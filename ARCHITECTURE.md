@@ -243,12 +243,16 @@ make ci        # 完整 CI 模拟（fmt + lint + test + deny）
 
 ## 设计决策记录
 
-| 决策 | 理由 |
-|------|------|
-| Rust 2024 + MSRV 1.85 | 采用最新稳定版号，利用新版特性 |
-| thiserror v2 | 成熟稳定的错误派生方案 |
-| serde 手动实现 Error 序列化 | 完整保留 IO 错误链跨序列化边界 |
-| 中文优先注释 | 团队母语，降低认知负担 |
-| 统一 target-dir 到 .cargo/ | 避免在非 workspace 根运行时的路径混淆 |
-| Beads（bd）任务跟踪 | 跨模型可协作，本地 DB 不入版本库 |
-| squash 合并 | 保持 main 线性历史 |
+详细内容见 [docs/decisions/ADR-001-009.md](docs/decisions/ADR-001-009.md)。
+
+| DDR | 决策 | 理由 |
+|-----|------|------|
+| 001 | Rust 2024 + MSRV 1.85 | 采用最新稳定版号，利用新版特性 |
+| 002 | thiserror v2 | 成熟稳定的错误派生方案 |
+| 003 | serde 手动实现 Error 序列化 | 完整保留 IO 错误链跨序列化边界 |
+| 004 | 中文优先注释 | 团队母语，降低认知负担 |
+| 005 | 统一 target-dir 到 .cargo/ | 避免多位置 target 缓存碎片 |
+| 006 | Beads（bd）任务跟踪 | 跨 AI 模型可协作，本地 DB 不入版本库 |
+| 007 | Squash Merge | 保持 main 线性历史 |
+| 008 | AI 治理三层分层 | SSOT 技能源，钩子全生命周期覆盖 |
+| 009 | taiki-e/install-action 统一安装 | 统一 CI 工具安装接口 |
