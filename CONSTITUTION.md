@@ -240,6 +240,20 @@ make check # 等效: ./scripts/check-constitution.sh
 #### 6.0.7 一句话
 > **先对齐 main，再开分支；先 PR 进 main，再谈完成。**
 
+#### 6.0.5 分支保护验证
+
+分支保护已启用 `enforce_admins` 测试，并记录于本宪章：
+
+- **开启 `enforce_admins: true`** 时：管理员直接推送 `main` 被拒绝，验证规则正确性
+- **生产环境**：保持 `enforce_admins: false`，允许管理员应急绕过（如紧急热修复跳过 CI 等待），但需在 PR 中注明绕过原因
+- 验证结果（2026-07-21）：
+  ```
+  remote: error: GH006: Protected branch update failed for refs/heads/main.
+  remote: - Changes must be made through a pull request.
+  remote: - 2 of 2 required status checks are expected.
+  ! [remote rejected] main -> main (protected branch hook declined)
+  ```
+
 ### 6.1 变更流程
 1. **从 main 同步** — `fetch` 最新主干并建分支（§6.0）
 2. **Issue** — 描述问题或提案（可追溯）
