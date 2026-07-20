@@ -41,13 +41,20 @@
 
 ## 目录结构
 
-```
+> 完整标准见父级 [`crates/AGENTS.md`](../AGENTS.md)「Crate 子模块标准布局」。
+
+```text
 crates/infra-core/
 ├── Cargo.toml
+├── README.md
 ├── AGENTS.md
-└── src/
-    ├── lib.rs      # 根模块（lint attrs + re-export）
-    └── error.rs    # Error 类型 + serde 实现
+├── CHANGELOG.md
+├── src/
+│   ├── lib.rs          # 根模块（lint attrs + re-export）
+│   └── error.rs        # Error 类型 + serde 实现
+├── tests/              # 集成/契约测试（暂无时 .gitkeep）
+├── examples/           # 可运行示例（暂无时 .gitkeep）
+└── docs/               # 设计/迁移文档（暂无时 .gitkeep）
 ```
 
 ---
@@ -56,4 +63,5 @@ crates/infra-core/
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v1.1.0 | 2026-07-21 | 对齐 crates 子模块标准布局并补齐骨架 |
 | v1.0.0 | 2026-07-21 | 初始规则 |

@@ -11,35 +11,111 @@
 
 ---
 
+## Crate 子模块标准布局（强制）
+
+每个 workspace 成员 crate 必须采用下列目录与文件骨架。新增 crate 时先建齐骨架，再写业务代码。
+
+```text
+crates/<crate-name>/
+├── Cargo.toml          # 包清单（必选）
+├── README.md           # 人类可读说明：职责、用法、特性开关（必选）
+├── AGENTS.md           # 本 crate 的 Agent 行为规则（必选）
+├── CHANGELOG.md        # 本 crate 变更日志，Keep a Changelog + SemVer（必选）
+├── src/                # 库/二进制源码（必选）
+│   └── lib.rs          # 库入口（lib crate 必选）
+├── tests/              # 集成测试 / 契约测试 / 公开 API 编译测试（必选目录）
+├── examples/           # 可运行示例（必选目录；暂无示例时放 .gitkeep）
+└── docs/               # crate 级设计/契约/迁移说明（必选目录；暂无文档时放 .gitkeep）
+```
+
+### 路径职责
+
+| 路径 | 级别 | 职责 |
+|------|------|------|
+| `Cargo.toml` | 必选 | 包元数据、依赖、feature；版本跟 `workspace.package` |
+| `src/` | 必选 | 实现与单元测试（`#[cfg(test)] mod tests`） |
+| `tests/` | 必选目录 | 集成测试、跨模块契约、公开 API 稳定性 |
+| `examples/` | 必选目录 | 可 `cargo run --example` 的示例；无内容时保留 `.gitkeep` |
+| `docs/` | 必选目录 | 设计笔记、API 契约、迁移指南；不替代 rustdoc |
+| `README.md` | 必选 | 给人类与外部消费者的入口文档 |
+| `AGENTS.md` | 必选 | 本 crate 专属 Agent 规则；父级为 `crates/AGENTS.md` |
+| `CHANGELOG.md` | 必选 | 本 crate 版本变更；仓库根 `CHANGELOG.md` 记整体发布 |
+
+### 分层边界（避免重复）
+
+| 层级 | 放什么 | 不放什么 |
+|------|--------|----------|
+| 仓库根 `docs/` | 跨 crate 治理、宪章细则、DDR、工作流 | 单个 crate 的 API 契约 |
+| 仓库根 `examples/` / `tests/` | 跨 crate 端到端示例与集成 | 单 crate 单元/契约测试 |
+| `crates/<name>/docs/` | 该 crate 设计、边界、迁移 | 全仓治理规则 |
+| `crates/<name>/examples/` | 只依赖本 crate（及声明的依赖）的示例 | workspace 级演示 |
+| `crates/<name>/tests/` | 本 crate 公开面契约 | 跨多个 crate 的 E2E |
+
+### 新增 crate 检查清单
+
+1. 在 `crates/<name>/` 按上表建齐骨架（含空目录的 `.gitkeep`）
+2. `Cargo.toml` 使用 `*.workspace = true` 对齐 workspace 元数据
+3. 在根 `Cargo.toml` 的 `workspace.members` 注册
+4. 编写 `README.md`（职责一句话 + 最小用法）
+5. 编写 `AGENTS.md`（职责、本 crate 专属规则、目录树）
+6. 初始化 `CHANGELOG.md`（`## [Unreleased]`）
+7. 更新本文件「Crate 概览」表
+8. 更新 `ARCHITECTURE.md` 层次模型（如职责变更）
+
+### 合规现状（2026-07-21）
+
+| Crate | src | tests | examples | docs | README | AGENTS | CHANGELOG |
+|-------|:---:|:-----:|:--------:|:----:|:------:|:------:|:---------:|
+| `infra-core` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `kernel`（`xhyper-kernel`） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+> `examples/` / `docs/` 在无内容时以 `.gitkeep` 占位；`infra-core/tests/` 同理（单元测试仍在 `src/`）。
+
+---
+
 ## 规则
 
 ### C1: 遵循宪章
+
 - 所有代码变更必须符合 `CONSTITUTION.md` 规范
 - 提交前运行 `make ci` 验证强制门禁
 
 ### C2: 模块边界
+
 - 新增 crate 前先评估：是否可以用现有 crate 的模块替代
 - crate 间依赖方向单向，禁止循环引用
 - `infra-core` 是基础层，不得依赖其他 workspace crate
+- 每个 crate 目录必须符合上文「子模块标准布局」
 
-### C3: 错误处���
+### C3: 错误处理
+
 - 库代码禁止裸 `unwrap()` / `expect()`
 - 使用 `thiserror` 定义 crate 专用错误类型
 - 错误链不可断裂，保留 `source()`
 
 ### C4: 测试
+
 - 每个公开函数至少一个单元测试
-- 测试置于 `#[cfg(test)] mod tests` 模块
+- 单元测试置于 `#[cfg(test)] mod tests` 模块
+- 集成/契约测试置于 crate 内 `tests/`
 - doc-test 必须可编译运行
 
 ### C5: 文档
+
 - 每个 `pub` 项有 `///` 注释
 - 每个 `mod.rs` / `lib.rs` 顶部有 `//!` 模块文档
 - 文档注释中的示例代码用 `` ``` `` 标记并确保可运行
+- crate 级说明写在 `README.md`；设计/迁移写在 `docs/`
 
 ### C6: unsafe
+
 - 禁止在 infra-core 中使用 `unsafe`
 - 如未来需要，必须封装在安全抽象中并附 SAFETY 注释
+
+### C7: 变更日志
+
+- 影响公共 API 或行为的变更必须写入本 crate `CHANGELOG.md`
+- 破坏性变更须在 PR 中显式声明，并同步仓库根 `CHANGELOG.md`（发布维度）
 
 ---
 
@@ -49,6 +125,7 @@
 - 提交含有 `todo!()` 的代码（须关联 issue）
 - 使用 `as` 进行类型转换（用 From/TryFrom）
 - 修改 `.cargo/config.toml` 未经明确授权
+- 新增 crate 时跳过标准布局骨架
 
 ---
 
@@ -57,6 +134,7 @@
 | Crate | 路径 | 职责 |
 |-------|------|------|
 | `infra-core` | `crates/infra-core/` | 核心错误类型、Result 别名、基础工具 |
+| `xhyper-kernel`（lib 名 `kernel`） | `crates/kernel/` | xhyper L0 语义信任根（clock / lifecycle） |
 
 ---
 
@@ -64,4 +142,5 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v1.1.0 | 2026-07-21 | 增加 crate 子模块标准布局（src/examples/docs/tests + README/AGENTS/CHANGELOG） |
 | v1.0.0 | 2026-07-21 | 初始代理规则 |

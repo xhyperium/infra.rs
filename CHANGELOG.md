@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Crate 子模块标准布局**（`crates/AGENTS.md` v1.1.0）：强制 `src/`、`tests/`、`examples/`、`docs/`、`README.md`、`AGENTS.md`、`CHANGELOG.md`
+- **`infra-core` / `kernel` 骨架补齐**：README、CHANGELOG、AGENTS（kernel）、空目录 `.gitkeep`
+
+---
+
 ## [0.3.0] — 2026-07-21
 
 ### Added
