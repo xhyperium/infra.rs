@@ -10,7 +10,13 @@
 //! - 不依赖 tokio 等异步运行时；
 //! - 关停必须一次触发、多方观察、不可逆；
 //! - 阻塞等待不得存在 lost wake-up。
+//!
+//! 并发原语在 `cfg(loom)` 下切换为 `loom::sync`，供模型检验（SPEC §7.6 / §11.2）。
+//! **本版本不公开 `Component` trait。**
 
+#[cfg(loom)]
+use loom::sync::{Arc, Condvar, Mutex};
+#[cfg(not(loom))]
 use std::sync::{Arc, Condvar, Mutex};
 
 // ---------------------------------------------------------------------------
@@ -106,6 +112,8 @@ struct ShutdownInner {
 /// 通过 [`ShutdownGuard::trigger`] 触发后，所有已阻塞的 [`ShutdownSignal::wait`]
 /// 调用方被唤醒；触发后新创建的观察者也立即看到已触发状态。
 ///
+/// 协议：`Mutex<bool>` + `Condvar`；`trigger` **持锁**写标志并 `notify_all`，避免 lost wake-up。
+///
 /// `ShutdownSignal` 可 [`Clone`]，`ShutdownGuard` 不可 [`Clone`]。
 #[must_use]
 #[derive(Clone, Debug)]
@@ -125,8 +133,9 @@ impl ShutdownSignal {
     }
 
     /// 检查关停是否已触发。
+    ///
+    /// 锁中毒时按 SPEC §10.2 用 `into_inner` 恢复，不把 poison 当作对外 panic 合同。
     pub fn is_triggered(&self) -> bool {
-        // 锁中毒时恢复，继续遵守同一状态机
         let triggered = self.inner.triggered.lock().unwrap_or_else(|e| e.into_inner());
         *triggered
     }
@@ -134,7 +143,7 @@ impl ShutdownSignal {
     /// 阻塞等待直到关停被触发。若已触发则立即返回。
     ///
     /// 使用 `while !triggered` 循环配合 [`Condvar::wait`]，确保不会出现
-    /// lost wake-up。
+    /// lost wake-up。锁中毒时按 SPEC §10.2 用 `into_inner` 恢复。
     pub fn wait(&self) {
         let mut triggered = self.inner.triggered.lock().unwrap_or_else(|e| e.into_inner());
         while !*triggered {
@@ -161,6 +170,7 @@ impl ShutdownGuard {
     /// 触发关停信号，唤醒所有阻塞在 [`ShutdownSignal::wait`] 的观察者。
     ///
     /// 此方法消费 `guard`，触发后不可重置。
+    /// SPEC §7.6 顺序：持同一 mutex → 设 true → `notify_all` → 释放锁。
     pub fn trigger(self) {
         let mut triggered = self.inner.triggered.lock().unwrap_or_else(|e| e.into_inner());
         *triggered = true;
@@ -169,10 +179,10 @@ impl ShutdownGuard {
 }
 
 // ---------------------------------------------------------------------------
-// 单元测试
+// 单元测试（标准 std 路径；loom 模型见 tests/lifecycle_concurrency_loom.rs）
 // ---------------------------------------------------------------------------
 
-#[cfg(test)]
+#[cfg(all(test, not(loom)))]
 mod tests {
     use super::*;
     use std::sync::Barrier;
@@ -343,17 +353,26 @@ mod tests {
         assert!(!signal.is_triggered());
     }
 
-    // -- Shutdown: poison recovery ----------------------------------------
+    // -- Shutdown: poison recovery（真实注入 mutex 毒锁） ------------------
 
     #[test]
-    fn test_poison_recovery() {
+    fn test_poison_recovery_into_inner() {
         let (guard, signal) = ShutdownSignal::new();
-        // Trigger to mark as triggered
+
+        // 同模块可触及 `ShutdownInner.triggered`，注入真实 poison
+        let poison = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _held = signal.inner.triggered.lock().unwrap_or_else(|p| p.into_inner());
+            panic!("intentional mutex poison for §11.1 poison recovery");
+        }));
+        assert!(poison.is_err(), "setup must poison the mutex");
+
+        // 毒锁后仍可读；标志未改写
+        assert!(!signal.is_triggered());
+
+        // 毒锁后仍可 trigger，并与 is_triggered / wait 一致
         guard.trigger();
-        // is_triggered should return true even after poison (not
-        // realistically testable without actual poison, but the code
-        // path with unwrap_or_else is exercised)
         assert!(signal.is_triggered());
+        signal.wait();
     }
 
     // -- Shutdown: 并发回归测试 ------------------------------------------

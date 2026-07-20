@@ -10,7 +10,21 @@
 
 ### Added
 
+- 对齐 **SPEC-KERNEL-002** 可移植合同（§3–§8 / §11）：error / clock / lifecycle 生产面
+- `tests/lifecycle_concurrency_loom.rs`（`cfg(loom)` Shutdown 模型测试）
+- dev-deps：`static_assertions`；`cfg(loom)` 条件依赖 `loom`
+- rustdoc `compile_fail` 负向面（字段私有、无 Default、无 Component、ShutdownGuard !Clone）
+- proptest 属性测试：Timestamp checked 运算 / mono 反向 / ErrorKind 构造矩阵
+- ControlledClock 双通道测试替身；真实 mutex poison 恢复测试
 - 按 crates 子模块标准补齐 `README.md`、`AGENTS.md`、`examples/`、`docs/` 骨架
+
+### Fixed
+
+- `Timestamp::checked_duration_since`：改用 `i128` 中间值，使 `i64::MAX - i64::MIN` 返回 `Some(u64::MAX nanos)` 而非溢出为 `None`
+
+### Changed
+
+- `lifecycle` 在 `cfg(loom)` 下切换 `loom::sync` 并发原语，供模型检验
 
 ---
 

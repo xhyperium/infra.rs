@@ -4,6 +4,70 @@
 //!
 //! 错误按"调用方应该如何反应"分类，而非按"错误来自哪个模块"分类。
 //! 调用方不得通过字符串匹配决定是否重试、降级或 fail-fast。
+//!
+//! ## 下游编译负向合同（SPEC-KERNEL-002 §11.4）
+//!
+//! `XError` 字段保持私有，下游只能通过构造器和查询方法使用：
+//!
+//! ```compile_fail
+//! use kernel::{ErrorKind, XError};
+//!
+//! let _ = XError {
+//!     kind: ErrorKind::Internal,
+//!     context: "not opaque".into(),
+//!     retry_after: None,
+//!     source: None,
+//! };
+//! ```
+//!
+//! kernel 不公开通用 `Component` trait：
+//!
+//! ```compile_fail
+//! use kernel::Component;
+//! ```
+//!
+//! 时间类型不提供 `Default`，避免用零值冒充有效时间：
+//!
+//! ```compile_fail
+//! use kernel::Timestamp;
+//!
+//! let _ = Timestamp::default();
+//! ```
+//!
+//! ```compile_fail
+//! use kernel::MonotonicInstant;
+//!
+//! let _ = MonotonicInstant::default();
+//! ```
+//!
+//! `ShutdownGuard` 不可克隆，唯一触发权不能被复制：
+//!
+//! ```compile_fail
+//! use kernel::ShutdownSignal;
+//!
+//! let (guard, _signal) = ShutdownSignal::new();
+//! let _second_guard = guard.clone();
+//! ```
+//!
+//! kernel 类型不实现 serde（wire 由协议层版本化）：
+//!
+//! ```compile_fail
+//! use kernel::Timestamp;
+//!
+//! fn assert_serialize<T: serde::Serialize>() {}
+//! assert_serialize::<Timestamp>();
+//! ```
+//!
+//! ```compile_fail
+//! use kernel::ErrorKind;
+//!
+//! fn assert_serialize<T: serde::Serialize>() {}
+//! assert_serialize::<ErrorKind>();
+//! ```
+//!
+//! 说明：doctest 仅链接生产依赖，不含 `serde`；上述 `compile_fail` 与
+//! `tests/api_compile.rs` 中 dev-dep 下的 `assert_not_impl_any!(…: serde::Serialize)`
+//! 互补——后者在存在 `serde` 特征时证明类型本身未实现 trait。
 
 use std::borrow::Cow;
 use std::fmt;
@@ -446,5 +510,24 @@ mod tests {
         assert!(!XError::cancelled("ca").is_bug());
         assert!(!XError::deadline_exceeded("d").is_bug());
         assert!(!XError::internal("int").is_bug());
+    }
+
+    // -- ClockError → XError（§5.7） --------------------------------------
+
+    #[test]
+    fn test_clock_error_maps_all_variants_to_unavailable() {
+        for clock_err in
+            [ClockError::BeforeUnixEpoch, ClockError::Overflow, ClockError::Unavailable]
+        {
+            let e: XError = clock_err.into();
+            assert_eq!(e.kind(), ErrorKind::Unavailable);
+            assert!(!e.is_retryable());
+            assert!(!e.is_bug());
+            assert!(Error::source(&e).is_some());
+            // Display 不含 source 细节；kind 前缀固定
+            let display = e.to_string();
+            assert!(display.starts_with("Unavailable:"), "display={display}");
+            assert!(!display.contains("secret"));
+        }
     }
 }

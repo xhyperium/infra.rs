@@ -1,5 +1,6 @@
 [package]
 name = "xhyper-kernel"
+description = "infra.rs L0 kernel: opaque XError/ErrorKind, Clock/Timestamp, ShutdownSignal (SPEC-KERNEL-002)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -12,8 +13,21 @@ name = "kernel"
 [dependencies]
 thiserror = { workspace = true }
 
+# loom：仅在 RUSTFLAGS='--cfg loom' 构建时链接（库内 lifecycle 切换并发原语）
+# 非 feature：符合 §3.4 default=[]；正常生产构建不拉 loom
+[target.'cfg(loom)'.dependencies]
+loom = "0.7"
+
 [dev-dependencies]
+# SPEC-KERNEL-002 §3.3 / §11：测试合同依赖（不进生产 / 不进公开 API）
 proptest = "1"
+serde = { workspace = true } # 仅用于 §11.4 负向面（assert !Serialize/!Deserialize）
+static_assertions = "1"
 
 [features]
+# SPEC-KERNEL-002 §3.4：不允许任何 feature；显式 default=[] 满足字面合同
 default = []
+
+# 声明 `cfg(loom)` 为已知条件，避免 unexpected_cfgs 警告（非 feature）
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)'] }

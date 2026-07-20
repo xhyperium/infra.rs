@@ -112,6 +112,54 @@ node scripts/check.mjs
 | `harness-init` / `harness-mode` / `harness-gc` | Harness 管理 |
 | `beads` | 任务板操作 |
 
+## 任务处理流程
+
+### 生命周期
+
+```text
+接收 → 分析 → 分解 → 执行 → 验证 → 交付
+  │      │      │      │       │       │
+  │      │      │      │       │       └─ 更新 beads / 提交 / PR
+  │      │      │      │       └─ cargo test + clippy + fmt
+  │      │      │      └─ 逐个实现子任务
+  │      │      └─ 复杂任务拆分为 beads follow-up
+  │      └─ 判读范围：代码 / 配置 / 文档 / CI
+  └─ 用户输入或 beads ready
+```
+
+### 优先级规则
+
+| 优先级 | 触发条件 | 示例 |
+|--------|---------|------|
+| P0 | 阻塞性安全/构建/CI 修复 | CVE 修复、CI 红改绿 |
+| P1 | 用户显式请求 | 新功能、审查、重构 |
+| P2 | beads ready / 依赖 P1 的 follow-up | 子任务、文档补全 |
+| P3 | 代码质量改进 | clippy 警告、dead code 清理 |
+
+### 任务边界
+
+- **单任务单会话**：每个 `bd claim` 只在一个会话中执行
+- **原子交付**：任务完成后立即 `bd close`，不跨会话堆积
+- **子任务委托**：大任务拆分为 `bd create` 子项，不自我膨胀
+- **不清楚先问**：范围不明确时先确认，不做假设
+
+### 执行检查清单
+
+每项任务完成前：
+
+- [ ] `cargo fmt --all --check` 通过
+- [ ] `cargo clippy --workspace -- -D warnings` 通过
+- [ ] `cargo test --workspace` 通过
+- [ ] 文档已更新（API doc / CHANGELOG / CONSTITUTION）
+- [ ] 关联 beads 状态已更新
+- [ ] 提交信息遵循 Conventional Commits
+
+### 委托与接力
+
+- **Codex 审查**：PR 提交后 `codex review --base main`
+- **人工审批**：AI 不可 self-approve（§7.1），需 `@xhyperium/maintainers`
+- **失败处理**：3 次尝试后仍失败 → 记录原因 → 创建 follow-up → 移交给人类
+
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->
 ## Beads Issue Tracker
 
