@@ -1,13 +1,15 @@
 # Git Worktree 强制开发策略
 
-> 本文档为 `CONSTITUTION.md §6.0.6` 的实施细则。
-> 工具脚本：`scripts/worktree.mjs`
+> 本文档为 `CONSTITUTION.md §6.0.5` 的实施细则。
+> 工具脚本：`scripts/worktree.mjs`、`scripts/worktree-policy.mjs`
+> 硬门禁：`.claude/hooks/pre-tool-check.mjs`（BLOCK）+ `session-context.mjs`（指引）
 
 ---
 
 ## 原则
 
-**所有活跃开发必须在独立的 Git Worktree 中进行。** 禁止在 `main` 工作区直接创建或切换功能分支。
+**所有活跃开发必须在独立的 Git Worktree 中进行。**  
+禁止在 `main` 主工作区直接创建或切换功能分支，禁止在主仓 Write/Edit 仓库文件。
 
 ---
 
@@ -22,54 +24,121 @@
 
 ## 强制规则
 
-### 1. 创建 Worktree
-
-新功能开发必须通过 Worktree 创建：
+### 1. 创建 Worktree（唯一合法开工路径）
 
 ```bash
-# 方式 A: 使用脚本
-./scripts/worktree.mjs create feat/my-feature
+# 方式 A: 使用脚本（推荐）
+node scripts/worktree.mjs create feat/<id>-<slug>
+cd .worktrees/feat/<id>-<slug>
 
-# 方式 B: 手动
-git worktree add .worktrees/feat/my-feature -b feat/my-feature origin/main
+# 方式 B: 手动（路径必须规范）
+git worktree add .worktrees/feat/<id>-<slug> -b feat/<id>-<slug> origin/main
+cd .worktrees/feat/<id>-<slug>
 ```
+
+分支命名：`{type}/{module-or-id}-{描述}`  
+合法 type 前缀：`docs` / `feat` / `feature` / `fix` / `test` / `refactor` / `chore` / `governance` / `benchmark`
 
 ### 2. 目录约定
 
 ```text
-infra.rs/                      # 主工作区 (main)
+infra.rs/                      # 主工作区 (main) — 只读：review / build / test
 └── .worktrees/                 # Worktree 根（已 gitignore）
     ├── feat/                  # 功能分支
-    │   └── my-feature/
+    │   └── <id>-<slug>/
     ├── fix/                   # 修复分支
-    │   └── bug-123/
+    │   └── <id>-<slug>/
     └── chore/                 # 杂项分支
-        └── update-deps/
+        └── <id>-<slug>/
 ```
 
-### 3. 禁止行为
+规范路径公式：
+
+```text
+.worktrees/<branch-name>
+# 分支名中的 / 保留为目录分隔符
+# 例: feat/infra-2gg-worktree-hard-gate → .worktrees/feat/infra-2gg-worktree-hard-gate
+```
+
+**已废弃（禁止新建）**：
+
+- `.worktrees/workspaces/`
+- 单数根 `.worktree/`
+- 全局 `~/.worktrees/<project>/`
+
+### 3. 硬门禁（机器强制 BLOCK）
+
+| 触发 | 行为 | 实现 |
+|------|------|------|
+| `Write` / `Edit` 目标在主仓路径（非 `.worktrees/**`） | **BLOCK** | `pre-tool-check.mjs` |
+| 主工作区 `git checkout -b` / `git switch -c` | **BLOCK** | `pre-tool-check.mjs` |
+| 主工作区 `git checkout`/`switch` 到非 main 功能分支 | **BLOCK** | `pre-tool-check.mjs` |
+| 在 `main`/`master` 分支上 `git commit` | **BLOCK** | `pre-tool-check.mjs` |
+| `git worktree add` 路径 ≠ `.worktrees/<branch>` | **BLOCK** | `pre-tool-check.mjs` |
+| 分支名缺少 type 前缀 | **BLOCK** | `pre-tool-check.mjs` |
+| SessionStart 在主仓 | **WARN + 开工指引** | `session-context.mjs` |
+
+主工作区**允许**：`git status` / `fetch` / `pull` / `log` / `diff`、`cargo test`/`build`（只读验证）、`node scripts/worktree.mjs create`、`git worktree list/remove`。
+
+### 4. 禁止行为
 
 - 禁止在 main 工作区 `git checkout -b <feature>`
 - 禁止在 main 工作区 `git switch <feature>`
-- 禁止在 main 工作区执行 `cargo build/test` 以外的写操作
+- 禁止在 main 工作区对仓库文件 Write/Edit（Agent 与脚本钩子均拦截）
+- 禁止在 `main` 分支上直接 `git commit` / push
 - Worktree 仅用于开发，不得用于 `cargo publish` 等发布操作
 
-### 4. 清理
+### 5. 清理
 
 合并后删除 Worktree：
 
 ```bash
-./scripts/worktree.mjs remove feat/my-feature
-./scripts/worktree.mjs prune    # 清理残留
+node scripts/worktree.mjs remove feat/<id>-<slug>
+node scripts/worktree.mjs prune    # 清理残留
 ```
 
 ---
 
-## CI 检查
+## 紧急绕过（人工 only）
 
-钩子脚本 `scripts/worktree.mjs` 将在 session 启动时验证当前工作区是否符合规则。
+仅 maintainer 在生产事故等场景可临时设置：
 
-## 例外
+```bash
+export INFRA_WORKTREE_BYPASS=1
+```
 
-- 紧急热修复可通过 PR 审查后直接操作 main（须记录原因）
-- 单次微小修改（如 typo fix）可由 maintainer 在 main 工作区完成
+- **AI Agent 不得**自行设置此变量绕过门禁
+- 使用后须在 PR / incident 记录原因，并在 72h 内补齐 worktree 流程与证据
+
+---
+
+## 例外（收紧后）
+
+| 场景 | 是否允许主仓写 | 条件 |
+|------|----------------|------|
+| 紧急热修复 | 仅人工 + `INFRA_WORKTREE_BYPASS=1` | 事后补 PR 与原因 |
+| 单次 typo（maintainer） | 仅人工本地，**不经 Agent 钩子** | 尽量仍走 PR |
+| Agent 任何活跃开发 | **否** | 必须 worktree |
+
+---
+
+## 开工检查清单（Agent）
+
+1. `git rev-parse --show-toplevel` 确认是否主仓
+2. `node scripts/worktree.mjs create <type>/<id>-<slug>`
+3. `cd .worktrees/<type>/<id>-<slug>`
+4. 在 worktree 内编码 / 测试 / 提交
+5. `gh pr create --base main`
+6. 合并后 `node scripts/worktree.mjs remove <branch>`
+
+---
+
+## 相关文件
+
+| 文件 | 职责 |
+|------|------|
+| `scripts/worktree.mjs` | create / list / remove / prune |
+| `scripts/worktree-policy.mjs` | 路径规范、门禁判定、审计 |
+| `.claude/hooks/pre-tool-check.mjs` | PreToolUse 硬拦截 |
+| `.claude/hooks/session-context.mjs` | SessionStart 指引与审计 |
+| `CONSTITUTION.md §6.0.5` | 宪章条款 |

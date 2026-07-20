@@ -22,6 +22,12 @@ import { homedir } from "os";
 /** 人读规则说明 */
 export const WORKTREE_PATH_RULE = ".worktrees/<branch-name>";
 
+/**
+ * 紧急绕过环境变量（仅人工 maintainer）。
+ * 设为 `1` 时 pre-tool-check 跳过 worktree 硬门禁。
+ */
+export const WORKTREE_BYPASS_ENV = "INFRA_WORKTREE_BYPASS";
+
 /** 旧路径模式关键词（审计时匹配） */
 const LEGACY_WORKSPACES_SEGMENT = "workspaces";
 
@@ -37,6 +43,30 @@ export function bareBranch(branchName) {
 }
 
 /**
+ * 返回规范 worktree 根目录（`.worktrees`）。
+ */
+export function worktreeBasePath(projectRoot) {
+  return resolve(projectRoot, ".worktrees");
+}
+
+/**
+ * 从任意路径（含 worktree 内路径）解析主仓根目录。
+ * - 路径含 `/.worktrees/` → 取其前缀为主仓
+ * - 否则返回规范化后的 fromPath（调用方应传入 hooks 推导的 toplevel）
+ *
+ * 例:
+ *   .../infra.rs/.worktrees/feat/x/.claude/hooks → .../infra.rs
+ *   .../infra.rs/.claude/hooks → 调用方应先 join 到 .../infra.rs 再传入
+ */
+export function resolveMainProjectRoot(fromPath) {
+  const abs = resolve(fromPath || ".");
+  const needle = "/.worktrees/";
+  const idx = abs.indexOf(needle);
+  if (idx >= 0) return abs.slice(0, idx);
+  return abs;
+}
+
+/**
  * 返回规范 worktree 绝对路径。
  */
 export function canonicalWorktreePath(projectRoot, branchName) {
@@ -44,14 +74,159 @@ export function canonicalWorktreePath(projectRoot, branchName) {
 }
 
 /**
+ * child 是否位于 parent 之下（含等于 parent）。
+ */
+export function isPathInside(child, parent) {
+  const c = resolve(child);
+  const p = resolve(parent);
+  return c === p || c.startsWith(p + "/");
+}
+
+/**
  * 从 CWD 推断当前所在的 worktree 名称（含 `/`），
  * 若不在任何 worktree 下则返回 null。
  */
 export function detectWorktreeFromCwd({ projectRoot, cwd }) {
-  const wtBase = resolve(projectRoot, ".worktrees");
+  const wtBase = worktreeBasePath(projectRoot);
   const resolvedCwd = resolve(cwd ?? process.cwd());
-  if (!resolvedCwd.startsWith(wtBase + "/")) return null;
+  if (!isPathInside(resolvedCwd, wtBase) || resolvedCwd === resolve(wtBase)) return null;
   return resolvedCwd.slice(wtBase.length + 1); // e.g. "feat/login"
+}
+
+/**
+ * 当前 git 顶层是否为主仓（main 工作区），而非 `.worktrees/*`。
+ */
+export function isMainWorkspaceTopLevel(projectRoot, topLevel) {
+  if (!topLevel) return false;
+  return resolve(topLevel) === resolve(projectRoot);
+}
+
+/**
+ * Write/Edit 目标路径是否允许（必须在 `.worktrees/<branch>/` 内）。
+ * 仓外路径放行；主仓路径（含 main 检出）一律拒绝。
+ *
+ * @returns {{ allowed: boolean, fullPath: string, reason?: string, fixHint?: string }}
+ */
+export function evaluateEditPath({ projectRoot, filePath, bypass = false }) {
+  const fullPath = filePath ? resolve(projectRoot, filePath) : "";
+  if (bypass) {
+    return { allowed: true, fullPath, reason: "bypass" };
+  }
+  if (!filePath) {
+    return { allowed: true, fullPath };
+  }
+
+  const root = resolve(projectRoot);
+  const wtBase = worktreeBasePath(projectRoot);
+
+  // 仓外路径不归本策略管
+  if (!isPathInside(fullPath, root)) {
+    return { allowed: true, fullPath };
+  }
+
+  // 必须落在 .worktrees/<branch>/... 下（不允许写主仓）
+  if (isPathInside(fullPath, wtBase) && fullPath !== wtBase) {
+    return { allowed: true, fullPath };
+  }
+
+  return {
+    allowed: false,
+    fullPath,
+    reason: "edit-outside-worktree",
+    fixHint:
+      "node scripts/worktree.mjs create <type>/<id>-<slug> && cd .worktrees/<type>/<id>-<slug>",
+  };
+}
+
+/**
+ * 主工作区内禁止的 git 分支操作（创建/切换功能分支）。
+ * 允许：worktree add、checkout/switch main|master、文件还原等。
+ *
+ * @returns {{ blocked: boolean, kind?: string, message?: string }}
+ */
+export function evaluateMainWorkspaceGitCommand(command) {
+  const cmd = String(command || "");
+  if (!cmd.trim()) return { blocked: false };
+
+  // 允许 git worktree *
+  if (/\bgit\s+worktree\b/.test(cmd)) {
+    return { blocked: false };
+  }
+
+  // 禁止在主仓创建功能分支
+  if (/\bgit\s+checkout\s+-b\b/.test(cmd) || /\bgit\s+switch\s+-c\b/.test(cmd)) {
+    return {
+      blocked: true,
+      kind: "branch-create-on-main-workspace",
+      message:
+        "禁止在 main 工作区创建功能分支。请使用：node scripts/worktree.mjs create <type>/<slug>",
+    };
+  }
+
+  // 禁止在主仓 switch/checkout 到非 main 分支（保留文件还原语法）
+  // git switch <branch>  /  git checkout <branch>
+  // 不匹配：git checkout -- file, git checkout -p, git switch - , git checkout HEAD -- file
+  const switchMatch = cmd.match(/\bgit\s+switch\s+(?:--detach\s+)?([^\s-]\S*)/);
+  if (switchMatch) {
+    const ref = switchMatch[1];
+    if (ref !== "main" && ref !== "master" && ref !== "-") {
+      return {
+        blocked: true,
+        kind: "branch-switch-on-main-workspace",
+        message: `禁止在 main 工作区切换到分支 \`${ref}\`。请：node scripts/worktree.mjs create ${ref} 或 cd 已有 .worktrees/${ref}`,
+      };
+    }
+  }
+
+  // git checkout <branch> — 排除 -b/-B/-- / -p / --ours 等选项形式与路径还原
+  const checkoutMatch = cmd.match(
+    /\bgit\s+checkout\s+(?!-b\b|-B\b|--\b|-p\b)([^\s-][^\s]*)/,
+  );
+  if (checkoutMatch) {
+    const ref = checkoutMatch[1];
+    // 跳过明显是路径或 rev 文件操作：含 / 且像路径、或以 . 开头
+    const looksLikePath =
+      ref.startsWith("./") || ref.startsWith("../") || /\.[a-zA-Z0-9]+$/.test(ref);
+    if (
+      !looksLikePath &&
+      ref !== "main" &&
+      ref !== "master" &&
+      ref !== "HEAD" &&
+      ref !== "-"
+    ) {
+      return {
+        blocked: true,
+        kind: "branch-checkout-on-main-workspace",
+        message: `禁止在 main 工作区 checkout 分支 \`${ref}\`。请使用 worktree：node scripts/worktree.mjs create ${ref}`,
+      };
+    }
+  }
+
+  return { blocked: false };
+}
+
+/**
+ * 是否禁止在 main/master 上 commit。
+ */
+export function evaluateCommitOnMain(branchName, command) {
+  const br = bareBranch(branchName);
+  const cmd = String(command || "");
+  if ((br === "main" || br === "master") && /\bgit\s+commit\b/.test(cmd)) {
+    return {
+      blocked: true,
+      kind: "commit-on-main",
+      message:
+        "禁止在 main 上直接 commit。请先 node scripts/worktree.mjs create <type>/<slug> 再提交。",
+    };
+  }
+  return { blocked: false };
+}
+
+/**
+ * 环境变量是否请求绕过硬门禁。
+ */
+export function isWorktreeBypassEnabled(env = process.env) {
+  return String(env?.[WORKTREE_BYPASS_ENV] || "") === "1";
 }
 
 // ── 合规判定 ────────────────────────────────

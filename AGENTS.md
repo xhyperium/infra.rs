@@ -93,6 +93,15 @@ node scripts/check.mjs
 - **alias**：`cargo xtask` → `infra-xtask`（crate 尚未添加时可忽略）
 - **突变测试输出**：`.cargo/cache/mutants/`
 
+## Git Worktree（强制）
+
+完整细则见 [docs/worktree-policy.md](./docs/worktree-policy.md) 与 [CONSTITUTION.md §6.0.5](./CONSTITUTION.md)。
+
+- **所有活跃开发**在 `.worktrees/<branch-name>` 内进行
+- 开工：`node scripts/worktree.mjs create <type>/<id>-<slug>` → `cd` 进入 worktree
+- `pre-tool-check` 硬拦截主仓 Write/Edit 与主仓功能分支切换
+- 禁止 Agent 使用 `INFRA_WORKTREE_BYPASS=1`
+
 ## Git 规范（Main First）
 
 完整条款见 [CONSTITUTION.md §6.0](./CONSTITUTION.md)。摘要：

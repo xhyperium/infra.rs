@@ -251,21 +251,23 @@ make check # 等效: ./scripts/check-constitution.mjs
 **所有活跃开发必须在独立的 Git Worktree 中进行。** 细则见 [docs/worktree-policy.md](./docs/worktree-policy.md)。
 
 ```bash
-./scripts/worktree.mjs create feat/my-feature
+node scripts/worktree.mjs create feat/my-feature
 cd .worktrees/feat/my-feature
 ```
 
 - 禁止在 main 工作区创建/切换功能分支
 - main 工作区仅用于 review、构建、测试（只读操作）
-- Worktree 目录：`.worktrees/<type>/<branch>/`（已 gitignore）
-- 实质性任务（多文件或大 diff）应使用独立分支；推荐 git worktree 隔离
-- Worktree 规范路径：`.worktrees/workspaces/<branch-name>`（分支名中的 `/` 可映射为 `-`）
+- Worktree 规范路径：`.worktrees/<branch-name>`（分支名中的 `/` 保留为目录分隔符；已 gitignore）
+- **已废弃**：`.worktrees/workspaces/`、单数 `.worktree/`、全局 `~/.worktrees/`
+- 实质性任务必须使用独立分支 + worktree 隔离
 - 禁止多任务混用同一 worktree / 分支
+- **机器强制（BLOCK）**：`pre-tool-check.mjs` 拦截主仓 Write/Edit、主仓 `checkout -b`/`switch` 功能分支、`main` 上 commit；`session-context.mjs` 在主仓给出开工指引
 
 #### 6.0.6 与 AI 协作
-- AI **不得**在 `main` 检出上直接改业务代码并提交
-- AI 开工前应确认当前分支 ≠ `main`（或仅作只读说明 / 文档性例外须人工明示）
-- Session 钩子（如 `branch-protect`）可告警，但**宪章效力不依赖钩子是否启用**
+- AI **不得**在 `main` 检出上直接改代码并提交
+- AI 开工前必须：`node scripts/worktree.mjs create …` 并 `cd` 进入 `.worktrees/…`
+- Session 钩子提供硬门禁与告警；**即使钩子未启用，本条款仍有效**——Agent 须自觉遵守
+- 紧急绕过仅限人工 maintainer 设置 `INFRA_WORKTREE_BYPASS=1`，并事后记录
 
 #### 6.0.7 一句话
 > **先对齐 main，再开分支；先 PR 进 main，再谈完成。**

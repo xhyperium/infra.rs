@@ -84,7 +84,7 @@ ok("scripts/worktree-policy.mjs", exists("scripts/worktree-policy.mjs"), "hooks 
 ok("scripts/gc-scan.mjs", exists("scripts/gc-scan.mjs"), "session-review / RSI 依赖 gc-scan");
 ok("scripts/check.mjs", exists("scripts/check.mjs"), "自身");
 
-// worktree-policy 可导入
+// worktree-policy 可导入 + 单元自检 + 硬门禁源码存在
 let worktreeImportOk = false;
 try {
   await import(join(root, "scripts/worktree-policy.mjs"));
@@ -94,6 +94,25 @@ try {
   ok("worktree-policy 可导入", false, String(error.message || error));
 }
 if (worktreeImportOk) ok("worktree-policy 可导入", true);
+
+const preToolSrc = read(".claude/hooks/pre-tool-check.mjs");
+ok(
+  "pre-tool-check 含 worktree 硬门禁",
+  preToolSrc.includes("evaluateEditPath") && preToolSrc.includes("worktree 硬门禁"),
+  "pre-tool-check.mjs 缺少 evaluateEditPath / 硬门禁文案",
+);
+ok(
+  "session-context 指引 worktree.mjs create",
+  read(".claude/hooks/session-context.mjs").includes("worktree.mjs create"),
+  "session-context 应引导 node scripts/worktree.mjs create",
+);
+
+const policyTest = run("node scripts/worktree-policy.test.mjs 2>&1");
+ok(
+  "worktree-policy 单元自检",
+  /all passed/.test(policyTest) && !/FAIL/.test(policyTest),
+  policyTest.slice(0, 400) || "node scripts/worktree-policy.test.mjs 失败",
+);
 
 // ── Harness 状态 ──────────────────────────────────────────
 const harnessStatePath = ".claude/.harness-state";
