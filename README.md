@@ -78,7 +78,7 @@ bd init && bd prime
 
 ```bash
 # 首次：加载快捷命令（建议写入 ~/.bashrc）
-source scripts/worktree-activate.sh
+source scripts/worktree-activate.mjs
 
 # 创建 worktree 并切换
 wt feat/my-feature
@@ -90,9 +90,9 @@ wt main
 wt
 
 # 管理命令
-./scripts/worktree.sh create feat/my-feature   # 创建
-./scripts/worktree.sh remove feat/my-feature   # 删除
-./scripts/worktree.sh prune                    # 清理
+./scripts/worktree.mjs create feat/my-feature   # 创建
+./scripts/worktree.mjs remove feat/my-feature   # 删除
+./scripts/worktree.mjs prune                    # 清理
 ```
 
 路径约定：`.worktrees/<branch>`，分支 `/` 保留为目录分隔符。

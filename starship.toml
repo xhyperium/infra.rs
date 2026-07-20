@@ -8,8 +8,8 @@
 
 [custom.wt]
 description = "infra.rs Git Worktree 状态"
-command = "scripts/starship-wt.sh"
-when = "scripts/starship-wt.sh"
+command = "scripts/starship-wt.mjs"
+when = "scripts/starship-wt.mjs"
 format = "[$symbol$output]($style)"
 style = "bold cyan"
 symbol = "⛓️ "
