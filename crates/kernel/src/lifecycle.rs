@@ -68,15 +68,8 @@ impl ComponentState {
     ///
     /// 合法转换返回 `Ok(to)`，非法转换返回 `Err(LifecycleError)`。
     /// 此方法不会 panic。
-    pub fn try_transition(
-        self,
-        to: ComponentState,
-    ) -> Result<ComponentState, LifecycleError> {
-        if self.can_transition_to(to) {
-            Ok(to)
-        } else {
-            Err(LifecycleError { from: self, to })
-        }
+    pub fn try_transition(self, to: ComponentState) -> Result<ComponentState, LifecycleError> {
+        if self.can_transition_to(to) { Ok(to) } else { Err(LifecycleError { from: self, to }) }
     }
 }
 
@@ -125,13 +118,8 @@ impl ShutdownSignal {
     ///
     /// `guard` 是唯一的触发入口；`signal` 可被克隆并分发给观察者。
     pub fn new() -> (ShutdownGuard, ShutdownSignal) {
-        let inner = Arc::new(ShutdownInner {
-            triggered: Mutex::new(false),
-            cv: Condvar::new(),
-        });
-        let signal = ShutdownSignal {
-            inner: Arc::clone(&inner),
-        };
+        let inner = Arc::new(ShutdownInner { triggered: Mutex::new(false), cv: Condvar::new() });
+        let signal = ShutdownSignal { inner: Arc::clone(&inner) };
         let guard = ShutdownGuard { inner };
         (guard, signal)
     }
@@ -231,18 +219,14 @@ mod tests {
     #[test]
     fn test_try_transition_legal() {
         assert_eq!(
-            ComponentState::Created
-                .try_transition(ComponentState::Starting)
-                .unwrap(),
+            ComponentState::Created.try_transition(ComponentState::Starting).unwrap(),
             ComponentState::Starting
         );
     }
 
     #[test]
     fn test_try_transition_illegal() {
-        let err = ComponentState::Created
-            .try_transition(ComponentState::Running)
-            .unwrap_err();
+        let err = ComponentState::Created.try_transition(ComponentState::Running).unwrap_err();
         assert_eq!(err.from, ComponentState::Created);
         assert_eq!(err.to, ComponentState::Running);
     }
