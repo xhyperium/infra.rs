@@ -15,8 +15,9 @@
 | 上游镜像 COMPLETE / residual OPEN=0 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
 | 本仓 `crates/kernel` | **已落地**并与 SPEC §3–§11 可移植子集对齐 |
 | 本仓 archgate / `.architecture` 快照 | **未**移植 → 矩阵 **DEFER** |
-| 本仓 crates.io 再发布 / `publish=true` | **不做** → 矩阵 **DEFER** |
-| line/branch cov、mutants、miri CI 门禁 | 环境/工具链限制时 **DEFER**（不得伪造数字） |
+| 本仓 crates.io 再发布 | **不做**；`publish = false` 显式关闭 |
+| line/branch cov CI | **有** PR 门禁：`.github/workflows/kernel-coverage.yml` |
+| mutants / miri CI | **有** 周调度：`kernel-mutants.yml` / `kernel-miri.yml` |
 
 ## 本仓可观察事实
 
@@ -25,9 +26,10 @@ crates/kernel/                  EXISTS
 Cargo.toml members              含 crates/kernel
 package name                    xhyper-kernel
 lib name                        kernel
-publish                         未声明 true（跟随 workspace 默认）
+publish                         false（显式，非默认可发布）
 生产依赖                        仅 thiserror
 features                        default = []
+[lints]                         workspace = true + loom unexpected_cfgs
 ```
 
 验证（本仓权威命令）：
@@ -72,7 +74,7 @@ RUSTFLAGS='--cfg loom' cargo test -p xhyper-kernel --test lifecycle_concurrency_
 | 4.1 | `forbid(unsafe_code)` / `deny(missing_docs, unreachable_pub)` | `src/lib.rs` | PASS |
 | 4.2 | 无 unsafe / todo! / unimplemented! 生产路径 | `rg` 扫描 src | PASS |
 | 4.3 | 生产路径无 panic 合同；锁中毒 `into_inner` | `lifecycle.rs` poison 恢复 + 单元测 | PASS |
-| 4.4 | `[lints] workspace = true` | 本仓根 `Cargo.toml` **无** `[workspace.lints]`；crate 仅声明 `unexpected_cfgs` for loom | DEFER（本仓无 workspace lints 可继承） |
+| 4.4 | `[lints] workspace = true` | 根 `Cargo.toml` `[workspace.lints.rust]` + crate `[lints] workspace = true`；并覆盖 loom `unexpected_cfgs` | PASS |
 
 ### §5 error
 
@@ -145,9 +147,9 @@ RUSTFLAGS='--cfg loom' cargo test -p xhyper-kernel --test lifecycle_concurrency_
 | 11.2 | loom 模型 | `lifecycle_concurrency_loom.rs`；默认构建 0 tests；`RUSTFLAGS='--cfg loom'` 启用 | PASS / 环境不可跑时见证据 DEFER |
 | 11.3 | proptest：Timestamp×Duration；ComponentState 对；ErrorKind 一致 | `clock_contract.rs` proptest! | PASS |
 | 11.4 | compile-fail / static 负向面 | rustdoc compile_fail + `api_compile.rs` | PASS |
-| 11.5 | line ≥95% / branch ≥90% CI | 本仓未强制 CI job | DEFER（工具/CI 战役） |
-| 11.6 | mutants ≥90% | 本仓未跑 cargo-mutants 门禁 | DEFER（工具缺失则不伪造） |
-| 11.7 | miri | 本仓未强制 | DEFER（nightly/组件） |
+| 11.5 | line ≥95% / branch ≥90% CI | `.github/workflows/kernel-coverage.yml`（PR paths `crates/kernel/**`；`--fail-under-lines 95` + branch ≥90%） | PASS（CI job 存在且强制） |
+| 11.6 | mutants ≥90% | `.github/workflows/kernel-mutants.yml`（schedule 周一 + workflow_dispatch；`cargo mutants -p xhyper-kernel`） | PASS（scheduled CI 存在） |
+| 11.7 | miri | `.github/workflows/kernel-miri.yml`（schedule 周一 + workflow_dispatch；`cargo miri test -p xhyper-kernel`） | PASS（scheduled CI 存在） |
 
 ### §12+ monorepo 专属（非本仓可移植目标）
 
@@ -155,7 +157,7 @@ RUSTFLAGS='--cfg loom' cargo test -p xhyper-kernel --test lifecycle_concurrency_
 |----|------|------|------|
 | 12.x | archgate KERNEL-* | DEFER | 本仓无 `.architecture` / archgate |
 | 12.3 | public-api 快照文件 | DEFER | 本仓无 snapshot 机控；以 §8 + 测试代替 |
-| 15.x | crates.io publish / tag | DEFER | 本仓不复刻上游发布元数据 |
+| 15.x | crates.io publish / tag | DEFER 发布动作；**package `publish = false` PASS** | 本仓明确不向 crates.io 再发布 |
 | TIME-004 机控 | from_clock_elapsed allowlist | DEFER 机控；**结构扫描 PASS** | 见上文 6.3-hidden |
 
 ---
@@ -176,3 +178,4 @@ RUSTFLAGS='--cfg loom' cargo test -p xhyper-kernel --test lifecycle_concurrency_
 | 日期 | 说明 |
 |------|------|
 | 2026-07-21 | 初版：逐条矩阵 + 禁止 From/not_found/other/Clock 默认 monotonic 负向面加强 |
+| 2026-07-21 | Codex P2 修复：`[lints] workspace = true`、`publish = false`、如实引用 coverage/mutants/miri workflows |
