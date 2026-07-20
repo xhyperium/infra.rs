@@ -14,7 +14,7 @@
 | Quality | `quality.yml` | PR + Rust 文件变更 | rustfmt + clippy |
 | CI (Rust) | `ci-rust.yml` | PR + Rust 文件变更 | build → test → coverage |
 | Security | `security.yml` | PR + 定时 (周一) | cargo-deny + cargo-audit |
-| Constitution | `constitution.yml` | PR + main push | 宪章合规性验证 |
+| Constitution | `constitution.yml` | 全部 PR；main push（Rust/配置路径） | 宪章合规；docs-only PR 快速绿 |
 | PR Template Check | `pr-template-check.yml` | PR (opened/edited/sync) | 模板字段校验 |
 
 ---
@@ -35,21 +35,26 @@
 | 过时 PR 自动 dismiss | 启用 |
 | `require_last_push_approval` | **启用**（最后 pusher 不能当唯一批准；走 `pr-auto-approve` / 第二身份） |
 | Conversation resolution | 未强制（AI First：避免评论挂死） |
-| Required status checks | `Constitution / Constitution Check`、`PR Template Check / Template Validation` |
+| Required status checks | **`Constitution Check`**、**`Template Validation`**（须与 check_run 名一致，勿加 workflow 前缀） |
 | Status check strict | 启用（分支须与 base 同步） |
 | 线性历史 | 启用 |
 | Force push | 禁止（`non_fast_forward`） |
 | 删除 `main` | 禁止（`deletion`） |
 | 允许的 merge 方法 | **仅 squash**（ruleset + 仓库设置） |
+| CODEOWNERS | `@ZoneCNH @liukongqiang5`（team 需 write 后可改回 `@xhyperium/maintainers`） |
 | Bypass | team `maintainers`（`pull_request` 模式，应急） |
 | 合并后删除分支 | 启用（仓库设置） |
 | Auto-merge | 启用（仓库设置） |
 
 ### AI First 合入路径
 
-```text
-ZoneCNH 开 PR → required checks 绿 → liukongqiang5 批准（pr-auto-approve）
-  → gh pr merge --squash --auto
+```bash
+# 1) 开 PR（作者 ZoneCNH）
+# 2) 等 required: Constitution Check + Template Validation 绿
+# 3) 第二身份批准（默认自动识别当前仓库，无需 export PR_AUTO_APPROVE_REPO）
+bash .claude/skills/pr-auto-approve/scripts/approve.sh <pr> "checks green; AI-first path."
+# 4) 自动合入
+gh pr merge <pr> --squash --auto
 ```
 
 ---
