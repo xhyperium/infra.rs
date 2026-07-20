@@ -5,11 +5,12 @@
 ## 语言与编码（强制）
 
 - **字符编码**：全部文本文件使用 **UTF-8（无 BOM）**，换行 **LF**
-- **注释 / 文档**：统一使用**中文**（技术术语可保留英文）
+- **注释 / 中文治理文档**：统一使用**中文**（技术术语可保留英文）
+- **英文技术文档**：**ASD-STE100（Simplified Technical English）**（宪章 §4.6）
 - **用户可见错误信息**：中文
 - **标识符**：英文（Rust 惯例）
 - **LICENSE**：保留英文许可证原文
-- 细则见 [CONSTITUTION.md §4.5](./CONSTITUTION.md) 与 [docs/编码与语言约定.md](./docs/编码与语言约定.md)
+- 细则见 [CONSTITUTION.md §4.5 / §4.6](./CONSTITUTION.md)、[docs/编码与语言约定.md](./docs/编码与语言约定.md)、[docs/ASD-STE100.md](./docs/ASD-STE100.md)
 
 ## 项目身份
 

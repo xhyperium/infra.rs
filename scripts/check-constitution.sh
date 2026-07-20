@@ -93,7 +93,7 @@ fi
 if ! $JSON_MODE; then
     echo -e "${CYAN}╔══════════════════════════════════╗${NC}"
     echo -e "${CYAN}║   宪章合规性验证                 ║${NC}"
-    echo -e "${CYAN}║   CONSTITUTION.md v1.2.0         ║${NC}"
+    echo -e "${CYAN}║   CONSTITUTION.md v1.3.0         ║${NC}"
     echo -e "${CYAN}╚══════════════════════════════════╝${NC}"
 fi
 
@@ -232,6 +232,20 @@ if grep -q '### 6.0 Git Main First' CONSTITUTION.md 2>/dev/null; then
   log_pass "CONSTITUTION.md 含 §6.0 Git Main First"
 else
   log_fail "CONSTITUTION.md" "缺少 §6.0 Git Main First 条款"
+fi
+
+# 宪章必须包含 §4.6 ASD-STE100
+if grep -q '### 4.6 文档标准：ASD-STE100' CONSTITUTION.md 2>/dev/null \
+  || grep -q '### 4.6' CONSTITUTION.md 2>/dev/null; then
+  log_pass "CONSTITUTION.md 含 §4.6 ASD-STE100"
+else
+  log_fail "CONSTITUTION.md" "缺少 §4.6 ASD-STE100 文档标准条款"
+fi
+
+if [ -f docs/ASD-STE100.md ]; then
+  log_pass "docs/ASD-STE100.md 存在"
+else
+  log_fail "docs/ASD-STE100.md" "缺少 ASD-STE100 落地指南"
 fi
 
 # ═══════════════════════════════════════════
