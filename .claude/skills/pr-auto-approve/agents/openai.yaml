@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR Auto-Approve"
+  short_description: "Approve open PRs as @liukongqiang5 via LIUKONGQIANG5_APPROVE_TOKEN"
+  default_prompt: "Use $pr-auto-approve to APPROVE a PR as @liukongqiang5 (LIUKONGQIANG5_APPROVE_TOKEN)."

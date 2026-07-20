@@ -1,0 +1,156 @@
+#!/usr/bin/env node
+/**
+ * infra.rs Harness 健康检查
+ *
+ * 验证本仓库作为元基础设施时的关键路径、钩子与 beads 就绪状态。
+ * 用法: node scripts/check.mjs
+ */
+
+import { existsSync, readFileSync, readdirSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import { execSync } from "child_process";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = join(__dirname, "..");
+
+const checks = [];
+
+const ok = (name, pass, hint = "") => {
+  checks.push({ name, ok: Boolean(pass), hint: pass ? "" : hint });
+};
+
+const exists = (rel) => existsSync(join(root, rel));
+const read = (rel) => {
+  try {
+    return readFileSync(join(root, rel), "utf8");
+  } catch {
+    return "";
+  }
+};
+
+const run = (cmd) => {
+  try {
+    return execSync(cmd, { cwd: root, encoding: "utf8", timeout: 8000, stdio: ["pipe", "pipe", "pipe"] }).trim();
+  } catch (error) {
+    return String(error.stderr || error.message || "").trim();
+  }
+};
+
+// ── 核心文档 ──────────────────────────────────────────────
+ok("CLAUDE.md 存在", exists("CLAUDE.md"), "缺少 CLAUDE.md");
+ok("AGENTS.md 存在", exists("AGENTS.md"), "缺少 AGENTS.md");
+ok("README.md 存在", exists("README.md"), "缺少 README.md");
+ok(".gitignore 排除 .claude/*.local.json", read(".gitignore").includes(".claude/*.local.json"), "敏感配置未被 gitignore");
+ok(".gitignore 排除 .beads/", read(".gitignore").includes(".beads/"), "Beads 数据目录应被忽略");
+
+// ── Hooks ─────────────────────────────────────────────────
+const requiredHooks = [
+  "pre-tool-check.mjs",
+  "post-tool-check.mjs",
+  "pre-compact.mjs",
+  "session-context.mjs",
+  "session-review.mjs",
+  "edit-guard.mjs",
+  "count-guard.mjs",
+  "branch-protect.mjs",
+  "version-guard.mjs",
+];
+const hooksDir = join(root, ".claude/hooks");
+const hooksPresent = existsSync(hooksDir)
+  ? new Set(readdirSync(hooksDir).filter((f) => f.endsWith(".mjs") || f.endsWith(".cjs")))
+  : new Set();
+for (const h of requiredHooks) {
+  ok(`Hook 文件: ${h}`, hooksPresent.has(h), `缺失 .claude/hooks/${h}`);
+}
+
+const settings = read(".claude/settings.json");
+let settingsJson = null;
+try {
+  settingsJson = JSON.parse(settings);
+} catch {
+  settingsJson = null;
+}
+ok(".claude/settings.json 可解析", Boolean(settingsJson), "settings.json JSON 无效");
+const hookEvents = settingsJson?.hooks || {};
+for (const event of ["PreToolUse", "PostToolUse", "SessionStart", "Stop", "PreCompact"]) {
+  ok(`settings 注册 ${event}`, Array.isArray(hookEvents[event]) && hookEvents[event].length > 0, `未注册 ${event}`);
+}
+
+// ── Scripts 依赖 ──────────────────────────────────────────
+ok("scripts/worktree-policy.mjs", exists("scripts/worktree-policy.mjs"), "hooks 依赖 worktree-policy");
+ok("scripts/gc-scan.mjs", exists("scripts/gc-scan.mjs"), "session-review / RSI 依赖 gc-scan");
+ok("scripts/check.mjs", exists("scripts/check.mjs"), "自身");
+
+// worktree-policy 可导入
+let worktreeImportOk = false;
+try {
+  await import(join(root, "scripts/worktree-policy.mjs"));
+  worktreeImportOk = true;
+} catch (error) {
+  worktreeImportOk = false;
+  ok("worktree-policy 可导入", false, String(error.message || error));
+}
+if (worktreeImportOk) ok("worktree-policy 可导入", true);
+
+// ── Harness 状态 ──────────────────────────────────────────
+const harnessStatePath = ".claude/.harness-state";
+if (exists(harnessStatePath)) {
+  try {
+    const state = JSON.parse(read(harnessStatePath));
+    ok("harness-state 字段完整", Boolean(state.phase && state.mode), "需要 phase 与 mode");
+  } catch {
+    ok("harness-state 可解析", false, "JSON 无效");
+  }
+} else {
+  ok("harness-state 存在", false, "缺少 .claude/.harness-state，将在首次 SessionStart 时创建或需手动初始化");
+}
+
+// ── Beads ─────────────────────────────────────────────────
+const bdWhere = run("bd where 2>&1");
+ok("Beads 已初始化", !/no beads database found/i.test(bdWhere) && bdWhere.length > 0, "运行 bd init");
+const bdVersion = run("bd version 2>&1");
+ok("bd CLI 可用", /bd version|version/i.test(bdVersion) || bdVersion.length > 0, "安装 beads CLI");
+
+// ── Skills / Cargo SSOT ───────────────────────────────────
+ok(".claude/skills/ 存在", exists(".claude/skills"), "技能 SSOT 缺失");
+const skillCount = exists(".claude/skills")
+  ? readdirSync(join(root, ".claude/skills"), { withFileTypes: true }).filter((d) => d.isDirectory()).length
+  : 0;
+ok(`技能数量 ≥ 10（当前 ${skillCount}）`, skillCount >= 10, "技能库异常稀疏");
+ok(".cargo/config.toml 存在", exists(".cargo/config.toml"), "下游 Cargo SSOT 缺失");
+
+// ── Git 分支护栏提示 ──────────────────────────────────────
+const branch = run("git rev-parse --abbrev-ref HEAD 2>/dev/null") || "unknown";
+ok("不在 detached HEAD", branch !== "HEAD", "当前 detached HEAD");
+// main 仅提示，不 fail（初始化 root commit 合法落在 main）
+if (branch === "main") {
+  checks.push({
+    name: "当前在 main（提示）",
+    ok: true,
+    hint: "日常开发请切 feature 分支；main 受保护",
+  });
+} else {
+  ok(`当前分支: ${branch}`, true);
+}
+
+// ── 输出 ──────────────────────────────────────────────────
+const failed = checks.filter((c) => !c.ok);
+const passed = checks.filter((c) => c.ok);
+
+console.log("\n=== infra.rs Harness Health Check ===");
+console.log(`分支: ${branch}`);
+console.log(`通过: ${passed.length}/${checks.length}\n`);
+
+for (const c of checks) {
+  const mark = c.ok ? "PASS" : "FAIL";
+  console.log(`${mark}: ${c.name}${c.hint ? ` — ${c.hint}` : ""}`);
+}
+
+if (failed.length > 0) {
+  console.log(`\n结果: FAIL (${failed.length} 项失败)`);
+  process.exit(1);
+}
+
+console.log("\n结果: PASS");
+process.exit(0);

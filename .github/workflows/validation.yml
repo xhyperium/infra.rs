@@ -1,0 +1,97 @@
+name: 校验
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  yaml-lint:
+    name: YAML 检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 运行 yamllint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          config_data: |
+            extends: default
+            rules:
+              line-length: disable
+              document-start: disable
+
+  toml-lint:
+    name: TOML 检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 taplo
+        uses: taiki-e/install-action@v2
+        with:
+          tool: taplo-cli
+      - name: 运行 taplo
+        run: taplo fmt --check
+
+  markdown-lint:
+    name: Markdown 检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 运行 markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: |
+            README.md
+            AGENTS.md
+            CLAUDE.md
+            docs/**/*.md
+
+  spellcheck:
+    name: 拼写检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 运行 codespell
+        uses: codespell-project/actions-codespell@v2
+        with:
+          ignore_words_list: ser
+
+  link-check:
+    name: 链接检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: 运行 lychee
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: --no-progress README.md AGENTS.md CLAUDE.md docs/
+          fail: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  harness:
+    name: Harness 健康检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 脱离 detached HEAD
+        run: |
+          if [ "$(git rev-parse --abbrev-ref HEAD)" = "HEAD" ]; then
+            git checkout -b harness-ci
+          fi
+      - name: 运行 harness check
+        run: node scripts/check.mjs
