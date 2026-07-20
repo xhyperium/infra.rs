@@ -165,9 +165,7 @@ pub struct SystemClock {
 impl SystemClock {
     /// 创建一个新的 `SystemClock`，以当前时刻作为单调钟原点。
     pub fn new() -> Self {
-        Self {
-            origin: std::time::Instant::now(),
-        }
+        Self { origin: std::time::Instant::now() }
     }
 }
 
@@ -185,9 +183,7 @@ impl Clock for SystemClock {
         match ts.duration_since(UNIX_EPOCH) {
             Ok(d) => {
                 let nanos: u128 = d.as_nanos();
-                let nanos_i64: i64 = nanos
-                    .try_into()
-                    .map_err(|_| ClockError::Overflow)?;
+                let nanos_i64: i64 = nanos.try_into().map_err(|_| ClockError::Overflow)?;
                 Ok(Timestamp::from_unix_nanos(nanos_i64))
             }
             Err(_) => Err(ClockError::BeforeUnixEpoch),
@@ -305,10 +301,7 @@ mod tests {
         let a = MonotonicInstant::from_clock_elapsed(Duration::from_secs(2));
         let b = MonotonicInstant::from_clock_elapsed(Duration::from_secs(5));
         // a (2s) is earlier than b (5s); b - a = 3s (valid)
-        assert_eq!(
-            b.checked_duration_since(a),
-            Some(Duration::from_secs(3))
-        );
+        assert_eq!(b.checked_duration_since(a), Some(Duration::from_secs(3)));
         // a - b would be negative, should return None
         assert!(a.checked_duration_since(b).is_none());
     }

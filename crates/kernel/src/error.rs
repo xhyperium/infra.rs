@@ -126,10 +126,7 @@ impl XError {
     }
 
     /// 构造一个 [`ErrorKind::Transient`] 错误，附带 `retry_after` 提示。
-    pub fn transient_after(
-        context: impl Into<String>,
-        retry_after: std::time::Duration,
-    ) -> Self {
+    pub fn transient_after(context: impl Into<String>, retry_after: std::time::Duration) -> Self {
         Self {
             kind: ErrorKind::Transient,
             context: Cow::Owned(context.into()),
@@ -251,9 +248,7 @@ impl fmt::Debug for XError {
 
 impl std::error::Error for XError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        self.source
-            .as_ref()
-            .map(|e| e.as_ref() as &(dyn std::error::Error + 'static))
+        self.source.as_ref().map(|e| e.as_ref() as &(dyn std::error::Error + 'static))
     }
 }
 

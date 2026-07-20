@@ -3,8 +3,8 @@
 //! 验证所有公开类型和函数签名可被下游正常使用。
 
 use kernel::{
-    BoxError, Clock, ClockError, ComponentState, ErrorKind,
-    MonotonicInstant, ShutdownSignal, SystemClock, Timestamp, XError, XResult,
+    BoxError, Clock, ClockError, ComponentState, ErrorKind, MonotonicInstant, ShutdownSignal,
+    SystemClock, Timestamp, XError, XResult,
 };
 
 #[test]
