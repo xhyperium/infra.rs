@@ -30,6 +30,13 @@ assert_not_impl_any!(XError: Clone);
 // ShutdownGuard 消费式 trigger，禁止 Clone
 assert_not_impl_any!(ShutdownGuard: Clone);
 
+// §5.5：禁止 From 旁路绕过显式 ErrorKind 分类
+assert_not_impl_any!(XError: From<&'static str>, From<String>);
+
+// §6.2 / §6.6：禁止 From<SystemTime> 与 Timestamp Display 人类时间（Display 用负向 assert）
+assert_not_impl_any!(Timestamp: From<std::time::SystemTime>, std::fmt::Display);
+assert_not_impl_any!(MonotonicInstant: std::fmt::Display);
+
 // §11.4：kernel 类型无 serde derive（dev-dep 提供 trait，不进入生产图）
 assert_not_impl_any!(Timestamp: serde::Serialize, serde::Deserialize<'static>);
 assert_not_impl_any!(MonotonicInstant: serde::Serialize, serde::Deserialize<'static>);
@@ -37,6 +44,8 @@ assert_not_impl_any!(ErrorKind: serde::Serialize, serde::Deserialize<'static>);
 assert_not_impl_any!(ComponentState: serde::Serialize, serde::Deserialize<'static>);
 assert_not_impl_any!(SystemClock: serde::Serialize, serde::Deserialize<'static>);
 assert_not_impl_any!(XError: serde::Serialize, serde::Deserialize<'static>);
+assert_not_impl_any!(ShutdownSignal: serde::Serialize, serde::Deserialize<'static>);
+assert_not_impl_any!(ShutdownGuard: serde::Serialize, serde::Deserialize<'static>);
 
 #[test]
 fn public_constructors_and_queries_compile() {
