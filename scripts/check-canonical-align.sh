@@ -34,6 +34,23 @@ echo "$t10" | grep -q DEFERRED || fail "T-10X not DEFERRED: $t10"
 ! rg -n '\bf32\b|\bf64\b' "$CRATE/src" --glob '*.rs' >/dev/null || fail "f32/f64 in crate"
 cmp -s "$SSOT/spec/spec.md" "$SSOT/spec/xhyper-canonical-complete-spec.md" || fail "dual-mirror"
 ok "authority facts"
+# post-S1 historical docs must not reassert OPEN ID/TIME as current authority
+if grep -q '当前仅 5 测' "$SSOT/plan/plan.md"; then fail "plan DRIFT-04 still claims 5 tests"; fi
+if grep -q '未假装批准' "$SSOT/20260717/xhyper-canonical-complete-goal.md"; then
+  fail "complete-goal §7 still pretends ID/time OPEN"
+fi
+if ! grep -q 'SUPERSEDED for current-state' "$SSOT/plan/approval-packet.md"; then
+  fail "approval-packet.md missing SUPERSEDED banner"
+fi
+if rg -n 'until_can_time_approved|ts unit remains OPEN' "$CRATE/src" >/dev/null; then
+  fail "crate still has OPEN-time wording"
+fi
+# DRIFT rows must be FIXED not open 补测 disposition
+if grep -E '\| DRIFT-0[1-6] \|' "$SSOT/plan/plan.md" | grep -q 'agent-safe 补测\|agent-safe 修正$'; then
+  fail "plan DRIFT still has open agent-safe disposition"
+fi
+ok "post-S1 drift/goal/approval/crate wording"
+
 cargo test -p xhyper-canonical -p xhyper-decimalx 2>&1 | tee "$SCRATCH/canonical-test.log" | tail -15
 cargo clippy -p xhyper-canonical -p xhyper-decimalx --all-targets -- -D warnings 2>&1 | tee "$SCRATCH/canonical-clippy.log" | tail -5
 cargo fmt -p xhyper-canonical -p xhyper-decimalx -- --check 2>&1 | tee "$SCRATCH/canonical-fmt.log"

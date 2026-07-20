@@ -1,9 +1,15 @@
 # Approval Packet — SPEC-TYPES-CANONICAL-002
 
+> **SUPERSEDED for current-state authority（2026-07-21）**  
+> 本文件是 **2026-07-17 agent-safe 战役** 的原始人审包（Draft 台账）。  
+> **生产 M1 / S1 权威**： [approval-packet-prod-m1.md](./approval-packet-prod-m1.md)（T1–T4 / S1 **Approved**；S2 stable **Defer**）。  
+> **当前 residual / 语义**： [residual-open.md](./residual-open.md) · [alignment-matrix-infra-2026-07-21.md](./alignment-matrix-infra-2026-07-21.md) · `spec/spec.md`。  
+> 下文 A4「CAN-ID/TIME 保持 OPEN」、A5「保留 OrderId」、A6「Spec Approved Defer」为 **历史快照**，已被 prod-m1 否决/闭合，**不得**当作现行权威。
+
 | 字段 | 值 |
 |------|-----|
 | Packet ID | `APPR-TYPES-CANONICAL-002-v1` |
-| Spec | `SPEC-TYPES-CANONICAL-002`（Draft） |
+| Spec | `SPEC-TYPES-CANONICAL-002`（**历史 Draft 包**；现行 S1 见 approval-packet-prod-m1） |
 | Plan | `PLAN-TYPES-CANONICAL-002-v1` |
 | 日期 | 2026-07-17 |
 | 基线 | `main@4fe8e988` |

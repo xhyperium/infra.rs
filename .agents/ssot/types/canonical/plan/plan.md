@@ -52,16 +52,19 @@ schema registry / CanonicalWriter-Reader / 通用 codec / hash-sign-evidence 框
 | Fixture | `fixtures/market/order_cancel_okx.json` + `order_ack_legacy.json` + `canonical/v1/*` |
 | 消费者 | contracts、binance、okx、domain_{core,market,exchange,macro}、bootstrap e2e、contract-testkit、taos |
 
-### 0.3 主要漂移与缺口
+### 0.3 主要漂移与缺口（战役登记 → 终态）
 
-| ID | 主题 | 严重度 | 处置 |
-|----|------|--------|------|
-| DRIFT-01 | active Candidate 链接指向已删除 `.agent/draft/...` | P0 文档 | agent-safe 修正 |
-| DRIFT-02 | Goal/Spec 相对路径写成 `../specs/types/canonical/...`（错误） | P1 文档 | agent-safe 修正 |
-| DRIFT-03 | active 已登记 ID/cancel 类型，但 README 未列 `OrderRef`/`CancelOrderRequest`/`VenueId`/`InstrumentId` | P1 | agent-safe |
-| DRIFT-04 | 规范要求全 DTO/枚举 RT + 全 `OrderStatus`/`OrderRef` variants；当前仅 5 测 | P1 | agent-safe 补测 |
-| DRIFT-05 | 无 `Money ≡ decimalx::Money` 类型同一性回归 | P1 | agent-safe 补测 |
-| DRIFT-06 | 无正式 consumer inventory / 字段语义缺口表落盘 | P1 | plan 包 + todo |
+> **2026-07-21**：DRIFT-01…06 均为 **历史缺口台账**；agent-safe 项已 **FIXED/CLOSED**。  
+> 当前事实以 §0.2、[alignment-matrix-infra-2026-07-21.md](./alignment-matrix-infra-2026-07-21.md)、[residual-open.md](./residual-open.md) 为准。
+
+| ID | 主题 | 终态 | 证据 |
+|----|------|------|------|
+| DRIFT-01 | active Candidate 链接指向已删除 `.agent/draft/...` | **FIXED** | active → `20260717/`；`spec/spec.md` Complete Spec 链接 |
+| DRIFT-02 | Goal/Spec 相对路径错误 | **FIXED** | goal/spec 相对路径已校正 |
+| DRIFT-03 | README 未列 OrderRef/Cancel/Venue/Instrument | **FIXED** | `crates/types/canonical/README.md` 公开类型清单 |
+| DRIFT-04 | 全 DTO/枚举 RT + variants；曾仅 5 测 | **FIXED** | `cargo test -p xhyper-canonical` **22** tests（§0.2） |
+| DRIFT-05 | 无 Money ≡ decimalx::Money 同一性 | **FIXED** | `money_is_decimalx_money_type_identity` |
+| DRIFT-06 | 无 consumer inventory / 语义缺口表 | **FIXED**（文档） | `plan/spec-inventory.md` + gap/residual；产品树全量迁移仍 DEFER-M3 |
 | OPEN-ID | Venue slug/shape 规则 **CLOSED**（CAN-ID）；OrderRef newtype 二期 **DEFER** | CLOSED/DEFER | residual OPEN-ID-001/002 |
 | OPEN-TIME | `ts: i64` = Unix **ns** **CLOSED**（CAN-TIME-001 Approved） | CLOSED | residual OPEN-TIME-001 |
 | OPEN-WIRE | 未知字段策略、schema 版本、未覆盖 DTO 的 wire 承诺 | OPEN | residual / HUMAN |

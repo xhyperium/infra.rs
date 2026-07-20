@@ -290,7 +290,7 @@ mod tests {
             serde_json::to_string(&ack).unwrap(),
             r#"{"id":"okx:987","status":"Open","ts":7}"#
         );
-        // ts unit remains OPEN: this only freezes the current JSON field shape.
+        // JSON field shape freeze for legacy ack; `ts` unit is Unix ns (CAN-TIME-001 Approved).
         let back: OrderAck = serde_json::from_str(r#"{"id":"okx:987","status":"Open","ts":7}"#)
             .expect("legacy ack deserialize");
         assert_eq!(back, ack);
@@ -423,12 +423,12 @@ mod tests {
     }
 
     #[test]
-    fn ts_fields_remain_raw_i64_until_can_time_approved() {
+    fn ts_fields_remain_raw_i64_nanoseconds_shape() {
         // Structural: production path must not silently introduce Timestamp deps here.
         let ack = OrderAck {
             id: "x".into(),
             status: OrderStatus::Pending,
-            ts: -1, // negative allowed at shape layer; unit is Unix ns (CAN-TIME-001)
+            ts: -1, // negative allowed at shape layer; unit is Unix ns (CAN-TIME-001 Approved)
         };
         let tick = Tick { symbol: "S".into(), bid: price(1), ask: price(2), ts: 0 };
         assert_eq!(ack.ts, -1);

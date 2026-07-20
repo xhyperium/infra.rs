@@ -79,14 +79,15 @@
 
 迁移 contracts、binance、okx、domain 与 contract-testkit；保留遗留 API 直至消费者和历史数据路径闭合。
 
-## 7. 完成定义
+## 7. 完成定义（对齐 Approved 生产基线 · 2026-07-21）
 
-- [x] active spec 精确登记当前全部公开类型与 serde fixtures。（agent-safe 2026-07-17；见 plan + active）
-- [x] crate 仍是纯 DTO，依赖方向保持 `canonical → decimalx`，无 domain/contracts/L1 依赖。（gates + lint-deps）
-- [x] 所有 ID、时间和字符串语义已批准或明确标为 OPEN；不得以猜测补齐。（**标 OPEN**，未假装批准；residual）
-- [x] legacy 与新 DTO 的兼容/迁移矩阵完整，下游编译和 fixture 均通过。（consumer inventory + 抽样 check；全量迁移仍 DEFERRED）
-- [x] 没有把通用 codec、hash/sign/evidence 职责引入本 crate。
-- [x] 聚焦测试、API/依赖门禁与受影响 adapters/domain 测试通过。（`cargo test/check/clippy -p xhyper-canonical` + lint-deps + fmt）
+- [x] active spec 精确登记当前全部公开类型与 serde fixtures。（见 `spec/spec.md` + fixtures）
+- [x] crate 仍是纯 DTO，依赖方向保持 `canonical → decimalx`，无 domain/contracts/L1 依赖。
+- [x] **CAN-ID / CAN-TIME 已 Approved（S1 人审 2026-07-17）**：`OrderId` 类型已删；`ts`=Unix ns；OrderRef/shape；**不得**再写回 OPEN 假叙事。仍 OPEN 的仅 residual：WIRE 全量、newtype 二期、unknown-field deny 等。
+- [x] Spec **S1 Approved**（≠ package stable）；见 [approval-packet-prod-m1.md](../plan/approval-packet-prod-m1.md)。
+- [x] legacy 与新 DTO 兼容矩阵 + fixture；全量 M3 迁移仍 DEFERRED。
+- [x] 无通用 codec / hash/sign/evidence 进本 crate。
+- [x] 聚焦门禁：`cargo test/check/clippy -p xhyper-canonical` + fmt（22 tests）。
 
-完成只证明 DTO 边界与 **agent-safe 事实/测试闭合**；不证明 Spec Approved、package stable、或每个 adapter 输入 / domain 业务状态有效。  
-全量语义批准与 M3 大迁移见 [residual-open.md](../plan/residual-open.md) / [todo.md](../todo.md)。
+完成证明：DTO 边界 + **S1 已批准语义** + agent-safe 测试闭合。  
+**仍不证明**：package stable / crates.io / 全 DTO 跨版本 wire / Goal 全 ACHIEVED。见 [residual-open.md](../plan/residual-open.md) / [todo.md](../todo.md)。
