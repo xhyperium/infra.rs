@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/infra-core"]
+members = ["crates/infra-core", "crates/kernel"]
 
 [workspace.package]
 version = "0.3.0"
