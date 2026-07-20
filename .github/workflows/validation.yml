@@ -49,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: 运行 markdownlint
-        uses: DavidAnson/markdownlint-cli2-action@v16
+        uses: DavidAnson/markdownlint-cli2-action@v24
         with:
           globs: |
             README.md

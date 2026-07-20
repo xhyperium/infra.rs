@@ -40,7 +40,7 @@ infra.rs/
 ## 代理角色
 
 | 系统 | 角色 | 技能来源 |
-|------|------|----------|
+| ------ | ------ | ---------- |
 | **Claude Code** | 主执行代理：编码、审查、交付 | `.claude/skills/` |
 | **Codex** | 多模型编排与派工 | `.claude/skills/`（可投影到 `.agents/skills/`） |
 | **Copilot** | 补充建议 | 自行管理 |
@@ -62,7 +62,7 @@ infra.rs/
 `.claude/settings.json` 生命周期钩子：
 
 | 事件 | 钩子 | 用途 |
-|------|------|------|
+| ------ | ------ | ------ |
 | SessionStart | `session-context.mjs` + `bd prime` | 上下文与任务记忆 |
 | PreToolUse | `pre-tool-check` / `edit-guard` / `count-guard` | 编辑前校验 |
 | PostToolUse | `post-tool-check` / `edit-guard-reset` / `link-check` | 编辑后检查 |
@@ -103,7 +103,7 @@ node scripts/check.mjs
 ## 常用 Skill
 
 | 技能 | 场景 |
-|------|------|
+| ------ | ------ |
 | `code-review` | 分支/PR 审查 |
 | `codebase-design` / `design-an-interface` | 模块与 API 设计 |
 | `diagnosing-bugs` | 故障与回归诊断 |
