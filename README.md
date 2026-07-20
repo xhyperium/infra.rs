@@ -145,4 +145,3 @@ Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTU
 ## 许可
 
 MIT © 2026 [xhyperium](https://github.com/xhyperium)
-
