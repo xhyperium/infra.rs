@@ -44,7 +44,7 @@
 - **测试方法**: 开启 `enforce_admins: true`，管理员直接在 main 提交并推送
 - **结果**: 推送被拒绝
 
-```
+```text
 remote: error: GH006: Protected branch update failed for refs/heads/main.
 remote: - Changes must be made through a pull request.
 remote: - 2 of 2 required status checks are expected.
@@ -70,7 +70,7 @@ remote: - 2 of 2 required status checks are expected.
 
 全部强制门禁 (8/8) 已通过：
 
-```
+```text
 rustfmt          ✓
 clippy           ✓
 unit + doc tests ✓  (18 tests)
@@ -85,7 +85,7 @@ cargo-deny       ✓
 
 ---
 
-## 仓库配���
+## 仓库配置
 
 | 配置 | 值 |
 |------|-----|
