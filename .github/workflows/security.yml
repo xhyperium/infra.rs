@@ -37,7 +37,7 @@ jobs:
     outputs:
       has-rust: ${{ steps.check.outputs.has-rust }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: check
         run: |
           if [ -f Cargo.toml ]; then
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install cargo-deny
         uses: taiki-e/install-action@v2
         with:
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: 安装 cargo-audit
         uses: taiki-e/install-action@v2
         with:
