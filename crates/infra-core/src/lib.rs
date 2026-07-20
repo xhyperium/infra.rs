@@ -2,6 +2,16 @@
 //!
 //! 提供可复用的错误类型与基础工具函数，作为 workspace 的起点 crate。
 
+// ── 宪章强制 lint (CONSTITUTION.md §4) ────────
+
+#![deny(missing_docs, unsafe_code)]
+#![warn(clippy::todo)]
+#![warn(clippy::unwrap_used)]
+#![warn(clippy::expect_used)]
+
+// ── 模块 ──────────────────────────────────────
+
+/// 错误类型与序列化支持。
 pub mod error;
 
 pub use error::{Error, Result};
@@ -10,40 +20,43 @@ pub use error::{Error, Result};
 ///
 /// 主要用于冒烟测试与脚手架验证。
 ///
-/// # 示例
-///
 /// ```
-/// assert_eq!(infra_core::hello(), "你好，infra-core");
+/// assert_eq!(infra_core::hello(), "Hello from infra-core");
 /// ```
 pub fn hello() -> &'static str {
-    "你好，infra-core"
+    "Hello from infra-core"
 }
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used)]
+
     use super::*;
 
     #[test]
-    fn 问候语() {
-        assert_eq!(hello(), "你好，infra-core");
+    fn test_hello() {
+        assert_eq!(hello(), "Hello from infra-core");
     }
 
     #[test]
-    fn 错误可从_io_转换() {
-        let err = std::io::Error::new(std::io::ErrorKind::NotFound, "文件不存在");
+    fn test_error_from_io() {
+        let err = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
         let infra_err: Error = err.into();
         assert!(matches!(infra_err, Error::Io(_)));
     }
 
     #[test]
-    fn 错误显示() {
-        assert_eq!(Error::InvalidArgument("缺少字段".into()).to_string(), "参数无效: 缺少字段");
+    fn test_error_display() {
+        assert_eq!(
+            Error::InvalidArgument("missing field".into()).to_string(),
+            "Invalid argument: missing field"
+        );
     }
 
     #[test]
-    fn result_别名() {
+    fn test_result_alias() {
         fn returns_result() -> Result<i32> {
-            Err(Error::Config("测试".into()))
+            Err(Error::Config("test".into()))
         }
         assert!(returns_result().is_err());
     }

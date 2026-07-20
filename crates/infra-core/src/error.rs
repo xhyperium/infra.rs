@@ -91,7 +91,7 @@ pub enum Error {
     /// let err: Error = io_err.into();
     /// assert!(matches!(err, Error::Io(_)));
     /// ```
-    #[error("I/O 错误: {0}")]
+    #[error("I/O error: {0}")]
     Io(#[from] io::Error),
 
     /// 配置错误。
@@ -103,9 +103,9 @@ pub enum Error {
     /// ```
     /// # use infra_core::Error;
     /// let err = Error::Config("missing field 'host'".into());
-    /// assert_eq!(err.to_string(), "配置错误: missing field 'host'");
+    /// assert_eq!(err.to_string(), "Config error: missing field 'host'");
     /// ```
-    #[error("配置错误: {0}")]
+    #[error("Config error: {0}")]
     Config(String),
 
     /// 参数校验错误。
@@ -117,9 +117,9 @@ pub enum Error {
     /// ```
     /// # use infra_core::Error;
     /// let err = Error::InvalidArgument("port must be 1..=65535".into());
-    /// assert_eq!(err.to_string(), "参数无效: port must be 1..=65535");
+    /// assert_eq!(err.to_string(), "Invalid argument: port must be 1..=65535");
     /// ```
-    #[error("参数无效: {0}")]
+    #[error("Invalid argument: {0}")]
     InvalidArgument(String),
 
     /// 内部错误。
@@ -131,9 +131,9 @@ pub enum Error {
     /// ```
     /// # use infra_core::Error;
     /// let err = Error::Internal("pool exhausted".into());
-    /// assert_eq!(err.to_string(), "内部错误: pool exhausted");
+    /// assert_eq!(err.to_string(), "Internal error: pool exhausted");
     /// ```
-    #[error("内部错误: {0}")]
+    #[error("Internal error: {0}")]
     Internal(String),
 }
 
@@ -309,6 +309,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used)]
+
     use super::Error;
     use std::error::Error as StdError;
     use std::io;
