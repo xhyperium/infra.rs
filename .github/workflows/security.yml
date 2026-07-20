@@ -52,9 +52,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: EmbarkStudios/cargo-deny-action@v1
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
         with:
-          command: check
+          tool: cargo-deny
+      - name: Run cargo-deny
+        run: cargo deny check --all-features
 
   audit:
     name: cargo-audit 漏洞扫描

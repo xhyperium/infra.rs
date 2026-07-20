@@ -93,7 +93,7 @@ fi
 if ! $JSON_MODE; then
     echo -e "${CYAN}╔══════════════════════════════════╗${NC}"
     echo -e "${CYAN}║   宪章合规性验证                 ║${NC}"
-    echo -e "${CYAN}║   CONSTITUTION.md v1.0.0         ║${NC}"
+    echo -e "${CYAN}║   CONSTITUTION.md v1.1.0         ║${NC}"
     echo -e "${CYAN}╚══════════════════════════════════╝${NC}"
 fi
 
@@ -175,6 +175,56 @@ if cargo clippy $CARGO_OPTS -- -W clippy::unwrap_used -W clippy::expect_used 2>/
 else
     # 这不会阻塞，因为 test 模块已 allow
     log_pass "unwrap / expect (已由 clippy lint 控制)"
+fi
+
+# ═══════════════════════════════════════════
+# §4.5 语言与编码
+# ═══════════════════════════════════════════
+
+banner "§4.5 语言与编码 (UTF-8)"
+
+# 扫描项目自有文本：非 UTF-8 / U+FFFD
+ENC_FAIL=0
+ENC_FILES=$(find crates scripts docs .github \
+  \( -name '*.rs' -o -name '*.md' -o -name '*.toml' -o -name '*.yml' -o -name '*.yaml' -o -name '*.mjs' -o -name '*.sh' \) \
+  2>/dev/null || true)
+# 根目录关键文档
+for f in CONSTITUTION.md AGENTS.md CLAUDE.md README.md TOPO.md .editorconfig deny.toml rustfmt.toml Cargo.toml; do
+  [ -f "$f" ] && ENC_FILES="$ENC_FILES
+$f"
+done
+
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  [ -f "$f" ] || continue
+  if ! iconv -f UTF-8 -t UTF-8 "$f" >/dev/null 2>&1; then
+    log_fail "UTF-8" "非 UTF-8 文件: $f"
+    ENC_FAIL=1
+    continue
+  fi
+  # U+FFFD 检测（UTF-8 字节 EF BF BD）
+  if grep -q $'\xEF\xBF\xBD' "$f" 2>/dev/null; then
+    log_fail "U+FFFD" "编码损坏(替换字符): $f"
+    ENC_FAIL=1
+  fi
+done <<< "$ENC_FILES"
+
+if [ "$ENC_FAIL" -eq 0 ]; then
+  log_pass "UTF-8 无 BOM/无 U+FFFD（项目文本）"
+fi
+
+# .editorconfig 必须声明 utf-8
+if [ -f .editorconfig ] && grep -q 'charset = utf-8' .editorconfig; then
+  log_pass ".editorconfig charset=utf-8"
+else
+  log_fail ".editorconfig" "缺少 charset = utf-8"
+fi
+
+# 宪章必须包含 §4.5
+if grep -q '### 4.5 语言与编码' CONSTITUTION.md 2>/dev/null; then
+  log_pass "CONSTITUTION.md 含 §4.5"
+else
+  log_fail "CONSTITUTION.md" "缺少 §4.5 语言与编码条款"
 fi
 
 # ═══════════════════════════════════════════

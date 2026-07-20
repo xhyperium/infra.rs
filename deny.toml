@@ -2,7 +2,6 @@
 # 文档：https://embarkstudios.github.io/cargo-deny/
 
 [advisories]
-db-path = ".cargo/cache/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
 yanked = "deny"
 ignore = []
