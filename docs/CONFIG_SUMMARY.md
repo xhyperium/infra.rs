@@ -49,7 +49,7 @@ remote: error: GH006: Protected branch update failed for refs/heads/main.
 remote: - Changes must be made through a pull request.
 remote: - 2 of 2 required status checks are expected.
  ! [remote rejected] main -> main (protected branch hook declined)
-```
+```text
 
 - **生产策略**: `enforce_admins: false`，管理员可应急绕过，须在 PR 记录原因
 - **来源**: `CONSTITUTION.md §6.0.5`
