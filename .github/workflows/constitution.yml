@@ -17,20 +17,10 @@ on:
       - "scripts/check-constitution.mjs"
       - ".github/workflows/constitution.yml"
       - "CONSTITUTION.md"
+  # PR 必须始终上报 Constitution Check（Ruleset required）。
+  # 纯文档 PR 也需要有 conclusion，否则 main 合入永久 pending。
   pull_request:
     branches: [main]
-    paths:
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "**/Cargo.toml"
-      - "**/*.rs"
-      - "deny.toml"
-      - "rust-toolchain.toml"
-      - "rustfmt.toml"
-      - "clippy.toml"
-      - "scripts/check-constitution.mjs"
-      - ".github/workflows/constitution.yml"
-      - "CONSTITUTION.md"
   workflow_dispatch:
 
 concurrency:
