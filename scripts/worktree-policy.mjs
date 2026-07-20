@@ -35,9 +35,6 @@ export function bareBranch(branchName) {
     .trim();
 }
 
-// 别名，保持向后兼容
-export const branchToWorktreeDirName = bareBranch;
-
 /**
  * 返回规范 worktree 绝对路径。
  */
