@@ -1,8 +1,8 @@
 /**
  * Worktree 路径策略（CLAUDE.md / CONTRIBUTING）
  *
- * 规范路径：`.worktrees/workspaces/<branch-name>`
- * 分支名中的 `/` 映射为目录名中的 `-`（与现有 workspaces 约定一致）。
+ * 规范路径：`.worktrees/<branch-name>`
+ * 分支名中的 `/` 映射为目录名中的 `/`（与 shell 脚本 worktree.sh 约定一致）。
  *
  * 供 `.claude/hooks/pre-tool-check.mjs` 与 `session-context.mjs` 共用。
  */
@@ -12,7 +12,7 @@ import { existsSync } from "fs";
 import { homedir } from "os";
 
 /** 人读规则说明（错误信息 / SessionStart 护栏） */
-export const WORKTREE_PATH_RULE = ".worktrees/workspaces/<branch-name>";
+export const WORKTREE_PATH_RULE = ".worktrees/<branch-name>";
 
 /**
  * 将 git 分支名规范为 worktree 目录段。
@@ -24,7 +24,8 @@ export function branchToWorktreeDirName(branchName) {
     .replace(/^refs\/heads\//, "")
     .trim();
   if (!bare) return "";
-  return bare.replace(/\//g, "-");
+  // 保持 '/' 作为目录分隔符，与 worktree.sh 约定一致
+  return bare;
 }
 
 /**
@@ -35,7 +36,7 @@ export function branchToWorktreeDirName(branchName) {
  */
 export function canonicalWorktreePath(projectRoot, branchName) {
   const dir = branchToWorktreeDirName(branchName);
-  return resolve(projectRoot, ".worktrees", "workspaces", dir);
+  return resolve(projectRoot, ".worktrees", dir);
 }
 
 /**
@@ -194,7 +195,7 @@ export function formatAuditWarning(audit) {
   }
   for (const { path } of audit.legacyGlobalPaths || []) {
     lines.push(`   • 旧规范残留目录存在: ${path}`);
-    lines.push(`     → 该目录下的工作区应迁至 .worktrees/workspaces/<branch>`);
+    lines.push(`     → 该目录下的工作区应迁至 .worktrees/<branch>`);
   }
   return lines;
 }
