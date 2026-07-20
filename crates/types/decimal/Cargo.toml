@@ -1,0 +1,20 @@
+[package]
+name = "xhyper-decimalx"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+description = "/types/ 十进制数值类型（ADR-006/007，spec §4.2）"
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+name = "decimalx"
+
+[dependencies]
+xhyper-kernel = { path = "../../kernel" }
+serde = { workspace = true }
+
+[dev-dependencies]
+proptest = "1"
+serde_json = { workspace = true }
