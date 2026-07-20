@@ -4,7 +4,7 @@
 |------|-----|
 | Plan | `PLAN-TYPES-CANONICAL-002-v1` + `PLAN-TYPES-CANONICAL-PROD-001` |
 | Baseline | `main@4fe8e988` · prod branch `feat/canonical-prod-upgrade` |
-| 更新 | 2026-07-17 |
+| 更新 | 2026-07-21（infra 对齐 + R6 双写） |
 
 > OPEN 不是失败；**假装 CLOSED** 才是失败。  
 > 生产晋级提案见 [production-upgrade.md](./production-upgrade.md) / [approval-packet-prod-m1.md](./approval-packet-prod-m1.md)。
@@ -57,6 +57,7 @@
 | PLAN-DOC-v1 | plan/gap/inventory/tasks/residual/approval 首版 |
 | PROD-DOC-v1 | production-upgrade + wire 矩阵 + validation owners + M1 人审包 |
 | PROD-TEST-v1 | 矩阵/owner 覆盖测 + legacy ack fixture + ts 形状测 |
+| INFRA-ALIGN-20260721 | alignment 矩阵 + active/pipeline 对齐 + workspace 成员 + R6 双写 |
 | （实现项随 PR 更新） | 见 todo.md 证据列 |
 
 ## 生产路径状态（诚实）

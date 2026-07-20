@@ -1,7 +1,15 @@
 # types/canonical — Tasks
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 可执行任务清单待战役填充。
+| 字段 | 值 |
+|------|-----|
+| 状态 | agent-safe **DONE** · residual OPEN/DEFER |
+| 更新 | 2026-07-21 |
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+| ID | 任务 | 状态 |
+|----|------|------|
+| T-ALIGN-01 | alignment 矩阵 | **DONE** |
+| T-SPEC-01 | active spec OrderId/ts/S1 | **DONE** |
+| T-PIPE-01 | pipeline 诚实 verdict | **DONE** |
+| T-CODE-01 | workspace crates | **DONE** |
+| T-TEST-01 | fixtures+门禁 | **DONE** |
+| T-STABLE | package stable | **HUMAN_ONLY** |

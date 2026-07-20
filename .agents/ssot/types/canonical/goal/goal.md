@@ -1,7 +1,20 @@
 # types/canonical — Goal
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> Source Goal 待战役定义；无证据不得宣称 In Progress 闭合。
+| 字段 | 值 |
+|------|-----|
+| Goal ID | `GOAL-TYPES-CANONICAL-002` |
+| Complete | [../20260717/xhyper-canonical-complete-goal.md](../20260717/xhyper-canonical-complete-goal.md) |
+| 状态 | **agent-safe 表面 PASS** · package stable / 全 wire **未宣称 ACHIEVED** |
+| 更新 | 2026-07-21 |
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+## AC
+
+| AC | 裁决 | 证据 |
+|----|------|------|
+| 1:1 alignment 矩阵 | **PASS** | [plan/alignment-matrix-infra-2026-07-21.md](../plan/alignment-matrix-infra-2026-07-21.md) |
+| OrderId/ts/S1 无矛盾 | **PASS** | [spec/spec.md](../spec/spec.md) |
+| workspace 可测 | **PASS** | `crates/types/canonical` + decimal |
+| 单测/fixtures | **PASS** | `cargo test -p xhyper-canonical` |
+| residual 诚实 | **PASS** | [plan/residual-open.md](../plan/residual-open.md) |
+| package stable | **OPEN/HUMAN** | DEFER-STABLE |
+| 全 wire 冻结 | **OPEN** | OPEN-WIRE-002 |

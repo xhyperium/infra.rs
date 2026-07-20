@@ -1,7 +1,9 @@
 # types/canonical — Test
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 测试策略入口；测试代码在实现 crate，不在本树。
+| 字段 | 值 |
+|------|-----|
+| 状态 | **策略有效** |
+| 更新 | 2026-07-21 |
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+覆盖：全 DTO RT · OrderStatus/OrderRef variants · cancel/ack golden · Money 同一 · ms↔ns · venue shape。  
+命令：`cargo test -p xhyper-canonical`（22 tests）。

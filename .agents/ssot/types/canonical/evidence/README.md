@@ -1,7 +1,9 @@
-# types/canonical — Evidence（横切）
+# types/canonical — Evidence
 
-> 模块战役证据落盘处（≠ `crates/evidence` 生产库）。  
-> 当前：**无战役 evidence 归档**（布局迁移创建）。  
-> 有验证输出时按 `YYYY-MM-DD/` 建日目录，并维护 `residual-open.*`。
-
-参见 `.agent/SSOT/kernel/evidence/` 与 `.agent/SSOT/AGENTS.md` §2.5。
+| 类 | 位置 |
+|----|------|
+| 实现/测试 | `crates/types/canonical` · `crates/types/decimal` |
+| Fixtures | `fixtures/market/**` |
+| Alignment | `plan/alignment-matrix-infra-2026-07-21.md` |
+| Fresh 门禁 | 实现会话 scratch logs |
+| 历史 10x/PR | 本 clone 可能缺失 → 不继承为 DONE |

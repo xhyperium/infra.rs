@@ -1,7 +1,15 @@
 # types/canonical — Gate
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 模块门禁清单（≠ .agent/gates/ 机器规格）。
+| 字段 | 值 |
+|------|-----|
+| 状态 | **agent-safe PASS** · package stable **BLOCKED** |
+| 更新 | 2026-07-21 |
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+| # | 门禁 | 裁决 |
+|---|------|------|
+| G1 | `cargo test -p xhyper-canonical -p xhyper-decimalx` | **PASS** |
+| G2 | clippy `-D warnings` | **PASS** |
+| G3 | fmt `--check` | **PASS** |
+| G4 | dual-mirror cmp | **PASS** |
+| G5 | 无 OrderId 类型 / reverse deps / f32 字段 | **PASS** |
+| G6 | package stable | **BLOCKED** HUMAN S2 |
