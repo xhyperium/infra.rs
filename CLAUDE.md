@@ -22,11 +22,25 @@
 `.claude/settings.json` 已注册完整钩子链：
 
 1. **启动**：`session-context.mjs` + `bd prime`
-2. **工具前**：`count-guard` / `edit-guard` / `pre-tool-check`
+2. **工具前**：`count-guard` / `edit-guard` / `pre-tool-check`（含 **worktree 硬门禁**）
 3. **编辑后**：`post-tool-check` / `link-check` / `edit-guard-reset`
 4. **结束**：`session-review` / `version-guard` / `branch-protect`
 
 钩子报错时应修复问题，不要绕过。
+
+## Git Worktree（强制开工）
+
+**禁止在主仓 `main` 工作区直接改代码。** 细则：[docs/worktree-policy.md](./docs/worktree-policy.md)
+
+```bash
+node scripts/worktree.mjs create feat/<id>-<slug>
+cd .worktrees/feat/<id>-<slug>
+# 在该目录内编码 / 测试 / 提交 / 开 PR
+```
+
+- `pre-tool-check` **BLOCK**：主仓 Write/Edit、主仓 `checkout -b`/`switch` 功能分支、`main` 上 commit
+- 路径规范：`.worktrees/<branch-name>`（`/` 保留为目录分隔符）
+- 禁止设置 `INFRA_WORKTREE_BYPASS=1` 绕过（仅人工 maintainer 应急）
 
 ## 安全红线
 
@@ -34,7 +48,7 @@
 - 不在对话中回显完整 API Token
 - 不削弱 `.gitignore` 对敏感路径的排除
 - 不执行 `git push --force`、`git push --no-verify`、删除 `main`（除非用户明确要求且已确认风险）
-- **Git Main First**（宪章 §6.0）：不在 `main` 上直接开发；从最新 main 建支，经 PR 合并回 main
+- **Git Main First**（宪章 §6.0）：不在 `main` 上直接开发；worktree 建支 → PR → 合并 main
 
 ## 代码行为准则
 

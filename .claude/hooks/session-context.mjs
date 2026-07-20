@@ -8,10 +8,12 @@ import {
   parseWorktreePorcelain,
   auditWorktreePaths,
   formatAuditWarning,
+  resolveMainProjectRoot,
 } from "../../scripts/worktree-policy.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = join(__dirname, "../..");
+// hooks 可能从主仓或 worktree 内加载；统一解析为主仓根
+const projectRoot = resolveMainProjectRoot(join(__dirname, "../.."));
 const loopsDir = join(projectRoot, ".claude/loops");
 const NO_OPTIONAL_LOCKS_GIT_ENV = { ...process.env, GIT_OPTIONAL_LOCKS: "0" };
 
@@ -55,36 +57,45 @@ const worktreeState = parseWorktreePorcelain(worktreePorcelain);
 
 const lines = ["--- SessionStart Hook ---", "分支: " + branch];
 
-// === Branch discipline guard ===
-if (branch === "main") {
-  lines.push("---", "⚠️ 当前在 main 分支！CLAUDE.md 禁止在 main 上直接编辑。请创建 feature 分支：");
-  lines.push("   git checkout -b docs/<module>-<描述>");
+// === Branch / worktree discipline guard ===
+// Write/Edit 硬门禁由 pre-tool-check.mjs 执行；此处给出开工指引（不阻断 SessionStart）。
+const onMainWorkspace = currentTopLevel === projectRoot;
+
+if (branch === "main" || onMainWorkspace) {
+  lines.push("---", "🚫 当前在主工作区（main 检出）。活跃开发必须使用 Git Worktree。");
+  lines.push("   pre-tool-check 将硬拦截：主仓 Write/Edit、主仓 checkout -b/switch 功能分支、main 上 commit。");
+  lines.push("   正确开工：");
+  lines.push("   node scripts/worktree.mjs create feat/<id>-<slug>");
+  lines.push("   cd .worktrees/feat/<id>-<slug>");
+  lines.push("   细则: docs/worktree-policy.md / CONSTITUTION §6.0.5");
 }
 
 if (branch !== "main" && branch !== "HEAD" && branch !== "（非 git 目录）") {
   const actualPath = worktreeState.branchToPath.get(branch) || currentTopLevel;
-  const { expectedPath, isRootCheckout, compliant } = describeBranchWorktreePath({
+  const { expectedPath, compliant } = describeBranchWorktreePath({
     root: projectRoot,
     branchName: branch,
     actualPath,
   });
   if (actualPath && !compliant) {
-    lines.push("---", "⚠️ 分支路径不符合 worktree 规则：");
+    lines.push("---", "🚫 分支路径不符合 worktree 规则（应迁入规范路径）：");
     lines.push("   当前: " + actualPath);
     lines.push("   期望: " + expectedPath);
     lines.push("   规则: " + WORKTREE_PATH_RULE);
+    lines.push("   → git worktree move '" + actualPath + "' '" + expectedPath + "'");
+    lines.push("   → 或重建：node scripts/worktree.mjs create " + branch);
   }
 }
 
-// === Worktree 路径全表审计（机器强制，WARN 不阻塞）===
+// === Worktree 路径全表审计（机器检测，WARN 不阻塞 SessionStart）===
 // 扫描所有已登记 worktree 找偏离规范者 + 检测旧路径 ~/.worktrees/ 残留。
-// 不阻断会话：并发进程正在用的偏离 worktree 仅 WARN，迁移由人或进程在空闲时做。
+// 编辑硬拦截在 pre-tool-check；此处仅报告迁移线索。
 const audit = auditWorktreePaths({
   root: projectRoot,
   worktreeState,
   homeDir: process.env.HOME,
 });
-if (audit.nonCompliant.length || audit.legacyGlobalPaths.length) {
+if ((audit.nonCompliant || []).length || (audit.legacyPaths || []).length) {
   lines.push("---", "⚠️ worktree 路径偏离规范（机器检测）：");
   lines.push(...formatAuditWarning(audit));
   lines.push("   规则: " + WORKTREE_PATH_RULE + "（~/.worktrees/ 已于 2026-05-12 废弃）");
