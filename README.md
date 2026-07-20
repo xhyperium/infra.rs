@@ -53,7 +53,7 @@ infra.rs/
 ## Workspace
 
 | Crate | 说明 |
-|-------|------|
+| ------- | ------ |
 | `infra-core` | 核心基础设施库（起点脚手架） |
 
 Rust edition `2024`，MSRV 见 `Cargo.toml` 中 `rust-version`。
@@ -71,7 +71,7 @@ Rust edition `2024`，MSRV 见 `Cargo.toml` 中 `rust-version`。
 完整索引见 [docs/README.md](docs/README.md)。
 
 | 文档 | 说明 |
-|------|------|
+| ------ | ------ |
 | [CONSTITUTION.md](CONSTITUTION.md) | 工程宪章 — 核心价值观、架构原则、代码标准 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 架构文档 — 结构、Crate、CI/CD、治理 |
 | [CI_STATUS_REPORT.md](docs/CI_STATUS_REPORT.md) | CI 工作流矩阵、触发条件与运行统计 |
@@ -82,7 +82,7 @@ Rust edition `2024`，MSRV 见 `Cargo.toml` 中 `rust-version`。
 ## AI 协作
 
 | 系统 | 角色 |
-|------|------|
+| ------ | ------ |
 | Claude Code | 主执行：编码、审查、交付 |
 | Codex | 编排与派工 |
 | Copilot | 补充建议 |
