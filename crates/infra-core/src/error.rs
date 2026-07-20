@@ -1,7 +1,3 @@
-
-
-use serde::{de, ser};
-use std::error::Error as StdError;
 use std::fmt;
 use std::io;
 
@@ -20,16 +16,16 @@ impl fmt::Display for ChainNode {
     }
 }
 
-impl StdError for ChainNode {
-    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+impl std::error::Error for ChainNode {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         self.source
             .as_ref()
-            .map(|n| n as &(dyn StdError + 'static))
+            .map(|n| n as &(dyn std::error::Error + 'static))
     }
 }
 
 /// 将错误链展开为消息列表（从最深层到最顶层）。
-fn collect_chain(err: &(dyn StdError + 'static)) -> Vec<String> {
+fn collect_chain(err: &(dyn std::error::Error + 'static)) -> Vec<String> {
     let mut messages = vec![err.to_string()];
     let mut current = err.source();
     while let Some(src) = current {
@@ -61,8 +57,8 @@ fn rebuild_io_error(kind: io::ErrorKind, chain: Vec<String>) -> io::Error {
 /// `infra-core` 的基础错误类型。
 ///
 /// 涵盖基础设施层面最常见的四类错误：I/O、配置、参数和内部错误。
-/// `thiserror` 自动实现 [`fmt::Display`] 和 [`StdError`]。
-/// 手动实现 [`serde::Serialize`] / [`serde::Deserialize`]。
+/// `thiserror` 自动实现 [`fmt::Display`] 和 [`Error`](std::error::Error)。
+/// 手动实现 [`Serialize`](serde::Serialize) / [`Deserialize`](serde::Deserialize)。
 ///
 /// # 序列化格式
 ///
@@ -148,9 +144,12 @@ pub enum Error {
 
 // ── serde::Serialize ──────────────────────────────────────────────
 
-impl ser::Serialize for Error {
-    fn serialize<S: ser::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
-        use ser::SerializeStruct;
+impl serde::ser::Serialize for Error {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer,
+    {
+        use serde::ser::SerializeStruct;
 
         match self {
             Error::Io(e) => {
@@ -179,23 +178,23 @@ impl ser::Serialize for Error {
 
 // ── serde::Deserialize ────────────────────────────────────────────
 
-impl<'de> de::Deserialize<'de> for Error {
+impl<'de> serde::de::Deserialize<'de> for Error {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
-        D: de::Deserializer<'de>,
+        D: serde::de::Deserializer<'de>,
     {
         struct ErrorVisitor;
 
-        impl<'de> de::Visitor<'de> for ErrorVisitor {
+        impl<'de> serde::de::Visitor<'de> for ErrorVisitor {
             type Value = Error;
 
             fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                f.write_str("包含 kind 字段的 Error 结构体")
+                f.write_str("an Error struct with a `kind` field")
             }
 
-            fn visit_map<A: de::MapAccess<'de>>(self, mut map: A) -> std::result::Result<Error, A::Error>
+            fn visit_map<A>(self, mut map: A) -> std::result::Result<Error, A::Error>
             where
-                A: de::MapAccess<'de>,
+                A: serde::de::MapAccess<'de>,
             {
                 #[derive(serde::Deserialize)]
                 #[serde(field_identifier, rename_all = "lowercase")]
@@ -216,36 +215,36 @@ impl<'de> de::Deserialize<'de> for Error {
                     match key {
                         Field::Kind => {
                             if kind.is_some() {
-                                return Err(de::Error::duplicate_field("kind"));
+                                return Err(serde::de::Error::duplicate_field("kind"));
                             }
                             kind = Some(map.next_value()?);
                         }
                         Field::Message => {
                             if message.is_some() {
-                                return Err(de::Error::duplicate_field("message"));
+                                return Err(serde::de::Error::duplicate_field("message"));
                             }
                             message = Some(map.next_value()?);
                         }
                         Field::ErrorKind => {
                             if error_kind.is_some() {
-                                return Err(de::Error::duplicate_field("error_kind"));
+                                return Err(serde::de::Error::duplicate_field("error_kind"));
                             }
                             error_kind = Some(map.next_value()?);
                         }
                         Field::Chain => {
                             if chain.is_some() {
-                                return Err(de::Error::duplicate_field("chain"));
+                                return Err(serde::de::Error::duplicate_field("chain"));
                             }
                             chain = Some(map.next_value()?);
                         }
                     }
                 }
 
-                let kind = kind.ok_or_else(|| de::Error::missing_field("kind"))?;
+                let kind = kind.ok_or_else(|| serde::de::Error::missing_field("kind"))?;
                 match kind.as_str() {
                     "Io" => {
                         let chain =
-                            chain.ok_or_else(|| de::Error::missing_field("chain"))?;
+                            chain.ok_or_else(|| serde::de::Error::missing_field("chain"))?;
                         let err_kind = match error_kind.as_deref() {
                             Some("NotFound") => io::ErrorKind::NotFound,
                             Some("PermissionDenied") => io::ErrorKind::PermissionDenied,
@@ -274,20 +273,20 @@ impl<'de> de::Deserialize<'de> for Error {
                     }
                     "Config" => {
                         let msg =
-                            message.ok_or_else(|| de::Error::missing_field("message"))?;
+                            message.ok_or_else(|| serde::de::Error::missing_field("message"))?;
                         Ok(Error::Config(msg))
                     }
                     "InvalidArgument" => {
                         let msg =
-                            message.ok_or_else(|| de::Error::missing_field("message"))?;
+                            message.ok_or_else(|| serde::de::Error::missing_field("message"))?;
                         Ok(Error::InvalidArgument(msg))
                     }
                     "Internal" => {
                         let msg =
-                            message.ok_or_else(|| de::Error::missing_field("message"))?;
+                            message.ok_or_else(|| serde::de::Error::missing_field("message"))?;
                         Ok(Error::Internal(msg))
                     }
-                    other => Err(de::Error::unknown_variant(
+                    other => Err(serde::de::Error::unknown_variant(
                         other,
                         &["Io", "Config", "InvalidArgument", "Internal"],
                     )),
@@ -315,9 +314,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    // 仅为 .source() 方法解析导入 trait，避免遮蔽 crate Error 类型
+    use super::Error;
     use std::error::Error as StdError;
+    use std::io;
 
     #[test]
     fn serialize_config_error() {
@@ -358,8 +357,11 @@ mod tests {
             _ => unreachable!(),
         };
         assert_eq!(io_err.kind(), io::ErrorKind::NotFound);
-        assert!(io_err.source().is_some());
-        assert_eq!(io_err.source().unwrap().to_string(), "connection refused");
+        assert!(StdError::source(io_err).is_some());
+        assert_eq!(
+            StdError::source(io_err).unwrap().to_string(),
+            "connection refused"
+        );
     }
 
     #[test]
@@ -390,12 +392,12 @@ mod tests {
 
         assert_eq!(original.to_string(), restored.to_string());
 
-        fn count_sources(err: &dyn StdError) -> usize {
+        fn count_sources(err: &dyn std::error::Error) -> usize {
             let mut count = 0;
-            let mut cur = err.source();
+            let mut cur = StdError::source(err);
             while let Some(s) = cur {
                 count += 1;
-                cur = s.source();
+                cur = StdError::source(s);
             }
             count
         }

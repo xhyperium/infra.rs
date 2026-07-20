@@ -24,7 +24,7 @@ node scripts/check.mjs
 
 ## 仓库结构
 
-```
+```text
 infra.rs/
 ├── crates/               # Rust workspace crates
 │   └── infra-core/       #   核心库
