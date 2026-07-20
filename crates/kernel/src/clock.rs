@@ -236,7 +236,7 @@ mod tests {
 
     #[test]
     fn test_timestamp_checked_add_huge_duration() {
-        // Adding a duration larger than i128::MAX nanoseconds should overflow
+        // 极大 Duration 应溢出为 None，不得 panic
         let t = Timestamp::from_unix_nanos(i64::MAX);
         let huge = Duration::from_secs(u64::MAX);
         assert!(t.checked_add(huge).is_none());
@@ -311,9 +311,9 @@ mod tests {
     fn test_monotonic_duration_since_reverse_returns_none() {
         let a = MonotonicInstant::from_clock_elapsed(Duration::from_secs(2));
         let b = MonotonicInstant::from_clock_elapsed(Duration::from_secs(5));
-        // a (2s) is earlier than b (5s); b - a = 3s (valid)
+        // a 早于 b：b - a = 3s（合法）
         assert_eq!(b.checked_duration_since(a), Some(Duration::from_secs(3)));
-        // a - b would be negative, should return None
+        // a - b 为反向差，应返回 None
         assert!(a.checked_duration_since(b).is_none());
     }
 
@@ -329,10 +329,9 @@ mod tests {
     #[test]
     fn test_system_clock_returns_timestamp() {
         let clock = SystemClock::new();
-        let ts = clock.now().expect("wall clock should be available");
-        // Sanity: timestamp should be well after Y2K
+        let ts = clock.now().expect("墙钟应可用");
+        // 时间戳应为正（远晚于 epoch）
         assert!(ts.as_unix_nanos() > 0);
-        // SystemTime nanos should fit in i64 for many decades
     }
 
     #[test]
@@ -373,5 +372,72 @@ mod tests {
         let c = DummyClock;
         let ts = c.now().unwrap();
         assert_eq!(ts.as_unix_nanos(), 0);
+    }
+
+    // -- ControlledClock（§11.1 双通道测试替身；from_clock_elapsed 仅允许本文件） --
+
+    use std::sync::atomic::{AtomicI64, AtomicU64, Ordering};
+
+    /// 可控双通道 Clock：墙钟可回退，单调通道独立推进。
+    struct ControlledClock {
+        wall_nanos: AtomicI64,
+        monotonic_nanos: AtomicU64,
+    }
+
+    impl ControlledClock {
+        fn new(wall_nanos: i64, monotonic_nanos: u64) -> Self {
+            Self {
+                wall_nanos: AtomicI64::new(wall_nanos),
+                monotonic_nanos: AtomicU64::new(monotonic_nanos),
+            }
+        }
+
+        fn set_wall(&self, wall_nanos: i64) {
+            self.wall_nanos.store(wall_nanos, Ordering::Relaxed);
+        }
+
+        fn set_monotonic_nanos(&self, monotonic_nanos: u64) {
+            self.monotonic_nanos.store(monotonic_nanos, Ordering::Relaxed);
+        }
+    }
+
+    impl Clock for ControlledClock {
+        fn now(&self) -> Result<Timestamp, ClockError> {
+            Ok(Timestamp::from_unix_nanos(self.wall_nanos.load(Ordering::Relaxed)))
+        }
+
+        fn monotonic(&self) -> MonotonicInstant {
+            // 允许：KERNEL-TIME-004 allowlist 含 crates/kernel/src/clock.rs
+            MonotonicInstant::from_clock_elapsed(Duration::from_nanos(
+                self.monotonic_nanos.load(Ordering::Relaxed),
+            ))
+        }
+    }
+
+    /// 墙钟回退不得牵连单调通道间隔语义。
+    #[test]
+    fn wall_clock_regression_does_not_regress_monotonic_time() {
+        let c = ControlledClock::new(1_000, 10);
+        let wall_before = c.now().unwrap();
+        let mono_before = c.monotonic();
+
+        c.set_wall(500);
+        c.set_monotonic_nanos(15);
+
+        let wall_after = c.now().unwrap();
+        let mono_after = c.monotonic();
+        assert!(wall_after < wall_before, "墙钟回退是合法状态变化");
+        assert_eq!(mono_after.checked_duration_since(mono_before), Some(Duration::from_nanos(5)));
+    }
+
+    /// 单调 elapsed 反向差为 None（§11.1 / 属性测试同源，放在 allowlist 路径内）。
+    #[test]
+    fn mono_elapsed_reverse_matrix_samples() {
+        for (ms_a, ms_b) in [(0u64, 1), (10, 100), (1_000_000, 1_000_001)] {
+            let a = MonotonicInstant::from_clock_elapsed(Duration::from_millis(ms_a));
+            let b = MonotonicInstant::from_clock_elapsed(Duration::from_millis(ms_b));
+            assert!(a.checked_duration_since(b).is_none());
+            assert_eq!(b.checked_duration_since(a), Some(Duration::from_millis(ms_b - ms_a)));
+        }
     }
 }

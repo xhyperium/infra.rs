@@ -1,4 +1,4 @@
-//! Public API smoke: ErrorKind / Clock / Shutdown surface (SPEC-KERNEL-002 §11).
+//! 公开 API 烟雾：ErrorKind / Clock / Shutdown 表面（SPEC-KERNEL-002 §11）。
 use std::time::Duration;
 
 use kernel::{
@@ -8,7 +8,7 @@ use kernel::{
 
 #[test]
 fn test_public_api_basics() {
-    // Error
+    // 错误
     let err: XError = XError::invalid("test");
     let _kind: ErrorKind = err.kind();
     let _ctx: &str = err.context();
@@ -16,12 +16,12 @@ fn test_public_api_basics() {
     let _boxed: BoxError = Box::new(std::io::Error::other("oops"));
     let _result: XResult<()> = Err(err);
 
-    // Clock
+    // 时钟
     let clock = SystemClock::new();
     let _ts: Result<Timestamp, ClockError> = clock.now();
     let _mono: MonotonicInstant = clock.monotonic();
 
-    // Lifecycle
+    // 生命周期
     let _state: ComponentState = ComponentState::Created;
     let (_guard, _signal) = ShutdownSignal::new();
 }
@@ -56,14 +56,14 @@ fn error_context_and_debug_are_observably_correct() {
 
 /// SystemClock 公共面烟雾：墙钟可读 + 单调可推进。
 ///
-/// **interval smoke only / not correctness proof** — 忙等待仅制造可测间隔；
+/// **仅间隔烟雾 / 非正确性证明** — 忙等待只制造可测间隔；
 /// 生命周期正确性见 loom（`lifecycle_concurrency_loom`），非本测。
 #[test]
 fn clock_contract_system() {
     let c = SystemClock::new();
     assert!(c.now().unwrap().as_unix_nanos() > 0);
     let a = c.monotonic();
-    // Busy-wait briefly to ensure elapsed time increases (no sleep-as-proof)
+    // 忙等待片刻以确保 elapsed 前进（不用 sleep 作证明）
     let _sum: u64 = (0..1_000_000).sum();
     let b = c.monotonic();
     assert!(b >= a);

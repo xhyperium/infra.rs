@@ -21,6 +21,7 @@ loom = "0.7"
 [dev-dependencies]
 # SPEC-KERNEL-002 §3.3 / §11：测试合同依赖（不进生产 / 不进公开 API）
 proptest = "1"
+serde = { workspace = true } # 仅用于 §11.4 负向面（assert !Serialize/!Deserialize）
 static_assertions = "1"
 
 [features]

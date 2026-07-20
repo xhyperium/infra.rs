@@ -1,16 +1,17 @@
 //! SPEC-KERNEL-002 §11 — Clock / Timestamp / ErrorKind / ComponentState 合同。
+//!
+//! 注意：`MonotonicInstant::from_clock_elapsed` 仅允许出现在
+//! `crates/kernel/src/clock.rs` 与 `crates/testkit/*`（SPEC §6.3 / TIME-004）。
+//! 双通道 ControlledClock 与依赖该构造器的单调属性测位于 `src/clock.rs` 单元测试。
 
-use kernel::{
-    Clock, ClockError, ComponentState, ErrorKind, MonotonicInstant, SystemClock, Timestamp, XError,
-};
+use kernel::{Clock, ClockError, ComponentState, ErrorKind, SystemClock, Timestamp, XError};
 use proptest::prelude::*;
-use std::sync::atomic::{AtomicI64, AtomicU64, Ordering};
 use std::time::Duration;
 
 #[test]
 fn system_clock_now_and_mono_contract() {
     let c = SystemClock::new();
-    let _timestamp = c.now().expect("SystemClock::now must be representable");
+    let _timestamp = c.now().expect("SystemClock::now 必须可表示");
     let a = c.monotonic();
     let b = c.monotonic();
     // 单调非递减（同进程内 elapsed 不回退）
@@ -23,7 +24,7 @@ fn system_clock_monotonic_series_non_decreasing() {
     let c = SystemClock::new();
     let mut mono = c.monotonic();
     for _ in 0..32 {
-        let _wall = c.now().expect("wall clock must be representable");
+        let _wall = c.now().expect("墙钟必须可表示");
         let m = c.monotonic();
         assert!(m.checked_duration_since(mono).is_some());
         mono = m;
@@ -33,16 +34,16 @@ fn system_clock_monotonic_series_non_decreasing() {
 #[test]
 fn test_system_clock_now_returns_valid_timestamp() {
     let clock = SystemClock::new();
-    let ts = clock.now().expect("wall clock should be available");
-    // Should be after the year 2000
-    let y2k_nanos: i64 = 946_684_800_000_000_000; // 2000-01-01T00:00:00Z
+    let ts = clock.now().expect("墙钟应可用");
+    // 应晚于 2000-01-01
+    let y2k_nanos: i64 = 946_684_800_000_000_000;
     assert!(ts.as_unix_nanos() > y2k_nanos);
 }
 
 #[test]
 fn test_system_clock_default_works() {
     let clock = SystemClock::default();
-    let ts = clock.now().expect("wall clock should be available");
+    let ts = clock.now().expect("墙钟应可用");
     assert!(ts.as_unix_nanos() > 0);
 }
 
@@ -54,58 +55,6 @@ fn clock_error_maps_to_xerror_unavailable() {
         assert_eq!(xe.kind(), ErrorKind::Unavailable);
         assert!(!xe.is_retryable());
         assert!(!xe.is_bug());
-    }
-}
-
-/// 可控双通道 Clock（ManualClock 风格测试替身，位于 tests/ 不进生产）。
-///
-/// 墙钟允许回退，且不改变单调通道的间隔语义。
-#[test]
-fn wall_clock_regression_does_not_regress_monotonic_time() {
-    let c = ControlledClock::new(1_000, 10);
-    let wall_before = c.now().unwrap();
-    let mono_before = c.monotonic();
-
-    c.set_wall(500);
-    c.set_monotonic_nanos(15);
-
-    let wall_after = c.now().unwrap();
-    let mono_after = c.monotonic();
-    assert!(wall_after < wall_before, "墙钟回退是合法状态变化");
-    assert_eq!(mono_after.checked_duration_since(mono_before), Some(Duration::from_nanos(5)));
-}
-
-struct ControlledClock {
-    wall_nanos: AtomicI64,
-    monotonic_nanos: AtomicU64,
-}
-
-impl ControlledClock {
-    fn new(wall_nanos: i64, monotonic_nanos: u64) -> Self {
-        Self {
-            wall_nanos: AtomicI64::new(wall_nanos),
-            monotonic_nanos: AtomicU64::new(monotonic_nanos),
-        }
-    }
-
-    fn set_wall(&self, wall_nanos: i64) {
-        self.wall_nanos.store(wall_nanos, Ordering::Relaxed);
-    }
-
-    fn set_monotonic_nanos(&self, monotonic_nanos: u64) {
-        self.monotonic_nanos.store(monotonic_nanos, Ordering::Relaxed);
-    }
-}
-
-impl Clock for ControlledClock {
-    fn now(&self) -> Result<Timestamp, ClockError> {
-        Ok(Timestamp::from_unix_nanos(self.wall_nanos.load(Ordering::Relaxed)))
-    }
-
-    fn monotonic(&self) -> MonotonicInstant {
-        MonotonicInstant::from_clock_elapsed(Duration::from_nanos(
-            self.monotonic_nanos.load(Ordering::Relaxed),
-        ))
     }
 }
 
@@ -157,22 +106,37 @@ fn component_state_transition_matrix() {
     for from in all {
         for to in all {
             let allowed = legal.contains(&(from, to));
-            assert_eq!(from.can_transition_to(to), allowed, "matrix mismatch {from:?}->{to:?}");
+            assert_eq!(from.can_transition_to(to), allowed, "矩阵不一致 {from:?}->{to:?}");
             assert_eq!(from.try_transition(to).is_ok(), allowed);
         }
     }
 }
 
+/// 任意 `Duration`：由秒 + 亚秒纳秒合成，覆盖大秒数与亚秒分量（§11.3）。
+fn arb_duration() -> impl Strategy<Value = Duration> {
+    (
+        prop_oneof![
+            Just(0u64),
+            0u64..10_000,
+            10_000u64..1_000_000,
+            any::<u32>().prop_map(u64::from),
+            Just(u64::MAX),
+        ],
+        0u32..1_000_000_000,
+    )
+        .prop_map(|(secs, nanos)| Duration::new(secs, nanos))
+}
+
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(64))]
 
+    /// 任意 i64 Timestamp × 任意 Duration 的 checked 运算不 panic，且可逆时一致。
     #[test]
     fn timestamp_checked_add_sub_agree(
         nanos in any::<i64>(),
-        millis in 0u64..10_000,
+        d in arb_duration(),
     ) {
         let t = Timestamp::from_unix_nanos(nanos);
-        let d = Duration::from_millis(millis);
         if let Some(t2) = t.checked_add(d) {
             // 可表示 i64 差分时，since 必须等于 d
             if let (Ok(delta_i64), Some(back)) = (
@@ -187,7 +151,14 @@ proptest! {
             if let Some(t0) = t2.checked_sub(d) {
                 prop_assert_eq!(t0.as_unix_nanos(), t.as_unix_nanos());
             }
+        } else {
+            // 溢出路径：不得 panic；对 MAX 基座 + 正 duration 必为 None
+            if nanos == i64::MAX && d > Duration::ZERO {
+                prop_assert!(t.checked_add(d).is_none());
+            }
         }
+        // sub 独立路径也不 panic
+        let _ = t.checked_sub(d);
     }
 
     #[test]
@@ -208,33 +179,19 @@ proptest! {
         }
     }
 
-    #[test]
-    fn mono_elapsed_reverse_none(ms_a in 0u64..1_000_000, ms_b in 0u64..1_000_000) {
-        let a = MonotonicInstant::from_clock_elapsed(Duration::from_millis(ms_a));
-        let b = MonotonicInstant::from_clock_elapsed(Duration::from_millis(ms_b));
-        if ms_a < ms_b {
-            prop_assert!(a.checked_duration_since(b).is_none());
-            prop_assert_eq!(
-                b.checked_duration_since(a),
-                Some(Duration::from_millis(ms_b - ms_a))
-            );
-        }
-    }
-
     /// 靠近 i64 边界的 Timestamp：加减不 panic，溢出为 None。
     #[test]
     fn timestamp_near_i64_bounds(
         base in prop_oneof![Just(i64::MIN), Just(i64::MAX), Just(0i64), any::<i64>()],
-        nanos in 0u64..=10_000,
+        d in arb_duration(),
     ) {
         let t = Timestamp::from_unix_nanos(base);
-        let d = Duration::from_nanos(nanos);
         let _ = t.checked_add(d);
         let _ = t.checked_sub(d);
-        if base == i64::MAX && nanos > 0 {
+        if base == i64::MAX && d > Duration::ZERO {
             prop_assert!(t.checked_add(d).is_none());
         }
-        if base == i64::MIN && nanos > 0 {
+        if base == i64::MIN && d > Duration::ZERO {
             prop_assert!(t.checked_sub(d).is_none());
         }
         prop_assert_eq!(t.as_unix_nanos(), base);

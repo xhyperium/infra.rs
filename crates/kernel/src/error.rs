@@ -48,6 +48,26 @@
 //! let (guard, _signal) = ShutdownSignal::new();
 //! let _second_guard = guard.clone();
 //! ```
+//!
+//! kernel 类型不实现 serde（wire 由协议层版本化）：
+//!
+//! ```compile_fail
+//! use kernel::Timestamp;
+//!
+//! fn assert_serialize<T: serde::Serialize>() {}
+//! assert_serialize::<Timestamp>();
+//! ```
+//!
+//! ```compile_fail
+//! use kernel::ErrorKind;
+//!
+//! fn assert_serialize<T: serde::Serialize>() {}
+//! assert_serialize::<ErrorKind>();
+//! ```
+//!
+//! 说明：doctest 仅链接生产依赖，不含 `serde`；上述 `compile_fail` 与
+//! `tests/api_compile.rs` 中 dev-dep 下的 `assert_not_impl_any!(…: serde::Serialize)`
+//! 互补——后者在存在 `serde` 特征时证明类型本身未实现 trait。
 
 use std::borrow::Cow;
 use std::fmt;

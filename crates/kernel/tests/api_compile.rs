@@ -2,9 +2,15 @@
 //!
 //! `static_assertions` 证明 trait 边界；`error` 模块的 rustdoc `compile_fail` 另从真实
 //! 下游编译面证明字段私有、无 `Component`、时间类型无 `Default`、`ShutdownGuard`
-//! 无 `Clone`。两者互补。
+//! 无 `Clone`、无 serde。两者互补。
+//!
+//! 不在此文件调用 `MonotonicInstant::from_clock_elapsed`（TIME-004 仅允许
+//! `src/clock.rs` 与 `testkit/*`）。
 
-use kernel::{Clock, ErrorKind, MonotonicInstant, ShutdownGuard, SystemClock, Timestamp, XError};
+use kernel::{
+    Clock, ComponentState, ErrorKind, MonotonicInstant, ShutdownGuard, ShutdownSignal, SystemClock,
+    Timestamp, XError,
+};
 use static_assertions::{assert_impl_all, assert_not_impl_any};
 use std::time::Duration;
 
@@ -24,6 +30,14 @@ assert_not_impl_any!(XError: Clone);
 // ShutdownGuard 消费式 trigger，禁止 Clone
 assert_not_impl_any!(ShutdownGuard: Clone);
 
+// §11.4：kernel 类型无 serde derive（dev-dep 提供 trait，不进入生产图）
+assert_not_impl_any!(Timestamp: serde::Serialize, serde::Deserialize<'static>);
+assert_not_impl_any!(MonotonicInstant: serde::Serialize, serde::Deserialize<'static>);
+assert_not_impl_any!(ErrorKind: serde::Serialize, serde::Deserialize<'static>);
+assert_not_impl_any!(ComponentState: serde::Serialize, serde::Deserialize<'static>);
+assert_not_impl_any!(SystemClock: serde::Serialize, serde::Deserialize<'static>);
+assert_not_impl_any!(XError: serde::Serialize, serde::Deserialize<'static>);
+
 #[test]
 fn public_constructors_and_queries_compile() {
     let _ = XError::invalid("x");
@@ -38,13 +52,16 @@ fn public_constructors_and_queries_compile() {
     let e = XError::internal("n").with_source(std::io::Error::other("s"));
     assert_eq!(e.kind(), ErrorKind::Internal);
     assert_eq!(e.context(), "n");
-    let _ = SystemClock::new().now();
+    let clock = SystemClock::new();
+    let _ = clock.now();
+    let mono = clock.monotonic();
+    let _ = mono.checked_duration_since(mono);
     let _ = Timestamp::from_unix_nanos(1).checked_add(Duration::from_nanos(1));
 }
 
 #[test]
 fn test_all_public_items_accessible() {
-    // error module
+    // error 模块
     let _ = XError::invalid("test");
     let _ = XError::missing("test");
     let _ = XError::conflict("test");
@@ -65,7 +82,7 @@ fn test_all_public_items_accessible() {
 
     let _ = err.with_source(std::io::Error::other("source"));
 
-    // clock module
+    // clock 模块（不调用 from_clock_elapsed）
     let clock = SystemClock::new();
     let _ = clock.now();
     let _ = clock.monotonic();
@@ -76,12 +93,9 @@ fn test_all_public_items_accessible() {
     let _ = ts.checked_sub(std::time::Duration::from_secs(1));
     let _ = ts.checked_duration_since(ts);
 
-    let mi = MonotonicInstant::from_clock_elapsed(std::time::Duration::ZERO);
-    let _ = mi.checked_duration_since(mi);
+    // lifecycle 模块
+    let _ = ComponentState::Created.can_transition_to(ComponentState::Starting);
+    let _ = ComponentState::Created.try_transition(ComponentState::Starting);
 
-    // lifecycle module
-    let _ = kernel::ComponentState::Created.can_transition_to(kernel::ComponentState::Starting);
-    let _ = kernel::ComponentState::Created.try_transition(kernel::ComponentState::Starting);
-
-    let (_guard, _signal) = kernel::ShutdownSignal::new();
+    let (_guard, _signal) = ShutdownSignal::new();
 }

@@ -64,6 +64,7 @@ let _ = (guard, signal);
 
 ```bash
 cargo test -p xhyper-kernel --all-targets
+cargo test -p xhyper-kernel --doc   # rustdoc compile_fail 负向面（--all-targets 不含 doctest）
 cargo clippy -p xhyper-kernel --all-targets -- -D warnings
 RUSTFLAGS='--cfg loom' cargo test -p xhyper-kernel --test lifecycle_concurrency_loom --release
 ```

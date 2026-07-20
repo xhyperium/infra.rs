@@ -638,6 +638,7 @@ version = "0.3.0"
 dependencies = [
  "loom",
  "proptest",
+ "serde",
  "static_assertions",
  "thiserror",
 ]
