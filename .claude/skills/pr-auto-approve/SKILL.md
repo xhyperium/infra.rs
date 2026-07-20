@@ -17,7 +17,7 @@ description: Approve open GitHub PRs as @liukongqiang5 via LIUKONGQIANG5_APPROVE
 |----|-----|
 | 批准账号 | **`liukongqiang5`**（@liukongqiang5） |
 | Token 环境变量 | **`LIUKONGQIANG5_APPROVE_TOKEN`**（必填） |
-| 默认仓库 | `xhyperium/xhyper.rs` |
+| 默认仓库 | **当前仓库**（`gh`/`git origin` 自动识别；本仓为 `xhyperium/infra.rs`） |
 
 脚本会先 `GET /user` 校验 token 登录名必须等于 `liukongqiang5`，否则 exit 2。
 
@@ -43,17 +43,20 @@ test -n "${LIUKONGQIANG5_APPROVE_TOKEN:-}" || echo "MISSING LIUKONGQIANG5_APPROV
 
 ### 2. 运行脚本（首选）
 
-从仓库根（或任意 cwd，脚本用默认 REPO）：
+从仓库根运行（脚本自动识别当前 repo，一般**不必**再 export `PR_AUTO_APPROVE_REPO`）：
 
 ```bash
-bash .agent/skills/pr-auto-approve/scripts/approve.sh <pr-number> [review-body]
+bash .claude/skills/pr-auto-approve/scripts/approve.sh <pr-number> [review-body]
 ```
 
 示例：
 
 ```bash
-bash .agent/skills/pr-auto-approve/scripts/approve.sh 799 \
-  "Auto-approve @liukongqiang5: CI fail=0; recovery harness/worktree/R0."
+bash .claude/skills/pr-auto-approve/scripts/approve.sh 12 \
+  "Auto-approve @liukongqiang5: checks green; AI-first path."
+
+# 仅当要批「另一个」仓库的 PR 时才显式指定：
+PR_AUTO_APPROVE_REPO=xhyperium/other bash .claude/skills/pr-auto-approve/scripts/approve.sh 42
 ```
 
 ### 3. 可选：resolve review threads + auto-merge
@@ -94,7 +97,7 @@ gh pr merge <n> --squash
 |------|------|
 | `LIUKONGQIANG5_APPROVE_TOKEN` | （必填） |
 | `PR_AUTO_APPROVE_EXPECTED_LOGIN` | `liukongqiang5` |
-| `PR_AUTO_APPROVE_REPO` | `xhyperium/xhyper.rs` |
+| `PR_AUTO_APPROVE_REPO` | 未设置时：`gh repo view` → `git origin` → `xhyperium/infra.rs` |
 | `PR_AUTO_APPROVE_API` | `https://api.github.com` |
 
 ## 安全
