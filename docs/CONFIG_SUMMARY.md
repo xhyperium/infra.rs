@@ -19,40 +19,56 @@
 
 ---
 
-## 分支保护规则
+## 分支保护规则（Ruleset）
+
+> **2026-07-21 迁移**：经典 Branch Protection 已删除；`main` 由仓库 Ruleset **`main-ai-first`**（id `19250230`）强制。  
+> UI：https://github.com/xhyperium/infra.rs/rules/19250230
 
 | 规则 | 值 |
 | ------ | ----- |
+| 机制 | GitHub Ruleset（非 classic branch protection） |
+| Target | `refs/heads/main` |
+| Enforcement | `active` |
 | 合并前需 PR | 启用 |
 | 最少 approving reviews | 1 |
 | CODEOWNERS 审查 | 强制 |
 | 过时 PR 自动 dismiss | 启用 |
-| Required status checks | Constitution Check, PR Template Check |
-| Status check strict | 启用 (分支须与 main 同步) |
+| `require_last_push_approval` | **启用**（最后 pusher 不能当唯一批准；走 `pr-auto-approve` / 第二身份） |
+| Conversation resolution | 未强制（AI First：避免评论挂死） |
+| Required status checks | `Constitution / Constitution Check`、`PR Template Check / Template Validation` |
+| Status check strict | 启用（分支须与 base 同步） |
 | 线性历史 | 启用 |
-| Force push | 禁止 |
-| Branch deletion | 禁止 |
-| Squash merge only | 启用 |
-| 合并后删除分支 | 启用 |
-| Auto-merge | 启用 |
+| Force push | 禁止（`non_fast_forward`） |
+| 删除 `main` | 禁止（`deletion`） |
+| 允许的 merge 方法 | **仅 squash**（ruleset + 仓库设置） |
+| Bypass | team `maintainers`（`pull_request` 模式，应急） |
+| 合并后删除分支 | 启用（仓库设置） |
+| Auto-merge | 启用（仓库设置） |
+
+### AI First 合入路径
+
+```text
+ZoneCNH 开 PR → required checks 绿 → liukongqiang5 批准（pr-auto-approve）
+  → gh pr merge --squash --auto
+```
 
 ---
 
-## enforce_admins 测试验证
+## 直推 main 拦截验证
 
-- **测试时间**: 2026-07-21
-- **测试方法**: 开启 `enforce_admins: true`，管理员直接在 main 提交并推送
-- **结果**: 推送被拒绝
+- **测试时间**: 2026-07-21（Ruleset 迁移后复测）
+- **测试方法**: 空 commit 直推 `origin main`
+- **结果**: 推送被拒绝（Ruleset only；classic 已删除）
 
 ```text
-remote: error: GH006: Protected branch update failed for refs/heads/main.
+remote: error: GH013: Repository rule violations found for refs/heads/main.
 remote: - Changes must be made through a pull request.
 remote: - 2 of 2 required status checks are expected.
- ! [remote rejected] main -> main (protected branch hook declined)
-```text
+ ! [remote rejected] HEAD -> main (push declined due to repository rule violations)
+```
 
-- **生产策略**: `enforce_admins: false`，管理员可应急绕过，须在 PR 记录原因
-- **来源**: `CONSTITUTION.md §6.0.5`
+- **应急**: team `maintainers` 可在 PR 路径下 bypass；须在 PR 记录原因
+- **来源**: `CONSTITUTION.md §6.0` + Ruleset `main-ai-first`
 
 ---
 
