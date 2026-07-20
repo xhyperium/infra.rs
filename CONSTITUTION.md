@@ -297,6 +297,7 @@ cd .worktrees/feat/my-feature
 - 遵循语义化版本 [SemVer](https://semver.org/)
 - `0.x.y` 期间不保证向后兼容
 - `1.0.0` 后严格 SemVer
+- 统一版本管理细则见 [docs/VERSIONING.md](./docs/VERSIONING.md)
 
 ### 6.3 所有权
 - 代码所有权由 `.github/CODEOWNERS` 定义
