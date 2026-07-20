@@ -45,7 +45,7 @@ fn rebuild_io_error(kind: io::ErrorKind, chain: Vec<String>) -> io::Error {
     if let Some(node) = source {
         io::Error::new(kind, io::Error::other(node))
     } else {
-        io::Error::other("deserialized io::Error (empty chain)")
+        io::Error::other("反序列化的 I/O 错误（空链）")
     }
 }
 
@@ -91,7 +91,7 @@ pub enum Error {
     /// let err: Error = io_err.into();
     /// assert!(matches!(err, Error::Io(_)));
     /// ```
-    #[error("I/O error: {0}")]
+    #[error("I/O 错误: {0}")]
     Io(#[from] io::Error),
 
     /// 配置错误。
@@ -103,9 +103,9 @@ pub enum Error {
     /// ```
     /// # use infra_core::Error;
     /// let err = Error::Config("missing field 'host'".into());
-    /// assert_eq!(err.to_string(), "Config error: missing field 'host'");
+    /// assert_eq!(err.to_string(), "配置错误: missing field 'host'");
     /// ```
-    #[error("Config error: {0}")]
+    #[error("配置错误: {0}")]
     Config(String),
 
     /// 参数校验错误。
@@ -117,9 +117,9 @@ pub enum Error {
     /// ```
     /// # use infra_core::Error;
     /// let err = Error::InvalidArgument("port must be 1..=65535".into());
-    /// assert_eq!(err.to_string(), "Invalid argument: port must be 1..=65535");
+    /// assert_eq!(err.to_string(), "参数无效: port must be 1..=65535");
     /// ```
-    #[error("Invalid argument: {0}")]
+    #[error("参数无效: {0}")]
     InvalidArgument(String),
 
     /// 内部错误。
@@ -131,9 +131,9 @@ pub enum Error {
     /// ```
     /// # use infra_core::Error;
     /// let err = Error::Internal("pool exhausted".into());
-    /// assert_eq!(err.to_string(), "Internal error: pool exhausted");
+    /// assert_eq!(err.to_string(), "内部错误: pool exhausted");
     /// ```
-    #[error("Internal error: {0}")]
+    #[error("内部错误: {0}")]
     Internal(String),
 }
 

@@ -21,10 +21,10 @@ pub use error::{Error, Result};
 /// 主要用于冒烟测试与脚手架验证。
 ///
 /// ```
-/// assert_eq!(infra_core::hello(), "Hello from infra-core");
+/// assert_eq!(infra_core::hello(), "你好，infra-core");
 /// ```
 pub fn hello() -> &'static str {
-    "Hello from infra-core"
+    "你好，infra-core"
 }
 
 #[cfg(test)]
@@ -35,28 +35,25 @@ mod tests {
 
     #[test]
     fn test_hello() {
-        assert_eq!(hello(), "Hello from infra-core");
+        assert_eq!(hello(), "你好，infra-core");
     }
 
     #[test]
     fn test_error_from_io() {
-        let err = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
+        let err = std::io::Error::new(std::io::ErrorKind::NotFound, "文件不存在");
         let infra_err: Error = err.into();
         assert!(matches!(infra_err, Error::Io(_)));
     }
 
     #[test]
     fn test_error_display() {
-        assert_eq!(
-            Error::InvalidArgument("missing field".into()).to_string(),
-            "Invalid argument: missing field"
-        );
+        assert_eq!(Error::InvalidArgument("缺少字段".into()).to_string(), "参数无效: 缺少字段");
     }
 
     #[test]
     fn test_result_alias() {
         fn returns_result() -> Result<i32> {
-            Err(Error::Config("test".into()))
+            Err(Error::Config("测试".into()))
         }
         assert!(returns_result().is_err());
     }

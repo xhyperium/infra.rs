@@ -9,7 +9,7 @@
 - **用户可见错误信息**：中文
 - **标识符**：英文（Rust 惯例）
 - **LICENSE**：保留英文许可证原文
-- 细则见 [docs/编码与语言约定.md](./docs/编码与语言约定.md)
+- 细则见 [CONSTITUTION.md §4.5](./CONSTITUTION.md) 与 [docs/编码与语言约定.md](./docs/编码与语言约定.md)
 
 ## 项目身份
 
