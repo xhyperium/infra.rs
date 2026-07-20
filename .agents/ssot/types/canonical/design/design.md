@@ -1,7 +1,6 @@
 # types/canonical — Design
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> Design 入口；无完整稿时不伪造 DESIGN-* 双镜像。
+| 状态 | 要点有效 · 2026-07-21 |
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+纯 DTO；Money 在 decimalx；ts=ns；OrderRef；shape/time helpers；无 codec/业务状态机。  
+见 20260717 complete-spec 与 production-upgrade。

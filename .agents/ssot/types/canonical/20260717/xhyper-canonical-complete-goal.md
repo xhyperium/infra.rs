@@ -3,33 +3,34 @@
 | 字段           | 值                                                              |
 | -------------- | --------------------------------------------------------------- |
 | Goal ID        | `GOAL-TYPES-CANONICAL-002`                                      |
-| Status         | **Draft / Non-normative candidate**                             |
+| Status         | **Approved production path (S1, 2026-07-17)** · **≠** package stable |
 | Package / lib  | `xhyper-canonical` / `canonical`                                |
 | Path / version | `crates/types/canonical` / `0.1.0`                              |
 | Candidate Spec | [SPEC-TYPES-CANONICAL-002](./xhyper-canonical-complete-spec.md) |
-| Active SSOT    | [canonical-spec.md](../canonical-spec.md)                       |
+| Active SSOT    | [../spec/spec.md](../spec/spec.md)（指针 [canonical-spec.md](../canonical-spec.md)） |
 | Snapshot       | `95102919`（2026-07-15）                                        |
-| Supersedes     | `none while Draft`                                              |
+| Supersedes     | Draft campaign baseline；current-state 以 active + residual 为准 |
 
-> `[KNOWN]` / `[INFERRED]` 是证据标签；`PROPOSED` / `OPEN` 是需求状态。`[KNOWN] HIGH` 的失败条件是所引源码、Cargo 或 Approved ADR 已变化。
+> `[KNOWN]` / `[INFERRED]` 是证据标签。**2026-07-21**：下列「当前基线」已按 Approved 生产路径重写；Goal 正文中的历史 M0–M3 叙事保留为战役记录，**不得**覆盖 active spec 的 OrderId 删除 / ts=ns / S1 事实。
 
-## 1. 当前基线
+## 1. 当前基线（Approved 事实）
 
 - `[KNOWN] HIGH` ADR-001/007 把 `canonical` 定位为 `/types/` 的跨层共享纯 DTO crate；`Money`/`Decimal` 族唯一归属 `decimalx`，本 crate 只复用。
-- `[KNOWN] HIGH` 当前公开 4 个标识类型（含 deprecated `OrderId`）、2 个订单引用/取消类型、2 个枚举与 8 个业务 DTO；全部是公开字段数据形状，没有业务状态机。
-- `[KNOWN] HIGH` 当前生产依赖是 `xhyper-decimalx` 与 `serde`，测试以 JSON fixture 固定部分 wire shape。
-- `[KNOWN] HIGH` `OrderRef`、`CancelOrderRequest`、`VenueId`、`InstrumentId` 已落地，但 active spec 尚未登记。
-- `[KNOWN] HIGH` `ts: i64` 的单位、ID namespace、symbol 规范、未知字段与 schema 演进仍没有统一批准语义。
+- `[KNOWN] HIGH` 公开表面：`VenueId`/`InstrumentId`（alias）、`OrderRef`、`CancelOrderRequest`、2 枚举、8 DTO；`Money` 重导出 `decimalx`；**无 `OrderId` 类型**（已删）。
+- `[KNOWN] HIGH` 生产依赖 `xhyper-decimalx` + `serde`；cancel/OrderRef/legacy ack 有 golden；其余 Uncommitted RT。
+- `[KNOWN] HIGH` CAN-ID / CAN-TIME **Approved 2026-07-17**：`ts`=Unix ns；adapter 用 `shape::*` / `ns_from_unix_millis`。
+- `[KNOWN] HIGH` Spec S1 **Approved**（≠ package stable）；validation owner 表 v1 原则 Approved。
+- `[KNOWN] HIGH` 仍 OPEN/DEFER：全 DTO wire 冻结、unknown-field deny、OrderRef newtype 二期、package stable、M3 全量迁移。
 
-关键反例：若源码出现业务状态方法或上层依赖，纯 DTO 结论失效；若 serde attributes/fixtures 或 Approved 时间/ID 决策已变化，当前 wire/OPEN 结论失效。
+关键反例：若源码重新引入 `OrderId` 类型或业务方法/上层依赖，本基线失效；若人审撤回 T1/T2/S1，须同步 residual 与 active。
 
 ## 2. 目标结果
 
 `canonical` 的终态不是通用编码器，而是一个最小、稳定、无业务行为的跨层 DTO 词汇表：
 
 1. 每个公开 DTO 都有明确 owner、消费者、字段语义与兼容范围。
-2. `OrderId` 遗留面通过 additive 迁移收敛到带 namespace 的 `OrderRef`，不破坏已存在 wire。
-3. 时间、venue、instrument、symbol 等基础标识不再依赖调用方各自猜测。
+2. `OrderId` **类型已删**；新接口优先 `OrderRef`；legacy `Order`/`OrderAck` id 字段为 `String` wire。
+3. 时间单位已批准为 Unix ns；venue/instrument 形状由 adapter `shape` 校验（跨所归一仍不做）。
 4. serde 当前形状被明确区分为“已测试 wire”或“仅实现细节”，不再把 derive 自动等同稳定协议。
 5. crate 永远不承载订单状态机、订单簿 diff、校验、canonical bytes、hash/sign/evidence 或协议驱动。
 
@@ -47,11 +48,11 @@
 
 ## 4. 候选能力与决策门
 
-- `PROPOSED`：为 ID、时间戳、symbol/venue/instrument 建立明确语义与版本化迁移方案。
-- `PROPOSED`：建立 DTO/枚举 API 快照与 golden fixtures，区分 Rust API 兼容和 wire 兼容。
-- `PROPOSED`：为每个 DTO 登记 owner/consumer 与 validation owner；validation 仍在 adapter/domain。
-- `OPEN`：哪些 serde shape 对外稳定、未知字段如何处理、枚举新增如何兼容。
-- `OPEN`：legacy `Order`/`OrderAck` 何时迁移到结构化 ID；在无下游清零证据前不得删除。
+- `APPROVED`：CAN-ID / CAN-TIME（OrderRef 优先；`ts`=ns；OrderId 类型已删）。
+- `APPROVED` 原则：CAN-VALID owner 表 v1；validation 仍在 adapter/domain。
+- `PARTIAL`：cancel/OrderRef/legacy ack golden；其余 DTO Uncommitted。
+- `OPEN`：unknown-field deny、全量跨版本 wire、枚举扩展策略。
+- `DEFER`：OrderRef newtype 二期；legacy Order/OrderAck DTO 形状删除（须 consumer=0）。
 
 ## 5. 非目标
 

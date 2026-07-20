@@ -1,7 +1,10 @@
 # types/canonical — Matrix
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 追溯边横切；非 pipeline_state。
+| 字段 | 值 |
+|------|-----|
+| 状态 | **入口有效** |
+| 更新 | 2026-07-21 |
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+权威 1:1：[plan/alignment-matrix-infra-2026-07-21.md](../plan/alignment-matrix-infra-2026-07-21.md)  
+Wire：[plan/wire-commitment-matrix.md](../plan/wire-commitment-matrix.md)  
+Owners：[plan/validation-owners.md](../plan/validation-owners.md)

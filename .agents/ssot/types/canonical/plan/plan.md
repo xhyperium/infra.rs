@@ -1,14 +1,17 @@
 # Plan — GOAL-TYPES-CANONICAL-002 / SPEC-TYPES-CANONICAL-002 闭合执行包
 
+> **2026-07-21 权威对齐**：§0.2/§0.3 已按 Approved 生产路径改写（OrderId 类型已删；`ts`=Unix ns；S1 Approved）。
+> 当前 1:1 矩阵见 [alignment-matrix-infra-2026-07-21.md](./alignment-matrix-infra-2026-07-21.md)；residual 见 [residual-open.md](./residual-open.md)。
+
 | 字段 | 值 |
 |------|-----|
 | Plan ID | `PLAN-TYPES-CANONICAL-002-v1` |
-| Source Goal | [GOAL-TYPES-CANONICAL-002](../20260717/xhyper-canonical-complete-goal.md) · Status **Draft** |
-| Source Spec | [SPEC-TYPES-CANONICAL-002](../20260717/xhyper-canonical-complete-spec.md) · Status **Draft / Non-normative** |
-| Active SSOT | [canonical-spec.md](../canonical-spec.md) |
+| Source Goal | [GOAL-TYPES-CANONICAL-002](../20260717/xhyper-canonical-complete-goal.md) · **S1 path Approved**（≠ package stable / Goal 全 ACHIEVED） |
+| Source Spec | [SPEC-TYPES-CANONICAL-002](../20260717/xhyper-canonical-complete-spec.md) · **Approved S1**（≠ package stable） |
+| Active SSOT | [spec/spec.md](../spec/spec.md)（指针 [canonical-spec.md](../canonical-spec.md)） |
 | Package | `xhyper-canonical` / `canonical` @ `crates/types/canonical` **0.1.0** |
 | Layer | Types / 跨层共享纯 DTO |
-| Baseline | `main@4fe8e988`（战役开盘） |
+| Baseline | `main@4fe8e988`（战役开盘）· infra 对齐 **2026-07-21** |
 | Work Todo | [../todo.md](../todo.md) |
 | Gap Matrix | [gap-matrix.md](./gap-matrix.md) |
 | Spec Inventory | [spec-inventory.md](./spec-inventory.md) |
@@ -16,9 +19,9 @@
 | Residual | [residual-open.md](./residual-open.md) |
 | Approval Packet | [approval-packet.md](./approval-packet.md) |
 | 10x Verdict | [canonical-plan-10x-verdict.md](./canonical-plan-10x-verdict.md) |
-| Alignment | [alignment-2026-07-17.md](./alignment-2026-07-17.md) · [evidence/types-canonical-002/](../../../../../evidence/types-canonical-002/) |
-| Strategy | **诚实 inventory → agent-safe 事实闭合 → residual 显式 OPEN → 门禁绿 → 10x → 人审 APPROVE** |
-| Campaign status | **agent-safe 闭合目标** · **≠ Spec Approved** · **≠ package stable** · **≠ Goal ACHIEVED / Production Ready** |
+| Alignment | [alignment-2026-07-17.md](./alignment-2026-07-17.md) · [alignment-matrix-infra-2026-07-21.md](./alignment-matrix-infra-2026-07-21.md) |
+| Strategy | **诚实 inventory → agent-safe 事实闭合 → residual 显式 OPEN → 门禁绿 → 人审**（10x 无 fresh 证据则 DEFER） |
+| Campaign status | **agent-safe PASS** · Spec S1 **Approved** · **≠ package stable** · **≠ 全 wire Production Ready** |
 
 > 本 plan 的 DONE 仅表示 agent-safe 工作项与门禁证据闭合。  
 > **禁止**把 10x PASS、PR APPROVE、todo DONE 写成 Spec Approved / stable / wire 跨版本承诺。
@@ -41,12 +44,12 @@ schema registry / CanonicalWriter-Reader / 通用 codec / hash-sign-evidence 框
 
 | 面 | 事实 |
 |----|------|
-| 公开类型 | 4 ID（含 deprecated `OrderId`）+ `CancelOrderRequest` + 2 枚举 + 8 DTO；`Money` 重导出 `decimalx` |
+| 公开类型 | `VenueId`/`InstrumentId` + `OrderRef` + `CancelOrderRequest` + 2 枚举 + 8 DTO；`Money` 重导出 `decimalx`；**无 `OrderId` 类型**（已删 2026-07-17） |
 | 依赖 | `xhyper-decimalx` + `serde`；dev：`serde_json` |
 | 行为 | 无业务方法 / I/O / 全局状态 / 本地错误类型 |
 | 数值 | 无 `f32`/`f64` 金融字段 |
-| 测试 | 5 个单测：Order RT、空 book、OrderRef/cancel wire、legacy OrderAck wire、OKX cancel fixture 双向 |
-| Fixture | `fixtures/market/order_cancel_okx.json` |
+| 测试 | 22 单测：全 DTO RT、全 OrderStatus/OrderRef variants、Money 同一性、cancel/ack/v1 golden、shape/time helpers |
+| Fixture | `fixtures/market/order_cancel_okx.json` + `order_ack_legacy.json` + `canonical/v1/*` |
 | 消费者 | contracts、binance、okx、domain_{core,market,exchange,macro}、bootstrap e2e、contract-testkit、taos |
 
 ### 0.3 主要漂移与缺口
@@ -59,11 +62,11 @@ schema registry / CanonicalWriter-Reader / 通用 codec / hash-sign-evidence 框
 | DRIFT-04 | 规范要求全 DTO/枚举 RT + 全 `OrderStatus`/`OrderRef` variants；当前仅 5 测 | P1 | agent-safe 补测 |
 | DRIFT-05 | 无 `Money ≡ decimalx::Money` 类型同一性回归 | P1 | agent-safe 补测 |
 | DRIFT-06 | 无正式 consumer inventory / 字段语义缺口表落盘 | P1 | plan 包 + todo |
-| OPEN-ID | Venue/Instrument/Order 字符集·规范化·映射 | OPEN | residual / HUMAN |
-| OPEN-TIME | `ts: i64` 单位/epoch/范围 | OPEN | residual / HUMAN |
+| OPEN-ID | Venue slug/shape 规则 **CLOSED**（CAN-ID）；OrderRef newtype 二期 **DEFER** | CLOSED/DEFER | residual OPEN-ID-001/002 |
+| OPEN-TIME | `ts: i64` = Unix **ns** **CLOSED**（CAN-TIME-001 Approved） | CLOSED | residual OPEN-TIME-001 |
 | OPEN-WIRE | 未知字段策略、schema 版本、未覆盖 DTO 的 wire 承诺 | OPEN | residual / HUMAN |
-| OPEN-VALID | 各 DTO validation owner 登记未冻结 | OPEN | residual / HUMAN |
-| OPEN-MIG | legacy `OrderId`/`Order`/`OrderAck` 删除时机 | OPEN | residual；**禁删** |
+| OPEN-VALID | owner 表 v1 原则 **CLOSED**；consumer 可增补 | CLOSED 原则 | validation-owners.md |
+| OPEN-MIG | `OrderId` **类型已删**；legacy `Order`/`OrderAck` DTO 字段形状保留至 consumer=0 | PARTIAL | residual OPEN-MIG-001 |
 | OPEN-LAYOUT | 新建 `types/core`/`types/protocol` 或移除 serde | OPEN | 须独立 RFC |
 | REJECT-CODEC | Canonical Encoding Core | REJECTED | 持续门禁 |
 
@@ -80,10 +83,11 @@ schema registry / CanonicalWriter-Reader / 通用 codec / hash-sign-evidence 框
 ### 0.5 完成语义（防假关）
 
 ```text
-agent-safe DONE  ≠  Spec Draft→Approved
-10x fail_rounds=0  ≠  实现完成宣称 Spec Approved
-PR APPROVE         ≠  package stable / crates.io
-M0 事实闭合        ≠  M1 语义批准 / M3 全量迁移
+agent-safe DONE  ≠  package stable
+Spec S1 Approved  ≠  package stable / crates.io / 全 wire Production Ready
+10x fail_rounds=0  ≠  Goal ACHIEVED（无 fresh 10x 时 SAFE-15=DEFERRED）
+PR APPROVE         ≠  package stable
+M0/M1 语义闭合     ≠  M3 全量迁移 / DEFER-WIRE-FULL
 ```
 
 ---
@@ -93,7 +97,7 @@ M0 事实闭合        ≠  M1 语义批准 / M3 全量迁移
 | 里程碑 | Goal 定义 | 本战役 agent-safe 范围 | 非本战役 |
 |--------|-----------|------------------------|----------|
 | **M0** 事实闭合 | 同步 active API/fixture/consumers；字段语义缺口表 | active 链接/API 对齐；inventory；gap；测试补全；README | 无 |
-| **M1** 身份与时间 | 批准 ID/时间/字符串语义；additive 新类型 | **仅**登记 OPEN + 文档不得谎称已批准；不臆造 newtype | 人审批准语义；引入 Timestamp newtype |
+| **M1** 身份与时间 | 批准 ID/时间/字符串语义；additive 新类型 | **DONE** T1/T2：ts=ns；OrderRef/shape；OrderId 类型已删 | newtype 二期 DEFER；Timestamp 不进本 crate |
 | **M2** Wire 治理 | 承诺类型的版本化 fixture；未承诺标不稳定 | 已有 cancel + legacy ack golden 保持；文档区分承诺/未承诺 | 全 DTO wire 稳定承诺 |
 | **M3** 下游迁移 | contracts/adapters/domain/testkit 迁移 | consumer inventory；触及路径编译；**保留** legacy API | consumer=0 后删除；trait 大迁 |
 
@@ -115,7 +119,7 @@ M0 事实闭合        ≠  M1 语义批准 / M3 全量迁移
 | Lane | 允许路径 | 禁止 |
 |------|----------|------|
 | L-DOC | `.agent/SSOT/types/canonical/**`、`evidence/types-canonical-002/**` | 改 runtime 语义裁定 |
-| L-DTO | `crates/types/canonical/**`、`fixtures/market/**`（仅既有 wire） | 删 OrderId；加 codec；上层依赖 |
+| L-DTO | `crates/types/canonical/**`、`fixtures/market/**`（仅既有 wire） | 删 legacy Order/OrderAck DTO 形状（无 consumer=0）；加 codec；上层依赖 |
 | L-DOWN | 仅当编译失败时最小修 adapters/contracts/domain/testkit | 无 consumer 证据的 breaking |
 | L-GATE | 门禁命令、10x 脚本、SCRATCH 日志 | 伪造 APPROVED / 手写 digest |
 
@@ -127,14 +131,14 @@ M0 事实闭合        ≠  M1 语义批准 / M3 全量迁移
 
 1. 假 Spec Approved / package stable / Goal Achieved / Production Ready  
 2. 将 `canonical` 改造成 codec core / schema registry / hash-sign  
-3. 无 consumer 清零证据删除 `OrderId`/`Order`/`OrderAck`  
-4. 文档声称 `ts` 为 ms/ns 或 ID 字符集已冻结（在人审前）  
+3. 无 consumer 清零证据删除 legacy `Order`/`OrderAck` **DTO 形状**（`OrderId` **类型**已于 2026-07-17 删除）  
+4. 文档否认已批准事实：`ts`=Unix ns 与 CAN-ID shape **已 Approved**；禁止改回 OPEN 假叙事  
 5. 引入 contracts/L1/domain/adapter/evidence 生产依赖  
 6. 金融字段使用 `f32`/`f64` 或复制 `(mantissa, scale)`  
 7. 10x 单轮 cherry-pick PASS / SKIP 计 PASS  
 8. AI 独断把 OPEN 语义写成 APPROVED  
 9. 伪造 `@liukongqiang5` APPROVE 或手写 APPROVED 无 API readback  
-10. 双 SSOT：active 与 candidate 互相覆盖而不标注 Draft 边界  
+10. 双 SSOT：active 与 20260717 互相覆盖而不标注权威；当前 **S1 Approved** 与 active 应对齐  
 
 ---
 

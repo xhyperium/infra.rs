@@ -1,3 +1,7 @@
+> **SUPERSEDED for current-state（2026-07-21）**
+> 当前权威：alignment-matrix-infra-2026-07-21.md + spec/spec.md + residual-open.md + todo.md。
+>
+
 # Spec Inventory — PLAN-TYPES-CANONICAL-002
 
 | 字段 | 值 |

@@ -1,7 +1,5 @@
 # types/canonical — Prompt
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 下一刀 Context Package 待填充。
+| 状态 | 入口有效 · 2026-07-21 |
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+实现 crates/types/{canonical,decimal}；Spec S1；alignment 矩阵；residual 仅 OPEN/HUMAN/DEFER。

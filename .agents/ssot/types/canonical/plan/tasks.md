@@ -1,5 +1,7 @@
 # Tasks — PLAN-TYPES-CANONICAL-002
 
+> **2026-07-21 标签对齐**：与 todo/residual 一致；T-10X=DEFERRED；T-APPR-002=HUMAN 历史；S1 DONE。
+
 | 字段 | 值 |
 |------|-----|
 | Plan | `PLAN-TYPES-CANONICAL-002-v1` |
@@ -69,9 +71,9 @@
 
 | Task ID | 内容 | AC | Status |
 |---------|------|-----|--------|
-| T-10X-001 | 十轮固定命令；每轮日志；summary fail_rounds=0 | 整组重跑规则 | **DONE** |
+| T-10X-001 | 十轮固定命令；每轮日志；summary fail_rounds=0 | 整组重跑规则 | **DEFERRED**（本 clone 无 fresh `evidence/types-canonical-002/10x/`；= SAFE-15） |
 | T-APPR-001 | PR 创建 | PR #508 | **DONE** |
-| T-APPR-002 | `export LIUKONGQIANG5_APPROVE_TOKEN` + approve helper | API readback APPROVED on tip | **DONE** |
+| T-APPR-002 | `export LIUKONGQIANG5_APPROVE_TOKEN` + approve helper | API readback APPROVED on tip | **HUMAN_ONLY** 历史（xhyper PR；本仓不伪造；= SAFE-16） |
 
 ---
 
@@ -79,9 +81,9 @@
 
 | Task ID | 内容 | Status |
 |---------|------|--------|
-| T-HUM-001 | CAN-ID/TIME/WIRE/VALID 语义人审批准 | **DEFER** → residual |
-| T-HUM-002 | Spec Draft → Approved | **HUMAN_ONLY** |
+| T-HUM-001 | CAN-ID/TIME/VALID 原则人审 | **DONE** T1/T2/T4；WIRE 全量仍 OPEN → residual |
+| T-HUM-002 | Spec Draft → Approved S1 | **DONE**（2026-07-17；≠ package stable） |
 | T-HUM-003 | package stable / crates.io | **HUMAN_ONLY** |
-| T-HUM-004 | 删除 legacy OrderId 族 | **DEFER** 至 consumer=0 |
+| T-HUM-004 | `OrderId` **类型已删**；legacy Order/OrderAck DTO 形状删除 | 类型 **DONE**；DTO 形状 **DEFER** 至 consumer=0 |
 | T-HUM-005 | types/core·protocol 搬迁 RFC | **DEFER** |
 | T-HUM-006 | 移除 serde | **DEFER** |
