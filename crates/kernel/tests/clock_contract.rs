@@ -216,4 +216,32 @@ proptest! {
         prop_assert_eq!(err.is_bug(), matches!(expect, ErrorKind::Invariant));
         prop_assert_eq!(err.context(), "x");
     }
+
+    /// §11.3：任意 ComponentState 二元组合与合法边表一致（有限枚举，抽样 + 穷举互补）。
+    #[test]
+    fn component_state_pair_matrix(from_idx in 0usize..6, to_idx in 0usize..6) {
+        use ComponentState::*;
+        let all = [Created, Starting, Running, Draining, Stopped, Failed];
+        let legal = [
+            (Created, Starting),
+            (Starting, Running),
+            (Starting, Failed),
+            (Running, Draining),
+            (Running, Failed),
+            (Draining, Stopped),
+            (Draining, Failed),
+        ];
+        let from = all[from_idx];
+        let to = all[to_idx];
+        let allowed = legal.contains(&(from, to));
+        prop_assert_eq!(from.can_transition_to(to), allowed);
+        prop_assert_eq!(from.try_transition(to).is_ok(), allowed);
+        if allowed {
+            prop_assert_eq!(from.try_transition(to).unwrap(), to);
+        } else {
+            let err = from.try_transition(to).unwrap_err();
+            prop_assert_eq!(err.from, from);
+            prop_assert_eq!(err.to, to);
+        }
+    }
 }

@@ -6,6 +6,8 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
+# 本仓不向 crates.io 再发布；与 xhyper-testkit 一致显式关闭
+publish = false
 
 [lib]
 name = "kernel"
@@ -28,6 +30,6 @@ static_assertions = "1"
 # SPEC-KERNEL-002 §3.4：不允许任何 feature；显式 default=[] 满足字面合同
 default = []
 
-# 声明 `cfg(loom)` 为已知条件，避免 unexpected_cfgs 警告（非 feature）
-[lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)'] }
+# SPEC-KERNEL-002 §4：继承 workspace lints（含 loom unexpected_cfgs）
+[lints]
+workspace = true

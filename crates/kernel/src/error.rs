@@ -65,6 +65,46 @@
 //! assert_serialize::<ErrorKind>();
 //! ```
 //!
+//! §5.5 禁止 `not_found` / `other` 与 `From<&str|String>` 旁路：
+//!
+//! ```compile_fail
+//! use kernel::XError;
+//!
+//! let _ = XError::not_found("x");
+//! ```
+//!
+//! ```compile_fail
+//! use kernel::XError;
+//!
+//! let _ = XError::other("x");
+//! ```
+//!
+//! ```compile_fail
+//! use kernel::XError;
+//!
+//! let _: XError = "x".into();
+//! ```
+//!
+//! ```compile_fail
+//! use kernel::XError;
+//!
+//! let _: XError = String::from("x").into();
+//! ```
+//!
+//! §6.4：`Clock::monotonic` 不得有默认实现——只实现 `now` 必须无法通过编译：
+//!
+//! ```compile_fail
+//! use kernel::{Clock, ClockError, Timestamp};
+//!
+//! struct OnlyWall;
+//!
+//! impl Clock for OnlyWall {
+//!     fn now(&self) -> Result<Timestamp, ClockError> {
+//!         Ok(Timestamp::from_unix_nanos(0))
+//!     }
+//! }
+//! ```
+//!
 //! 说明：doctest 仅链接生产依赖，不含 `serde`；上述 `compile_fail` 与
 //! `tests/api_compile.rs` 中 dev-dep 下的 `assert_not_impl_any!(…: serde::Serialize)`
 //! 互补——后者在存在 `serde` 特征时证明类型本身未实现 trait。

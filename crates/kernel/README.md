@@ -2,7 +2,8 @@
 
 xhyper.rs 的 **L0 语义信任根**：错误分类、时间与生命周期的统一语义。库名（`lib`）为 `kernel`。
 
-契约 SSOT：`.agents/ssot/kernel/spec/spec.md`（**SPEC-KERNEL-002**）。
+契约 SSOT：`.agents/ssot/kernel/spec/spec.md`（**SPEC-KERNEL-002**）。  
+本仓对齐矩阵：[docs/kernel-ssot-alignment.md](../../docs/kernel-ssot-alignment.md)。
 
 ## 职责
 

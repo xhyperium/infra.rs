@@ -13,9 +13,12 @@
 - 对齐 **SPEC-KERNEL-002** 可移植合同（§3–§8 / §11）：error / clock / lifecycle 生产面
 - `tests/lifecycle_concurrency_loom.rs`（`cfg(loom)` Shutdown 模型测试）
 - dev-deps：`static_assertions`；`cfg(loom)` 条件依赖 `loom`
-- rustdoc `compile_fail` 负向面（字段私有、无 Default、无 Component、ShutdownGuard !Clone）
-- proptest 属性测试：Timestamp checked 运算 / mono 反向 / ErrorKind 构造矩阵
+- rustdoc `compile_fail` 负向面（字段私有、无 Default、无 Component、ShutdownGuard !Clone、禁 not_found/other/From&lt;str&gt;、Clock 无默认 monotonic）
+- `api_compile`：`XError: !From<&str|String>`、`Timestamp: !Display/!From<SystemTime>`、serde 负向扩至 Signal/Guard
+- proptest 属性测试：Timestamp checked 运算 / ComponentState 二元组合 / ErrorKind 构造矩阵
 - ControlledClock 双通道测试替身；真实 mutex poison 恢复测试
+- 本仓对齐文档：`docs/kernel-ssot-alignment.md`
+- `publish = false`；`[lints] workspace = true`（继承根 `workspace.lints`）
 - 按 crates 子模块标准补齐 `README.md`、`AGENTS.md`、`examples/`、`docs/` 骨架
 
 ### Fixed

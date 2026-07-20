@@ -52,16 +52,13 @@ impl Timestamp {
     }
 
     /// 安全减法，溢出时返回 `None`。
+    ///
+    /// 与 [`Timestamp::checked_add`] 一致：经 `i128` 中间值，避免 `std::time::Duration`
+    /// 合法域内不可达的 `u128 → i128` 死分支。
     pub fn checked_sub(self, duration: Duration) -> Option<Self> {
         let nanos = i128::from(self.0);
-        // duration.as_nanos() is u128, need to handle carefully for subtraction
-        let dur_nanos: u128 = duration.as_nanos();
-        if dur_nanos > i128::MAX as u128 {
-            // duration is too large to represent as i128, subtraction would always overflow
-            return None;
-        }
-        let dur_nanos_i128 = dur_nanos as i128;
-        let result = nanos.checked_sub(dur_nanos_i128)?;
+        let dur_nanos: i128 = duration.as_nanos().try_into().ok()?;
+        let result = nanos.checked_sub(dur_nanos)?;
         let result_i64: i64 = result.try_into().ok()?;
         Some(Self(result_i64))
     }
@@ -176,19 +173,25 @@ impl Default for SystemClock {
     }
 }
 
+/// 将 epoch 起的 `Duration` 转为 [`Timestamp`]（纯函数，便于测 Overflow）。
+fn timestamp_from_unix_duration(d: Duration) -> Result<Timestamp, ClockError> {
+    let nanos: u128 = d.as_nanos();
+    let nanos_i64: i64 = nanos.try_into().map_err(|_| ClockError::Overflow)?;
+    Ok(Timestamp::from_unix_nanos(nanos_i64))
+}
+
+/// 将 `std::time::SystemTime` 转为 [`Timestamp`]（纯函数，便于测 BeforeUnixEpoch / Overflow）。
+fn timestamp_from_system_time(ts: std::time::SystemTime) -> Result<Timestamp, ClockError> {
+    use std::time::UNIX_EPOCH;
+    match ts.duration_since(UNIX_EPOCH) {
+        Ok(d) => timestamp_from_unix_duration(d),
+        Err(_) => Err(ClockError::BeforeUnixEpoch),
+    }
+}
+
 impl Clock for SystemClock {
     fn now(&self) -> Result<Timestamp, ClockError> {
-        use std::time::{SystemTime, UNIX_EPOCH};
-
-        let ts = SystemTime::now();
-        match ts.duration_since(UNIX_EPOCH) {
-            Ok(d) => {
-                let nanos: u128 = d.as_nanos();
-                let nanos_i64: i64 = nanos.try_into().map_err(|_| ClockError::Overflow)?;
-                Ok(Timestamp::from_unix_nanos(nanos_i64))
-            }
-            Err(_) => Err(ClockError::BeforeUnixEpoch),
-        }
+        timestamp_from_system_time(std::time::SystemTime::now())
     }
 
     fn monotonic(&self) -> MonotonicInstant {
@@ -372,6 +375,23 @@ mod tests {
         let c = DummyClock;
         let ts = c.now().unwrap();
         assert_eq!(ts.as_unix_nanos(), 0);
+        let mono = c.monotonic();
+        assert_eq!(mono.checked_duration_since(mono), Some(Duration::ZERO));
+    }
+
+    /// SystemClock 墙钟映射：epoch 前 → BeforeUnixEpoch；超 i64 纳秒 → Overflow。
+    #[test]
+    fn system_time_mapping_before_epoch_and_overflow() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let before = UNIX_EPOCH.checked_sub(Duration::from_secs(1)).expect("epoch - 1s");
+        assert_eq!(timestamp_from_system_time(before), Err(ClockError::BeforeUnixEpoch));
+
+        // ~year 2286：纳秒 > i64::MAX → Overflow
+        let far = Duration::from_secs(10_000_000_000);
+        assert_eq!(timestamp_from_unix_duration(far), Err(ClockError::Overflow));
+
+        let ok = timestamp_from_system_time(SystemTime::now()).expect("now after epoch");
+        assert!(ok.as_unix_nanos() > 0);
     }
 
     // -- ControlledClock（§11.1 双通道测试替身；from_clock_elapsed 仅允许本文件） --
