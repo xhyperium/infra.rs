@@ -53,8 +53,8 @@ impl Timestamp {
 
     /// 安全减法，溢出时返回 `None`。
     ///
-    /// 与 [`checked_add`] 一致：经 `i128` 中间值，避免 `std::time::Duration` 合法域内
-    /// 不可达的 `u128 → i128` 死分支。
+    /// 与 [`Timestamp::checked_add`] 一致：经 `i128` 中间值，避免 `std::time::Duration`
+    /// 合法域内不可达的 `u128 → i128` 死分支。
     pub fn checked_sub(self, duration: Duration) -> Option<Self> {
         let nanos = i128::from(self.0);
         let dur_nanos: i128 = duration.as_nanos().try_into().ok()?;
@@ -180,7 +180,7 @@ fn timestamp_from_unix_duration(d: Duration) -> Result<Timestamp, ClockError> {
     Ok(Timestamp::from_unix_nanos(nanos_i64))
 }
 
-/// 将 [`SystemTime`] 转为 [`Timestamp`]（纯函数，便于测 BeforeUnixEpoch / Overflow）。
+/// 将 `std::time::SystemTime` 转为 [`Timestamp`]（纯函数，便于测 BeforeUnixEpoch / Overflow）。
 fn timestamp_from_system_time(ts: std::time::SystemTime) -> Result<Timestamp, ClockError> {
     use std::time::UNIX_EPOCH;
     match ts.duration_since(UNIX_EPOCH) {
