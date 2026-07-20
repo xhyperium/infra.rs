@@ -1,0 +1,2 @@
+crates/kernel/src/lifecycle.rs:118:9: replace ShutdownSignal::wait with ()
+crates/kernel/src/lifecycle.rs:123:15: delete ! in ShutdownSignal::wait

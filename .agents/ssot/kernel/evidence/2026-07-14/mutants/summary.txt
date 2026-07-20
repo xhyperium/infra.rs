@@ -1,0 +1,5 @@
+Found 64 mutants to test
+ok       Unmutated baseline in 21s build + 1s test
+TIMEOUT  crates/kernel/src/lifecycle.rs:118:9: replace ShutdownSignal::wait with () in 1s build + 90s test
+TIMEOUT  crates/kernel/src/lifecycle.rs:123:15: delete ! in ShutdownSignal::wait in 2s build + 90s test
+64 mutants tested in 3m: 31 caught, 31 unviable, 2 timeouts

@@ -1,0 +1,141 @@
+======== PASS 1 / 10 ========
+  [OK] SSOT identity
+  [OK] 001 archive
+  [OK] Spec ID
+  [OK] pipeline 002
+  [OK] registry incubating
+  [OK] release honesty
+  [OK] mid-correct meanings for API-003 and LC-004
+  [OK] residual IDs registered mid-correctly
+  [OK] publish=false + features default=[]
+  [OK] opaque XError
+  [OK] mono base+elapsed
+PASS_1=SUCCESS
+
+======== PASS 2 / 10 ========
+  [OK] SSOT identity
+  [OK] 001 archive
+  [OK] Spec ID
+  [OK] pipeline 002
+  [OK] registry incubating
+  [OK] release honesty
+  [OK] mid-correct meanings for API-003 and LC-004
+  [OK] residual IDs registered mid-correctly
+  [OK] publish=false + features default=[]
+  [OK] opaque XError
+  [OK] mono base+elapsed
+PASS_2=SUCCESS
+
+======== PASS 3 / 10 ========
+  [OK] SSOT identity
+  [OK] 001 archive
+  [OK] Spec ID
+  [OK] pipeline 002
+  [OK] registry incubating
+  [OK] release honesty
+  [OK] mid-correct meanings for API-003 and LC-004
+  [OK] residual IDs registered mid-correctly
+  [OK] publish=false + features default=[]
+  [OK] opaque XError
+  [OK] mono base+elapsed
+PASS_3=SUCCESS
+
+======== PASS 4 / 10 ========
+  [OK] SSOT identity
+  [OK] 001 archive
+  [OK] Spec ID
+  [OK] pipeline 002
+  [OK] registry incubating
+  [OK] release honesty
+  [OK] mid-correct meanings for API-003 and LC-004
+  [OK] residual IDs registered mid-correctly
+  [OK] publish=false + features default=[]
+  [OK] opaque XError
+  [OK] mono base+elapsed
+PASS_4=SUCCESS
+
+======== PASS 5 / 10 ========
+  [OK] SSOT identity
+  [OK] 001 archive
+  [OK] Spec ID
+  [OK] pipeline 002
+  [OK] registry incubating
+  [OK] release honesty
+  [OK] mid-correct meanings for API-003 and LC-004
+  [OK] residual IDs registered mid-correctly
+  [OK] publish=false + features default=[]
+  [OK] opaque XError
+  [OK] mono base+elapsed
+PASS_5=SUCCESS
+
+======== PASS 6 / 10 ========
+  [OK] SSOT identity
+  [OK] 001 archive
+  [OK] Spec ID
+  [OK] pipeline 002
+  [OK] registry incubating
+  [OK] release honesty
+  [OK] mid-correct meanings for API-003 and LC-004
+  [OK] residual IDs registered mid-correctly
+  [OK] publish=false + features default=[]
+  [OK] opaque XError
+  [OK] mono base+elapsed
+PASS_6=SUCCESS
+
+======== PASS 7 / 10 ========
+  [OK] SSOT identity
+  [OK] 001 archive
+  [OK] Spec ID
+  [OK] pipeline 002
+  [OK] registry incubating
+  [OK] release honesty
+  [OK] mid-correct meanings for API-003 and LC-004
+  [OK] residual IDs registered mid-correctly
+  [OK] publish=false + features default=[]
+  [OK] opaque XError
+  [OK] mono base+elapsed
+PASS_7=SUCCESS
+
+======== PASS 8 / 10 ========
+  [OK] SSOT identity
+  [OK] 001 archive
+  [OK] Spec ID
+  [OK] pipeline 002
+  [OK] registry incubating
+  [OK] release honesty
+  [OK] mid-correct meanings for API-003 and LC-004
+  [OK] residual IDs registered mid-correctly
+  [OK] publish=false + features default=[]
+  [OK] opaque XError
+  [OK] mono base+elapsed
+PASS_8=SUCCESS
+
+======== PASS 9 / 10 ========
+  [OK] SSOT identity
+  [OK] 001 archive
+  [OK] Spec ID
+  [OK] pipeline 002
+  [OK] registry incubating
+  [OK] release honesty
+  [OK] mid-correct meanings for API-003 and LC-004
+  [OK] residual IDs registered mid-correctly
+  [OK] publish=false + features default=[]
+  [OK] opaque XError
+  [OK] mono base+elapsed
+PASS_9=SUCCESS
+
+======== PASS 10 / 10 ========
+  [OK] SSOT identity
+  [OK] 001 archive
+  [OK] Spec ID
+  [OK] pipeline 002
+  [OK] registry incubating
+  [OK] release honesty
+  [OK] mid-correct meanings for API-003 and LC-004
+  [OK] residual IDs registered mid-correctly
+  [OK] publish=false + features default=[]
+  [OK] opaque XError
+  [OK] mono base+elapsed
+PASS_10=SUCCESS
+
+==== fail_rounds=0 ====

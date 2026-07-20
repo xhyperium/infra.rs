@@ -1,0 +1,42 @@
+   Compiling kernel v0.1.0 (/home/workspace/xhyper.rs/crates/kernel)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.11s
+     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-7c2d371062655107)
+
+running 19 tests
+test clock::tests::from_clock_elapsed_advances_with_elapsed ... ok
+test clock::tests::clock_error_display_and_equality ... ok
+test clock::tests::system_clock_default_matches_new_contract ... ok
+test clock::tests::system_clock_not_copy ... ok
+test clock::tests::system_clock_returns_positive ... ok
+test clock::tests::timestamp_checked_add_sub_and_since ... ok
+test clock::tests::timestamp_preserves_nanoseconds_without_sentinel_failure_value ... ok
+test error::tests::clock_error_maps_all_variants_to_unavailable ... ok
+test error::tests::context_cow_borrows_context ... ok
+test error::tests::display_covers_all_kinds ... ok
+test error::tests::display_excludes_source_details ... ok
+test error::tests::error_kind_is_copy_hash ... ok
+test error::tests::kinds_and_constructors ... ok
+test error::tests::with_source_preserves_kind ... ok
+test lifecycle::tests::legal_and_illegal_transitions ... ok
+test lifecycle::tests::trigger_idempotent_wait ... ok
+test clock::tests::monotonic_checked_duration_since_none_on_reverse ... ok
+test clock::tests::system_clock_monotonic_advances_and_interval_usable ... ok
+test lifecycle::tests::shutdown_multi_observer ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-8db42b7c16267b44)
+
+running 3 tests
+test error_kind_query_surface ... ok
+test shutdown_trigger_wakes ... ok
+test clock_contract_system ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests kernel
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

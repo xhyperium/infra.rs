@@ -1,0 +1,151 @@
+# decimalx consumer inventory 2026-07-16T19:45:42Z
+## HEAD 4fe8e98873f43dfa49f206752654fd9d246540a1
+## Consumers
+crates/adapters/exchange/binance/src/lib.rs:21:use decimalx::{Decimal, Price, Qty};
+crates/adapters/exchange/binance/src/parser.rs:12:use decimalx::{Currency, Decimal, Price, Qty};
+crates/adapters/exchange/binance/src/parser.rs:4://! - `f64` → `decimalx::Decimal`（杜绝浮点参与金额运算，ADR-006）
+crates/adapters/exchange/binance/src/rest.rs:337:fn format_decimal(d: decimalx::Decimal) -> String {
+crates/adapters/exchange/binance/src/rest.rs:377:    use decimalx::Decimal;
+crates/adapters/exchange/okx/src/lib.rs:27:use decimalx::{Decimal, Price, Qty};
+crates/adapters/exchange/okx/src/parser.rs:14:use decimalx::{Currency, Decimal, Price, Qty};
+crates/adapters/exchange/okx/src/rest.rs:469:fn format_decimal(d: decimalx::Decimal) -> String {
+crates/adapters/exchange/okx/src/rest.rs:509:    use decimalx::Decimal;
+crates/adapters/exchange/okx/src/ws.rs:17:use decimalx::{Decimal, Price, Qty};
+crates/adapters/storage/taos/src/lib.rs:1001:        use decimalx::Decimal;
+crates/adapters/storage/taos/src/lib.rs:123:    use decimalx::Decimal;
+crates/adapters/storage/taos/src/lib.rs:24://! `bid`/`ask` 以 NCHAR 字符串形式存储 [`decimalx::Decimal`] 的精确十进制表示
+crates/adapters/storage/taos/src/lib.rs:254:    use decimalx::Price;
+crates/adapters/storage/taos/src/lib.rs:410:    use decimalx::Price;
+crates/adapters/storage/taos/src/lib.rs:728:    use decimalx::{Decimal, Price};
+crates/domain/core/src/lib.rs:154:    use decimalx::Decimal;
+crates/domain/core/src/lib.rs:171:    use decimalx::Price;
+crates/domain/core/src/lib.rs:7:use decimalx::Qty;
+crates/domain/exchange/src/lib.rs:23:use decimalx::{Price, Qty};
+crates/domain/exchange/src/lib.rs:88:    use decimalx::Decimal;
+crates/domain/exchange/src/venue_safety.rs:20:use decimalx::{Decimal, RoundingStrategy};
+crates/domain/exchange/src/venue_safety.rs:633:/// 全程 `decimalx::Decimal`，禁止 `f64`。算术失败 fail-closed（拒绝）。
+crates/domain/ledger/src/file_journal.rs:14:use decimalx::Decimal;
+crates/domain/ledger/src/ledger.rs:20:/// 金额路径一律使用 [`decimalx::Decimal`] 定点算术，禁止 `f32`/`f64`。
+crates/domain/ledger/src/ledger.rs:3:use decimalx::Decimal;
+crates/domain/ledger/src/recon.rs:8:use decimalx::Decimal;
+crates/domain/macro/src/lib.rs:24:use decimalx as _decimalx;
+crates/domain/market/benches/orderbook_bench.rs:3:use decimalx::{Decimal, Price, Qty};
+crates/domain/market/src/lib.rs:18:use decimalx::{Decimal, Price, Qty};
+crates/domain/market/src/lib.rs:210:    use decimalx::{Decimal, Price, Qty};
+crates/test-support/contracts/tests/suite_self_tests.rs:17:use decimalx::{Decimal, Price, Qty};
+crates/types/canonical/src/lib.rs:5:use decimalx::{Decimal, Price, Qty};
+crates/types/canonical/src/lib.rs:9:pub use decimalx::Money;
+crates/types/decimal/benches/decimal_bench.rs:2:use decimalx::{Decimal, RoundingStrategy};
+crates/types/decimal/tests/fuzz.rs:14:use decimalx::{Decimal, RoundingStrategy};
+tools/schema_codegen/src/sql.rs:140:        "// DECIMAL/NUMERIC → decimalx::Decimal（ADR-006：禁止 f64 承载金额/价格/数量）。\n\n",
+tools/schema_codegen/src/sql.rs:187:        assert_eq!(sql_type_to_rust("DECIMAL"), "decimalx::Decimal");
+tools/schema_codegen/src/sql.rs:188:        assert_eq!(sql_type_to_rust("NUMERIC"), "decimalx::Decimal");
+tools/schema_codegen/src/sql.rs:189:        assert_eq!(sql_type_to_rust("NUMERIC(38,18)"), "decimalx::Decimal");
+tools/schema_codegen/src/sql.rs:190:        assert_eq!(sql_type_to_rust("decimal(38, 18)"), "decimalx::Decimal");
+tools/schema_codegen/src/sql.rs:20:/// `decimalx::Decimal`（仓库金额/价格/数量唯一定义点）。
+tools/schema_codegen/src/sql.rs:265:        // DOUBLE 仍为显式非金融浮点 → f64；DECIMAL/NUMERIC → decimalx::Decimal
+tools/schema_codegen/src/sql.rs:272:        assert!(code.contains("pub bid: decimalx::Decimal,"));
+tools/schema_codegen/src/sql.rs:298:        assert!(code.contains("pub price: decimalx::Decimal,"));
+tools/schema_codegen/src/sql.rs:299:        assert!(code.contains("pub volume: decimalx::Decimal,"));
+tools/schema_codegen/src/sql.rs:38:        "DECIMAL" | "NUMERIC" => "decimalx::Decimal",
+
+## Panicking operator surface (decimalx)
+176:    pub fn rescale(self, target_scale: u8, strategy: RoundingStrategy) -> Decimal {
+178:            .expect("decimal rescale overflow")
+361:impl Add for Decimal {
+364:        self.checked_add(other).expect("decimal add overflow")
+368:impl Sub for Decimal {
+371:        self.checked_sub(other).expect("decimal sub overflow")
+375:impl Mul for Decimal {
+378:        self.checked_mul(other).expect("decimal mul overflow")
+693:    fn rescale_expand_and_shrink() {
+710:    fn rescale_half_up_midpoint() {
+
+## Public field construction (new / struct lit) outside decimal
+crates/domain/market/src/lib.rs:215:                price: Price(Decimal::new((100 + i as i128) * 100, 2)),
+crates/domain/market/src/lib.rs:216:                qty: Qty(Decimal::new(10, 2)),
+crates/domain/market/src/lib.rs:221:                price: Price(Decimal::new((101 + i as i128) * 100, 2)),
+crates/domain/market/src/lib.rs:222:                qty: Qty(Decimal::new(10, 2)),
+crates/types/canonical/src/lib.rs:134:            price: Price(Decimal::new(50000, 0)),
+crates/types/canonical/src/lib.rs:135:            qty: Qty(Decimal::new(1, 0)),
+crates/domain/market/benches/orderbook_bench.rs:10:            price: Price(Decimal::new(100 + i as i128, 2)),
+crates/domain/market/benches/orderbook_bench.rs:11:            qty: Qty(Decimal::new(10, 2)),
+crates/domain/market/benches/orderbook_bench.rs:16:            price: Price(Decimal::new(101 + i as i128, 2)),
+crates/domain/market/benches/orderbook_bench.rs:17:            qty: Qty(Decimal::new(10, 2)),
+crates/domain/core/src/lib.rs:165:            price: Price(Decimal::new(50000, 0)),
+crates/domain/core/src/lib.rs:166:            qty: Qty(Decimal::new(1, 0)),
+crates/domain/core/src/lib.rs:266:            qty: Qty(Decimal::new(2, 0)),
+crates/domain/core/src/lib.rs:267:            entry_price: Price(Decimal::new(49000, 0)),
+crates/domain/core/src/lib.rs:281:            price: Price(Decimal::new(3000, 0)),
+crates/domain/core/src/lib.rs:282:            qty: Qty(Decimal::new(5, 1)),
+crates/domain/ledger/src/ledger.rs:559:        (0i128..1_000_000i128, 0u8..=4u8).prop_map(|(m, s)| Decimal::new(m, s).to_string())
+crates/adapters/exchange/binance/src/parser.rs:57:    Ok(Decimal::new(mantissa, scale))
+crates/adapters/exchange/binance/src/parser.rs:236:/// 只保留资产名为 3 个大写字母的条目（`Currency([u8;3])` 的 DTO 限制，
+crates/adapters/exchange/binance/src/parser.rs:259:        out.push(canonical::Money { amount, currency });
+crates/adapters/exchange/binance/src/parser.rs:328:        assert_eq!(d, Decimal::new(100, 0));
+crates/adapters/exchange/binance/src/parser.rs:334:        assert_eq!(d, Decimal::new(300005, 1));
+crates/adapters/exchange/binance/src/parser.rs:340:        assert_eq!(d, Decimal::new(1, 3));
+crates/adapters/exchange/binance/src/parser.rs:346:        assert_eq!(d, Decimal::new(-15, 1));
+crates/adapters/exchange/binance/src/parser.rs:373:        assert_eq!(tick.bid, Price(Decimal::new(2535190000, 8)));
+crates/adapters/exchange/binance/src/parser.rs:374:        assert_eq!(tick.ask, Price(Decimal::new(2536520000, 8)));
+crates/adapters/exchange/binance/src/parser.rs:399:        assert_eq!(trade.price, Price(Decimal::new(1, 3)));
+crates/adapters/exchange/binance/src/parser.rs:400:        assert_eq!(trade.qty, Qty(Decimal::new(100, 0)));
+crates/adapters/exchange/binance/src/parser.rs:418:                price: Price(Decimal::new(24, 4)),
+crates/adapters/exchange/binance/src/parser.rs:419:                qty: Qty(Decimal::new(10, 0))
+crates/adapters/exchange/binance/src/parser.rs:425:                price: Price(Decimal::new(26, 4)),
+crates/adapters/exchange/binance/src/parser.rs:426:                qty: Qty(Decimal::new(100, 0))
+crates/adapters/exchange/binance/src/parser.rs:527:        assert_eq!(meta.tick_size, Decimal::new(1, 2));
+crates/adapters/exchange/binance/src/parser.rs:528:        assert_eq!(meta.min_qty, Qty(Decimal::new(1, 3)));
+crates/adapters/exchange/binance/src/lib.rs:569:            price: Price(Decimal::new(50000, 0)),
+crates/adapters/exchange/binance/src/lib.rs:570:            qty: Qty(Decimal::new(1, 0)),
+crates/adapters/exchange/binance/src/lib.rs:680:            price: Price(Decimal::new(50000, 0)),
+crates/adapters/exchange/binance/src/lib.rs:681:            qty: Qty(Decimal::new(1, 0)),
+crates/adapters/exchange/binance/src/lib.rs:776:            price: Price(Decimal::new(10_000, 0)), // 远低于市价，不会成交
+crates/adapters/exchange/binance/src/lib.rs:777:            qty: Qty(Decimal::new(1, 0)),
+crates/adapters/exchange/okx/src/ws.rs:326:                price: Price(Decimal::new(100, 0)),
+crates/adapters/exchange/okx/src/ws.rs:327:                qty: Qty(Decimal::new(2, 0)),
+crates/adapters/exchange/okx/src/ws.rs:330:                price: Price(Decimal::new(101, 0)),
+crates/adapters/exchange/okx/src/ws.rs:331:                qty: Qty(Decimal::new(3, 0)),
+crates/adapters/exchange/okx/src/ws.rs:339:                    price: Price(Decimal::new(100, 0)),
+crates/adapters/exchange/okx/src/ws.rs:343:                    price: Price(Decimal::new(99, 0)),
+crates/adapters/exchange/okx/src/ws.rs:344:                    qty: Qty(Decimal::new(4, 0)),
+crates/adapters/exchange/okx/src/ws.rs:348:                price: Price(Decimal::new(101, 0)),
+crates/adapters/exchange/okx/src/ws.rs:349:                qty: Qty(Decimal::new(5, 0)),
+crates/adapters/exchange/okx/src/ws.rs:355:        assert_eq!(merged.bids[0].price, Price(Decimal::new(99, 0)));
+crates/adapters/exchange/okx/src/ws.rs:356:        assert_eq!(merged.asks[0].qty, Qty(Decimal::new(5, 0)));
+crates/adapters/exchange/okx/src/lib.rs:602:            price: Price(Decimal::new(50000, 0)),
+crates/adapters/exchange/okx/src/lib.rs:603:            qty: Qty(Decimal::new(1, 0)),
+crates/adapters/exchange/okx/src/lib.rs:713:            price: Price(Decimal::new(50000, 0)),
+crates/adapters/exchange/okx/src/lib.rs:714:            qty: Qty(Decimal::new(1, 0)),
+crates/adapters/exchange/okx/src/lib.rs:814:            price: Price(Decimal::new(10_000, 0)), // 远低于市价，不会成交
+crates/adapters/exchange/okx/src/lib.rs:815:            qty: Qty(Decimal::new(1, 3)),
+crates/adapters/exchange/binance/src/rest.rs:335:/// `Decimal { mantissa: 300005, scale: 1 }` → `"30000.5"`。
+crates/adapters/exchange/binance/src/rest.rs:336:/// `Decimal { mantissa: 100, scale: 0 }` → `"100"`。
+crates/adapters/exchange/binance/src/rest.rs:430:        assert_eq!(format_decimal(Decimal::new(100, 0)), "100");
+crates/adapters/exchange/binance/src/rest.rs:435:        assert_eq!(format_decimal(Decimal::new(300005, 1)), "30000.5");
+crates/adapters/exchange/binance/src/rest.rs:440:        assert_eq!(format_decimal(Decimal::new(1, 3)), "0.001");
+crates/adapters/exchange/binance/src/rest.rs:446:        assert_eq!(format_decimal(Decimal::new(100, 2)), "1");
+crates/adapters/exchange/binance/src/rest.rs:451:        assert_eq!(format_decimal(Decimal::new(-15, 1)), "-1.5");
+crates/adapters/storage/taos/src/lib.rs:181:        Some(Decimal::new(mantissa, scale))
+crates/adapters/storage/taos/src/lib.rs:733:            bid: Price(Decimal::new(100, 0)),
+crates/adapters/storage/taos/src/lib.rs:734:            ask: Price(Decimal::new(101, 0)),
+crates/adapters/storage/taos/src/lib.rs:937:                        bid: Price(Decimal::new(100, 0)),
+crates/adapters/storage/taos/src/lib.rs:938:                        ask: Price(Decimal::new(102, 0)),
+crates/adapters/storage/taos/src/lib.rs:943:                        bid: Price(Decimal::new(99, 0)),
+crates/adapters/storage/taos/src/lib.rs:944:                        ask: Price(Decimal::new(101, 0)),
+crates/adapters/storage/taos/src/lib.rs:1005:            let d = Decimal::new(12345, 0);
+crates/adapters/storage/taos/src/lib.rs:1012:            let d = Decimal::new(12345, 2); // 123.45
+crates/adapters/storage/taos/src/lib.rs:1019:            let d = Decimal::new(-1, 3); // -0.001
+crates/adapters/storage/taos/src/lib.rs:1033:            assert_eq!(parse_decimal("42"), Some(Decimal::new(42, 0)));
+crates/adapters/exchange/okx/src/parser.rs:58:    Ok(Decimal::new(mantissa, scale))
+crates/adapters/exchange/okx/src/parser.rs:263:/// 只保留 3 字节大写资产（`Currency([u8;3])` DTO 限制，见 ADR-007）；
+crates/adapters/exchange/okx/src/parser.rs:287:        out.push(Money { amount, currency });
+crates/adapters/exchange/okx/src/parser.rs:451:        assert_eq!(d, Decimal::new(100, 0));
+crates/adapters/exchange/okx/src/parser.rs:457:        assert_eq!(d, Decimal::new(300005, 1));
+
+## float mentions near consumers
+crates/adapters/exchange/binance/src/parser.rs:4://! - `f64` → `decimalx::Decimal`（杜绝浮点参与金额运算，ADR-006）
+crates/domain/ledger/src/ledger.rs:20:/// 金额路径一律使用 [`decimalx::Decimal`] 定点算术，禁止 `f32`/`f64`。
+crates/domain/ledger/src/ledger.rs:368:        // 定点累加：0.1 + 0.2 = 0.3（若用 f64 会有 0.3000…4 展示风险）
+crates/domain/exchange/src/venue_safety.rs:633:/// 全程 `decimalx::Decimal`，禁止 `f64`。算术失败 fail-closed（拒绝）。
+crates/adapters/storage/taos/src/lib.rs:25://! （`mantissa × 10^(-scale)`），避免 DOUBLE 精度损失与 f64 参与金额运算（ADR-006）。

@@ -1,0 +1,120 @@
+warning: --branch option is unstable
+info: cargo-llvm-cov currently setting cfg(coverage) and cfg(coverage_nightly); you can opt-out it by passing --no-cfg-coverage and --no-cfg-coverage-nightly
+I will run `rustup component add llvm-tools-preview --toolchain nightly-x86_64-unknown-linux-gnu` to install the `llvm-tools-preview` component for the selected toolchain.
+Proceed? [Y/n] info: downloading component llvm-tools
+   Compiling libc v0.2.186
+   Compiling cfg-if v1.0.4
+   Compiling getrandom v0.3.4
+   Compiling proc-macro2 v1.0.106
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.46
+   Compiling zerocopy v0.8.54
+   Compiling getrandom v0.4.3
+   Compiling rustix v1.1.4
+   Compiling linux-raw-sys v0.12.1
+   Compiling bitflags v2.13.0
+   Compiling autocfg v1.5.1
+   Compiling fastrand v2.4.1
+   Compiling once_cell v1.21.4
+   Compiling thiserror v2.0.18
+   Compiling quick-error v1.2.3
+   Compiling fnv v1.0.7
+   Compiling bit-vec v0.8.0
+   Compiling regex-syntax v0.8.11
+   Compiling unarray v0.1.4
+   Compiling static_assertions v1.1.0
+   Compiling num-traits v0.2.19
+   Compiling bit-set v0.8.0
+   Compiling syn v2.0.118
+   Compiling wait-timeout v0.2.1
+   Compiling rand_core v0.9.5
+   Compiling rand v0.9.5
+   Compiling rand_xorshift v0.4.0
+   Compiling tempfile v3.27.0
+   Compiling rusty-fork v0.3.1
+   Compiling thiserror-impl v2.0.18
+   Compiling kernel v0.1.1 (/home/workspace/xhyper.rs/crates/kernel)
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.9.0
+   Compiling proptest v1.11.0
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.73s
+     Running unittests src/lib.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/kernel-c54ca73ad7ae6456)
+
+running 21 tests
+test clock::tests::clock_error_names_match_spec ... ok
+test clock::tests::from_clock_elapsed_single_arg_spec_shape ... ok
+test clock::tests::monotonic_checked_duration_since_none_on_reverse ... ok
+test clock::tests::system_clock_not_copy ... ok
+test clock::tests::timestamp_checked_add_sub_and_since ... ok
+test clock::tests::system_clock_returns_positive ... ok
+test clock::tests::timestamp_preserves_nanoseconds_without_sentinel_failure_value ... ok
+test error::tests::clock_error_maps_all_variants_to_unavailable ... ok
+test error::tests::display_covers_all_kinds ... ok
+test error::tests::display_excludes_source_details ... ok
+test error::tests::error_kind_is_copy_hash ... ok
+test error::tests::kinds_and_constructors ... ok
+test error::tests::static_context_is_borrowed ... ok
+test lifecycle::tests::guard_drop_does_not_trigger ... ok
+test error::tests::with_source_preserves_kind ... ok
+test lifecycle::tests::legal_and_illegal_transitions ... ok
+test lifecycle::tests::trigger_idempotent_wait ... ok
+test lifecycle::tests::trigger_then_is_triggered_consistent ... ok
+test lifecycle::tests::shutdown_multi_observer ... ok
+test clock::tests::system_clock_monotonic_advances_and_interval_usable ... ok
+test lifecycle::tests::poison_recovery_into_inner ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/api_compile.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/api_compile-06873085fb8d7c54)
+
+running 1 test
+test public_constructors_and_queries_compile ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/clock_contract.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/clock_contract-c212aec6f3b26716)
+
+running 9 tests
+test component_state_transition_matrix ... ok
+test system_clock_now_and_mono_contract ... ok
+test system_clock_series_non_decreasing ... ok
+test timestamp_min_max_and_u64_edges ... ok
+test error_kind_constructor_matrix ... ok
+test mono_elapsed_reverse_none ... ok
+test timestamp_checked_add_sub_agree ... ok
+test timestamp_reverse_since_is_none ... ok
+test timestamp_near_i64_bounds ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/lifecycle_concurrency-5bd1a944cf8c4348)
+
+running 3 tests
+test wait_after_trigger_returns ... ok
+test multi_waiter_all_observe_trigger ... ok
+test concurrent_regression_1000_cycles ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+
+     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/lifecycle_concurrency_loom-c20915dc734c651b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/public_api.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/public_api-900a9d7d2928f885)
+
+running 3 tests
+test error_kind_query_surface ... ok
+test shutdown_trigger_wakes ... ok
+test clock_contract_system ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+Filename                      Regions    Missed Regions     Cover   Functions  Missed Functions  Executed       Lines      Missed Lines     Cover    Branches   Missed Branches     Cover
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+clock.rs                          226                 8    96.46%          20                 1    95.00%         117                 3    97.44%           2                 0   100.00%
+error.rs                          368                 2    99.46%          40                 0   100.00%         213                 0   100.00%           0                 0         -
+lifecycle.rs                      228                 4    98.25%          19                 2    89.47%         145                 2    98.62%           6                 0   100.00%
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+TOTAL                             822                14    98.30%          79                 3    96.20%         475                 5    98.95%           8                 0   100.00%
