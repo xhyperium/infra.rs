@@ -37,10 +37,7 @@ mod tests {
 
     #[test]
     fn 错误显示() {
-        assert_eq!(
-            Error::InvalidArgument("缺少字段".into()).to_string(),
-            "参数无效: 缺少字段"
-        );
+        assert_eq!(Error::InvalidArgument("缺少字段".into()).to_string(), "参数无效: 缺少字段");
     }
 
     #[test]

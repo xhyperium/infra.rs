@@ -1,0 +1,29 @@
+# Clippy 配置 — 强制宪章规范的 lint 规则
+
+# ── 代码质量 ──────────────────────────────
+
+# 禁止无注释的 allow 属性
+allow-dirty = ["missing_safety_doc"]
+
+# ── unsafe 代码 ───────────────────────────
+
+# unsafe 代码块必须有 SAFETY 注释
+missing-safety-doc = "deny"
+
+# ── 文档 ──────────────────────────────────
+
+# 公共项缺少文档时警告
+missing-docs = "warn"
+
+# 文档中的标识符用反引号包裹
+doc-markdown = "warn"
+
+# ── 错误处理 ──────────────────────────────
+
+# unwrap/expect 仅允许在测试代码中（由 check-constitution.sh 强制执行）
+# Clippy 本身不禁止 unwrap，交由脚本做全局检查
+
+# ── 禁止项 ────────────────────────────────
+
+# 禁止 todo，必须用 issue 链接
+todo = "warn"

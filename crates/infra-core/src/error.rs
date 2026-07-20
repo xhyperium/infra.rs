@@ -18,9 +18,7 @@ impl fmt::Display for ChainNode {
 
 impl std::error::Error for ChainNode {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        self.source
-            .as_ref()
-            .map(|n| n as &(dyn std::error::Error + 'static))
+        self.source.as_ref().map(|n| n as &(dyn std::error::Error + 'static))
     }
 }
 
@@ -41,10 +39,7 @@ fn rebuild_io_error(kind: io::ErrorKind, chain: Vec<String>) -> io::Error {
     let mut source: Option<Box<ChainNode>> = None;
     // chain[0] 是最深层，chain[last] 是最顶层
     for msg in chain.iter() {
-        source = Some(Box::new(ChainNode {
-            message: msg.clone(),
-            source,
-        }));
+        source = Some(Box::new(ChainNode { message: msg.clone(), source }));
     }
 
     if let Some(node) = source {
@@ -358,10 +353,7 @@ mod tests {
         };
         assert_eq!(io_err.kind(), io::ErrorKind::NotFound);
         assert!(StdError::source(io_err).is_some());
-        assert_eq!(
-            StdError::source(io_err).unwrap().to_string(),
-            "connection refused"
-        );
+        assert_eq!(StdError::source(io_err).unwrap().to_string(), "connection refused");
     }
 
     #[test]
