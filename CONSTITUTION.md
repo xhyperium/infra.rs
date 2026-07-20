@@ -239,14 +239,14 @@ make check # 等效: ./scripts/check-constitution.sh
 
 ```bash
 ./scripts/worktree.sh create feat/my-feature
-cd .worktree/feat/my-feature
+cd .worktrees/feat/my-feature
 ```
 
 - 禁止在 main 工作区创建/切换功能分支
 - main 工作区仅用于 review、构建、测试（只读操作）
-- Worktree 目录：`.worktree/<type>/<branch>/`（已 gitignore）
+- Worktree 目录：`.worktrees/<type>/<branch>/`（已 gitignore）
 - 实质性任务（多文件或大 diff）应使用独立分支；推荐 git worktree 隔离
-- Worktree 规范路径：`.worktree/workspaces/<branch-name>`（分支名中的 `/` 可映射为 `-`）
+- Worktree 规范路径：`.worktrees/workspaces/<branch-name>`（分支名中的 `/` 可映射为 `-`）
 - 禁止多任务混用同一 worktree / 分支
 
 #### 6.0.6 与 AI 协作

@@ -19,8 +19,8 @@ if [[ "$(basename "$REPO_ROOT")" != "infra.rs" ]]; then
 fi
 
 # 在 worktree 中
-if [[ "$CURRENT" == "$REPO_ROOT/.worktree/"* ]]; then
-    rel="${CURRENT#$REPO_ROOT/.worktree/}"
+if [[ "$CURRENT" == "$REPO_ROOT/.worktrees/"* ]]; then
+    rel="${CURRENT#$REPO_ROOT/.worktrees/}"
     echo "${rel%%/*}"
     exit 0
 fi

@@ -104,4 +104,4 @@ desktop.ini
 # Local cargo target/cache (infra.rs)
 .cargo/target/
 .cargo/cache/
-.worktree/
+.worktrees/

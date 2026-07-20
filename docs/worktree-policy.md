@@ -31,14 +31,14 @@
 ./scripts/worktree.sh create feat/my-feature
 
 # 方式 B: 手动
-git worktree add .worktree/feat/my-feature -b feat/my-feature origin/main
+git worktree add .worktrees/feat/my-feature -b feat/my-feature origin/main
 ```
 
 ### 2. 目录约定
 
 ```
 infra.rs/                      # 主工作区 (main)
-└── .worktree/                 # Worktree 根（已 gitignore）
+└── .worktrees/                 # Worktree 根（已 gitignore）
     ├── feat/                  # 功能分支
     │   └── my-feature/
     ├── fix/                   # 修复分支

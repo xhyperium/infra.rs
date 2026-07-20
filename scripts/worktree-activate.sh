@@ -51,7 +51,7 @@ wt() {
 # Tab 补全
 _wt_complete() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
-    COMPREPLY=($(compgen -W "$(ls "$REPO_ROOT/.worktree/" 2>/dev/null)" -- "$cur"))
+    COMPREPLY=($(compgen -W "$(ls "$REPO_ROOT/.worktrees/" 2>/dev/null)" -- "$cur"))
 }
 complete -F _wt_complete wt 2>/dev/null || true
 
@@ -70,8 +70,8 @@ __wt_prompt() {
     local current_pwd="$PWD"
 
     # 判断是否在 worktree 中
-    if [[ "$current_pwd" == "$REPO_ROOT/.worktree/"* ]]; then
-        local rel="${current_pwd#$REPO_ROOT/.worktree/}"
+    if [[ "$current_pwd" == "$REPO_ROOT/.worktrees/"* ]]; then
+        local rel="${current_pwd#$REPO_ROOT/.worktrees/}"
         local branch_name="${rel%%/*}"
         case "$WT_PROMPT_STYLE" in
             icon)  wt_info="🔀$branch_name" ;;
