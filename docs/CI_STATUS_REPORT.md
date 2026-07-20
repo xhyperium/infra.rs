@@ -114,7 +114,7 @@
 ### 迁移清单
 
 | 旧脚本 (.sh) | 新脚本 (.mjs) | 状态 |
-|-------------|-------------|------|
+|----|----|----|
 | `scripts/check-constitution.sh` | `scripts/check-constitution.mjs` | ✓ |
 | `scripts/check-pr-template.sh` | `scripts/check-pr-template.mjs` | ✓ |
 | `scripts/worktree.sh` | `scripts/worktree.mjs` | ✓ |
@@ -125,7 +125,7 @@
 ### CI 工作流验证
 
 | 工作流 | 脚本引用 | 解释器 | 路径过滤 | 状态 |
-|--------|---------|--------|---------|------|
+|----|----|----|----|----|
 | `constitution.yml` | `./scripts/check-constitution.mjs` | shebang (`#!/usr/bin/env node`) | `scripts/check-constitution.mjs` | ✓ |
 | `pr-template-check.yml` | `node scripts/check-pr-template.mjs` | `node` (显式) | (全部 PR) | ✓ |
 | `validation.yml` | `node scripts/check.mjs` | `node` (显式) | — | ✓ |

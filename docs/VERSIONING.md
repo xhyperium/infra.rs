@@ -7,7 +7,7 @@
 
 ## 版本体系
 
-```text
+```
 项目版本 (Project)          CONSTITUTION 版本 (Governance)
 ├── Cargo.toml              ├── CONSTITUTION.md
 ├── CHANGELOG.md            └── .agents/ssot/SSOT.md
@@ -15,13 +15,13 @@
                              crates/AGENTS.md (独立)
 ```
 
-| 版本类型 | 载体 | 格式 | 示例 | 更新时机 |
-|----------|-----------------------|-----------------------------|--------|----------------|
-| 项目版本 | `Cargo.toml` | SemVer | `0.2.0` | 每次 release |
-| 宪章版本 | `CONSTITUTION.md` | vX.Y.Z | `v1.5.0` | 每次修订 |
-| Crate 版本 | `crates/*/Cargo.toml` | SemVer (`workspace = true`) | `0.2.0` | 跟随 workspace |
-| 工具版本 | `Cargo.lock` | 锁定版本 | — | `cargo update` |
-| 文档附版 | `docs/*.md` | 参考宪章版本 | — | 宪章修订时同步 |
+| 版本类型   | 载体                  | 格式                        | 示例     | 更新时机       |
+| ---------- | --------------------- | --------------------------- | -------- | -------------- |
+| 项目版本   | `Cargo.toml`          | SemVer                      | `0.2.0`  | 每次 release   |
+| 宪章版本   | `CONSTITUTION.md`     | vX.Y.Z                      | `v1.5.0` | 每次修订       |
+| Crate 版本 | `crates/*/Cargo.toml` | SemVer (`workspace = true`) | `0.2.0`  | 跟随 workspace |
+| 工具版本   | `Cargo.lock`          | 锁定版本                    | —        | `cargo update` |
+| 文档附版   | `docs/*.md`           | 参考宪章版本                | —        | 宪章修订时同步 |
 
 ## 版本同步规则
 
@@ -58,15 +58,14 @@ CI 中验证：
 
 ## 当前版本快照 (2026-07-21)
 
-| 载体                          | 版本     |
-| ----------------------------- | -------- |
-| `Cargo.toml` (项目)           | `0.3.0`  |
-| `package.json` (npm) | `0.3.0` |
-| `CHANGELOG.md` (最新)         | `0.3.0`  |
-| `CONSTITUTION.md` (宪章)      | `v1.4.0` |
-| `.agents/ssot/SSOT.md`        | `v1.1.0` |
-| `infra-core` (crate)          | `0.1.0`  |
-| `crates/AGENTS.md`            | `v1.0.0` |
+| 载体 | 版本 |
+|----|----|
+| `Cargo.toml` (项目) | `0.3.0` |
+| `CHANGELOG.md` (最新) | `0.3.0` |
+| `CONSTITUTION.md` (宪章) | `v1.4.0` |
+| `.agents/ssot/SSOT.md` | `v1.1.0` |
+| `infra-core` (crate) | `0.1.0` |
+| `crates/AGENTS.md` | `v1.0.0` |
 | `crates/infra-core/AGENTS.md` | `v1.0.0` |
 
 版本号已统一，下次发布按 R-V2 规则递增。
