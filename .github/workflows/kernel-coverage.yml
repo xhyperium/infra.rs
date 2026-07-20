@@ -1,0 +1,53 @@
+name: Kernel Coverage
+
+# kernel crate 分支覆盖率门禁（RES-TEST-014）
+# 阈值: lines >= 95%, branches >= 90%, functions >= 95%
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/kernel/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/kernel-coverage.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "crates/kernel/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/kernel-coverage.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  branch-coverage:
+    name: 分支覆盖率 (≥90%)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - name: 安装 cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - name: 分支覆盖率门禁
+        run: |
+          cargo llvm-cov \
+            -p kernel \
+            --all-features \
+            --branch \
+            --fail-under-lines 95 \
+            --fail-under-functions 95 \
+            --fail-under-branches 90
