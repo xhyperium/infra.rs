@@ -53,7 +53,7 @@ infra.rs/
 ## Workspace
 
 | Crate | 说明 |
-| ------- | ------ |
+|-------|------|
 | `infra-core` | 核心基础设施库（起点脚手架） |
 
 Rust edition `2024`，MSRV 见 `Cargo.toml` 中 `rust-version`。
@@ -71,19 +71,19 @@ Rust edition `2024`，MSRV 见 `Cargo.toml` 中 `rust-version`。
 完整索引见 [docs/README.md](docs/README.md)。
 
 | 文档 | 说明 |
-| ------ | ------ |
+|------|------|
 | [CONSTITUTION.md](CONSTITUTION.md) | 工程宪章 — 核心价值观、架构原则、代码标准 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 架构文档 — 结构、Crate、CI/CD、治理 |
-| [CONFIG_SUMMARY.md](docs/CONFIG_SUMMARY.md) | CI 配置、分支保护规则、测试验证记录 |
-| [CI_STATUS_REPORT.md](docs/CI_STATUS_REPORT.md) | CI 工作流矩阵、触发条件与运行统计 |
 | [ASD-STE100.md](docs/ASD-STE100.md) | 英文技术文档规范（ASD-STE100 / STE） |
 | [编码与语言约定.md](docs/编码与语言约定.md) | 中文编码与文档语言约定 |
-| [DDR/](docs/decisions/) | 架构决策记录（DDR-001 ~ DDR-009） |
+| [CI_STATUS_REPORT.md](docs/CI_STATUS_REPORT.md) | CI 工作流矩阵、触发条件与运行统计 |
+| [CONFIG_SUMMARY.md](docs/CONFIG_SUMMARY.md) | CI 配置、分支保护规则、测试验证记录 |
+| [DDR 索引](docs/decisions/) | 架构决策记录（DDR-001 ~ DDR-009） |
 
 ## AI 协作
 
 | 系统 | 角色 |
-| ------ | ------ |
+|------|------|
 | Claude Code | 主执行：编码、审查、交付 |
 | Codex | 编排与派工 |
 | Copilot | 补充建议 |
