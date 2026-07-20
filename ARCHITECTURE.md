@@ -41,7 +41,7 @@ infra.rs/
 │
 ├── scripts/                   # Harness 脚本
 │   ├── check.mjs              # 健康检查
-│   ├── check-constitution.sh  # 宪章合规验证
+│   ├── check-constitution.mjs  # 宪章合规验证
 │   ├── gc-scan.mjs            # 垃圾回收扫描
 │   └── worktree-policy.mjs    # Worktree 策略
 │

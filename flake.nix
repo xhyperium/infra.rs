@@ -30,7 +30,7 @@
 
         # Starship worktree 模块：在 prompt 中显示 infra.rs worktree 状态
         starshipWtModule = pkgs.writeShellScriptBin "starship-wt" ''
-          exec ${./scripts/starship-wt.sh}
+          exec ${./scripts/starship-wt.mjs}
         '';
 
         # Starship 配置（含 worktree 自定义模块）
@@ -78,7 +78,7 @@
             export STARSHIP_CACHE="$TMPDIR/starship-cache"
 
             # Worktree 别名
-            source ${./scripts/worktree-activate.sh}
+            eval "$(${./scripts/worktree-activate.mjs})"
 
             echo ""
             echo "  infra.rs dev shell"

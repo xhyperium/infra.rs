@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * worktree.mjs — Git Worktree 管理工具（替代 worktree.sh）
+ * worktree.mjs — Git Worktree 管理工具（替代 worktree.mjs）
  *
  * 职责: 创建/列出/删除/清理 Git Worktree。
  *
@@ -13,7 +13,7 @@
  *   node scripts/worktree.mjs current
  *
  * SSOT: CONSTITUTION.md §6.0.5 / docs/worktree-policy.md
- * 替代: scripts/worktree.sh (已迁移)
+ * 替代: scripts/worktree.mjs (已迁移)
  */
 
 import { execSync } from "child_process";

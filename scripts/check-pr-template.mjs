@@ -9,7 +9,7 @@
  *   PR_BODY="..." node scripts/check-pr-template.mjs
  *
  * SSOT: .github/PULL_REQUEST_TEMPLATE.md / CONSTITUTION.md §6.1
- * 替代: scripts/check-pr-template.sh (已迁移)
+ * 替代: scripts/check-pr-template.mjs (已迁移)
  */
 
 const body = process.env.PR_BODY || "";

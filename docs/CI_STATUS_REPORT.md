@@ -56,7 +56,7 @@
 
 | Job | 说明 | 超时 |
 | ----- | ------ | ------ |
-| Constitution Check | `./scripts/check-constitution.sh` (rustfmt + clippy + test + doc + cargo-deny + unsafe/unwrap/naming 审计) | 15m |
+| Constitution Check | `./scripts/check-constitution.mjs` (rustfmt + clippy + test + doc + cargo-deny + unsafe/unwrap/naming 审计) | 15m |
 
 ### CodeQL
 

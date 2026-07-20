@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * starship-wt.mjs — Starship Worktree 模块（替代 starship-wt.sh）
+ * starship-wt.mjs — Starship Worktree 模块（替代 starship-wt.mjs）
  *
  * 职责: 输出当前 worktree 状态供 Starship 自定义模块使用。
  *
@@ -14,7 +14,7 @@
  *   (无输出)    — 不在 infra.rs 仓库中
  *
  * SSOT: starship.toml
- * 替代: scripts/starship-wt.sh (已迁移)
+ * 替代: scripts/starship-wt.mjs (已迁移)
  */
 
 import { execSync } from "child_process";

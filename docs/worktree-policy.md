@@ -1,7 +1,7 @@
 # Git Worktree 强制开发策略
 
 > 本文档为 `CONSTITUTION.md §6.0.6` 的实施细则。
-> 工具脚本：`scripts/worktree.sh`
+> 工具脚本：`scripts/worktree.mjs`
 
 ---
 
@@ -28,7 +28,7 @@
 
 ```bash
 # 方式 A: 使用脚本
-./scripts/worktree.sh create feat/my-feature
+./scripts/worktree.mjs create feat/my-feature
 
 # 方式 B: 手动
 git worktree add .worktrees/feat/my-feature -b feat/my-feature origin/main
@@ -59,15 +59,15 @@ infra.rs/                      # 主工作区 (main)
 合并后删除 Worktree：
 
 ```bash
-./scripts/worktree.sh remove feat/my-feature
-./scripts/worktree.sh prune    # 清理残留
+./scripts/worktree.mjs remove feat/my-feature
+./scripts/worktree.mjs prune    # 清理残留
 ```
 
 ---
 
 ## CI 检查
 
-钩子脚本 `scripts/worktree.sh` 将在 session 启动时验证当前工作区是否符合规则。
+钩子脚本 `scripts/worktree.mjs` 将在 session 启动时验证当前工作区是否符合规则。
 
 ## 例外
 

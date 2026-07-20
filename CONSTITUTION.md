@@ -126,7 +126,7 @@ crates/
 
 #### 4.5.4 合规检查
 - 本地 / CI 应能检测：非 UTF-8、`U+FFFD`、明显双重编码痕迹
-- 宪章校验脚本：`./scripts/check-constitution.sh` 包含 §4.5 检查
+- 宪章校验脚本：`./scripts/check-constitution.mjs` 包含 §4.5 检查
 
 ### 4.6 文档标准：ASD-STE100（强制）
 
@@ -183,9 +183,9 @@ crates/
 - 禁止新增 `.sh` / `.bash` 脚本
 - 现有 `.sh` 脚本须逐步迁移至 `.mjs`
 - **例外**（须 shell 集成）：
-  - `worktree-activate.sh` — 需 `source` 注入函数与补全
-  - `starship-wt.sh` — Starship 调用（子进程，轻量）
-  - `worktree.sh` — 需 `cd` 改变 shell 状态
+  - `worktree-activate.mjs` — 需 `source` 注入函数与补全
+  - `starship-wt.mjs` — Starship 调用（子进程，轻量）
+  - `worktree.mjs` — 需 `cd` 改变 shell 状态
 
 理由：跨平台兼容、统一依赖（Node.js ≥ 18）、类型安全潜力。
 
@@ -199,7 +199,7 @@ crates/
 | `cargo clippy -- -D warnings` | **强制** | 代码质量 | `quality.yml` / `make lint` |
 | `cargo test` / `cargo nextest run` | **强制** | 功能正确性 | `ci-rust.yml` / `make test` |
 | `cargo-deny check` | **强制** | 安全审计 | `security.yml` / `make deny` |
-| 宪章合规性（全部） | **强制** | `scripts/check-constitution.sh` | `constitution.yml` / `make check` |
+| 宪章合规性（全部） | **强制** | `scripts/check-constitution.mjs` | `constitution.yml` / `make check` |
 | UTF-8 / 无 `U+FFFD`（§4.5） | **强制** | 编码完整性 | `constitution.yml`（已包含） |
 | Git Main First（§6.0） | **强制** | 主干唯一、PR 收敛 | 分支保护 + 宪章脚本条款检查 |
 | ASD-STE100（§4.6） | **强制** | 英文技术文档受控语言 | 审查清单 + `docs/ASD-STE100.md` |
@@ -212,7 +212,7 @@ crates/
 
 ```bash
 make ci    # 等价于: make fmt-check lint test deny
-make check # 等效: ./scripts/check-constitution.sh
+make check # 等效: ./scripts/check-constitution.mjs
 ```
 
 ---
@@ -251,7 +251,7 @@ make check # 等效: ./scripts/check-constitution.sh
 **所有活跃开发必须在独立的 Git Worktree 中进行。** 细则见 [docs/worktree-policy.md](./docs/worktree-policy.md)。
 
 ```bash
-./scripts/worktree.sh create feat/my-feature
+./scripts/worktree.mjs create feat/my-feature
 cd .worktrees/feat/my-feature
 ```
 

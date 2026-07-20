@@ -8,7 +8,7 @@
 
 let
   starshipWtScript = pkgs.writeShellScriptBin "starship-wt" ''
-    exec ${./scripts/starship-wt.sh}
+    exec ${./scripts/starship-wt.mjs}
   '';
 
   starshipWtConfig = pkgs.writeText "starship-wt.toml" ''
@@ -35,7 +35,7 @@ in pkgs.mkShell {
 
   shellHook = ''
     export STARSHIP_CONFIG="${starshipWtConfig}"
-    source ${./scripts/worktree-activate.sh} 2>/dev/null || true
+    eval "$(${./scripts/worktree-activate.mjs})" 2>/dev/null || true
     echo "infra.rs dev shell — Starship worktree module enabled"
   '';
 

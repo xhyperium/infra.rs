@@ -4,7 +4,7 @@
  * 职责: 定义 worktree 路径规范、提供合规判定和旧格式审计。
  *
  * 规范: .worktrees/<branch> (分支 / 保留为目录分隔符)
- *   - 与 worktree.sh / worktree-activate.sh 约定一致
+ *   - 与 worktree.mjs / worktree-activate.mjs 约定一致
  *
  * 审计: 检测 workspaces/ 子目录和 ~/.worktrees/ 全局旧格式残留
  *

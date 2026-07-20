@@ -10,7 +10,7 @@
  *   node scripts/check-constitution.mjs --json       # JSON 输出
  *
  * SSOT: CONSTITUTION.md / Makefile (make check)
- * 替代: scripts/check-constitution.sh (已迁移)
+ * 替代: scripts/check-constitution.mjs (已迁移)
  */
 
 import { execSync } from "child_process";

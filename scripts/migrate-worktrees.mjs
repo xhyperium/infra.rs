@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * migrate-worktrees.mjs — Worktree 路径迁移工具（替代 migrate-worktrees.sh）
+ * migrate-worktrees.mjs — Worktree 路径迁移工具（替代 migrate-worktrees.mjs）
  *
  * 职责: 将旧格式 worktree 迁移到新规范 .worktrees/<branch>。
  *
@@ -9,7 +9,7 @@
  *   node scripts/migrate-worktrees.mjs --apply     # 执行迁移
  *
  * SSOT: CONSTITUTION.md §6.0.5 / scripts/worktree-policy.mjs
- * 替代: scripts/migrate-worktrees.sh (已迁移)
+ * 替代: scripts/migrate-worktrees.mjs (已迁移)
  */
 
 import { execSync } from "child_process";

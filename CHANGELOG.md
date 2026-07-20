@@ -26,8 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **工程宪章** (`CONSTITUTION.md`): 核心价值观、架构原则、代码标准、质量门禁、AI 代理章程
 - **CI 工作流**: `validation.yml`, `quality.yml`, `ci-rust.yml`, `security.yml`, `constitution.yml`
 - **PR 模板** (`.github/PULL_REQUEST_TEMPLATE.md`): 标准化格式（类型、Issue、宪章检查清单、验证方式）
-- **PR 模板校验** (`scripts/check-pr-template.sh` + `.github/workflows/pr-template-check.yml`)
-- **宪章合规性验证** (`scripts/check-constitution.sh`): 一键运行全部强制门禁
+- **PR 模板校验** (`scripts/check-pr-template.mjs` + `.github/workflows/pr-template-check.yml`)
+- **宪章合规性验证** (`scripts/check-constitution.mjs`): 一键运行全部强制门禁
 - **Makefile**: `make check`, `make ci`, `make fmt`, `make test` 等 16 条快捷命令
 - **Git Main First** (§6.0): 强制执行主干集成与分支保护
 - **分支保护规则**: PR 强制、1 人 approve、CODEOWNERS、required status checks、线性历史
