@@ -26,4 +26,4 @@ jobs:
         with:
           tool: cargo-mutants
       - name: 运行变异测试
-        run: cargo mutants -p kernel --all-features -- --all-features
+        run: cargo mutants -p xhyper-kernel --all-features -- --all-features

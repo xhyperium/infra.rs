@@ -24,4 +24,4 @@ jobs:
           components: miri
       - uses: Swatinem/rust-cache@v2
       - name: 运行 Miri
-        run: cargo +nightly miri test -p kernel --all-features
+        run: cargo +nightly miri test -p xhyper-kernel --all-features
