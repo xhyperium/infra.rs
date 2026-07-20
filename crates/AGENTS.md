@@ -13,19 +13,23 @@
 
 ## Crate 子模块标准布局（强制）
 
-每个 workspace 成员 crate 必须采用下列目录与文件骨架。新增 crate 时先建齐骨架，再写业务代码。
+每个 workspace 成员 crate **必须**具备下列标准骨架。新增 crate 时先建齐，再写业务代码。
+
+> **规范七项（顺序固定）**  
+> `src/` · `examples/` · `docs/` · `tests/` · `CHANGELOG.md` · `AGENTS.md` · `README.md`  
+> 另加包清单 `Cargo.toml`（Cargo 硬性要求）。
 
 ```text
 crates/<crate-name>/
 ├── Cargo.toml          # 包清单（必选）
-├── README.md           # 人类可读说明：职责、用法、特性开关（必选）
-├── AGENTS.md           # 本 crate 的 Agent 行为规则（必选）
-├── CHANGELOG.md        # 本 crate 变更日志，Keep a Changelog + SemVer（必选）
-├── src/                # 库/二进制源码（必选）
+├── src/                # 源码（必选）
 │   └── lib.rs          # 库入口（lib crate 必选）
-├── tests/              # 集成测试 / 契约测试 / 公开 API 编译测试（必选目录）
-├── examples/           # 可运行示例（必选目录；暂无示例时放 .gitkeep）
-└── docs/               # crate 级设计/契约/迁移说明（必选目录；暂无文档时放 .gitkeep）
+├── examples/           # 可运行示例（必选目录；暂无内容时 .gitkeep）
+├── docs/               # crate 级设计/契约/迁移（必选目录；暂无内容时 .gitkeep）
+├── tests/              # 集成/契约/公开 API 测试（必选目录；暂无内容时 .gitkeep）
+├── CHANGELOG.md        # 本 crate 变更日志（Keep a Changelog + SemVer）（必选）
+├── AGENTS.md           # 本 crate Agent 行为规则（必选）
+└── README.md           # 职责、用法、feature（必选）
 ```
 
 ### 路径职责
@@ -34,12 +38,12 @@ crates/<crate-name>/
 |------|------|------|
 | `Cargo.toml` | 必选 | 包元数据、依赖、feature；版本跟 `workspace.package` |
 | `src/` | 必选 | 实现与单元测试（`#[cfg(test)] mod tests`） |
-| `tests/` | 必选目录 | 集成测试、跨模块契约、公开 API 稳定性 |
 | `examples/` | 必选目录 | 可 `cargo run --example` 的示例；无内容时保留 `.gitkeep` |
 | `docs/` | 必选目录 | 设计笔记、API 契约、迁移指南；不替代 rustdoc |
-| `README.md` | 必选 | 给人类与外部消费者的入口文档 |
-| `AGENTS.md` | 必选 | 本 crate 专属 Agent 规则；父级为 `crates/AGENTS.md` |
+| `tests/` | 必选目录 | 集成测试、跨模块契约、公开 API 稳定性 |
 | `CHANGELOG.md` | 必选 | 本 crate 版本变更；仓库根 `CHANGELOG.md` 记整体发布 |
+| `AGENTS.md` | 必选 | 本 crate 专属 Agent 规则；父级为 `crates/AGENTS.md` |
+| `README.md` | 必选 | 给人类与外部消费者的入口文档 |
 
 ### 分层边界（避免重复）
 
@@ -64,12 +68,12 @@ crates/<crate-name>/
 
 ### 合规现状（2026-07-21）
 
-| Crate | src | tests | examples | docs | README | AGENTS | CHANGELOG |
-|-------|:---:|:-----:|:--------:|:----:|:------:|:------:|:---------:|
+| Crate | src | examples | docs | tests | CHANGELOG | AGENTS | README |
+|-------|:---:|:--------:|:----:|:-----:|:---------:|:------:|:------:|
 | `infra-core` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `kernel`（`xhyper-kernel`） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-> `examples/` / `docs/` 在无内容时以 `.gitkeep` 占位；`infra-core/tests/` 同理（单元测试仍在 `src/`）。
+> `examples/` / `docs/` / 暂无集成测试时的 `tests/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。
 
 ---
 
@@ -142,5 +146,6 @@ crates/<crate-name>/
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
-| v1.1.0 | 2026-07-21 | 增加 crate 子模块标准布局（src/examples/docs/tests + README/AGENTS/CHANGELOG） |
+| v1.1.1 | 2026-07-21 | 锁定标准条目顺序：src → examples → docs → tests → CHANGELOG → AGENTS → README |
+| v1.1.0 | 2026-07-21 | 增加 crate 子模块标准布局（七项 + Cargo.toml） |
 | v1.0.0 | 2026-07-21 | 初始代理规则 |

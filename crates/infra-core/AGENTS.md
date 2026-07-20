@@ -46,15 +46,15 @@
 ```text
 crates/infra-core/
 ├── Cargo.toml
-├── README.md
-├── AGENTS.md
-├── CHANGELOG.md
 ├── src/
 │   ├── lib.rs          # 根模块（lint attrs + re-export）
 │   └── error.rs        # Error 类型 + serde 实现
-├── tests/              # 集成/契约测试（暂无时 .gitkeep）
 ├── examples/           # 可运行示例（暂无时 .gitkeep）
-└── docs/               # 设计/迁移文档（暂无时 .gitkeep）
+├── docs/               # 设计/迁移文档（暂无时 .gitkeep）
+├── tests/              # 集成/契约测试（暂无时 .gitkeep）
+├── CHANGELOG.md
+├── AGENTS.md
+└── README.md
 ```
 
 ---

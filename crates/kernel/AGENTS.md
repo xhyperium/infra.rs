@@ -54,21 +54,21 @@
 ```text
 crates/kernel/
 ├── Cargo.toml
-├── README.md
-├── AGENTS.md
-├── CHANGELOG.md
 ├── src/
 │   ├── lib.rs
 │   ├── clock.rs
 │   ├── error.rs
 │   └── lifecycle.rs
+├── examples/           # 暂无示例时保留 .gitkeep
+├── docs/               # 设计/迁移文档；暂无时保留 .gitkeep
 ├── tests/
 │   ├── api_compile.rs
 │   ├── clock_contract.rs
 │   ├── lifecycle_concurrency.rs
 │   └── public_api.rs
-├── examples/           # 暂无示例时保留 .gitkeep
-└── docs/               # 设计/迁移文档；暂无时保留 .gitkeep
+├── CHANGELOG.md
+├── AGENTS.md
+└── README.md
 ```
 
 ---
