@@ -45,7 +45,7 @@ jobs:
       - name: 分支覆盖率门禁
         run: |
           cargo llvm-cov \
-            -p kernel \
+            -p xhyper-kernel \
             --all-features \
             --branch \
             --fail-under-lines 95 \
