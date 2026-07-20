@@ -1,11 +1,13 @@
-#!/usr/bin/env node
 /**
- * infra.rs Harness 健康检查
+ * check.mjs — Harness 健康检查
  *
- * 验证本仓库作为元基础设施时的关键路径、钩子与 beads 就绪状态。
- * 用法: node scripts/check.mjs
+ * 职责: 验证开发环境就绪状态 (hooks / skills / beads / worktree-policy)。
+ *
+ * 用法:
+ *   node scripts/check.mjs
+ *
+ * SSOT: .claude/hooks/ / .agents/ssot/SSOT.md
  */
-
 import { existsSync, readFileSync, readdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";

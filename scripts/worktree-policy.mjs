@@ -1,15 +1,16 @@
 /**
- * Worktree 路径策略 v2
+ * worktree-policy.mjs — Git Worktree 路径策略与审计
  *
- * 规范路径：`.worktrees/<branch-name>`
- *   - 分支 `/` 保留为目录分隔符
- *   - 与 `scripts/worktree.sh` / `worktree-activate.sh` 约定一致
+ * 职责: 定义 worktree 路径规范、提供合规判定和旧格式审计。
  *
- * 旧路径（已废弃, 审计报告）：
- *   - `workspaces/` 模式：`.worktrees/workspaces/<branch>`
- *   - 全局模式：`~/.worktrees/<project>/`
+ * 规范: .worktrees/<branch> (分支 / 保留为目录分隔符)
+ *   - 与 worktree.sh / worktree-activate.sh 约定一致
  *
- * 供 `.claude/hooks/pre-tool-check.mjs` 与 `session-context.mjs` 共用。
+ * 审计: 检测 workspaces/ 子目录和 ~/.worktrees/ 全局旧格式残留
+ *
+ * 使用者: .claude/hooks/pre-tool-check.mjs / session-context.mjs
+ *
+ * SSOT: CONSTITUTION.md §6.0.5 / docs/worktree-policy.md
  */
 
 import { resolve, basename } from "path";

@@ -1,10 +1,12 @@
-#!/usr/bin/env node
 /**
- * gc-scan.mjs — Harness Starter GC 扫描器
+ * gc-scan.mjs — 仓库垃圾扫描
  *
- * 确定性健康检查，不依赖 AI。外部验证门（Sniff 模式）。
+ * 职责: 扫描并报告需清理的过期文件、缓存残留、worktree 孤儿。
  *
- * 用法: node scripts/gc-scan.mjs [--json] [--ci]
+ * 用法:
+ *   node scripts/gc-scan.mjs
+ *
+ * SSOT: .gitignore / docs/worktree-policy.md
  */
 
 import { readFileSync, existsSync, readdirSync, statSync, writeFileSync, mkdirSync } from "fs";

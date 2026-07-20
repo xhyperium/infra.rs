@@ -1,7 +1,16 @@
 #!/usr/bin/env node
-// check-pr-template.mjs — PR 描述模板合规性校验（替代 check-pr-template.sh）
-//
-// CI 中通过 PR_BODY 环境变量接收 PR 描述文本。
+/**
+ * check-pr-template.mjs — PR 描述模板合规性校验
+ *
+ * 职责: CI 中校验 PR body 是否按模板填写了必填字段。
+ * 通过环境变量 PR_BODY 接收 PR 描述文本。
+ *
+ * 用法:
+ *   PR_BODY="..." node scripts/check-pr-template.mjs
+ *
+ * SSOT: .github/PULL_REQUEST_TEMPLATE.md / CONSTITUTION.md §6.1
+ * 替代: scripts/check-pr-template.sh (已迁移)
+ */
 
 const body = process.env.PR_BODY || "";
 

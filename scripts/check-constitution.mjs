@@ -1,10 +1,17 @@
 #!/usr/bin/env node
-// check-constitution.mjs — 宪章合规性自动验证（替代 check-constitution.sh）
-//
-// 用法:
-//   node scripts/check-constitution.mjs              # 完整检查
-//   node scripts/check-constitution.mjs --quick      # 快速（格式 + lint）
-//   node scripts/check-constitution.mjs --json       # JSON 输出
+/**
+ * check-constitution.mjs — 宪章合规性自动验证
+ *
+ * 职责: 验证代码是否符合 CONSTITUTION.md 全部可自动化检查项。
+ *
+ * 用法:
+ *   node scripts/check-constitution.mjs              # 完整检查
+ *   node scripts/check-constitution.mjs --quick      # 快速（格式 + lint）
+ *   node scripts/check-constitution.mjs --json       # JSON 输出
+ *
+ * SSOT: CONSTITUTION.md / Makefile (make check)
+ * 替代: scripts/check-constitution.sh (已迁移)
+ */
 
 import { execSync } from "child_process";
 import { existsSync } from "fs";
