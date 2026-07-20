@@ -11,13 +11,13 @@ help: ## 显示帮助信息
 
 .PHONY: check check-quick check-json
 check: ## 运行完整宪章合规性验证
-	@./scripts/check-constitution.sh
+	@./scripts/check-constitution.mjs
 
 check-quick: ## 快速验证（仅格式 + lint）
-	@./scripts/check-constitution.sh --quick
+	@./scripts/check-constitution.mjs --quick
 
 check-json: ## JSON 输出验证结果（供 AI 解析）
-	@./scripts/check-constitution.sh --json
+	@./scripts/check-constitution.mjs --json
 
 # ── Rust 工具链 ──────────────────────────
 

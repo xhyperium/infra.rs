@@ -14,7 +14,7 @@ on:
       - "rust-toolchain.toml"
       - "rustfmt.toml"
       - "clippy.toml"
-      - "scripts/check-constitution.sh"
+      - "scripts/check-constitution.mjs"
       - ".github/workflows/constitution.yml"
       - "CONSTITUTION.md"
   pull_request:
@@ -28,7 +28,7 @@ on:
       - "rust-toolchain.toml"
       - "rustfmt.toml"
       - "clippy.toml"
-      - "scripts/check-constitution.sh"
+      - "scripts/check-constitution.mjs"
       - ".github/workflows/constitution.yml"
       - "CONSTITUTION.md"
   workflow_dispatch:
@@ -62,6 +62,6 @@ jobs:
           tool: cargo-deny
 
       - name: Run constitution checks
-        run: ./scripts/check-constitution.sh
+        run: ./scripts/check-constitution.mjs
         env:
           CARGO_TERM_COLOR: always

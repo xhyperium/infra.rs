@@ -176,6 +176,19 @@ crates/
 - 宪章校验脚本检查：`CONSTITUTION.md` 含 §4.6、`docs/ASD-STE100.md` 存在  
 - 深度 STE 词表校验不强制自动化（依赖官方工具/人工）；结构与原则抽查为强制审查义务
 
+### 4.8 脚本语言：ECMAScript Module（强制）
+
+**`scripts/` 下的自动化脚本统一使用 `.mjs`（ECMAScript Module）。**
+
+- 禁止新增 `.sh` / `.bash` 脚本
+- 现有 `.sh` 脚本须逐步迁移至 `.mjs`
+- **例外**（须 shell 集成）：
+  - `worktree-activate.sh` — 需 `source` 注入函数与补全
+  - `starship-wt.sh` — Starship 调用（子进程，轻量）
+  - `worktree.sh` — 需 `cd` 改变 shell 状态
+
+理由：跨平台兼容、统一依赖（Node.js ≥ 18）、类型安全潜力。
+
 ---
 
 ## 五、质量门禁
