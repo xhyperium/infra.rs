@@ -5,9 +5,32 @@ name: Constitution
 on:
   push:
     branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "**/Cargo.toml"
+      - "**/*.rs"
+      - "deny.toml"
+      - "rust-toolchain.toml"
+      - "rustfmt.toml"
+      - "clippy.toml"
+      - "scripts/check-constitution.sh"
+      - ".github/workflows/constitution.yml"
+      - "CONSTITUTION.md"
   pull_request:
     branches: [main]
-  # 允许手动触发
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "**/Cargo.toml"
+      - "**/*.rs"
+      - "deny.toml"
+      - "rust-toolchain.toml"
+      - "rustfmt.toml"
+      - "clippy.toml"
+      - "scripts/check-constitution.sh"
+      - ".github/workflows/constitution.yml"
+      - "CONSTITUTION.md"
   workflow_dispatch:
 
 concurrency:

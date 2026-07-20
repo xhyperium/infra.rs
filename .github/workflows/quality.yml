@@ -7,6 +7,8 @@ on:
       - "Cargo.toml"
       - "**/*.rs"
       - "**/Cargo.toml"
+      - "rustfmt.toml"
+      - "clippy.toml"
       - ".github/workflows/quality.yml"
   pull_request:
     branches: [main]
@@ -14,6 +16,8 @@ on:
       - "Cargo.toml"
       - "**/*.rs"
       - "**/Cargo.toml"
+      - "rustfmt.toml"
+      - "clippy.toml"
       - ".github/workflows/quality.yml"
 
 concurrency:
@@ -38,7 +42,7 @@ jobs:
           HAS_CARGO=false
           HAS_SRC=false
           [ -f Cargo.toml ] && HAS_CARGO=true
-          if [ -d src ] || [ -d crates ] || find . -name '*.rs' -not -path './.cargo/*' -not -path './.git/*' | grep -q .; then
+          if [ -d crates ] || find . -name '*.rs' -not -path './.cargo/*' -not -path './.git/*' | grep -q .; then
             HAS_SRC=true
           fi
           echo "has-rust=$HAS_CARGO" >> "$GITHUB_OUTPUT"

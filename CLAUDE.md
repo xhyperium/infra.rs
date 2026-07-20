@@ -27,6 +27,7 @@
 - 不在对话中回显完整 API Token
 - 不削弱 `.gitignore` 对敏感路径的排除
 - 不执行 `git push --force`、`git push --no-verify`、删除 `main`（除非用户明确要求且已确认风险）
+- **Git Main First**（宪章 §6.0）：不在 `main` 上直接开发；从最新 main 建支，经 PR 合并回 main
 
 ## 代码行为准则
 

@@ -83,10 +83,14 @@ node scripts/check.mjs
 - **alias**：`cargo xtask` → `infra-xtask`（crate 尚未添加时可忽略）
 - **突变测试输出**：`.cargo/cache/mutants/`
 
-## Git 规范
+## Git 规范（Main First）
 
-- 不在 `main` 上直接开发；走 feature 分支 + PR
-- 禁止 `git push --force`、`git push --no-verify`（历史重写仅在用户明确要求且单独确认后执行）
+完整条款见 [CONSTITUTION.md §6.0](./CONSTITUTION.md)。摘要：
+
+- **`main` 唯一主干**：工作必须收敛到 `main`，禁止长期并行主线
+- **禁止在 `main` 上直接开发 / 推送**；路径：`分支 → PR → 审查 → CI → 合并 main`
+- 从最新 `origin/main` 建支；合并默认 squash；合并后清理分支
+- 禁止对 `main` force push；禁止 `--no-verify` 绕过钩子
 - Conventional Commits
 
 ## 安全

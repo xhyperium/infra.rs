@@ -149,12 +149,54 @@ make check # 等效: ./scripts/check-constitution.sh
 
 ## 六、治理
 
+### 6.0 Git Main First（强制）
+
+**Main First**：`main` 是唯一长期真实主干与集成分支。一切有价值的工作必须周期性收敛至 `main`，禁止长期并行「第二真相」。
+
+#### 6.0.1 主干唯一
+- 默认分支名为 **`main`**
+- 禁止维护与 `main` 长期分叉、互不合并的并行主线
+- 功能分支、修复分支均为**短期**；合并后应及时删除远程与本地分支
+- **「长期」定义**：超过 **30 天**未向 `main` 合并的功能分支视为违规并行（release 维护分支须在文档中显式声明生命周期）
+
+#### 6.0.2 禁止在 main 上直接开发
+- **禁止**在 `main` 上直接编码、提交、推送
+- 合法路径唯一：`feature / fix / chore 分支 → PR → 审查 → CI 通过 → 合并入 main`
+- 紧急热修复也须走 PR；可缩短审查窗口，但**不可**跳过门禁与合并路径
+
+#### 6.0.3 分支与同步
+- 新分支须从**最新** `origin/main` 创建（先 `git fetch` + 基于最新 main 建支）
+- 开发中定期与 `main` 同步；首选 **rebase** 保持线性历史，冲突过大时可用 merge 并在 PR 中说明
+- PR 合并前须相对 `main` 可合并（无未解决冲突）
+- 默认 **squash merge** 进 `main`，保持主干历史清晰
+
+#### 6.0.4 推送与保护
+- `main` 受分支保护：禁止 force push、禁止绕过 CI 的直推
+- 禁止 `git push --force` / `git push --force-with-lease` 到 `main`
+- 禁止 `git push --no-verify` 绕过钩子向共享分支推送
+- 历史重写（orphan / force push 覆盖远程）仅在**维护者明确授权**且团队知情时执行
+
+#### 6.0.5 工作区隔离（推荐 / substantial 强制）
+- 实质性任务（多文件或大 diff）应使用独立分支；推荐 git worktree 隔离
+- Worktree 规范路径：`.worktree/workspaces/<branch-name>`（分支名中的 `/` 可映射为 `-`）
+- 禁止多任务混用同一 worktree / 分支
+
+#### 6.0.6 与 AI 协作
+- AI **不得**在 `main` 检出上直接改业务代码并提交
+- AI 开工前应确认当前分支 ≠ `main`（或仅作只读说明 / 文档性例外须人工明示）
+- Session 钩子（如 `branch-protect`）可告警，但**宪章效力不依赖钩子是否启用**
+
+#### 6.0.7 一句话
+> **先对齐 main，再开分支；先 PR 进 main，再谈完成。**
+
 ### 6.1 变更流程
-1. **Issue** — 描述问题或提案
-2. **PR** — 包含变更、测试、文档
-3. **审查** — 至少一人 approve
-4. **CI** — 所有强制门禁通过
-5. **合并** — squash merge 到 `main`
+1. **从 main 同步** — `fetch` 最新主干并建分支（§6.0）
+2. **Issue** — 描述问题或提案（可追溯）
+3. **PR** — 包含变更、测试、文档
+4. **审查** — 至少一人 approve（或项目规定的 maintainer 规则）
+5. **CI** — 所有强制门禁通过
+6. **合并** — squash merge 到 `main`
+7. **清理** — 删除已合并分支；必要时同步本地 main
 
 ### 6.2 版本策略
 - 遵循语义化版本 [SemVer](https://semver.org/)
@@ -171,7 +213,8 @@ make check # 等效: ./scripts/check-constitution.sh
 
 ### 7.1 权限边界
 - AI **不可** approve 或 merge PR
-- AI **不可** 直接推送 `main` 分支
+- AI **不可** 直接推送 `main` 分支（§6.0 Git Main First）
+- AI **不可** 在 `main` 上直接开发或提交（§6.0.2）
 - AI **不可** 修改 `.github/CODEOWNERS`
 - AI **不可** 绕过任何强制门禁
 
@@ -202,6 +245,7 @@ make check # 等效: ./scripts/check-constitution.sh
 
 | 版本 | 日期 | 修订内容 |
 |------|------|----------|
+| v1.2.0 | 2026-07-21 | 新增 §6.0 Git Main First（主干唯一、禁 main 直推、PR 收敛） |
 | v1.1.0 | 2026-07-21 | 新增 §4.5 语言与编码（中文注释/文档 + UTF-8 强制） |
 | v1.0.0 | 2026-07-21 | 初始版本 |
 

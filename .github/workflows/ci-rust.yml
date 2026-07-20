@@ -7,8 +7,8 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
       - "**/Cargo.toml"
-      - "src/**"
       - "crates/**"
+      - "rust-toolchain.toml"
       - ".github/workflows/ci-rust.yml"
   pull_request:
     branches: [main]
@@ -16,8 +16,8 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
       - "**/Cargo.toml"
-      - "src/**"
       - "crates/**"
+      - "rust-toolchain.toml"
       - ".github/workflows/ci-rust.yml"
 
 concurrency:
@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v4
       - id: check
         run: |
-          if [ -f Cargo.toml ] && { [ -d src ] || [ -d crates ]; }; then
+          if [ -f Cargo.toml ] && [ -d crates ]; then
             echo "has-rust=true" >> "$GITHUB_OUTPUT"
           else
             echo "has-rust=false" >> "$GITHUB_OUTPUT"

@@ -93,7 +93,7 @@ fi
 if ! $JSON_MODE; then
     echo -e "${CYAN}╔══════════════════════════════════╗${NC}"
     echo -e "${CYAN}║   宪章合规性验证                 ║${NC}"
-    echo -e "${CYAN}║   CONSTITUTION.md v1.1.0         ║${NC}"
+    echo -e "${CYAN}║   CONSTITUTION.md v1.2.0         ║${NC}"
     echo -e "${CYAN}╚══════════════════════════════════╝${NC}"
 fi
 
@@ -225,6 +225,13 @@ if grep -q '### 4.5 语言与编码' CONSTITUTION.md 2>/dev/null; then
   log_pass "CONSTITUTION.md 含 §4.5"
 else
   log_fail "CONSTITUTION.md" "缺少 §4.5 语言与编码条款"
+fi
+
+# 宪章必须包含 §6.0 Git Main First
+if grep -q '### 6.0 Git Main First' CONSTITUTION.md 2>/dev/null; then
+  log_pass "CONSTITUTION.md 含 §6.0 Git Main First"
+else
+  log_fail "CONSTITUTION.md" "缺少 §6.0 Git Main First 条款"
 fi
 
 # ═══════════════════════════════════════════
