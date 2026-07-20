@@ -64,7 +64,7 @@ bd ready
 ## Skill 路由
 
 | 任务类型 | Skill | 触发条件 |
-|---------|-------|---------|
+| --------- | ------- | --------- |
 | Harness 初始化 / 复位 | harness-init / harness-start | 初始化、检查 Harness |
 | 模式切换 | harness-mode | full / hotfix / tweak |
 | 健康扫描 | harness-gc | 漂移与一致性 |
