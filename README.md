@@ -78,7 +78,7 @@ Rust edition `2024`，MSRV 见 `Cargo.toml` 中 `rust-version`。
 | [CI_STATUS_REPORT.md](docs/CI_STATUS_REPORT.md) | CI 工作流矩阵、触发条件与运行统计 |
 | [ASD-STE100.md](docs/ASD-STE100.md) | 英文技术文档规范（ASD-STE100 / STE） |
 | [编码与语言约定.md](docs/编码与语言约定.md) | 中文编码与文档语言约定 |
-| [ADR-001-009.md](docs/decisions/ADR-001-009.md) | 架构决策记录（DDR-001 ~ DDR-009） |
+| [DDR/](docs/decisions/) | 架构决策记录（DDR-001 ~ DDR-009） |
 
 ## AI 协作
 

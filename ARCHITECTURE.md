@@ -243,7 +243,7 @@ make ci        # 完整 CI 模拟（fmt + lint + test + deny）
 
 ## 设计决策记录
 
-详细内容见 [docs/decisions/ADR-001-009.md](docs/decisions/ADR-001-009.md)。
+详细内容见 [docs/decisions/](docs/decisions/)（DDR-001 ~ DDR-009）。
 
 | DDR | 决策 | 理由 |
 |-----|------|------|
