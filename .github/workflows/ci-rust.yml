@@ -35,7 +35,7 @@ jobs:
     outputs:
       has-rust: ${{ steps.check.outputs.has-rust }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: check
         run: |
           if [ -f Cargo.toml ] && [ -d crates ]; then
@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: 安装 MSRV Rust 工具链
         uses: dtolnay/rust-toolchain@1.85
       - uses: Swatinem/rust-cache@v2
@@ -96,7 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -109,7 +109,7 @@ jobs:
       - name: 生成覆盖率
         run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
       - name: 上传覆盖率到 Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: lcov.info
           fail_ci_if_error: false
