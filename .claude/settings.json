@@ -1,0 +1,113 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "node .claude/hooks/post-tool-check.mjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node .claude/hooks/edit-guard-reset.mjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Write"
+      },
+      {
+        "description": "Link-check after markdown edits",
+        "hooks": [
+          {
+            "command": "node .claude/hooks/link-check.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write"
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "command": "node .claude/hooks/pre-compact.mjs",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "node .claude/hooks/pre-tool-check.mjs",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      },
+      {
+        "hooks": [
+          {
+            "command": "node .claude/hooks/edit-guard.mjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node .claude/hooks/count-guard.mjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Write|Edit"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "node .claude/hooks/session-context.mjs",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      },
+      {
+        "hooks": [
+          {
+            "command": "bd prime --stealth --readonly --hook-json",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "node .claude/hooks/session-review.mjs",
+            "type": "command"
+          },
+          {
+            "command": "node .claude/hooks/version-guard.mjs",
+            "type": "command"
+          },
+          {
+            "command": "node .claude/hooks/branch-protect.mjs",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  }
+}

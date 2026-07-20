@@ -1,0 +1,11 @@
+[package]
+name = "infra-core"
+description = "Core infrastructure library for infra.rs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+thiserror = "2"

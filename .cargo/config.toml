@@ -1,0 +1,14 @@
+# .cargo/ 目录约定：
+# - target/      构建产物（Cargo 自动管理）
+# - cache/       工具缓存根（子目录按工具名）
+# - config.toml  本文件：Cargo 总配置（alias、target-dir、registry）
+# - mutants.toml cargo-mutants 专用配置
+
+[alias]
+xtask = "run -p infra-xtask --"
+
+# 构建产物统一到仓库内 .cargo/target/（gitignored）
+[build]
+target-dir = ".cargo/target/"
+
+# crates.io：使用官方 registry

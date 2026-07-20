@@ -1,0 +1,71 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "**/Cargo.toml"
+      - ".github/workflows/security.yml"
+      - "deny.toml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "**/Cargo.toml"
+      - ".github/workflows/security.yml"
+      - "deny.toml"
+  schedule:
+    - cron: "0 2 * * 1" # Every Monday at 02:00 UTC
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check-rust:
+    name: Check (has Rust source)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      has-rust: ${{ steps.check.outputs.has-rust }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f Cargo.toml ]; then
+            echo "has-rust=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-rust=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  deny:
+    name: cargo-deny
+    needs: check-rust
+    if: needs.check-rust.outputs.has-rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          command: check
+
+  audit:
+    name: cargo-audit
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: check-rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+      - run: cargo audit

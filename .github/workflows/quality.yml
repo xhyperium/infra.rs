@@ -1,0 +1,76 @@
+name: Quality
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - ".github/workflows/quality.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - ".github/workflows/quality.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check-rust:
+    name: Check (has Rust source)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      has-rust: ${{ steps.check.outputs.has-rust }}
+      has-src: ${{ steps.check.outputs.has-src }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          HAS_CARGO=false
+          HAS_SRC=false
+          [ -f Cargo.toml ] && HAS_CARGO=true
+          if [ -d src ] || [ -d crates ] || find . -name '*.rs' -not -path './.cargo/*' -not -path './.git/*' | grep -q .; then
+            HAS_SRC=true
+          fi
+          echo "has-rust=$HAS_CARGO" >> "$GITHUB_OUTPUT"
+          echo "has-src=$HAS_SRC" >> "$GITHUB_OUTPUT"
+
+  fmt:
+    name: Rustfmt
+    needs: check-rust
+    if: needs.check-rust.outputs.has-src == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+  clippy:
+    name: Clippy
+    needs: check-rust
+    if: needs.check-rust.outputs.has-rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Run clippy
+        run: cargo clippy --workspace --all-features --all-targets -- -D warnings

@@ -1,0 +1,103 @@
+name: CI (Rust)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "**/Cargo.toml"
+      - "src/**"
+      - "crates/**"
+      - ".github/workflows/ci-rust.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "**/Cargo.toml"
+      - "src/**"
+      - "crates/**"
+      - ".github/workflows/ci-rust.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check-rust:
+    name: Check (has Rust source)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      has-rust: ${{ steps.check.outputs.has-rust }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f Cargo.toml ] && { [ -d src ] || [ -d crates ]; }; then
+            echo "has-rust=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-rust=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build
+    needs: check-rust
+    if: needs.check-rust.outputs.has-rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --workspace --all-features
+
+  test:
+    name: Test
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+      - name: Test
+        run: cargo nextest run --workspace --all-features
+
+  coverage:
+    name: Coverage
+    needs: check-rust
+    if: needs.check-rust.outputs.has-rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - name: Generate coverage
+        run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
