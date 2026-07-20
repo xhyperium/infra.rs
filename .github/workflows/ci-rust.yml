@@ -109,7 +109,7 @@ jobs:
       - name: 生成覆盖率
         run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
       - name: 上传覆盖率到 Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: lcov.info
           fail_ci_if_error: false
