@@ -111,7 +111,7 @@ Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTU
 |------|------|
 | 构建 | `.cargo/target/`（gitignored），`cargo build --workspace` |
 | 格式 | `cargo fmt --all`，`max_width = 100` |
-| Lint  | `cargo clippy --workspace --all-targets -- -D warnings` |
+| Lint | `cargo clippy --workspace --all-targets -- -D warnings` |
 | 测试 | `cargo nextest` + `cargo llvm-cov`，覆盖率 >= 80% |
 | 安全 | `cargo deny check`，禁止 `unsafe` |
 | 提交 | Conventional Commits |

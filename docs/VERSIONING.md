@@ -15,13 +15,13 @@
                              crates/AGENTS.md (独立)
 ```
 
-| 版本类型   | 载体                  | 格式                        | 示例     | 更新时机       |
-| ---------- | --------------------- | --------------------------- | -------- | -------------- |
-| 项目版本   | `Cargo.toml`          | SemVer                      | `0.2.0`  | 每次 release   |
-| 宪章版本   | `CONSTITUTION.md`     | vX.Y.Z                      | `v1.5.0` | 每次修订       |
-| Crate 版本 | `crates/*/Cargo.toml` | SemVer (`workspace = true`) | `0.2.0`  | 跟随 workspace |
-| 工具版本   | `Cargo.lock`          | 锁定版本                    | —        | `cargo update` |
-| 文档附版   | `docs/*.md`           | 参考宪章版本                | —        | 宪章修订时同步 |
+| 版本类型 | 载体 | 格式 | 示例 | 更新时机 |
+|----------|-----------------------|-----------------------------|--------|----------------|
+| 项目版本 | `Cargo.toml` | SemVer | `0.2.0` | 每次 release |
+| 宪章版本 | `CONSTITUTION.md` | vX.Y.Z | `v1.5.0` | 每次修订 |
+| Crate 版本 | `crates/*/Cargo.toml` | SemVer (`workspace = true`) | `0.2.0` | 跟随 workspace |
+| 工具版本 | `Cargo.lock` | 锁定版本 | — | `cargo update` |
+| 文档附版 | `docs/*.md` | 参考宪章版本 | — | 宪章修订时同步 |
 
 ## 版本同步规则
 
