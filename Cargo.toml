@@ -10,6 +10,4 @@ repository = "https://github.com/xhyperium/infra.rs"
 rust-version = "1.85"
 
 [workspace.dependencies]
-# Common workspace dependencies
-# Add shared dependencies here
-# e.g., serde = { version = "1", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
