@@ -12,7 +12,8 @@ publish = false
 name = "canonical"
 
 [dependencies]
-xhyper-decimalx = { path = "../decimal" }
+# path + version：满足 cargo-deny bans.wildcards=deny（禁止裸 path 通配依赖）
+xhyper-decimalx = { path = "../decimal", version = "0.1.0" }
 serde = { workspace = true }
 
 [dev-dependencies]

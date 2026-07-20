@@ -26,7 +26,7 @@
 
 | Claim | Live | 状态 | 指针 |
 |-------|------|------|------|
-| Package `xhyper-canonical` / lib `canonical` | Cargo.toml | MATCH | crates/types/canonical |
+| Package `xhyper-canonical` / lib `canonical` | 根 workspace members + Cargo.toml | MATCH | `crates/types/canonical`（2026-07-21 重登记 members，修复源码在盘但未入 workspace） |
 | `VenueId`/`InstrumentId` String alias | lib.rs | MATCH | |
 | `OrderRef::{Client,Exchange}` | enum | MATCH | |
 | `CancelOrderRequest` | venue/instrument/id | MATCH | |
