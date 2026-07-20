@@ -1,6 +1,6 @@
 blank_issues_enabled: false
 
 contact_links:
-  - name: Questions & Discussions
-    url: https://github.com/org/repo/discussions
-    about: Please ask and answer questions here.
+  - name: 提问与讨论
+    url: https://github.com/xhyperium/infra.rs/discussions
+    about: 一般性问题请到 Discussions 提问与讨论。

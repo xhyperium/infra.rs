@@ -1,4 +1,4 @@
-name: Validation
+name: 校验
 
 on:
   push:
@@ -15,12 +15,12 @@ permissions:
 
 jobs:
   yaml-lint:
-    name: YAML Lint
+    name: YAML 检查
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Run yamllint
+      - name: 运行 yamllint
         uses: ibiqlik/action-yamllint@v3
         with:
           config_data: |
@@ -30,21 +30,21 @@ jobs:
               document-start: disable
 
   toml-lint:
-    name: TOML Lint
+    name: TOML 检查
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Run taplo
+      - name: 运行 taplo
         uses: tamasfe/taplo@v0
 
   markdown-lint:
-    name: Markdown Lint
+    name: Markdown 检查
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Run markdownlint
+      - name: 运行 markdownlint
         uses: DavidAnson/markdownlint-cli2-action@v16
         with:
           globs: |
@@ -54,24 +54,33 @@ jobs:
             docs/**/*.md
 
   spellcheck:
-    name: Spell Check
+    name: 拼写检查
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Run codespell
+      - name: 运行 codespell
         uses: codespell-project/actions-codespell@v2
 
   link-check:
-    name: Link Check
+    name: 链接检查
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Run lychee
+      - name: 运行 lychee
         uses: lycheeverse/lychee-action@v1
         with:
           args: --no-progress README.md AGENTS.md CLAUDE.md docs/
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  harness:
+    name: Harness 健康检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 运行 harness check
+        run: node scripts/check.mjs

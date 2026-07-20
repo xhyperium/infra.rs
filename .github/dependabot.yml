@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Maintain Cargo dependencies
+  # 维护 Cargo 依赖
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
@@ -11,7 +11,7 @@ updates:
       - "dependencies"
       - "cargo"
 
-  # Maintain GitHub Actions
+  # 维护 GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

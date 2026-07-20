@@ -1,6 +1,6 @@
 [package]
 name = "infra-core"
-description = "Core infrastructure library for infra.rs"
+description = "infra.rs 核心基础设施库"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,4 +9,7 @@ rust-version.workspace = true
 
 [dependencies]
 serde.workspace = true
-thiserror = "2"
+thiserror = { workspace = true }
+
+[dev-dependencies]
+serde_json.workspace = true

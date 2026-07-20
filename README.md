@@ -73,3 +73,8 @@ Rust edition `2024`，MSRV 见 `Cargo.toml` 中 `rust-version`。
 ## 许可
 
 MIT
+
+## 语言与编码
+
+- 注释与文档使用**中文**；标识符英文
+- 全文 **UTF-8（无 BOM）**，见 [docs/编码与语言约定.md](./docs/编码与语言约定.md)

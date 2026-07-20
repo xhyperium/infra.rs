@@ -1,68 +1,68 @@
-name: Bug Report
-description: File a bug report
-title: "[Bug] "
+name: 缺陷报告
+description: 提交一个缺陷（Bug）
+title: "[缺陷] "
 labels: ["bug", "triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        感谢填写缺陷报告。请尽量提供可复现信息。
 
   - type: input
     id: version
     attributes:
-      label: Version
-      description: What version of the project are you using?
-      placeholder: "e.g. 0.1.0, commit abc1234"
+      label: 版本
+      description: 你使用的项目版本是什么？
+      placeholder: "例如 0.1.0，或 commit abc1234"
     validations:
       required: true
 
   - type: textarea
     id: description
     attributes:
-      label: Description
-      description: A clear and concise description of the bug.
+      label: 问题描述
+      description: 清晰、简洁地描述缺陷现象。
     validations:
       required: true
 
   - type: textarea
     id: reproduction
     attributes:
-      label: Steps to Reproduce
-      description: Steps to reproduce the behavior.
+      label: 复现步骤
+      description: 如何稳定复现该问题。
       placeholder: |
-        1. Go to '...'
-        2. Run '...'
-        3. See error
+        1. 进入 '...'
+        2. 执行 '...'
+        3. 观察到错误
     validations:
       required: true
 
   - type: textarea
     id: expected
     attributes:
-      label: Expected Behavior
-      description: What did you expect to happen?
+      label: 期望行为
+      description: 你期望发生什么？
     validations:
       required: true
 
   - type: textarea
     id: logs
     attributes:
-      label: Logs & Output
-      description: Paste any relevant logs, error messages, or output.
+      label: 日志与输出
+      description: 粘贴相关日志、错误信息或终端输出。
       render: shell
 
   - type: textarea
     id: environment
     attributes:
-      label: Environment
+      label: 运行环境
       description: |
-        Please provide details about your environment.
+        请提供环境信息。
       placeholder: |
-        - OS: [e.g. Ubuntu 24.04]
-        - Rust version: [e.g. 1.80.0]
+        - 操作系统: [例如 Ubuntu 24.04]
+        - Rust 版本: [例如 1.85.0]
       value: |
-        - OS:
-        - Rust version:
+        - 操作系统:
+        - Rust 版本:
     validations:
       required: true

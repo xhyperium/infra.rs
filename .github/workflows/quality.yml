@@ -1,4 +1,4 @@
-name: Quality
+name: 质量
 
 on:
   push:
@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   check-rust:
-    name: Check (has Rust source)
+    name: 检测 Rust 源码
     runs-on: ubuntu-latest
     timeout-minutes: 2
     outputs:
@@ -45,32 +45,48 @@ jobs:
           echo "has-src=$HAS_SRC" >> "$GITHUB_OUTPUT"
 
   fmt:
-    name: Rustfmt
+    name: 格式检查（rustfmt）
     needs: check-rust
     if: needs.check-rust.outputs.has-src == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
+      - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - name: Check formatting
+      - name: 检查格式
         run: cargo fmt --all --check
 
   clippy:
-    name: Clippy
+    name: Clippy 静态检查
     needs: check-rust
     if: needs.check-rust.outputs.has-rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
+      - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - name: Run clippy
+      - name: 运行 clippy
         run: cargo clippy --workspace --all-features --all-targets -- -D warnings
+
+  doc:
+    name: 文档检查（cargo doc）
+    needs: check-rust
+    if: needs.check-rust.outputs.has-src == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RUSTDOCFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: 生成文档并检查警告
+        run: cargo doc --workspace --all-features --no-deps --document-private-items

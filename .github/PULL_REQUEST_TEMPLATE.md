@@ -1,13 +1,13 @@
-## Summary
+## 摘要
 
-<!-- Briefly describe what this PR does and why. -->
+<!-- 简要说明本 PR 做了什么、为什么做。 -->
 
-## Checklist
+## 检查清单
 
-- [ ] Tests added/updated (if applicable)
-- [ ] Documentation updated (if applicable)
-- [ ] CI passes locally
+- [ ] 已补充/更新测试（如适用）
+- [ ] 已更新文档（如适用）
+- [ ] 本地 CI 相关检查已通过
 
-## Review Notes
+## 审查说明
 
-<!-- Any specific areas to focus on during review. -->
+<!-- 需要 reviewer 重点关注的点。 -->
