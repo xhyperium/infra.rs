@@ -59,7 +59,7 @@ CI 中验证：
 
 | 载体 | 版本 |
 |------|------|
-| `Cargo.toml` (项目) | `0.1.0` |
+| `Cargo.toml` (项目) | `0.3.0` |
 | `CHANGELOG.md` (最新) | `0.3.0` |
 | `CONSTITUTION.md` (宪章) | `v1.4.0` |
 | `.agents/ssot/SSOT.md` | `v1.1.0` |
@@ -67,7 +67,7 @@ CI 中验证：
 | `crates/AGENTS.md` | `v1.0.0` |
 | `crates/infra-core/AGENTS.md` | `v1.0.0` |
 
-> **注意**：CHANGELOG v0.3.0 领先于 Cargo.toml v0.1.0。下次发布时统一。
+版本号已统一，下次发布按 R-V2 规则递增。
 
 ---
 
