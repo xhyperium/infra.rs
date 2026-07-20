@@ -77,8 +77,8 @@ bd init && bd prime
 所有活跃开发须在独立的 [Git Worktree](https://git-scm.com/docs/git-worktree) 中进行，保持 `main` 工作区干净。
 
 ```bash
-# 首次：加载快捷命令（建议写入 ~/.bashrc）
-source scripts/worktree-activate.mjs
+# 加载快捷命令（建议写入 ~/.bashrc）
+eval "$(node scripts/worktree-activate.mjs)"
 
 # 创建 worktree 并切换
 wt feat/my-feature
