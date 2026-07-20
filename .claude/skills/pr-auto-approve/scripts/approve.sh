@@ -6,13 +6,13 @@
 #
 # 可选:
 #   PR_AUTO_APPROVE_EXPECTED_LOGIN  默认 liukongqiang5
-#   PR_AUTO_APPROVE_REPO           默认 xhyperium/xhyper.rs
+#   PR_AUTO_APPROVE_REPO           默认：当前 git/gh 仓库（本仓为 xhyperium/infra.rs）
 #   PR_AUTO_APPROVE_API            默认 https://api.github.com
 #
 # 用法:
-#   bash .agent/skills/pr-auto-approve/scripts/approve.sh <pr-number> [body]
-#   bash .agent/skills/pr-auto-approve/scripts/approve.sh 799
-#   bash .agent/skills/pr-auto-approve/scripts/approve.sh 799 "CI green recovery"
+#   bash .claude/skills/pr-auto-approve/scripts/approve.sh <pr-number> [body]
+#   bash .claude/skills/pr-auto-approve/scripts/approve.sh 799
+#   bash .claude/skills/pr-auto-approve/scripts/approve.sh 799 "CI green recovery"
 #
 # 退出码:
 #   0  已 APPROVED 或已存在有效 APPROVE（幂等）
@@ -23,9 +23,36 @@
 set -euo pipefail
 
 API="${PR_AUTO_APPROVE_API:-https://api.github.com}"
-REPO="${PR_AUTO_APPROVE_REPO:-xhyperium/xhyper.rs}"
 EXPECTED_LOGIN="${PR_AUTO_APPROVE_EXPECTED_LOGIN:-liukongqiang5}"
 API_VERSION="2022-11-28"
+FALLBACK_REPO="xhyperium/infra.rs"
+
+# 解析目标仓库：显式 env > gh repo view > git origin > 本仓 fallback
+resolve_repo() {
+  if [[ -n "${PR_AUTO_APPROVE_REPO:-}" ]]; then
+    printf '%s' "$PR_AUTO_APPROVE_REPO"
+    return 0
+  fi
+  local name
+  if command -v gh >/dev/null 2>&1; then
+    name="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)"
+    if [[ -n "$name" ]]; then
+      printf '%s' "$name"
+      return 0
+    fi
+  fi
+  local url owner repo
+  url="$(git remote get-url origin 2>/dev/null || true)"
+  if [[ "$url" =~ github\.com[:/]([^/]+)/([^/.]+)(\.git)?$ ]]; then
+    owner="${BASH_REMATCH[1]}"
+    repo="${BASH_REMATCH[2]}"
+    printf '%s' "${owner}/${repo}"
+    return 0
+  fi
+  printf '%s' "$FALLBACK_REPO"
+}
+
+REPO="$(resolve_repo)"
 
 usage() {
   echo "用法: $0 <pr-number> [review-body]" >&2
@@ -67,6 +94,7 @@ if [[ "$LOGIN" != "$EXPECTED_LOGIN" ]]; then
   exit 2
 fi
 echo "OK: token 身份 @${LOGIN}"
+echo "OK: 目标仓库 ${REPO}"
 
 # 2) 读取 PR
 PR_JSON="$(api GET "/repos/${REPO}/pulls/${PR}")"
