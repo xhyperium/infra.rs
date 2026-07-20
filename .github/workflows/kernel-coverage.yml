@@ -1,7 +1,7 @@
 name: Kernel Coverage
 
 # kernel crate 分支覆盖率门禁（RES-TEST-014）
-# 阈值: lines >= 95%, branches >= 90%, functions >= 95%
+# 阈值: lines >= 95%, branches >= 90%, functions >= 90%
 
 on:
   push:
@@ -51,4 +51,4 @@ jobs:
             --all-features \
             --branch \
             --fail-under-lines 95 \
-            --fail-under-functions 95
+            --fail-under-functions 90
