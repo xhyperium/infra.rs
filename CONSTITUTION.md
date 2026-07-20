@@ -69,7 +69,7 @@ crates/
 ## 四、代码标准
 
 ### 4.1 格式
-- 统一使用 `rustfmt`���配置见 `rustfmt.toml`
+- 统一使用 `rustfmt`，配置见 `rustfmt.toml`
 - CI 中 `cargo fmt --check` 必须通过
 - 不讨论格式风格，工具即标准
 
