@@ -125,15 +125,25 @@ crates/
 
 ## 五、质量门禁
 
-| 门禁 | 级别 | 说明 |
-|------|------|------|
-| `cargo fmt --check` | **强制** | 格式一致性 |
-| `cargo clippy -- -D warnings` | **强制** | 代码质量 |
-| `cargo test` / `cargo nextest run` | **强制** | 功能正确性 |
-| `cargo-deny check` | **强制** | 安全审计 |
-| UTF-8 / 无 `U+FFFD`（§4.5） | **强制** | 编码完整性 |
-| 覆盖率 >= 80% | **推荐** | 代码覆盖 |
-| `cargo-llvm-cov` | **推荐** | 覆盖率统计 |
+| 门禁 | 级别 | 说明 | 工作流 / 命令 |
+|------|------|------|---------------|
+| `cargo fmt --check` | **强制** | 格式一致性 | `validation.yml` / `make fmt-check` |
+| `cargo clippy -- -D warnings` | **强制** | 代码质量 | `quality.yml` / `make lint` |
+| `cargo test` / `cargo nextest run` | **强制** | 功能正确性 | `ci-rust.yml` / `make test` |
+| `cargo-deny check` | **强制** | 安全审计 | `security.yml` / `make deny` |
+| 宪章合规性（全部） | **强制** | `scripts/check-constitution.sh` | `constitution.yml` / `make check` |
+| UTF-8 / 无 `U+FFFD`（§4.5） | **强制** | 编码完整性 | `constitution.yml` (已包含) |
+| 覆盖率 >= 80% | **推荐** | 代码覆盖 | `ci-rust.yml` |
+| `cargo-llvm-cov` | **推荐** | 覆盖率统计 | `ci-rust.yml` |
+
+### 5.1 本地验证
+
+提交 PR 前运行 `make ci` 模拟全部强制门禁：
+
+```bash
+make ci    # 等价于: make fmt-check lint test deny
+make check # 等效: ./scripts/check-constitution.sh
+```
 
 ---
 
