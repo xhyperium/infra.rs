@@ -61,6 +61,7 @@ CI 中验证：
 | 载体                          | 版本     |
 | ----------------------------- | -------- |
 | `Cargo.toml` (项目)           | `0.3.0`  |
+| `package.json` (npm) | `0.3.0` |
 | `CHANGELOG.md` (最新)         | `0.3.0`  |
 | `CONSTITUTION.md` (宪章)      | `v1.4.0` |
 | `.agents/ssot/SSOT.md`        | `v1.1.0` |
