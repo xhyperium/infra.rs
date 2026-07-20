@@ -39,20 +39,24 @@ ADR-007 历史文本中的 `xlib_standard` 当前对应 package `xhyper-kernel` 
 
 **Evidence**：`src/lib.rs` 当前公开：
 
+- 边界常量：`MAX_SCALE`（`18`）、`TECH_MAX_POW10_EXP`（`38`）、`DecimalLimits`；
 - `Decimal { pub mantissa: i128, pub scale: u8 }`、`Decimal::new`、`Decimal::ZERO`；
+- 生产构造：`try_new`、`validate`、`is_within_limits`（拒绝 `scale > MAX_SCALE`）；
 - `eq_value` / `cmp_value`（数值语义）；
 - `checked_add` / `checked_sub` / `checked_mul` / `checked_div` / `div` / `checked_rescale` / `rescale`；
-- `Add`、`Sub`、`Mul` 运算符（内部走 checked，溢出 panic）；
+- `normalize`（去掉尾随小数零，值不变）；
+- `FromStr` / `Display`（文本；`FromStr` 强制 `scale ≤ MAX_SCALE`，拒绝 NaN/Inf）；
+- `Add`、`Sub`、`Mul` 运算符（内部走 checked，溢出 panic；见 rustdoc `# Panics`）；
 - `PartialEq` / `Eq` / `PartialOrd` / `Ord` / `Hash` 为数值语义（非结构字段）；
 - `RoundingStrategy::{Floor, Ceiling, HalfUp, HalfDown, HalfEven}`；
-- `Price(pub Decimal)`、`Qty(pub Decimal)`、`Ratio(pub Decimal)`；
-- `Currency(pub [u8; 3])`、`as_str`、`FromStr<Err = XError>`；
-- `Money { pub amount: Decimal, pub currency: Currency }`；
+- `Price(pub Decimal)`、`Qty(pub Decimal)`、`Ratio(pub Decimal)`（newtype，无额外业务校验）；
+- `Currency(pub [u8; 3])`、`as_str`、`try_new` / `is_valid` / `validate`、`FromStr<Err = XError>`；
+- `Money { pub amount: Decimal, pub currency: Currency }`、`Money::try_new` / `validate`；
 - 值类型带 serde derive（形状为字段默认；`Decimal` 比较语义独立于 wire 字段）。
 
-公开字段意味着调用方可构造任意 `scale` 和任意三字节 `Currency`；`Currency::from_str` 才保证
-“恰好三个大写 ASCII 字母”。`as_str` 对非法公开字段返回空串。**Evidence**：这是当前行为，
-不是已证明合理的长期不变量。
+公开字段意味着调用方可构造任意 `scale` 和任意三字节 `Currency`；`Currency::from_str` /
+`try_new` 才保证“恰好三个大写 ASCII 字母”。`as_str` 对非法公开字段返回空串。
+**Evidence**：这是当前兼容行为，不是已证明合理的长期不变量；生产入口应使用 fallible API。
 
 ## 4. 数值行为与不变量
 
@@ -106,16 +110,18 @@ Additive Only 仅适用于 `contracts` trait 层，不适用于本 crate。
 
 ## 6. 测试合同
 
-当前 35 个内联测试 + 12 个 proptest 测试已覆盖（2026-07-15）：
+当前覆盖（2026-07-21 对账）：**49** 个内联 unit + **11** 个 proptest + crate 外 `tests/entry_checked_ops.rs`：
 
 1. 五种策略的正/负与精确中点；奇数分母非中点；
 2. scale 不一致的加减、数值 `Eq`/`Ord`/`Hash`、proptest 交换/结合/单位元；
 3. `i128` 对齐/加减乘 scale 溢出 → `Err`；禁止 `wrapping_mul`；
-4. 除法 scale 合同（含 `1.00/0.50`）、除零；
+4. 除法 scale 合同（含 `1.00/0.50`）、除零、`i128::MIN / -1` 不 panic；
 5. serde 结构字段 round-trip（**非**跨版本 wire 兼容政策——后者仍开放）；
-6. proptest 无 panic（checked 路径）与值相等不变量。
+6. proptest 无 panic（checked 路径）与值相等不变量；
+7. 生产路径：`try_new` / `FromStr` 强制 `MAX_SCALE`；entry 断言 `checked_*` 与 `Money`/`Currency` 具体返回值。
 
-仍建议补强（非本轮阻塞）：property 级舍入表生成、最大 scale 策略、canonical 编码往返。
+仍建议补强（非本轮阻塞；全空间见 residual T-DEF-003）：property 级舍入表生成、
+最大 scale 策略、canonical 编码往返、全 i128 differential oracle。
 
 聚焦命令：
 
@@ -132,17 +138,18 @@ cargo xtl lint-deps
 
 ## 7. 验收标准与开放决策
 
-- [ ] 路径、Cargo 依赖和独立 patch-only 版本规则符合 §2。
-- [ ] 公开 API/rustdoc 与 §3 的实际导出一致，未重复定义 `Money`/`Decimal`。
-- [ ] ADR-006 的 checked 算术、对齐、显式舍入和 rescale 合同已实现或经 RFC 正式修订。
-- [ ] 所有溢出和舍入边界有确定、无静默回绕的测试。
-- [ ] `Currency` 的安全构造边界明确；若保留公开字段，文档不得声称类型始终有效。
-- [ ] serde 格式兼容范围获批并测试。
-- [ ] §6 的聚焦与仓库门禁通过。
+- [x] 路径、Cargo 依赖和独立 patch-only 版本规则符合 §2。（agent-safe 对账 2026-07-21）
+- [x] 公开 API/rustdoc 与 §3 的实际导出一致，未重复定义 `Money`/`Decimal`。
+- [x] ADR-006 的 checked 算术、对齐、显式舍入和 rescale 合同已实现或经 RFC 正式修订。
+- [x] 所有溢出和舍入边界有确定、无静默回绕的测试。
+- [x] `Currency` 的安全构造边界明确；若保留公开字段，文档不得声称类型始终有效。
+- [ ] serde 格式兼容范围获批并测试。（**HUMAN_ONLY** T-HUM-004 — 不得伪闭合）
+- [x] §6 的聚焦与仓库门禁通过。（test/clippy/fmt；全仓 deny 等另循 release）
 
-实现/发布前仍需裁定：溢出错误映射；最大合法 scale；除法目标 scale；是否封闭公开字段；
-规范文本/二进制编码；serde 兼容承诺。implementation-plan 中超出当前源码与 Approved ADR 的草图均为
-**Proposed**，不得作为已实现事实。
+实现/发布前仍需裁定（residual）：溢出错误映射升格；最大合法 scale **治理批准**；
+除法目标 scale；是否封闭公开字段；规范文本/二进制编码；serde 兼容承诺。
+implementation-plan / Draft `20260717/` 中超出当前源码与 Approved ADR 的草图均为
+**Proposed**，不得作为已实现事实。**agent-safe 对账完成 ≠ Spec Approved ≠ Goal Achieved**。
 
 ## 8. 可追溯性
 
