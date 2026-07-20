@@ -6,65 +6,92 @@
 [![安全](https://github.com/xhyperium/infra.rs/actions/workflows/security.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/security.yml)
 [![Constitution](https://github.com/xhyperium/infra.rs/actions/workflows/constitution.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/constitution.yml)
 
-独立的 Rust 基础设施工作区（workspace）。提供可复用的核心库、工程约定，以及 AI 编码助手的治理配置。
+**infra.rs** 是 [xhyper.rs](https://github.com/xhyperium/xhyper.rs) 项目的基础设施与治理仓库，承载以下职责：
+
+- 可复用的 Rust 核心库（`infra-core`）
+- 统一的工程约定、工具链配置与 CI/CD 流水线
+- 多 AI 编码助手（Claude Code / Codex / Copilot）的共享治理配置
 
 ## 快速开始
 
+### 前置条件
+
+- [Rust](https://rustup.rs) >= 1.85（MSRV）
+- [Node.js](https://nodejs.org) >= 18（Harness 脚本）
+
 ```bash
-# 构建
+# 克隆仓库
+git clone https://github.com/xhyperium/infra.rs.git
+cd infra.rs
+
+# 构建全部 crate
 cargo build --workspace
 
-# 测试
+# 运行测试
 cargo test --workspace
 
-# 格式 / Lint
-cargo fmt --all --check
-cargo clippy --workspace --all-features --all-targets -- -D warnings
-
-# 依赖安全
-cargo deny check
-
-# Harness 健康检查
-node scripts/check.mjs
+# 完整 CI 模拟（格式 + Lint + 测试 + 安全审计）
+make ci
 ```
 
-## 仓库结构
+### 使用 Make 快捷命令
 
-```text
-infra.rs/
-├── crates/               # Rust workspace crates
-│   └── infra-core/       #   核心库
-├── examples/             # 示例（按需添加）
-├── tests/                # 集成测试（按需添加）
-├── docs/                 # 项目文档
-├── scripts/              # Harness 脚本（check / gc-scan / worktree-policy）
-├── .cargo/               # Cargo 配置与本地 target/cache
-├── .claude/              # Claude Code：skills / hooks / settings
-├── .codex/               # Codex：agents / hooks
-├── .github/              # CI/CD、Issue/PR 模板
-├── Cargo.toml            # Workspace 根
-├── AGENTS.md             # 全 Agent 共享治理
-├── CLAUDE.md             # Claude Code 专属指令
-├── deny.toml             # cargo-deny
-├── rustfmt.toml          # rustfmt
-└── README.md
+```bash
+make build       # 编译
+make test        # 测试
+make fmt-check   # 格式检查
+make lint        # Clippy 静态分析
+make deny        # 依赖安全审计
+make ci          # 本地完整 CI
+make check       # 宪章合规性验证
+```
+
+### 作为依赖引入
+
+在 `Cargo.toml` 中引用本仓库的 crate：
+
+```toml
+[dependencies]
+infra-core = { git = "https://github.com/xhyperium/infra.rs.git" }
+```
+
+或通过 crates.io（待发布）：
+
+```toml
+[dependencies]
+infra-core = "0.1"
+```
+
+### 初始化 Harness
+
+```bash
+# 健康检查（验证 hooks / skills / beads 就绪）
+node scripts/check.mjs
+
+# 初始化 Beads 任务板
+bd init && bd prime
 ```
 
 ## Workspace
 
 | Crate | 说明 |
 |-------|------|
-| `infra-core` | 核心基础设施库（起点脚手架） |
+| `infra-core` | 核心基础设施库 — 错误类型、Result 别名、serde 序列化 |
 
-Rust edition `2024`，MSRV 见 `Cargo.toml` 中 `rust-version`。
+Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTURE.md)。
 
 ## 工程约定
 
-- 构建产物：`.cargo/target/`（已 gitignore）
-- 工具缓存：`.cargo/cache/<tool>/`
-- 提交信息：Conventional Commits
-- 分支：`main` 受保护；功能开发走 feature 分支 + PR
-- 任务板：Beads（`bd`），本地 DB 不入库
+| 类别 | 约定 |
+|------|------|
+| 构建 | `.cargo/target/`（gitignored），`cargo build --workspace` |
+| 格式 | `cargo fmt --all`，`max_width = 100` |
+| Lint  | `cargo clippy --workspace --all-targets -- -D warnings` |
+| 测试 | `cargo nextest` + `cargo llvm-cov`，覆盖率 >= 80% |
+| 安全 | `cargo deny check`，禁止 `unsafe` |
+| 提交 | Conventional Commits |
+| 分支 | `main` 受保护，feature 分支 + PR，squash merge |
+| 任务 | Beads（`bd`），本地 Dolt DB |
 
 ## 文档
 
@@ -92,9 +119,5 @@ Rust edition `2024`，MSRV 见 `Cargo.toml` 中 `rust-version`。
 
 ## 许可
 
-MIT
+MIT © 2026 [xhyperium](https://github.com/xhyperium)
 
-## 语言与编码
-
-- 注释与文档使用**中文**；标识符英文
-- 全文 **UTF-8（无 BOM）**，见 [docs/编码与语言约定.md](./docs/编码与语言约定.md)
