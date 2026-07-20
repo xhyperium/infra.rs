@@ -9,7 +9,7 @@
 ## CI 工作流 (6 个)
 
 | 工作流 | 文件 | 触发 | 状态 |
-|--------|------|------|------|
+| -------- | ------ | ------ | ------ |
 | Validation | `validation.yml` | PR + main push | YAML/TOML/MD lint + spell + link check |
 | Quality | `quality.yml` | PR + Rust 文件变更 | rustfmt + clippy |
 | CI (Rust) | `ci-rust.yml` | PR + Rust 文件变更 | build → test → coverage |
@@ -22,7 +22,7 @@
 ## 分支保护规则
 
 | 规则 | 值 |
-|------|-----|
+| ------ | ----- |
 | 合并前需 PR | 启用 |
 | 最少 approving reviews | 1 |
 | CODEOWNERS 审查 | 强制 |
@@ -59,7 +59,7 @@ remote: - 2 of 2 required status checks are expected.
 ## Dependabot
 
 | 项目 | 状态 |
-|------|------|
+| ------ | ------ |
 | Dependabot 配置 | 已移除 (`dependabot.yml` 删除) |
 | 最后漏洞告警 | CVE-2024-48908 (lychee-action v1 → v2，已修复) |
 | 告警状态 | fixed (自动) |
@@ -88,7 +88,7 @@ cargo-deny       ✓
 ## 仓库配置
 
 | 配置 | 值 |
-|------|-----|
+| ------ | ----- |
 | 默认分支 | `main` |
 | 合并方式 | squash merge only |
 | Auto-merge | 启用 |
