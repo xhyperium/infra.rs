@@ -233,7 +233,18 @@ make check # 等效: ./scripts/check-constitution.sh
 - 禁止 `git push --no-verify` 绕过钩子向共享分支推送
 - 历史重写（orphan / force push 覆盖远程）仅在**维护者明确授权**且团队知情时执行
 
-#### 6.0.5 工作区隔离（推荐 / substantial 强制）
+#### 6.0.5 Git Worktree 强制
+
+**所有活跃开发必须在独立的 Git Worktree 中进行。** 细则见 [docs/worktree-policy.md](./docs/worktree-policy.md)。
+
+```bash
+./scripts/worktree.sh create feat/my-feature
+cd .worktree/feat/my-feature
+```
+
+- 禁止在 main 工作区创建/切换功能分支
+- main 工作区仅用于 review、构建、测试（只读操作）
+- Worktree 目录：`.worktree/<type>/<branch>/`（已 gitignore）
 - 实质性任务（多文件或大 diff）应使用独立分支；推荐 git worktree 隔离
 - Worktree 规范路径：`.worktree/workspaces/<branch-name>`（分支名中的 `/` 可映射为 `-`）
 - 禁止多任务混用同一 worktree / 分支
