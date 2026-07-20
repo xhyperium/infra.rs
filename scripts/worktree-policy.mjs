@@ -13,9 +13,10 @@
  * SSOT: CONSTITUTION.md §6.0.5 / docs/worktree-policy.md
  */
 
-import { resolve, basename } from "path";
+import { resolve, basename, relative } from "path";
 import { existsSync } from "fs";
 import { homedir } from "os";
+import { execFileSync } from "child_process";
 
 // ── 常量 ────────────────────────────────────
 
@@ -102,12 +103,47 @@ export function isMainWorkspaceTopLevel(projectRoot, topLevel) {
 }
 
 /**
- * Write/Edit 目标路径是否允许（必须在 `.worktrees/<branch>/` 内）。
- * 仓外路径放行；主仓路径（含 main 检出）一律拒绝。
+ * 判断路径是否被 git ignore（含目录规则与否定规则）。
+ * 使用 `git check-ignore`；无法判定时返回 false（偏保守，走 worktree 门禁）。
+ */
+export function isGitIgnored(projectRoot, filePath) {
+  if (!projectRoot || !filePath) return false;
+  const root = resolve(projectRoot);
+  const abs = resolve(root, filePath);
+  if (!isPathInside(abs, root)) return false;
+
+  // 相对路径对 check-ignore 更稳定；保留 `.` 表示根
+  let rel = relative(root, abs);
+  if (!rel || rel.startsWith("..")) return false;
+  // git 在 Windows 上也能吃 `/`；统一正斜杠
+  rel = rel.split("\\").join("/");
+
+  try {
+    execFileSync("git", ["-C", root, "check-ignore", "-q", "--", rel], {
+      stdio: "ignore",
+      timeout: 3000,
+    });
+    return true; // exit 0 = ignored
+  } catch {
+    return false; // exit 1 或命令失败 = 不视为 ignored
+  }
+}
+
+/**
+ * Write/Edit 目标路径是否允许。
  *
+ * 放行：
+ * - 紧急 bypass
+ * - 仓外路径
+ * - `.worktrees/<branch>/...` 内路径
+ * - **被 .gitignore 匹配的路径**（本地配置 / 构建产物 / beads 等）
+ *
+ * 拒绝：主仓内被跟踪（或未被 ignore）的源码与文档。
+ *
+ * @param {{ projectRoot: string, filePath?: string, bypass?: boolean, isIgnored?: (fullPath: string) => boolean }} opts
  * @returns {{ allowed: boolean, fullPath: string, reason?: string, fixHint?: string }}
  */
-export function evaluateEditPath({ projectRoot, filePath, bypass = false }) {
+export function evaluateEditPath({ projectRoot, filePath, bypass = false, isIgnored }) {
   const fullPath = filePath ? resolve(projectRoot, filePath) : "";
   if (bypass) {
     return { allowed: true, fullPath, reason: "bypass" };
@@ -124,9 +160,17 @@ export function evaluateEditPath({ projectRoot, filePath, bypass = false }) {
     return { allowed: true, fullPath };
   }
 
-  // 必须落在 .worktrees/<branch>/... 下（不允许写主仓）
+  // 必须落在 .worktrees/<branch>/... 下（活跃开发）
   if (isPathInside(fullPath, wtBase) && fullPath !== wtBase) {
     return { allowed: true, fullPath };
+  }
+
+  // .gitignore 覆盖的路径为例外（本地状态、缓存、密钥类本地文件等）
+  // 注：.env 等仍可由 pre-tool-check 的 PROTECTED_FILES 单独拦截
+  const ignored =
+    typeof isIgnored === "function" ? Boolean(isIgnored(fullPath)) : isGitIgnored(root, fullPath);
+  if (ignored) {
+    return { allowed: true, fullPath, reason: "gitignored" };
   }
 
   return {
