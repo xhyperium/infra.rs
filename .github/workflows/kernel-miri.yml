@@ -2,6 +2,8 @@ name: Kernel Miri
 
 # kernel crate Miri UB 检测（RES-TEST-016）
 # nightly/scheduled job，miri test 全部通过为门禁
+# 默认隔离模式下 SystemClock::now() 调用 clock_gettime(REALTIME) 被拒绝，
+# 使用 -Zmiri-disable-isolation 绕过（与现有 evidence 一致）
 
 on:
   schedule:
@@ -24,4 +26,6 @@ jobs:
           components: miri
       - uses: Swatinem/rust-cache@v2
       - name: 运行 Miri
+        env:
+          MIRIFLAGS: -Zmiri-disable-isolation
         run: cargo +nightly miri test -p xhyper-kernel --all-features

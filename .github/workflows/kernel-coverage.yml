@@ -50,5 +50,18 @@ jobs:
             -p xhyper-kernel \
             --all-features \
             --branch \
+            --summary-only 2>&1 | tee /tmp/cov.txt
+          # 从 summary 输出提取 TOTAL 行的 branch 覆盖率
+          branch_pct=$(awk '/^TOTAL/ {for(i=1;i<=NF;i++) if($i=="Branches") {getline; for(j=1;j<=NF;j++) if($j=="Cover"){split($(j-1),a,"%"); print a[1]}}}' RS='' /tmp/cov.txt | tail -1)
+          echo "Branch coverage: ${branch_pct}%"
+          if [ -n "$branch_pct" ] && [ "$(echo "$branch_pct < 90" | bc 2>/dev/null || echo 1)" -eq 1 ]; then
+            echo "::error::Branch coverage ${branch_pct}% is below 90% threshold"
+            exit 1
+          fi
+          # 同时校验 lines 和 functions
+          cargo llvm-cov \
+            -p xhyper-kernel \
+            --all-features \
+            --branch \
             --fail-under-lines 95 \
             --fail-under-functions 90
