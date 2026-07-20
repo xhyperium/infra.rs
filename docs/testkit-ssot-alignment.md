@@ -101,15 +101,15 @@ CI 入口（与 kernel 同级 paths 过滤）：
 |----|------|------|------|
 | 24.1 | layer=test-support；非 L0 runtime；单 active spec；README/AGENTS 对齐 | PASS | `publish=false`、README/AGENTS、镜像只读 |
 | 24.2 | 只依赖 kernel；无 feature/宏/FixtureBuilder/provider；ManualClock V2；无真实时间/sleep/unchecked；无 Clone/Default | PASS | Cargo.toml + public_surface + api_compile + 实现 |
-| 24.3 unit/property/concurrency/compile | PASS | 见 §13 |
-| 24.3 line≥95% | PASS | llvm-cov |
-| 24.3 branch≥90% | DEFER | OPTIONAL（上游 residual；本仓不升强制） |
-| 24.3 mutation≥90% | PASS | missed=0 |
-| 24.3 Miri | PASS | 本仓 miri 日志 |
-| 24.4 Contract 闭合 | DEFER | 缺 contracts 平面；另开战役 |
-| 24.5 消费为 dev-dep / 无 build-dep / 无 normal graph 泄漏（core 侧） | PASS | crate 自身 `publish=false` + prod deps only kernel；全仓 machine gate/xtask **DEFER**（无 infra-xtask graph check） |
-| 24.5 feature 不泄漏 | PASS | `default=[]` 无其它 feature |
-| 24.6 治理（RFC/archgate/xtask…） | DEFER | 战役级；CHANGELOG + Evidence 本仓已有 |
+| 24.3 | unit / property / concurrency / compile | PASS | 见 §13 |
+| 24.3 | line ≥95% | PASS | llvm-cov |
+| 24.3 | branch ≥90% | DEFER | OPTIONAL（上游 residual；本仓不升强制） |
+| 24.3 | mutation ≥90% | PASS | missed=0 |
+| 24.3 | Miri | PASS | 本仓 miri 日志 |
+| 24.4 | Contract 闭合 | DEFER | 缺 contracts 平面；另开战役 |
+| 24.5 | 消费为 dev-dep / 无 build-dep / 无 normal graph 泄漏（core 侧） | PASS | crate 自身 `publish=false` + prod deps only kernel；全仓 machine gate/xtask **DEFER**（无 infra-xtask graph check） |
+| 24.5 | feature 不泄漏 | PASS | `default=[]` 无其它 feature |
+| 24.6 | 治理（RFC / archgate / xtask…） | DEFER | 战役级；CHANGELOG + Evidence 本仓已有 |
 
 ### 退役 API（§8 / §3.1）
 
