@@ -1,0 +1,15 @@
+{
+  "name": "infra.rs",
+  "version": "0.3.0",
+  "private": true,
+  "description": "infra.rs — xhyper.rs infrastructure and governance workspace",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xhyperium/infra.rs.git"
+  },
+  "license": "MIT"
+}

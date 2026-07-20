@@ -255,6 +255,16 @@ mod tests {
     }
 
     #[test]
+    fn test_timestamp_checked_sub_saturates_at_i64_bounds() {
+        // u64::MAX seconds (≈ 1.8e19 s ≈ 1.8e28 ns) < i128::MAX (≈ 1.7e38 ns)
+        // 因此 Duration::MAX 无法触发 i128 溢出守卫。本测试验证实际可达的
+        // checked_sub 路径：Duration 转换为 i64 后溢出 → 返回 None。
+        let t = Timestamp::from_unix_nanos(42);
+        let huge = Duration::from_secs(u64::MAX);
+        assert!(t.checked_sub(huge).is_none());
+    }
+
+    #[test]
     fn test_timestamp_checked_duration_since_equal() {
         let t = Timestamp::from_unix_nanos(42);
         let d = t.checked_duration_since(t).unwrap();

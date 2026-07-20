@@ -7,7 +7,7 @@
 
 ## 版本体系
 
-```text
+```
 项目版本 (Project)          CONSTITUTION 版本 (Governance)
 ├── Cargo.toml              ├── CONSTITUTION.md
 ├── CHANGELOG.md            └── .agents/ssot/SSOT.md
@@ -58,14 +58,14 @@ CI 中验证：
 
 ## 当前版本快照 (2026-07-21)
 
-| 载体                          | 版本     |
-| ----------------------------- | -------- |
-| `Cargo.toml` (项目)           | `0.3.0`  |
-| `CHANGELOG.md` (最新)         | `0.3.0`  |
-| `CONSTITUTION.md` (宪章)      | `v1.4.0` |
-| `.agents/ssot/SSOT.md`        | `v1.1.0` |
-| `infra-core` (crate)          | `0.1.0`  |
-| `crates/AGENTS.md`            | `v1.0.0` |
+| 载体 | 版本 |
+|----|----|
+| `Cargo.toml` (项目) | `0.3.0` |
+| `CHANGELOG.md` (最新) | `0.3.0` |
+| `CONSTITUTION.md` (宪章) | `v1.4.0` |
+| `.agents/ssot/SSOT.md` | `v1.1.0` |
+| `infra-core` (crate) | `0.1.0` |
+| `crates/AGENTS.md` | `v1.0.0` |
 | `crates/infra-core/AGENTS.md` | `v1.0.0` |
 
 版本号已统一，下次发布按 R-V2 规则递增。

@@ -1,0 +1,67 @@
+name: Kernel Coverage
+
+# kernel crate 分支覆盖率门禁（RES-TEST-014）
+# 阈值: lines >= 95%, branches >= 90%, functions >= 90%
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/kernel/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/kernel-coverage.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "crates/kernel/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/kernel-coverage.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  branch-coverage:
+    name: 分支覆盖率 (≥90%)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - name: 安装 cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - name: 分支覆盖率门禁
+        env:
+          RUSTUP_TOOLCHAIN: nightly
+        run: |
+          cargo llvm-cov \
+            -p xhyper-kernel \
+            --all-features \
+            --branch \
+            --summary-only 2>&1 | tee /tmp/cov.txt
+          # 从 summary 输出提取 TOTAL 行的 branch 覆盖率
+          branch_pct=$(awk '/^TOTAL/ {for(i=1;i<=NF;i++) if($i=="Branches") {getline; for(j=1;j<=NF;j++) if($j=="Cover"){split($(j-1),a,"%"); print a[1]}}}' RS='' /tmp/cov.txt | tail -1)
+          echo "Branch coverage: ${branch_pct}%"
+          if [ -n "$branch_pct" ] && [ "$(echo "$branch_pct < 90" | bc 2>/dev/null || echo 1)" -eq 1 ]; then
+            echo "::error::Branch coverage ${branch_pct}% is below 90% threshold"
+            exit 1
+          fi
+          # 同时校验 lines 和 functions
+          cargo llvm-cov \
+            -p xhyper-kernel \
+            --all-features \
+            --branch \
+            --fail-under-lines 95 \
+            --fail-under-functions 90
