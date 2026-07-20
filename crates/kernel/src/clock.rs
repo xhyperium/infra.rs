@@ -69,14 +69,15 @@ impl Timestamp {
     /// 返回 `self` 和 `earlier` 之间的时间差。
     ///
     /// 若 `earlier > self` 则返回 `None`，禁止饱和为 `Duration::ZERO`。
+    /// 使用宽于 `i64` 的中间值，使 `i64::MAX - i64::MIN`（= `u64::MAX` 纳秒）可表示。
     pub fn checked_duration_since(self, earlier: Self) -> Option<Duration> {
         if self.0 < earlier.0 {
             return None;
         }
-        let diff = self.0.checked_sub(earlier.0)?;
-        // When self >= earlier, diff is non-negative and fits in u64
-        // (i64::MAX nanoseconds is about 292 years, which fits)
-        Some(Duration::from_nanos(diff as u64))
+        let diff = i128::from(self.0) - i128::from(earlier.0);
+        // 非负且最大为 u64::MAX（i64 全量程跨度）
+        let nanos_u64: u64 = diff.try_into().ok()?;
+        Some(Duration::from_nanos(nanos_u64))
     }
 }
 
