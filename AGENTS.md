@@ -18,6 +18,15 @@
 - **根 crate 示例**：`crates/infra-core`
 - **非目标**：不是其他产品的元仓库镜像；本地即为源码与约定的 SSOT
 
+## 上游 SSOT 镜像与 testkit 落地
+
+- `.agents/ssot/{kernel,testkit,types}/` 是 `xhyper.rs/.agent/SSOT/` 的**只读镜像**（见 `.agents/ssot/SSOT.md` R6）
+- **镜像文档写 COMPLETE / Stable ≠ 本仓已有对应 crate**；必须以 `crates/` + `cargo metadata` 为准
+- **testkit 落地策略（当前）**：本仓 **已移植** core 包 `crates/testkit`（package `xhyper-testkit`，lib `testkit`，ManualClock V2）
+- `contract-testkit` **未**移植（依赖 contracts 平面，另开战役）
+- 禁止在 `.agents/ssot/testkit/**` 镜像内直接编辑；上游变更用 `cp -rf` 同步
+- 对齐审计：[docs/testkit-ssot-alignment.md](./docs/testkit-ssot-alignment.md)
+
 ## 仓库结构
 
 ```text

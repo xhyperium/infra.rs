@@ -105,3 +105,4 @@ desktop.ini
 .cargo/target/
 .cargo/cache/
 .worktrees/
+.worktree/

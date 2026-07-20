@@ -73,6 +73,16 @@
 
 ---
 
+
+### R7: 镜像文档 ≠ 本仓实现
+
+- 镜像内 `review COMPLETE` / `Stable CLAIMED` 描述的是**上游 xhyper.rs 战役状态**
+- 本仓是否落地以 `Cargo.toml` workspace members + `crates/` 路径为准
+- **testkit**：本仓已落地 `crates/testkit`（`xhyper-testkit`）；`contract-testkit` 未落地
+- 审计基线见 `docs/testkit-ssot-alignment.md`
+
+---
+
 ## 当前 SSOT 清单
 
 | 事实域 | SSOT 位置 | 投影位置 | 同步方式 |
@@ -97,5 +107,6 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v1.2.0 | 2026-07-21 | R7：镜像≠实现；记录 testkit 本仓落地 |
 | v1.1.0 | 2026-07-21 | 添加 xhyper.rs kernel/testkit/types 上游 SSOT 镜像条目 |
 | v1.0.0 | 2026-07-21 | 初始 SSOT 规则定义 |

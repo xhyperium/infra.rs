@@ -10,6 +10,13 @@
 - 主要代码在 `crates/`
 - 职责：实现库代码、维护 CI/工程约定、维护 Agent skills/hooks
 
+## 上游 SSOT 与 testkit
+
+- `.agents/ssot/testkit` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓无 crate 也可宣称 ship」
+- 本仓已落地：`crates/testkit`（`xhyper-testkit` / ManualClock）
+- 验证：`cargo test -p xhyper-testkit`
+- 详：[docs/testkit-ssot-alignment.md](./docs/testkit-ssot-alignment.md)
+
 ## Hook 感知
 
 `.claude/settings.json` 已注册完整钩子链：
