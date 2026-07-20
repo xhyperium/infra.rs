@@ -46,20 +46,41 @@ jobs:
         env:
           RUSTUP_TOOLCHAIN: nightly
         run: |
-          cargo llvm-cov \
+          set -euo pipefail
+          cargo +nightly llvm-cov \
             -p xhyper-kernel \
             --all-features \
             --branch \
             --summary-only 2>&1 | tee /tmp/cov.txt
-          # 从 summary 输出提取 TOTAL 行的 branch 覆盖率
-          branch_pct=$(awk '/^TOTAL/ {for(i=1;i<=NF;i++) if($i=="Branches") {getline; for(j=1;j<=NF;j++) if($j=="Cover"){split($(j-1),a,"%"); print a[1]}}}' RS='' /tmp/cov.txt | tail -1)
+
+          # cargo-llvm-cov 表头: ... Lines Missed Lines Cover | Branches Missed Branches Cover
+          # TOTAL 行末尾三列: branches_total, missed_branches, branch_cover%
+          # 例: TOTAL ... 631 7 98.89% 8 1 87.50%
+          branch_pct=$(
+            awk '
+              /^TOTAL/ {
+                for (i = 1; i <= NF; i++) {
+                  if ($i ~ /%$/) last_pct = $i
+                }
+                gsub(/%/, "", last_pct)
+                print last_pct
+              }
+            ' /tmp/cov.txt | tail -1
+          )
           echo "Branch coverage: ${branch_pct}%"
-          if [ -n "$branch_pct" ] && [ "$(echo "$branch_pct < 90" | bc 2>/dev/null || echo 1)" -eq 1 ]; then
-            echo "::error::Branch coverage ${branch_pct}% is below 90% threshold"
+          if [ -z "${branch_pct}" ]; then
+            echo "::error::Failed to parse branch coverage from llvm-cov summary"
             exit 1
           fi
-          # 同时校验 lines 和 functions
-          cargo llvm-cov \
+          # 使用 awk 做数值比较，避免 bc 缺失时门禁被跳过
+          awk -v p="$branch_pct" 'BEGIN {
+            if (p + 0 < 90) {
+              printf "::error::Branch coverage %s%% is below 90%% threshold\n", p
+              exit 1
+            }
+          }'
+
+          cargo +nightly llvm-cov \
             -p xhyper-kernel \
             --all-features \
             --branch \

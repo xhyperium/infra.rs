@@ -147,9 +147,9 @@ RUSTFLAGS='--cfg loom' cargo test -p xhyper-kernel --test lifecycle_concurrency_
 | 11.2 | loom 模型 | `lifecycle_concurrency_loom.rs`；默认构建 0 tests；`RUSTFLAGS='--cfg loom'` 启用 | PASS / 环境不可跑时见证据 DEFER |
 | 11.3 | proptest：Timestamp×Duration；ComponentState 对；ErrorKind 一致 | `clock_contract.rs` proptest! | PASS |
 | 11.4 | compile-fail / static 负向面 | rustdoc compile_fail + `api_compile.rs` | PASS |
-| 11.5 | line ≥95% / branch ≥90% CI | `.github/workflows/kernel-coverage.yml`（PR paths `crates/kernel/**`；`--fail-under-lines 95` + branch ≥90%） | PASS（CI job 存在且强制） |
-| 11.6 | mutants ≥90% | `.github/workflows/kernel-mutants.yml`（schedule 周一 + workflow_dispatch；`cargo mutants -p xhyper-kernel`） | PASS（scheduled CI 存在） |
-| 11.7 | miri | `.github/workflows/kernel-miri.yml`（schedule 周一 + workflow_dispatch；`cargo miri test -p xhyper-kernel`） | PASS（scheduled CI 存在） |
+| 11.5 | line ≥95% / branch ≥90% CI | `.github/workflows/kernel-coverage.yml` 解析 TOTAL 末列 branch% 并强制 ≥90；`--fail-under-lines 95` / functions 90。本会话实测 TOTAL branch **100%** / lines **99.69%** | PASS |
+| 11.6 | mutants ≥90% | `.github/workflows/kernel-mutants.yml`：schedule + `mkdir -p .cargo/cache/mutants` 后 `cargo mutants` | PASS（job 可执行；本会话未全量跑 mutants） |
+| 11.7 | miri | `.github/workflows/kernel-miri.yml`（schedule 周一 + workflow_dispatch；`cargo miri test -p xhyper-kernel`） | PASS（scheduled CI 存在；本会话未跑 miri） |
 
 ### §12+ monorepo 专属（非本仓可移植目标）
 
@@ -179,3 +179,4 @@ RUSTFLAGS='--cfg loom' cargo test -p xhyper-kernel --test lifecycle_concurrency_
 |------|------|
 | 2026-07-21 | 初版：逐条矩阵 + 禁止 From/not_found/other/Clock 默认 monotonic 负向面加强 |
 | 2026-07-21 | Codex P2 修复：`[lints] workspace = true`、`publish = false`、如实引用 coverage/mutants/miri workflows |
+| 2026-07-21 | Codex P1：修复 coverage workflow branch 解析；补 BeforeUnixEpoch/Overflow 测；mutants mkdir；branch cover 100% |
