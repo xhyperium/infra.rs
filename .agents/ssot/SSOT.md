@@ -64,6 +64,7 @@
 | 项目文档 | `docs/` | — | 直接引用 |
 | 变更日志 | `CHANGELOG.md` | — | 直接引用 |
 | Cargo 配置 | `.cargo/config.toml` | — | 直接引用 |
+| Crate 规则 | `crates/AGENTS.md` | `crates/*/AGENTS.md` | 按 crate 细化 |
 | 宪章合规 | `scripts/check-constitution.sh` | — | 直接引用 |
 
 ---
