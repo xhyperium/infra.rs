@@ -1,0 +1,29 @@
+name: Testkit Mutants
+
+# testkit crate 变异测试（SPEC-TESTKIT-002 §13.6 / §24.3）
+# scheduled / workflow_dispatch；目标 mutation score ≥90%（missed 尽量为 0）
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # 每周一 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutants:
+    name: 变异测试
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: 安装 cargo-mutants
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants
+      - name: 运行变异测试
+        run: cargo mutants -p xhyper-testkit --timeout 60

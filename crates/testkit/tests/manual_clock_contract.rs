@@ -53,3 +53,26 @@ fn mono_from_elapsed_roundtrip() {
     let origin = MonotonicInstant::from_clock_elapsed(Duration::ZERO);
     assert_eq!(m.checked_duration_since(origin).unwrap(), Duration::from_millis(2));
 }
+
+/// §13.2：wall 与 monotonic 独立（ManualClockDeterminismContract）。
+#[test]
+fn wall_and_monotonic_are_independent() {
+    let c = ManualClock::new(ts(100));
+    c.advance_monotonic(Duration::from_nanos(1_000)).unwrap();
+    c.rewind_wall(Duration::from_nanos(50)).unwrap();
+    assert_eq!(c.now().unwrap().as_unix_nanos(), 50);
+    assert_eq!(c.snapshot().unwrap().monotonic_elapsed(), Duration::from_nanos(1_000));
+}
+
+/// §13.2：两次读取之间无 control call 时 wall/mono 值不变。
+#[test]
+fn two_reads_stable_without_control_call() {
+    let c = ManualClock::new(ts(42));
+    c.advance_monotonic(Duration::from_nanos(9)).unwrap();
+    let w1 = c.now().unwrap();
+    let m1 = c.monotonic();
+    let w2 = c.now().unwrap();
+    let m2 = c.monotonic();
+    assert_eq!(w1, w2);
+    assert_eq!(m1, m2);
+}

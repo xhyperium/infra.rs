@@ -16,6 +16,8 @@ xhyper-kernel = { path = "../kernel", version = "0.3.0" }
 
 [dev-dependencies]
 proptest = "1"
+static_assertions = "1"
 
 [features]
+# SPEC-TESTKIT-002 §5.2 / §24.2：无 feature；显式 default=[] 满足字面合同
 default = []
