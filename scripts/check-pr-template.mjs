@@ -21,15 +21,27 @@ if (!body.trim()) {
 
 let pass = true;
 
+// 降级配置: PR_TEMPLATE_ERROR_DOWNGRADE=type,summary,all
+// 将指定硬错误降级为警告（不阻塞 merge）
+const downgrade = new Set((process.env.PR_TEMPLATE_ERROR_DOWNGRADE || "").split(",").map(s => s.trim()).filter(Boolean));
+const DOWNGRADE_ALL = downgrade.has("all");
+
 function warn(msg) { console.log(`::warning::${msg}`); }
-function error(msg) { console.log(`::error::${msg}`); pass = false; }
+function error(msg, key = "") { 
+  if (DOWNGRADE_ALL || downgrade.has(key)) {
+    console.log(`::warning::${msg} (误差降级)`);
+  } else {
+    console.log(`::error::${msg}`); 
+    pass = false; 
+  }
+}
 function notice(msg) { console.log(`::notice::${msg}`); }
 
 // 1. 变更类型选择
 if (/^\s*-\s*\[\s*x\s*\]/m.test(body)) {
   notice("变更类型: 已勾选");
 } else {
-  error("变更类型: 请勾选至少一项 (- [x])");
+  error("变更类型: 请勾选至少一项 (- [x])", "type");
 }
 
 // 2. 关联 Issue
@@ -44,7 +56,7 @@ if (closesMatch) {
 const summarySection = body.match(/## 变更摘要\n\n([\s\S]*?)(?=\n## |$)/);
 const summary = summarySection ? summarySection[1].replace(/<!--[\s\S]*?-->/g, "").trim() : "";
 if (!summary) {
-  error("变更摘要: 请填写变更说明");
+  error("变更摘要: 请填写变更说明", "summary");
 } else {
   notice("变更摘要: 已填写");
 }
