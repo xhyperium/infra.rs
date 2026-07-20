@@ -255,6 +255,14 @@ mod tests {
     }
 
     #[test]
+    fn test_timestamp_checked_sub_huge_duration() {
+        // Duration larger than i128::MAX nanoseconds triggers early return
+        let t = Timestamp::from_unix_nanos(42);
+        let huge = Duration::from_secs(u64::MAX);
+        assert!(t.checked_sub(huge).is_none());
+    }
+
+    #[test]
     fn test_timestamp_checked_duration_since_equal() {
         let t = Timestamp::from_unix_nanos(42);
         let d = t.checked_duration_since(t).unwrap();
