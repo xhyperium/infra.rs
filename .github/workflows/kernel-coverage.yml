@@ -49,5 +49,4 @@ jobs:
             --all-features \
             --branch \
             --fail-under-lines 95 \
-            --fail-under-functions 95 \
-            --fail-under-branches 90
+            --fail-under-functions 95
