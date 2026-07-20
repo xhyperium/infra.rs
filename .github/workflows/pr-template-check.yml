@@ -1,0 +1,29 @@
+name: PR Template Check
+
+# PR 描述模板合规性校验
+# 检查提交者是否在 PR body 中填写了模板要求的必填字段
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  template-check:
+    name: Template Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check PR template
+        run: bash scripts/check-pr-template.sh
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
