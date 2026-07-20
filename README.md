@@ -66,8 +66,6 @@ Rust edition `2024`，MSRV 见 `Cargo.toml` 中 `rust-version`。
 - 分支：`main` 受保护；功能开发走 feature 分支 + PR
 - 任务板：Beads（`bd`），本地 DB 不入库
 
-<<<<<<< HEAD
-=======
 ## 文档
 
 完整索引见 [docs/README.md](docs/README.md)。
@@ -75,11 +73,10 @@ Rust edition `2024`，MSRV 见 `Cargo.toml` 中 `rust-version`。
 | 文档 | 说明 |
 |------|------|
 | [CONSTITUTION.md](CONSTITUTION.md) | 工程宪章 — 核心价值观、架构原则、代码标准 |
-| [CONFIG_SUMMARY.md](docs/CONFIG_SUMMARY.md) | CI 配置、分支保护规则、测试验证记录 |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 架构文档 — 结构、Crate、CI/CD、治理 |
 | [CI_STATUS_REPORT.md](docs/CI_STATUS_REPORT.md) | CI 工作流矩阵、触发条件与运行统计 |
-| [编码与语言约定.md](docs/编码与语言约定.md) | 中文编码与文档语言约定 |
-
->>>>>>> efd486f (docs: add CI status badges to README)
+| [ASD-STE100.md](docs/ASD-STE100.md) | 英文技术文档规范 |
+| [编码与语言约定.md](docs/编码与语言约定.md) | 中文编码与文档语言约定 |>>>>>>> efd486f (docs: add CI status badges to README)
 ## AI 协作
 
 | 系统 | 角色 |
