@@ -37,3 +37,17 @@
 - 全量 M1–M3 生产迁移已完成
 - 10x PASS = 实现全量闭合
 - 把 `plan/evidence/approval-readback-pr507.json` 当成 tip-bound APPROVED
+
+## infra.rs 落地（2026-07-21）
+
+| 字段 | 值 |
+|------|-----|
+| 仓库 | `infra.rs` |
+| 分支 | `feat/decimalx-ssot-baseline` |
+| 实现路径 | `crates/types/decimal`（此前缺失，现已挂入 workspace） |
+| Active SSOT 路径 | `.agents/ssot/types/decimal/spec/spec.md`（dual mirror OK） |
+| 对账证据 | 本地 SCRATCH `decimal-alignment.md`（非 Goal Achieved） |
+| 门禁 | `cargo test -p xhyper-decimalx` · fmt · clippy `-D warnings` · 依赖仅 kernel+serde |
+| residual | T-HUM-001..005 / T-DEF-001..003 / T-POL-001 **仍开放** |
+
+说明：上表 monorepo 战役字段（PR #507 等）指 xhyper 历史证据；**infra.rs 以本段与 `review/review.md` 为准**。
