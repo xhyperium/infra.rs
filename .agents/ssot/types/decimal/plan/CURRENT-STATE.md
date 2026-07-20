@@ -43,10 +43,11 @@
 | 字段 | 值 |
 |------|-----|
 | 仓库 | `infra.rs` |
-| 分支 | `feat/decimalx-ssot-baseline` |
-| 实现路径 | `crates/types/decimal`（此前缺失，现已挂入 workspace） |
-| Active SSOT 路径 | `.agents/ssot/types/decimal/spec/spec.md`（dual mirror OK） |
-| 对账证据 | 本地 SCRATCH `decimal-alignment.md`（非 Goal Achieved） |
+| 分支 | `feat/decimal-ssot-align`（对账回合） |
+| 实现路径 | `crates/types/decimal`（workspace member；package `xhyper-decimalx` 0.1.0） |
+| Active SSOT 路径 | `.agents/ssot/types/decimal/spec/spec.md`（dual mirror `cmp` exit 0） |
+| 对账证据 | 本地 SCRATCH `decimal-ssot-alignment.md`（**非** Goal Achieved） |
+| agent-safe 对账 | **完成**：§3 API 列表/§6 测试计数同步；entry 补强 sub/mul/rescale/newtype |
 | 门禁 | `cargo test -p xhyper-decimalx` · fmt · clippy `-D warnings` · 依赖仅 kernel+serde |
 | residual | T-HUM-001..005 / T-DEF-001..003 / T-POL-001 **仍开放** |
 

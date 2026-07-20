@@ -27,9 +27,11 @@ Disposition 规则：每行必须为 `DONE` / `DEFERRED` / `HUMAN_ONLY` / `POLIC
 | T-DEF-002 | panicking API 删除/全迁移 | DEFERRED | residual |
 | T-DEF-003 | 全 i128 property/differential | DEFERRED | residual |
 | T-POL-001 | 禁止 numeric 路径 / 环依赖 / 默认 Money\<U\> | POLICY | residual · ADR-007 |
+| T-ALIGN-001 | infra.rs Active SSOT 对账 2026-07-21（§3 API/§6 计数/entry 补强） | DONE | `spec/spec.md` dual · `tests/entry_checked_ops.rs` · review/CURRENT-STATE |
 
 ## 规则
 
 - agent-safe 全 DONE ≠ GOAL ACHIEVED ≠ SPEC Approved ≠ package stable
 - 10x PASS ≠ 全量 M1–M3 生产迁移完成
 - 无证据不得 DONE
+- **T-ALIGN-001 完成 ≠ Goal Achieved**（T-HUM-005 仍开放）

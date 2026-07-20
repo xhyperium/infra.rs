@@ -9,6 +9,12 @@
 - 数值语义 `Eq` / `Ord` / `Hash`；serde 结构字段 shape（**非** wire stable）
 - unit / proptest / crate 外入口测试
 
+### Changed（agent-safe 对账）
+
+- Active SSOT §3/§6 与公开 API、测试计数对齐；dual mirror 保持 `cmp` 同构
+- crate 外 `entry_checked_ops` 补强 `checked_sub` / `checked_mul` / `checked_rescale` / newtype 具体返回值
+
 ### Notes
 
 - 字段仍 `pub`；独立 `DecimalError`、wire stable、Spec Approved 仍开放（见 SSOT residual）
+- agent-safe 对账完成 **≠** Goal Achieved
