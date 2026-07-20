@@ -1,6 +1,6 @@
 # infra.rs CI Status Report
 
-**Branch**: `main` | **Date**: 2026-07-20
+**Branch**: `main` | **Date**: 2026-07-21 | **Last validated**: 2026-07-21 `.sh` → `.mjs` migration
 
 ## 工作流矩阵
 
@@ -106,3 +106,49 @@
 ## Codespell 配置
 
 排除词: `ser`（Rust serde 序列化的常用缩写）
+
+---
+
+## `.sh` → `.mjs` 迁移验证 (2026-07-21)
+
+### 迁移清单
+
+| 旧脚本 (.sh) | 新脚本 (.mjs) | 状态 |
+|-------------|-------------|------|
+| `scripts/check-constitution.sh` | `scripts/check-constitution.mjs` | ✓ |
+| `scripts/check-pr-template.sh` | `scripts/check-pr-template.mjs` | ✓ |
+| `scripts/worktree.sh` | `scripts/worktree.mjs` | ✓ |
+| `scripts/worktree-activate.sh` | `scripts/worktree-activate.mjs` | ✓ |
+| `scripts/starship-wt.sh` | `scripts/starship-wt.mjs` | ✓ |
+| `scripts/migrate-worktrees.sh` | `scripts/migrate-worktrees.mjs` | ✓ |
+
+### CI 工作流验证
+
+| 工作流 | 脚本引用 | 解释器 | 路径过滤 | 状态 |
+|--------|---------|--------|---------|------|
+| `constitution.yml` | `./scripts/check-constitution.mjs` | shebang (`#!/usr/bin/env node`) | `scripts/check-constitution.mjs` | ✓ |
+| `pr-template-check.yml` | `node scripts/check-pr-template.mjs` | `node` (显式) | (全部 PR) | ✓ |
+| `validation.yml` | `node scripts/check.mjs` | `node` (显式) | — | ✓ |
+| `ci-rust.yml` | Cargo only | Cargo | Rust 源码 | ✓ |
+| `quality.yml` | Cargo only | Cargo | Rust 源码 | ✓ |
+| `security.yml` | Cargo only | Cargo | Rust 源码 | ✓ |
+
+### 本地测试 (2026-07-21)
+
+```
+check-constitution.mjs --quick    4 pass / 0 fail / 1 skip
+check-pr-template.mjs             5 pass / 0 fail
+worktree.mjs list                 1 worktree (main)
+starship-wt.mjs                   "main"
+make check-quick                  exit 0
+```
+
+### 校验清单
+
+- [x] 全部 `.sh` 文件已删除 (`scripts/` 下无残留)
+- [x] CI 工作流脚本引用全部指向 `.mjs`
+- [x] 解释器全部为 `node`（shebang 或显式）
+- [x] 路径过滤器无 `.sh` 残留
+- [x] 14 个引用文件已更新（docs、config、Makefile、nix）
+- [x] CONSTITUTION.md §4.8 已更新（移除 shell 例外）
+- [x] 本地脚本全部通过测试
