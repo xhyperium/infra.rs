@@ -132,7 +132,8 @@ crates/
 | `cargo test` / `cargo nextest run` | **强制** | 功能正确性 | `ci-rust.yml` / `make test` |
 | `cargo-deny check` | **强制** | 安全审计 | `security.yml` / `make deny` |
 | 宪章合规性（全部） | **强制** | `scripts/check-constitution.sh` | `constitution.yml` / `make check` |
-| UTF-8 / 无 `U+FFFD`（§4.5） | **强制** | 编码完整性 | `constitution.yml` (已包含) |
+| UTF-8 / 无 `U+FFFD`（§4.5） | **强制** | 编码完整性 | `constitution.yml`（已包含） |
+| Git Main First（§6.0） | **强制** | 主干唯一、PR 收敛 | 分支保护 + 宪章脚本条款检查 |
 | 覆盖率 >= 80% | **推荐** | 代码覆盖 | `ci-rust.yml` |
 | `cargo-llvm-cov` | **推荐** | 覆盖率统计 | `ci-rust.yml` |
 
