@@ -1,0 +1,24 @@
+# testkit port evidence (infra.rs)
+date: 2026-07-20T19:49:57Z
+branch: feat/testkit-port
+package: xhyper-testkit 0.1.1
+source: ported from xhyper.rs crates/testkit ManualClock V2
+
+## cargo test -p xhyper-testkit
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+running 16 tests
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 2 tests
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+running 5 tests
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 3 tests
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+## cargo clippy -p xhyper-testkit --all-targets -- -D warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.14s
+
+## cargo fmt --check
+PASS

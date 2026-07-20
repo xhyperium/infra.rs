@@ -76,3 +76,5 @@ cp -rf /home/workspace/xhyper.rs/.agent/SSOT/types   .agents/ssot/
 ## 结论
 
 **全部通过** — 源和目标在文件数量、大小和内容上完全一致。无遗漏、无差异。
+
+> **补充（2026-07-21）**：镜像同步成功 ≠ 本仓实现。testkit **core 已落地** `crates/testkit`；详见 [testkit-ssot-alignment.md](./testkit-ssot-alignment.md)。

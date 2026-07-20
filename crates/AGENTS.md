@@ -149,3 +149,10 @@ crates/<crate-name>/
 | v1.1.1 | 2026-07-21 | 锁定标准条目顺序：src → examples → docs → tests → CHANGELOG → AGENTS → README |
 | v1.1.0 | 2026-07-21 | 增加 crate 子模块标准布局（七项 + Cargo.toml） |
 | v1.0.0 | 2026-07-21 | 初始代理规则 |
+
+## testkit（test-support）
+
+- path：`crates/testkit` · package：`xhyper-testkit` · lib：`testkit`
+- 仅允许 **dev-dependency** 消费；禁止进入生产 normal graph
+- 生产依赖仅 `xhyper-kernel`
+
