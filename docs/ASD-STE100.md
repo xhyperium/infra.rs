@@ -30,12 +30,14 @@
 下列规则是 STE 思想的可执行摘要，**不能替代**官方字典与完整规则集。写作英文技术文档时至少遵守：
 
 ### 3.1 词汇
+
 - 一词一义；避免同一词多种含义
 - 优先短词、常用词、可定义的技术名词
 - 禁止含糊词：如 *approximately*、*about*（数量）在步骤中随意使用
 - 术语首次出现给出定义；全文保持同一写法
 
 ### 3.2 句子
+
 - **一句一个主题**
 - 句子尽量短（描述句建议 ≤ 20 词；程序步骤可更短）
 - 优先 **主动语态**
@@ -43,6 +45,7 @@
 - 避免嵌套从句与过长并列
 
 ### 3.3 结构
+
 - 标题层级清晰，一步一事
 - 程序类文档：编号步骤 + 条件/结果
 - 警告 / 注意 / 危险 分级明确，放在操作之前
@@ -50,11 +53,11 @@
 
 ### 3.4 示例（对比）
 
-**不推荐（冗长、被动、含糊）**
+不推荐（冗长、被动、含糊）：
 
 > The configuration file should be carefully modified by the operator so that the service can be restarted afterwards if necessary.
 
-**推荐（STE 风格）**
+推荐（STE 风格）：
 
 > 1. Open the configuration file.  
 > 2. Change the required parameters.  
