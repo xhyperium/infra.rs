@@ -1,0 +1,54 @@
+name: Testkit Coverage
+
+# testkit crate line coverage 门禁（SPEC-TESTKIT-002 §13.7 / §24.3）
+# 阈值: lines >= 95%（branch ≥90% 为 OPTIONAL，见 residual）
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/testkit/**"
+      - "crates/kernel/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/testkit-coverage.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "crates/testkit/**"
+      - "crates/kernel/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/testkit-coverage.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  line-coverage:
+    name: 行覆盖率 (≥95%)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - name: 安装 cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - name: 行覆盖率门禁
+        env:
+          RUSTUP_TOOLCHAIN: nightly
+        run: |
+          cargo llvm-cov \
+            -p xhyper-testkit \
+            --fail-under-lines 95 \
+            --summary-only

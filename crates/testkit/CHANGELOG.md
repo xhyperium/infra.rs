@@ -8,6 +8,8 @@
 
 - 将 `xhyper-testkit` 0.1.1（ManualClock V2）移植到 **infra.rs** workspace
 - 合同 / 并发 / property 测试与 unit tests 一并落地
+- SPEC-TESTKIT-002 core 对齐补齐：`mono_overflow` 单测、`api_compile`（!Default/!Clone/Send+Sync）、property（mono overflow + fault sequence）、`public_surface` 守卫
+- 质量门禁：line-cov / miri / mutants 本地命令与 CI workflow（`testkit-*.yml`）
 
 ## [0.1.1] - 2026-07-14（上游 xhyper.rs ship；infra 移植保留版本号）
 

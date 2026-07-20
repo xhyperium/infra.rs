@@ -4,18 +4,21 @@
 |------|-----|
 | 策略 | **B — 本仓移植 core testkit** |
 | 日期 | 2026-07-21 |
-| 分支 | `feat/testkit-port` |
+| 分支 | `feat/testkit-ssot-align` |
+| 规范 | SPEC-TESTKIT-002（镜像 `.agents/ssot/testkit/spec/spec.md`） |
+| package | `xhyper-testkit` 0.1.1 · lib `testkit` |
 
 ## 结论摘要
 
 | 问题 | 状态 |
 |------|------|
 | 上游 SSOT 镜像 COMPLETE 叙事 | 仍是 xhyper 战役文档；**禁止**单独当作本仓交付证明 |
-| 本仓 `crates/testkit` | **已落地**（package `xhyper-testkit` 0.1.1 · ManualClock V2） |
-| 本仓 `contract-testkit` | **未**移植（scope 外） |
-| 本仓 `evidence/testkit/` 上游 stable-gates | **不复制**；以本仓 `cargo test -p xhyper-testkit` 为准 |
+| 本仓 `crates/testkit` core（ManualClock 族） | **已闭合**（§7 / §13.1–§13.5 / §24.1–§24.3 core / §24.5 core → 见 clause matrix） |
+| 本仓 `contract-testkit` | **DEFER**（缺 `xhyper-contracts` 平面；§24.4） |
+| integration harness | **DEFER**（跨 crate INFRA；§3.3 / §24.0 residual） |
+| 本仓质量证据 | **本仓实测** line-cov / mutants / miri；不复制上游 `2026-07-14-stable-gates` |
 
-## 本仓可观察事实（落地后）
+## 本仓可观察事实
 
 ```text
 crates/testkit/                 EXISTS
@@ -23,24 +26,115 @@ Cargo.toml members              含 crates/testkit
 package name                    xhyper-testkit
 lib name                        testkit
 publish                         false
-deps                            xhyper-kernel only
+prod deps                       xhyper-kernel only
+dev deps                        proptest, static_assertions
+features.default                []
 ```
 
-验证：
+## 验证命令（本仓可复现）
 
 ```bash
+# 功能与合同
 cargo test -p xhyper-testkit
 cargo clippy -p xhyper-testkit --all-targets -- -D warnings
+cargo fmt --all --check
+
+# §13.7 line coverage（≥95%）
+cargo llvm-cov -p xhyper-testkit --fail-under-lines 95 --summary-only
+
+# §13.6 mutants（目标 score≥90%；本仓期望 missed=0）
+mkdir -p .cargo/cache/mutants
+cargo mutants -p xhyper-testkit --timeout 60
+
+# §13.8 Miri
+cargo +nightly miri test -p xhyper-testkit
 ```
+
+CI 入口（与 kernel 同级 paths 过滤）：
+
+| Workflow | 触发 | 路径 |
+|----------|------|------|
+| `.github/workflows/testkit-coverage.yml` | push/PR（paths） | line ≥95% |
+| `.github/workflows/testkit-miri.yml` | schedule + dispatch | miri test |
+| `.github/workflows/testkit-mutants.yml` | schedule + dispatch | cargo mutants |
+
+## Clause matrix（本仓证据，非镜像勾选）
+
+> 标记：`PASS` = 本仓源码 + 可运行测试/命令证明；`GAP` = core 必选缺口；`DEFER` = 显式范围外或工具/依赖阻塞。  
+> **core 必选 GAP 必须为 0** 才可宣称 core 对齐。
+
+### §7 ManualClock 合同
+
+| ID | 条款 | 状态 | 本仓证据 |
+|----|------|------|----------|
+| 7.1 | 独立墙钟/单调钟、fault、snapshot、多线程、无真实时间、无静默溢出 | PASS | `src/clock.rs` + unit/contract/concurrency |
+| 7.2 | `Mutex<State>{wall, mono, fault}` 一致模型 | PASS | `clock.rs` State |
+| 7.3 | `ManualClockFault` 三变体映射 ClockError | PASS | unit `fault_variants_map_to_clock_error` |
+| 7.4 | `ManualClockError` + Display/Error，无 anyhow | PASS | unit `error_display_*` |
+| 7.5 | Snapshot 私有字段 + 只读 getter | PASS | unit `snapshot_getters_*` |
+| 7.6 | `new` / `with_monotonic_elapsed`；无 Default | PASS | unit 构造 + `api_compile` `!Default` |
+| 7.7 | wall set/advance/rewind checked；失败不改状态；可回拨 | PASS | unit wall_* + property advance/rewind |
+| 7.8 | mono set/advance；regression；overflow；无 rewind | PASS | unit mono_* + property mono_advance_checked |
+| 7.9 | fault set/clear/query；不改 wall；不影响 mono | PASS | unit fault_* + property fault_set_clear_sequence |
+| 7.10 | snapshot 同锁读三字段 | PASS | unit snapshot_* + concurrency |
+| 7.11 | `Clock` impl；poison 恢复文档语义 | PASS | `impl Clock` + lock_recover 文档 |
+| 7.12 | 无 Clone；共享用 Arc | PASS | `api_compile` `!Clone` + concurrency Arc |
+| 7.13 | Send + Sync compile assertion | PASS | `tests/api_compile.rs` |
+
+### §13 测试合同（core）
+
+| ID | 条款 | 状态 | 本仓证据 |
+|----|------|------|----------|
+| 13.1 | unit：构造/advance/rewind/边界/overflow/fault/snapshot/失败不变/!Default/!Clone/Send+Sync | PASS | `src/clock.rs` unit_tests + api_compile |
+| 13.2 | ManualClockDeterminism：now/error、可 rewind、mono 非减、独立、无漂移、无 control 值不变 | PASS | `tests/manual_clock_contract.rs` |
+| 13.3 | property：wall±、mono+、失败 snapshot 不变、fault sequence | PASS | `tests/manual_clock_properties.rs` |
+| 13.4 | concurrency：多线程读/控、Arc、无撕裂 | PASS | `tests/manual_clock_concurrency.rs` |
+| 13.5 | compile assertions：!Default/!Clone/Send+Sync；不导出退役符号 | PASS | `tests/api_compile.rs` + `tests/public_surface.rs` |
+| 13.6 | mutation score ≥90% | PASS | 本仓 `cargo mutants`：missed=0（caught=10, unviable=20） |
+| 13.7 | line ≥95%；branch ≥90% OPTIONAL | PASS / DEFER | line **99.65%** PASS；branch 本工具 summary 无分支数据 → **OPTIONAL/DEFER**（与上游 residual 一致） |
+| 13.8 | Miri | PASS | `cargo +nightly miri test -p xhyper-testkit`（见 evidence） |
+| 13.9 | contract-testkit 自测 | DEFER | 无 contract-testkit crate |
+
+### §24 验收清单（core 相关）
+
+| ID | 条款 | 状态 | 说明 |
+|----|------|------|------|
+| 24.1 | layer=test-support；非 L0 runtime；单 active spec；README/AGENTS 对齐 | PASS | `publish=false`、README/AGENTS、镜像只读 |
+| 24.2 | 只依赖 kernel；无 feature/宏/FixtureBuilder/provider；ManualClock V2；无真实时间/sleep/unchecked；无 Clone/Default | PASS | Cargo.toml + public_surface + api_compile + 实现 |
+| 24.3 unit/property/concurrency/compile | PASS | 见 §13 |
+| 24.3 line≥95% | PASS | llvm-cov |
+| 24.3 branch≥90% | DEFER | OPTIONAL（上游 residual；本仓不升强制） |
+| 24.3 mutation≥90% | PASS | missed=0 |
+| 24.3 Miri | PASS | 本仓 miri 日志 |
+| 24.4 Contract 闭合 | DEFER | 缺 contracts 平面；另开战役 |
+| 24.5 消费为 dev-dep / 无 build-dep / 无 normal graph 泄漏（core 侧） | PASS | crate 自身 `publish=false` + prod deps only kernel；全仓 machine gate/xtask **DEFER**（无 infra-xtask graph check） |
+| 24.5 feature 不泄漏 | PASS | `default=[]` 无其它 feature |
+| 24.6 治理（RFC/archgate/xtask…） | DEFER | 战役级；CHANGELOG + Evidence 本仓已有 |
+
+### 退役 API（§8 / §3.1）
+
+| 符号 | 状态 |
+|------|------|
+| `xlib_test!` | PASS（源码无定义；public_surface 守卫） |
+| `mock!` | PASS |
+| `FixtureBuilder` | PASS |
+| `provider_capability_contract_tests!` | PASS |
 
 ## 与镜像文档的关系
 
 - `.agents/ssot/testkit/**`：只读镜像；禁止本地改 CLOSED/COMPLETE 叙事冒充同步
-- 实现 SSOT 以 **源码 + 本仓测试输出** 为准
-- 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`「上游 SSOT 镜像与 testkit 落地」
+- 实现 SSOT 以 **源码 + 本仓测试/覆盖率/mutants/miri 输出** 为准
+- 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
 
-## 未做（follow-up）
+## 未做（follow-up / DEFER）
 
-- `crates/test-support/contracts`（contract-testkit）
-- mutants / Miri / line-cov CI job（可另开 quality 战役）
+- `crates/test-support/contracts`（contract-testkit，§24.4）
+- 全仓 production-graph machine gate（xtask，依赖缺失）
+- branch coverage ≥90% 强制（OPTIONAL residual）
 - 上游 SSOT 文档内部 STALE 收口（应在 xhyper.rs 修，再镜像同步）
+
+## Core 必选 GAP 计数
+
+```text
+core 必选 GAP = 0
+```

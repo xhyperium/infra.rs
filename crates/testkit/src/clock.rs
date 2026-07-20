@@ -298,6 +298,21 @@ mod unit_tests {
         c.set_monotonic_elapsed(Duration::from_nanos(11)).unwrap();
     }
 
+    /// §13.1 / §7.8：monotonic advance 溢出返回 `MonotonicOverflow` 且不修改状态。
+    #[test]
+    fn mono_overflow_does_not_mutate() {
+        let c = ManualClock::with_monotonic_elapsed(ts(0), Duration::MAX);
+        let before = c.snapshot().unwrap();
+        assert!(matches!(
+            c.advance_monotonic(Duration::from_nanos(1)),
+            Err(ManualClockError::MonotonicOverflow)
+        ));
+        assert_eq!(c.snapshot().unwrap(), before);
+        // 墙钟与 fault 也不得被副作用改写
+        assert_eq!(c.now().unwrap().as_unix_nanos(), 0);
+        assert_eq!(c.wall_fault().unwrap(), None);
+    }
+
     #[test]
     fn fault_injection_preserves_wall_and_mono() {
         let c = ManualClock::new(ts(42));
