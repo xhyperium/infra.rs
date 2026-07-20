@@ -22,7 +22,7 @@
 ## 分支保护规则（Ruleset）
 
 > **2026-07-21 迁移**：经典 Branch Protection 已删除；`main` 由仓库 Ruleset **`main-ai-first`**（id `19250230`）强制。  
-> UI：https://github.com/xhyperium/infra.rs/rules/19250230
+> UI：<https://github.com/xhyperium/infra.rs/rules/19250230>
 
 | 规则 | 值 |
 | ------ | ----- |
