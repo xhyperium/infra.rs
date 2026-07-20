@@ -70,7 +70,8 @@ infra.rs/                      # 主工作区 (main) — 只读：review / build
 
 | 触发 | 行为 | 实现 |
 |------|------|------|
-| `Write` / `Edit` 目标在主仓路径（非 `.worktrees/**`） | **BLOCK** | `pre-tool-check.mjs` |
+| `Write` / `Edit` 目标在主仓**已跟踪**路径（非 `.worktrees/**`） | **BLOCK** | `pre-tool-check.mjs` |
+| `Write` / `Edit` 目标被 `.gitignore` 匹配 | **放行（例外）** | `git check-ignore` |
 | 主工作区 `git checkout -b` / `git switch -c` | **BLOCK** | `pre-tool-check.mjs` |
 | 主工作区 `git checkout`/`switch` 到非 main 功能分支 | **BLOCK** | `pre-tool-check.mjs` |
 | 在 `main`/`master` 分支上 `git commit` | **BLOCK** | `pre-tool-check.mjs` |
@@ -78,7 +79,14 @@ infra.rs/                      # 主工作区 (main) — 只读：review / build
 | 分支名缺少 type 前缀 | **BLOCK** | `pre-tool-check.mjs` |
 | SessionStart 在主仓 | **WARN + 开工指引** | `session-context.mjs` |
 
-主工作区**允许**：`git status` / `fetch` / `pull` / `log` / `diff`、`cargo test`/`build`（只读验证）、`node scripts/worktree.mjs create`、`git worktree list/remove`。
+主工作区**允许**：
+
+- `git status` / `fetch` / `pull` / `log` / `diff`
+- `cargo test`/`build`（只读验证）
+- `node scripts/worktree.mjs create`、`git worktree list/remove`
+- **编辑 `.gitignore` 覆盖的路径**（如 `.beads/`、`.claude/*.local.json`、`.claude/reviews/`、`target/`、`.cargo/cache/` 等本地/生成物）
+
+> 安全叠加：`.env` / `.env.local` 仍由 `pre-tool-check` 的 `PROTECTED_FILES` 单独拦截，不受 gitignore 例外放行。
 
 ### 4. 禁止行为
 
@@ -112,13 +120,14 @@ export INFRA_WORKTREE_BYPASS=1
 
 ---
 
-## 例外（收紧后）
+## 例外
 
 | 场景 | 是否允许主仓写 | 条件 |
 |------|----------------|------|
-| 紧急热修复 | 仅人工 + `INFRA_WORKTREE_BYPASS=1` | 事后补 PR 与原因 |
+| **`.gitignore` 匹配的路径** | **是** | `git check-ignore` 判定为 ignored；含本地配置、缓存、构建产物、beads 状态等 |
+| 紧急热修复（跟踪文件） | 仅人工 + `INFRA_WORKTREE_BYPASS=1` | 事后补 PR 与原因 |
 | 单次 typo（maintainer） | 仅人工本地，**不经 Agent 钩子** | 尽量仍走 PR |
-| Agent 任何活跃开发 | **否** | 必须 worktree |
+| Agent 改跟踪源码/文档 | **否** | 必须 worktree |
 
 ---
 

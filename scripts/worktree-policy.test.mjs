@@ -61,27 +61,34 @@ assert("resolveMainProjectRoot main root", resolveMainProjectRoot(root) === root
 
 // evaluateEditPath
 {
+  const notIgnored = () => false;
+  const yesIgnored = () => true;
+
   const denyMain = evaluateEditPath({
     projectRoot: root,
     filePath: `${root}/crates/foo/src/lib.rs`,
+    isIgnored: notIgnored,
   });
   assert("deny main checkout edit", !denyMain.allowed, denyMain.reason);
 
   const denyRelative = evaluateEditPath({
     projectRoot: root,
     filePath: "CLAUDE.md",
+    isIgnored: notIgnored,
   });
   assert("deny relative main path", !denyRelative.allowed);
 
   const allowWt = evaluateEditPath({
     projectRoot: root,
     filePath: `${root}/.worktrees/feat/x/CLAUDE.md`,
+    isIgnored: notIgnored,
   });
   assert("allow worktree path", allowWt.allowed);
 
   const allowOutside = evaluateEditPath({
     projectRoot: root,
     filePath: "/tmp/scratch.txt",
+    isIgnored: notIgnored,
   });
   assert("allow outside repo", allowOutside.allowed);
 
@@ -91,6 +98,23 @@ assert("resolveMainProjectRoot main root", resolveMainProjectRoot(root) === root
     bypass: true,
   });
   assert("allow with bypass", allowBypass.allowed);
+
+  const allowGitignored = evaluateEditPath({
+    projectRoot: root,
+    filePath: `${root}/.beads/issues.jsonl`,
+    isIgnored: yesIgnored,
+  });
+  assert(
+    "allow gitignored path",
+    allowGitignored.allowed && allowGitignored.reason === "gitignored",
+  );
+
+  const denyTrackedDespiteCallback = evaluateEditPath({
+    projectRoot: root,
+    filePath: `${root}/README.md`,
+    isIgnored: notIgnored,
+  });
+  assert("deny tracked path when not ignored", !denyTrackedDespiteCallback.allowed);
 }
 
 // evaluateMainWorkspaceGitCommand

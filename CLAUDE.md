@@ -38,7 +38,8 @@ cd .worktrees/feat/<id>-<slug>
 # 在该目录内编码 / 测试 / 提交 / 开 PR
 ```
 
-- `pre-tool-check` **BLOCK**：主仓 Write/Edit、主仓 `checkout -b`/`switch` 功能分支、`main` 上 commit
+- `pre-tool-check` **BLOCK**：主仓**已跟踪**文件 Write/Edit、主仓 `checkout -b`/`switch` 功能分支、`main` 上 commit
+- **例外**：`.gitignore` 匹配路径（如 `.beads/`、`.claude/*.local.json`、`target/`）可在主仓编辑；`.env` 仍单独拦截
 - 路径规范：`.worktrees/<branch-name>`（`/` 保留为目录分隔符）
 - 禁止设置 `INFRA_WORKTREE_BYPASS=1` 绕过（仅人工 maintainer 应急）
 
