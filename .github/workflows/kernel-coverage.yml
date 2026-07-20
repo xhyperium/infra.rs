@@ -43,6 +43,8 @@ jobs:
         with:
           tool: cargo-llvm-cov
       - name: 分支覆盖率门禁
+        env:
+          RUSTUP_TOOLCHAIN: nightly
         run: |
           cargo llvm-cov \
             -p xhyper-kernel \
