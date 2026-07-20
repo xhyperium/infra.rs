@@ -1,6 +1,10 @@
 name: Constitution
 
 # 宪章合规性验证 — 对应 CONSTITUTION.md 全部可自动化检查项
+#
+# Ruleset required check 名必须始终上报: "Constitution Check"
+# - 有 Rust/配置变更: 跑完整 check-constitution.mjs
+# - 纯 docs/skill 等: 跳过重检查但仍 success（避免 docs PR 被卡死或等 15min）
 
 on:
   push:
@@ -17,8 +21,6 @@ on:
       - "scripts/check-constitution.mjs"
       - ".github/workflows/constitution.yml"
       - "CONSTITUTION.md"
-  # PR 必须始终上报 Constitution Check（Ruleset required）。
-  # 纯文档 PR 也需要有 conclusion，否则 main 合入永久 pending。
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -38,20 +40,72 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Detect code / constitution scope
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          # push/workflow_dispatch: always full check
+          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
+            echo "run_full=true" >> "$GITHUB_OUTPUT"
+            echo "scope=non-pr (full)"
+            exit 0
+          fi
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mapfile -t files < <(git diff --name-only "$BASE...$HEAD" || true)
+          run_full=false
+          patterns=(
+            '^Cargo\.toml$'
+            '^Cargo\.lock$'
+            'Cargo\.toml$'
+            '\.rs$'
+            '^deny\.toml$'
+            '^rust-toolchain\.toml$'
+            '^rustfmt\.toml$'
+            '^clippy\.toml$'
+            '^scripts/check-constitution\.mjs$'
+            '^\.github/workflows/constitution\.yml$'
+            '^CONSTITUTION\.md$'
+          )
+          for f in "${files[@]+"${files[@]}"}"; do
+            for p in "${patterns[@]}"; do
+              if [[ "$f" =~ $p ]]; then
+                run_full=true
+                break 2
+              fi
+            done
+          done
+          echo "run_full=${run_full}" >> "$GITHUB_OUTPUT"
+          echo "changed_files=${#files[@]}"
+          echo "scope=$([ "$run_full" = true ] && echo full || echo docs-only)"
 
       - name: Install Rust toolchain
+        if: steps.scope.outputs.run_full == 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
+        if: steps.scope.outputs.run_full == 'true'
 
       - name: Install cargo-deny
+        if: steps.scope.outputs.run_full == 'true'
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny
 
       - name: Run constitution checks
+        if: steps.scope.outputs.run_full == 'true'
         run: ./scripts/check-constitution.mjs
         env:
           CARGO_TERM_COLOR: always
+
+      - name: Docs-only skip (still green for Ruleset)
+        if: steps.scope.outputs.run_full != 'true'
+        run: |
+          echo "No Rust/config/constitution paths in this PR."
+          echo "Constitution Check reports success without full cargo suite (AI-first docs path)."
