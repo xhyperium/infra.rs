@@ -7,7 +7,7 @@
 
 ## 版本体系
 
-```
+```text
 项目版本 (Project)          CONSTITUTION 版本 (Governance)
 ├── Cargo.toml              ├── CONSTITUTION.md
 ├── CHANGELOG.md            └── .agents/ssot/SSOT.md
