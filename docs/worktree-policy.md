@@ -36,7 +36,7 @@ git worktree add .worktrees/feat/my-feature -b feat/my-feature origin/main
 
 ### 2. 目录约定
 
-```
+```text
 infra.rs/                      # 主工作区 (main)
 └── .worktrees/                 # Worktree 根（已 gitignore）
     ├── feat/                  # 功能分支

@@ -135,7 +135,7 @@
 
 ### 本地测试 (2026-07-21)
 
-```
+```text
 check-constitution.mjs --quick    4 pass / 0 fail / 1 skip
 check-pr-template.mjs             5 pass / 0 fail
 worktree.mjs list                 1 worktree (main)
