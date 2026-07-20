@@ -58,6 +58,7 @@
 | PROD-DOC-v1 | production-upgrade + wire 矩阵 + validation owners + M1 人审包 |
 | PROD-TEST-v1 | 矩阵/owner 覆盖测 + legacy ack fixture + ts 形状测 |
 | INFRA-ALIGN-20260721 | alignment 矩阵 + active/pipeline 对齐 + workspace 成员 + R6 双写 |
+| INFRA-WS-CANONICAL-20260721 | 根 members 重登记 `crates/types/canonical`；path+version deny 合规；integration `tests/public_api.rs` |
 | （实现项随 PR 更新） | 见 todo.md 证据列 |
 
 ## 生产路径状态（诚实）

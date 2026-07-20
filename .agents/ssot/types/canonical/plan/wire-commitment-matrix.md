@@ -22,14 +22,14 @@
 | `CancelOrderRequest` | Committed-candidate | `fixtures/market/order_cancel_okx.json` + 单测双向 | OKX 取消路径 |
 | `OrderRef` | Committed-candidate | 随 cancel fixture；Client/Exchange 变体测 | externally tagged |
 | `OrderAck` | Committed-legacy | 固定 JSON 字符串回归 | `id: String` |
-| `Order` | Uncommitted | serde RT | 含 deprecated id |
+| `Order` | Uncommitted | serde RT | `id: String` wire（无 OrderId 类型） |
 | `OrderStatus` | Uncommitted | variants RT | 非状态机批准 |
 | `Side` | Uncommitted | RT | |
 | `Position` | Uncommitted | RT | |
-| `Tick` | Uncommitted | RT | `ts` OPEN |
+| `Tick` | Uncommitted | RT | `ts` = Unix **ns**（CAN-TIME-001）；wire 未冻结 |
 | `PriceLevel` | Uncommitted | RT | |
-| `OrderBookSnapshot` | Uncommitted | RT + 空簿构造 | 无 diff 语义 |
-| `Trade` | Uncommitted | RT | `ts` OPEN |
+| `OrderBookSnapshot` | Uncommitted | RT + 空簿构造 | 无 diff 语义；`ts`=ns |
+| `Trade` | Uncommitted | RT | `ts` = Unix **ns**；wire 未冻结 |
 | `SymbolMeta` | Uncommitted | RT | |
 | `Money` | N/A（decimalx） | 类型同一性测 | 数值 SSOT 在 decimalx |
 | `VenueId` / `InstrumentId` | alias | — | shape 校验 |

@@ -72,6 +72,9 @@ crates/<crate-name>/
 |-------|:---:|:--------:|:----:|:-----:|:---------:|:------:|:------:|
 | `infra-core` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `kernel`（`xhyper-kernel`） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `testkit`（`xhyper-testkit`） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `decimal`（`xhyper-decimalx`） | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `canonical`（`xhyper-canonical`） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 > `examples/` / `docs/` / 暂无集成测试时的 `tests/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。
 
@@ -139,6 +142,9 @@ crates/<crate-name>/
 |-------|------|------|
 | `infra-core` | `crates/infra-core/` | 核心错误类型、Result 别名、基础工具 |
 | `xhyper-kernel`（lib 名 `kernel`） | `crates/kernel/` | xhyper L0 语义信任根（clock / lifecycle） |
+| `xhyper-testkit`（lib 名 `testkit`） | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
+| `xhyper-decimalx`（lib 名 `decimalx`） | `crates/types/decimal/` | 十进制数值 / Money（ADR-006/007） |
+| `xhyper-canonical`（lib 名 `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
 
 ---
 

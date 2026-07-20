@@ -102,6 +102,10 @@ wt
 | Crate | 说明 |
 |-------|------|
 | `infra-core` | 核心基础设施库 — 错误类型、Result 别名、serde 序列化 |
+| `xhyper-kernel` | L0 语义信任根（clock / lifecycle） |
+| `xhyper-testkit` | ManualClock 等测试支持（仅 dev-dep） |
+| `xhyper-decimalx` | 十进制数值 / Money（`crates/types/decimal`） |
+| `xhyper-canonical` | 跨层共享纯 DTO（`crates/types/canonical`；Money 复用 decimalx） |
 
 Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTURE.md)。
 

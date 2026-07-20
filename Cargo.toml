@@ -5,6 +5,7 @@ members = [
   "crates/kernel",
   "crates/testkit",
   "crates/types/decimal",
+  "crates/types/canonical",
 ]
 
 [workspace.package]

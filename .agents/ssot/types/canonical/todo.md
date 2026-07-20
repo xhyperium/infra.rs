@@ -55,3 +55,4 @@
 |-----|------|
 | 2026-07-17 | xhyper 战役台账 |
 | 2026-07-21 | infra 对齐 + R6 双写落盘；SAFE-15/16 纠正为 DEFERRED/HUMAN |
+| 2026-07-21 | **SAFE-INFRA-01 实锤**：根 `Cargo.toml` 重新登记 `crates/types/canonical`；`cargo metadata` 含 `xhyper-canonical`；`cargo test -p xhyper-canonical` 22 unit + integration 绿；decimalx path 依赖补 version（cargo-deny） |

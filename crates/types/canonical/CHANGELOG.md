@@ -5,29 +5,20 @@
 
 ## [Unreleased]
 
+### 新增
+
+- workspace：根 `Cargo.toml` 登记 `crates/types/canonical`（package `xhyper-canonical` / lib `canonical`）。
+- 依赖：`xhyper-decimalx` 使用 `path + version`，满足 cargo-deny `bans.wildcards=deny`。
+- 标准布局：`AGENTS.md`、`examples/`、`docs/`、`tests/public_api.rs`（库外消费者契约）。
+- API：公开模块 `shape::*` 形状检查、`proposed_time::*`（unix ns↔ms）；DTO `ts` 语义 = Unix ns。
+- Golden：`fixtures/market/canonical/v1/`（cancel / OrderRef / legacy ack）。
+- 战役计划包：`.agents/ssot/types/canonical/plan/` + `todo.md`（agent-safe 闭合台账；**≠** Spec Approved）。
+- 生产晋级：`plan/production-upgrade.md`、`approval-packet-prod-m1.md`、`wire-commitment-matrix.md`、`validation-owners.md`（M1 已签；**≠** package stable）。
+
 ### 变更
 
 - **BREAKING（0.1 monorepo）**：删除 `OrderId` 类型别名；`Order.id` / `OrderAck.id` 改为 `String`。
-- **BREAKING**：`VenueAdapter::cancel_order/query_order` 参数由 `&OrderId` 改为 `&str`（仍 deprecated）。
-
-
 - CAN-TIME-001：DTO `ts` 语义冻结为 Unix ns；`ns_from_unix_millis` 正式入口。
-- CAN-ID：`VenueAdapter::{cancel,query}_order_request` additive 路径由 contracts 导出。
-
-
-### 变更
-
-- 文档：active spec 补齐 `OrderRef` / `CancelOrderRequest` / Venue/Instrument ID、serde fixtures 与非权威 Candidate 边界。
-- 文档：README 补充「非职责」与「限制与安全」（crate-standard wave2）。
-- 文档：Candidate 链接迁至 `.agents/ssot/types/canonical/20260717/`；标注 OPEN 时间/ID 语义与 wire 承诺边界。
-- 文档/测试：生产晋级路径（wire 矩阵、validation owners、M1 人审包）；`ts` 保持不透明 i64；legacy `OrderAck` golden fixture。
-- 测试：全公开 DTO/枚举 serde round-trip、全部 `OrderStatus`/`OrderRef` variants、`Money`≡`decimalx::Money`、cancel fixture 双向与 legacy `OrderAck` 保持。
-
-### 新增
-
-- 建立初始文档骨架（CHANGELOG / AGENTS / README / docs）。
-- 战役计划包：`.agents/ssot/types/canonical/plan/` + `todo.md`（agent-safe 闭合台账；**≠** Spec Approved）。
-- 生产晋级：`plan/production-upgrade.md`、`approval-packet-prod-m1.md`、`wire-commitment-matrix.md`、`validation-owners.md`（M1 已签；**≠** package stable）。
-- API：公开模块 `shape::*` 形状检查、`proposed_time::*`（unix ns↔ms）；DTO `ts` 语义 = Unix ns。
-- Golden：`fixtures/market/canonical/v1/`（cancel / OrderRef / legacy ack）。
-- 文档：`plan/m3-migration-checklist.md`；`OrderId` 类型已删除。
+- 文档：active spec / alignment / residual 与 live crate 1:1；SAFE-15 DEFERRED、SAFE-16 HUMAN_ONLY。
+- 测试：全公开 DTO/枚举 serde round-trip、全部 `OrderStatus`/`OrderRef` variants、`Money`≡`decimalx::Money`、cancel/legacy ack/v1 golden 双向。
+- wire 矩阵：Tick/Trade `ts` 标注为 Unix ns（不再写 OPEN 单位）；Order 去掉 “deprecated id” 措辞。
