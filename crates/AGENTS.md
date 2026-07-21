@@ -163,7 +163,7 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 | `xhyper-schedulex`（lib `schedulex`） | `crates/schedulex/` | L1 任务 ID 登记表（active SSOT：无真实定时器） |
 | `xhyper-decimalx`（lib `decimalx`） | `crates/types/decimal/` | 十进制数值 / Money（ADR-006/007） |
 | `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
-| `xhyper-resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | L1 重试（active SSOT §2；熔断/限流未实现） |
+| `resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | L1 重试 + 熔断 + 限流 + 舱壁 + async retry（infra-s9t） |
 | `xhyper-bootstrap`（lib `bootstrap`） | `crates/bootstrap/` | L1 唯一组合根（ADR-016；typed composition） |
 | `xhyper-contracts` | `crates/contracts/` | adapter trait 出口（Exchange/Storage） |
 | `binancex` | `crates/adapters/exchange/binance/` | Binance exchange adapter（scaffold） |

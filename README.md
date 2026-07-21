@@ -106,7 +106,7 @@ wt
 | `xhyper-configx` | `crates/configx/` | L1 配置存储（MemoryConfigStore） |
 | `xhyper-decimalx` | `crates/types/decimal/` | 十进制数值 / Money |
 | `xhyper-canonical` | `crates/types/canonical/` | 跨层共享纯 DTO（Money 复用 decimalx） |
-| `xhyper-resiliencx` | `crates/resiliencx/` | L1 重试（熔断/限流未实现） |
+| `resiliencx` | `crates/resiliencx/` | L1 重试 + 熔断 + 限流 + 舱壁 + `retry_async` |
 | `xhyper-bootstrap` | `crates/bootstrap/` | L1 唯一组合根（ADR-016 typed composition） |
 
 Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTURE.md)。

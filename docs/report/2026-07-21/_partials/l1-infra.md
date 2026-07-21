@@ -24,7 +24,7 @@
 | 2 | `configx` | **90%** partial | 内存 KV | `ConfigStore` 字符串 map | **合同内就绪 / 平台未就绪** | L1（内存合同） | 进程内配置字典 | 多源 / schema / 热更新 / secret |
 | 3 | `evidence` | **88%** partial | 最小追加面 | trait + 内存 appender | **开发/测试默认就绪** | L1（内存） | 注入探测 / 单测 | 持久化审计 / 签名链 / 跨进程证据 |
 | 4 | `observex` | **88%** partial | tracing 三方法 | `TracingInstrumentation` | **最小面就绪** | L1（tracing 面） | 重试/熔断事件打点 | OTEL / metrics / flush·shutdown |
-| 5 | `resiliencx` | **98%** active | 弹性原语完整 | 重试+熔断+限流+舱壁（无墙钟） | **接近 Internal Ready** | L1 Internal | 同步弹性策略（确定性） | async wait / retry budget / 墙钟冷却 |
+| 5 | `resiliencx` | **100%** active | 弹性原语完整 | 重试+熔断+限流+舱壁 + `retry_async` | **接近 Internal Ready** | L1 Internal | 同步 + async Wait | retry budget / 墙钟冷却 |
 | 6 | `schedulex` | **88%** partial | 登记表 | 任务 **ID 登记** 非定时器 | **登记合同就绪 / 调度未就绪** | L1（registry） | 任务 ID 集合管理 | timer / cron / Job 执行 / 分布式 |
 | 7 | `transportx` | **95%** active | 真实 HTTP/WS | reqwest + tungstenite + mock | **传输边界有条件就绪** | L1 + 部分 I/O | 客户端 HTTP/WS（自管超时/策略） | TLS 矩阵 / 池 / 体大小硬限 / gRPC |
 
@@ -213,7 +213,7 @@
 
 | 类别 | 说明 | 严重度 |
 |------|------|--------|
-| async | 默认 `ThreadSleepWait` **阻塞线程**；无 async wait / tokio sleep 合同 | P0（async 服务默认路径） |
+| async | 默认 `ThreadSleepWait` 仍阻塞；**已有** `AsyncWait`/`retry_async`/`TokioSleepWait`（#167）；async 服务须显式选用 | 误用同步 sleep 于 async 仍 P0 |
 | 墙钟语义 | 熔断冷却/限流 refill 非时间驱动——生产需调用方自管时钟 | P1（语义差异，非 bug） |
 | retry budget | 未实现 | P1 |
 | panic | `Bulkhead::in_flight` 用 `expect`；`try_enter` 已 map poison；`RecordingWait` 测试用 expect | P2 |
@@ -234,7 +234,8 @@
 #### 判定
 
 - **同步弹性原语**：**接近 L1 Internal Ready**（L1 七模块中语义最厚）  
-- **async 生产弹性框架**：**未就绪**（sleep/async wait/budget）  
+- **async 生产弹性框架**：**部分就绪**（`retry_async` DONE；budget/墙钟冷却仍 DEFER）  
+
 - STATUS **98%** 与实现厚度匹配度最高；仍须防「98% = 生产 async 弹性完成」误读
 
 ---
@@ -360,7 +361,7 @@ transportx ──仅──► kernel + 网络信封（R3 不依赖其他 L1）
 |----|----|------|
 | L1-P1-1 | transport 默认超时未本 crate 强制；WS connect 超时/体大小限 DEFER | transportx |
 | L1-P1-2 | 熔断/限流无墙钟；生产需外层时钟或显式 refill | resiliencx |
-| L1-P1-3 | retry budget / async wait | resiliencx |
+| L1-P1-3 | retry budget（async wait **DONE** #167） | resiliencx |
 | L1-P1-4 | Bounded* 升级为 contracts 生产 trait 注入 | bootstrap |
 | L1-P1-5 | evidence 观测路径 `expect` 锁；统一 poison→Error | evidence / bulkhead |
 | L1-P1-6 | secret 配置与脱敏 | configx |

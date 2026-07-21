@@ -5,7 +5,7 @@
 | 日期 | 2026-07-21 |
 | Active SSOT | `.agents/ssot/resiliencx/spec/spec.md` |
 | 用户路径别名 | `.agent/ssot/resiliencx` → `.agents/ssot/resiliencx` |
-| 实现 | `crates/resiliencx` · package `xhyper-resiliencx` |
+| 实现 | `crates/resiliencx` · package `resiliencx`（文档/产品名可写 xhyper-resiliencx） |
 
 ## 结论
 
@@ -16,7 +16,7 @@
 | 限流（令牌桶） | **PASS**（本仓扩展；显式 refill） | `rate_limit.rs` + unit/public_api |
 | 舱壁（bulkhead） | **PASS**（并发上限；RAII） | `bulkhead.rs` + unit/public_api |
 | Instrumentation | **PASS** | re-export `contracts::Instrumentation`；禁止 observex |
-| LCOV 行 100% | **PASS** | `cov-gate-100.mjs -p xhyper-resiliencx` |
+| LCOV 行 100% | **PASS** | `cov-gate-100.mjs -p resiliencx` |
 | async wait | **PASS**（infra-s9t.6 / #167） | `retry_async` + `AsyncWait`；feature `tokio` → `TokioSleepWait` |
 | backoff / budget / stable | **DEFER** | residual OPEN |
 

@@ -6,7 +6,7 @@
 | 范围 | STATUS.md 全部 **adapter** 模块（Exchange 2 + Storage 7） |
 | 源权威 | `crates/adapters/**`、`crates/contracts`、`docs/ssot/adapters-ssot-alignment.md`、`STATUS.md` |
 | 审计性质 | **只读**；本文件为 production readiness 报告 partial，**不是** ship 签字 |
-| 总判定 | **9/9 均不可作为生产应用对真实后端的依赖**（内存 scaffold / 进程内 mock；无真实 client SDK） |
+| 总判定 | **默认 9/9 不可作生产业务依赖**；有限真路径：`redisx` live KV + exchange 公共 `server_time`（仍非业务 Production Ready） |
 
 > STATUS 完成度（83–89%）是**布局·测试·源码量**结构分，**不是** Production Ready。  
 > SSOT 对齐文明确：**未**宣称业务实现 / package stable / ship / Production Ready。
@@ -17,14 +17,14 @@
 
 | 包名 | 路径 | STATUS 成熟度 | 完成度 | 实现深度 | contracts trait | 真实后端 | 认证/TLS/重试/超时 | 生产判定 | 主要缺口 |
 |------|------|---------------|--------|----------|-----------------|----------|-------------------|----------|----------|
-| `binancex` | `crates/adapters/exchange/binance` | `scaffold+mock` | 89% | 内存 Venue + 可选 `HttpDriver` mock 路径；无协议解析 | `VenueAdapter` + 能力拆分 5 trait | **否** | 无签名/API Key；超时仅映射 `TransportError`；无 TLS 配置面；无重试 | **不可用** | 真实 HTTP/WS 协议、HMAC 签名、下单/行情解析、限流、live 集成测 |
-| `okxx` | `crates/adapters/exchange/okx` | `scaffold+mock` | 89% | 同 binance 模式（OKX path 占位） | 同上 | **否** | 同上 | **不可用** | 同上（OKX REST/WS + passphrase 等） |
+| `binancex` | `crates/adapters/exchange/binance` | `scaffold+mock` | 89% | 内存 Venue + 可选 `HttpDriver`；**`server_time` JSON 已解析** | `VenueAdapter` + 能力拆分 5 trait | **部分**（仅公共 time） | 无签名/API Key；无业务协议 | **业务不可用** | 签名、下单/行情协议、限流、业务 live |
+| `okxx` | `crates/adapters/exchange/okx` | `scaffold+mock` | 89% | 同 binance；**`server_time` JSON 已解析** | 同上 | **部分**（仅公共 time） | 同上 | **业务不可用** | 同上（OKX 签名/passphrase 等） |
 | `clickhousex` | `crates/adapters/storage/clickhouse` | `scaffold` | 83% | pure scaffold：`Vec` 记 sink | `AnalyticsSink` | **否** | 无 | **不可用** | HTTP/native client、batch insert、schema、mock 验证入口 |
 | `kafkax` | `crates/adapters/storage/kafka` | `scaffold+mock` | 89% | 内存 topic map + `MockKafkaBus` | `EventBus` | **否** | 无 broker/TLS/SASL/ack | **不可用** | rdkafka/等客户端、consumer group、offset、投递语义 |
 | `natsx` | `crates/adapters/storage/nats` | `scaffold+mock` | 88% | 内存 + `MockNatsBus` | `EventBus` | **否** | 无 | **不可用** | async-nats、JetStream、认证 |
 | `ossx` | `crates/adapters/storage/oss` | `scaffold` | 83% | pure scaffold：HashMap 对象 | `ObjectStore` | **否** | 无 | **不可用** | S3/OSS SDK、凭证、multipart、mock 入口 |
 | `postgresx` | `crates/adapters/storage/postgres` | `scaffold+mock` | 89% | 内存 Repository + `ObservingPostgresAdapter` commit 边界 | `Repository` + `TxRunner`/`TxContext` | **否** | 无连接池/TLS/SQL | **不可用** | sqlx/tokio-postgres、真实事务、迁移、连接管理 |
-| `redisx` | `crates/adapters/storage/redis` | `scaffold+mock` | 89% | 内存 KV（scaffold 忽略 TTL）+ `MockRedisAdapter` TTL 模拟 | `KeyValueStore` + `PubSub` | **否** | 无 | **不可用** | redis crate、真实 TTL/PubSub、集群/Sentinel |
+| `redisx` | `crates/adapters/storage/redis` | `scaffold+mock` | 89% | mock KV + **`RedisLiveKv`（feature `live`）** | `KeyValueStore` + `PubSub` | **是（KV live）** | live 依赖 optional `redis` | **KV 验证可用；非全功能客户端** | PubSub/集群 live、生产运维矩阵 |
 | `taosx` | `crates/adapters/storage/taos` | `scaffold+mock`\* | 88% | pure 内存 `TimeSeriesStore`（**无**独立 `Mock*` 类型） | `TimeSeriesStore` | **否** | 无 | **不可用** | TDengine client、时间线/压缩、mock 命名入口 |
 
 \* **STATUS 标签 vs 源码**：`taosx` 生成器标 `scaffold+mock`，但源码仅有 `TaosAdapter` 内存实现、无 `mock.rs`/Mock 类型；对齐文写 **pure scaffold** 更准确。`clickhousex`/`ossx` 为 pure scaffold 一致。
@@ -34,7 +34,7 @@
 | 包 | 生产依赖 | **无** 真实后端 crate |
 |----|----------|----------------------|
 | `binancex` / `okxx` | `async-trait`, `bytes`, `futures-*`, `canonical`, `contracts`, `decimalx`, `kernel`, `transportx` | 无 `reqwest` 直接依赖（可选注入 `transportx::HttpDriver`；默认无驱动） |
-| storage 七包 | `async-trait` + `contracts` + `kernel`（+ 部分 `bytes`/`futures`/`canonical`） | **零** `sqlx` / `redis` / `rdkafka` / `async-nats` / `clickhouse` / `aws-sdk` / `taos` 等 |
+| storage 七包（默认） | `async-trait` + `contracts` + `kernel`（+ 部分 `bytes`/`futures`/`canonical`） | 默认无 `sqlx`/`rdkafka`/…；**例外** `redisx` feature `live` → optional `redis` |
 
 全部 `publish = false`，workspace version `0.3.0`（adapters）；**不可** crates.io 消费叙事。
 
@@ -241,7 +241,7 @@ cargo test -p binancex -p okxx -p redisx -p postgresx -p kafkax --all-targets
 **STATUS 上 adapters「看起来齐」；源码上全部是 contracts 接线用的内存桩 / mock。**  
 作为「生产应用依赖」连接真实交易所或存储——**9/9 不可用**。  
 可保留价值：trait 形状冻结、first-batch mock 语义、Venue override 门禁、离线 CI 绿灯。  
-下一跳：按 §8 优先 `postgresx`/`redisx` 真后端集成入口，exchange 仅 testnet 只读。
+下一跳：按 §8 优先 **`postgresx` live Tx**（redis KV / exchange 只读 time 已 DONE）；Bus/签名业务另战役。
 
 ---
 

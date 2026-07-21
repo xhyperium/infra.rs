@@ -5,6 +5,7 @@
 | 日期 | 2026-07-21 |
 | 范围 | `configx` · `evidence` · `observex` · `resiliencx` · `schedulex` · `transportx` · `contracts` |
 | 性质 | **只读分析报告**；不是代码实现、不是 Maintainer 签核、不是 package stable |
+| 状态 | **分析快照**（§0–§9 历史）；落地以 §10.4 + `docs/ssot/*` + epic `infra-s9t` **CLOSED**（#166–#172）为准 |
 | 输入看板 | 根 [`STATUS.md`](../../../STATUS.md)（生成器 `scripts/docs/gen-crate-status.mjs`） |
 | 上游审计 | [status-modules-production-readiness.md](./status-modules-production-readiness.md) · [`_partials/l1-infra.md`](./_partials/l1-infra.md) · [`_partials/contracts.md`](./_partials/contracts.md) |
 | Follow-up | [status-modules-prod-followup.md](../../plans/2026-07-21-status-modules-prod-followup.md) · Beads epic **`infra-s9t`** |

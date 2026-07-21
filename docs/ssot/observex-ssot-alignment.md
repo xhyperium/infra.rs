@@ -15,7 +15,7 @@
 |------|------|
 | 上游/镜像 COMPLETE 叙事 | **禁止**单独当作本仓交付证明 |
 | 本仓 `crates/observex` | **已落地**（`TracingInstrumentation` + tracing 三方法） |
-| 本仓 Instrumentation 契约 | `contracts::Instrumentation`；本 crate 为 **L3 子集**非 scaffold 入口之一 |
+| 本仓 Instrumentation 契约 | `contracts::Instrumentation`；本 crate 为实现 **contracts L3 子集**（Instrumentation）的非 scaffold 入口之一 |
 | OTEL exporter / flush / shutdown | **DEFER**（禁止宣称 OTEL 栈完成） |
 | 完整 VenueAdapter 等 contracts | **DEFER**（非 observex 职责） |
 | resiliencx / bootstrap 注入链 | **PASS**（bootstrap 默认 `TracingInstrumentation`） |
@@ -27,7 +27,7 @@
 crates/contracts/               EXISTS（xhyper-contracts + Instrumentation）
 crates/observex/                EXISTS
 Cargo.toml members              含 contracts + observex + adapters
-package names                   contracts / xhyper-observex
+package names                   contracts / observex
 lib names                       contracts / observex
 publish                         false
 observex prod deps              xhyper-kernel, xhyper-contracts, tracing
@@ -37,7 +37,7 @@ features.default                []
 ## 验证命令
 
 ```bash
-cargo test -p contracts -p xhyper-observex
+cargo test -p contracts -p observex
 cargo clippy -p contracts -p observex --all-targets -- -D warnings
 cargo fmt --all --check
 node scripts/quality-gates/cov-gate-100.mjs -p observex --filter crates/observex/src
@@ -106,7 +106,7 @@ CI：`.github/workflows/observex-coverage.yml` · `contracts-coverage.yml`
 | 6.3 | 捕获 tracing 字段 | PASS | unit `tracing_fields_*` |
 | 6.4 | cargo test / clippy / fmt | PASS | 本仓日志 |
 | 6.5 | LCOV 100% | PASS | cov-gate-100 |
-| 6.6 | resiliencx 无 observex 依赖图 | PASS | `xhyper-resiliencx` dep 仅 kernel+contracts |
+| 6.6 | resiliencx 无 observex 依赖图 | PASS | `resiliencx` dep 仅 kernel+contracts |
 | 6.7 | exporter/flush 测试 | DEFER | API 未批 |
 
 ### §7 验收清单
