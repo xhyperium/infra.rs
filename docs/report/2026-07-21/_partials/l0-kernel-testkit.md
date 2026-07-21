@@ -43,7 +43,7 @@
 | P1 关停 deadline | `wait_timeout` + 组合根测 | `lifecycle.rs` + unit 测 | **已闭合**（库级）；进程级关停策略仍归组合根 |
 | P1 中文错误 | 已补 | ClockError / LifecycleError / ManualClockError Display 中文 | **已闭合** |
 | P1 testkit 仅 ManualClock 评级 | 维持 | 公开面仅 4 类型；README 明示非 runtime | **仍适用** |
-| P1 contract-testkit | 迁至 contracts 最小 Fake | 不在 testkit 源码 | **范围外 DEFER**（勿把 testkit 98% 当成 contract 平面） |
+| P1 contract-testkit | 独立 `crates/test-support/contracts`（#178） | 不在 testkit 源码；Fake 在 `contract-testkit` | **已落地**（勿把 testkit 98% 当成 contract 平面） |
 | §12 签核 L1+L4 / L1 | 见 `0.3.0-signoff.md` | 分层声明仍有效；整体 PR 仍否 | **仍适用** |
 
 ---

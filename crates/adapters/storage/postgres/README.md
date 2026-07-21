@@ -2,9 +2,10 @@
 
 Postgres adapter：
 
-- scaffold：`PostgresAdapter`（内存 + `FakeTxContext`）
+- scaffold：`PostgresAdapter`（内存 + 本地 `ScaffoldTxContext`；**不**依赖 `contract-testkit`）
 - mock 验证入口：`ObservingPostgresAdapter` / `MockPostgresBackend`
   （staged 写入 + commit 边界；**非**真实 Postgres / **非** Production Ready）
+- Fake/suite 合同测请用 `contract-testkit`（仅 dev-dep）
 
 ```rust
 use contracts::{Repository, TxRunner};

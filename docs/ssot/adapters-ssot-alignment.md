@@ -64,7 +64,7 @@ version                         workspace 0.3.0
 | `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | scaffold + **`MockKafkaBus`**（EventBus） |
 | `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | scaffold + **`MockNatsBus`**（EventBus） |
 | `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | pure scaffold |
-| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | scaffold + **`ObservingPostgresAdapter` / `MockPostgresBackend`**（Tx commit 边界） |
+| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | scaffold（本地 **`ScaffoldTxContext`**，不依赖 contract-testkit）+ **`ObservingPostgresAdapter` / `MockPostgresBackend`**（staged Tx） |
 | `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | mock KV + **`RedisLiveKv`（feature `live`）** + `live_kv_conformance` |
 | `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | pure scaffold |
 
@@ -162,7 +162,7 @@ adapters/*  →  (future) contracts / types / kernel
 
 | trait | package | mock 验证入口 | 证明点 |
 |-------|---------|---------------|--------|
-| `Repository` + `TxRunner`/`TxContext` | `postgresx` | `ObservingPostgresAdapter` / `MockPostgresBackend` | staged 写入仅在 commit 后可见；rollback 丢弃；可观察 commit/rollback 计数 |
+| `Repository` + `TxRunner`/`TxContext` | `postgresx` | scaffold `ScaffoldTxContext`（本地）+ `ObservingPostgresAdapter` / `MockPostgresBackend` | scaffold 无 rows 事务边界；mock staged 写入仅 commit 后可见；**禁止** prod 依赖 `contract-testkit` |
 | `KeyValueStore` + `PubSub` | `redisx` | `MockRedisAdapter` | TTL 过期返回 `None`；PubSub 单调 `BusMessage.id` |
 | `EventBus` | `kafkax` | `MockKafkaBus` | 跨 topic 单调消息 ID；`dyn EventBus` 可测 |
 | `EventBus` | `natsx` | `MockNatsBus` | 同上 |

@@ -56,3 +56,9 @@
 | [tools-ssot-alignment.md](tools-ssot-alignment.md) | tools（evidence/goalctl/xtask/verifyctl） |
 
 上级索引：[docs/README.md](../README.md)。
+
+## 变更（近期）
+
+| 日期 | 说明 |
+|------|------|
+| 2026-07-22 | **#178** 独立 `contract-testkit` 落地；Fake 在 `crates/test-support/contracts`；对齐/同步报告已纠偏 |

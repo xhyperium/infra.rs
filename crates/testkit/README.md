@@ -37,7 +37,7 @@ pub use testkit::{
 
 - 不提供通用 mock 框架
 - 不提供 integration harness（真实网络 / 进程）
-- contract trait suite 若需要，另开 `contract-testkit`（本 crate 不含）
+- contract trait suite 见独立 `contract-testkit`（`crates/test-support/contracts`；本 crate **仅** ManualClock）
 - 生产依赖仅 `kernel`
 
 ## 最小用法
