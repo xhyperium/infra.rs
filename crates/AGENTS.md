@@ -39,7 +39,7 @@ crates/<crate-name>/
 | `Cargo.toml` | 必选 | 包元数据、依赖、feature；版本跟 `workspace.package` |
 | `src/` | 必选 | 实现与单元测试（`#[cfg(test)] mod tests`） |
 | `examples/` | 必选目录 | 可 `cargo run --example` 的示例；无内容时保留 `.gitkeep` |
-| `docs/` | 必选目录 | 设计笔记、API 契约、迁移指南；不替代 rustdoc |
+| `docs/` | 必选目录 | 至少 `README.md`（入口索引 + 对齐链接）；设计笔记/API 契约/迁移；不替代 rustdoc |
 | `tests/` | 必选目录 | 集成测试、跨模块契约、公开 API 稳定性 |
 | `CHANGELOG.md` | 必选 | 本 crate 版本变更；仓库根 `CHANGELOG.md` 记整体发布 |
 | `AGENTS.md` | 必选 | 本 crate 专属 Agent 规则；父级为 `crates/AGENTS.md` |

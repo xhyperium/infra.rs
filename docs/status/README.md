@@ -22,7 +22,17 @@
 
 | 文档 | 说明 |
 |------|------|
-| [CI_STATUS_REPORT.md](CI_STATUS_REPORT.md) | CI 工作流矩阵、触发条件与迁移验证 |
-| [CONFIG_SUMMARY.md](CONFIG_SUMMARY.md) | CI 配置、分支保护、测试验证总览 |
+| [CI_WORKFLOW_MATRIX.generated.md](CI_WORKFLOW_MATRIX.generated.md) | **自动生成**工作流矩阵（`node scripts/gen-docs-status.mjs`） |
+| [CI_STATUS_REPORT.md](CI_STATUS_REPORT.md) | 人工叙事：CI 工作流说明与迁移验证 |
+| [CONFIG_SUMMARY.md](CONFIG_SUMMARY.md) | 人工叙事：CI 配置、分支保护、测试验证总览 |
+
+## 自动生成
+
+```bash
+node scripts/gen-docs-status.mjs          # 从 .github/workflows 重写矩阵
+node scripts/gen-docs-status.mjs --check  # 校验已提交矩阵是否过期
+```
+
+工作流 YAML 变更后应重跑生成脚本，并提交 `CI_WORKFLOW_MATRIX.generated.md`。
 
 上级索引：[docs/README.md](../README.md)。
