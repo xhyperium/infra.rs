@@ -10,12 +10,13 @@
 - 主要代码在 `crates/`
 - 职责：实现库代码、维护 CI/工程约定、维护 Agent skills/hooks
 
-## 上游 SSOT 与本仓落地
+## 域规格 SSOT 与本仓落地
 
-- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓可宣称 ship」
+- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}` 是**本仓域规格 SSOT**（非只读镜像）；**不要**把 COMPLETE 当成「本仓可宣称 ship」
   - infra 平面在 `.agents/ssot/{bootstrap,configx,gate,…}`（infra/ 已展平）
   - adapters 平面在 `.agents/ssot/adapters/{exchange,storage}/…`（保留 `adapters/` 层级）
   - tools 平面在 `.agents/ssot/tools/{evidence,goalctl,xtask,verifyctl}/…`（保留 `tools/` 层级；verifyctl 为本仓扩展）
+  - **archgate / `.architecture`：OOS**（PR #164）
 - 本仓 members：`kernel` / `testkit` / `configx` / `schedulex` / `bootstrap` / `evidence` / `observex` / `resiliencx` / `transport` / `types/*` / `contracts` / `adapters/**`（adapters 为 scaffold；**无** `infra-core`；gate/goalctl/xtask/verifyctl 等未落地）
 - 验证：`cargo test --workspace`；专项见对齐文档
 - 总览：[docs/ssot/workspace-ssot-alignment.md](./docs/ssot/workspace-ssot-alignment.md)

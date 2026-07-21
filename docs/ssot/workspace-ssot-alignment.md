@@ -76,10 +76,11 @@
 
 规则：
 
-1. 镜像写 COMPLETE / Stable ≠ 本仓可宣称 ship
+1. 规格写 COMPLETE / Stable ≠ 本仓可宣称 ship
 2. 本仓完成声明必须以 **members + 源码 + 本仓测试输出** 为准
-3. 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游用删除感知同步（见 [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md)）
-4. 保留上游层级：`adapters/`、`tools/` 勿展平到 `.agents/ssot/` 根（`infra/` 已展平）
+3. `.agents/ssot/**` 为本仓域规格 SSOT（见 `.agents/ssot/SSOT.md` R6）；变更走 worktree + PR。从外仓镜像同步用删除感知 rsync（见 [SSOT_SYNC_OPS.md](./SSOT_SYNC_OPS.md)），**禁止**用上游覆盖冲掉本仓 OOS/落地裁定
+4. 保留层级：`adapters/`、`tools/` 勿展平到 `.agents/ssot/` 根（`infra/` 已展平）
+5. **archgate / `.architecture`：OOS**（#164）— 本仓明确不移植；机控用结构扫描 / CI / public-api 等
 
 ## 验证入口
 

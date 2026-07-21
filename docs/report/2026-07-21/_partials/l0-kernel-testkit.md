@@ -58,7 +58,7 @@
 | `clock` | `Timestamp`、`MonotonicInstant`、`ClockDomain`、`Clock`、`SystemClock`、`ClockError` | 墙钟可回退；单调不可跨 domain 静默比较；无 Default；无 serde；SystemClock 进程共享原点 |
 | `lifecycle` | `ComponentState`、`LifecycleError`、`ShutdownSignal`、`ShutdownGuard` | 合法边全矩阵；关停一次触发多方观察；**Guard drop 不触发**；`wait_timeout` 供组合根 deadline |
 
-**`#[doc(hidden)]` 构造器**：`MonotonicInstant::from_clock_elapsed` / `from_clock_elapsed_in` — 仅供 kernel/testkit 时钟实现；**无 archgate TIME-004 机控**（SSOT DEFER），依赖约定 + 结构扫描。
+**`#[doc(hidden)]` 构造器**：`MonotonicInstant::from_clock_elapsed` / `from_clock_elapsed_in` — 仅供 kernel/testkit 时钟实现；**无 archgate TIME-004 机控**（SSOT **OOS**，本仓不移植 archgate），依赖约定 + 结构扫描。
 
 ### 2.2 testkit 冻结面
 
@@ -102,7 +102,7 @@ ManualClock | ManualClockError | ManualClockFault | ManualClockSnapshot
 | P1-1 | **Cargo package 名 vs 文档名漂移** | `Cargo.toml`：`name = "kernel"` / `"testkit"`；README/AGENTS/SSOT 写 `xhyper-kernel` / `xhyper-testkit`；`cargo test -p xhyper-kernel` → **package not found** | 统一为实际 package 名，或 `package.name` 改回 xhyper-* 并全仓改依赖；CI/文档命令同步 |
 | P1-2 | **CHANGELOG 与 0.3.0 签核不同步** | `ClockDomain` / loom / poison 等列在 kernel `[Unreleased]`，而 workspace 已签 `0.3.0` | 将已合入能力迁入 `0.3.0` 节或发 `0.3.1` 并清空 Unreleased 语义债 |
 | P1-3 | **examples / benches 仅 `.gitkeep`** | STATUS 布局 8/8 记 ✅，但无可运行 example/bench | 接受公式虚高，或补最小 example 再刷 STATUS |
-| P1-4 | **`from_clock_elapsed` 无机器 allowlist** | SSOT TIME-004 DEFER；仅结构约定 | 后续 archgate 或 `rg` CI 门禁限制调用点 |
+| P1-4 | **`from_clock_elapsed` 无机器 allowlist** | SSOT TIME-004 **OOS**（不移植 archgate）；仅结构约定 | 可选 `rg`/CI 结构扫描限制调用点（**非** archgate） |
 | P1-5 | **miri / mutants 以 schedule 为主** | `kernel-miri.yml` / `*-mutants.yml`；本会话未重跑 | 重大 lifecycle/时钟 PR 建议 `workflow_dispatch` 手跑并留证据 |
 | P1-6 | **testkit 生产图泄漏依赖机器门禁** | public_surface 查 Cargo.toml；全仓 xtask graph **DEFER** | 有 infra-xtask 后补 production-graph 检查 |
 
@@ -192,7 +192,7 @@ cargo test -p kernel -p testkit --all-targets
 | examples/benches | `.gitkeep` 即可点亮布局项 | 可运行示例/性能基线 | 结构满分 ≠ 示例交付 |
 | 包名 | 不进入公式 | 可复现命令 / 跨仓引用 | **文档写 xhyper-***，**cargo 认 kernel/testkit** |
 | testkit 角色 | 与 kernel 同档 98% | 测试支持 vs 生产 runtime | 同完成度 **不同生产许可** |
-| DEFER | 不减分 | archgate、全仓 graph、非 Linux、miri 当场证据 | 生产签字仍要 Accept 清单 |
+| DEFER / OOS | 不减分 | archgate（**OOS** #164）、全仓 graph、非 Linux、miri 当场证据 | 生产签字仍要 Accept 清单 |
 | 上层依赖 | 不评分 | decimalx/canonical/contracts 等仍可拖垮 **应用级** PR | L0 就绪 ≠ 应用可上线 |
 
 **一句话**：98% 表示「crate 骨架与测试厚度接近满分」；本审计的「有条件就绪」表示「在 **L1（+kernel L4）** 分层下可作为内部依赖使用」，二者不可互换。
