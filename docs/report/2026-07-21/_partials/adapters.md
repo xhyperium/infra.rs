@@ -198,19 +198,19 @@ cargo test -p binancex -p okxx -p redisx -p postgresx -p kafkax --all-targets
 
 下列任一为真即 **BLOCK** 生产宣称：
 
-1. **无真实后端客户端**：Cargo.toml 无对应 SDK；运行时不拨号 endpoint。
-2. **无认证面**：交易所签名、DB/MQ/云凭证均缺失。
-3. **无生产 I/O 路径**：Exchange 默认内存；可选 HTTP 仅 mock 驱动 + 非完整协议。
-4. **无 live / 集成证据**：无默认 `live` feature；`contracts-live.yml` 仍是 mock offline；`tests/` 集成目录空。
-5. **语义与生产不符**：
-   - Postgres scaffold 的 `begin_tx` → `FakeTxContext`，**不**与 `save` 组成真实事务边界（mock 才有 staged）。
-   - Redis scaffold **忽略 TTL**。
+1. **默认无真实后端客户端**：多数包无 SDK；**例外** `redisx` feature `live` → `RedisLiveKv`（#168）。
+2. **无认证面**：交易所签名、DB/MQ/云凭证均缺失（exchange 仅公共只读 time）。
+3. **无完整生产 I/O 路径**：Exchange 默认内存；HTTP 可注入驱动；业务协议未做。
+4. **live 证据有限**：默认离线绿；`redisx-live` optional CI；exchange `live_server_time` ignore + **workflow_dispatch only**；业务集成仍空。
+5. **语义与生产不符**（默认 scaffold）：
+   - Postgres `begin_tx` → `FakeTxContext`（mock 才有 staged）。
+   - Redis **scaffold** 忽略 TTL（live KV 另路径）。
    - EventBus subscribe 为一次性快照，非实时流。
-6. **命名陷阱**：`RedisAdapter` / `PostgresAdapter` / `mainnet()` 易被误当成生产客户端——README 已声明 scaffold，但 **API 命名仍像生产**。
-7. **SSOT / STATUS 误读**：镜像 COMPLETE 或 STATUS 89% **不等于** ship（对齐 A-9/A-10 OPEN）。
+6. **命名陷阱**：`*Adapter` / `mainnet()` 像生产客户端——README 红线（s9t.14）。
+7. **SSOT / STATUS 误读**：镜像 COMPLETE 或 STATUS ~89% **不等于** ship。
 
 **当前正确对外叙事**：  
-「adapters = contracts trait 的**进程内实现与 mock 验证入口**；**非** Production Ready 后端适配器。」
+「adapters = contracts 的 **scaffold/mock** 为主；**有限真路径** = redis live KV + exchange 公共 `server_time`；**非** Production Ready 业务适配器。」
 
 ---
 
@@ -220,10 +220,9 @@ cargo test -p binancex -p okxx -p redisx -p postgresx -p kafkax --all-targets
 
 | 优先级 | 包 | 理由 | 建议最小真实验证入口 |
 |--------|-----|------|----------------------|
-| **P1** | `postgresx` | Tx/Repository 语义 mock 最完整；业务落地刚需；contracts `run_tx_commit_on_ok` 已就绪 | `sqlx`/`tokio-postgres` + Docker Postgres；`#[ignore]`：begin/commit/rollback 与 mock 对照 |
-| **P1** | `redisx` | KV+TTL mock 已闭合；缓存/会话路径常见 | `redis` crate + Docker Redis；测 set/get/TTL/pub-sub |
-| **P2** | `binancex` | 已接 `HttpDriver`；transportx 有真实 reqwest 驱动；override 门禁已过 | testnet **只读** `server_time` / exchangeInfo；签名与私有 API 分战役；禁止默认 CI 真下单 |
-| **P2** | `okxx` | 与 binance 对称 | demo/public 只读时间或 instruments |
+| **DONE** | `redisx` live KV | #168 · feature `live` + conformance + optional CI | 扩展 TTL/PubSub live 另战役 |
+| **DONE** | `binancex`/`okxx` 只读 time | #172 · parse + ignore live；dispatch workflow | 签名 / exchangeInfo / 私有 API 另战役 |
+| **P1** | `postgresx` live Tx | mock 最完整；contracts `run_tx_commit_on_ok` 就绪 | Docker Postgres；begin/commit/rollback 对照 |
 | **P3** | `kafkax` / `natsx` | EventBus mock 可用；运维成本高于 Redis | 本地 container；至少 once publish→subscribe 往返 + 失败注入 |
 | **P4** | `clickhousex` / `ossx` / `taosx` | pure scaffold，先补 **命名 Mock\*** 与 contracts 深度，再接 SDK | 先 DEFER-1 式 mock 入口，再 live |
 
