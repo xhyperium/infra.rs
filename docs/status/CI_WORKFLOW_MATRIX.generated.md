@@ -17,6 +17,8 @@
 | `constitution.yml` | Constitution | pull_request, workflow_dispatch | `constitution` |
 | `contracts-coverage.yml` | Contracts Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `decimal-coverage.yml` | Decimal Coverage | pull_request, workflow_dispatch | `line-coverage` |
+| `decimal-miri.yml` | Decimal Miri | schedule, workflow_dispatch | `miri` |
+| `decimal-mutants.yml` | Decimal Mutants | schedule, workflow_dispatch | `mutants` |
 | `evidence-coverage.yml` | Evidence Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `kernel-coverage.yml` | Kernel Coverage | pull_request, workflow_dispatch | `coverage` |
 | `kernel-loom.yml` | kernel-loom | pull_request, workflow_dispatch | `loom` |
@@ -39,8 +41,8 @@
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 25 |
-| Job 总数（解析） | 43 |
+| 工作流文件数 | 27 |
+| Job 总数（解析） | 45 |
 
 ## 维护
 
