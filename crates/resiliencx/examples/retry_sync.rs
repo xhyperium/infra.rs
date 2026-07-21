@@ -6,7 +6,7 @@
 //!
 //! # 生产红线
 //! - `retry_fn` 默认使用 `ThreadSleepWait`（阻塞当前线程）。
-//! - async 服务中请用 `retry_fn_with_wait` + 非阻塞 Wait（或外层编排）；async Wait 合同仍 DEFER。
+//! - async 服务中请用 `retry_fn_with_wait` + 非阻塞 Wait（或外层编排）；请改用 `retry_async` + `AsyncWait`（feature `tokio`）。
 //! - 熔断无墙钟冷却；限流需显式 `refill`。
 
 use kernel::XError;

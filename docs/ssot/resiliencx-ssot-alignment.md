@@ -17,7 +17,8 @@
 | 舱壁（bulkhead） | **PASS**（并发上限；RAII） | `bulkhead.rs` + unit/public_api |
 | Instrumentation | **PASS** | re-export `contracts::Instrumentation`；禁止 observex |
 | LCOV 行 100% | **PASS** | `cov-gate-100.mjs -p xhyper-resiliencx` |
-| async wait / backoff / budget / stable | **DEFER** | residual OPEN |
+| async wait | **PASS** | `retry_async` + `AsyncWait`；feature `tokio` → `TokioSleepWait` |
+| backoff / budget / stable | **DEFER** | residual OPEN |
 
 ## 熔断合同（本仓）
 
@@ -43,6 +44,7 @@
 
 ```bash
 cargo test -p resiliencx --all-targets
+cargo test -p resiliencx --features tokio --all-targets
 cargo clippy -p resiliencx --all-targets -- -D warnings
 node scripts/quality-gates/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
 cargo tree -p resiliencx -i observex  # 须无匹配

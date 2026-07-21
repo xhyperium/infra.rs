@@ -2,12 +2,12 @@
 //!
 //! | 能力 | 类型 | 说明 |
 //! |------|------|------|
-//! | 重试 | [`RetryConfig`] / [`retry_fn`] / [`retry_fn_with_wait`] | 同步 `FnMut`；退避 + 可注入 wait |
+//! | 重试 | [`RetryConfig`] / [`retry_fn`] / [`retry_fn_with_wait`] / [`retry_async`] | 同步 `FnMut` + 异步 `AsyncWait` |
 //! | 熔断 | [`CircuitBreaker`] | 三态；**无墙钟**（拒绝计数推进 HalfOpen） |
 //! | 限流 | [`RateLimiter`] | 令牌桶；**无墙钟**（显式 [`RateLimiter::refill`]） |
 //! | 舱壁 | [`Bulkhead`] | 并发上限；满载立即拒绝；RAII 许可 |
 //!
-//! **仍未交付**：async runtime wait、retry budget、package stable。
+//! **仍未交付**：retry budget、package stable。async wait 见 feature `tokio` + [`retry_async`]。
 //!
 //! 可观测性通过 [`contracts::Instrumentation`] 注入；**禁止**直接依赖 observex（ADR-005）。
 
@@ -23,10 +23,13 @@ pub use bulkhead::{Bulkhead, BulkheadConfig, BulkheadPermit};
 pub use circuit::{CircuitBreaker, CircuitConfig, CircuitState};
 pub use rate_limit::{RateLimitConfig, RateLimiter};
 pub use retry::{
-    Backoff, NoWait, RecordingWait, RetryConfig, RetryValue, ThreadSleepWait, Wait,
-    apply_deterministic_jitter, retry_delay_ms, retry_downcast, retry_fn, retry_fn_with_wait,
-    retry_ok,
+    AsyncWait, Backoff, NoWait, RecordingWait, RetryConfig, RetryValue, ThreadSleepWait, Wait,
+    apply_deterministic_jitter, retry_async, retry_delay_ms, retry_downcast, retry_fn,
+    retry_fn_with_wait, retry_ok,
 };
+
+#[cfg(feature = "tokio")]
+pub use retry::TokioSleepWait;
 
 /// 可观测性注入点（ADR-005）——权威定义在 `xhyper-contracts`。
 pub use contracts::Instrumentation;

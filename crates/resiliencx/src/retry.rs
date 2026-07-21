@@ -1,8 +1,10 @@
 //! 重试（active SSOT §2 + 本仓退避/可注入 wait）。
 
 use crate::Instrumentation;
+use async_trait::async_trait;
 use kernel::{XError, XResult};
 use std::any::Any;
+use std::future::Future;
 use std::thread;
 use std::time::Duration;
 
@@ -72,6 +74,47 @@ impl RecordingWait {
 impl Wait for RecordingWait {
     fn wait_ms(&self, ms: u64) {
         self.delays.lock().expect("recording wait lock").push(ms);
+    }
+}
+
+// ── AsyncWait / 非阻塞重试 ─────────────────────────────────────────────────
+
+/// 异步等待策略（对象安全）。
+///
+/// async 服务路径应使用本 trait + [`retry_async`]，**禁止**在 async 任务中直接调用
+/// 默认阻塞的 [`retry_fn`] / [`ThreadSleepWait`]。
+#[async_trait]
+pub trait AsyncWait: Send + Sync {
+    /// 异步等待 `ms` 毫秒（`0` 应为空操作）。
+    async fn wait_ms(&self, ms: u64);
+}
+
+#[async_trait]
+impl AsyncWait for NoWait {
+    async fn wait_ms(&self, _ms: u64) {}
+}
+
+#[async_trait]
+impl AsyncWait for RecordingWait {
+    async fn wait_ms(&self, ms: u64) {
+        self.delays.lock().expect("recording wait lock").push(ms);
+    }
+}
+
+/// 基于 `tokio::time::sleep` 的非阻塞 wait（feature `tokio`）。
+///
+/// 在 async runtime 内 `await` 等待，**不**占用阻塞线程。
+#[cfg(feature = "tokio")]
+#[derive(Debug, Default, Clone, Copy)]
+pub struct TokioSleepWait;
+
+#[cfg(feature = "tokio")]
+#[async_trait]
+impl AsyncWait for TokioSleepWait {
+    async fn wait_ms(&self, ms: u64) {
+        if ms > 0 {
+            tokio::time::sleep(Duration::from_millis(ms)).await;
+        }
     }
 }
 
@@ -203,6 +246,52 @@ pub fn retry_fn_with_wait(
     }
 }
 
+/// 异步重试：退避时 `await` [`AsyncWait`]，不阻塞 worker 线程。
+///
+/// 语义与 [`retry_fn_with_wait`] 一致，但操作 `f` 为返回 `Future` 的闭包。
+///
+/// # 生产路径
+///
+/// - async 服务：本函数 + [`NoWait`]（测试）或 feature `tokio` 的 [`TokioSleepWait`]
+/// - 同步批处理：继续用 [`retry_fn`] / [`retry_fn_with_wait`]
+///
+/// # 禁止
+///
+/// 在 async 任务内调用 [`retry_fn`]（默认 [`ThreadSleepWait`] 会阻塞 runtime 线程）。
+pub async fn retry_async<F, Fut>(
+    config: &RetryConfig,
+    instrumentation: &dyn Instrumentation,
+    op: &str,
+    wait: &dyn AsyncWait,
+    mut f: F,
+) -> XResult<RetryValue>
+where
+    F: FnMut() -> Fut,
+    Fut: Future<Output = XResult<RetryValue>> + Send,
+{
+    let mut last_err = None;
+    for attempt in 1..=config.max_attempts {
+        match f().await {
+            Ok(v) => return Ok(v),
+            Err(e) => {
+                let retryable = e.is_retryable();
+                last_err = Some(e);
+                if retryable && attempt < config.max_attempts {
+                    instrumentation.record_retry(op, attempt);
+                    let delay = retry_delay_ms(config, attempt);
+                    wait.wait_ms(delay).await;
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+    match last_err {
+        Some(e) => Err(e),
+        None => Err(XError::invalid("max_attempts must be >= 1")),
+    }
+}
+
 /// 将具体成功值装箱为 [`RetryValue`]。
 #[must_use]
 pub fn retry_ok<T: Any + Send>(value: T) -> RetryValue {
@@ -304,9 +393,9 @@ mod tests {
 
     #[test]
     fn no_wait_and_thread_sleep_zero() {
-        NoWait.wait_ms(0);
-        NoWait.wait_ms(1);
-        ThreadSleepWait.wait_ms(0);
+        Wait::wait_ms(&NoWait, 0);
+        Wait::wait_ms(&NoWait, 1);
+        Wait::wait_ms(&ThreadSleepWait, 0);
         let _ = format!("{:?}", ThreadSleepWait);
         let _ = format!("{:?}", NoWait);
         let _ = format!("{:?}", Backoff::default());
