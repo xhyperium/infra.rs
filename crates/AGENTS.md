@@ -49,7 +49,7 @@ crates/<crate-name>/
 
 | 层级 | 放什么 | 不放什么 |
 |------|--------|----------|
-| 仓库根 `docs/` | 跨 crate 治理、宪章细则、DDR、工作流 | 单个 crate 的 API 契约 |
+| 仓库根 `docs/`（`governance/` · `ssot/` · `status/` · `decisions/`） | 跨 crate 治理、SSOT 对齐、状态记录、DDR | 单个 crate 的 API 契约 |
 | 仓库根 `examples/` / `tests/` | 跨 crate 端到端示例与集成 | 单 crate 单元/契约测试 |
 | `crates/<name>/docs/` | 该 crate 设计、边界、迁移 | 全仓治理规则 |
 | `crates/<name>/examples/` | 只依赖本 crate（及声明的依赖）的示例 | workspace 级演示 |
@@ -83,7 +83,7 @@ crates/<crate-name>/
 | `xhyper-transportx`（lib `transportx`） | `crates/transport/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 > `examples/` / `docs/` / 暂无集成测试时的 `tests/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。  
-> adapters / contracts 为 scaffold；标准七项已补齐，**≠** 业务实现完成。见 [docs/adapters-ssot-alignment.md](../docs/adapters-ssot-alignment.md)。
+> adapters / contracts 为 scaffold；标准七项已补齐，**≠** 业务实现完成。见 [docs/ssot/adapters-ssot-alignment.md](../docs/ssot/adapters-ssot-alignment.md)。
 
 ---
 
@@ -168,7 +168,7 @@ crates/<crate-name>/
 | `taosx` | `crates/adapters/storage/taos/` | TDengine storage adapter（scaffold） |
 
 > 领域分组路径（如 `crates/types/<name>/`、`crates/adapters/{exchange,storage}/<name>/`）合法；标准布局作用于每个 workspace 成员 crate 根目录。  
-> adapters SSOT 镜像：`.agents/ssot/adapters/**`；本仓状态见 [docs/adapters-ssot-alignment.md](../docs/adapters-ssot-alignment.md)。
+> adapters SSOT 镜像：`.agents/ssot/adapters/**`；本仓状态见 [docs/ssot/adapters-ssot-alignment.md](../docs/ssot/adapters-ssot-alignment.md)。
 
 ---
 

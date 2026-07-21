@@ -1,5 +1,6 @@
-//! Binance `VenueAdapter` scaffold（非真实 HTTP）。
+//! Binance `VenueAdapter` scaffold（可选注入 `transportx::HttpDriver`）。
 
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use async_trait::async_trait;
@@ -15,6 +16,21 @@ use decimalx::{Currency, Decimal, Price, Qty};
 use futures_core::stream::BoxStream;
 use futures_util::stream;
 use kernel::{XError, XResult};
+use transportx::{HttpDriver, HttpRequest, HttpResponse, TransportError};
+
+/// 将 [`TransportError`] 映射为 kernel [`XError`]。
+fn map_transport_error(err: TransportError) -> XError {
+    match err {
+        TransportError::RateLimited { .. } => XError::transient("transport rate limited"),
+        TransportError::ConnectTimeout => XError::transient("transport connect timeout"),
+        TransportError::ReadTimeout => XError::transient("transport read timeout"),
+        TransportError::ConnectionClosed { clean } => {
+            XError::unavailable(format!("transport connection closed (clean={clean})"))
+        }
+        TransportError::ProtocolViolation(msg) => XError::invalid(format!("transport: {msg}")),
+        TransportError::Io(source) => XError::unavailable(format!("transport io: {source}")),
+    }
+}
 
 /// 适配器连接状态（观测用）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -47,15 +63,24 @@ pub struct Candle {
 }
 
 /// Binance adapter scaffold。
+///
+/// 默认无 HTTP 驱动（纯内存占位）。通过 [`Self::with_http`] 注入
+/// [`HttpDriver`] 后，[`Self::http_get`] / `server_time` 走 transport 边界。
 pub struct BinanceAdapter {
     name: String,
     base_url: String,
     connected: AtomicBool,
+    http: Option<Arc<dyn HttpDriver>>,
 }
 
 impl BinanceAdapter {
     pub fn new(name: impl Into<String>, base_url: impl Into<String>) -> Self {
-        Self { name: name.into(), base_url: base_url.into(), connected: AtomicBool::new(false) }
+        Self {
+            name: name.into(),
+            base_url: base_url.into(),
+            connected: AtomicBool::new(false),
+            http: None,
+        }
     }
 
     pub fn testnet() -> Self {
@@ -64,6 +89,19 @@ impl BinanceAdapter {
 
     pub fn mainnet() -> Self {
         Self::new("binance-mainnet", "https://api.binance.com")
+    }
+
+    /// 注入 HTTP 驱动（组合 transportx；仍非真实业务协议解析）。
+    #[must_use]
+    pub fn with_http(mut self, http: Arc<dyn HttpDriver>) -> Self {
+        self.http = Some(http);
+        self
+    }
+
+    /// 是否已配置 HTTP 驱动。
+    #[must_use]
+    pub fn has_http(&self) -> bool {
+        self.http.is_some()
     }
 
     pub fn name(&self) -> &str {
@@ -87,6 +125,27 @@ impl BinanceAdapter {
             return Err(XError::unavailable("not connected"));
         }
         Ok(())
+    }
+
+    fn join_url(&self, path: &str) -> String {
+        if path.starts_with("http://") || path.starts_with("https://") {
+            return path.to_string();
+        }
+        let base = self.base_url.trim_end_matches('/');
+        if path.starts_with('/') { format!("{base}{path}") } else { format!("{base}/{path}") }
+    }
+
+    /// 经注入的 [`HttpDriver`] 发起 GET（需已 `with_http`）。
+    pub async fn http_get(&self, path: &str) -> XResult<HttpResponse> {
+        let http =
+            self.http.as_ref().ok_or_else(|| XError::unavailable("http driver not configured"))?;
+        let request = HttpRequest {
+            method: "GET".into(),
+            url: self.join_url(path),
+            headers: vec![],
+            body: None,
+        };
+        http.execute(request).await.map_err(map_transport_error)
     }
 
     fn zero_price() -> XResult<Price> {
@@ -198,6 +257,14 @@ impl VenueAdapter for BinanceAdapter {
 
     async fn server_time(&self) -> XResult<i64> {
         self.require_connected()?;
+        if self.http.is_some() {
+            let resp = self.http_get("/api/v3/time").await?;
+            if resp.status == 200 {
+                // 业务 JSON 解析 DEFER；transport 接线成功返回占位 0
+                return Ok(0);
+            }
+            return Err(XError::unavailable(format!("server_time http status {}", resp.status)));
+        }
         Ok(0)
     }
 
@@ -361,5 +428,78 @@ mod tests {
         assert_eq!(meta.symbol, "BTCUSDT");
         assert!(VenueAdapter::query_position(&a).await.unwrap().is_empty());
         assert_eq!(VenueAdapter::query_balance(&a).await.unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn http_driver_get_and_server_time() {
+        use bytes::Bytes;
+        use transportx::MockHttpTransport;
+
+        let mock = Arc::new(MockHttpTransport::new());
+        let url = "https://api.binance.com/api/v3/time";
+        mock.set_get(url, Bytes::from_static(b"{\"serverTime\":1}"));
+
+        let a = BinanceAdapter::mainnet().with_http(mock);
+        assert!(a.has_http());
+        VenueAdapter::connect(&a).await.unwrap();
+
+        let resp = a.http_get("/api/v3/time").await.unwrap();
+        assert_eq!(resp.status, 200);
+
+        let t = VenueAdapter::server_time(&a).await.unwrap();
+        assert_eq!(t, 0);
+
+        // absolute URL path
+        let resp2 = a.http_get(url).await.unwrap();
+        assert_eq!(resp2.status, 200);
+    }
+
+    #[tokio::test]
+    async fn http_get_without_driver_unavailable() {
+        let a = BinanceAdapter::mainnet();
+        assert!(!a.has_http());
+        let e = a.http_get("/x").await.expect_err("no driver");
+        assert_eq!(e.kind(), kernel::ErrorKind::Unavailable);
+    }
+
+    #[tokio::test]
+    async fn http_server_time_missing_mock_maps_error() {
+        use transportx::MockHttpTransport;
+
+        let mock = Arc::new(MockHttpTransport::new());
+        // 未 set_get → ProtocolViolation → Invalid
+        let a = BinanceAdapter::mainnet().with_http(mock);
+        VenueAdapter::connect(&a).await.unwrap();
+        let e = VenueAdapter::server_time(&a).await.expect_err("missing mock");
+        assert_eq!(e.kind(), kernel::ErrorKind::Invalid);
+    }
+
+    #[test]
+    fn map_transport_error_variants() {
+        use std::time::Duration;
+        let e = map_transport_error(TransportError::RateLimited {
+            retry_after: Some(Duration::from_secs(1)),
+        });
+        assert_eq!(e.kind(), kernel::ErrorKind::Transient);
+        assert_eq!(
+            map_transport_error(TransportError::ConnectTimeout).kind(),
+            kernel::ErrorKind::Transient
+        );
+        assert_eq!(
+            map_transport_error(TransportError::ReadTimeout).kind(),
+            kernel::ErrorKind::Transient
+        );
+        assert_eq!(
+            map_transport_error(TransportError::ConnectionClosed { clean: true }).kind(),
+            kernel::ErrorKind::Unavailable
+        );
+        assert_eq!(
+            map_transport_error(TransportError::ProtocolViolation("bad".into())).kind(),
+            kernel::ErrorKind::Invalid
+        );
+        assert_eq!(
+            map_transport_error(TransportError::Io(Box::new(std::io::Error::other("e")))).kind(),
+            kernel::ErrorKind::Unavailable
+        );
     }
 }

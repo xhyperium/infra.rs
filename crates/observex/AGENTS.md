@@ -16,7 +16,7 @@
 - 观测调用不得 panic、不得改变业务结果
 - 禁止在本战役引入 OTEL SDK / exporter
 - 验证：`cargo test -p xhyper-observex` · clippy · `node scripts/cov-gate-100.mjs -p xhyper-observex --filter crates/observex/src`
-- 对齐：[`../../docs/observex-ssot-alignment.md`](../../docs/observex-ssot-alignment.md)
+- 对齐：[`../../docs/ssot/observex-ssot-alignment.md`](../../docs/ssot/observex-ssot-alignment.md)
 
 ## 与 SSOT 镜像的关系
 

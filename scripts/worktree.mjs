@@ -12,7 +12,7 @@
  *   node scripts/worktree.mjs prune
  *   node scripts/worktree.mjs current
  *
- * SSOT: CONSTITUTION.md §6.0.5 / docs/worktree-policy.md
+ * SSOT: CONSTITUTION.md §6.0.5 / docs/governance/worktree-policy.md
  * 替代: scripts/worktree.mjs (已迁移)
  */
 

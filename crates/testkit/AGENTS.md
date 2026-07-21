@@ -18,7 +18,7 @@
 - **禁止** 重新引入 `xlib_test!` / `mock!` / `FixtureBuilder` / provider 大宏
 - 验证：`cargo test -p xhyper-testkit` · `cargo clippy -p xhyper-testkit --all-targets -- -D warnings`
 - 质量：`cargo llvm-cov -p xhyper-testkit --fail-under-lines 95` · `cargo mutants -p xhyper-testkit` · `cargo +nightly miri test -p xhyper-testkit`
-- 对齐矩阵：[`../../docs/testkit-ssot-alignment.md`](../../docs/testkit-ssot-alignment.md)
+- 对齐矩阵：[`../../docs/ssot/testkit-ssot-alignment.md`](../../docs/ssot/testkit-ssot-alignment.md)
 
 ## 与 SSOT 镜像的关系
 

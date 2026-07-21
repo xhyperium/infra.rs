@@ -1,0 +1,21 @@
+[package]
+name = "xhyper-evidence"
+version = "0.1.0"
+publish = false
+edition.workspace = true
+rust-version.workspace = true
+description = "L1 审计证据追加面（EvidenceAppender + 内存实现）"
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "evidence"
+
+[dependencies]
+# std-only 0.1.0：无生产依赖（与 bootstrap 注入边界对齐）
+
+[features]
+default = []
+
+[lints]
+workspace = true

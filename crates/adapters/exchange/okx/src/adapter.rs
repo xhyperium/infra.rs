@@ -1,5 +1,6 @@
-//! OKX `VenueAdapter` scaffold（非真实 HTTP）。
+//! OKX `VenueAdapter` scaffold（可选注入 `transportx::HttpDriver`）。
 
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use async_trait::async_trait;
@@ -15,6 +16,20 @@ use decimalx::{Currency, Decimal, Qty};
 use futures_core::stream::BoxStream;
 use futures_util::stream;
 use kernel::{XError, XResult};
+use transportx::{HttpDriver, HttpRequest, HttpResponse, TransportError};
+
+fn map_transport_error(err: TransportError) -> XError {
+    match err {
+        TransportError::RateLimited { .. } => XError::transient("transport rate limited"),
+        TransportError::ConnectTimeout => XError::transient("transport connect timeout"),
+        TransportError::ReadTimeout => XError::transient("transport read timeout"),
+        TransportError::ConnectionClosed { clean } => {
+            XError::unavailable(format!("transport connection closed (clean={clean})"))
+        }
+        TransportError::ProtocolViolation(msg) => XError::invalid(format!("transport: {msg}")),
+        TransportError::Io(source) => XError::unavailable(format!("transport io: {source}")),
+    }
+}
 
 /// 适配器连接状态（观测用）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -24,15 +39,23 @@ pub enum AdapterState {
 }
 
 /// OKX adapter scaffold。
+///
+/// 默认无 HTTP 驱动。通过 [`Self::with_http`] 注入 transportx 后走 HTTP 边界。
 pub struct OkxAdapter {
     name: String,
     base_url: String,
     connected: AtomicBool,
+    http: Option<Arc<dyn HttpDriver>>,
 }
 
 impl OkxAdapter {
     pub fn new(name: impl Into<String>, base_url: impl Into<String>) -> Self {
-        Self { name: name.into(), base_url: base_url.into(), connected: AtomicBool::new(false) }
+        Self {
+            name: name.into(),
+            base_url: base_url.into(),
+            connected: AtomicBool::new(false),
+            http: None,
+        }
     }
 
     pub fn demo() -> Self {
@@ -41,6 +64,19 @@ impl OkxAdapter {
 
     pub fn mainnet() -> Self {
         Self::new("okx-mainnet", "https://www.okx.com")
+    }
+
+    /// 注入 HTTP 驱动。
+    #[must_use]
+    pub fn with_http(mut self, http: Arc<dyn HttpDriver>) -> Self {
+        self.http = Some(http);
+        self
+    }
+
+    /// 是否已配置 HTTP 驱动。
+    #[must_use]
+    pub fn has_http(&self) -> bool {
+        self.http.is_some()
     }
 
     pub fn name(&self) -> &str {
@@ -64,6 +100,27 @@ impl OkxAdapter {
             return Err(XError::unavailable("not connected"));
         }
         Ok(())
+    }
+
+    fn join_url(&self, path: &str) -> String {
+        if path.starts_with("http://") || path.starts_with("https://") {
+            return path.to_string();
+        }
+        let base = self.base_url.trim_end_matches('/');
+        if path.starts_with('/') { format!("{base}{path}") } else { format!("{base}/{path}") }
+    }
+
+    /// 经注入的 [`HttpDriver`] 发起 GET。
+    pub async fn http_get(&self, path: &str) -> XResult<HttpResponse> {
+        let http =
+            self.http.as_ref().ok_or_else(|| XError::unavailable("http driver not configured"))?;
+        let request = HttpRequest {
+            method: "GET".into(),
+            url: self.join_url(path),
+            headers: vec![],
+            body: None,
+        };
+        http.execute(request).await.map_err(map_transport_error)
     }
 
     fn zero_qty() -> XResult<Qty> {
@@ -148,6 +205,13 @@ impl VenueAdapter for OkxAdapter {
 
     async fn server_time(&self) -> XResult<i64> {
         self.require_connected()?;
+        if self.http.is_some() {
+            let resp = self.http_get("/api/v5/public/time").await?;
+            if resp.status == 200 {
+                return Ok(0);
+            }
+            return Err(XError::unavailable(format!("server_time http status {}", resp.status)));
+        }
         Ok(0)
     }
 
@@ -285,5 +349,28 @@ mod tests {
         assert_eq!(ExecutionVenue::venue_id(&a), "okx");
         let _ = VenueAdapter::server_time(&a).await.unwrap();
         assert!(VenueAdapter::query_position(&a).await.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn http_driver_get_and_server_time() {
+        use bytes::Bytes;
+        use transportx::MockHttpTransport;
+
+        let mock = Arc::new(MockHttpTransport::new());
+        let url = "https://www.okx.com/api/v5/public/time";
+        mock.set_get(url, Bytes::from_static(b"{\"code\":\"0\"}"));
+        let a = OkxAdapter::mainnet().with_http(mock);
+        assert!(a.has_http());
+        VenueAdapter::connect(&a).await.unwrap();
+        let resp = a.http_get("/api/v5/public/time").await.unwrap();
+        assert_eq!(resp.status, 200);
+        assert_eq!(VenueAdapter::server_time(&a).await.unwrap(), 0);
+    }
+
+    #[tokio::test]
+    async fn http_get_without_driver() {
+        let a = OkxAdapter::demo();
+        assert!(!a.has_http());
+        assert_eq!(a.http_get("/x").await.expect_err("e").kind(), kernel::ErrorKind::Unavailable);
     }
 }

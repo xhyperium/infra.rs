@@ -15,7 +15,8 @@
 | `xhyper-configx` | `crates/configx/` | `configx` | L1 内存字符串 KV（非多源热更新） | [configx-ssot-alignment.md](./configx-ssot-alignment.md) |
 | `xhyper-schedulex` | `crates/schedulex/` | `schedulex` | L1 任务 ID 登记表（registry only） | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) |
 | `xhyper-bootstrap` | `crates/bootstrap/` | `bootstrap` | L1 唯一组合根（ADR-016） | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) |
-| `xhyper-resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
+| `xhyper-evidence` | `crates/evidence/` | `evidence` | L1 审计证据追加面 | [evidence-ssot-alignment.md](./evidence-ssot-alignment.md) |
+| `xhyper-resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试 + 熔断 + 限流 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
 | `xhyper-decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `xhyper-canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `xhyper-contracts` | `crates/contracts/` | `contracts` | adapter trait 出口（#43） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
@@ -63,7 +64,7 @@
 | schedulex | `.agents/ssot/infra/schedulex/` | `crates/schedulex` | **registry 已落地**（active SSOT 最小合同） |
 | types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；wire/package stable OPEN |
 | infra/configx | `.agents/ssot/infra/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
-| infra/bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/bootstrap` | **组合根已落地**；contracts/observex/evidence 全量 **DEFER** |
+| infra/bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/bootstrap` | **组合根已落地**；evidence crate 已注入 |
 | infra/resiliencx | `.agents/ssot/infra/resiliencx/` | `crates/resiliencx` | **重试已落地**；熔断/限流 DEFER |
 | infra 其余域 | `.agents/ssot/infra/*` | — | **仅镜像**，未宣称 crate 落地 |
 | adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **镜像已注册**；crate 为 **scaffold**，未宣称实现 |
@@ -118,5 +119,5 @@ diff -rq /home/workspace/xhyper.rs/.agent/SSOT/contracts .agents/ssot/contracts
 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) | contracts 镜像 + trait 落地 |
 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) | transportx 本仓矩阵 |
 | [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md) | 镜像同步完整性（≠ 实现落地） |
-| [crates/AGENTS.md](../crates/AGENTS.md) | crate 子模块标准布局 + 概览 |
-| [.agents/ssot/SSOT.md](../.agents/ssot/SSOT.md) | R6/R7 规则 |
+| [crates/AGENTS.md](../../crates/AGENTS.md) | crate 子模块标准布局 + 概览 |
+| [.agents/ssot/SSOT.md](../../.agents/ssot/SSOT.md) | R6/R7 规则 |

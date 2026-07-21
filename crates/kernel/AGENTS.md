@@ -3,7 +3,7 @@
 > 适用 crate：`crates/kernel/`（包名 `xhyper-kernel`，lib 名 `kernel`）  
 > 父级规则：[`crates/AGENTS.md`](../AGENTS.md)  
 > 实现契约 SSOT：`.agents/ssot/kernel/spec/spec.md`（**SPEC-KERNEL-002**）  
-> 本仓对齐矩阵：[`docs/kernel-ssot-alignment.md`](../../docs/kernel-ssot-alignment.md)
+> 本仓对齐矩阵：[`docs/ssot/kernel-ssot-alignment.md`](../../docs/ssot/kernel-ssot-alignment.md)
 
 ---
 

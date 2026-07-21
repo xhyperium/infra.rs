@@ -33,7 +33,7 @@
 | `xhyper-kernel`（Shutdown / ErrorKind） | path `crates/kernel` | **PASS** |
 | `xhyper-contracts`（Instrumentation） | path `crates/contracts`；re-export `Instrumentation` | **PASS**（ADR-005 trait 权威）/ 全量 venue async 仍 **DEFER**（`traits` 最小替面） |
 | `xhyper-observex`（`TracingInstrumentation`） | path `crates/observex`；`Bootstrap::new` 默认 | **PASS**（ADR-005 默认实现） |
-| `xhyper-evidence`（`EvidenceAppender`） | 最小 `EvidenceAppender` + `EvidenceError` | **PASS**（注入/可选/require）/ 全量 evidence **DEFER** |
+| `xhyper-evidence`（`EvidenceAppender`） | path `crates/evidence`；re-export + `InMemoryEvidenceAppender` | **PASS**（注入/可选/require；内存实现）/ 远程持久化 wire **DEFER** |
 | dev：binance / redisx / canonical / tokio e2e | 无 monorepo adapters | **DEFER**（见非目标）；以 stub trait double + 单元/集成测试替代组合证明 |
 
 ## §3 公开 API

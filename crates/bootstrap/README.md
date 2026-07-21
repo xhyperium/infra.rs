@@ -4,7 +4,7 @@ L1 **唯一组合根**（R3.1 豁免 / ADR-016）：启动期把 instrumentation
 
 库名（`lib`）为 `bootstrap`。  
 契约 SSOT：`.agents/ssot/infra/bootstrap/spec/spec.md`。  
-本仓对齐矩阵：[docs/bootstrap-ssot-alignment.md](../../docs/bootstrap-ssot-alignment.md)。
+本仓对齐矩阵：[docs/ssot/bootstrap-ssot-alignment.md](../../docs/ssot/bootstrap-ssot-alignment.md)。
 
 ## 职责
 

@@ -11,7 +11,7 @@
  *
  * 使用者: .claude/hooks/pre-tool-check.mjs / session-context.mjs
  *
- * SSOT: CONSTITUTION.md §6.0.5 / docs/worktree-policy.md
+ * SSOT: CONSTITUTION.md §6.0.5 / docs/governance/worktree-policy.md
  */
 
 import { resolve, basename, relative } from "path";

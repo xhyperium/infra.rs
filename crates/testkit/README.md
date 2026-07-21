@@ -13,7 +13,7 @@ T0 **deterministic test support**（SPEC-TESTKIT-002）。
 > **不是**生产 runtime。与生产依赖图正交；业务 crate **只能** `[dev-dependencies]` 引用。
 
 规范镜像：[`../../.agents/ssot/testkit/spec/spec.md`](../../.agents/ssot/testkit/spec/spec.md)  
-对齐说明：[`../../docs/testkit-ssot-alignment.md`](../../docs/testkit-ssot-alignment.md)
+对齐说明：[`../../docs/ssot/testkit-ssot-alignment.md`](../../docs/ssot/testkit-ssot-alignment.md)
 
 ## 公开面
 

@@ -9,7 +9,7 @@
 
 ## 结论
 
-**core 必选 GAP = 0**。详见 `docs/testkit-ssot-alignment.md` clause matrix。
+**core 必选 GAP = 0**。详见 `docs/ssot/testkit-ssot-alignment.md` clause matrix。
 
 ## 本仓实测摘要
 

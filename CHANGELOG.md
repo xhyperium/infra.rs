@@ -9,22 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Agent 入口索引同步**：`AGENTS.md` / `CLAUDE.md` 补齐 workspace members（evidence / observex / transport 等）与完整 `docs/ssot/*` 域链接，与分类后的文档树一致
+
+
+- **`docs/` 严格分类**：根目录不再平铺内容文件；按职责拆为
+  - `docs/governance/` — 版本、worktree、语言约定、ASD-STE100、量化规范
+  - `docs/ssot/` — SSOT 对齐矩阵、同步手册与同步报告
+  - `docs/status/` — CI/配置状态与验证记录
+  - `docs/decisions/` — DDR（原路径保留）
+- 更新 `docs/README.md` 分类规则与索引；为各子目录新增 `README.md` 收录标准
+- 全仓引用路径同步（`AGENTS.md` / `CLAUDE.md` / `CONSTITUTION.md` / crate 文档 / hooks / scripts）
+
 ### Added
 
 - **`xhyper-schedulex` 0.1.0**（`crates/schedulex`）：active SSOT 最小任务 ID 登记表；std-only；line cov 100%
-- **`docs/schedulex-ssot-alignment.md`**：schedulex 本仓对齐矩阵
+- **`docs/ssot/schedulex-ssot-alignment.md`**：schedulex 本仓对齐矩阵
 - **`binancex` / `okxx`**：实现 `contracts::VenueAdapter` 及能力拆分 trait（scaffold；非真实 HTTP）
 - **storage adapters 收敛到 `xhyper-contracts`**：redisx→KeyValueStore/PubSub；kafkax/natsx→EventBus；postgresx→Repository/TxRunner；ossx→ObjectStore；clickhousex→AnalyticsSink；taosx→TimeSeriesStore（均内存 scaffold）
 - **`natsx` / `postgresx` / `clickhousex` / `ossx` / `taosx`**：StorageAdapter 内存 scaffold（与 redisx/kafkax 同模式）
 - **`redisx` / `kafkax`**：实现 `StorageAdapter`（进程内 KV scaffold + 单元测试）
 - **`okxx`**：实现 `ExchangeAdapter` trait（占位 ticker；5 单元测试）
-- **contracts SSOT 镜像**：`.agents/ssot/contracts/`（16 文件，与上游 0 diff）；对齐文 `docs/contracts-ssot-alignment.md`
-- **`xhyper-bootstrap`**（lib `bootstrap`）：L1 唯一组合根（ADR-016）；typed `PlatformContext` / `AppContext` / `BootstrappedApp`；可移植 trait 替面；对齐文档 `docs/bootstrap-ssot-alignment.md`
-- **`xhyper-configx`（lib `configx`）**：落地 active SSOT 0.1.0 内存字符串 KV（`ConfigStore`）；生产依赖仅 `xhyper-kernel`；对齐文 `docs/configx-ssot-alignment.md`
+- **contracts SSOT 镜像**：`.agents/ssot/contracts/`（16 文件，与上游 0 diff）；对齐文 `docs/ssot/contracts-ssot-alignment.md`
+- **`xhyper-bootstrap`**（lib `bootstrap`）：L1 唯一组合根（ADR-016）；typed `PlatformContext` / `AppContext` / `BootstrappedApp`；可移植 trait 替面；对齐文档 `docs/ssot/bootstrap-ssot-alignment.md`
+- **`xhyper-configx`（lib `configx`）**：落地 active SSOT 0.1.0 内存字符串 KV（`ConfigStore`）；生产依赖仅 `xhyper-kernel`；对齐文 `docs/ssot/configx-ssot-alignment.md`
 - **Crate 子模块标准布局**（`crates/AGENTS.md`）：强制 `src/`、`tests/`、`examples/`、`docs/`、`README.md`、`AGENTS.md`、`CHANGELOG.md`
 - **`kernel` 等 crate 骨架补齐**：README、CHANGELOG、AGENTS、空目录 `.gitkeep`
 - **adapters SSOT 镜像**（只读）：`exchange/{binance,okx}` + `storage/{clickhouse,kafka,nats,oss,postgres,redis,taos}`（144 文件，与上游 0 diff）
-- **对齐文档**：[docs/adapters-ssot-alignment.md](./docs/adapters-ssot-alignment.md)（镜像 vs scaffold 状态矩阵）
+- **对齐文档**：[docs/ssot/adapters-ssot-alignment.md](./docs/ssot/adapters-ssot-alignment.md)（镜像 vs scaffold 状态矩阵）
 - **adapters / contracts 标准布局补齐**：9 adapter crate + `xhyper-contracts` 补齐七项骨架；各 crate 显式 `publish = false`
 
 ### Removed
@@ -34,9 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - workspace members 增加 `xhyper-schedulex`；总览/对齐文档同步
-- 同步更新 `README` / `ARCHITECTURE` / `CONSTITUTION` / `crates/AGENTS.md` / `docs/VERSIONING.md` 中的 crate 地图
+- 同步更新 `README` / `ARCHITECTURE` / `CONSTITUTION` / `crates/AGENTS.md` / `docs/governance/VERSIONING.md` 中的 crate 地图
 - DDR-002 适用范围改为 workspace 库 crate；DDR-003 标记为已撤销（依赖已删除的 `infra_core::Error`）
-- 对齐文档：新增 `docs/workspace-ssot-alignment.md`、`docs/types-ssot-alignment.md`、`docs/configx-ssot-alignment.md`、`docs/bootstrap-ssot-alignment.md`；更新 `SSOT_SYNC_REPORT` / `docs/README` / 根 `AGENTS.md` / `CLAUDE.md` 入口
+- 对齐文档：新增 `docs/ssot/workspace-ssot-alignment.md`、`docs/ssot/types-ssot-alignment.md`、`docs/ssot/configx-ssot-alignment.md`、`docs/ssot/bootstrap-ssot-alignment.md`；更新 `SSOT_SYNC_REPORT` / `docs/README` / 根 `AGENTS.md` / `CLAUDE.md` 入口
 - **adapters SSOT 本地化**：注册 `.agents/ssot/adapters/` 镜像；更新 R6/R7、`workspace`/`SSOT_SYNC` 总览与 `crates/AGENTS` 概览
 
 ---
@@ -46,10 +59,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **文档系统**: `docs/README.md` 文档索引，`docs/decisions/` ADR 目录与模板
-- **配置总结**: `docs/CONFIG_SUMMARY.md` — CI 工作流、分支保护规则、验证记录总览
+- **配置总结**: `docs/status/CONFIG_SUMMARY.md` — CI 工作流、分支保护规则、验证记录总览
 - **主 README 文档链接**: 项目 README 新增文档章节，链接到全部 4 份文档
-- **ASD-STE100 指南** (`docs/ASD-STE100.md`): 英文技术文档受控语言规范
-- **中文编码约定** (`docs/编码与语言约定.md`): UTF-8 与编码策略
+- **ASD-STE100 指南** (`docs/governance/ASD-STE100.md`): 英文技术文档受控语言规范
+- **中文编码约定** (`docs/governance/编码与语言约定.md`): UTF-8 与编码策略
 
 ---
 

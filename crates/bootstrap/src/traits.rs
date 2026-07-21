@@ -2,7 +2,8 @@
 //!
 //! - [`Instrumentation`]：权威定义在 [`contracts::Instrumentation`]；本模块 re-export。
 //! - [`NoopInstrumentation`]：静默空实现（测试/显式关闭观测时用）。
-//! - Evidence / 有界 venue 能力：完整 monorepo 平面仍 DEFER；保留最小对象安全形状。
+//! - Evidence：权威在 [`evidence`]；本模块 re-export trait / error / 内存实现。
+//! - 有界 venue 能力：完整 async 平面仍 DEFER；保留最小对象安全形状。
 
 // ── observability（ADR-005）────────────────────────────────────────────────
 
@@ -29,34 +30,9 @@ impl Instrumentation for NoopInstrumentation {
     fn record_circuit_close(&self, _op: &str) {}
 }
 
-// ── evidence ───────────────────────────────────────────────────────────────
+// ── evidence（权威在 xhyper-evidence）─────────────────────────────────────
 
-/// 证据追加错误（可移植最小面；非 monorepo `xhyper-evidence` 全量枚举）。
-#[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EvidenceError {
-    /// 持久化失败。
-    DurabilityFailure,
-    /// 存储/后端不可用。
-    Unavailable,
-}
-
-impl std::fmt::Display for EvidenceError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::DurabilityFailure => write!(f, "evidence durability failure"),
-            Self::Unavailable => write!(f, "evidence backend unavailable"),
-        }
-    }
-}
-
-impl std::error::Error for EvidenceError {}
-
-/// 审计证据追加器（对象安全；完整 AppendRequest/Receipt API DEFER 至 evidence crate）。
-pub trait EvidenceAppender: Send + Sync {
-    /// 按逻辑名追加一条审计事件（可移植探针；非 wire 兼容 monorepo）。
-    fn append_named(&self, name: &str) -> Result<(), EvidenceError>;
-}
+pub use evidence::{AppendReceipt, EvidenceAppender, EvidenceError, InMemoryEvidenceAppender};
 
 // ── venue / storage（有界上下文字段用最小对象安全面）──────────────────────
 
@@ -135,7 +111,7 @@ mod tests {
 
     struct FailAppender;
     impl EvidenceAppender for FailAppender {
-        fn append_named(&self, _name: &str) -> Result<(), EvidenceError> {
+        fn append_named(&self, _name: &str) -> Result<AppendReceipt, EvidenceError> {
             Err(EvidenceError::DurabilityFailure)
         }
     }
