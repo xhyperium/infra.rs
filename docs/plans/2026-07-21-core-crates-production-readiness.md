@@ -6,20 +6,23 @@
 | 日期 | 2026-07-21 |
 | 输入审计 | [docs/report/2026-07-21/core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) |
 | 已合入基线 | PR [#98](https://github.com/xhyperium/infra.rs/pull/98) squash `76c56d7`（批次 A–E **子集**） |
+| W0–W5 实现合入 | PR [#120](https://github.com/xhyperium/infra.rs/pull/120) [#121](https://github.com/xhyperium/infra.rs/pull/121) [#124](https://github.com/xhyperium/infra.rs/pull/124) [#125](https://github.com/xhyperium/infra.rs/pull/125) [#127](https://github.com/xhyperium/infra.rs/pull/127) [#128](https://github.com/xhyperium/infra.rs/pull/128)（2026-07-21 squash → `main`） |
 | 目标 | 五个核心 crate 达到可签字的 **Production Ready**（按模块分轨，不假装整体一次过线） |
 | 范围 | `xhyper-contracts` · `xhyper-decimalx` · `xhyper-canonical` · `xhyper-kernel` · `xhyper-testkit`；以及阻断生产语义的 adapters 验证入口 |
 | 性质 | **可执行修复计划**（含顺序、验收、门禁、签字）；**不是**发布批准本身 |
-| 状态 | **W0 Frozen**（2026-07-21）· 产物见 `docs/plans/artifacts/` · 待 W1–W5 执行与 L5 签字 |
+| 状态 | **W0–W5 已合入 main**（2026-07-21）· **L5 / DEFER-7 待 Maintainer 签核** · 整体 Production Ready：**否** |
 
 ---
 
 ## 0. 一句话结论
 
-PR #98 已把审计报告中的 **P0/P1 可机器验证子集**合入 `main`，但 **§8 生产接受门槛仍未全部满足**。当前最准确的表述仍是：
+PR #98 闭合了审计 **P0/P1 可机器验证子集**；PLAN-CORE-PROD-002 **W0–W5 实现已于 2026-07-21 合入 `main`**（见上表 PR）。  
+**§8.8 / DEFER-7 人工签核尚未完成**，因此：
 
-> `kernel` / `testkit::ManualClock` 接近就绪；`decimalx` 有条件内部就绪；`canonical` 仅 committed wire v1 子集就绪；`contracts` 事务/消息最小面就绪。**五个 crate 整体 Production Ready：否。**
+> 证据链与门禁已显著加强（decimal oracle、wire v1.1–v1.3、contracts 合同测、adapter mock 验证入口、public-api / 支持矩阵）。  
+> **五个 crate 整体 Production Ready：否**（待 Maintainer 签核 + 真实后端仍 Accept）。
 
-本计划把报告 §11.2 的 8 个 DEFER 与 §8 的 8 条门槛映射为 **6 个可交付波次（W0–W5）**，并给出每波的 scope、完成判据、验证命令与依赖。
+本计划把报告 §11.2 的 8 个 DEFER 与 §8 的 8 条门槛映射为 **6 个可交付波次（W0–W5）**；实现波次已闭合，剩余为签核与真实后端 Accept 项。
 
 ---
 
@@ -546,13 +549,12 @@ node scripts/quality-gates/check.mjs
 
 ---
 
-## 17. 立即下一步（给执行会话）
+## 17. 立即下一步（合入后）
 
-1. Maintainer 确认 §5.3 首批 trait 与 §2 目标层级（可裁剪）。
-2. `bd create` epic：`PLAN-CORE-PROD-002` + W1–W5 子任务。
-3. 开 PR-A：仅文档（本计划 + `docs/README` 索引 + DEFER 表）。
-4. 并行启动 PR-B（decimal oracle）与 PR-F（contracts 语义文档骨架）。
-5. 任何实现会话：**worktree 隔离**，禁止 main 直改。
+1. **Maintainer**：阅读 [`releases/2026-07-21-signoff-DRAFT.md`](./releases/2026-07-21-signoff-DRAFT.md)，手签正式 signoff（DEFER-7）。
+2. 可选 follow-up：真实后端 live feature、二期 trait、非 Linux 矩阵。
+3. 合并后若 public-api baseline 漂移：`node scripts/quality-gates/check-public-api.mjs --update` 并开文档 PR。
+4. 任何实现会话：**worktree 隔离**，禁止 main 直改。
 
 ---
 
@@ -562,3 +564,4 @@ node scripts/quality-gates/check.mjs
 |------|------|
 | 2026-07-21 | 初版：基于审计报告 §11 DEFER 与 main（含 PR #98）源码事实的生产级修复方案 |
 | 2026-07-21 | **W0 Frozen**：`artifacts/` 落盘 trait/wire/支持矩阵/DEFER 处置；beads `infra-asa.1`…`.6` |
+| 2026-07-21 | **W0–W5 已合入 main**（PR #120–#128）；签核草稿；DEFER 表更新实现状态 |

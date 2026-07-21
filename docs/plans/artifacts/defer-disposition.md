@@ -4,8 +4,9 @@
 |------|-----|
 | Plan | [PLAN-CORE-PROD-002](../2026-07-21-core-crates-production-readiness.md) §11 |
 | 审计 | [core-crates-production-readiness.md](../../report/2026-07-21/core-crates-production-readiness.md) §11.2 |
-| Beads | `infra-asa.1` |
+| Beads | `infra-asa`（epic 已 close） |
 | 冻结日期 | 2026-07-21 |
+| 实现合入 | 2026-07-21 · PR #120–#128（见计划文） |
 | 规则 | 每项必须为 **Close** / **Accept** / **Defer-with-sign** 之一；禁止「未分类」 |
 
 ## 处置定义
@@ -18,16 +19,16 @@
 
 ## 表
 
-| ID | 项 | 处置 | 波次 / 证据 | 签字影响 |
-|----|----|------|-------------|----------|
-| DEFER-1 | 真实后端验证入口 | **Close**（首批 trait） | W4 · `infra-asa.5`；二期 trait 可残留 scaffold | 阻塞 contracts L3 |
-| DEFER-2 | 全 trait 深度语义 | **Close 首批** + **Accept 二期** | W3 · `infra-asa.4`；二期见 [prod-trait-inventory](./prod-trait-inventory.md) §3 | 首批阻塞 L3；二期不阻塞 |
-| DEFER-3 | 非 committed DTO | **Close 分批** | W2 · `infra-asa.3`；按 [wire-promotion-candidates](./wire-promotion-candidates.md) | 阻塞 canonical L2 扩面 |
-| DEFER-4 | fuzz / oracle / mutants / Miri | **Close** | W1 · `infra-asa.2` | 阻塞 decimalx L1 签字 |
-| DEFER-5 | API snapshot / semver 门禁 | **Close** | W5 · `infra-asa.6` | 阻塞 L4/L5 |
-| DEFER-6 | 非 Linux 矩阵实测 | **Accept** | W0 本表 + [support-matrix](./support-matrix.md)：仅 Linux 官方支持 | 不阻塞（已声明） |
-| DEFER-7 | §8 发布/回滚人工签字 | **Defer-with-sign** | W5 · **仅 Maintainer** | 阻塞 L5；Agent 禁止伪造 |
-| DEFER-8 | VenueAdapter additive override 门禁 | **Close** | W3 · `infra-asa.4` | 阻塞 venue 生产路径 |
+| ID | 项 | 处置 | 波次 / 证据 | 实现状态 | 签字影响 |
+|----|----|------|-------------|----------|----------|
+| DEFER-1 | 真实后端验证入口 | **Close**（首批 = 离线 mock）+ **Accept** 真实云端 | W4 · PR [#125](https://github.com/xhyperium/infra.rs/pull/125) | **已合入 mock**；真实 DB/MQ/交易所仍 Accept | 真实后端不阻塞 mock-L3 |
+| DEFER-2 | 全 trait 深度语义 | **Close 首批** + **Accept 二期** | W3 · PR [#128](https://github.com/xhyperium/infra.rs/pull/128) | **首批已合入**；二期见 inventory | 二期不阻塞 |
+| DEFER-3 | 非 committed DTO | **Close 分批** | W2 · PR [#124](https://github.com/xhyperium/infra.rs/pull/124) | **v1.1–v1.3 已合入** | L2 扩面完成 |
+| DEFER-4 | fuzz / oracle / mutants / Miri | **Close** | W1 · PR [#121](https://github.com/xhyperium/infra.rs/pull/121) | **已合入** oracle/边界/门禁 + scheduled mutants/miri | L1 证据链就绪 |
+| DEFER-5 | API snapshot / semver 门禁 | **Close** | W5 · PR [#127](https://github.com/xhyperium/infra.rs/pull/127) | **已合入** baseline + CI | L4 门禁就绪 |
+| DEFER-6 | 非 Linux 矩阵实测 | **Accept** | W0 + [`support-matrix.md`](../../governance/support-matrix.md) | **已声明仅 Linux** | 不阻塞 |
+| DEFER-7 | §8 发布/回滚人工签字 | **Defer-with-sign** | 草稿见 `docs/plans/releases/2026-07-21-signoff-DRAFT.md` | **待 Maintainer** | **阻塞 L5** |
+| DEFER-8 | VenueAdapter additive override 门禁 | **Close** | W3 · PR [#128](https://github.com/xhyperium/infra.rs/pull/128) | **已合入** runtime 门禁测 | venue 路径可测 |
 
 ## 无未分类项
 
@@ -39,3 +40,4 @@
 | 日期 | 说明 |
 |------|------|
 | 2026-07-21 | W0 初冻：8 项全部分类 |
+| 2026-07-21 | W0–W5 合入后更新实现状态；DEFER-7 仍待人签 |
