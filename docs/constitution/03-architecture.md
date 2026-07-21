@@ -2,7 +2,7 @@
 
 ## 3.1 模块边界
 
-```
+```text
 crates/
 ├── kernel/              # L0 语义信任根（clock / lifecycle）
 ├── testkit/             # 测试支持（仅 dev-dependency）

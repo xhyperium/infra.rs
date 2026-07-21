@@ -18,7 +18,7 @@ on:
       - "rust-toolchain.toml"
       - "rustfmt.toml"
       - "clippy.toml"
-      - "scripts/check-constitution.mjs"
+      - "scripts/quality-gates/check-constitution.mjs"
       - ".github/workflows/constitution.yml"
       - "CONSTITUTION.md"
       - "docs/constitution/**"
@@ -68,7 +68,7 @@ jobs:
             '^rust-toolchain\.toml$'
             '^rustfmt\.toml$'
             '^clippy\.toml$'
-            '^scripts/check-constitution\.mjs$'
+            '^scripts/quality-gates/check-constitution\.mjs$'
             '^\.github/workflows/constitution\.yml$'
             '^CONSTITUTION\.md$'
             '^docs/constitution/'
@@ -102,7 +102,7 @@ jobs:
 
       - name: Run constitution checks
         if: steps.scope.outputs.run_full == 'true'
-        run: ./scripts/check-constitution.mjs
+        run: ./scripts/quality-gates/check-constitution.mjs
         env:
           CARGO_TERM_COLOR: always
 

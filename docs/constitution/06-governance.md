@@ -66,7 +66,8 @@ cd .worktrees/feat/my-feature
 - **开启 `enforce_admins: true`** 时：管理员直接推送 `main` 被拒绝，验证规则正确性
 - **生产环境**：保持 `enforce_admins: false`，允许管理员应急绕过（如紧急热修复跳过 CI 等待），但需在 PR 中注明绕过原因
 - 验证结果（2026-07-21）：
-  ```
+
+  ```text
   remote: error: GH006: Protected branch update failed for refs/heads/main.
   remote: - Changes must be made through a pull request.
   remote: - 2 of 2 required status checks are expected.
