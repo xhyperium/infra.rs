@@ -24,3 +24,13 @@
 cargo test -p evidence -p bootstrap --all-targets
 node scripts/quality-gates/cov-gate-100.mjs -p evidence --filter crates/evidence/src
 ```
+
+## 双栏落地（2026-07-22 · STATUS 100% structure）
+
+| 标尺 | 状态 |
+|------|------|
+| STATUS 结构完成度 | **100%**（layout+tests+content；非 Production Ready） |
+| 声明面生产硬化 | 公共 API 集成测 + 热路径 bench + `docs/` 红线；**cov-gate-100 行覆盖** |
+| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
+
+自验证：`cargo test -p evidence --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p evidence`；`cargo run -p evidence --example …`；`cargo bench -p evidence --bench hot_path -- --quick`。

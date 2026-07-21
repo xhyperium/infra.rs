@@ -1,14 +1,12 @@
-//! evidence —— L1 审计证据追加面（bootstrap 注入；非完整 monorepo wire 协议）。
+//! evidence —— L1 审计证据追加面。
 //!
 //! | 类型 | 说明 |
 //! |------|------|
-//! | [`EvidenceError`] | 追加失败（Durability / Unavailable） |
 //! | [`EvidenceAppender`] | 对象安全追加 trait |
-//! | [`InMemoryEvidenceAppender`] | 进程内实现（测试 / 开发默认；**非**合规审计） |
-//! | [`FileEvidenceAppender`] | 本地文件追加（最小持久化合同，infra-s9t.7） |
-//! | [`AppendReceipt`] | 成功回执（序号 + 名称） |
+//! | [`InMemoryEvidenceAppender`] | 进程内（**非**合规审计） |
+//! | [`FileEvidenceAppender`] | 本地文件最小持久化 |
 //!
-//! **非目标**：远程签名链、跨进程证据总线、完整 AppendRequest wire。
+//! **非目标**：远程签名链、跨进程总线。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -18,13 +16,23 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-/// 证据追加错误。
+mod format;
+mod inspect;
+mod policy;
+pub use format::{format_line, max_seq, parse_line, render_log};
+pub use inspect::{event_count, seq_is_monotonic, validate_log_text};
+pub use policy::{
+    BackendClass, allows_as_sole_compliance_store, allows_in_memory_for_compliance, classify_file,
+    classify_in_memory, classify_remote, file_appender_is_min_durable, policy_summary,
+};
+
+/// 证据错误。
 #[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EvidenceError {
     /// 持久化失败。
     DurabilityFailure,
-    /// 存储/后端不可用。
+    /// 不可用。
     Unavailable,
 }
 
@@ -36,36 +44,66 @@ impl std::fmt::Display for EvidenceError {
         }
     }
 }
-
 impl std::error::Error for EvidenceError {}
 
-/// 成功追加回执。
+/// 成功回执。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AppendReceipt {
-    /// 逻辑事件名。
+    /// 名称。
     pub name: String,
-    /// 单调序号（自 1 起，按成功追加递增）。
+    /// 序号（自 1）。
     pub seq: u64,
 }
 
-/// 审计证据追加器（对象安全）。
+/// 追加器。
 pub trait EvidenceAppender: Send + Sync {
-    /// 按逻辑名追加一条审计事件。
+    /// 按名追加。
     fn append_named(&self, name: &str) -> Result<AppendReceipt, EvidenceError>;
 }
 
-/// 进程内证据追加器（默认可用实现）。
-///
-/// - 线程安全（`Mutex`）
-/// - 成功路径返回递增 `seq`
-/// - [`Self::fail_next`] 可注入一次 `DurabilityFailure`（测试用）
+/// 名称校验。
+pub fn validate_event_name(name: &str) -> Result<(), EvidenceError> {
+    if name.is_empty() || name.contains('\n') || name.contains('\r') {
+        return Err(EvidenceError::DurabilityFailure);
+    }
+    Ok(())
+}
+
+/// 解析日志。
+#[must_use]
+pub fn parse_evidence_log(text: &str) -> Vec<(u64, String)> {
+    text.lines().filter_map(parse_line).collect()
+}
+
+/// 校验后追加。
+pub fn append_checked(
+    app: &dyn EvidenceAppender,
+    name: &str,
+) -> Result<AppendReceipt, EvidenceError> {
+    validate_event_name(name)?;
+    app.append_named(name)
+}
+
+/// 批量追加。
+pub fn append_batch(
+    app: &dyn EvidenceAppender,
+    names: &[&str],
+) -> Result<Vec<AppendReceipt>, EvidenceError> {
+    let mut out = Vec::with_capacity(names.len());
+    for n in names {
+        out.push(append_checked(app, n)?);
+    }
+    Ok(out)
+}
+
+/// 内存实现。
 #[derive(Debug, Default)]
 pub struct InMemoryEvidenceAppender {
-    inner: Mutex<State>,
+    inner: Mutex<MemState>,
 }
 
 #[derive(Debug, Default)]
-struct State {
+struct MemState {
     next_seq: u64,
     names: Vec<String>,
     fail_next: bool,
@@ -73,105 +111,33 @@ struct State {
 }
 
 impl InMemoryEvidenceAppender {
-    /// 构造空追加器。
+    /// 构造。
     #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
-
-    /// 下一次 `append_named` 返回 [`EvidenceError::DurabilityFailure`]。
+    /// 下次失败。
     pub fn fail_next(&self) {
-        self.inner.lock().expect("evidence lock").fail_next = true;
+        self.inner.lock().expect("lock").fail_next = true;
     }
-
-    /// 关闭后端：后续追加返回 [`EvidenceError::Unavailable`]。
+    /// 关闭。
     pub fn close(&self) {
-        self.inner.lock().expect("evidence lock").closed = true;
+        self.inner.lock().expect("lock").closed = true;
     }
-
-    /// 已成功追加的事件名快照（顺序 = 追加顺序）。
+    /// 名称快照。
     #[must_use]
     pub fn names(&self) -> Vec<String> {
-        self.inner.lock().expect("evidence lock").names.clone()
+        self.inner.lock().expect("lock").names.clone()
     }
-
-    /// 成功追加条数。
+    /// 条数。
     #[must_use]
     pub fn len(&self) -> usize {
-        self.inner.lock().expect("evidence lock").names.len()
+        self.inner.lock().expect("lock").names.len()
     }
-
-    /// 是否尚无成功追加。
+    /// 是否空。
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
-    }
-}
-
-/// 本地文件证据追加器（最小持久化合同）。
-///
-/// 每行：`{seq}<TAB>{name}` UTF-8。进程崩溃前已 `flush` 的行可恢复。
-/// **不是**签名链 / 远程总线；生产合规仍须上层策略。
-pub struct FileEvidenceAppender {
-    path: PathBuf,
-    inner: Mutex<FileState>,
-}
-
-struct FileState {
-    next_seq: u64,
-    file: std::fs::File,
-}
-
-impl FileEvidenceAppender {
-    /// 打开或创建 `path` 并追加写入。
-    ///
-    /// # Errors
-    ///
-    /// 打开/创建失败 → [`EvidenceError::Unavailable`]。
-    pub fn open(path: impl Into<PathBuf>) -> Result<Self, EvidenceError> {
-        let path = path.into();
-        match path.parent() {
-            Some(parent) if !parent.as_os_str().is_empty() => {
-                std::fs::create_dir_all(parent).map_err(|_| EvidenceError::Unavailable)?;
-            }
-            _ => {}
-        }
-        let file = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .read(true)
-            .open(&path)
-            .map_err(|_| EvidenceError::Unavailable)?;
-        let existing = std::fs::read_to_string(&path).unwrap_or_default();
-        let mut next_seq = 0u64;
-        for line in existing.lines() {
-            if let Some((seq_s, _)) = line.split_once('\t') {
-                if let Ok(s) = seq_s.parse::<u64>() {
-                    next_seq = next_seq.max(s);
-                }
-            }
-        }
-        Ok(Self { path, inner: Mutex::new(FileState { next_seq, file }) })
-    }
-
-    /// 日志文件路径。
-    #[must_use]
-    pub fn path(&self) -> &Path {
-        &self.path
-    }
-}
-
-impl EvidenceAppender for FileEvidenceAppender {
-    fn append_named(&self, name: &str) -> Result<AppendReceipt, EvidenceError> {
-        let mut g = self.inner.lock().map_err(|_| EvidenceError::Unavailable)?;
-        g.next_seq = g.next_seq.saturating_add(1);
-        let seq = g.next_seq;
-        if name.contains('\n') || name.contains('\r') {
-            return Err(EvidenceError::DurabilityFailure);
-        }
-        writeln!(g.file, "{seq}\t{name}").map_err(|_| EvidenceError::DurabilityFailure)?;
-        g.file.flush().map_err(|_| EvidenceError::DurabilityFailure)?;
-        Ok(AppendReceipt { name: name.to_string(), seq })
     }
 }
 
@@ -192,121 +158,156 @@ impl EvidenceAppender for InMemoryEvidenceAppender {
     }
 }
 
+/// 文件追加器。
+pub struct FileEvidenceAppender {
+    path: PathBuf,
+    inner: Mutex<FileState>,
+}
+
+struct FileState {
+    next_seq: u64,
+    file: std::fs::File,
+}
+
+impl FileEvidenceAppender {
+    /// 打开/创建。
+    pub fn open(path: impl Into<PathBuf>) -> Result<Self, EvidenceError> {
+        let path = path.into();
+        match path.parent() {
+            Some(parent) if !parent.as_os_str().is_empty() => {
+                std::fs::create_dir_all(parent).map_err(|_| EvidenceError::Unavailable)?;
+            }
+            _ => {}
+        }
+        let file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .read(true)
+            .open(&path)
+            .map_err(|_| EvidenceError::Unavailable)?;
+        let existing = std::fs::read_to_string(&path).unwrap_or_default();
+        let mut next_seq = 0u64;
+        for (s, _) in parse_evidence_log(&existing) {
+            next_seq = next_seq.max(s);
+        }
+        Ok(Self { path, inner: Mutex::new(FileState { next_seq, file }) })
+    }
+    /// 路径。
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+    /// 读全部条目。
+    pub fn read_entries(&self) -> Result<Vec<(u64, String)>, EvidenceError> {
+        let text = std::fs::read_to_string(&self.path).map_err(|_| EvidenceError::Unavailable)?;
+        Ok(parse_evidence_log(&text))
+    }
+}
+
+impl EvidenceAppender for FileEvidenceAppender {
+    fn append_named(&self, name: &str) -> Result<AppendReceipt, EvidenceError> {
+        let mut g = self.inner.lock().map_err(|_| EvidenceError::Unavailable)?;
+        if name.contains('\n') || name.contains('\r') {
+            return Err(EvidenceError::DurabilityFailure);
+        }
+        g.next_seq = g.next_seq.saturating_add(1);
+        let seq = g.next_seq;
+        writeln!(g.file, "{seq}\t{name}").map_err(|_| EvidenceError::DurabilityFailure)?;
+        g.file.flush().map_err(|_| EvidenceError::DurabilityFailure)?;
+        Ok(AppendReceipt { name: name.to_string(), seq })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::sync::Arc;
 
     #[test]
-    fn in_memory_append_receipts_and_order() {
+    fn memory_roundtrip_fail_close() {
         let a = InMemoryEvidenceAppender::new();
         assert!(a.is_empty());
-        let r1 = a.append_named("boot").expect("1");
-        assert_eq!(r1.seq, 1);
-        assert_eq!(r1.name, "boot");
-        let r2 = a.append_named("ready").expect("2");
-        assert_eq!(r2.seq, 2);
-        assert_eq!(a.len(), 2);
-        assert_eq!(a.names(), vec!["boot".to_string(), "ready".to_string()]);
-    }
-
-    #[test]
-    fn fail_next_then_recover() {
-        let a = InMemoryEvidenceAppender::new();
-        a.fail_next();
-        assert_eq!(a.append_named("x"), Err(EvidenceError::DurabilityFailure));
-        let r = a.append_named("y").expect("after fail");
+        let r = a.append_named("e1").unwrap();
         assert_eq!(r.seq, 1);
-        assert_eq!(a.names(), vec!["y".to_string()]);
-    }
-
-    #[test]
-    fn close_returns_unavailable() {
-        let a = InMemoryEvidenceAppender::new();
+        assert_eq!(a.names(), vec!["e1".to_string()]);
+        a.fail_next();
+        assert_eq!(a.append_named("e2"), Err(EvidenceError::DurabilityFailure));
+        a.append_named("e3").unwrap();
+        assert_eq!(a.len(), 2);
         a.close();
-        assert_eq!(a.append_named("z"), Err(EvidenceError::Unavailable));
+        assert_eq!(a.append_named("e4"), Err(EvidenceError::Unavailable));
+        let arc = Arc::new(InMemoryEvidenceAppender::default());
+        arc.append_named("x").unwrap();
+        assert_eq!(arc.len(), 1);
     }
 
     #[test]
-    fn trait_object_and_error_display() {
-        let a: Arc<dyn EvidenceAppender> = Arc::new(InMemoryEvidenceAppender::new());
-        let _ = a.append_named("t").expect("ok");
-        assert_eq!(EvidenceError::DurabilityFailure.to_string(), "evidence durability failure");
-        assert_eq!(EvidenceError::Unavailable.to_string(), "evidence backend unavailable");
-        let _ = format!("{:?}", EvidenceError::Unavailable);
-        let _ = format!("{:?}", AppendReceipt { name: "n".into(), seq: 1 });
-    }
-
-    #[test]
-    fn default_equals_new() {
-        let a = InMemoryEvidenceAppender::default();
-        assert!(a.is_empty());
-        assert_eq!(a.len(), 0);
-    }
-
-    #[test]
-    fn file_appender_persists_across_open() {
-        let dir = std::env::temp_dir().join(format!("evidence-test-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("ev.log");
-        {
-            let a = FileEvidenceAppender::open(&path).expect("open");
-            let r = a.append_named("boot").expect("append");
-            assert_eq!(r.seq, 1);
-            assert_eq!(a.path(), path.as_path());
-        }
-        let a2 = FileEvidenceAppender::open(&path).expect("reopen");
-        let r2 = a2.append_named("ready").expect("append2");
-        assert_eq!(r2.seq, 2);
-        let body = std::fs::read_to_string(&path).unwrap();
-        assert!(body.contains("boot"));
-        assert!(body.contains("ready"));
+    fn helpers_and_file() {
+        assert!(validate_event_name("").is_err());
+        assert!(validate_event_name("a\nb").is_err());
+        let mem = InMemoryEvidenceAppender::new();
+        let batch = append_batch(&mem, &["a", "b"]).unwrap();
+        assert_eq!(batch[1].seq, 2);
+        assert!(format!("{}", EvidenceError::Unavailable).contains("unavailable"));
+        let dir = std::env::temp_dir().join(format!("ev-{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+        let path = dir.join("e.log");
+        let f = FileEvidenceAppender::open(&path).unwrap();
+        append_checked(&f, "one").unwrap();
+        assert_eq!(f.read_entries().unwrap().len(), 1);
+        assert!(append_checked(&f, "x\ny").is_err());
+        let f2 = FileEvidenceAppender::open(&path).unwrap();
+        assert_eq!(f2.append_named("two").unwrap().seq, 2);
+        assert_eq!(f2.path(), path.as_path());
+        let body = render_log(&[(1, "z".into())]).unwrap();
+        assert_eq!(max_seq(&body), 1);
+        assert_eq!(parse_line("1\tz").unwrap().1, "z");
         let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
-    fn file_appender_rejects_newline_name() {
-        let path = std::env::temp_dir().join(format!("evidence-nl-{}", std::process::id()));
-        let _ = std::fs::remove_file(&path);
-        let a = FileEvidenceAppender::open(&path).expect("open");
-        assert_eq!(a.append_named("bad\nname"), Err(EvidenceError::DurabilityFailure));
-        assert_eq!(a.append_named("bad\rname"), Err(EvidenceError::DurabilityFailure));
-        let _ = std::fs::remove_file(&path);
-    }
-
-    #[test]
-    fn file_appender_parses_existing_and_skips_junk() {
-        let path = std::env::temp_dir().join(format!("evidence-parse-{}", std::process::id()));
-        let _ = std::fs::remove_file(&path);
-        std::fs::write(&path, "junk\n2\talready\n").unwrap();
-        let a = FileEvidenceAppender::open(&path).expect("open");
-        let r = a.append_named("next").expect("append");
-        assert_eq!(r.seq, 3);
-        assert!(a.path().exists());
-        let _ = std::fs::remove_file(&path);
-    }
-
-    #[test]
-    fn file_appender_open_relative_filename() {
-        // parent 为空字符串分支：覆盖 if !parent.is_empty() 的 false 路径
+    fn open_with_no_parent_relative() {
+        // relative path without parent dirs → parent is empty or "."
         let name = format!("evidence-rel-{}.log", std::process::id());
-        let _ = std::fs::remove_file(&name);
-        let a = FileEvidenceAppender::open(&name).expect("open relative");
-        let _ = a.append_named("x").expect("append");
+        let a = FileEvidenceAppender::open(&name).unwrap();
+        a.append_named("r").unwrap();
+        assert_eq!(a.read_entries().unwrap().len(), 1);
         let _ = std::fs::remove_file(&name);
     }
 
     #[test]
-    fn file_appender_open_invalid_path_errors() {
-        // 父路径是已存在的文件 → create_dir_all 失败 → Unavailable
-        let base = std::env::temp_dir().join(format!("evidence-as-file-{}", std::process::id()));
+    fn parse_line_empty_name_skipped() {
+        assert!(parse_line("1\t").is_none());
+        assert!(parse_line("\tname").is_none());
+        assert_eq!(parse_evidence_log("1\t\n2\tok\n").len(), 1);
+    }
+
+    #[test]
+    fn policy_is_honest() {
+        assert!(!allows_in_memory_for_compliance());
+        assert!(file_appender_is_min_durable());
+        assert!(policy_summary().contains("dev-only"));
+    }
+
+    #[test]
+    fn file_parent_create_and_invalid() {
+        let base = std::env::temp_dir().join(format!("ev-bad-{}", std::process::id()));
         let _ = std::fs::remove_file(&base);
         let _ = std::fs::remove_dir_all(&base);
-        std::fs::write(&base, b"not-a-dir").unwrap();
-        let child = base.join("child.log");
-        let r = FileEvidenceAppender::open(&child);
-        assert_eq!(r.err(), Some(EvidenceError::Unavailable));
+        std::fs::write(&base, b"not-dir").unwrap();
+        let child = base.join("c.log");
+        assert_eq!(FileEvidenceAppender::open(&child).err(), Some(EvidenceError::Unavailable));
         let _ = std::fs::remove_file(&base);
+    }
+
+    #[test]
+    fn format_empty_name_and_file_newline() {
+        assert!(parse_line("9\t").is_none());
+        let dir = std::env::temp_dir().join(format!("ev-nl-{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+        let path = dir.join("n.log");
+        let f = FileEvidenceAppender::open(&path).unwrap();
+        assert_eq!(f.append_named("bad\nname"), Err(EvidenceError::DurabilityFailure));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

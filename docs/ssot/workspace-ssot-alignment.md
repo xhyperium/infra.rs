@@ -178,3 +178,9 @@ cargo test -p evidence --all-targets
 | 2026-07-21 | **infra-s9t** 闭合（#166–#168 · #172）：L1 P0、redis live KV、contracts L3 子集、exchange `server_time`；总览与分域对齐同步 |
 | 2026-07-21 | 对齐/同步文档刷新 #174；follow-up CLOSED + report partials closeout #175；本文件补引用 |
 | 2026-07-22 | **#178** 独立 `contract-testkit` 落地；members 表补行；Fake 迁出 contracts；SSOT 同步报告纠偏 |
+| 2026-07-22 | 七包双栏 STATUS 结构 100%（configx/evidence/observex/resiliencx/schedulex/transportx/contracts）；≠ workspace Production Ready / L5 |
+
+## 七包双栏（2026-07-22）
+
+`configx` / `evidence` / `observex` / `resiliencx` / `schedulex` / `transportx` / `contracts`：
+STATUS **结构 100%** + 声明面测/bench/cov-100；**≠** workspace Production Ready / L5。

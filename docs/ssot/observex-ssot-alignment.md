@@ -5,7 +5,7 @@
 | 策略 | **B — 本仓移植 observex 0.1.0 最小面** |
 | 日期 | 2026-07-21 |
 | 规范 | `.agents/ssot/observex/spec/spec.md` |
-| package | `xhyper-observex` 0.1.0 · lib `observex` |
+| package（`cargo -p`） | `observex` 0.1.0 · lib `observex`（产品名别名 `xhyper-observex`，不可用于 `-p`） |
 | 契约面 | `xhyper-contracts` · lib `contracts`（**Instrumentation**） |
 | 跟进 | L3 Instrumentation 真入口（`infra-s9t.3` / #172）；OTEL 仍 DEFER |
 
@@ -135,3 +135,13 @@ core 0.1.0 GAP = 0
 
 - `.agents/ssot/observex/**`：只读镜像；禁止改 COMPLETE 叙事冒充同步
 - 实现 SSOT 以 **源码 + 本仓测试/LCOV** 为准（SSOT.md R6/R7）
+
+## 双栏落地（2026-07-22 · STATUS 100% structure）
+
+| 标尺 | 状态 |
+|------|------|
+| STATUS 结构完成度 | **100%**（layout+tests+content；非 Production Ready） |
+| 声明面生产硬化 | 公共 API 集成测 + 热路径 bench + `docs/` 红线；**cov-gate-100 行覆盖** |
+| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
+
+自验证：`cargo test -p observex --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p observex`；`cargo run -p observex --example …`；`cargo bench -p observex --bench hot_path -- --quick`。

@@ -59,3 +59,19 @@ fn healthy_set_is_ok_not_error() {
     // 健康路径绝不是 Invalid
     assert_ne!(ErrorKind::Invalid, ErrorKind::Missing);
 }
+
+#[test]
+fn public_new_helpers_require_nonempty_snapshot_diff() {
+    use configx::{
+        ConfigSnapshot, diff_snapshots, require_nonempty, set_checked, store_from_pairs,
+        subset_snapshot,
+    };
+    let s = store_from_pairs([("a", "1"), ("b", "2")]).unwrap();
+    set_checked(&s, "c", "3").unwrap();
+    require_nonempty(&s, &["a", "b", "c"]).unwrap();
+    let snap = ConfigSnapshot::capture(&s);
+    let sub = subset_snapshot(&s, &["a", "c"]);
+    assert_eq!(sub.len(), 2);
+    let d = diff_snapshots(&snap, &sub);
+    assert!(d.only_left.contains(&"b".to_string()));
+}

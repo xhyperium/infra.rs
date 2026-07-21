@@ -2,7 +2,7 @@
 
 | 字段 | 值 |
 |------|-----|
-| package | `xhyper-contracts` / lib `contracts` |
+| package（`cargo -p`） | `contracts` / lib `contracts`（产品名别名 `xhyper-contracts`，不可用于 `-p`） |
 | path | `crates/contracts` |
 | Active Spec | `.agents/ssot/contracts/spec/spec.md`（若存在；以本仓源码为准） |
 | 审计/跟进 | 2026-07-21 W3 语义 + Venue gate（`infra-asa.4`）+ **L3 子集**（`infra-s9t.3` / #172） |
@@ -113,3 +113,13 @@ cargo test -p redisx --features live --test live_kv_conformance -- --ignored
 | KeyValueStore | 语义 + Fake conformance + 非 scaffold 入口 | **满足**（`RedisLiveKv`） |
 | Instrumentation | 同上 | **满足**（`observex::TracingInstrumentation`） |
 | Tx / Bus / Repository / Venue 业务 | — | **不满足**（仍 DEFER） |
+
+## 双栏落地（2026-07-22 · STATUS 100% structure）
+
+| 标尺 | 状态 |
+|------|------|
+| STATUS 结构完成度 | **100%**（layout+tests+content；非 Production Ready） |
+| 声明面生产硬化 | 公共 API 集成测 + 热路径 bench + `docs/` 红线；**cov-gate-100 行覆盖** |
+| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
+
+自验证：`cargo test -p contracts --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p contracts`；`cargo run -p contracts --example …`；`cargo bench -p contracts --bench hot_path -- --quick`。
