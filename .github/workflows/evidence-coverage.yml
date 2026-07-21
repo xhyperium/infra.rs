@@ -2,7 +2,7 @@ name: Evidence Coverage
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "crates/evidence/**"
       - "Cargo.toml"
@@ -10,7 +10,7 @@ on:
       - "scripts/cov-gate-100.mjs"
       - ".github/workflows/evidence-coverage.yml"
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "crates/evidence/**"
       - "Cargo.toml"
@@ -44,4 +44,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p xhyper-evidence --filter crates/evidence/src
+        run: node scripts/cov-gate-100.mjs -p evidence --filter crates/evidence/src

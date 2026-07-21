@@ -8,7 +8,7 @@ name: Constitution
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "Cargo.toml"
       - "Cargo.lock"
@@ -22,7 +22,7 @@ on:
       - ".github/workflows/constitution.yml"
       - "CONSTITUTION.md"
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
 
 concurrency:
