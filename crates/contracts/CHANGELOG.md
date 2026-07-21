@@ -23,8 +23,16 @@
 
 ## [Unreleased]
 
+### Breaking
+
+- 移除本 crate 内 Fake/Recording 公开类型（`FakeTx*` / `FakeEventBus` / `FakeKeyValueStore` /
+  `FakeRepository` / `Recording*` / `InstrEvent`）
+- Fake 与 per-trait suite 迁至独立 package **`contract-testkit`**
+  （`crates/test-support/contracts`，仅 dev-dep）
+
 ### Added
 
+- `venue_gate` 模块：保留 `VENUE_*_DEFAULT_MSG` / `is_default_*`
 - 真实 `benches/hot_path`
 - 公开 API 集成覆盖扩展
 - `docs/API.md`

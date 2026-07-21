@@ -1,10 +1,13 @@
 //! Postgres 内存 scaffold：`Repository` + `TxRunner`。
+//!
+//! 注意：scaffold 的 `begin_tx` 使用本模块本地 [`ScaffoldTxContext`]，
+//! **不**依赖 test-support 的 `contract-testkit`（禁止 production graph 泄漏）。
 
 use std::collections::HashMap;
 use std::sync::Mutex;
 
 use async_trait::async_trait;
-use contracts::{FakeTxContext, Repository, TxContext, TxRunner};
+use contracts::{Repository, TxContext, TxRunner};
 use kernel::{XError, XResult};
 
 /// 简单可持久化记录（scaffold entity）。
@@ -12,6 +15,28 @@ use kernel::{XError, XResult};
 pub struct Record {
     pub id: String,
     pub data: Vec<u8>,
+}
+
+/// Scaffold 事务上下文：仅形状可测，**不**与 rows 绑定真实事务边界。
+#[derive(Debug, Default)]
+struct ScaffoldTxContext {
+    committed: bool,
+    rolled_back: bool,
+}
+
+#[async_trait]
+impl TxContext for ScaffoldTxContext {
+    async fn commit(&mut self) -> XResult<()> {
+        self.committed = true;
+        self.rolled_back = false;
+        Ok(())
+    }
+
+    async fn rollback(&mut self) -> XResult<()> {
+        self.rolled_back = true;
+        self.committed = false;
+        Ok(())
+    }
 }
 
 /// Postgres 适配器（进程内；非真实客户端）。
@@ -58,7 +83,7 @@ impl Repository<Record, String> for PostgresAdapter {
 #[async_trait]
 impl TxRunner for PostgresAdapter {
     async fn begin_tx(&self) -> XResult<Box<dyn TxContext>> {
-        Ok(Box::new(FakeTxContext::new()))
+        Ok(Box::new(ScaffoldTxContext::default()))
     }
 }
 

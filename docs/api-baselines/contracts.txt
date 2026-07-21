@@ -1,27 +1,4 @@
 pub mod contracts
-pub enum contracts::InstrEvent
-pub contracts::InstrEvent::CircuitClose
-pub contracts::InstrEvent::CircuitClose::op: alloc::string::String
-pub contracts::InstrEvent::CircuitOpen
-pub contracts::InstrEvent::CircuitOpen::op: alloc::string::String
-pub contracts::InstrEvent::Retry
-pub contracts::InstrEvent::Retry::attempt: u32
-pub contracts::InstrEvent::Retry::op: alloc::string::String
-impl core::clone::Clone for contracts::InstrEvent
-pub fn contracts::InstrEvent::clone(&self) -> contracts::InstrEvent
-impl core::cmp::Eq for contracts::InstrEvent
-impl core::cmp::PartialEq for contracts::InstrEvent
-pub fn contracts::InstrEvent::eq(&self, &contracts::InstrEvent) -> bool
-impl core::fmt::Debug for contracts::InstrEvent
-pub fn contracts::InstrEvent::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::StructuralPartialEq for contracts::InstrEvent
-impl core::marker::Freeze for contracts::InstrEvent
-impl core::marker::Send for contracts::InstrEvent
-impl core::marker::Sync for contracts::InstrEvent
-impl core::marker::Unpin for contracts::InstrEvent
-impl core::marker::UnsafeUnpin for contracts::InstrEvent
-impl core::panic::unwind_safe::RefUnwindSafe for contracts::InstrEvent
-impl core::panic::unwind_safe::UnwindSafe for contracts::InstrEvent
 pub enum contracts::MessageAck
 pub contracts::MessageAck::Ack
 pub contracts::MessageAck::Nack
@@ -59,133 +36,6 @@ impl core::marker::Unpin for contracts::BusMessage
 impl core::marker::UnsafeUnpin for contracts::BusMessage
 impl core::panic::unwind_safe::RefUnwindSafe for contracts::BusMessage
 impl core::panic::unwind_safe::UnwindSafe for contracts::BusMessage
-pub struct contracts::FakeEventBus
-impl contracts::FakeEventBus
-pub fn contracts::FakeEventBus::new() -> Self
-impl contracts::EventBus for contracts::FakeEventBus
-pub fn contracts::FakeEventBus::publish<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, bytes::bytes::Bytes) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-pub fn contracts::FakeEventBus::subscribe<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<futures_core::stream::BoxStream<'static, contracts::BusMessage>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-impl core::default::Default for contracts::FakeEventBus
-pub fn contracts::FakeEventBus::default() -> contracts::FakeEventBus
-impl core::fmt::Debug for contracts::FakeEventBus
-pub fn contracts::FakeEventBus::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl !core::marker::Freeze for contracts::FakeEventBus
-impl core::marker::Send for contracts::FakeEventBus
-impl core::marker::Sync for contracts::FakeEventBus
-impl core::marker::Unpin for contracts::FakeEventBus
-impl core::marker::UnsafeUnpin for contracts::FakeEventBus
-impl core::panic::unwind_safe::RefUnwindSafe for contracts::FakeEventBus
-impl core::panic::unwind_safe::UnwindSafe for contracts::FakeEventBus
-pub struct contracts::FakeKeyValueStore
-impl contracts::FakeKeyValueStore
-pub fn contracts::FakeKeyValueStore::is_empty(&self) -> kernel::error::XResult<bool>
-pub fn contracts::FakeKeyValueStore::len(&self) -> kernel::error::XResult<usize>
-pub fn contracts::FakeKeyValueStore::new() -> Self
-impl contracts::KeyValueStore for contracts::FakeKeyValueStore
-pub fn contracts::FakeKeyValueStore::get<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<core::option::Option<alloc::vec::Vec<u8>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-pub fn contracts::FakeKeyValueStore::set<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, alloc::vec::Vec<u8>, core::option::Option<core::time::Duration>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-impl core::default::Default for contracts::FakeKeyValueStore
-pub fn contracts::FakeKeyValueStore::default() -> contracts::FakeKeyValueStore
-impl core::fmt::Debug for contracts::FakeKeyValueStore
-pub fn contracts::FakeKeyValueStore::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl !core::marker::Freeze for contracts::FakeKeyValueStore
-impl core::marker::Send for contracts::FakeKeyValueStore
-impl core::marker::Sync for contracts::FakeKeyValueStore
-impl core::marker::Unpin for contracts::FakeKeyValueStore
-impl core::marker::UnsafeUnpin for contracts::FakeKeyValueStore
-impl core::panic::unwind_safe::RefUnwindSafe for contracts::FakeKeyValueStore
-impl core::panic::unwind_safe::UnwindSafe for contracts::FakeKeyValueStore
-pub struct contracts::FakeRepository<T, Id>
-impl<T, Id> contracts::FakeRepository<T, Id> where T: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, Id: core::cmp::Eq + core::hash::Hash + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
-pub fn contracts::FakeRepository<T, Id>::is_empty(&self) -> kernel::error::XResult<bool>
-pub fn contracts::FakeRepository<T, Id>::len(&self) -> kernel::error::XResult<usize>
-pub fn contracts::FakeRepository<T, Id>::new<F>(F) -> Self where F: core::ops::function::Fn(&T) -> Id + core::marker::Send + core::marker::Sync + 'static
-impl<T, Id> contracts::Repository<T, Id> for contracts::FakeRepository<T, Id> where T: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, Id: core::cmp::Eq + core::hash::Hash + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
-pub fn contracts::FakeRepository<T, Id>::find<'life0, 'async_trait>(&'life0 self, Id) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<core::option::Option<T>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
-pub fn contracts::FakeRepository<T, Id>::save<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 T) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-impl<T, Id> !core::marker::Freeze for contracts::FakeRepository<T, Id>
-impl<T, Id> core::marker::Send for contracts::FakeRepository<T, Id> where Id: core::marker::Send, T: core::marker::Send
-impl<T, Id> core::marker::Sync for contracts::FakeRepository<T, Id> where Id: core::marker::Send, T: core::marker::Send
-impl<T, Id> core::marker::Unpin for contracts::FakeRepository<T, Id> where Id: core::marker::Unpin, T: core::marker::Unpin
-impl<T, Id> core::marker::UnsafeUnpin for contracts::FakeRepository<T, Id>
-impl<T, Id> !core::panic::unwind_safe::RefUnwindSafe for contracts::FakeRepository<T, Id>
-impl<T, Id> !core::panic::unwind_safe::UnwindSafe for contracts::FakeRepository<T, Id>
-pub struct contracts::FakeTxContext
-pub contracts::FakeTxContext::committed: bool
-pub contracts::FakeTxContext::rolled_back: bool
-impl contracts::FakeTxContext
-pub fn contracts::FakeTxContext::new() -> Self
-pub fn contracts::FakeTxContext::with_commit_failure(self) -> Self
-impl contracts::TxContext for contracts::FakeTxContext
-pub fn contracts::FakeTxContext::commit<'life0, 'async_trait>(&'life0 mut self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
-pub fn contracts::FakeTxContext::rollback<'life0, 'async_trait>(&'life0 mut self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
-impl core::default::Default for contracts::FakeTxContext
-pub fn contracts::FakeTxContext::default() -> contracts::FakeTxContext
-impl core::fmt::Debug for contracts::FakeTxContext
-pub fn contracts::FakeTxContext::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for contracts::FakeTxContext
-impl core::marker::Send for contracts::FakeTxContext
-impl core::marker::Sync for contracts::FakeTxContext
-impl core::marker::Unpin for contracts::FakeTxContext
-impl core::marker::UnsafeUnpin for contracts::FakeTxContext
-impl core::panic::unwind_safe::RefUnwindSafe for contracts::FakeTxContext
-impl core::panic::unwind_safe::UnwindSafe for contracts::FakeTxContext
-pub struct contracts::FakeTxRunner
-impl contracts::TxRunner for contracts::FakeTxRunner
-pub fn contracts::FakeTxRunner::begin_tx<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<alloc::boxed::Box<dyn contracts::TxContext>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
-impl core::default::Default for contracts::FakeTxRunner
-pub fn contracts::FakeTxRunner::default() -> contracts::FakeTxRunner
-impl core::fmt::Debug for contracts::FakeTxRunner
-pub fn contracts::FakeTxRunner::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for contracts::FakeTxRunner
-impl core::marker::Send for contracts::FakeTxRunner
-impl core::marker::Sync for contracts::FakeTxRunner
-impl core::marker::Unpin for contracts::FakeTxRunner
-impl core::marker::UnsafeUnpin for contracts::FakeTxRunner
-impl core::panic::unwind_safe::RefUnwindSafe for contracts::FakeTxRunner
-impl core::panic::unwind_safe::UnwindSafe for contracts::FakeTxRunner
-pub struct contracts::RecordingInstrumentation
-impl contracts::RecordingInstrumentation
-pub fn contracts::RecordingInstrumentation::clear(&self) -> kernel::error::XResult<()>
-pub fn contracts::RecordingInstrumentation::new() -> Self
-pub fn contracts::RecordingInstrumentation::snapshot(&self) -> kernel::error::XResult<alloc::vec::Vec<contracts::InstrEvent>>
-impl contracts::Instrumentation for contracts::RecordingInstrumentation
-pub fn contracts::RecordingInstrumentation::record_circuit_close(&self, &str)
-pub fn contracts::RecordingInstrumentation::record_circuit_open(&self, &str)
-pub fn contracts::RecordingInstrumentation::record_retry(&self, &str, u32)
-impl core::clone::Clone for contracts::RecordingInstrumentation
-pub fn contracts::RecordingInstrumentation::clone(&self) -> contracts::RecordingInstrumentation
-impl core::default::Default for contracts::RecordingInstrumentation
-pub fn contracts::RecordingInstrumentation::default() -> contracts::RecordingInstrumentation
-impl core::fmt::Debug for contracts::RecordingInstrumentation
-pub fn contracts::RecordingInstrumentation::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for contracts::RecordingInstrumentation
-impl core::marker::Send for contracts::RecordingInstrumentation
-impl core::marker::Sync for contracts::RecordingInstrumentation
-impl core::marker::Unpin for contracts::RecordingInstrumentation
-impl core::marker::UnsafeUnpin for contracts::RecordingInstrumentation
-impl core::panic::unwind_safe::RefUnwindSafe for contracts::RecordingInstrumentation
-impl core::panic::unwind_safe::UnwindSafe for contracts::RecordingInstrumentation
-pub struct contracts::RecordingTxRunner
-pub contracts::RecordingTxRunner::committed: alloc::sync::Arc<std::sync::poison::mutex::Mutex<bool>>
-pub contracts::RecordingTxRunner::rolled_back: alloc::sync::Arc<std::sync::poison::mutex::Mutex<bool>>
-impl contracts::RecordingTxRunner
-pub fn contracts::RecordingTxRunner::new() -> Self
-impl contracts::TxRunner for contracts::RecordingTxRunner
-pub fn contracts::RecordingTxRunner::begin_tx<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<alloc::boxed::Box<dyn contracts::TxContext>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
-impl core::clone::Clone for contracts::RecordingTxRunner
-pub fn contracts::RecordingTxRunner::clone(&self) -> contracts::RecordingTxRunner
-impl core::default::Default for contracts::RecordingTxRunner
-pub fn contracts::RecordingTxRunner::default() -> Self
-impl core::fmt::Debug for contracts::RecordingTxRunner
-pub fn contracts::RecordingTxRunner::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for contracts::RecordingTxRunner
-impl core::marker::Send for contracts::RecordingTxRunner
-impl core::marker::Sync for contracts::RecordingTxRunner
-impl core::marker::Unpin for contracts::RecordingTxRunner
-impl core::marker::UnsafeUnpin for contracts::RecordingTxRunner
-impl core::panic::unwind_safe::RefUnwindSafe for contracts::RecordingTxRunner
-impl core::panic::unwind_safe::UnwindSafe for contracts::RecordingTxRunner
 pub const contracts::VENUE_CANCEL_REQUEST_DEFAULT_MSG: &str
 pub const contracts::VENUE_QUERY_REQUEST_DEFAULT_MSG: &str
 pub trait contracts::AccountSource: core::marker::Send + core::marker::Sync
@@ -196,9 +46,6 @@ pub fn contracts::AnalyticsSink::sink<'life0, 'life1, 'async_trait>(&'life0 self
 pub trait contracts::EventBus: core::marker::Send + core::marker::Sync
 pub fn contracts::EventBus::publish<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, bytes::bytes::Bytes) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn contracts::EventBus::subscribe<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<futures_core::stream::BoxStream<'static, contracts::BusMessage>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-impl contracts::EventBus for contracts::FakeEventBus
-pub fn contracts::FakeEventBus::publish<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, bytes::bytes::Bytes) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-pub fn contracts::FakeEventBus::subscribe<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<futures_core::stream::BoxStream<'static, contracts::BusMessage>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub trait contracts::ExecutionVenue: core::marker::Send + core::marker::Sync
 pub fn contracts::ExecutionVenue::cancel_order<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 canonical::CancelOrderRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn contracts::ExecutionVenue::place_order<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 canonical::Order) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<canonical::OrderAck>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
@@ -210,16 +57,9 @@ pub trait contracts::Instrumentation: core::marker::Send + core::marker::Sync
 pub fn contracts::Instrumentation::record_circuit_close(&self, &str)
 pub fn contracts::Instrumentation::record_circuit_open(&self, &str)
 pub fn contracts::Instrumentation::record_retry(&self, &str, u32)
-impl contracts::Instrumentation for contracts::RecordingInstrumentation
-pub fn contracts::RecordingInstrumentation::record_circuit_close(&self, &str)
-pub fn contracts::RecordingInstrumentation::record_circuit_open(&self, &str)
-pub fn contracts::RecordingInstrumentation::record_retry(&self, &str, u32)
 pub trait contracts::KeyValueStore: core::marker::Send + core::marker::Sync
 pub fn contracts::KeyValueStore::get<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<core::option::Option<alloc::vec::Vec<u8>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn contracts::KeyValueStore::set<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, alloc::vec::Vec<u8>, core::option::Option<core::time::Duration>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-impl contracts::KeyValueStore for contracts::FakeKeyValueStore
-pub fn contracts::FakeKeyValueStore::get<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<core::option::Option<alloc::vec::Vec<u8>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-pub fn contracts::FakeKeyValueStore::set<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, alloc::vec::Vec<u8>, core::option::Option<core::time::Duration>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub trait contracts::MarketDataSource: core::marker::Send + core::marker::Sync
 pub fn contracts::MarketDataSource::subscribe_orderbook<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<futures_core::stream::BoxStream<'static, canonical::OrderBookSnapshot>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn contracts::MarketDataSource::subscribe_ticks<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<futures_core::stream::BoxStream<'static, canonical::Tick>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
@@ -233,24 +73,14 @@ pub fn contracts::PubSub::sub_channel<'life0, 'life1, 'async_trait>(&'life0 self
 pub trait contracts::Repository<T, Id>: core::marker::Send + core::marker::Sync
 pub fn contracts::Repository::find<'life0, 'async_trait>(&'life0 self, Id) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<core::option::Option<T>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 pub fn contracts::Repository::save<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 T) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-impl<T, Id> contracts::Repository<T, Id> for contracts::FakeRepository<T, Id> where T: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, Id: core::cmp::Eq + core::hash::Hash + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
-pub fn contracts::FakeRepository<T, Id>::find<'life0, 'async_trait>(&'life0 self, Id) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<core::option::Option<T>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
-pub fn contracts::FakeRepository<T, Id>::save<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 T) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub trait contracts::TimeSeriesStore: core::marker::Send + core::marker::Sync
 pub fn contracts::TimeSeriesStore::query_series<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, i64, i64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<alloc::vec::Vec<canonical::Tick>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn contracts::TimeSeriesStore::write_series<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, alloc::vec::Vec<canonical::Tick>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub trait contracts::TxContext: core::marker::Send
 pub fn contracts::TxContext::commit<'life0, 'async_trait>(&'life0 mut self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 pub fn contracts::TxContext::rollback<'life0, 'async_trait>(&'life0 mut self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
-impl contracts::TxContext for contracts::FakeTxContext
-pub fn contracts::FakeTxContext::commit<'life0, 'async_trait>(&'life0 mut self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
-pub fn contracts::FakeTxContext::rollback<'life0, 'async_trait>(&'life0 mut self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 pub trait contracts::TxRunner: core::marker::Send + core::marker::Sync
 pub fn contracts::TxRunner::begin_tx<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<alloc::boxed::Box<dyn contracts::TxContext>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
-impl contracts::TxRunner for contracts::FakeTxRunner
-pub fn contracts::FakeTxRunner::begin_tx<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<alloc::boxed::Box<dyn contracts::TxContext>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
-impl contracts::TxRunner for contracts::RecordingTxRunner
-pub fn contracts::RecordingTxRunner::begin_tx<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<alloc::boxed::Box<dyn contracts::TxContext>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 pub trait contracts::VenueAdapter: core::marker::Send + core::marker::Sync
 pub fn contracts::VenueAdapter::cancel_order<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn contracts::VenueAdapter::cancel_order_request<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 canonical::CancelOrderRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait

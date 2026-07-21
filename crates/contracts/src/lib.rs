@@ -1,6 +1,8 @@
 //! contracts —— 契约层 trait 出口（spec §4.3，R4，Additive Only）。
 //!
-//! 只放 trait/type 与最小 contract-testkit（Fake/Recording）。
+//! 只放 trait/type 与 VenueAdapter 门禁辅助。
+//! Fake/Recording 与 per-trait suite 见独立 crate **`contract-testkit`**
+//!（`crates/test-support/contracts`，仅 dev-dep）。
 //! 一旦发布不可修改签名，只能新增（Additive Only）。
 //! 依赖白名单（R4）：kernel + canonical + async-trait/bytes/futures-core。
 //!
@@ -33,12 +35,10 @@ use futures_core::stream::BoxStream;
 use kernel::{XError, XResult};
 use std::time::Duration;
 
-mod fakes;
-pub use fakes::{
-    FakeEventBus, FakeKeyValueStore, FakeRepository, FakeTxContext, FakeTxRunner, InstrEvent,
-    RecordingInstrumentation, RecordingTxRunner, VENUE_CANCEL_REQUEST_DEFAULT_MSG,
-    VENUE_QUERY_REQUEST_DEFAULT_MSG, is_default_cancel_order_request_error,
-    is_default_query_order_request_error,
+mod venue_gate;
+pub use venue_gate::{
+    VENUE_CANCEL_REQUEST_DEFAULT_MSG, VENUE_QUERY_REQUEST_DEFAULT_MSG,
+    is_default_cancel_order_request_error, is_default_query_order_request_error,
 };
 
 // ── storage 契约 ──────────────────────────
@@ -333,6 +333,12 @@ mod tests {
     use canonical::{CancelOrderRequest, OrderRef, Side};
     use decimalx::{Decimal, Price, Qty};
     use futures_core::Stream;
+    use std::pin::Pin;
+    use std::task::{Context, Poll};
+
+    // 注意：本单元测试 **禁止** 依赖 contract-testkit（dev-dep 环会造成
+    // contracts 双版本，Fake 实现的 trait 与本 crate cfg(test) 类型不兼容）。
+    // Fake/suite 覆盖见 integration tests + `cargo test -p contract-testkit`。
 
     struct MockKv;
     #[async_trait]
@@ -454,9 +460,37 @@ mod tests {
         assert!(v.place_order(&order).await.is_err());
     }
 
+    #[derive(Default)]
+    struct StubTx {
+        committed: bool,
+        rolled_back: bool,
+    }
+
+    #[async_trait]
+    impl TxContext for StubTx {
+        async fn commit(&mut self) -> XResult<()> {
+            self.committed = true;
+            self.rolled_back = false;
+            Ok(())
+        }
+        async fn rollback(&mut self) -> XResult<()> {
+            self.rolled_back = true;
+            self.committed = false;
+            Ok(())
+        }
+    }
+
+    struct StubTxRunner;
+    #[async_trait]
+    impl TxRunner for StubTxRunner {
+        async fn begin_tx(&self) -> XResult<Box<dyn TxContext>> {
+            Ok(Box::new(StubTx::default()))
+        }
+    }
+
     #[tokio::test]
     async fn tx_runner_commit_path() {
-        let runner = FakeTxRunner;
+        let runner = StubTxRunner;
         let out =
             run_tx_commit_on_ok(&runner, |_ctx| async move { Ok(42u32) }).await.expect("commit ok");
         assert_eq!(out, 42);
@@ -464,7 +498,7 @@ mod tests {
 
     #[tokio::test]
     async fn tx_runner_err_triggers_rollback_path() {
-        let runner = FakeTxRunner;
+        let runner = StubTxRunner;
         let err = run_tx_commit_on_ok(&runner, |_ctx| async move {
             Err::<u32, _>(XError::invalid("业务失败"))
         })
@@ -476,14 +510,36 @@ mod tests {
 
     #[tokio::test]
     async fn tx_runner_is_object_safe() {
-        let runner: &dyn TxRunner = &FakeTxRunner;
+        let runner: &dyn TxRunner = &StubTxRunner;
         let mut ctx = runner.begin_tx().await.unwrap();
         ctx.commit().await.unwrap();
     }
 
+    struct OnceMsg(Option<BusMessage>);
+    impl Stream for OnceMsg {
+        type Item = BusMessage;
+        fn poll_next(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+            Poll::Ready(self.0.take())
+        }
+    }
+
+    struct StubBus;
+    #[async_trait]
+    impl EventBus for StubBus {
+        async fn publish(&self, _topic: &str, _payload: Bytes) -> XResult<()> {
+            Ok(())
+        }
+        async fn subscribe(&self, _topic: &str) -> XResult<BoxStream<'static, BusMessage>> {
+            Ok(Box::pin(OnceMsg(Some(BusMessage {
+                id: "1".into(),
+                payload: Bytes::from_static(b"hi"),
+            }))))
+        }
+    }
+
     #[tokio::test]
     async fn event_bus_publish_subscribe_message_contract() {
-        let bus = FakeEventBus::new();
+        let bus = StubBus;
         bus.publish("orders", Bytes::from_static(b"hi")).await.unwrap();
         let _stream = bus.subscribe("orders").await.unwrap();
     }
@@ -498,17 +554,15 @@ mod tests {
 
     #[tokio::test]
     async fn event_bus_stream_poll_clone_waker() {
-        let bus = FakeEventBus::new();
+        let bus = StubBus;
         bus.publish("t", Bytes::from_static(b"p")).await.unwrap();
         let mut stream = bus.subscribe("t").await.unwrap();
-        use std::pin::Pin;
-        use std::task::{Context, Poll, Waker};
-        // MSRV 1.85+：`Waker::noop` 避免测试路径 `unsafe`（与 forbid(unsafe_code) 对齐）
+        use std::task::Waker;
         let waker = Waker::noop();
         let waker2 = waker.clone();
         let mut cx = Context::from_waker(&waker2);
         match Pin::new(&mut stream).poll_next(&mut cx) {
-            Poll::Ready(Some(msg)) => assert_eq!(msg.payload.as_ref(), b"p"),
+            Poll::Ready(Some(msg)) => assert_eq!(msg.payload.as_ref(), b"hi"),
             _ => panic!("expected Some"),
         }
         match Pin::new(&mut stream).poll_next(&mut cx) {

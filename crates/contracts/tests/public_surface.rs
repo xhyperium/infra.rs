@@ -1,16 +1,16 @@
-//! 公开 trait 可达性 + 参考实现合同（禁止空断言）。
+//! 公开 trait 可达性 + 经 contract-testkit 的参考实现合同（禁止空断言）。
 
 use bytes::Bytes;
-use contracts::{
-    AccountSource, AnalyticsSink, BusMessage, EventBus, ExecutionVenue, FakeEventBus,
-    FakeKeyValueStore, FakeRepository, FakeTxRunner, InstrEvent, InstrumentCatalog,
-    Instrumentation, KeyValueStore, MarketDataSource, MessageAck, ObjectStore, PubSub,
-    RecordingInstrumentation, Repository, TimeSeriesStore, TxRunner, VenueAdapter, VenueTimeSource,
-    run_tx_commit_on_ok,
+use contract_testkit::{
+    FakeEventBus, FakeKeyValueStore, FakeRepository, FakeTxRunner, InstrEvent,
+    RecordingInstrumentation, assert_event_bus, assert_key_value_store,
 };
-use futures_core::Stream;
-use std::pin::Pin;
-use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+use contracts::{
+    AccountSource, AnalyticsSink, BusMessage, EventBus, ExecutionVenue, InstrumentCatalog,
+    Instrumentation, KeyValueStore, MarketDataSource, MessageAck, ObjectStore, PubSub, Repository,
+    TimeSeriesStore, TxRunner, VenueAdapter, VenueTimeSource, run_tx_commit_on_ok,
+};
+use kernel::XError;
 use std::time::Duration;
 
 fn _a(_: &dyn KeyValueStore) {}
@@ -29,40 +29,18 @@ fn _m(_: &dyn VenueAdapter) {}
 fn _n<T, Id, R: Repository<T, Id>>() {}
 fn _o(_: &dyn TxRunner) {}
 
-fn dummy_waker() -> Waker {
-    fn no(_: *const ()) {}
-    fn clone(_: *const ()) -> RawWaker {
-        dummy_raw()
-    }
-    fn dummy_raw() -> RawWaker {
-        static VTABLE: RawWakerVTable = RawWakerVTable::new(clone, no, no, no);
-        RawWaker::new(std::ptr::null(), &VTABLE)
-    }
-    unsafe { Waker::from_raw(dummy_raw()) }
-}
-
 #[tokio::test]
 async fn contract_testkit_tx_and_bus_are_runnable() {
     let _ = (_a as fn(&dyn KeyValueStore), _h as fn(&dyn EventBus), _o as fn(&dyn TxRunner));
     let runner = FakeTxRunner;
-    let n = run_tx_commit_on_ok(&runner, |_ctx| async move { Ok::<_, kernel::XError>(7u8) })
-        .await
-        .expect("tx");
+    let n =
+        run_tx_commit_on_ok(&runner, |_ctx| async move { Ok::<_, XError>(7u8) }).await.expect("tx");
     assert_eq!(n, 7);
 
     let bus = FakeEventBus::new();
-    bus.publish("t", Bytes::from_static(b"p")).await.expect("pub");
-    let mut s = bus.subscribe("t").await.expect("sub");
-    let waker = dummy_waker();
-    let mut cx = Context::from_waker(&waker);
-    match Pin::new(&mut s).poll_next(&mut cx) {
-        Poll::Ready(Some(BusMessage { id, payload })) => {
-            assert!(!id.is_empty());
-            assert_eq!(payload.as_ref(), b"p");
-        }
-        other => panic!("expected bus message: {other:?}"),
-    }
+    assert_event_bus(&bus).await.expect("bus");
     assert_eq!(MessageAck::Ack, MessageAck::Ack);
+    let _ = BusMessage { id: "1".into(), payload: Bytes::from_static(b"x") };
 }
 
 #[test]
@@ -74,12 +52,10 @@ fn trait_surface_object_safe_bounds() {
 #[tokio::test]
 async fn fake_key_value_store_public_surface() {
     let store = FakeKeyValueStore::new();
-    let kv: &dyn KeyValueStore = &store;
-    assert!(kv.get("missing").await.expect("get").is_none());
-    kv.set("k", b"v".to_vec(), Some(Duration::from_secs(1))).await.expect("set");
-    assert_eq!(kv.get("k").await.expect("get2").as_deref(), Some(b"v".as_ref()));
+    assert_key_value_store(&store).await.expect("kv");
     assert_eq!(store.len().expect("len"), 1);
     assert!(!store.is_empty().expect("empty"));
+    let _ = Duration::from_secs(1);
 }
 
 #[tokio::test]

@@ -90,7 +90,7 @@
 
 - SSOT 内 `review COMPLETE` / `Stable CLAIMED` / Phase Approved **仅**描述规格或历史战役状态
 - 本仓是否落地以 `Cargo.toml` workspace members + `crates/` 路径 + 本仓测试为准
-- **testkit**：本仓已落地 `crates/testkit`（`xhyper-testkit`）；`contract-testkit` 未落地
+- **testkit**：本仓已落地 `crates/testkit`；`contract-testkit` 已落地 `crates/test-support/contracts`
 - **infra**：按各域对齐文；未在 members 中的域不得宣称落地
 - **adapters 九域**：crate 为 scaffold，**未**宣称业务实现 / package stable
 - **tools**：仅 `crates/evidence` 最小面落地；goalctl / xtask / verifyctl **未**落地

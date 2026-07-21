@@ -36,7 +36,8 @@
 - **archgate / `.architecture`：OOS**（PR #164）— 本仓明确不移植
 - **当前 workspace members**（无 `infra-core`）：
   - `crates/kernel` → `xhyper-kernel`（L0）
-  - `crates/testkit` → `xhyper-testkit`（core ManualClock；仅 dev-dep）
+  - `crates/testkit` → `testkit`（core ManualClock；仅 dev-dep）
+  - `crates/test-support/contracts` → `contract-testkit`（Fake + suite；仅 dev-dep）
   - `crates/configx` → `xhyper-configx`（L1 内存字符串 KV；非多源热更新）
   - `crates/schedulex` → `xhyper-schedulex`（L1 任务 ID 登记表；active SSOT registry only）
   - `crates/bootstrap` → `xhyper-bootstrap`（L1 组合根；已注入 contracts/observex/evidence）
@@ -48,7 +49,7 @@
   - `crates/types/canonical` → `xhyper-canonical`
   - `crates/contracts` → `xhyper-contracts`（adapter trait 出口；#43）
   - `crates/adapters/**` → 9 个 adapter package（**scaffold**；见 adapters 对齐文）
-- `contract-testkit` **未**移植；**infra 其余域**（gate 等）当前仅镜像，未宣称本仓实现
+- `contract-testkit` **已落地**（`crates/test-support/contracts`）；**infra 其余域**（gate 等）当前仅镜像，未宣称本仓实现
 - **adapters**：镜像已本地化；crate 为 scaffold，**未**宣称业务实现 / package stable
 - **tools**：镜像已本地化；仅 `crates/evidence` 最小面落地；goalctl / xtask / verifyctl **未**宣称落地
 - `.agents/ssot/**` 变更走 **worktree + PR**；从外仓同步用删除感知 rsync（见 `docs/ssot/SSOT_SYNC_OPS.md`），**禁止**用上游覆盖冲掉本仓 OOS/落地裁定
