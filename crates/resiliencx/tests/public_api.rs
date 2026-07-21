@@ -2,8 +2,9 @@
 
 use kernel::{ErrorKind, XError, XResult};
 use resiliencx::{
-    CircuitBreaker, CircuitConfig, CircuitState, Instrumentation, NoopInstrumentation,
-    RateLimitConfig, RateLimiter, RetryConfig, retry_downcast, retry_fn, retry_ok,
+    Bulkhead, BulkheadConfig, CircuitBreaker, CircuitConfig, CircuitState, Instrumentation,
+    NoopInstrumentation, RateLimitConfig, RateLimiter, RetryConfig, retry_downcast, retry_fn,
+    retry_ok,
 };
 use std::sync::{Arc, Mutex};
 
@@ -83,4 +84,13 @@ fn consumer_circuit_and_rate_limit_surface() {
     assert_eq!(lim.try_acquire(1).expect_err("rl").kind(), ErrorKind::Unavailable);
     lim.refill(1);
     lim.try_acquire(1).expect("after refill");
+}
+
+#[test]
+fn consumer_bulkhead_surface() {
+    let b = Arc::new(Bulkhead::new(BulkheadConfig { max_concurrent: 1 }).expect("bh"));
+    let p = b.try_enter().expect("enter");
+    assert_eq!(b.call(|| Ok(())).expect_err("full").kind(), ErrorKind::Unavailable);
+    drop(p);
+    assert_eq!(b.call(|| Ok(7)).expect("ok"), 7);
 }
