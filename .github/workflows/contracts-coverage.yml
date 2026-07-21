@@ -1,6 +1,6 @@
 name: Contracts Coverage
 
-# infra-contracts：LCOV 行覆盖率 100%
+# xhyper-contracts：LCOV 行覆盖率 100%
 
 on:
   push:
@@ -46,4 +46,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p infra-contracts --filter crates/contracts/src
+        run: node scripts/cov-gate-100.mjs -p xhyper-contracts --filter crates/contracts/src
