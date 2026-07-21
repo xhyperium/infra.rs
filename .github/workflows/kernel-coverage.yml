@@ -1,7 +1,6 @@
 name: Kernel Coverage
 
-# kernel crate 分支覆盖率门禁（RES-TEST-014）
-# 阈值: lines >= 95%, branches >= 90%, functions >= 90%
+# kernel：LCOV 行覆盖率 100% + branch ≥90%
 
 on:
   push:
@@ -10,6 +9,7 @@ on:
       - "crates/kernel/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "scripts/cov-gate-100.mjs"
       - ".github/workflows/kernel-coverage.yml"
   pull_request:
     branches: [main]
@@ -17,6 +17,7 @@ on:
       - "crates/kernel/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "scripts/cov-gate-100.mjs"
       - ".github/workflows/kernel-coverage.yml"
 
 concurrency:
@@ -27,8 +28,8 @@ permissions:
   contents: read
 
 jobs:
-  branch-coverage:
-    name: 分支覆盖率 (≥90%)
+  coverage:
+    name: 覆盖率 (lines=100% / branch≥90%)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -42,7 +43,11 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-llvm-cov
-      - name: 分支覆盖率门禁
+      - name: 行覆盖率 100% (LCOV)
+        env:
+          RUSTUP_TOOLCHAIN: nightly
+        run: node scripts/cov-gate-100.mjs -p xhyper-kernel --filter crates/kernel/src --all-features
+      - name: 分支覆盖率 ≥90%
         env:
           RUSTUP_TOOLCHAIN: nightly
         run: |
@@ -52,10 +57,6 @@ jobs:
             --all-features \
             --branch \
             --summary-only 2>&1 | tee /tmp/cov.txt
-
-          # cargo-llvm-cov 表头: ... Lines Missed Lines Cover | Branches Missed Branches Cover
-          # TOTAL 行末尾三列: branches_total, missed_branches, branch_cover%
-          # 例: TOTAL ... 631 7 98.89% 8 1 87.50%
           branch_pct=$(
             awk '
               /^TOTAL/ {
@@ -69,20 +70,12 @@ jobs:
           )
           echo "Branch coverage: ${branch_pct}%"
           if [ -z "${branch_pct}" ]; then
-            echo "::error::Failed to parse branch coverage from llvm-cov summary"
+            echo "::error::Failed to parse branch coverage"
             exit 1
           fi
-          # 使用 awk 做数值比较，避免 bc 缺失时门禁被跳过
           awk -v p="$branch_pct" 'BEGIN {
             if (p + 0 < 90) {
               printf "::error::Branch coverage %s%% is below 90%% threshold\n", p
               exit 1
             }
           }'
-
-          cargo +nightly llvm-cov \
-            -p xhyper-kernel \
-            --all-features \
-            --branch \
-            --fail-under-lines 95 \
-            --fail-under-functions 90

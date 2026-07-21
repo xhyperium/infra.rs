@@ -359,20 +359,45 @@ mod tests {
     fn test_poison_recovery_into_inner() {
         let (guard, signal) = ShutdownSignal::new();
 
-        // 同模块可触及 `ShutdownInner.triggered`，注入真实 poison
+        // 同模块可触及 `ShutdownInner.triggered`，注入真实 poison。
+        // 首次 lock 必成功，用 unwrap（避免测试里未覆盖的 poison 分支污染 line 覆盖率）。
         let poison = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let _held = signal.inner.triggered.lock().unwrap_or_else(|p| p.into_inner());
+            let _held = signal.inner.triggered.lock().expect("lock before poison");
             panic!("intentional mutex poison for §11.1 poison recovery");
         }));
         assert!(poison.is_err(), "setup must poison the mutex");
 
-        // 毒锁后仍可读；标志未改写
+        // 毒锁后仍可读；标志未改写（走 is_triggered 的 into_inner 恢复）
         assert!(!signal.is_triggered());
 
         // 毒锁后仍可 trigger，并与 is_triggered / wait 一致
         guard.trigger();
         assert!(signal.is_triggered());
         signal.wait();
+    }
+
+    /// 覆盖 `wait` 中 `Condvar::wait` 返回后的 poison 恢复路径（§10.2）。
+    #[test]
+    fn test_wait_poison_recovery_on_condvar_reacquire() {
+        let (guard, signal) = ShutdownSignal::new();
+        let waiter = {
+            let s = signal.clone();
+            std::thread::spawn(move || s.wait())
+        };
+        // 等到 waiter 进入 Condvar::wait（已释放 mutex）
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        // 在 wait 阻塞期间毒化 mutex
+        let poison = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _held = signal.inner.triggered.lock().expect("lock to poison");
+            panic!("poison while waiter blocked");
+        }));
+        assert!(poison.is_err());
+
+        // trigger 经 into_inner 写标志 + notify；waiter 在 reacquire 时走 poison 恢复
+        guard.trigger();
+        waiter.join().expect("waiter");
+        assert!(signal.is_triggered());
     }
 
     // -- Shutdown: 并发回归测试 ------------------------------------------

@@ -461,4 +461,55 @@ mod unit_tests {
         c.clear_wall_fault().unwrap();
         assert_eq!(c.wall_fault().unwrap(), None);
     }
+
+    /// 毒化 state mutex 后：`monotonic` 走 `lock_recover`；控制路径报 Synchronization；
+    /// `Clock::now` 映射 Unavailable。
+    #[test]
+    fn poison_recovery_and_control_path_errors() {
+        let c = ManualClock::new(ts(7));
+        c.advance_monotonic(Duration::from_nanos(3)).unwrap();
+
+        let poison = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _g = c.state.lock().expect("lock before poison");
+            panic!("intentional ManualClock state poison");
+        }));
+        assert!(poison.is_err());
+
+        // lock_recover：不 panic、不伪造零值
+        assert_eq!(
+            c.monotonic()
+                .checked_duration_since(MonotonicInstant::from_clock_elapsed(Duration::ZERO))
+                .unwrap(),
+            Duration::from_nanos(3)
+        );
+
+        // 控制路径：poison → Synchronization，状态保持
+        assert!(matches!(c.set_wall(ts(1)), Err(ManualClockError::Synchronization)));
+        assert!(matches!(
+            c.advance_wall(Duration::from_nanos(1)),
+            Err(ManualClockError::Synchronization)
+        ));
+        assert!(matches!(
+            c.rewind_wall(Duration::from_nanos(1)),
+            Err(ManualClockError::Synchronization)
+        ));
+        assert!(matches!(
+            c.set_monotonic_elapsed(Duration::from_nanos(9)),
+            Err(ManualClockError::Synchronization)
+        ));
+        assert!(matches!(
+            c.advance_monotonic(Duration::from_nanos(1)),
+            Err(ManualClockError::Synchronization)
+        ));
+        assert!(matches!(
+            c.set_wall_fault(ManualClockFault::Unavailable),
+            Err(ManualClockError::Synchronization)
+        ));
+        assert!(matches!(c.clear_wall_fault(), Err(ManualClockError::Synchronization)));
+        assert!(matches!(c.wall_fault(), Err(ManualClockError::Synchronization)));
+        assert!(matches!(c.snapshot(), Err(ManualClockError::Synchronization)));
+
+        // Clock::now 毒锁 → Unavailable
+        assert!(matches!(c.now(), Err(ClockError::Unavailable)));
+    }
 }
