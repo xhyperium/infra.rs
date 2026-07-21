@@ -122,6 +122,15 @@ const mutual = spawnSync("node", [SCRIPT, "--watch", "5", "--check"], {
 });
 assert("watch+check 互斥 exit 2", mutual.status === 2);
 
+// 6b) --summary 输出短摘要
+const sum = spawnSync("node", [SCRIPT, "--summary"], {
+  cwd: ROOT,
+  encoding: "utf8",
+});
+assert("--summary exit 0", sum.status === 0, sum.stderr);
+assert("--summary 含标题", /## crates 子模块进度/.test(sum.stdout));
+assert("--summary 含平均完成度", /平均完成度/.test(sum.stdout));
+
 // 7) tmp 目录不会被脚本误写
 const tmp = mkdtempSync(join(tmpdir(), "crate-status-"));
 try {

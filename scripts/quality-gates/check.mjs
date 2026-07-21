@@ -36,9 +36,14 @@ const read = (rel) => {
   }
 };
 
-const run = (cmd) => {
+const run = (cmd, timeoutMs = 8000) => {
   try {
-    return execSync(cmd, { cwd: root, encoding: "utf8", timeout: 8000, stdio: ["pipe", "pipe", "pipe"] }).trim();
+    return execSync(cmd, {
+      cwd: root,
+      encoding: "utf8",
+      timeout: timeoutMs,
+      stdio: ["pipe", "pipe", "pipe"],
+    }).trim();
   } catch (error) {
     return String(error.stderr || error.message || "").trim();
   }
@@ -185,7 +190,8 @@ if (branch === "main") {
 }
 
 // ── docs/status 自动生成矩阵 ──────────────────────────────
-const statusCheck = run("node scripts/docs/gen-docs-status.mjs --check 2>&1");
+// 扫描/生成脚本可能 >8s（冷盘/CI）；status 类检查单独放宽
+const statusCheck = run("node scripts/docs/gen-docs-status.mjs --check 2>&1", 20000);
 ok(
   "docs status matrix 新鲜",
   !statusCheck.includes("FAIL") && (statusCheck.includes("OK") || statusCheck.includes("up to date")),
@@ -193,7 +199,7 @@ ok(
 );
 
 // ── crates 进度看板 STATUS.md ─────────────────────────────
-const crateStatusCheck = run("node scripts/docs/gen-crate-status.mjs --check 2>&1");
+const crateStatusCheck = run("node scripts/docs/gen-crate-status.mjs --check 2>&1", 30000);
 ok(
   "STATUS.md crates 看板新鲜",
   !crateStatusCheck.includes("FAIL") &&
