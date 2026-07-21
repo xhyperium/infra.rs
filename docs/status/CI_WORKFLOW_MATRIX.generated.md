@@ -16,6 +16,7 @@
 | `configx-coverage.yml` | ConfigX Coverage | pull_request, workflow_dispatch | `coverage` |
 | `constitution.yml` | Constitution | pull_request, workflow_dispatch | `constitution` |
 | `contracts-coverage.yml` | Contracts Coverage | pull_request, workflow_dispatch | `line-coverage` |
+| `contracts-live.yml` | Contracts Mock Verification | workflow_dispatch | `mock-backend` |
 | `decimal-coverage.yml` | Decimal Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `decimal-miri.yml` | Decimal Miri | schedule, workflow_dispatch | `miri` |
 | `decimal-mutants.yml` | Decimal Mutants | schedule, workflow_dispatch | `mutants` |
@@ -41,8 +42,8 @@
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 27 |
-| Job 总数（解析） | 45 |
+| 工作流文件数 | 28 |
+| Job 总数（解析） | 46 |
 
 ## 维护
 

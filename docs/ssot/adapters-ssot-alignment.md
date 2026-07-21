@@ -182,4 +182,3 @@ cargo test -p postgresx -p redisx -p kafkax -p natsx -p okxx -p binancex --all-t
 cargo test -p contracts --all-targets
 cargo clippy -p postgresx -p redisx -p kafkax -p okxx --all-targets -- -D warnings
 ```
-
