@@ -5,7 +5,7 @@
  * 职责: 扫描并报告需清理的过期文件、缓存残留、worktree 孤儿。
  *
  * 用法:
- *   node scripts/gc-scan.mjs
+ *   node scripts/harness/gc-scan.mjs
  *
  * SSOT: .gitignore / docs/governance/worktree-policy.md
  */

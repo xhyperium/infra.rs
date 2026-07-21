@@ -1,7 +1,7 @@
 /**
  * worktree-policy 单元自检（无外部依赖）
  *
- * 用法: node scripts/worktree-policy.test.mjs
+ * 用法: node scripts/worktree/worktree-policy.test.mjs
  * exit 0 = 全部通过
  */
 import {

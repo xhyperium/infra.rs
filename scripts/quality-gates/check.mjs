@@ -5,7 +5,7 @@
  * 职责: 验证开发环境就绪状态 (hooks / skills / beads / worktree-policy)。
  *
  * 用法:
- *   node scripts/check.mjs
+ *   node scripts/quality-gates/check.mjs
  *
  * SSOT: .claude/hooks/ / .agents/ssot/SSOT.md
  */
@@ -109,14 +109,14 @@ for (const event of ["PreToolUse", "PostToolUse", "SessionStart", "Stop", "PreCo
 }
 
 // ── Scripts 依赖 ──────────────────────────────────────────
-ok("scripts/worktree-policy.mjs", exists("scripts/worktree-policy.mjs"), "hooks 依赖 worktree-policy");
-ok("scripts/gc-scan.mjs", exists("scripts/gc-scan.mjs"), "session-review / RSI 依赖 gc-scan");
-ok("scripts/check.mjs", exists("scripts/check.mjs"), "自身");
+ok("scripts/worktree/worktree-policy.mjs", exists("scripts/worktree/worktree-policy.mjs"), "hooks 依赖 worktree-policy");
+ok("scripts/harness/gc-scan.mjs", exists("scripts/harness/gc-scan.mjs"), "session-review / RSI 依赖 gc-scan");
+ok("scripts/quality-gates/check.mjs", exists("scripts/quality-gates/check.mjs"), "自身");
 
 // worktree-policy 可导入 + 单元自检 + 硬门禁源码存在
 let worktreeImportOk = false;
 try {
-  await import(join(root, "scripts/worktree-policy.mjs"));
+  await import(join(root, "scripts/worktree/worktree-policy.mjs"));
   worktreeImportOk = true;
 } catch (error) {
   worktreeImportOk = false;
@@ -133,7 +133,7 @@ ok(
 ok(
   "session-context 指引 worktree.mjs create",
   read(".claude/hooks/session-context.mjs").includes("worktree.mjs create"),
-  "session-context 应引导 node scripts/worktree.mjs create",
+  "session-context 应引导 node scripts/worktree/worktree.mjs create",
 );
 
 const policyTest = run("node scripts/worktree-policy.test.mjs 2>&1");
@@ -185,11 +185,11 @@ if (branch === "main") {
 }
 
 // ── docs/status 自动生成矩阵 ──────────────────────────────
-const statusCheck = run("node scripts/gen-docs-status.mjs --check 2>&1");
+const statusCheck = run("node scripts/docs/gen-docs-status.mjs --check 2>&1");
 ok(
   "docs status matrix 新鲜",
   !statusCheck.includes("FAIL") && (statusCheck.includes("OK") || statusCheck.includes("up to date")),
-  statusCheck.slice(0, 240) || "node scripts/gen-docs-status.mjs --check 失败",
+  statusCheck.slice(0, 240) || "node scripts/docs/gen-docs-status.mjs --check 失败",
 );
 
 // ── 输出 ──────────────────────────────────────────────────

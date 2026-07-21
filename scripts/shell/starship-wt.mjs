@@ -6,7 +6,7 @@
  *
  * 用法: 在 starship.toml 中:
  *   [custom.wt]
- *   command = "node scripts/starship-wt.mjs"
+ *   command = "node scripts/shell/starship-wt.mjs"
  *
  * 输出:
  *   main       — 在 infra.rs 主工作区
@@ -14,7 +14,7 @@
  *   (无输出)    — 不在 infra.rs 仓库中
  *
  * SSOT: starship.toml
- * 替代: scripts/starship-wt.mjs (已迁移)
+ * 替代: scripts/shell/starship-wt.mjs (已迁移)
  */
 
 import { execSync } from "child_process";

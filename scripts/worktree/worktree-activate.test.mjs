@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * worktree-activate.test.mjs — L1 自检测试 for scripts/worktree-activate.mjs
+ * worktree-activate.test.mjs — L1 自检测试 for scripts/worktree/worktree-activate.mjs
  */
 import { existsSync, readFileSync } from "fs";
 import { join, dirname } from "path";

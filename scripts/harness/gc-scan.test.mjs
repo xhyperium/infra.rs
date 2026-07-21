@@ -1,7 +1,7 @@
 /**
  * gc-scan.mjs — L1 逻辑测试
  *
- * 用法: node scripts/gc-scan.test.mjs
+ * 用法: node scripts/harness/gc-scan.test.mjs
  * exit 0 = 全部通过
  *
  * 测试覆盖:

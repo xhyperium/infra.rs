@@ -1,7 +1,7 @@
 /**
  * check-constitution.mjs — L1 静态验证（不触发 cargo 运行）
  *
- * 用法: node scripts/check-constitution.test.mjs
+ * 用法: node scripts/quality-gates/check-constitution.test.mjs
  * exit 0 = 全部通过
  *
  * L1 只做静态分析（文件结构、语法、import、标志解析逻辑）。

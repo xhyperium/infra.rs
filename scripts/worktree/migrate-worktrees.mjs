@@ -5,11 +5,11 @@
  * 职责: 将旧格式 worktree 迁移到新规范 .worktrees/<branch>。
  *
  * 用法:
- *   node scripts/migrate-worktrees.mjs             # dry-run
- *   node scripts/migrate-worktrees.mjs --apply     # 执行迁移
+ *   node scripts/worktree/migrate-worktrees.mjs             # dry-run
+ *   node scripts/worktree/migrate-worktrees.mjs --apply     # 执行迁移
  *
- * SSOT: CONSTITUTION.md §6.0.5 / scripts/worktree-policy.mjs
- * 替代: scripts/migrate-worktrees.mjs (已迁移)
+ * SSOT: CONSTITUTION.md §6.0.5 / scripts/worktree/worktree-policy.mjs
+ * 替代: scripts/worktree/migrate-worktrees.mjs (已迁移)
  */
 
 import { execSync } from "child_process";
@@ -99,5 +99,5 @@ console.log(git("worktree list"));
 
 if (!APPLY) {
   console.log(`\n${C.yellow}这是 dry-run 模式。执行迁移:${C.reset}`);
-  console.log(`  ${C.cyan}node scripts/migrate-worktrees.mjs --apply${C.reset}`);
+  console.log(`  ${C.cyan}node scripts/worktree/migrate-worktrees.mjs --apply${C.reset}`);
 }

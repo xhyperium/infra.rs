@@ -179,7 +179,7 @@ export function evaluateEditPath({ projectRoot, filePath, bypass = false, isIgno
     fullPath,
     reason: "edit-outside-worktree",
     fixHint:
-      "node scripts/worktree.mjs create <type>/<id>-<slug> && cd .worktrees/<type>/<id>-<slug>",
+      "node scripts/worktree/worktree.mjs create <type>/<id>-<slug> && cd .worktrees/<type>/<id>-<slug>",
   };
 }
 
@@ -204,7 +204,7 @@ export function evaluateMainWorkspaceGitCommand(command) {
       blocked: true,
       kind: "branch-create-on-main-workspace",
       message:
-        "禁止在 main 工作区创建功能分支。请使用：node scripts/worktree.mjs create <type>/<slug>",
+        "禁止在 main 工作区创建功能分支。请使用：node scripts/worktree/worktree.mjs create <type>/<slug>",
     };
   }
 
@@ -218,7 +218,7 @@ export function evaluateMainWorkspaceGitCommand(command) {
       return {
         blocked: true,
         kind: "branch-switch-on-main-workspace",
-        message: `禁止在 main 工作区切换到分支 \`${ref}\`。请：node scripts/worktree.mjs create ${ref} 或 cd 已有 .worktrees/${ref}`,
+        message: `禁止在 main 工作区切换到分支 \`${ref}\`。请：node scripts/worktree/worktree.mjs create ${ref} 或 cd 已有 .worktrees/${ref}`,
       };
     }
   }
@@ -242,7 +242,7 @@ export function evaluateMainWorkspaceGitCommand(command) {
       return {
         blocked: true,
         kind: "branch-checkout-on-main-workspace",
-        message: `禁止在 main 工作区 checkout 分支 \`${ref}\`。请使用 worktree：node scripts/worktree.mjs create ${ref}`,
+        message: `禁止在 main 工作区 checkout 分支 \`${ref}\`。请使用 worktree：node scripts/worktree/worktree.mjs create ${ref}`,
       };
     }
   }
@@ -261,7 +261,7 @@ export function evaluateCommitOnMain(branchName, command) {
       blocked: true,
       kind: "commit-on-main",
       message:
-        "禁止在 main 上直接 commit。请先 node scripts/worktree.mjs create <type>/<slug> 再提交。",
+        "禁止在 main 上直接 commit。请先 node scripts/worktree/worktree.mjs create <type>/<slug> 再提交。",
     };
   }
   return { blocked: false };

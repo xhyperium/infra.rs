@@ -5,15 +5,15 @@
  * 职责: 创建/列出/删除/清理 Git Worktree。
  *
  * 用法:
- *   node scripts/worktree.mjs create <branch>
- *   node scripts/worktree.mjs go <branch>         # 输出路径供 cd 使用
- *   node scripts/worktree.mjs list
- *   node scripts/worktree.mjs remove <branch>
- *   node scripts/worktree.mjs prune
- *   node scripts/worktree.mjs current
+ *   node scripts/worktree/worktree.mjs create <branch>
+ *   node scripts/worktree/worktree.mjs go <branch>         # 输出路径供 cd 使用
+ *   node scripts/worktree/worktree.mjs list
+ *   node scripts/worktree/worktree.mjs remove <branch>
+ *   node scripts/worktree/worktree.mjs prune
+ *   node scripts/worktree/worktree.mjs current
  *
  * SSOT: CONSTITUTION.md §6.0.5 / docs/governance/worktree-policy.md
- * 替代: scripts/worktree.mjs (已迁移)
+ * 替代: scripts/worktree/worktree.mjs (已迁移)
  */
 
 import { execSync } from "child_process";

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * check.test.mjs — L1 自检测试 for scripts/check.mjs
+ * check.test.mjs — L1 自检测试 for scripts/quality-gates/check.mjs
  */
 import { existsSync } from "fs";
 import { join, dirname } from "path";

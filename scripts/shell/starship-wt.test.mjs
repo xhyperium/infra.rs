@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * starship-wt.test.mjs — L1 自检测试 for scripts/starship-wt.mjs
+ * starship-wt.test.mjs — L1 自检测试 for scripts/shell/starship-wt.mjs
  */
 import { existsSync, readFileSync } from "fs";
 import { join, dirname } from "path";

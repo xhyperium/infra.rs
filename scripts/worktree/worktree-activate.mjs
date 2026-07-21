@@ -5,10 +5,10 @@
  * 职责: 输出 shell 代码供 source/eval 加载：wt 函数 + tab 补全 + PROMPT 注入。
  *
  * 用法:
- *   eval "$(node scripts/worktree-activate.mjs)"    # 加载到当前 shell
+ *   eval "$(node scripts/worktree/worktree-activate.mjs)"    # 加载到当前 shell
  *
  * SSOT: CONSTITUTION.md §6.0.5 / docs/governance/worktree-policy.md
- * 替代: scripts/worktree-activate.mjs (已迁移)
+ * 替代: scripts/worktree/worktree-activate.mjs (已迁移)
  */
 
 import { resolve, dirname } from "path";
