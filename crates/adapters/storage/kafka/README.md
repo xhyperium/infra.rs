@@ -13,7 +13,7 @@ Package：`kafkax` · path：`crates/adapters/storage/kafka`
 ## 最小用法
 
 ```rust
-use infra_contracts::storage::StorageAdapter;
+use crate::StorageAdapter;
 use kafkax::KafkaAdapter;
 
 let mut a = KafkaAdapter::local();

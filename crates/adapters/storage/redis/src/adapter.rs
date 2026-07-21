@@ -6,8 +6,7 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use infra_contracts::storage::StorageAdapter;
-use infra_contracts::{AdapterState, Result};
+use crate::{AdapterState, Error, Result, StorageAdapter};
 
 /// redis 存储适配器（内存 scaffold）。
 pub struct RedisAdapter {
@@ -40,7 +39,7 @@ impl RedisAdapter {
 
     fn require_connected(&self) -> Result<()> {
         if self.state != AdapterState::Connected {
-            return Err(infra_contracts::Error::NotConnected);
+            return Err(Error::NotConnected);
         }
         Ok(())
     }
@@ -53,7 +52,7 @@ impl StorageAdapter for RedisAdapter {
 
     fn connect(&mut self) -> Result<()> {
         if self.state == AdapterState::Connected {
-            return Err(infra_contracts::Error::AlreadyConnected);
+            return Err(Error::AlreadyConnected);
         }
         self.state = AdapterState::Connected;
         Ok(())
@@ -61,7 +60,7 @@ impl StorageAdapter for RedisAdapter {
 
     fn disconnect(&mut self) -> Result<()> {
         if self.state != AdapterState::Connected {
-            return Err(infra_contracts::Error::NotConnected);
+            return Err(Error::NotConnected);
         }
         self.state = AdapterState::Disconnected;
         Ok(())
@@ -76,7 +75,7 @@ impl StorageAdapter for RedisAdapter {
         let mut guard = self
             .store
             .lock()
-            .map_err(|e| infra_contracts::Error::Internal(format!("store lock poisoned: {e}")))?;
+            .map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
         guard.insert(key.to_string(), value.to_vec());
         Ok(())
     }
@@ -86,7 +85,7 @@ impl StorageAdapter for RedisAdapter {
         let guard = self
             .store
             .lock()
-            .map_err(|e| infra_contracts::Error::Internal(format!("store lock poisoned: {e}")))?;
+            .map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
         Ok(guard.get(key).cloned())
     }
 
@@ -95,7 +94,7 @@ impl StorageAdapter for RedisAdapter {
         let mut guard = self
             .store
             .lock()
-            .map_err(|e| infra_contracts::Error::Internal(format!("store lock poisoned: {e}")))?;
+            .map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
         guard.remove(key);
         Ok(())
     }
@@ -104,7 +103,7 @@ impl StorageAdapter for RedisAdapter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use infra_contracts::storage::StorageAdapter;
+    use crate::StorageAdapter;
 
     #[test]
     fn connect_disconnect() {

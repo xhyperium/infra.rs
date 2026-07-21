@@ -13,7 +13,7 @@ Package：`redisx` · path：`crates/adapters/storage/redis`
 ## 最小用法
 
 ```rust
-use infra_contracts::storage::StorageAdapter;
+use crate::StorageAdapter;
 use redisx::RedisAdapter;
 
 let mut a = RedisAdapter::local();
