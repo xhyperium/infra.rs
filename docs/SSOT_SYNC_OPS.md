@@ -2,7 +2,6 @@
 
 > 从上游 `xhyper.rs` 镜像 SSOT 到本仓 `.agents/ssot/`。
 
-
 ## 前置条件
 
 ```bash
