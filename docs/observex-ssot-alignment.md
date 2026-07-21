@@ -7,7 +7,7 @@
 | 分支 | `feat/observex-ssot-align` |
 | 规范 | `.agents/ssot/infra/observex/spec/spec.md`（OBJECTIVE 中 `.agent/ssot/observex` = 上游习惯路径） |
 | package | `xhyper-observex` 0.1.0 · lib `observex` |
-| 契约面 | `infra-contracts` · lib `contracts`（adapters + **Instrumentation**） |
+| 契约面 | `infra-contracts` · lib `infra_contracts`（adapters + **Instrumentation**） |
 
 ## 结论摘要
 
@@ -15,7 +15,7 @@
 |------|------|
 | 上游/镜像 COMPLETE 叙事 | **禁止**单独当作本仓交付证明 |
 | 本仓 `crates/observex` | **已落地**（TracingInstrumentation + tracing 三方法） |
-| 本仓 Instrumentation 契约 | 已并入既有 `crates/contracts`（`infra-contracts` / lib `contracts`） |
+| 本仓 Instrumentation 契约 | 已并入既有 `crates/contracts`（`infra-contracts` / lib `infra_contracts`） |
 | OTEL exporter / flush / shutdown | **DEFER** |
 | 完整 VenueAdapter 等 contracts | **DEFER** |
 | resiliencx / bootstrap 注入链 | **DEFER** |
