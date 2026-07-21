@@ -20,6 +20,7 @@ jobs:
     name: 变异测试
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable

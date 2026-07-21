@@ -25,6 +25,7 @@ jobs:
     name: 覆盖率 (lines=100% / branch≥90%)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@nightly
