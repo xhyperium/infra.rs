@@ -17,3 +17,12 @@ pub use model::{AcceptanceItem, GoalContract, GoalDocument, RiskLevel};
 pub use validate::{ValidateError, validate_goal};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn version_is_nonempty() {
+        assert!(!crate::VERSION.is_empty());
+        assert!(crate::VERSION.chars().next().unwrap().is_ascii_digit());
+    }
+}

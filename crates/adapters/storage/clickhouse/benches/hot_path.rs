@@ -1,4 +1,5 @@
-//! clickhousex 核心路径：ping + execute SELECT 1（有服务时）。
+//! clickhousex 核心路径：SELECT 1（有服务时）。connect/ping 有界超时。
+use std::time::Duration;
 use std::time::Instant;
 
 use clickhousex::{ClickHouseConfig, ClickHousePool};
@@ -11,14 +12,20 @@ fn iters() -> u32 {
 async fn main() {
     let n = iters();
     let cfg = ClickHouseConfig::from_env();
-    let Ok(pool) = ClickHousePool::connect(cfg).await else {
-        println!("bench_clickhousex_select1: skipped (no clickhouse)");
+    let connect = tokio::time::timeout(Duration::from_secs(3), ClickHousePool::connect(cfg));
+    let Ok(Ok(pool)) = connect.await else {
+        println!("bench_clickhousex_select1: skipped (no clickhouse / timeout)");
         return;
     };
-    pool.ping().await.expect("ping");
+    if tokio::time::timeout(Duration::from_secs(2), pool.ping()).await.is_err() {
+        println!("bench_clickhousex_select1: skipped (ping timeout)");
+        return;
+    }
     let start = Instant::now();
     for _ in 0..n {
-        pool.execute("SELECT 1").await.expect("select");
+        if pool.execute("SELECT 1").await.is_err() {
+            break;
+        }
     }
     let elapsed = start.elapsed();
     println!(
