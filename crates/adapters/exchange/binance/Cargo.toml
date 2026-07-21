@@ -8,4 +8,5 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+infra-contracts = { path = "../../../contracts" }
 thiserror = { workspace = true }

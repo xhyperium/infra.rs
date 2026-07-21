@@ -1,7 +1,8 @@
-//! `binancex` — binance exchange adapter.
+//! `binancex` — Binance exchange adapter.
 //!
-//! Implements contracts trait for binance.
+//! Implements `ExchangeAdapter` trait for Binance.
 
-pub use self::error::{Error, Result};
+pub use adapter::BinanceAdapter;
 
+mod adapter;
 mod error;
