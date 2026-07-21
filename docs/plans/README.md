@@ -12,7 +12,7 @@
 | [2026-07-21-core-crates-production-readiness.md](./2026-07-21-core-crates-production-readiness.md) | W0–W5 已合入 · **L5 GO-with-Accepts** · 计划 DONE | 五核心 crate 生产级修复；PR #120–#128；输入审计 `docs/report/2026-07-21/`（含 §12 post-W5） |
 | [releases/0.3.0-signoff.md](./releases/0.3.0-signoff.md) | **SIGNED · GO-with-Accepts** | 正式签核包（DEFER-7 已闭；`@ZoneCNH` · 2026-07-21） |
 | [releases/2026-07-21-four-crates-internal-release.md](./releases/2026-07-21-four-crates-internal-release.md) | **DRAFT · GO for declared tiers** | kernel/testkit/decimalx/canonical 四包内部生产证据（L1/L2/L4）；非 crates.io |
-| [releases/2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md](./releases/2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md) | Maintainer 收尾清单 | 可选手签 / 可选内部 tag；禁止 Agent 代签 |
+| [releases/2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md](./releases/2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md) | Maintainer 收尾清单 | tag `v0.3.0-four-crates` 已推；可选手签仍仅人工 |
 | [releases/2026-07-21-signoff-DRAFT.md](./releases/2026-07-21-signoff-DRAFT.md) | **SUPERSEDED** | 草稿归档；权威见 `0.3.0-signoff.md` |
 | [releases/2026-07-21-MAINTAINER-HANDOFF.md](./releases/2026-07-21-MAINTAINER-HANDOFF.md) | 交接一页纸（历史） | 签核前步骤说明；签核后以正式包为准 |
 

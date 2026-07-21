@@ -4,20 +4,24 @@
 |------|----|
 | 日期 | 2026-07-21 |
 | 范围 | `kernel` · `testkit` · `decimalx` · `canonical` |
-| 代码基线 | `main` · `#159` · `8fbd5ef` |
+| 代码基线 | `main` · `#159` + `#160` · tip `5acac34`（tag 锚点） |
+| 内部 tag | **`v0.3.0-four-crates`** → `5acac34`（已推送 `origin`，2026-07-21） |
 | 证据包 | [`2026-07-21-four-crates-internal-release.md`](./2026-07-21-four-crates-internal-release.md) |
 | L5 权威 | 仍以 [`0.3.0-signoff.md`](./0.3.0-signoff.md) 为准（GO-with-Accepts · `@ZoneCNH`） |
-| 本文件 | **人工执行清单**；Agent 不得代签 / 不得擅自打生产 tag |
+| 本文件 | **收尾清单**；Agent **不得**代写 `Signed-off-by` |
 
 ---
 
-## 0. 当前状态（已完成，无需 Maintainer 重复）
+## 0. 当前状态（已完成）
 
 - [x] 四包在声明层级内的实现、测试、bench、examples、docs 合入 `main`（PR #159）
 - [x] CI 全绿后 squash merge
 - [x] 内部证据包落盘（**DRAFT · GO for declared tiers**）
+- [x] Maintainer 收尾清单合入（PR #160）
+- [x] 内部 annotated tag **`v0.3.0-four-crates`** 已推送 `origin`（指向 `5acac34`）
 - [x] `publish = false` 保持；**未**批准 crates.io
 - [x] 未宣称 workspace 整体 Production Ready
+- [x] 发布后抽查：`cargo test` / clippy / fmt / public-api / examples / benches（2026-07-21 会话复验全绿）
 
 ---
 
@@ -52,25 +56,24 @@ docs(releases): maintainer sign four-crates internal GO
 
 ---
 
-## 3. 可选：git tag（内部追溯，≠ crates.io）
+## 3. git tag（内部追溯，≠ crates.io）— **已完成**
 
-仅在 Maintainer 确认需要版本锚点时执行。
+| 项 | 值 |
+|----|-----|
+| Tag | `v0.3.0-four-crates` |
+| 对象 | annotated → commit `5acac34` |
+| 远程 | `origin` 已推送 |
+| 并存 | 仓库另有 `v0.3.0` / `v0.3.18`；本 tag 为四包收口注记，**不**替代 crates.io |
+
+校验：
 
 ```bash
-# 在干净 main 上
-git fetch origin main
-git checkout main && git pull --ff-only origin main
-git rev-parse HEAD   # 期望含 #159（8fbd5ef 或其后的 main tip）
-
-# 推荐 annotated tag 名称（示例，按仓库惯例二选一）
-# A) 与 workspace 0.3.0 对齐的「四包收口」注记 tag
-git tag -a v0.3.0-four-crates -m "Internal GO: kernel L1+L4, testkit L1 test-support, decimalx L1, canonical L2 wire subset (#159)"
-
-# B) 若仓库另有统一 v0.3.0 tag 策略，用 changelog 注记代替新 tag，避免重复
-git push origin v0.3.0-four-crates   # 仅 A 且已确认后
+git fetch --tags
+git show v0.3.0-four-crates --no-patch
+# 期望：tag 存在且 peels 到 5acac34（或 main 上等价 tip）
 ```
 
-**不要**：
+**不要**（仍有效）：
 
 - 用 tag 暗示 crates.io 已发布
 - `cargo publish`
@@ -104,12 +107,12 @@ node scripts/quality-gates/check-public-api.mjs
 
 ---
 
-## 6. 完成后勾选（Maintainer）
+## 6. 完成后勾选
 
-- [ ] 已读证据包与 Accept 列表
-- [ ] （可选）证据包 §6 已手签并合入
-- [ ] （可选）内部 tag 已推送或明确跳过
-- [ ] 知悉：消费者按声明层级使用；testkit 仅 dev-dep
+- [x] 证据包与 Accept 列表已可读且合入
+- [ ] （**仍可选 · 仅人工**）证据包 §6 `Signed-off-by` 手签并合入 — Agent **未**代签；L5 权威继续用 `0.3.0-signoff.md`
+- [x] 内部 tag `v0.3.0-four-crates` 已推送
+- [x] 知悉口径：消费者按声明层级使用；testkit 仅 dev-dep；非 crates.io
 
 ---
 

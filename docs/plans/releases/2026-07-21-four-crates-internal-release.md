@@ -7,7 +7,9 @@
 | 性质 | **内部生产发布证据**（分层 GO）；**不是** crates.io 发布；**不是** workspace 整体 Production Ready |
 | 关联 | PLAN-CORE-PROD-002 · 既有 L5 [`0.3.0-signoff.md`](./0.3.0-signoff.md) |
 | 本文件状态 | **DRAFT · GO for declared tiers** · 新 L5 人工 `Signed-off-by` **未**代签（沿用 0.3.0 Maintainer 签核 + 本证据包） |
-| Maintainer 收尾清单 | [`2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md`](./2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md)（可选手签 / 可选内部 tag） |
+| Maintainer 收尾清单 | [`2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md`](./2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md) |
+| 内部 tag | **`v0.3.0-four-crates`** → `5acac34`（`main` · #159+#160 · 已推送 origin） |
+| 实现 PR | [#159](https://github.com/xhyperium/infra.rs/pull/159) · 清单 PR [#160](https://github.com/xhyperium/infra.rs/pull/160) |
 
 ---
 
@@ -116,3 +118,5 @@ Accept 风险仍适用：见 defer-disposition.md / 0.3.0-signoff.md
 - 审计：[`../../report/2026-07-21/core-crates-production-readiness.md`](../../report/2026-07-21/core-crates-production-readiness.md)
 - 支持矩阵：[`../../governance/support-matrix.md`](../../governance/support-matrix.md)
 - API baselines：`docs/api-baselines/{kernel,testkit,decimalx,canonical}.txt`
+- 内部 tag：`git show v0.3.0-four-crates`
+- Maintainer 清单：[`2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md`](./2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md)
