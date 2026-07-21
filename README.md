@@ -102,7 +102,9 @@ wt
 | Crate | 路径 | 说明 |
 |-------|------|------|
 | `xhyper-kernel` | `crates/kernel/` | L0 语义信任根（clock / lifecycle） |
-| `xhyper-testkit` | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
+| `testkit` | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
+| `contract-testkit` | `crates/test-support/contracts/` | Fake + per-trait suite（仅 dev-dep） |
+| `contracts` | `crates/contracts/` | R4 trait 出口（Additive Only） |
 | `xhyper-configx` | `crates/configx/` | L1 配置存储（MemoryConfigStore） |
 | `xhyper-decimalx` | `crates/types/decimal/` | 十进制数值 / Money |
 | `xhyper-canonical` | `crates/types/canonical/` | 跨层共享纯 DTO（Money 复用 decimalx） |

@@ -215,6 +215,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "contract-testkit"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "canonical",
+ "contracts",
+ "decimalx",
+ "futures-core",
+ "futures-util",
+ "kernel",
+ "tokio",
+]
+
+[[package]]
 name = "contracts"
 version = "0.1.0"
 dependencies = [
@@ -222,6 +237,7 @@ dependencies = [
  "binancex",
  "bytes",
  "canonical",
+ "contract-testkit",
  "decimalx",
  "futures-core",
  "kernel",

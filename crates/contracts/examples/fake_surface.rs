@@ -1,4 +1,4 @@
-//! 最小 Fake 合同面：KV set/get + 事务 Ok→commit 编排。
+//! 最小 Fake 合同面（dev-dep：`contract-testkit`）：KV set/get + 事务 Ok→commit。
 //!
 //! ```bash
 //! cargo run -p contracts --example fake_surface
@@ -6,12 +6,11 @@
 //!
 //! # 生产红线
 //! - 本示例使用 **进程内 Fake**，不是非 scaffold 真实后端。
-//! - L3 Contract Ready 仍要求至少一非 scaffold 验证入口（adapters W4 / `infra-s9t.2`）。
+//! - L3 Contract Ready 仍要求至少一非 scaffold 验证入口。
 //! - 勿将 Fake 路径当作集成测完成或生产存储。
 
-use contracts::{
-    FakeKeyValueStore, FakeTxRunner, KeyValueStore, RecordingTxRunner, run_tx_commit_on_ok,
-};
+use contract_testkit::{FakeKeyValueStore, FakeTxRunner, RecordingTxRunner};
+use contracts::{KeyValueStore, run_tx_commit_on_ok};
 
 #[tokio::main]
 async fn main() {

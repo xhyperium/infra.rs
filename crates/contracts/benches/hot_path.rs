@@ -1,8 +1,9 @@
-//! contracts 热路径：RecordingInstrumentation + FakeKeyValueStore。
+//! contracts 热路径：RecordingInstrumentation（来自 contract-testkit）。
 use std::hint::black_box;
 use std::time::Instant;
 
-use contracts::{Instrumentation, RecordingInstrumentation};
+use contract_testkit::RecordingInstrumentation;
+use contracts::Instrumentation;
 
 fn iters() -> u32 {
     if std::env::args().any(|a| a == "--quick") { 1_000 } else { 50_000 }

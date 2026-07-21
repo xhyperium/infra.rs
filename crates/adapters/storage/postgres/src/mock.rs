@@ -1,6 +1,6 @@
 //! 进程内 mock 后端：带 **commit 边界** 的 Repository + TxRunner。
 //!
-//! 与 scaffold [`crate::PostgresAdapter`]（直接写 durable + `FakeTxContext`）不同：
+//! 与 scaffold [`crate::PostgresAdapter`]（直接写 durable + 本地 ScaffoldTxContext）不同：
 //! - 事务内写入进入 staged 区，**仅**在 `commit` 后可见于 durable；
 //! - `rollback` 丢弃 staged，不触碰 durable；
 //! - 可观察 commit/rollback 计数，证明 `run_tx_commit_on_ok` 驱动真实路径。
@@ -46,7 +46,7 @@ impl TxObservability {
 /// 进程内 mock Postgres（commit 边界版）。
 ///
 /// 与 scaffold [`super::PostgresAdapter`] 的差异：
-/// - `begin_tx` 返回 [`MockTxContext`]（非 `FakeTxContext`）
+/// - `begin_tx` 返回 [`MockTxContext`]（staged 写入；非 scaffold 空事务）
 /// - 事务写入必须 `stage_save`，commit 后才进入 durable
 /// - 可观察 commit/rollback 次数
 #[derive(Debug, Clone)]

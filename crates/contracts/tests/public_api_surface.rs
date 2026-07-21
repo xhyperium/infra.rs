@@ -1,9 +1,10 @@
-//! contracts 公开面：FakeTx / RecordingTx / 默认 VenueAdapter 错误助手。
+//! contracts 公开面：VenueAdapter 默认错误助手 + Tx 编排（Fake 来自 contract-testkit）。
 
+use contract_testkit::{FakeTxContext, FakeTxRunner, RecordingTxRunner};
 use contracts::{
-    FakeTxContext, FakeTxRunner, RecordingTxRunner, TxContext, VENUE_CANCEL_REQUEST_DEFAULT_MSG,
-    VENUE_QUERY_REQUEST_DEFAULT_MSG, is_default_cancel_order_request_error,
-    is_default_query_order_request_error, run_tx_commit_on_ok,
+    TxContext, VENUE_CANCEL_REQUEST_DEFAULT_MSG, VENUE_QUERY_REQUEST_DEFAULT_MSG,
+    is_default_cancel_order_request_error, is_default_query_order_request_error,
+    run_tx_commit_on_ok,
 };
 use kernel::{ErrorKind, XError};
 

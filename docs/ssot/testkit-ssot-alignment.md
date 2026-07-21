@@ -15,7 +15,7 @@
 | 上游 SSOT 镜像 COMPLETE 叙事 | 仍是 xhyper 战役文档；**禁止**单独当作本仓交付证明 |
 | 本仓 `crates/testkit` core（ManualClock 族） | **已闭合**（§7 / §13.1–§13.5 / §24.1–§24.3 core / §24.5 core → 见 clause matrix） |
 | 内部生产 GO（声明层级） | **L1 test-support only**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
-| 本仓 `contract-testkit` | **部分闭合**：`crates/contracts` 内最小 Fake/Recording 入口已可运行；**独立** `test-support/contracts` crate 与全套件仍 **DEFER**（§24.4） |
+| 本仓 `contract-testkit` | **已落地**：`crates/test-support/contracts`（package `contract-testkit`）；Fake + per-trait suite；全 trait 深度 / 真实后端 profile 仍 **DEFER** |
 | integration harness | **DEFER**（跨 crate INFRA；§3.3 / §24.0 residual） |
 | ClockDomain 跟随 | **PASS**：每 `ManualClock` 实例独立 domain；跨实例 `checked_duration_since` → `None` |
 | 用户可见错误中文 | **PASS**：`ManualClockError` Display 中文 |
@@ -105,7 +105,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 | 13.6 | mutation score ≥90% | PASS | 本仓 `cargo mutants`：missed=0（caught=10, unviable=20） |
 | 13.7 | line ≥95%；branch ≥90% OPTIONAL | PASS / DEFER | line **99.65%** PASS；branch 本工具 summary 无分支数据 → **OPTIONAL/DEFER**（与上游 residual 一致） |
 | 13.8 | Miri | PASS | `cargo +nightly miri test -p testkit`（见 evidence） |
-| 13.9 | contract-testkit 自测 | PARTIAL | 最小面在 `contracts` crate（FakeTx/FakeBus）；独立 test-support crate DEFER |
+| 13.9 | contract-testkit 自测 | PASS | `cargo test -p contract-testkit` · `tests/suite_self_tests.rs` |
 
 ### §24 验收清单（core 相关）
 
@@ -118,7 +118,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 | 24.3 | branch ≥90% | DEFER | OPTIONAL（上游 residual；本仓不升强制） |
 | 24.3 | mutation ≥90% | PASS | missed=0 |
 | 24.3 | Miri | PASS | 本仓 miri 日志 |
-| 24.4 | Contract 闭合 | PARTIAL / DEFER | **contracts 平面已存在**；最小 Fake 入口在 contracts；全 trait conformance + 真实后端仍 DEFER |
+| 24.4 | Contract 闭合 | PARTIAL | **contract-testkit 已独立落地**；first-batch suite PASS；ObjectStore 等 + 真实后端仍 DEFER |
 | 24.5 | 消费为 dev-dep / 无 build-dep / 无 normal graph 泄漏（core 侧） | PASS | crate 自身 `publish=false` + prod deps only kernel；全仓 machine gate/xtask **DEFER**（无 infra-xtask graph check） |
 | 24.5 | feature 不泄漏 | PASS | `default=[]` 无其它 feature |
 | 24.6 | 治理（RFC / xtask…） | PARTIAL | CHANGELOG + Evidence 本仓已有；经 archgate 的治理机控 **OOS**（本仓明确不移植 archgate / `.architecture`） |
@@ -141,7 +141,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 
 ## 未做（follow-up / DEFER）
 
-- 独立 `crates/test-support/contracts` crate 与全 trait conformance suite（§24.4 残余）
+- 全 trait 深度 conformance / 真实后端 profile（§24.4 残余）
 - 全仓 production-graph machine gate（xtask，依赖缺失）
 - branch coverage ≥90% 强制（OPTIONAL residual）
 - 上游 SSOT 文档内部 STALE 收口（应在 xhyper.rs 修，再镜像同步）
@@ -157,7 +157,7 @@ core 必选 GAP = 0
 | 项 | 状态 |
 |----|------|
 | contracts 平面 | **已存在**（纠正旧文「缺 contracts」） |
-| 最小 contract-testkit 入口 | **在 contracts**：`FakeTxRunner` / `FakeEventBus` / `RecordingTxRunner` |
+| 独立 contract-testkit | **已落地**：`crates/test-support/contracts` |
 | contracts 生产语义 | **部分闭合**（Tx/消息）；其余 trait 深度仍 DEFER |
 | ManualClock × ClockDomain | **PASS**；跨实例比较 → `None` |
 | 中文 Display / workspace lints | **PASS** |
@@ -168,5 +168,6 @@ core 必选 GAP = 0
 
 | 日期 | 说明 |
 |------|------|
+| 2026-07-21 | 独立 `contract-testkit` crate 落地（`crates/test-support/contracts`） |
 | 2026-07-21 | 生产就绪文档同步：contracts 存在性、domain、中文错误、PARTIAL contract-testkit；PR #98 **合入 main** |
 | 2026-07-21 | 四包内部 GO：package 名对齐 `testkit`；全部 `cargo -p testkit`；examples/surface/baseline；PR #159 · tag `v0.3.0-four-crates` |

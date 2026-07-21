@@ -22,6 +22,7 @@ futures-core = { workspace = true }
 workspace = true
 
 [dev-dependencies]
+contract-testkit = { path = "../test-support/contracts", version = "0.1.0" }
 async-trait = { workspace = true }
 binancex = { path = "../adapters/exchange/binance", version = "0.3.0" }
 decimalx = { path = "../types/decimal", version = "0.1.0" }

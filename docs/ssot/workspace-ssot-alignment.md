@@ -63,7 +63,8 @@
 | 上游镜像域 | 镜像路径 | 本仓 crate | 状态 |
 |------------|----------|------------|------|
 | kernel | `.agents/ssot/kernel/` | `crates/kernel` | **已落地**；ClockDomain + loom CI + wait_timeout；见 kernel 对齐文 |
-| testkit | `.agents/ssot/testkit/` | `crates/testkit` | **ManualClock core 已落地**（含 domain）；独立 contract-testkit crate **DEFER** |
+| testkit | `.agents/ssot/testkit/` | `crates/testkit` | **ManualClock core 已落地**（含 domain） |
+| contract-testkit | `.agents/ssot/testkit/` §3.2 | `crates/test-support/contracts` | **已落地**（Fake + per-trait suite；仅 dev-dep） |
 | schedulex | `.agents/ssot/schedulex/` | `crates/schedulex` | **registry 已落地**（active SSOT 最小合同） |
 | types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；decimal **L1**；canonical **L2** committed v1–v1.3；package stable **OPEN** |
 | configx | `.agents/ssot/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
@@ -72,7 +73,7 @@
 | observex | `.agents/ssot/observex/` | `crates/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
 | infra 其余域 | `.agents/ssot/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
 | adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **镜像已注册**；多数 scaffold；**redisx live KV** + exchange **只读 server_time** 入口（#168/#172）；**非**业务 Production Ready |
-| （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/conformance；**L3 子集** KV+Instr（#172）；Tx/Bus/Repo/Venue 业务 live **DEFER** |
+| （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Tx/Bus/Repo/Venue 业务 live **DEFER** |
 | transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
 | tools | `.agents/ssot/tools/` | `crates/evidence`（仅 evidence） | evidence 含 `FileEvidenceAppender`；goalctl/xtask/verifyctl **未**落地 |
 
@@ -94,6 +95,7 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 # 域专项（package 名 = cargo metadata name）
 cargo test -p kernel --all-targets
 cargo test -p testkit --all-targets
+cargo test -p contract-testkit --all-targets
 cargo test -p configx --all-targets
 cargo test -p schedulex --all-targets
 cargo test -p decimalx --all-targets

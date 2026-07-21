@@ -1,0 +1,32 @@
+[package]
+name = "contract-testkit"
+version = "0.1.0"
+publish = false
+edition.workspace = true
+rust-version.workspace = true
+description = "T0 contract-testkit：Fake/Recording + per-trait conformance suite（SPEC-TESTKIT-002 §3.2）"
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "contract_testkit"
+
+[dependencies]
+async-trait = { workspace = true }
+bytes = { workspace = true }
+canonical = { path = "../../types/canonical", version = "0.1.0" }
+contracts = { path = "../../contracts", version = "0.1.0" }
+decimalx = { path = "../../types/decimal", version = "0.1.0" }
+futures-core = { workspace = true }
+futures-util = { workspace = true }
+kernel = { path = "../../kernel", version = "0.3.0" }
+tokio = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+
+[features]
+default = []
+
+[lints]
+workspace = true
