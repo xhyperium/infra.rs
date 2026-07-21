@@ -25,13 +25,16 @@
 上游 hyperware 源 (xhyper.rs)
 ├── .agent/SSOT/kernel/     ← xhyper kernel 规格 SSOT
 ├── .agent/SSOT/testkit/    ← xhyper testkit 规格 SSOT
-└── .agent/SSOT/types/      ← xhyper 类型系统 SSOT
+├── .agent/SSOT/types/      ← xhyper 类型系统 SSOT
+└── .agent/SSOT/infra/      ← xhyper infra 平面（bootstrap/configx/gate/…）
 
 投影层（只读，自动生成）
 ├── .agents/skills/         ← 从 .claude/skills/ 投影
 ├── .agents/ssot/kernel/    ← 从 xhyper.rs/.agent/SSOT/kernel/ 镜像
 ├── .agents/ssot/testkit/   ← 从 xhyper.rs/.agent/SSOT/testkit/ 镜像
-└── .agents/ssot/types/     ← 从 xhyper.rs/.agent/SSOT/types/ 镜像
+├── .agents/ssot/types/     ← 从 xhyper.rs/.agent/SSOT/types/ 镜像
+└── .agents/ssot/{bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport}/
+                            ← 从 xhyper.rs/.agent/SSOT/infra/* 镜像
 ```
 
 ---
@@ -61,12 +64,15 @@
 - 投影层必须同步更新
 
 ### R6: 上游 hyperware 镜像
-- `.agents/ssot/kernel/`、`.agents/ssot/testkit/`、`.agents/ssot/types/` 是 `xhyper.rs/.agent/SSOT/` 的只读镜像
+- `.agents/ssot/kernel/`、`.agents/ssot/testkit/`、`.agents/ssot/types/` 以及 infra 域
+  （`bootstrap` / `configx` / `gate` / `observex` / `resiliencx` / `schedulex` / `testkitx` / `transport`）
+  是 `xhyper.rs/.agent/SSOT/` 的只读镜像
 - 镜像更新命令：
   ```bash
   cp -rf /home/workspace/xhyper.rs/.agent/SSOT/kernel  .agents/ssot/
   cp -rf /home/workspace/xhyper.rs/.agent/SSOT/testkit .agents/ssot/
   cp -rf /home/workspace/xhyper.rs/.agent/SSOT/types   .agents/ssot/
+  cp -rf /home/workspace/xhyper.rs/.agent/SSOT/infra/* .agents/ssot/
   ```
 - 禁止在镜像副本中直接编辑
 - 上游变更后需手动执行镜像同步
