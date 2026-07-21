@@ -66,6 +66,45 @@ status-check: ## 校验入库 STATUS.md / CI 矩阵是否过期
 status-watch: ## 自动监控：每 30s 重扫（本地副本；非 main 写 STATUS.md）
 	@node scripts/docs/gen-crate-status.mjs --watch 30
 
+# ── Beads 同步与测试 ──────────────────────
+
+.PHONY: beads-test beads-test-unit beads-test-ui beads-test-complex beads-test-stress beads-test-i18n
+.PHONY: beads-sync-dry beads-sync-live beads-sync-full beads-sync-interactive
+
+beads-test: ## 运行全部 beads 测试套件（180 assertions）
+	@echo "=== beads unit (61) ===" && node scripts/beads/gh-sync.test.mjs
+	@echo "=== beads UI (59) ===" && node scripts/beads/gh-sync-interactive-test.mjs
+	@echo "=== beads complex (11) ===" && node scripts/beads/gh-sync-complex-test.mjs
+	@echo "=== beads stress (29) ===" && node scripts/beads/gh-sync-stress-test.mjs
+	@echo "=== beads i18n (20) ===" && node scripts/beads/gh-sync-i18n-test.mjs
+
+beads-test-unit: ## 单元测试 (61 assertions)
+	@node scripts/beads/gh-sync.test.mjs
+
+beads-test-ui: ## 交互 UI 测试 (59 assertions)
+	@node scripts/beads/gh-sync-interactive-test.mjs
+
+beads-test-complex: ## 复杂输入测试 (11 assertions)
+	@node scripts/beads/gh-sync-complex-test.mjs
+
+beads-test-stress: ## 极值压力测试 (29 assertions)
+	@node scripts/beads/gh-sync-stress-test.mjs
+
+beads-test-i18n: ## 多语言测试 (20 assertions)
+	@node scripts/beads/gh-sync-i18n-test.mjs
+
+beads-sync-dry: ## 预览 beads→GitHub 同步（不实际变更）
+	@node scripts/beads/gh-sync.mjs --dry-run
+
+beads-sync-live: ## 增量同步 beads↔GitHub（实际变更）
+	@node scripts/beads/gh-sync.mjs
+
+beads-sync-full: ## 全量重新同步
+	@node scripts/beads/gh-sync.mjs --full
+
+beads-sync-interactive: ## 交互式冲突审查同步
+	@node scripts/beads/gh-sync.mjs --interactive
+
 # ── 常用组合 ─────────────────────────────
 
 .PHONY: ci update
