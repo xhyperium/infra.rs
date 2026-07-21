@@ -31,6 +31,9 @@ jobs:
     name: Public API baseline
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v4
 
@@ -43,7 +46,8 @@ jobs:
       - name: 安装 stable（workspace 默认）
         uses: dtolnay/rust-toolchain@stable
 
-      - uses: Swatinem/rust-cache@v2
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: 安装 cargo-public-api
         uses: taiki-e/install-action@v2
