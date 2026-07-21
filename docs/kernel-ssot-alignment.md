@@ -173,6 +173,12 @@ RUSTFLAGS='--cfg loom' cargo test -p xhyper-kernel --test lifecycle_concurrency_
 - crates.io 再发布与 `publish = true`
 - 上游 SSOT 镜像内部措辞收口（应在 xhyper.rs 修，再 `cp -rf` 同步）
 
+## Workspace 交叉引用
+
+- 总览：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
+- testkit（ManualClock）：[testkit-ssot-alignment.md](./testkit-ssot-alignment.md)
+- types：[types-ssot-alignment.md](./types-ssot-alignment.md)
+
 ## 变更记录
 
 | 日期 | 说明 |
@@ -180,3 +186,4 @@ RUSTFLAGS='--cfg loom' cargo test -p xhyper-kernel --test lifecycle_concurrency_
 | 2026-07-21 | 初版：逐条矩阵 + 禁止 From/not_found/other/Clock 默认 monotonic 负向面加强 |
 | 2026-07-21 | Codex P2 修复：`[lints] workspace = true`、`publish = false`、如实引用 coverage/mutants/miri workflows |
 | 2026-07-21 | Codex P1：修复 coverage workflow branch 解析；补 BeforeUnixEpoch/Overflow 测；mutants mkdir；branch cover 100% |
+| 2026-07-21 | 交叉引用 workspace 总览；确认无 `infra-core` 依赖 |

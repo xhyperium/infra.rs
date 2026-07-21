@@ -10,12 +10,16 @@
 - 主要代码在 `crates/`
 - 职责：实现库代码、维护 CI/工程约定、维护 Agent skills/hooks
 
-## 上游 SSOT 与 testkit
+## 上游 SSOT 与本仓落地
 
-- `.agents/ssot/testkit` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓无 crate 也可宣称 ship」
-- 本仓已落地：`crates/testkit`（`xhyper-testkit` / ManualClock）
-- 验证：`cargo test -p xhyper-testkit`
-- 详：[docs/testkit-ssot-alignment.md](./docs/testkit-ssot-alignment.md)
+- `.agents/ssot/{kernel,testkit,types}` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓可宣称 ship」
+- 本仓 members：`kernel` / `testkit` / `types/decimal` / `types/canonical`（**无** `infra-core`）
+- 验证：`cargo test --workspace`；专项见对齐文档
+- 总览：[docs/workspace-ssot-alignment.md](./docs/workspace-ssot-alignment.md)
+- 域文档：
+  - [docs/kernel-ssot-alignment.md](./docs/kernel-ssot-alignment.md)
+  - [docs/testkit-ssot-alignment.md](./docs/testkit-ssot-alignment.md)
+  - [docs/types-ssot-alignment.md](./docs/types-ssot-alignment.md)
 
 ## Hook 感知
 
