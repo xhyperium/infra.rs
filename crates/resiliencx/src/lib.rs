@@ -1,22 +1,25 @@
-//! resiliencx —— L1 弹性：重试 + 熔断 + 限流（ADR-005 可观测注入）。
+//! resiliencx —— L1 弹性：重试 + 熔断 + 限流 + 舱壁（ADR-005 可观测注入）。
 //!
 //! | 能力 | 类型 | 说明 |
 //! |------|------|------|
 //! | 重试 | [`RetryConfig`] / [`retry_fn`] | active SSOT §2；同步 `FnMut` |
 //! | 熔断 | [`CircuitBreaker`] | 三态；**无墙钟**（拒绝计数推进 HalfOpen） |
 //! | 限流 | [`RateLimiter`] | 令牌桶；**无墙钟**（显式 [`RateLimiter::refill`]） |
+//! | 舱壁 | [`Bulkhead`] | 并发上限；满载立即拒绝；RAII 许可 |
 //!
-//! **仍未交付**：bulkhead、async wait、backoff/jitter、retry budget、package stable。
+//! **仍未交付**：async wait、backoff/jitter、retry budget、package stable。
 //!
 //! 可观测性通过 [`contracts::Instrumentation`] 注入；**禁止**直接依赖 observex（ADR-005）。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod bulkhead;
 mod circuit;
 mod rate_limit;
 mod retry;
 
+pub use bulkhead::{Bulkhead, BulkheadConfig, BulkheadPermit};
 pub use circuit::{CircuitBreaker, CircuitConfig, CircuitState};
 pub use rate_limit::{RateLimitConfig, RateLimiter};
 pub use retry::{RetryConfig, RetryValue, retry_downcast, retry_fn, retry_ok};
