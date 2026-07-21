@@ -5,6 +5,7 @@
 [![校验](https://github.com/xhyperium/infra.rs/actions/workflows/validation.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/validation.yml)
 [![安全](https://github.com/xhyperium/infra.rs/actions/workflows/security.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/security.yml)
 [![Constitution](https://github.com/xhyperium/infra.rs/actions/workflows/constitution.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/constitution.yml)
+[![Beads Sync Test](https://github.com/xhyperium/infra.rs/actions/workflows/beads-test.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/beads-test.yml)
 
 **infra.rs** 是 [xhyper.rs](https://github.com/xhyperium/xhyper.rs) 项目的基础设施与治理仓库，承载以下职责：
 
@@ -118,6 +119,7 @@ Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTU
 | 格式 | `cargo fmt --all`，`max_width = 100` |
 | Lint | `cargo clippy --workspace --all-targets -- -D warnings` |
 | 测试 | `cargo nextest` + `cargo llvm-cov`，覆盖率 >= 80% |
+| Beads 测试 | `make beads-test`（180 assertions，5 套件） |
 | 安全 | `cargo deny check`，禁止 `unsafe` |
 | 提交 | Conventional Commits |
 | 分支 | `main` 受保护，feature 分支 + PR，squash merge |
@@ -145,7 +147,7 @@ Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTU
 | Codex | 编排与派工 |
 | Copilot | 补充建议 |
 
-技能 SSOT：`.claude/skills/`。任务跟踪：`bd`。
+技能 SSOT：`.claude/skills/`。任务跟踪：`bd`（`make beads-sync-dry` / `make beads-test` 自验证）。
 
 ## 许可
 

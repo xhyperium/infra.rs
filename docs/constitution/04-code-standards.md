@@ -84,6 +84,7 @@ Agent 与人类编写本仓 Rust 代码时，至少遵守：
   - 例：`v0.3.0`, `v1.0.0`
 - **commit**：[Conventional Commits](https://www.conventionalcommits.org/)
   - 例：`feat(binancex): add order management scaffold`
+  - **模板**：仓库提供 `.gitmessage` 提交信息模板，首次克隆后执行 `git config commit.template .gitmessage` 激活；之后每次 `git commit`（不带 `-m`）自动在编辑器中加载模板
 
 ### 4.3.4 文件与目录
 

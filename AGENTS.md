@@ -210,7 +210,7 @@ node scripts/quality-gates/check.mjs
 - [ ] `cargo test --workspace` 通过
 - [ ] 文档已更新（API doc / CHANGELOG / CONSTITUTION）
 - [ ] 关联 beads 状态已更新
-- [ ] 提交信息遵循 Conventional Commits
+- [ ] 提交信息遵循 Conventional Commits（模板：`git config commit.template .gitmessage`）
 
 ### 委托与接力
 
