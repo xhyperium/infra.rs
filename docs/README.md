@@ -6,7 +6,7 @@
 
 | 目录 | 放什么 | 不放什么 |
 |------|--------|----------|
-| [`constitution/`](constitution/) | 工程宪章入口、条款导航、宪章附属说明 | 落地细则、对齐矩阵、状态报告、DDR |
+| [`constitution/`](constitution/) | 工程宪章正文 SSOT（分章）+ 索引 | 落地细则、对齐矩阵、状态报告、DDR |
 | [`governance/`](governance/) | 宪章落地细则、强制工程约定、领域规范 | 对齐审计矩阵、一次性状态报告、DDR |
 | [`ssot/`](ssot/) | SSOT 镜像同步手册、域对齐矩阵、落地状态 | 通用治理条文、CI 配置快照 |
 | [`status/`](status/) | CI/仓库配置的**状态与验证记录**（可过期） | 长期有效的规则与策略 |
@@ -27,8 +27,9 @@
 
 | 文档 | 说明 |
 |------|------|
-| [README.md](constitution/README.md) | 宪章目录职责、条款导航、与 governance 边界 |
-| [CONSTITUTION.md](../CONSTITUTION.md) | 工程宪章正文（仓库根 SSOT，不在本子目录内复制） |
+| [README.md](constitution/README.md) | 宪章索引与常用条款速查（正文 SSOT 入口） |
+| [01-mission.md](constitution/01-mission.md) … [08-amendments.md](constitution/08-amendments.md) | 分章正文 |
+| [CONSTITUTION.md](../CONSTITUTION.md) | 仓库根兼容索引（指向本目录） |
 
 ## 治理与约定 — [`governance/`](governance/)
 
@@ -40,7 +41,7 @@
 | [ASD-STE100.md](governance/ASD-STE100.md) | 英文技术文档受控语言（STE）落地指南 |
 | [quant-dev-spec.md](governance/quant-dev-spec.md) | 量化开发领域专项规范 |
 
-相关根文档（不在 `docs/` 内）：[CONSTITUTION.md](../CONSTITUTION.md)（索引见 [`constitution/`](constitution/)）、[ARCHITECTURE.md](../ARCHITECTURE.md)。
+相关根文档：[CONSTITUTION.md](../CONSTITUTION.md)（兼容索引 → [`constitution/`](constitution/)）、[ARCHITECTURE.md](../ARCHITECTURE.md)。
 
 ---
 

@@ -73,7 +73,7 @@ remote: - 2 of 2 required status checks are expected.
 ```
 
 - **应急**: team `maintainers` 可在 PR 路径下 bypass；须在 PR 记录原因
-- **来源**: `CONSTITUTION.md §6.0` + Ruleset `main-ai-first`
+- **来源**: `docs/constitution/06-governance.md` §6.0 + Ruleset `main-ai-first`
 
 ---
 

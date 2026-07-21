@@ -1,49 +1,53 @@
 # constitution/ — 工程宪章
 
-## 职责
+本目录是 **工程宪章正文 SSOT**。所有参与者（人、AI、自动化）均受此宪章约束。
 
-本目录是 **工程宪章** 在 `docs/` 下的归类入口：索引宪章正文、条款导航，以及仅服务宪章阅读与修订的附属材料。
+仓库根 [`CONSTITUTION.md`](../../CONSTITUTION.md) 为**兼容索引**（指向本目录）；修订宪章时改本目录分章文件，并同步根索引与本 README。
 
-**宪章正文 SSOT** 仍位于仓库根：[`CONSTITUTION.md`](../../CONSTITUTION.md)。  
-本目录不复制正文；修订宪章时改根文件，并在本目录同步索引（如有条款表变更）。
+**当前版本**：v1.5.0（见 [八、修订](./08-amendments.md#83-版本)）
+
+## 章节索引
+
+| 章节 | 文件 | 主题 |
+|------|------|------|
+| 一 | [01-mission.md](./01-mission.md) | 使命 |
+| 二 | [02-values.md](./02-values.md) | 核心价值观（安全 / 可观测 / 可验证 / 自动化 / 简单） |
+| 三 | [03-architecture.md](./03-architecture.md) | 架构原则（模块边界 / 接口 / 类型驱动 / 错误处理） |
+| 四 | [04-code-standards.md](./04-code-standards.md) | 代码标准（格式 / Lint / 命名 / 测试 / 语言编码 / STE / ESM） |
+| 五 | [05-quality-gates.md](./05-quality-gates.md) | 质量门禁 |
+| 六 | [06-governance.md](./06-governance.md) | 治理（Git Main First / 变更流程 / 版本 / 所有权） |
+| 七 | [07-ai-agents.md](./07-ai-agents.md) | AI 代理章程 |
+| 八 | [08-amendments.md](./08-amendments.md) | 修订与版本历史 |
+
+### 常用条款速查
+
+| 条款 | 链接 |
+|------|------|
+| §4.5 语言与编码 | [04-code-standards.md §4.5](./04-code-standards.md#45-语言与编码强制) |
+| §4.6 ASD-STE100 | [04-code-standards.md §4.6](./04-code-standards.md#46-文档标准asd-ste100强制) |
+| §4.8 ESM 脚本 | [04-code-standards.md §4.8](./04-code-standards.md#48-脚本语言ecmascript-module强制) |
+| §5 质量门禁 | [05-quality-gates.md](./05-quality-gates.md) |
+| §6.0 Git Main First | [06-governance.md §6.0](./06-governance.md#60-git-main-first强制) |
+| §6.0.5 Worktree | [06-governance.md §6.0.5](./06-governance.md#605-git-worktree-强制) |
+| §7 AI 代理 | [07-ai-agents.md](./07-ai-agents.md) |
 
 ## 收录标准
 
 **应放入本目录：**
 
+- 宪章分章正文
 - 宪章条款导航 / 章节索引
-- 宪章阅读指南、修订说明、与治理文档的映射表
+- 宪章版本历史（§8.3）
 - 仅解释宪章本身（不展开落地细则）的材料
 
 **不应放入本目录：**
 
-- 宪章条款的**实施细则**（worktree、语言约定、STE、版本号规则等）→ [`docs/governance/`](../governance/)
+- 宪章条款的**实施细则** → [`docs/governance/`](../governance/)
 - SSOT 对齐矩阵 / 同步报告 → [`docs/ssot/`](../ssot/)
 - CI 状态、配置快照 → [`docs/status/`](../status/)
 - 架构决策（DDR）→ [`docs/decisions/`](../decisions/)
 
-## 宪章正文
-
-| 文档 | 说明 |
-|------|------|
-| [CONSTITUTION.md](../../CONSTITUTION.md) | 工程宪章正文（仓库根 SSOT） |
-
-## 条款导航
-
-| 章节 | 主题 |
-|------|------|
-| 一 | 使命 |
-| 二 | 核心价值观（安全 / 可观测 / 可验证 / 自动化 / 简单） |
-| 三 | 架构原则（模块边界 / 接口 / 类型驱动 / 错误处理） |
-| 四 | 代码标准（格式 / Lint / 命名 / 测试 / 语言编码 / STE / ESM） |
-| 五 | 质量门禁 |
-| 六 | 治理（Git Main First / 变更流程 / 版本 / 所有权） |
-| 七 | AI 代理章程 |
-| 八 | 修订 |
-
 ## 落地细则（不在本目录）
-
-宪章条款的可执行细则见 [`docs/governance/`](../governance/)：
 
 | 细则 | 宪章锚点 |
 |------|----------|
@@ -51,6 +55,6 @@
 | [worktree-policy.md](../governance/worktree-policy.md) | §6.0.5 |
 | [编码与语言约定.md](../governance/编码与语言约定.md) | §4.5 |
 | [ASD-STE100.md](../governance/ASD-STE100.md) | §4.6 |
-| [quant-dev-spec.md](../governance/quant-dev-spec.md) | 领域扩展 |
+| [quant-dev-spec.md](../governance/quant-dev-spec.md) | 领域扩展（§3.3） |
 
 上级索引：[docs/README.md](../README.md)。

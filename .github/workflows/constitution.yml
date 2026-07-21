@@ -18,9 +18,10 @@ on:
       - "rust-toolchain.toml"
       - "rustfmt.toml"
       - "clippy.toml"
-      - "scripts/check-constitution.mjs"
+      - "scripts/quality-gates/check-constitution.mjs"
       - ".github/workflows/constitution.yml"
       - "CONSTITUTION.md"
+      - "docs/constitution/**"
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
@@ -67,9 +68,10 @@ jobs:
             '^rust-toolchain\.toml$'
             '^rustfmt\.toml$'
             '^clippy\.toml$'
-            '^scripts/check-constitution\.mjs$'
+            '^scripts/quality-gates/check-constitution\.mjs$'
             '^\.github/workflows/constitution\.yml$'
             '^CONSTITUTION\.md$'
+            '^docs/constitution/'
           )
           for f in "${files[@]+"${files[@]}"}"; do
             for p in "${patterns[@]}"; do
@@ -100,7 +102,7 @@ jobs:
 
       - name: Run constitution checks
         if: steps.scope.outputs.run_full == 'true'
-        run: ./scripts/check-constitution.mjs
+        run: ./scripts/quality-gates/check-constitution.mjs
         env:
           CARGO_TERM_COLOR: always
 
