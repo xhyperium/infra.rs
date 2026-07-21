@@ -28,7 +28,7 @@ jobs:
       - name: 初始化 beads 数据库
         run: bd init
       - name: 创建测试 issue
-        run: bd create "CI smoke test" -t test -p 0
+        run: bd create "CI smoke test" -t task -p 0
       - name: 列出 issues
         run: bd list
       - name: 获取 ready work
