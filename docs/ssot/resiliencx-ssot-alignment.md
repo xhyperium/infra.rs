@@ -44,6 +44,6 @@
 ```bash
 cargo test -p resiliencx --all-targets
 cargo clippy -p resiliencx --all-targets -- -D warnings
-node scripts/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
+node scripts/quality-gates/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
 cargo tree -p resiliencx -i observex  # 须无匹配
 ```

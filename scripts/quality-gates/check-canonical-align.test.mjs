@@ -1,7 +1,7 @@
 /**
  * check-canonical-align.mjs — L1 逻辑测试
  *
- * 用法: node scripts/check-canonical-align.test.mjs
+ * 用法: node scripts/quality-gates/check-canonical-align.test.mjs
  * exit 0 = 全部通过
  *
  * 测试覆盖:

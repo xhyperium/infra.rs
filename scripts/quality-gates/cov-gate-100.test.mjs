@@ -2,7 +2,7 @@
 /**
  * cov-gate-100.mjs 综合测试套件（不执行 cargo）。
  *
- * 运行: node scripts/cov-gate-100.test.mjs
+ * 运行: node scripts/quality-gates/cov-gate-100.test.mjs
  */
 import { strict as assert } from "node:assert";
 import { execSync } from "node:child_process";

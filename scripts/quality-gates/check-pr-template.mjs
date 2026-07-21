@@ -6,10 +6,10 @@
  * 通过环境变量 PR_BODY 接收 PR 描述文本。
  *
  * 用法:
- *   PR_BODY="..." node scripts/check-pr-template.mjs
+ *   PR_BODY="..." node scripts/quality-gates/check-pr-template.mjs
  *
  * SSOT: .github/PULL_REQUEST_TEMPLATE.md / CONSTITUTION.md §6.1
- * 替代: scripts/check-pr-template.mjs (已迁移)
+ * 替代: scripts/quality-gates/check-pr-template.mjs (已迁移)
  */
 
 const body = process.env.PR_BODY || "";

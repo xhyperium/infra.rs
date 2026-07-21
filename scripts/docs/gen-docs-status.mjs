@@ -3,8 +3,8 @@
  * gen-docs-status.mjs — 从 .github/workflows 生成 CI 工作流矩阵快照
  *
  * 用法:
- *   node scripts/gen-docs-status.mjs           # 写入 docs/status/CI_WORKFLOW_MATRIX.generated.md
- *   node scripts/gen-docs-status.mjs --check   # 仅校验是否与已生成文件一致
+ *   node scripts/docs/gen-docs-status.mjs           # 写入 docs/status/CI_WORKFLOW_MATRIX.generated.md
+ *   node scripts/docs/gen-docs-status.mjs --check   # 仅校验是否与已生成文件一致
  *
  * SSOT: docs/status/README.md
  */
@@ -71,7 +71,7 @@ const now = new Date().toISOString().slice(0, 10);
 const lines = [
   "# CI 工作流矩阵（自动生成）",
   "",
-  `> **生成方式**：\`node scripts/gen-docs-status.mjs\``,
+  `> **生成方式**：\`node scripts/docs/gen-docs-status.mjs\``,
   `> **生成日期**：${now}`,
   `> **源目录**：\`.github/workflows/\``,
   `> **勿手改**：本文件由脚本覆盖；叙事性说明见 [CI_STATUS_REPORT.md](CI_STATUS_REPORT.md) / [CONFIG_SUMMARY.md](CONFIG_SUMMARY.md)。`,
@@ -100,8 +100,8 @@ lines.push(
   "## 维护",
   "",
   "```bash",
-  "node scripts/gen-docs-status.mjs          # 重新生成",
-  "node scripts/gen-docs-status.mjs --check  # CI/本地一致性检查",
+  "node scripts/docs/gen-docs-status.mjs          # 重新生成",
+  "node scripts/docs/gen-docs-status.mjs --check  # CI/本地一致性检查",
   "```",
   "",
 );
@@ -117,7 +117,7 @@ if (CHECK) {
   // Compare ignoring generation date line
   const norm = (s) => s.replace(/> \*\*生成日期\*\*：\d{4}-\d{2}-\d{2}/, "> **生成日期**：DATE");
   if (norm(cur) !== norm(body)) {
-    console.error("FAIL: CI_WORKFLOW_MATRIX.generated.md is stale; run: node scripts/gen-docs-status.mjs");
+    console.error("FAIL: CI_WORKFLOW_MATRIX.generated.md is stale; run: node scripts/docs/gen-docs-status.mjs");
     process.exit(1);
   }
   console.log("OK: CI_WORKFLOW_MATRIX.generated.md is up to date");

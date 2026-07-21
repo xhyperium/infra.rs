@@ -118,7 +118,7 @@ cargo test --workspace
 cargo fmt --all --check
 cargo clippy --workspace --all-features --all-targets -- -D warnings
 cargo deny check
-node scripts/check.mjs
+node scripts/quality-gates/check.mjs
 ```
 
 - **target-dir**：`.cargo/target/`
@@ -130,7 +130,7 @@ node scripts/check.mjs
 完整细则见 [docs/governance/worktree-policy.md](./docs/governance/worktree-policy.md) 与 [CONSTITUTION.md §6.0.5](./CONSTITUTION.md)。
 
 - **所有活跃开发**在 `.worktrees/<branch-name>` 内进行
-- 开工：`node scripts/worktree.mjs create <type>/<id>-<slug>` → `cd` 进入 worktree
+- 开工：`node scripts/worktree/worktree.mjs create <type>/<id>-<slug>` → `cd` 进入 worktree
 - `pre-tool-check` 硬拦截主仓 Write/Edit 与主仓功能分支切换
 - 禁止 Agent 使用 `INFRA_WORKTREE_BYPASS=1`
 

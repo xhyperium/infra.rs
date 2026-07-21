@@ -6,7 +6,7 @@
  * 不存在 `DA:<line>,0`（每条可插桩行至少执行一次）。
  *
  * 用法:
- *   node scripts/cov-gate-100.mjs -p kernel --filter crates/kernel/src
+ *   node scripts/quality-gates/cov-gate-100.mjs -p kernel --filter crates/kernel/src
  */
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -15,7 +15,7 @@ import { join } from "node:path";
 
 function usage(code = 1) {
   console.error(
-    "usage: node scripts/cov-gate-100.mjs -p <package> --filter <path-substr> [--extra cargo-llvm-cov-args...]",
+    "usage: node scripts/quality-gates/cov-gate-100.mjs -p <package> --filter <path-substr> [--extra cargo-llvm-cov-args...]",
   );
   process.exit(code);
 }

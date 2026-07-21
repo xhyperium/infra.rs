@@ -5,7 +5,7 @@
  * 职责: 从门禁、审查、推送、CI 到清理的全流程 PR 自动化。
  *
  * 用法:
- *   node scripts/pr-flow.mjs [选项]
+ *   node scripts/workflow/pr-flow.mjs [选项]
  *
  * 选项:
  *   --dry-run        仅输出计划，不执行实际操作
@@ -212,7 +212,7 @@ async function phaseGate(opts) {
     { name: "cargo clippy", cmd: "cargo clippy --workspace --all-features --all-targets -- -D warnings", error: "Clippy 检查失败" },
     { name: "cargo test", cmd: "cargo test --workspace", error: "测试失败" },
     { name: "cargo doc", cmd: "cargo doc --workspace --no-deps --document-private-items", error: "文档生成失败" },
-    { name: "harness check", cmd: "node scripts/check.mjs", error: "Harness 检查失败" },
+    { name: "harness check", cmd: "node scripts/quality-gates/check.mjs", error: "Harness 检查失败" },
   ];
 
   for (const step of steps) {
@@ -430,7 +430,7 @@ async function phaseCleanup(opts) {
     info(`  git checkout main`);
     info(`  git pull`);
     info(`  git branch -d ${branch}`);
-    info(`  node scripts/worktree.mjs remove ${branch}`);
+    info(`  node scripts/worktree/worktree.mjs remove ${branch}`);
     info(`  git fetch --prune`);
     return true;
   }
@@ -466,7 +466,7 @@ async function phaseCleanup(opts) {
 
   info("清理 worktree ...");
   try {
-    run(`node scripts/worktree.mjs remove ${branch}`, { silent: true, allowFail: true });
+    run(`node scripts/worktree/worktree.mjs remove ${branch}`, { silent: true, allowFail: true });
     ok("Worktree 已清理");
   } catch (e) {
     warn("Worktree 清理失败（可能不存在）");
@@ -488,7 +488,7 @@ function showHelp() {
   console.log(`pr-flow.mjs — PR 全生命周期自动化
 
 用法:
-  node scripts/pr-flow.mjs [选项]
+  node scripts/workflow/pr-flow.mjs [选项]
 
 选项:
   --dry-run          仅输出计划，不执行实际操作
@@ -506,9 +506,9 @@ function showHelp() {
   5. 清理 — 切换 main + 删除分支 + worktree 清理 + prune
 
 示例:
-  node scripts/pr-flow.mjs --dry-run
-  node scripts/pr-flow.mjs --auto-merge --reviewer alice --label enhancement
-  node scripts/pr-flow.mjs --skip-review --dry-run
+  node scripts/workflow/pr-flow.mjs --dry-run
+  node scripts/workflow/pr-flow.mjs --auto-merge --reviewer alice --label enhancement
+  node scripts/workflow/pr-flow.mjs --skip-review --dry-run
 `);
 }
 

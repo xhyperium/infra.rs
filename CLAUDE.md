@@ -50,7 +50,7 @@
 **禁止在主仓 `main` 工作区直接改代码。** 细则：[docs/governance/worktree-policy.md](./docs/governance/worktree-policy.md)
 
 ```bash
-node scripts/worktree.mjs create feat/<id>-<slug>
+node scripts/worktree/worktree.mjs create feat/<id>-<slug>
 cd .worktrees/feat/<id>-<slug>
 # 在该目录内编码 / 测试 / 提交 / 开 PR
 ```
@@ -94,8 +94,8 @@ cd .worktrees/feat/<id>-<slug>
 ## 自动审查闭环
 
 ```bash
-node scripts/check.mjs
-node scripts/gc-scan.mjs
+node scripts/quality-gates/check.mjs
+node scripts/harness/gc-scan.mjs
 cargo test --workspace
 bd ready
 ```

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * pr-flow.test.mjs — L1 自检测试 for scripts/pr-flow.mjs
+ * pr-flow.test.mjs — L1 自检测试 for scripts/workflow/pr-flow.mjs
  *
  * 测试覆盖:
  * - Shebang 与语法检查

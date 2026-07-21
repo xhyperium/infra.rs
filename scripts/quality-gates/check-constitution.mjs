@@ -5,12 +5,12 @@
  * 职责: 验证代码是否符合 CONSTITUTION.md 全部可自动化检查项。
  *
  * 用法:
- *   node scripts/check-constitution.mjs              # 完整检查
- *   node scripts/check-constitution.mjs --quick      # 快速（格式 + lint）
- *   node scripts/check-constitution.mjs --json       # JSON 输出
+ *   node scripts/quality-gates/check-constitution.mjs              # 完整检查
+ *   node scripts/quality-gates/check-constitution.mjs --quick      # 快速（格式 + lint）
+ *   node scripts/quality-gates/check-constitution.mjs --json       # JSON 输出
  *
  * SSOT: CONSTITUTION.md / Makefile (make check)
- * 替代: scripts/check-constitution.mjs (已迁移)
+ * 替代: scripts/quality-gates/check-constitution.mjs (已迁移)
  */
 
 import { execSync } from "child_process";

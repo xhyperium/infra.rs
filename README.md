@@ -65,7 +65,7 @@ xhyper-testkit = { git = "https://github.com/xhyperium/infra.rs.git", package = 
 
 ```bash
 # 健康检查（验证 hooks / skills / beads 就绪）
-node scripts/check.mjs
+node scripts/quality-gates/check.mjs
 
 # 初始化 Beads 任务板
 bd init && bd prime
@@ -77,7 +77,7 @@ bd init && bd prime
 
 ```bash
 # 加载快捷命令（建议写入 ~/.bashrc）
-eval "$(node scripts/worktree-activate.mjs)"
+eval "$(node scripts/worktree/worktree-activate.mjs)"
 
 # 创建 worktree 并切换
 wt feat/my-feature
@@ -89,9 +89,9 @@ wt main
 wt
 
 # 管理命令
-./scripts/worktree.mjs create feat/my-feature   # 创建
-./scripts/worktree.mjs remove feat/my-feature   # 删除
-./scripts/worktree.mjs prune                    # 清理
+./scripts/worktree/worktree.mjs create feat/my-feature   # 创建
+./scripts/worktree/worktree.mjs remove feat/my-feature   # 删除
+./scripts/worktree/worktree.mjs prune                    # 清理
 ```
 
 路径约定：`.worktrees/<branch>`，分支 `/` 保留为目录分隔符。
