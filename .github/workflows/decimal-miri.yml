@@ -20,7 +20,6 @@ jobs:
     name: Miri UB 检测
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    env:
     steps:
       - uses: actions/checkout@v4
       - name: 安装 nightly 工具链 (miri)

@@ -25,7 +25,6 @@ jobs:
     name: 行覆盖率 (100%)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust
