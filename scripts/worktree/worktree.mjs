@@ -23,7 +23,7 @@ import { fileURLToPath } from "url";
 import process from "process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "..");
+const ROOT = resolve(__dirname, "../..");
 const WT_BASE = resolve(ROOT, ".worktrees");
 
 function git(cmd, opts = {}) {
