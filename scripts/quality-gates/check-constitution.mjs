@@ -2,15 +2,14 @@
 /**
  * check-constitution.mjs — 宪章合规性自动验证
  *
- * 职责: 验证代码是否符合 CONSTITUTION.md 全部可自动化检查项。
+ * 职责: 验证代码是否符合 docs/constitution/ 工程宪章全部可自动化检查项。
  *
  * 用法:
  *   node scripts/quality-gates/check-constitution.mjs              # 完整检查
  *   node scripts/quality-gates/check-constitution.mjs --quick      # 快速（格式 + lint）
  *   node scripts/quality-gates/check-constitution.mjs --json       # JSON 输出
  *
- * SSOT: CONSTITUTION.md / Makefile (make check)
- * 替代: scripts/quality-gates/check-constitution.mjs (已迁移)
+ * SSOT: docs/constitution/（正文）/ CONSTITUTION.md（根索引）/ Makefile (make check)
  */
 
 import { execSync } from "child_process";
@@ -56,7 +55,7 @@ function info(msg) {
 if (!JSON_MODE) {
   console.log("╔══════════════════════════════════╗");
   console.log("║   宪章合规性验证                 ║");
-  console.log("║   CONSTITUTION.md               ║");
+  console.log("║   docs/constitution/            ║");
   console.log("╚══════════════════════════════════╝");
 }
 

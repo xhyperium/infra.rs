@@ -1,6 +1,6 @@
 # AGENTS.md — transportx
 
-> 完整行为准则与架构约束以仓库根 [AGENTS.md](../../AGENTS.md) 与 [CONSTITUTION.md](../../CONSTITUTION.md) 为准。
+> 完整行为准则与架构约束以仓库根 [AGENTS.md](../../AGENTS.md) 与 [docs/constitution/](../../docs/constitution/) 为准。
 
 ## 分支纪律
 

@@ -1,6 +1,6 @@
 # AGENTS.md — testkit
 
-> 仓库级规则见 [`../../AGENTS.md`](../../AGENTS.md) 与 [`../../CONSTITUTION.md`](../../CONSTITUTION.md)。  
+> 仓库级规则见 [`../../AGENTS.md`](../../AGENTS.md) 与 [`../../docs/constitution/`](../../docs/constitution/)。  
 > 权威规范镜像：SPEC-TESTKIT-002 · [`.agents/ssot/testkit/spec/spec.md`](../../.agents/ssot/testkit/spec/spec.md)
 
 ## 身份

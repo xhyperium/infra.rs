@@ -1,7 +1,7 @@
 # crates/ — Agent 行为规则
 
 > 本文件定义 AI 代理在本仓库 Rust workspace crates 中的行为规范。
-> SSOT 源：`.agents/ssot/SSOT.md`、`CONSTITUTION.md`。
+> SSOT 源：`.agents/ssot/SSOT.md`、`docs/constitution/`（正文；根 `CONSTITUTION.md` 为兼容索引）。
 
 ---
 
@@ -91,7 +91,7 @@ crates/<crate-name>/
 
 ### C1: 遵循宪章
 
-- 所有代码变更必须符合 `CONSTITUTION.md` 规范
+- 所有代码变更必须符合 `docs/constitution/` 工程宪章规范
 - 提交前运行 `make ci` 验证强制门禁
 
 ### C2: 模块边界

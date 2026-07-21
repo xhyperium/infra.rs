@@ -1,6 +1,6 @@
 # AGENTS.md — schedulex
 
-> 仓库级规则见 [`../../AGENTS.md`](../../AGENTS.md) 与 [`../../CONSTITUTION.md`](../../CONSTITUTION.md)。  
+> 仓库级规则见 [`../../AGENTS.md`](../../AGENTS.md) 与 [`../../docs/constitution/`](../../docs/constitution/)。  
 > 权威规范：active schedulex SSOT · [`.agents/ssot/infra/schedulex/spec/spec.md`](../../.agents/ssot/infra/schedulex/spec/spec.md)
 
 ## 身份
