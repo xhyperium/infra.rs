@@ -7,7 +7,7 @@
 //! 当前 active 合同（0.1.0）只提供线程安全的内存 `String` key-value 存储。
 //! **不是**多源加载、schema 校验或热更新系统；那些上位目标在 SSOT 中仍为 Unknown。
 //!
-//! 生产依赖仅 [`xhyper_kernel`]（本库以 `kernel` 名引用），不依赖 `observex` 或其他 L1。
+//! 生产依赖仅 [`kernel`]（package `xhyper-kernel`），不依赖 `observex` 或其他 L1。
 
 use std::collections::HashMap;
 use std::sync::RwLock;
