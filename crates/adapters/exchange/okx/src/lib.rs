@@ -1,16 +1,7 @@
 //! `okxx` — okx exchange adapter scaffold。
-//! 完整 `contracts` venue trait 接入 DEFER。
+//!
+//! 实现 [`contracts::VenueAdapter`] 及能力拆分 trait（内存占位，非真实 HTTP）。
 
 mod adapter;
-mod error;
 
-pub use adapter::{OkxAdapter, Ticker};
-pub use error::{Error, Result};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AdapterState {
-    Uninitialized,
-    Connected,
-    Disconnected,
-    Shutdown,
-}
+pub use adapter::{AdapterState, OkxAdapter};

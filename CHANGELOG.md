@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`xhyper-schedulex` 0.1.0**（`crates/schedulex`）：active SSOT 最小任务 ID 登记表；std-only；line cov 100%
 - **`docs/schedulex-ssot-alignment.md`**：schedulex 本仓对齐矩阵
+- **`binancex` / `okxx`**：实现 `contracts::VenueAdapter` 及能力拆分 trait（scaffold；非真实 HTTP）
 - **storage adapters 收敛到 `xhyper-contracts`**：redisx→KeyValueStore/PubSub；kafkax/natsx→EventBus；postgresx→Repository/TxRunner；ossx→ObjectStore；clickhousex→AnalyticsSink；taosx→TimeSeriesStore（均内存 scaffold）
 - **`natsx` / `postgresx` / `clickhousex` / `ossx` / `taosx`**：StorageAdapter 内存 scaffold（与 redisx/kafkax 同模式）
 - **`redisx` / `kafkax`**：实现 `StorageAdapter`（进程内 KV scaffold + 单元测试）
