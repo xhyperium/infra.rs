@@ -203,7 +203,7 @@ flowchart TB
 ```toml
 # crates/kernel/Cargo.toml（事实）
 [package]
-name = "xhyper-kernel"
+name = "kernel"
 version = "0.1.1"
 publish = true
 
@@ -618,7 +618,7 @@ flowchart LR
 1. 写/更新 docs/specs 或 kernel RFC（触及第三章/公开 API）
 2. 状态 Approved
 3. 改 crates/kernel + 下游同一批次
-4. cargo public-api -p xhyper-kernel --simplified（固定版本）→ 规范化后更新 .architecture/api/kernel-public-api.txt
+4. cargo public-api -p kernel --simplified（固定版本）→ 规范化后更新 .architecture/api/kernel-public-api.txt
 5. PR diff 必须包含快照变更；archgate KERNEL-API-001 会从源码 regenerate 并与 snapshot 比较（不一致 fail）
 6. addition 相对 baseline 须登记 kernel-api-rfc.toml + Approved RFC；removal/signature change 禁止
 7. cargo test -p xhyper-kernel；cargo run -p xhyper-archgate；cargo xtl lint-deps
@@ -838,7 +838,7 @@ PR:   https://github.com/xhyperium/infra.rs/pull/235
 1. Code review + CI green（含 kernel-loom）on #235 ✓
 2. Merge #235 → main（merge e7bda98e，2026-07-14）✓
 3. 验证 main：version 0.1.1 · registry stable · archgate · cargo test -p kernel ✓
-4. tag kernel-v0.1.1 · crates.io publish xhyper-kernel 0.1.1 ✓
+4. tag kernel-v0.1.1 · crates.io publish kernel 0.1.1 ✓
 5. 后续 #238（land record）/ #241（API-002）已 merge ✓
 ```
 

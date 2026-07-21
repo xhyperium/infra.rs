@@ -6,7 +6,7 @@
 | Status | **Draft / Non-normative candidate** |
 | Package / lib | `xhyper-decimalx` / `decimalx` |
 | Path / version | `crates/types/decimal` / `0.1.0` |
-| Candidate Spec | [SPEC-TYPES-DECIMALX-002](./xhyper-decimalx-complete-spec.md) |
+| Candidate Spec | [SPEC-TYPES-DECIMALX-002](./decimalx-complete-spec.md) |
 | Active SSOT | [decimalx-spec.md](../decimalx-spec.md) |
 | Snapshot | `95102919`（2026-07-15） |
 | Supersedes | `none while Draft` |

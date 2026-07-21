@@ -7,7 +7,7 @@
 | Path | `crates/schedulex` |
 | Layer | L1 Infra |
 | Authority | 本文件是 active current-state spec |
-| Candidate | [SPEC-INFRA-SCHEDULEX-002](../../../../draft/xhyper-schedulex-complete-spec.md)（Draft，非权威，不覆盖本文） |
+| Candidate | [SPEC-INFRA-SCHEDULEX-002](../../../../draft/schedulex-complete-spec.md)（Draft，非权威，不覆盖本文） |
 | Implementation snapshot | `b0934baa`（2026-07-15） |
 | Document commit | `e0b98df4` |
 | Verified at | `e0b98df4`（相关实现路径未变化） |
@@ -48,8 +48,8 @@
 
 ```bash
 cargo test -p xhyper-schedulex
-cargo check -p xhyper-schedulex --all-targets
-cargo clippy -p xhyper-schedulex --all-targets -- -D warnings
+cargo check -p schedulex --all-targets
+cargo clippy -p schedulex --all-targets -- -D warnings
 cargo xtl lint-deps
 cargo fmt -- --check
 ```

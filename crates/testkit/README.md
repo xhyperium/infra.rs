@@ -39,12 +39,12 @@ pub use testkit::{
 
 ```bash
 cargo test -p xhyper-testkit
-cargo clippy -p xhyper-testkit --all-targets -- -D warnings
+cargo clippy -p testkit --all-targets -- -D warnings
 cargo fmt --all --check
 
 # 质量（§13.6–§13.8；与 kernel 同级 CI 入口见 .github/workflows/testkit-*.yml）
-cargo llvm-cov -p xhyper-testkit --fail-under-lines 95 --summary-only
-mkdir -p .cargo/cache/mutants && cargo mutants -p xhyper-testkit --timeout 60
+cargo llvm-cov -p testkit --fail-under-lines 95 --summary-only
+mkdir -p .cargo/cache/mutants && cargo mutants -p testkit --timeout 60
 cargo +nightly miri test -p xhyper-testkit
 ```
 

@@ -2,7 +2,7 @@ name: 质量
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "Cargo.toml"
       - "**/*.rs"
@@ -11,7 +11,7 @@ on:
       - "clippy.toml"
       - ".github/workflows/quality.yml"
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "Cargo.toml"
       - "**/*.rs"

@@ -28,4 +28,4 @@ jobs:
       - name: 运行 Miri
         env:
           MIRIFLAGS: -Zmiri-disable-isolation
-        run: cargo +nightly miri test -p xhyper-kernel --all-features
+        run: cargo +nightly miri test -p kernel --all-features

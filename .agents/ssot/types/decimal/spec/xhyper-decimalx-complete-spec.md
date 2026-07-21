@@ -8,7 +8,7 @@ crate：`crates/types/decimal`
 - Implementation snapshot：`b0934baa`（2026-07-15）
 - Document commit：`e0b98df4`
 - Verified at：`e0b98df4`（相关实现路径未变化）
-- Candidate：[SPEC-TYPES-DECIMALX-002](../20260717/xhyper-decimalx-complete-spec.md)（Draft，非权威，不覆盖本文）
+- Candidate：[SPEC-TYPES-DECIMALX-002](../20260717/decimalx-complete-spec.md)（Draft，非权威，不覆盖本文）
 
 ## 1. 定位、证据等级与职责
 
@@ -127,8 +127,8 @@ Additive Only 仅适用于 `contracts` trait 层，不适用于本 crate。
 
 ```text
 cargo test -p xhyper-decimalx
-cargo check -p xhyper-decimalx --all-targets
-cargo clippy -p xhyper-decimalx --all-targets -- -D warnings
+cargo check -p decimalx --all-targets
+cargo clippy -p decimalx --all-targets -- -D warnings
 cargo fmt -- --check
 cargo xtl lint-deps
 ```

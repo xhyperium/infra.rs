@@ -12,32 +12,38 @@
 | 能力 | 状态 | 证据 |
 |------|------|------|
 | 重试 §2 | **PASS** | `retry.rs` + `tests/retry_contract.rs` |
-| 退避 / 确定性 jitter | **PASS** | `Backoff` / `retry_delay_ms` / `jitter_bps` |
-| 可注入 wait | **PASS** | `Wait` / `retry_fn_with_wait` / `NoWait` / `RecordingWait` |
-| 熔断 | **PASS**（无墙钟） | `circuit.rs` |
-| 限流（令牌桶） | **PASS** | `rate_limit.rs` |
-| 舱壁（bulkhead） | **PASS** | `bulkhead.rs` |
+| 熔断 | **PASS**（本仓扩展；无墙钟） | `circuit.rs` + unit/public_api |
+| 限流（令牌桶） | **PASS**（本仓扩展；显式 refill） | `rate_limit.rs` + unit/public_api |
+| 舱壁（bulkhead） | **PASS**（并发上限；RAII） | `bulkhead.rs` + unit/public_api |
 | Instrumentation | **PASS** | re-export `contracts::Instrumentation`；禁止 observex |
 | LCOV 行 100% | **PASS** | `cov-gate-100.mjs -p xhyper-resiliencx` |
-| async runtime wait / retry budget / stable | **DEFER** | residual OPEN |
+| async wait / backoff / budget / stable | **DEFER** | residual OPEN |
 
-## 重试退避合同（本仓）
+## 熔断合同（本仓）
 
-- `RetryConfig::{base_delay_ms, backoff, jitter_bps}`
-- `Backoff::Constant`：每次 `base_delay_ms`
-- `Backoff::Exponential { factor, max_delay_ms }`：`min(base * factor^(attempt-1), max)`
-- `jitter_bps`：确定性伪抖动（非加密 RNG）；`0` 关闭
-- `retry_fn` 默认 `ThreadSleepWait`；`retry_fn_with_wait` 注入自定义 wait
-- `base_delay_ms == 0` → 不 wait
+- 状态：`Closed` / `Open` / `HalfOpen`
+- `failure_threshold` 连续失败 → Open + `record_circuit_open`
+- Open 下累计拒绝 `open_to_half_open_after_rejects` 次 → HalfOpen（**非**墙钟冷却）
+- HalfOpen 连续成功 `success_threshold` → Closed + `record_circuit_close`；失败 → Open
+- 配置阈值为 0 → `Invalid`；Open 拒绝 → `Unavailable`
 
-## 熔断 / 限流 / 舱壁
+## 限流合同（本仓）
 
-见历史合同：三态熔断、令牌桶、`Bulkhead` RAII；均无墙钟冷却/自动 refill/排队超时。
+- 满桶起步；`try_acquire(n)` 不足 → `Unavailable`（不部分扣减）
+- `refill(n)` 不超过 capacity；**不**按时间自动补充
+
+## 舱壁合同（本仓）
+
+- `max_concurrent >= 1`；否则 `Invalid`
+- `try_enter` / `call`：在途达上限 → `Unavailable("bulkhead full")`
+- `BulkheadPermit` drop 归还槽位（含错误路径）
+- **无**排队、**无**超时等待
 
 ## 验证
 
 ```bash
-cargo test -p xhyper-resiliencx --all-targets
-cargo clippy -p xhyper-resiliencx --all-targets -- -D warnings
-node scripts/cov-gate-100.mjs -p xhyper-resiliencx --filter crates/resiliencx/src
+cargo test -p resiliencx --all-targets
+cargo clippy -p resiliencx --all-targets -- -D warnings
+node scripts/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
+cargo tree -p resiliencx -i observex  # 须无匹配
 ```

@@ -1,7 +1,7 @@
 # types/decimal — Goal
 
 > **状态**：Active 合同 agent-safe 基线已落地并对账 · **未** Goal Achieved · **未** Spec Approved  
-> Source Goal 候选：`20260717/xhyper-decimalx-complete-goal.md`（Draft，非权威）
+> Source Goal 候选：`20260717/decimalx-complete-goal.md`（Draft，非权威）
 
 ## 目标摘要
 

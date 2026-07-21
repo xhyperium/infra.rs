@@ -51,7 +51,7 @@
 └─────────┘
 
   adapters/* (scaffold) ── thiserror（+ contracts/decimalx when implementing）
-  xhyper-contracts ── serde + thiserror + decimalx（trait 出口；#43）
+  contracts ── serde + thiserror + decimalx（trait 出口；#43）
   （kernel/types MUST NOT depend on adapters）
 ```
 
@@ -88,18 +88,18 @@ cargo test --workspace --all-targets
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 # 域专项
-cargo test -p xhyper-kernel --all-targets
-cargo test -p xhyper-testkit --all-targets
-cargo test -p xhyper-configx --all-targets
-cargo test -p xhyper-schedulex --all-targets
-cargo test -p xhyper-decimalx --all-targets
-cargo test -p xhyper-canonical --all-targets
-cargo test -p xhyper-bootstrap --all-targets
-cargo test -p xhyper-transportx --all-targets
+cargo test -p kernel --all-targets
+cargo test -p testkit --all-targets
+cargo test -p configx --all-targets
+cargo test -p schedulex --all-targets
+cargo test -p decimalx --all-targets
+cargo test -p canonical --all-targets
+cargo test -p bootstrap --all-targets
+cargo test -p transportx --all-targets
 node scripts/check-canonical-align.mjs
 
 # adapters / contracts scaffold
-cargo check -p xhyper-contracts -p binancex -p okxx -p redisx -p kafkax \
+cargo check -p contracts -p binancex -p okxx -p redisx -p kafkax \
   -p natsx -p postgresx -p taosx -p ossx -p clickhousex
 diff -rq /home/workspace/xhyper.rs/.agent/SSOT/adapters .agents/ssot/adapters
 cargo test -p okxx --all-targets

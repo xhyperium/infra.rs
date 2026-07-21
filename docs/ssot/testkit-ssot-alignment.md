@@ -26,7 +26,7 @@ Cargo.toml members              含 crates/testkit
 package name                    xhyper-testkit
 lib name                        testkit
 publish                         false
-prod deps                       xhyper-kernel only
+prod deps                       kernel only
 dev deps                        proptest, static_assertions
 features.default                []
 ```
@@ -36,15 +36,15 @@ features.default                []
 ```bash
 # 功能与合同
 cargo test -p xhyper-testkit
-cargo clippy -p xhyper-testkit --all-targets -- -D warnings
+cargo clippy -p testkit --all-targets -- -D warnings
 cargo fmt --all --check
 
 # §13.7 line coverage（≥95%）
-cargo llvm-cov -p xhyper-testkit --fail-under-lines 95 --summary-only
+cargo llvm-cov -p testkit --fail-under-lines 95 --summary-only
 
 # §13.6 mutants（目标 score≥90%；本仓期望 missed=0）
 mkdir -p .cargo/cache/mutants
-cargo mutants -p xhyper-testkit --timeout 60
+cargo mutants -p testkit --timeout 60
 
 # §13.8 Miri
 cargo +nightly miri test -p xhyper-testkit

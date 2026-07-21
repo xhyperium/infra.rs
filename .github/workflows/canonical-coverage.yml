@@ -1,10 +1,11 @@
 name: Canonical Coverage
 
-# xhyper-canonical：LCOV 行覆盖率 100%
+# canonical：LCOV 行覆盖率 100%
 
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "crates/types/canonical/**"
       - "Cargo.toml"
@@ -12,7 +13,7 @@ on:
       - "scripts/cov-gate-100.mjs"
       - ".github/workflows/canonical-coverage.yml"
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "crates/types/canonical/**"
       - "Cargo.toml"
@@ -46,4 +47,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p xhyper-canonical --filter crates/types/canonical/src
+        run: node scripts/cov-gate-100.mjs -p canonical --filter crates/types/canonical/src

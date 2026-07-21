@@ -55,7 +55,7 @@ fn main() {
 ## 验证
 
 ```bash
-cargo test -p xhyper-bootstrap --all-targets
-cargo clippy -p xhyper-bootstrap --all-targets -- -D warnings
-cargo llvm-cov -p xhyper-bootstrap --all-targets --fail-under-lines 100 --summary-only
+cargo test -p bootstrap --all-targets
+cargo clippy -p bootstrap --all-targets -- -D warnings
+cargo llvm-cov -p bootstrap --all-targets --fail-under-lines 100 --summary-only
 ```

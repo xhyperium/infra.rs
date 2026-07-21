@@ -30,7 +30,7 @@
 # crates.io
 xhyper-kernel = "0.1.1"
 # 或 path（workspace）
-kernel = { package = "xhyper-kernel", path = "crates/kernel" }
+kernel = { package = "kernel", path = "crates/kernel" }
 ```
 
 ```rust

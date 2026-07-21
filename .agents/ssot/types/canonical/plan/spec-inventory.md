@@ -112,8 +112,8 @@
 | ID | 命令 |
 |----|------|
 | I-GATE-01 | `cargo test -p xhyper-canonical` |
-| I-GATE-02 | `cargo check -p xhyper-canonical --all-targets` |
-| I-GATE-03 | `cargo clippy -p xhyper-canonical --all-targets -- -D warnings` |
+| I-GATE-02 | `cargo check -p canonical --all-targets` |
+| I-GATE-03 | `cargo clippy -p canonical --all-targets -- -D warnings` |
 | I-GATE-04 | `cargo xtl lint-deps` |
 | I-GATE-05 | `cargo fmt -- --check` |
 
@@ -130,8 +130,8 @@
 | ID | 路径 | 角色 |
 |----|------|------|
 | I-DOC-01 | `canonical-spec.md` | active SSOT |
-| I-DOC-02 | `20260717/xhyper-canonical-complete-goal.md` | Goal Draft |
-| I-DOC-03 | `20260717/xhyper-canonical-complete-spec.md` | Spec Draft |
+| I-DOC-02 | `20260717/canonical-complete-goal.md` | Goal Draft |
+| I-DOC-03 | `20260717/canonical-complete-spec.md` | Spec Draft |
 | I-DOC-04 | `plan/*` | 本执行包 |
 | I-DOC-05 | `todo.md` | 工作台账 |
 | I-DOC-06 | crate README/CHANGELOG/AGENTS | 实现侧 |

@@ -99,18 +99,16 @@ crates/
 
 #### 4.3.2 Crate 命名
 
-| 层级 | 包名 (Cargo.toml) | 目录 | 说明 |
+| 类型 | 包名 (Cargo.toml) | 目录 | 示例 |
 |------|-------------------|------|------|
-| 可发布核心 | `xhyper-<domain>x` | `crates/<domain>x/` | 如 `xhyper-configx` |
-| 可发布（历史） | `xhyper-<domain>` | `crates/<domain>/` | `xhyper-kernel`, `xhyper-testkit` |
-| 内部适配器 | `<provider>x` | `crates/adapters/<kind>/<provider>/` | `binancex`, `redisx` |
-| 内部类型 | `xhyper-<domain>x` | `crates/types/<domain>/` | `xhyper-decimalx` |
+| 核心 crate | `<domain>` 或 `<domain>x` | `crates/<domain>/` | `kernel`, `configx` |
+| 适配器 | `<provider>x` | `crates/adapters/<kind>/<provider>/` | `binancex`, `redisx` |
 
 **规则**：
-- **`x` 后缀**：所有新 crate 包名统一以 `x` 结尾（xhyper extension）
-- **`xhyper-` 前缀**：crates.io 可发布的包加 `xhyper-` 前缀
-- **适配器**：无 `xhyper-` 前缀，包名 = `<provider>x`
-- **历史 crate**（kernel, testkit, canonical, evidence, contracts, bootstrap）暂不重命名，新 crate 遵循新规则
+- **`x` 后缀**：推荐新 crate 以 `x` 结尾（xhyper extension）
+- **无前缀**：包名不含 `xhyper-` 前缀
+- **目录与包名一致**：`crates/configx/` → 包名 `configx`
+- **适配器**：统一 `{provider}x` 模式，目录保持 `crates/adapters/{kind}/{provider}/`
 
 #### 4.3.3 分支与标签
 

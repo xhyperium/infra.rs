@@ -11,8 +11,8 @@ publish = false
 [dependencies]
 async-trait = { workspace = true }
 bytes = { workspace = true }
-xhyper-contracts = { path = "../../../contracts", version = "0.1.0" }
-xhyper-kernel = { path = "../../../kernel", version = "0.3.0" }
+contracts = { path = "../../../contracts", version = "0.1.0" }
+kernel = { path = "../../../kernel", version = "0.3.0" }
 
 [dev-dependencies]
 tokio = { workspace = true }

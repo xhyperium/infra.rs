@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/infra/transport/spec/spec.md` |
 | 本仓 crate | `crates/transport` → package `xhyper-transportx` / lib `transportx` |
 | 版本 | `0.1.0` |
-| 覆盖率门禁 | `cargo llvm-cov -p xhyper-transportx --fail-under-lines 100` |
+| 覆盖率门禁 | `cargo llvm-cov -p transportx --fail-under-lines 100` |
 
 > 镜像写 COMPLETE ≠ 本仓可宣称 ship。本表以 **members + 源码 + 本仓测试** 为准。
 
@@ -76,7 +76,7 @@
 
 | 指标 | 目标 | 结果 |
 |------|------|------|
-| lines | 100% | `cargo llvm-cov -p xhyper-transportx --fail-under-lines 100` |
+| lines | 100% | `cargo llvm-cov -p transportx --fail-under-lines 100` |
 | functions | 100%（报告） | 同上 summary |
 
 ## 本目标 FAIL 计数

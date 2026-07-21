@@ -9,7 +9,7 @@
 |----|----|----|------|
 | Goal → Spec | `goal/goal.md` | `spec/spec.md` | Active 入口绑定 |
 | Spec → Code | `spec/spec.md` | `crates/types/decimal` | 公开 API / 行为对齐 |
-| Spec dual | `spec/spec.md` | `spec/xhyper-decimalx-complete-spec.md` | `cmp` 同构 |
+| Spec dual | `spec/spec.md` | `spec/decimalx-complete-spec.md` | `cmp` 同构 |
 | Plan residual | `plan/residual-open.md` | T-HUM / T-DEF / T-POL | **仍开放** |
 | Review | `review/review.md` | 门禁 + residual | 默认 NOT PASS（人审） |
 | Wire | `crates/types/decimal/docs/WIRE.md` | serde/text/DB | **非** stable |

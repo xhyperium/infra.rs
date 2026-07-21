@@ -29,4 +29,4 @@ jobs:
         run: |
           # .cargo/mutants.toml 输出到 .cargo/cache/mutants；干净 checkout 需先建父目录
           mkdir -p .cargo/cache/mutants
-          cargo mutants -p xhyper-kernel --all-features -- --all-features
+          cargo mutants -p kernel --all-features -- --all-features

@@ -38,8 +38,8 @@ instr.record_circuit_close("fetch");
 
 ```bash
 cargo test -p xhyper-observex
-cargo clippy -p xhyper-observex --all-targets -- -D warnings
-node scripts/cov-gate-100.mjs -p xhyper-observex --filter crates/observex/src
+cargo clippy -p observex --all-targets -- -D warnings
+node scripts/cov-gate-100.mjs -p observex --filter crates/observex/src
 ```
 
 ## 非职责

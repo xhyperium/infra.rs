@@ -1,10 +1,11 @@
 name: Resiliencx Coverage
 
-# xhyper-resiliencx：LCOV 行覆盖率 100%
+# resiliencx：LCOV 行覆盖率 100%
 
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "crates/resiliencx/**"
       - "crates/contracts/**"
@@ -14,7 +15,7 @@ on:
       - "scripts/cov-gate-100.mjs"
       - ".github/workflows/resiliencx-coverage.yml"
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "crates/resiliencx/**"
       - "crates/contracts/**"
@@ -50,4 +51,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p xhyper-resiliencx --filter crates/resiliencx/src
+        run: node scripts/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src

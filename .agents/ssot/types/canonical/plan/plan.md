@@ -6,8 +6,8 @@
 | 字段 | 值 |
 |------|-----|
 | Plan ID | `PLAN-TYPES-CANONICAL-002-v1` |
-| Source Goal | [GOAL-TYPES-CANONICAL-002](../20260717/xhyper-canonical-complete-goal.md) · **S1 path Approved**（≠ package stable / Goal 全 ACHIEVED） |
-| Source Spec | [SPEC-TYPES-CANONICAL-002](../20260717/xhyper-canonical-complete-spec.md) · **Approved S1**（≠ package stable） |
+| Source Goal | [GOAL-TYPES-CANONICAL-002](../20260717/canonical-complete-goal.md) · **S1 path Approved**（≠ package stable / Goal 全 ACHIEVED） |
+| Source Spec | [SPEC-TYPES-CANONICAL-002](../20260717/canonical-complete-spec.md) · **Approved S1**（≠ package stable） |
 | Active SSOT | [spec/spec.md](../spec/spec.md)（指针 [canonical-spec.md](../canonical-spec.md)） |
 | Package | `xhyper-canonical` / `canonical` @ `crates/types/canonical` **0.1.0** |
 | Layer | Types / 跨层共享纯 DTO |
@@ -149,8 +149,8 @@ M0/M1 语义闭合     ≠  M3 全量迁移 / DEFER-WIRE-FULL
 
 ```bash
 cargo test -p xhyper-canonical
-cargo check -p xhyper-canonical --all-targets
-cargo clippy -p xhyper-canonical --all-targets -- -D warnings
+cargo check -p canonical --all-targets
+cargo clippy -p canonical --all-targets -- -D warnings
 cargo xtl lint-deps
 cargo fmt -- --check
 ```

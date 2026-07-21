@@ -16,8 +16,8 @@
 
 ## 指针
 
-- Goal: `20260717/xhyper-decimalx-complete-goal.md`
-- Spec: `20260717/xhyper-decimalx-complete-spec.md`
+- Goal: `20260717/decimalx-complete-goal.md`
+- Spec: `20260717/decimalx-complete-spec.md`
 - Gap: `plan/gap-matrix.md`
 - Residual: `plan/residual-open.md`
 - 10x: `plan/decimalx-plan-10x-verdict.md`

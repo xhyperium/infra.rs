@@ -7,11 +7,11 @@
 | Path | `crates/types/canonical` |
 | Layer | Types / 跨层共享纯 DTO |
 | Authority | 本文件是 active current-state spec（与 20260717 Approved 语义对齐） |
-| Complete Spec | [SPEC-TYPES-CANONICAL-002](../20260717/xhyper-canonical-complete-spec.md)（Approved；≠ package stable） |
-| Goal | [GOAL-TYPES-CANONICAL-002](../20260717/xhyper-canonical-complete-goal.md) |
+| Complete Spec | [SPEC-TYPES-CANONICAL-002](../20260717/canonical-complete-spec.md)（Approved；≠ package stable） |
+| Goal | [GOAL-TYPES-CANONICAL-002](../20260717/canonical-complete-goal.md) |
 | Plan | [plan/plan.md](../plan/plan.md) · [alignment-matrix-infra-2026-07-21.md](../plan/alignment-matrix-infra-2026-07-21.md) · [todo.md](../todo.md) |
 | Residual | [plan/residual-open.md](../plan/residual-open.md) |
-| Dual mirror | 本文件 ≡ [xhyper-canonical-complete-spec.md](./xhyper-canonical-complete-spec.md)（须 `cmp`） |
+| Dual mirror | 本文件 ≡ [xhyper-canonical-complete-spec.md](./canonical-complete-spec.md)（须 `cmp`） |
 
 > `[KNOWN]` 为当前代码或 Approved 裁决直接证据。API、serde attributes/fixtures 变化会使相应结论失效。
 
@@ -108,9 +108,9 @@
 
 ```bash
 cargo test -p xhyper-canonical
-cargo check -p xhyper-canonical --all-targets
-cargo clippy -p xhyper-canonical --all-targets -- -D warnings
-cargo fmt -p xhyper-canonical -- --check
+cargo check -p canonical --all-targets
+cargo clippy -p canonical --all-targets -- -D warnings
+cargo fmt -p canonical -- --check
 ```
 
 ## 6. 仍 OPEN / HUMAN / DEFER（不得假装 DONE）
@@ -127,7 +127,7 @@ cargo fmt -p xhyper-canonical -- --check
 
 ## 7. 追溯
 
-- Complete Spec：[20260717/xhyper-canonical-complete-spec.md](../20260717/xhyper-canonical-complete-spec.md)
+- Complete Spec：[20260717/canonical-complete-spec.md](../20260717/canonical-complete-spec.md)
 - Alignment：[plan/alignment-matrix-infra-2026-07-21.md](../plan/alignment-matrix-infra-2026-07-21.md)
 - Residual：[plan/residual-open.md](../plan/residual-open.md)
 - Production：[plan/production-upgrade.md](../plan/production-upgrade.md)

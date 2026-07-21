@@ -30,9 +30,9 @@ let wait = RecordingWait::new(); // 测试：不睡眠，只记延迟
 ## 验证
 
 ```bash
-cargo test -p xhyper-resiliencx --all-targets
-cargo clippy -p xhyper-resiliencx --all-targets -- -D warnings
-node scripts/cov-gate-100.mjs -p xhyper-resiliencx --filter crates/resiliencx/src
+cargo test -p resiliencx --all-targets
+cargo clippy -p resiliencx --all-targets -- -D warnings
+node scripts/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
 ```
 
 ## SSOT

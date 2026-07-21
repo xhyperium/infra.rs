@@ -5,7 +5,7 @@ Spec ID:       SPEC-TYPES-DECIMALX-002
 Status:        Draft / Non-normative candidate
 Active SSOT:   .agents/ssot/types/decimal/decimalx-spec.md
 Source Goal:   GOAL-TYPES-DECIMALX-002
-Package:       xhyper-decimalx 0.1.0
+Package:       decimalx 0.1.0
 Lib / Path:    decimalx / crates/types/decimal
 Layer:         Types / financial numeric primitives
 Snapshot:      95102919 (2026-07-15)
@@ -141,8 +141,8 @@ scale: u8 (表示类型事实；合法业务上限仍 OPEN)
 
 ```bash
 cargo test -p xhyper-decimalx
-cargo check -p xhyper-decimalx --all-targets
-cargo clippy -p xhyper-decimalx --all-targets -- -D warnings
+cargo check -p decimalx --all-targets
+cargo clippy -p decimalx --all-targets -- -D warnings
 cargo xtl lint-deps
 cargo fmt -- --check
 ```

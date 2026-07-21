@@ -20,6 +20,6 @@
 ## 验证
 
 ```bash
-cargo test -p xhyper-evidence -p xhyper-bootstrap --all-targets
-node scripts/cov-gate-100.mjs -p xhyper-evidence --filter crates/evidence/src
+cargo test -p evidence -p bootstrap --all-targets
+node scripts/cov-gate-100.mjs -p evidence --filter crates/evidence/src
 ```

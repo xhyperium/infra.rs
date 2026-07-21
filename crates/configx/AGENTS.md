@@ -33,7 +33,7 @@ crates/configx/
 ## 验证
 
 ```bash
-cargo test -p xhyper-configx --all-targets
-cargo clippy -p xhyper-configx --all-targets -- -D warnings
-cargo llvm-cov -p xhyper-configx --summary-only
+cargo test -p configx --all-targets
+cargo clippy -p configx --all-targets -- -D warnings
+cargo llvm-cov -p configx --summary-only
 ```

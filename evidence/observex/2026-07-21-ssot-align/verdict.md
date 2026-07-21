@@ -13,6 +13,6 @@
 
 ## 验证
 
-- `cargo test -p xhyper-contracts -p xhyper-observex`
-- `cargo clippy -p xhyper-contracts -p xhyper-observex --all-targets -- -D warnings`
-- `node scripts/cov-gate-100.mjs -p xhyper-observex --filter crates/observex/src`
+- `cargo test -p contracts -p xhyper-observex`
+- `cargo clippy -p contracts -p observex --all-targets -- -D warnings`
+- `node scripts/cov-gate-100.mjs -p observex --filter crates/observex/src`

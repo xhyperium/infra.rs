@@ -42,11 +42,11 @@ assert_eq!(store.get("host").as_deref(), Some("localhost"));
 ## 验证
 
 ```bash
-cargo test -p xhyper-configx --all-targets
-cargo clippy -p xhyper-configx --all-targets -- -D warnings
+cargo test -p configx --all-targets
+cargo clippy -p configx --all-targets -- -D warnings
 cargo fmt --all --check
-cargo run -p xhyper-configx --example basic
-cargo llvm-cov -p xhyper-configx --summary-only
+cargo run -p configx --example basic
+cargo llvm-cov -p configx --summary-only
 ```
 
 ## 非职责

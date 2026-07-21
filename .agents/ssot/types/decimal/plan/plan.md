@@ -3,8 +3,8 @@
 | 字段 | 值 |
 |------|-----|
 | Plan ID | `PLAN-TYPES-DECIMALX-002-agent-safe-v1` |
-| Source Goal | [`20260717/xhyper-decimalx-complete-goal.md`](../20260717/xhyper-decimalx-complete-goal.md) · `GOAL-TYPES-DECIMALX-002` |
-| Source Spec | [`20260717/xhyper-decimalx-complete-spec.md`](../20260717/xhyper-decimalx-complete-spec.md) · `SPEC-TYPES-DECIMALX-002` |
+| Source Goal | [`20260717/decimalx-complete-goal.md`](../20260717/decimalx-complete-goal.md) · `GOAL-TYPES-DECIMALX-002` |
+| Source Spec | [`20260717/decimalx-complete-spec.md`](../20260717/decimalx-complete-spec.md) · `SPEC-TYPES-DECIMALX-002` |
 | Active SSOT | [`../decimalx-spec.md`](../decimalx-spec.md)（**仍为权威验收合同**） |
 | Package | `xhyper-decimalx` @ `crates/types/decimal` · **0.1.0** |
 | Gap Matrix | [`gap-matrix.md`](./gap-matrix.md) |
@@ -115,8 +115,8 @@ OBJECTIVE 要求「目标全部完成 DONE」与 Goal/Spec 中多项 `PROPOSED`/
 
 ```bash
 cargo test -p xhyper-decimalx
-cargo check -p xhyper-decimalx --all-targets
-cargo clippy -p xhyper-decimalx --all-targets -- -D warnings
+cargo check -p decimalx --all-targets
+cargo clippy -p decimalx --all-targets -- -D warnings
 cargo fmt -- --check
 # 未改依赖图：可不跑 lint-deps；若改 Cargo.toml 则必须
 .agents/ssot/types/decimal/plan/scripts/run_10x_gate.sh
