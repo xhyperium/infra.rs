@@ -21,7 +21,7 @@
  */
 
 import { execSync } from "child_process";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { createHash } from "crypto";
@@ -125,6 +125,7 @@ function parseArgs() {
     includeClosed: argv.includes("--include-closed"),
     full: argv.includes("--full"),
     incrementalOnly: argv.includes("--incremental-only"),
+    interactive: argv.includes("--interactive"),
   };
 }
 
@@ -489,6 +490,115 @@ function pullToBeads(ghIssue, mapping, state, opts, results) {
   results.updated.push({ beadId, ghNumber: ghIssue.ghNumber });
 }
 
+// ====================== F.1 Interactive Review ======================
+
+/**
+ * 收集冲突的已知映射并逐个交互式审查。
+ * 返回对象 { beadId: "push"|"pull"|"skip" }，供 syncAll 在 STEP 4 中查询。
+ * 仅在 --interactive 模式且非 --json / --dry-run 时生效。
+ */
+function interactiveReview(conflicts, opts) {
+  // 交互式模式需要终端输入，JSON 或 dry-run 模式下跳过
+  if (opts.json || opts.dryRun || !process.stdin.isTTY) {
+    if (conflicts.length > 0) {
+      info(`${conflicts.length} 个冲突将按默认策略自动裁决`);
+    }
+    return {};
+  }
+
+  if (conflicts.length === 0) return {};
+
+  console.log(`\n=== 发现 ${conflicts.length} 个双向变更冲突 ===`);
+  console.log("以下议题在 beads 和 GitHub 两侧均有更新，请逐项裁决：");
+  console.log("");
+
+  const decisions = {};
+  let applyToAll = null;
+
+  for (let i = 0; i < conflicts.length; i++) {
+    const c = conflicts[i];
+    const b = c.beadIssue;
+    const g = c.ghIssue;
+
+    console.log(`── 第 ${i + 1}/${conflicts.length} 个冲突 ──`);
+    console.log(`  标题: ${b.title}`);
+    console.log(`  beads ID: ${b.id}  ↔  gh#${g.ghNumber}`);
+    console.log("");
+    console.log(`  ┌─ beads ───────────────────────────`);
+    console.log(`  │ 状态:      ${b.status}`);
+    console.log(`  │ 优先级:    ${b.priority ?? "—"}`);
+    console.log(`  │ 类型:      ${b.issueType}`);
+    console.log(`  │ 标签:      ${(b.labels || []).join(", ") || "—"}`);
+    console.log(`  │ 更新时间:  ${b.updatedAt || "—"}`);
+    const bDesc = (b.description || "").length > 120
+      ? (b.description || "").slice(0, 120) + "..."
+      : (b.description || "");
+    console.log(`  │ 描述:      ${bDesc || "—"}`);
+    console.log("");
+    console.log(`  └─ GitHub ───────────────────────────`);
+    console.log(`     gh#${g.ghNumber}`);
+    console.log(`     状态:      ${g.status}`);
+    console.log(`     优先级:    ${g.priority ?? "—"}`);
+    console.log(`     类型:      ${g.issueType}`);
+    console.log(`     标签:      ${(g.labels || []).join(", ") || "—"}`);
+    console.log(`     更新时间:  ${g.updatedAt || "—"}`);
+    const gDesc = (g.description || "").length > 120
+      ? (g.description || "").slice(0, 120) + "..."
+      : (g.description || "");
+    console.log(`     描述:      ${gDesc || "—"}`);
+    console.log("");
+
+    if (applyToAll) {
+      decisions[b.id] = applyToAll;
+      console.log(`  → 应用全局裁决: ${applyToAll === "push" ? "beads 获胜" : applyToAll === "pull" ? "GitHub 获胜" : "跳过"}`);
+      console.log("");
+      continue;
+    }
+
+    process.stdout.write("  选择 [b]eads 获胜 / [g]itHub 获胜 / [s]跳过 / [a]全部 beads / [A]全部 GitHub / [q]退出: ");
+
+      let choice;
+      try {
+        const buf = Buffer.alloc(8);
+        const n = readSync(0, buf, 0, 8, null);
+        choice = buf.toString("utf-8", 0, n).trim().toLowerCase();
+      } catch {
+      // stdin 不可读时跳过交互
+      break;
+    }
+    console.log(""); // newline after input
+
+    if (choice === "q") {
+      console.log("退出交互审查，剩余冲突按默认策略处理。");
+      break;
+    }
+    if (choice === "a") {
+      applyToAll = "push";
+      decisions[b.id] = "push";
+      console.log("  → beads 获胜（应用于后续全部）");
+    } else if (choice === "A" || choice === "A".toLowerCase()) {
+      applyToAll = "pull";
+      decisions[b.id] = "pull";
+      console.log("  → GitHub 获胜（应用于后续全部）");
+    } else if (choice === "b") {
+      decisions[b.id] = "push";
+      console.log("  → beads 获胜");
+    } else if (choice === "g") {
+      decisions[b.id] = "pull";
+      console.log("  → GitHub 获胜");
+    } else if (choice === "s") {
+      decisions[b.id] = "skip";
+      console.log("  → 跳过");
+    } else {
+      console.log("  → 无效输入，跳过");
+      decisions[b.id] = "skip";
+    }
+    console.log("");
+  }
+
+  return decisions;
+}
+
 /** 核心同步 orchestrator */
 function syncAll(opts) {
   const state = loadState();
@@ -542,6 +652,27 @@ function syncAll(opts) {
   const ghMap = {};
   for (const g of ghIssues) ghMap[g.ghNumber] = g;
 
+  // STEP 3b: Interactive conflict review (pre-scan before processing)
+  let conflictDecisions = {};
+  if (opts.interactive) {
+    const pending = [];
+    for (const [beadId, mapping] of Object.entries(state.mappings)) {
+      const beadIssue = beadMap[beadId];
+      const ghIssue = ghMap[mapping.ghNumber];
+      if (!beadIssue || !ghIssue) continue;
+
+      let beadsChanged = beadIssue.updatedAt > (mapping.lastBeadsUpdated || "1970-01-01");
+      if (!beadsChanged) beadsChanged = hashFields(beadIssue) !== mapping.beadsHash;
+      let ghChanged = ghIssue.updatedAt > (mapping.lastGhUpdated || "1970-01-01");
+      if (!ghChanged) ghChanged = hashFields(ghIssue) !== mapping.ghHash;
+
+      if (beadsChanged && ghChanged) {
+        pending.push({ beadId, beadIssue, ghIssue, mapping });
+      }
+    }
+    conflictDecisions = interactiveReview(pending, opts);
+  }
+
   // STEP 4: Process known mappings
   for (const [beadId, mapping] of Object.entries(state.mappings)) {
     const beadIssue = beadMap[beadId];
@@ -586,11 +717,24 @@ function syncAll(opts) {
     } else if (!beadsChanged && ghChanged) {
       pullToBeads(ghIssue, mapping, state, opts, results);
     } else {
-      const dir = resolveConflict(beadIssue, ghIssue, opts);
-      if (dir === "push") {
+      // Conflict — check interactive decision first
+      const decision = conflictDecisions[beadId];
+      if (decision === "push") {
+        info(`  ↳ interactive: beads wins for ${beadId}`);
         pushToGithub(beadIssue, mapping, state, opts, results);
-      } else {
+      } else if (decision === "pull") {
+        info(`  ↳ interactive: GitHub wins for ${beadId}`);
         pullToBeads(ghIssue, mapping, state, opts, results);
+      } else if (decision === "skip") {
+        info(`  ↳ interactive: skip ${beadId}`);
+        results.skipped.push({ beadId, reason: "interactive skip" });
+      } else {
+        const dir = resolveConflict(beadIssue, ghIssue, opts);
+        if (dir === "push") {
+          pushToGithub(beadIssue, mapping, state, opts, results);
+        } else {
+          pullToBeads(ghIssue, mapping, state, opts, results);
+        }
       }
     }
   }
@@ -707,4 +851,5 @@ export {
   resolveConflict, loadState, saveState, updateMapping,
   syncAll, getAllBeads, getChangedBeads, getGhIssues,
   buildFooter as _buildFooter,
+  interactiveReview,
 };

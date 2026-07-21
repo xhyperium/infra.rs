@@ -16,6 +16,7 @@ import {
   extractPriorityFromLabels, extractTypeFromLabels,
   deterministicColor, shEscape,
   resolveConflict, loadState, saveState, updateMapping,
+  interactiveReview,
 } from "./gh-sync.mjs";
 
 import { existsSync, unlinkSync, readFileSync } from "fs";
@@ -226,6 +227,24 @@ section("Conflict Resolution");
   eq(resolveConflict(beadNew, beadNew, {}), "push", "tie → push (local wins)");
   eq(resolveConflict(beadOld, ghNew, { preferLocal: true }), "push", "prefer-local → push");
   eq(resolveConflict(beadNew, ghNew, { preferGithub: true }), "pull", "prefer-github → pull");
+}
+
+// ====================== Interactive Review ======================
+section("Interactive Review");
+{
+  // Non-TTY → returns empty (JSON mode)
+  const d1 = interactiveReview([], { json: true });
+  eq(d1, {}, "interactiveReview: returns empty on json mode");
+
+  // No conflicts → returns empty
+  const d2 = interactiveReview([], {});
+  eq(d2, {}, "interactiveReview: returns empty with no conflicts");
+
+  // Dry-run → returns empty (no interactive in dry-run)
+  const beadIssue = { id: "test-1", title: "Test", status: "open", priority: 2, issueType: "bug", labels: [], updatedAt: "2026-07-21T15:00:00Z", description: "desc" };
+  const ghIssue = { ghNumber: 99, title: "Test GH", status: "open", priority: 2, issueType: "bug", labels: [], updatedAt: "2026-07-21T14:00:00Z", description: "desc" };
+  const d3 = interactiveReview([{ beadId: "test-1", beadIssue, ghIssue }], { json: true });
+  ok(typeof d3 === "object", "interactiveReview: returns object even with conflicts in json mode");
 }
 
 // ====================== Summary ======================
