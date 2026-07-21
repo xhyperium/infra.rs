@@ -1,30 +1,49 @@
 # postgresx
 
-Postgres adapter：
+Postgres 存储适配：**生产连接池 / 参数化 SQL 为默认导出**。
 
-- scaffold：`PostgresAdapter`（内存 + 本地 `ScaffoldTxContext`；**不**依赖 `contract-testkit`）
-- mock 验证入口：`ObservingPostgresAdapter` / `MockPostgresBackend`
-  （staged 写入 + commit 边界；**非**真实 Postgres / **非** Production Ready）
-- Fake/suite 合同测请用 `contract-testkit`（仅 dev-dep）
+| 面 | 说明 |
+|----|------|
+| 生产默认 | `PostgresConfig` + `PostgresPool` + `PgConnection` / `PgTransaction` |
+| contracts | `PgTxRunner`（真实 BEGIN/COMMIT/ROLLBACK **边界**；SQL 请用 `with_transaction`） |
+| scaffold | feature `scaffold`：`PostgresAdapter` / `ObservingPostgresAdapter`（内存，非生产） |
+
+## 快速开始
 
 ```rust
-use contracts::{Repository, TxRunner};
-use postgresx::{ObservingPostgresAdapter, Record};
+use postgresx::{PostgresConfig, PostgresPool};
 
 # async fn demo() -> kernel::XResult<()> {
-let a = ObservingPostgresAdapter::local();
-let mut tx = a.begin_mock_tx().await?;
-tx.stage_save(Record { id: "1".into(), data: b"x".to_vec() })?;
-tx.commit().await?;
-assert!(a.find("1".into()).await?.is_some());
+let pool = PostgresPool::connect(&PostgresConfig::from_env()?).await?;
+let row = pool.query_one("SELECT 1 AS n", &[]).await?;
+let n: i32 = row.get("n");
+assert_eq!(n, 1);
+pool.close();
 # Ok(())
 # }
 ```
 
-## 生产误用警示（infra-s9t.14）
+环境变量见 [docs/config.md](./docs/config.md)。也可用 `DATABASE_URL` 覆盖。
 
-**默认实现是进程内 scaffold/mock，不是生产客户端。**
+## 文档
 
-- 禁止把 `*Adapter` 类型名当成已对接真实 Binance/Postgres/Redis/…
-- 真实入口须有显式 feature（如 redisx `live`）与文档/CI 证据
-- 详见 `docs/plans/artifacts/prod-consume-surface.md`
+- [docs/usage.md](./docs/usage.md)
+- [docs/config.md](./docs/config.md)
+- [docs/operations.md](./docs/operations.md)
+
+## 测试
+
+```bash
+cargo test -p postgresx
+cargo test -p postgresx --features scaffold
+cargo test -p postgresx --test live_postgres -- --ignored
+cargo bench -p postgresx --bench query_hot_path
+```
+
+## 依赖
+
+- `deadpool-postgres` + `tokio-postgres`（workspace）
+- `kernel` / `contracts` / `async-trait` / `tokio`
+- 可选 `tracing`
+
+**禁止**将密码或完整 DSN 提交到 git。

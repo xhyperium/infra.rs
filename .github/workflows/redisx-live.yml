@@ -1,4 +1,4 @@
-# Optional: redisx live 验证入口（infra-s9t.2）
+# Optional: redisx live 验证入口（生产 RedisPool/Client）
 name: Redisx Live
 on:
   workflow_dispatch:
@@ -32,7 +32,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: live ignored tests
         env:
+          # 无密码的 CI service；本地可改用 FOUNDATIONX_REDISX_*
           REDIS_URL: redis://127.0.0.1:6379
+          FOUNDATIONX_REDISX_ADDR: 127.0.0.1:6379
+          FOUNDATIONX_REDISX_DB: "0"
+          FOUNDATIONX_REDISX_TLS: "false"
         run: |
-          cargo test -p redisx --features live -- --ignored --nocapture
-          cargo test -p redisx --features live --test live_kv_conformance -- --ignored --nocapture
+          cargo test -p redisx --all-targets
+          cargo test -p redisx -- --ignored --nocapture
+          cargo test -p redisx --test live_kv_conformance -- --ignored --nocapture

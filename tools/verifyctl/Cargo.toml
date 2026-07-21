@@ -1,0 +1,37 @@
+[package]
+name = "verifyctl"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+description = "Minimal verification planner/executor/reporter"
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+name = "verifyctl"
+path = "src/lib.rs"
+
+[[bin]]
+name = "verifyctl"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+evidence = { path = "../../crates/evidence", version = "0.1.0", optional = true }
+hex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+
+[features]
+default = []
+# 可选：将 plan/execute/report 事件 append 到 evidence 文件
+with-evidence = ["dep:evidence"]
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[lints]
+workspace = true

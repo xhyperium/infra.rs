@@ -74,10 +74,10 @@
 | resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
 | observex | `.agents/ssot/observex/` | `crates/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
 | infra 其余域 | `.agents/ssot/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
-| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **镜像已注册**；多数 scaffold；**redisx live KV** + exchange **只读 server_time** 入口（#168/#172）；**非**业务 Production Ready |
-| （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Tx/Bus/Repo/Venue 业务 live **DEFER** |
+| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **storage 7 库生产默认客户端已落地** + live/bench；exchange 只读 server_time；**非** package stable / 全业务 Production Ready |
+| （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Venue 业务 live **DEFER** |
 | transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
-| tools | `.agents/ssot/tools/` | `crates/evidence`（仅 evidence） | evidence 含 `FileEvidenceAppender`；goalctl/xtask/verifyctl **未**落地 |
+| tools | `.agents/ssot/tools/` | `crates/evidence` + `tools/goalctl` + `tools/verifyctl` | evidence + **goalctl/verifyctl 最小生产 CLI 已 member**；xtask **未**落地 |
 
 规则：
 
@@ -115,8 +115,9 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 cargo check -p contracts -p binancex -p okxx -p redisx -p kafkax \
   -p natsx -p postgresx -p taosx -p ossx -p clickhousex
 cargo test -p contracts -p binancex -p okxx -p redisx --all-targets
-# optional live（需服务 / 外网；默认 ignore）
-# REDIS_URL=redis://127.0.0.1:6379 cargo test -p redisx --features live -- --ignored
+# optional live（需服务 / 外网；默认 ignore；凭据经 FOUNDATIONX_* 注入）
+# source scripts/live/export-foundationx-env.sh /path/to/secrets/env
+# cargo test -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p taosx -- --ignored
 # cargo test -p binancex -p okxx --test live_server_time -- --ignored
 
 # tools（本地化后与上游非零 diff 为预期；校验目录存在）
@@ -124,7 +125,9 @@ test -d .agents/ssot/tools/evidence
 test -d .agents/ssot/tools/goalctl
 test -d .agents/ssot/tools/xtask
 test -d .agents/ssot/tools/verifyctl
-cargo test -p evidence --all-targets
+cargo test -p evidence -p goalctl -p verifyctl --all-targets
+cargo run -p goalctl -- doctor
+VERIFYCTL_DRY=1 cargo run -p verifyctl -- plan --changed tools/verifyctl
 ```
 
 ## 核心 crate 生产就绪快照（2026-07-21 · 更新）

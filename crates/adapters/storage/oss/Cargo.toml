@@ -1,6 +1,6 @@
 [package]
 name = "ossx"
-description = "oss storage adapter (ObjectStore scaffold)"
+description = "Aliyun OSS ObjectStore adapter (reqwest + OSS V1 signing)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,14 +8,31 @@ repository.workspace = true
 rust-version.workspace = true
 publish = false
 
+[features]
+default = []
+# 启用后暴露进程内 scaffold `OssAdapter`（非生产）
+scaffold = []
+
 [dependencies]
 async-trait = { workspace = true }
+base64 = "0.22"
 bytes = { workspace = true }
+chrono = { workspace = true }
 contracts = { path = "../../../contracts", version = "0.1.0" }
+hmac = "0.12"
 kernel = { path = "../../../kernel", version = "0.3.0" }
+reqwest = { workspace = true }
+sha1 = "0.10"
+thiserror = { workspace = true }
+url = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
+criterion = { version = "0.5", default-features = false }
+
+[[bench]]
+name = "put_get"
+harness = false
 
 [lints]
 workspace = true

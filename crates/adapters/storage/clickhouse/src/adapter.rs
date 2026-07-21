@@ -1,4 +1,4 @@
-//! ClickHouse 内存 scaffold：`AnalyticsSink`。
+//! ClickHouse 内存 scaffold：`AnalyticsSink`（feature `scaffold`）。
 
 use std::sync::Mutex;
 
@@ -7,6 +7,7 @@ use bytes::Bytes;
 use contracts::AnalyticsSink;
 use kernel::{XError, XResult};
 
+/// 进程内事件缓冲（**非**真实 ClickHouse I/O）。
 pub struct ClickHouseAdapter {
     name: String,
     endpoint: String,
@@ -14,18 +15,22 @@ pub struct ClickHouseAdapter {
 }
 
 impl ClickHouseAdapter {
+    /// 构造命名 scaffold。
     pub fn new(name: impl Into<String>, endpoint: impl Into<String>) -> Self {
         Self { name: name.into(), endpoint: endpoint.into(), events: Mutex::new(Vec::new()) }
     }
 
+    /// 本地默认端点。
     pub fn local() -> Self {
         Self::new("clickhouse-local", "http://127.0.0.1:8123")
     }
 
+    /// 名称。
     pub fn name(&self) -> &str {
         &self.name
     }
 
+    /// 端点。
     pub fn endpoint(&self) -> &str {
         &self.endpoint
     }

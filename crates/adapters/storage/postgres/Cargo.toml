@@ -1,6 +1,6 @@
 [package]
 name = "postgresx"
-description = "postgres storage adapter (Repository + TxRunner scaffold)"
+description = "postgres storage adapter (production pool/SQL + optional scaffold)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,13 +8,26 @@ repository.workspace = true
 rust-version.workspace = true
 publish = false
 
+[features]
+default = []
+# 进程内 scaffold / mock（PostgresAdapter / ObservingPostgresAdapter）
+scaffold = []
+
 [dependencies]
 async-trait = { workspace = true }
 contracts = { path = "../../../contracts", version = "0.1.0" }
+deadpool-postgres = { workspace = true }
 kernel = { path = "../../../kernel", version = "0.3.0" }
+tokio = { workspace = true }
+tokio-postgres = { workspace = true }
+tracing = { workspace = true, optional = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
+
+[[bench]]
+name = "query_hot_path"
+harness = false
 
 [lints]
 workspace = true
