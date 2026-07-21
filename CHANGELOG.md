@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Agent 入口索引同步**：`AGENTS.md` / `CLAUDE.md` 补齐 workspace members（evidence / observex / transport 等）与完整 `docs/ssot/*` 域链接，与分类后的文档树一致
+
+
 - **`docs/` 严格分类**：根目录不再平铺内容文件；按职责拆为
   - `docs/governance/` — 版本、worktree、语言约定、ASD-STE100、量化规范
   - `docs/ssot/` — SSOT 对齐矩阵、同步手册与同步报告
