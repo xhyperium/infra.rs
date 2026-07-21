@@ -1,7 +1,7 @@
 # Round 2 — §4–§6 目录 / 依赖合同 / crate 规则
 
 > Verifier: 只读计划完备性检查（非实现验收）  
-> Source Spec: `.agent/SSOT/testkit/testkit-complete-spec.md`  
+> Source Spec: `.agents/ssot/testkit/xhyper-testkit-complete-spec.md`  
 > Plan pack: `plan.md` · `tasks.md` · `gap-matrix.md` · `spec-inventory.md` · `residual-open.md` · `approval-packet.md` · `.worktree/testkit-todo.md`  
 > 日期: 2026-07-14
 

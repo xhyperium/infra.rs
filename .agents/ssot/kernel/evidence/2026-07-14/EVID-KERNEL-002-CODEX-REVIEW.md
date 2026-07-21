@@ -26,7 +26,7 @@ SUMMARY
 
 FINDINGS
 [P1] `crates/kernel/src/clock.rs:56` — `from_std` 仍是公开 API；同时 `from_clock_elapsed(base, elapsed)` 与 SPEC 的单参数签名不符，且溢出静默回退 `base`。这违反公开面冻结与时间不失真约束，但 residual 将其 CLOSED、§8 标为 PASS。
-[P1] `.agent/SSOT/kernel/evidence/2026-07-14/residual-open.txt:31` — loom、property/compile-fail 测试及 `KERNEL-LIFECYCLE-001` 门禁缺失；台账自身标记 P1，SPEC 仍为 Proposed，当前不能作为 SPEC-KERNEL-002 完成实现合入。
+[P1] `.agents/ssot/kernel/evidence/2026-07-14/residual-open.txt:31` — loom、property/compile-fail 测试及 `KERNEL-LIFECYCLE-001` 门禁缺失；台账自身标记 P1，SPEC 仍为 Proposed，当前不能作为 SPEC-KERNEL-002 完成实现合入。
 [P2] `crates/kernel/src/lifecycle.rs:125` — mutex 在 `notify_all()` 前已释放，与 §7.6 明定的“notify 后释放”顺序及 CHANGELOG“持锁 trigger”声明不符；该写法通常不会 lost wake-up，但没有逐字满足合同。
 [P2] `crates/kernel/src/clock.rs:81` — `BeforeEpoch` 未按 SPEC 命名为 `BeforeUnixEpoch`；台账已诚实登记。
 

@@ -9,7 +9,7 @@
 | final | PASS |
 | content_tip | 1c53304a08db534fcff1ce8fe03aeacb127aa2ae |
 | content_tip_at_run | 1c53304a08db534fcff1ce8fe03aeacb127aa2ae |
-| Gate script | `.agent/SSOT/types/decimal/plan/scripts/run_10x_gate.sh` |
+| Gate script | `.agents/ssot/types/decimal/plan/scripts/run_10x_gate.sh` |
 | Checklist | [`checklist-10x.md`](./checklist-10x.md) |
 | Log dir | 本地 SCRATCH 指针，未入库，reviewer/未来 agent 不可见：`/tmp/grok-goal-99a109d2452b/implementer/10x`（**SCRATCH，非 durable**） |
 | Summary | 本地 SCRATCH 指针，未入库，reviewer/未来 agent 不可见：`/tmp/grok-goal-99a109d2452b/implementer/10x/decimal-10x-summary.log`（**SCRATCH，非 durable**） |

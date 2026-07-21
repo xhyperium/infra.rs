@@ -46,5 +46,6 @@
 | [resiliencx-ssot-alignment.md](resiliencx-ssot-alignment.md) | resiliencx |
 | [transport-ssot-alignment.md](transport-ssot-alignment.md) | transport |
 | [evidence-ssot-alignment.md](evidence-ssot-alignment.md) | evidence |
+| [tools-ssot-alignment.md](tools-ssot-alignment.md) | tools（evidence/goalctl/xtask/verifyctl） |
 
 上级索引：[docs/README.md](../README.md)。

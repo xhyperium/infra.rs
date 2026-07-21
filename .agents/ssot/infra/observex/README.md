@@ -1,9 +1,9 @@
 # infra/observex — Goal 管线契约
 
 > 实现 / 代码唯一位置：`crates/observex`  
-> **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/observex-complete-spec.md](spec/observex-complete-spec.md)  
+> **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-observex-complete-spec.md](spec/xhyper-observex-complete-spec.md)  
 > **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
-> **布局**：对齐 [`.agent/SSOT/kernel/`](../../kernel/)（[AGENTS.md](../../../../AGENTS.md) §2）  
+> **布局**：对齐 [`.agents/ssot/kernel/`](../../kernel/)（[AGENTS.md](../../../../AGENTS.md) §2）  
 > **状态**：布局已对齐 kernel · 战役内容未宣称闭合
 
 ## 11 层映射
@@ -16,7 +16,7 @@
 | Plan | [plan/plan.md](plan/plan.md) | 入口；战役文件可并列于 plan/ |
 | Tasks | [tasks/tasks.md](tasks/tasks.md) | 入口 / 占位 |
 | Prompt | [prompt/prompt.md](prompt/prompt.md) | 入口 / 占位 |
-| **Code** | **`crates/observex`** | 实现不在 `.agent/SSOT/` |
+| **Code** | **`crates/observex`** | 实现不在 `.agents/ssot/` |
 | Test | [test/test.md](test/test.md) | 入口 / 占位 |
 | Review | [review/review.md](review/review.md) | 默认 NOT PASS |
 | Release | [release/release.md](release/release.md) | 默认 BLOCKED |
@@ -35,16 +35,16 @@
 1. 无证据不得宣称 Done / 全闭合 / 5/5 / Spec Approved（除非既有战役文件已证明）。
 2. 本树禁止 `src/`、`Cargo.toml`、`*.rs` 实现副本（C-LINT-007）。
 3. 布局迁移 **≠** 实现完成 **≠** package stable。
-4. 双镜像：`spec/spec.md` 与 `spec/observex-complete-spec.md` 须 `cmp` 同构。
+4. 双镜像：`spec/spec.md` 与 `spec/xhyper-observex-complete-spec.md` 须 `cmp` 同构。
 
 ## 验证
 
 ```bash
-cmp .agent/SSOT/infra/observex/spec/spec.md \
-    .agent/SSOT/infra/observex/spec/observex-complete-spec.md
+cmp .agents/ssot/infra/observex/spec/spec.md \
+    .agents/ssot/infra/observex/spec/xhyper-observex-complete-spec.md
 # 结构：README + 11 层目录 + evidence/ 横切
-test -f .agent/SSOT/infra/observex/README.md
-test -f .agent/SSOT/infra/observex/spec/spec.md
+test -f .agents/ssot/infra/observex/README.md
+test -f .agents/ssot/infra/observex/spec/spec.md
 ```
 
 **布局对齐：是 · 战役全闭合：未宣称 · 禁止假 Done。**

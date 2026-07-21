@@ -9,7 +9,7 @@
 | crates.io package | **`xhyper-testkit`**（**internal only · 未发布**） |
 | Version | `0.1.1` |
 | Registry | **Stable**（`publish = false`——internal only，**不发布到 crates.io**） |
-| Ship PR | [#247](https://github.com/xhyperium/xhyper.rs/pull/247) · [#254](https://github.com/xhyperium/xhyper.rs/pull/254) · [#255](https://github.com/xhyperium/xhyper.rs/pull/255) |
+| Ship PR | [#247](https://github.com/xhyperium/infra.rs/pull/247) · [#254](https://github.com/xhyperium/infra.rs/pull/254) · [#255](https://github.com/xhyperium/infra.rs/pull/255) |
 | Tag | `testkit-v0.1.1` |
 | Evidence | [plan/residual-open.md](../plan/residual-open.md) · [plan/approval-packet.md](../plan/approval-packet.md) · 仓库根 `evidence/testkit/2026-07-14-stable-gates/` |
 

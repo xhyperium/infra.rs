@@ -5,9 +5,9 @@ Disposition 规则：每行必须为 `DONE` / `DEFERRED` / `HUMAN_ONLY` / `POLIC
 
 | Task ID | 描述 | Disposition | Evidence |
 |---------|------|-------------|----------|
-| T-DOC-001 | 落盘 plan 包（plan/gap/tasks/residual/CURRENT-STATE/alignment/checklist/scripts） | DONE | `.agent/SSOT/types/decimal/plan/**` |
-| T-DOC-002 | 本 todo 台账 | DONE | `.agent/SSOT/types/decimal/todo.md` |
-| T-DOC-003 | Active spec 候选链接 → `20260717/` | DONE | `.agent/SSOT/types/decimal/decimalx-spec.md` |
+| T-DOC-001 | 落盘 plan 包（plan/gap/tasks/residual/CURRENT-STATE/alignment/checklist/scripts） | DONE | `.agents/ssot/types/decimal/plan/**` |
+| T-DOC-002 | 本 todo 台账 | DONE | `.agents/ssot/types/decimal/todo.md` |
+| T-DOC-003 | Active spec 候选链接 → `20260717/` | DONE | `.agents/ssot/types/decimal/decimalx-spec.md` |
 | T-DOC-004 | README + CHANGELOG 对齐 | DONE | `crates/types/decimal/README.md` · `CHANGELOG.md` |
 | T-M0-001 | Consumer/API inventory | DONE | `plan/evidence/m0-consumer-inventory-2026-07-17.txt` |
 | T-M0-002 | 边界测试补强 | DONE | `crates/types/decimal/src/lib.rs` tests · `cargo test -p xhyper-decimalx` |

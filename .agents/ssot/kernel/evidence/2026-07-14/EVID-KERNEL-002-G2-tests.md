@@ -4,7 +4,7 @@
 |------|-----|
 | Date | 2026-07-14 |
 | Branch | `feat/kernel-002-e2-migrate-banned-apis` |
-| PR | [#235](https://github.com/xhyperium/xhyper.rs/pull/235) |
+| PR | [#235](https://github.com/xhyperium/infra.rs/pull/235) |
 | Scope | G2 子集：dev-deps · loom · §11 测试文件 · public-api 快照 |
 | §18 | **仍 OPEN**（不得 stable） |
 
