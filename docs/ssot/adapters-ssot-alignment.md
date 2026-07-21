@@ -22,7 +22,7 @@
 
 ## 镜像目录（只读）
 
-保留上游 `adapters/` 层级（与 `infra/` 同理，勿展平到 `.agents/ssot/` 根）。
+保留上游 `adapters/` 层级（勿展平到 `.agents/ssot/` 根；`infra/` 已展平）。
 
 ```text
 .agents/ssot/adapters/

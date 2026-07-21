@@ -96,7 +96,7 @@ cargo test -p decimalx --all-targets
 cargo test -p canonical --all-targets
 cargo test -p bootstrap --all-targets
 cargo test -p transportx --all-targets
-node scripts/check-canonical-align.mjs
+node scripts/quality-gates/check-canonical-align.mjs
 
 # adapters / contracts scaffold
 cargo check -p contracts -p binancex -p okxx -p redisx -p kafkax \

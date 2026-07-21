@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
-| SSOT（只读） | `.agents/ssot/infra/bootstrap/spec/spec.md` ≡ `spec/bootstrap-complete-spec.md`（`cmp` 同构） |
+| SSOT（只读） | `.agents/ssot/bootstrap/spec/spec.md` ≡ `spec/bootstrap-complete-spec.md`（`cmp` 同构） |
 | 实现路径 | `crates/bootstrap`（package `xhyper-bootstrap` / lib `bootstrap`） |
 | 权威 | 本文件描述 **本仓** 落地状态；**不**编辑 `.agents/ssot/**` 镜像 |
 | 上游参考 | `xhyper.rs/crates/infra/bootstrap`（可移植源，非本仓 member） |

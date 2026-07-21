@@ -46,7 +46,7 @@ cargo clippy -p decimalx --all-targets -- -D warnings
 
 cargo test -p canonical --all-targets
 cargo clippy -p canonical --all-targets -- -D warnings
-node scripts/check-canonical-align.mjs
+node scripts/quality-gates/check-canonical-align.mjs
 ```
 
 ## 依赖方向（本仓）
@@ -84,7 +84,7 @@ canonical  →  decimalx  →  kernel
 | C-5 | DTO `ts: i64` = Unix ns（CAN-TIME-001） | PASS | lib + `proposed_time` |
 | C-6 | `shape::*` / `proposed_time::*` 公开 | PASS | 模块 + `tests/public_api.rs` |
 | C-7 | 依赖仅 decimalx + serde | PASS | `Cargo.toml` |
-| C-8 | align script 可跑 | PASS | `node scripts/check-canonical-align.mjs` |
+| C-8 | align script 可跑 | PASS | `node scripts/quality-gates/check-canonical-align.mjs` |
 | C-9 | 全 wire Production Ready / package stable | OPEN | 未宣称；见 plan/residual |
 
 ## 与镜像文档的关系
