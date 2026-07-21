@@ -10,6 +10,10 @@ on:
       - "Cargo.lock"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   loom:
     runs-on: ubuntu-latest
