@@ -44,4 +44,15 @@ fn public_counting_prefix_normalize() {
     assert_eq!(op_depth("a.b"), 2);
     assert_eq!(sanitize_op("x\ny"), "xy");
     assert_eq!(op_leaf("a.b.c"), "c");
+    // 公开面：多字节 op 截断不得 panic，且结果合法 UTF-8
+    let zh = "配置服务";
+    for max in [2usize, 3, 5, 6, 8, 9] {
+        let t = truncate_op(zh, max);
+        assert!(t.is_char_boundary(t.len()), "max={max} {t:?}");
+        assert!(t.ends_with('~') || t == zh);
+        if max < zh.len() && max > 1 {
+            assert!(t.len() <= max, "max={max} len={}", t.len());
+        }
+    }
+    assert_eq!(truncate_op(zh, 4), "配~");
 }
