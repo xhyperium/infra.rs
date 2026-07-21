@@ -60,8 +60,8 @@ mod tests {
     fn tick(ts: i64) -> Tick {
         Tick {
             symbol: "BTC".into(),
-            bid: Price(Decimal::try_new(1, 0).expect("d")),
-            ask: Price(Decimal::try_new(2, 0).expect("d")),
+            bid: Price::new(Decimal::try_new(1, 0).expect("d")),
+            ask: Price::new(Decimal::try_new(2, 0).expect("d")),
             ts,
         }
     }

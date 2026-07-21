@@ -27,8 +27,8 @@ fn consumer_can_construct_and_roundtrip_core_dtos() {
         id: "o1".into(),
         symbol: "BTCUSDT".into(),
         side: Side::Buy,
-        price: Price(Decimal::new(50_000, 0)),
-        qty: Qty(Decimal::new(1, 0)),
+        price: Price::new(Decimal::new(50_000, 0)),
+        qty: Qty::new(Decimal::new(1, 0)),
         status: OrderStatus::Open,
     };
     let ojson = serde_json::to_string(&order).expect("order serialize");
@@ -53,7 +53,8 @@ fn consumer_time_helpers_are_nanoseconds() {
 
 #[test]
 fn consumer_money_is_decimalx_reexport() {
-    let m: Money = Money { amount: Decimal::new(1, 0), currency: "USD".parse().expect("currency") };
+    let m: Money =
+        Money::try_new(Decimal::new(1, 0), "USD".parse().expect("currency")).expect("money");
     let as_decimalx: decimalx::Money = m;
     assert_eq!(m, as_decimalx);
 }
@@ -63,21 +64,22 @@ fn consumer_inventory_types_constructible() {
     let _venue: VenueId = "binance".into();
     let _pos = Position {
         symbol: "ETHUSDT".into(),
-        qty: Qty(Decimal::new(2, 0)),
-        entry_price: Price(Decimal::new(3000, 0)),
+        qty: Qty::new(Decimal::new(2, 0)),
+        entry_price: Price::new(Decimal::new(3000, 0)),
     };
     let _tick = Tick {
         symbol: "ETHUSDT".into(),
-        bid: Price(Decimal::new(1, 0)),
-        ask: Price(Decimal::new(2, 0)),
+        bid: Price::new(Decimal::new(1, 0)),
+        ask: Price::new(Decimal::new(2, 0)),
         ts: 0,
     };
-    let _level = PriceLevel { price: Price(Decimal::new(10, 0)), qty: Qty(Decimal::new(5, 0)) };
+    let _level =
+        PriceLevel { price: Price::new(Decimal::new(10, 0)), qty: Qty::new(Decimal::new(5, 0)) };
     let _book = OrderBookSnapshot { symbol: "ETHUSDT".into(), bids: vec![], asks: vec![], ts: 0 };
     let _trade = Trade {
         symbol: "ETHUSDT".into(),
-        price: Price(Decimal::new(100, 0)),
-        qty: Qty(Decimal::new(1, 0)),
+        price: Price::new(Decimal::new(100, 0)),
+        qty: Qty::new(Decimal::new(1, 0)),
         ts: 12,
     };
     let _meta = SymbolMeta {
@@ -85,7 +87,7 @@ fn consumer_inventory_types_constructible() {
         base: "ETH".into(),
         quote: "USDT".into(),
         tick_size: Decimal::new(1, 2),
-        min_qty: Qty(Decimal::new(1, 0)),
+        min_qty: Qty::new(Decimal::new(1, 0)),
     };
     let _client = OrderRef::Client("c-1".into());
     for status in [

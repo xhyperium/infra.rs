@@ -27,7 +27,7 @@ jobs:
       - name: Check PR template
         id: check
         run: |
-          node scripts/check-pr-template.mjs 2>&1 | tee /tmp/check-result.txt
+          node scripts/quality-gates/check-pr-template.mjs 2>&1 | tee /tmp/check-result.txt
           echo "status=$?" >> "$GITHUB_OUTPUT"
         env:
           PR_BODY: ${{ github.event.pull_request.body }}

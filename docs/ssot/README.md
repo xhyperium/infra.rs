@@ -24,8 +24,11 @@
 
 1. [workspace-ssot-alignment.md](workspace-ssot-alignment.md) — members 地图与总览
 2. [SSOT_SYNC_OPS.md](SSOT_SYNC_OPS.md) — 如何从上游同步
-3. [SSOT_SYNC_REPORT.md](SSOT_SYNC_REPORT.md) — 镜像是否完整
+3. [SSOT_SYNC_REPORT.md](SSOT_SYNC_REPORT.md) — 镜像是否完整（≠ 实现落地）
 4. 各域 `*-ssot-alignment.md` — 本仓落地差距
+5. 生产就绪审计（五核心 crate）：[../report/2026-07-21/core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md)
+
+> **2026-07-21 跟进（PR #98）**：decimal/canonical/contracts/kernel/testkit 已做 P0/P1 闭合并回写对齐文；镜像 COMPLETE **仍不等于** 本仓 Production Ready。
 
 ## 文档
 

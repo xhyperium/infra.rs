@@ -3,6 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
+| 跟进 | 2026-07-21 核心 crate 生产就绪闭合（PR #98）；**不**宣称五 crate 整体 Production Ready |
 | 用途 | 一眼看清：**镜像有什么** vs **本仓落地了什么** |
 | 权威 members | 根 `Cargo.toml` `[workspace.members]` + `cargo metadata --no-deps` |
 
@@ -19,7 +20,7 @@
 | `xhyper-resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试 + 熔断 + 限流 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
 | `xhyper-decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `xhyper-canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO | [types-ssot-alignment.md](./types-ssot-alignment.md) |
-| `xhyper-contracts` | `crates/contracts/` | `contracts` | adapter trait 出口（#43） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `xhyper-contracts` | `crates/contracts/` | `contracts` | adapter trait 出口（#43）；Tx/消息可测 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
 | `binancex` | `crates/adapters/exchange/binance/` | `binancex` | exchange adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx/` | `okxx` | exchange adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
@@ -59,17 +60,16 @@
 
 | 上游镜像域 | 镜像路径 | 本仓 crate | 状态 |
 |------------|----------|------------|------|
-| kernel | `.agents/ssot/kernel/` | `crates/kernel` | **已落地**；见 kernel 对齐文 |
-| testkit | `.agents/ssot/testkit/` | `crates/testkit` | **core 已落地**；contract-testkit DEFER |
+| kernel | `.agents/ssot/kernel/` | `crates/kernel` | **已落地**；ClockDomain + loom CI + wait_timeout；见 kernel 对齐文 |
+| testkit | `.agents/ssot/testkit/` | `crates/testkit` | **ManualClock core 已落地**（含 domain）；独立 contract-testkit crate **DEFER** |
 | schedulex | `.agents/ssot/schedulex/` | `crates/schedulex` | **registry 已落地**（active SSOT 最小合同） |
-| types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；wire/package stable OPEN |
+| types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；decimal 不变量硬化；canonical **仅** committed wire v1；package stable **OPEN** |
 | configx | `.agents/ssot/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
-| bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根已落地**；evidence crate 已注入 |
+| bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根已落地**；`Bounded*` 有界面 + Instrumentation/Evidence 注入；全量 async contracts **DEFER** |
 | resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试已落地**；熔断/限流 DEFER |
-| infra 其余域 | `.agents/ssot/{gate,observex,testkitx,transport}` | — | **仅镜像**，未宣称 crate 落地 |
-| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **镜像已注册**；crate 为 **scaffold**，未宣称实现 |
-| （本仓）contracts | —（无独立上游 SSOT 域） | `crates/contracts` | **trait 出口已注册**（#43）；非业务实现 |
-| bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根已落地**（可移植 trait 替面）；contracts/observex/evidence 全量 **DEFER** |
+| infra 其余域 | `.agents/ssot/{gate,observex,testkitx,transport}` | — | **仅镜像** 或见分域对齐文；勿把镜像 COMPLETE 当本仓 ship |
+| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **镜像已注册**；crate 为 **scaffold**，未宣称业务实现 |
+| （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口已注册**；Tx/消息可测 + 最小 Fake testkit；真实后端 **DEFER** |
 | transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（未达 M3）；见 transport 对齐文 |
 | tools | `.agents/ssot/tools/` | `crates/evidence`（仅 evidence） | **镜像已本地化**；evidence 最小面落地；goalctl/xtask/verifyctl **未**落地 |
 
@@ -94,9 +94,13 @@ cargo test -p configx --all-targets
 cargo test -p schedulex --all-targets
 cargo test -p decimalx --all-targets
 cargo test -p canonical --all-targets
+cargo test -p contracts --all-targets
 cargo test -p bootstrap --all-targets
 cargo test -p transportx --all-targets
 node scripts/quality-gates/check-canonical-align.mjs
+# kernel loom 持续门禁
+RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release
+# 或: node scripts/quality-gates/run-kernel-loom.mjs
 
 # adapters / contracts scaffold
 cargo check -p contracts -p binancex -p okxx -p redisx -p kafkax \
@@ -112,6 +116,19 @@ test -d .agents/ssot/tools/xtask
 test -d .agents/ssot/tools/verifyctl
 cargo test -p xhyper-evidence --all-targets
 ```
+
+## 核心五 crate 生产就绪快照（2026-07-21）
+
+| crate | 本仓判定 | 权威细节 |
+|-------|----------|----------|
+| decimalx | **有条件就绪（内部）** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
+| canonical | **部分就绪**（committed v1 子集） | 同上 |
+| contracts | **部分就绪** | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
+| kernel | **接近就绪** | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
+| testkit ManualClock | **有条件就绪** | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
+
+审计与 DEFER：[docs/report/2026-07-21/core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) §11。  
+**禁止**将上表误读为「五 crate 整体 Production Ready」。
 
 ## 相关索引
 

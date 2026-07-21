@@ -5,7 +5,7 @@ use std::sync::Mutex;
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use contracts::EventBus;
+use contracts::{BusMessage, EventBus};
 use futures_core::stream::BoxStream;
 use futures_util::stream;
 use kernel::{XError, XResult};
@@ -14,7 +14,7 @@ use kernel::{XError, XResult};
 pub struct NatsAdapter {
     name: String,
     endpoint: String,
-    topics: Mutex<HashMap<String, Vec<Bytes>>>,
+    topics: Mutex<HashMap<String, Vec<BusMessage>>>,
 }
 
 impl NatsAdapter {
@@ -34,7 +34,7 @@ impl NatsAdapter {
         &self.endpoint
     }
 
-    fn lock(&self) -> XResult<std::sync::MutexGuard<'_, HashMap<String, Vec<Bytes>>>> {
+    fn lock(&self) -> XResult<std::sync::MutexGuard<'_, HashMap<String, Vec<BusMessage>>>> {
         self.topics.lock().map_err(|e| XError::internal(format!("topics lock poisoned: {e}")))
     }
 }
@@ -42,11 +42,13 @@ impl NatsAdapter {
 #[async_trait]
 impl EventBus for NatsAdapter {
     async fn publish(&self, topic: &str, payload: Bytes) -> XResult<()> {
-        self.lock()?.entry(topic.to_string()).or_default().push(payload);
+        let n = self.lock()?.get(topic).map(|v| v.len()).unwrap_or(0);
+        let msg = BusMessage { id: n.to_string(), payload };
+        self.lock()?.entry(topic.to_string()).or_default().push(msg);
         Ok(())
     }
 
-    async fn subscribe(&self, topic: &str) -> XResult<BoxStream<'static, Bytes>> {
+    async fn subscribe(&self, topic: &str) -> XResult<BoxStream<'static, BusMessage>> {
         let msgs = self.lock()?.get(topic).cloned().unwrap_or_default();
         Ok(Box::pin(stream::iter(msgs)))
     }
@@ -62,7 +64,9 @@ mod tests {
         let a = NatsAdapter::local();
         a.publish("t", Bytes::from_static(b"p")).await.expect("pub");
         let mut s = a.subscribe("t").await.expect("sub");
-        assert_eq!(s.next().await, Some(Bytes::from_static(b"p")));
+        let msg = s.next().await.expect("msg");
+        assert_eq!(msg.payload, Bytes::from_static(b"p"));
+        assert!(!msg.id.is_empty());
     }
 
     #[test]

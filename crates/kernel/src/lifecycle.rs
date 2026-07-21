@@ -18,6 +18,8 @@
 use loom::sync::{Arc, Condvar, Mutex};
 #[cfg(not(loom))]
 use std::sync::{Arc, Condvar, Mutex};
+#[cfg(not(loom))]
+use std::time::Duration;
 
 // ---------------------------------------------------------------------------
 // ComponentState
@@ -85,7 +87,7 @@ impl ComponentState {
 
 /// 非法的组件状态转换错误。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
-#[error("illegal component state transition: {from:?} -> {to:?}")]
+#[error("非法组件状态转换: {from:?} -> {to:?}")]
 pub struct LifecycleError {
     /// 当前状态。
     pub from: ComponentState,
@@ -149,6 +151,32 @@ impl ShutdownSignal {
         while !*triggered {
             triggered = self.inner.cv.wait(triggered).unwrap_or_else(|e| e.into_inner());
         }
+    }
+
+    /// 阻塞直到关停被触发或超时。
+    ///
+    /// 返回 `true` 表示已触发；`false` 表示超时仍未触发。
+    /// 组合根应在丢弃 [`ShutdownGuard`] 前设定 deadline；超时后升级（告警/强制退出）。
+    ///
+    /// 在 `cfg(loom)` 下不可用（loom Condvar 无 `wait_timeout`）。
+    #[cfg(not(loom))]
+    pub fn wait_timeout(&self, timeout: Duration) -> bool {
+        let mut triggered = self.inner.triggered.lock().unwrap_or_else(|e| e.into_inner());
+        let deadline = std::time::Instant::now() + timeout;
+        while !*triggered {
+            let now = std::time::Instant::now();
+            if now >= deadline {
+                return false;
+            }
+            let remaining = deadline.saturating_duration_since(now);
+            let (guard, result) =
+                self.inner.cv.wait_timeout(triggered, remaining).unwrap_or_else(|e| e.into_inner());
+            triggered = guard;
+            if result.timed_out() && !*triggered {
+                return false;
+            }
+        }
+        true
     }
 }
 
@@ -424,5 +452,60 @@ mod tests {
                 h.join().unwrap();
             }
         }
+    }
+
+    #[test]
+    fn wait_timeout_returns_false_before_trigger() {
+        let (_guard, signal) = ShutdownSignal::new();
+        assert!(!signal.wait_timeout(Duration::from_millis(20)));
+    }
+
+    #[test]
+    fn wait_timeout_returns_true_after_trigger() {
+        let (guard, signal) = ShutdownSignal::new();
+        guard.trigger();
+        assert!(signal.wait_timeout(Duration::from_secs(1)));
+    }
+
+    #[test]
+    fn composition_root_deadline_upgrade_path() {
+        let (guard, signal) = ShutdownSignal::new();
+        let observer = signal.clone();
+        let done = thread::spawn(move || observer.wait_timeout(Duration::from_millis(30)));
+        let timed_out = !done.join().expect("join");
+        assert!(timed_out, "deadline exceeded without trigger");
+        guard.trigger();
+        assert!(signal.is_triggered());
+    }
+
+    #[test]
+    fn lifecycle_error_display_is_chinese() {
+        let err = LifecycleError { from: ComponentState::Running, to: ComponentState::Starting };
+        assert!(err.to_string().contains("非法"));
+    }
+
+    #[test]
+    fn wait_timeout_zero_deadline_branch() {
+        let (_g, s) = ShutdownSignal::new();
+        // 零超时：立即走 deadline 分支
+        assert!(!s.wait_timeout(Duration::from_millis(0)));
+    }
+
+    #[test]
+    fn wait_timeout_spuriously_not_triggered_until_timeout() {
+        let (_g, s) = ShutdownSignal::new();
+        assert!(!s.wait_timeout(Duration::from_millis(5)));
+    }
+
+    #[test]
+    fn wait_timeout_true_after_trigger_from_other_thread() {
+        let (guard, signal) = ShutdownSignal::new();
+        let s2 = signal.clone();
+        let h = thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(10));
+            guard.trigger();
+        });
+        assert!(s2.wait_timeout(Duration::from_secs(2)));
+        h.join().unwrap();
     }
 }

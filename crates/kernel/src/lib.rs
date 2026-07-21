@@ -17,6 +17,6 @@ pub mod clock;
 pub mod error;
 pub mod lifecycle;
 
-pub use clock::{Clock, ClockError, MonotonicInstant, SystemClock, Timestamp};
+pub use clock::{Clock, ClockDomain, ClockError, MonotonicInstant, SystemClock, Timestamp};
 pub use error::{BoxError, ErrorKind, XError, XResult};
 pub use lifecycle::{ComponentState, LifecycleError, ShutdownGuard, ShutdownSignal};

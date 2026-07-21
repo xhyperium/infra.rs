@@ -11,7 +11,7 @@ on:
       - "crates/kernel/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - "scripts/cov-gate-100.mjs"
+      - "scripts/quality-gates/cov-gate-100.mjs"
       - ".github/workflows/testkit-coverage.yml"
   pull_request:
     branches: [main, develop]
@@ -20,7 +20,7 @@ on:
       - "crates/kernel/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - "scripts/cov-gate-100.mjs"
+      - "scripts/quality-gates/cov-gate-100.mjs"
       - ".github/workflows/testkit-coverage.yml"
 
 concurrency:
@@ -49,4 +49,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p testkit --filter crates/testkit/src
+        run: node scripts/quality-gates/cov-gate-100.mjs -p testkit --filter crates/testkit/src

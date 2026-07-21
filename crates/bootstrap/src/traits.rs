@@ -36,38 +36,40 @@ pub use evidence::{AppendReceipt, EvidenceAppender, EvidenceError, InMemoryEvide
 
 // ── venue / storage（有界上下文字段用最小对象安全面）──────────────────────
 
-/// 行情源能力（完整 async stream API DEFER）。
-pub trait MarketDataSource: Send + Sync {
+/// 有界行情源能力（bootstrap 组合根字段用；**不是** [`contracts::MarketDataSource`]）。
+///
+/// 与 contracts 同名历史面已收敛：本类型加 `Bounded` 前缀以消除静默双平面冲突。
+pub trait BoundedMarketDataSource: Send + Sync {
     /// 逻辑标识（测试/诊断）。
     fn label(&self) -> &str;
 }
 
 /// 标的目录能力。
-pub trait InstrumentCatalog: Send + Sync {
+pub trait BoundedInstrumentCatalog: Send + Sync {
     /// 逻辑标识。
     fn label(&self) -> &str;
 }
 
 /// 键值存储能力。
-pub trait KeyValueStore: Send + Sync {
+pub trait BoundedKeyValueStore: Send + Sync {
     /// 逻辑标识。
     fn label(&self) -> &str;
 }
 
 /// 执行场所能力。
-pub trait ExecutionVenue: Send + Sync {
+pub trait BoundedExecutionVenue: Send + Sync {
     /// 场所 id。
     fn venue_id(&self) -> &str;
 }
 
 /// 账户源能力。
-pub trait AccountSource: Send + Sync {
+pub trait BoundedAccountSource: Send + Sync {
     /// 逻辑标识。
     fn label(&self) -> &str;
 }
 
 /// 场所时间源能力。
-pub trait VenueTimeSource: Send + Sync {
+pub trait BoundedVenueTimeSource: Send + Sync {
     /// 逻辑标识。
     fn label(&self) -> &str;
 }
@@ -78,32 +80,32 @@ mod tests {
     use std::sync::Arc;
 
     struct StubVenue;
-    impl MarketDataSource for StubVenue {
+    impl BoundedMarketDataSource for StubVenue {
         fn label(&self) -> &str {
             "md"
         }
     }
-    impl InstrumentCatalog for StubVenue {
+    impl BoundedInstrumentCatalog for StubVenue {
         fn label(&self) -> &str {
             "cat"
         }
     }
-    impl KeyValueStore for StubVenue {
+    impl BoundedKeyValueStore for StubVenue {
         fn label(&self) -> &str {
             "kv"
         }
     }
-    impl ExecutionVenue for StubVenue {
+    impl BoundedExecutionVenue for StubVenue {
         fn venue_id(&self) -> &str {
             "stub"
         }
     }
-    impl AccountSource for StubVenue {
+    impl BoundedAccountSource for StubVenue {
         fn label(&self) -> &str {
             "acct"
         }
     }
-    impl VenueTimeSource for StubVenue {
+    impl BoundedVenueTimeSource for StubVenue {
         fn label(&self) -> &str {
             "time"
         }
@@ -147,17 +149,17 @@ mod tests {
     #[test]
     fn bounded_capability_stubs_object_safe() {
         let s = StubVenue;
-        let _: &dyn MarketDataSource = &s;
-        let _: &dyn InstrumentCatalog = &s;
-        let _: &dyn KeyValueStore = &s;
-        let _: &dyn ExecutionVenue = &s;
-        let _: &dyn AccountSource = &s;
-        let _: &dyn VenueTimeSource = &s;
+        let _: &dyn BoundedMarketDataSource = &s;
+        let _: &dyn BoundedInstrumentCatalog = &s;
+        let _: &dyn BoundedKeyValueStore = &s;
+        let _: &dyn BoundedExecutionVenue = &s;
+        let _: &dyn BoundedAccountSource = &s;
+        let _: &dyn BoundedVenueTimeSource = &s;
         assert_eq!(s.venue_id(), "stub");
-        assert_eq!(MarketDataSource::label(&s), "md");
-        assert_eq!(InstrumentCatalog::label(&s), "cat");
-        assert_eq!(KeyValueStore::label(&s), "kv");
-        assert_eq!(AccountSource::label(&s), "acct");
-        assert_eq!(VenueTimeSource::label(&s), "time");
+        assert_eq!(BoundedMarketDataSource::label(&s), "md");
+        assert_eq!(BoundedInstrumentCatalog::label(&s), "cat");
+        assert_eq!(BoundedKeyValueStore::label(&s), "kv");
+        assert_eq!(BoundedAccountSource::label(&s), "acct");
+        assert_eq!(BoundedVenueTimeSource::label(&s), "time");
     }
 }

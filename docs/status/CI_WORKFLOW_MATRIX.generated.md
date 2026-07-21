@@ -19,6 +19,7 @@
 | `decimal-coverage.yml` | Decimal Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
 | `evidence-coverage.yml` | Evidence Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
 | `kernel-coverage.yml` | Kernel Coverage | push, pull_request, workflow_dispatch | `coverage` |
+| `kernel-loom.yml` | kernel-loom | push, pull_request, workflow_dispatch | `loom` |
 | `kernel-miri.yml` | Kernel Miri | schedule, workflow_dispatch | `miri` |
 | `kernel-mutants.yml` | Kernel Mutants | schedule, workflow_dispatch | `mutants` |
 | `observex-coverage.yml` | Observex Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
@@ -37,8 +38,8 @@
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 23 |
-| Job 总数（解析） | 40 |
+| 工作流文件数 | 24 |
+| Job 总数（解析） | 41 |
 
 ## 维护
 

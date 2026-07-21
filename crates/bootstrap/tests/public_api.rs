@@ -30,32 +30,32 @@ impl EvidenceAppender for ProbeAppender {
 
 struct Cap(&'static str);
 
-impl bootstrap::MarketDataSource for Cap {
+impl bootstrap::BoundedMarketDataSource for Cap {
     fn label(&self) -> &str {
         self.0
     }
 }
-impl bootstrap::InstrumentCatalog for Cap {
+impl bootstrap::BoundedInstrumentCatalog for Cap {
     fn label(&self) -> &str {
         self.0
     }
 }
-impl bootstrap::KeyValueStore for Cap {
+impl bootstrap::BoundedKeyValueStore for Cap {
     fn label(&self) -> &str {
         self.0
     }
 }
-impl bootstrap::ExecutionVenue for Cap {
+impl bootstrap::BoundedExecutionVenue for Cap {
     fn venue_id(&self) -> &str {
         self.0
     }
 }
-impl bootstrap::AccountSource for Cap {
+impl bootstrap::BoundedAccountSource for Cap {
     fn label(&self) -> &str {
         self.0
     }
 }
-impl bootstrap::VenueTimeSource for Cap {
+impl bootstrap::BoundedVenueTimeSource for Cap {
     fn label(&self) -> &str {
         self.0
     }
@@ -149,16 +149,16 @@ fn bounded_contexts_from_platform_clone() {
     let platform = Bootstrap::new().build().platform_cloned();
     let c = Arc::new(Cap("cap"));
     let mdx = MarketDataContext::new(
-        Arc::clone(&c) as Arc<dyn bootstrap::MarketDataSource>,
-        Arc::clone(&c) as Arc<dyn bootstrap::InstrumentCatalog>,
-        Arc::clone(&c) as Arc<dyn bootstrap::KeyValueStore>,
+        Arc::clone(&c) as Arc<dyn bootstrap::BoundedMarketDataSource>,
+        Arc::clone(&c) as Arc<dyn bootstrap::BoundedInstrumentCatalog>,
+        Arc::clone(&c) as Arc<dyn bootstrap::BoundedKeyValueStore>,
         platform.clone(),
     );
     assert_eq!(mdx.source().label(), "cap");
     let ex = ExecutionContext::new(
-        Arc::clone(&c) as Arc<dyn bootstrap::ExecutionVenue>,
-        Arc::clone(&c) as Arc<dyn bootstrap::AccountSource>,
-        Arc::clone(&c) as Arc<dyn bootstrap::VenueTimeSource>,
+        Arc::clone(&c) as Arc<dyn bootstrap::BoundedExecutionVenue>,
+        Arc::clone(&c) as Arc<dyn bootstrap::BoundedAccountSource>,
+        Arc::clone(&c) as Arc<dyn bootstrap::BoundedVenueTimeSource>,
         platform,
     );
     assert_eq!(ex.venue().venue_id(), "cap");

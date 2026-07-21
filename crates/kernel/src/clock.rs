@@ -8,6 +8,10 @@
 //!   或人工校时回退，不承诺非递减。
 //! - **单调钟**（[`MonotonicInstant`] / [`Clock::monotonic`]）：仅用于测量间隔，
 //!   绝对值无业务意义，不可持久化，不可跨进程比较。
+//! - **domain**：单调采样点带 [`ClockDomain`]。同进程所有 [`SystemClock`] 共享
+//!   进程级 domain 与原点；每个 `ManualClock`（testkit）有独立 domain。
+//!   跨 domain 的 [`MonotonicInstant::checked_duration_since`] 返回 `None`，
+//!   不得当作可靠间隔。
 //!
 //! 获取失败必须显式返回错误，禁止返回零值时间戳哨兵。
 
@@ -82,28 +86,80 @@ impl Timestamp {
 // MonotonicInstant
 // ---------------------------------------------------------------------------
 
+/// 单调时钟 domain 标识。
+///
+/// 仅同一 domain 内的 [`MonotonicInstant`] 可比较间隔；跨 domain 比较返回 `None`。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ClockDomain(u64);
+
+impl ClockDomain {
+    /// 进程级系统单调域（所有 [`SystemClock`] 共享）。
+    pub const PROCESS: Self = Self(1);
+
+    /// 构造测试/自定义 domain（`id == 0` 或 `1` 保留给进程域时仍可用，但勿与
+    /// [`Self::PROCESS`] 混用语义）。
+    pub const fn from_raw(id: u64) -> Self {
+        Self(id)
+    }
+
+    /// 原始 ID。
+    pub const fn as_raw(self) -> u64 {
+        self.0
+    }
+}
+
 /// 单调时钟采样点，仅用于测量时间间隔。
 ///
 /// 封装为不透明类型，不暴露底层 ticks。不可持久化，不可跨进程比较，绝对值无
-/// 业务意义。
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct MonotonicInstant(Duration);
+/// 业务意义。比较间隔前必须同 [`ClockDomain`]。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct MonotonicInstant {
+    elapsed: Duration,
+    domain: ClockDomain,
+}
+
+impl PartialOrd for MonotonicInstant {
+    /// 仅同 domain 可比较；跨 domain 返回 `None`（不可静默当可靠序）。
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if self.domain != other.domain {
+            return None;
+        }
+        Some(self.elapsed.cmp(&other.elapsed))
+    }
+}
 
 impl MonotonicInstant {
-    /// 返回 `self` 和 `earlier` 之间的持续时间差。
-    ///
-    /// 若 `earlier` 晚于 `self`（反向比较）则返回 `None`，禁止饱和为零。
-    pub fn checked_duration_since(self, earlier: Self) -> Option<Duration> {
-        self.0.checked_sub(earlier.0)
+    /// 返回采样点所属 domain。
+    pub const fn domain(self) -> ClockDomain {
+        self.domain
     }
 
-    /// 从已流逝的时间构造 `MonotonicInstant`。
+    /// 返回 `self` 和 `earlier` 之间的持续时间差。
+    ///
+    /// - 跨 domain：返回 `None`（不可静默当作可靠结果）
+    /// - `earlier` 晚于 `self`：返回 `None`，禁止饱和为零
+    pub fn checked_duration_since(self, earlier: Self) -> Option<Duration> {
+        if self.domain != earlier.domain {
+            return None;
+        }
+        self.elapsed.checked_sub(earlier.elapsed)
+    }
+
+    /// 从已流逝的时间构造 `MonotonicInstant`（默认进程 domain）。
     ///
     /// 仅供 [`Clock`] 实现和 `testkit::ManualClock` 使用。`archgate` 限制
     /// 其调用位置只能出现在 `crates/kernel/src/clock.rs` 和 `crates/testkit/*`。
     #[doc(hidden)]
     pub const fn from_clock_elapsed(elapsed: Duration) -> Self {
-        Self(elapsed)
+        Self { elapsed, domain: ClockDomain::PROCESS }
+    }
+
+    /// 从已流逝时间 + 显式 domain 构造。
+    ///
+    /// 仅供 [`Clock`] 实现和 `testkit::ManualClock` 使用。
+    #[doc(hidden)]
+    pub const fn from_clock_elapsed_in(elapsed: Duration, domain: ClockDomain) -> Self {
+        Self { elapsed, domain }
     }
 }
 
@@ -116,15 +172,15 @@ impl MonotonicInstant {
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum ClockError {
     /// 系统时间早于 Unix epoch。
-    #[error("system clock is before Unix epoch")]
+    #[error("系统时钟早于 Unix epoch")]
     BeforeUnixEpoch,
 
     /// 时钟值超出可表示的纳秒范围。
-    #[error("clock value exceeds representable nanoseconds")]
+    #[error("时钟值超出可表示的纳秒范围")]
     Overflow,
 
     /// 时间源不可用。
-    #[error("time source unavailable")]
+    #[error("时间源不可用")]
     Unavailable,
 }
 
@@ -155,15 +211,16 @@ pub trait Clock: Send + Sync {
 /// 基于 `std::time` 的真实系统时钟实现。
 ///
 /// 这是生产环境中唯一的时钟实现。测试应使用 `testkit::ManualClock`。
+/// 所有实例共享进程级单调原点与 [`ClockDomain::PROCESS`]。
 #[derive(Debug, Clone)]
-pub struct SystemClock {
-    origin: std::time::Instant,
-}
+pub struct SystemClock;
 
 impl SystemClock {
-    /// 创建一个新的 `SystemClock`，以当前时刻作为单调钟原点。
+    /// 创建一个新的 `SystemClock`（共享进程单调原点）。
     pub fn new() -> Self {
-        Self { origin: std::time::Instant::now() }
+        // 预热进程原点，避免首采样抖动影响 domain 语义说明
+        let _ = process_monotonic_origin();
+        Self
     }
 }
 
@@ -171,6 +228,12 @@ impl Default for SystemClock {
     fn default() -> Self {
         Self::new()
     }
+}
+
+fn process_monotonic_origin() -> std::time::Instant {
+    use std::sync::OnceLock;
+    static ORIGIN: OnceLock<std::time::Instant> = OnceLock::new();
+    *ORIGIN.get_or_init(std::time::Instant::now)
 }
 
 /// 将 epoch 起的 `Duration` 转为 [`Timestamp`]（纯函数，便于测 Overflow）。
@@ -195,7 +258,10 @@ impl Clock for SystemClock {
     }
 
     fn monotonic(&self) -> MonotonicInstant {
-        MonotonicInstant::from_clock_elapsed(self.origin.elapsed())
+        MonotonicInstant::from_clock_elapsed_in(
+            process_monotonic_origin().elapsed(),
+            ClockDomain::PROCESS,
+        )
     }
 }
 
@@ -347,7 +413,7 @@ mod tests {
 
     #[test]
     fn test_system_clock_default() {
-        let clock = SystemClock::default();
+        let clock = SystemClock::new();
         let ts = clock.now().expect("wall clock should be available");
         assert!(ts.as_unix_nanos() > 0);
     }
@@ -459,5 +525,57 @@ mod tests {
             assert!(a.checked_duration_since(b).is_none());
             assert_eq!(b.checked_duration_since(a), Some(Duration::from_millis(ms_b - ms_a)));
         }
+    }
+    #[test]
+    fn system_clocks_share_process_domain() {
+        let a = SystemClock::new();
+        let b = SystemClock::new();
+        let ia = a.monotonic();
+        let ib = b.monotonic();
+        assert_eq!(ia.domain(), ClockDomain::PROCESS);
+        assert_eq!(ib.domain(), ClockDomain::PROCESS);
+        let _ = ia.checked_duration_since(ia);
+        let _ = ib.checked_duration_since(ia);
+    }
+
+    #[test]
+    fn cross_domain_duration_is_none() {
+        let a = MonotonicInstant::from_clock_elapsed_in(
+            Duration::from_millis(10),
+            ClockDomain::PROCESS,
+        );
+        let b = MonotonicInstant::from_clock_elapsed_in(
+            Duration::from_millis(5),
+            ClockDomain::from_raw(99),
+        );
+        assert!(a.checked_duration_since(b).is_none());
+        assert!(b.checked_duration_since(a).is_none());
+    }
+
+    #[test]
+    fn clock_error_display_is_chinese() {
+        assert!(ClockError::BeforeUnixEpoch.to_string().contains("系统"));
+        assert!(ClockError::Overflow.to_string().contains("纳秒"));
+        assert!(ClockError::Unavailable.to_string().contains("不可用"));
+    }
+
+    #[test]
+    fn clock_domain_raw_and_partial_ord() {
+        let d = ClockDomain::from_raw(42);
+        assert_eq!(d.as_raw(), 42);
+        let a =
+            MonotonicInstant::from_clock_elapsed_in(Duration::from_millis(1), ClockDomain::PROCESS);
+        let b =
+            MonotonicInstant::from_clock_elapsed_in(Duration::from_millis(2), ClockDomain::PROCESS);
+        assert!(a < b);
+        let c = MonotonicInstant::from_clock_elapsed_in(
+            Duration::from_millis(1),
+            ClockDomain::from_raw(7),
+        );
+        assert!(a.partial_cmp(&c).is_none());
+        let _ = SystemClock::new();
+        // 覆盖 Default 实现（非 unit-struct default lint 的 ::default() 调用）
+        let _clk: SystemClock = Default::default();
+        let _ = _clk.monotonic().domain();
     }
 }

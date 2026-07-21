@@ -102,7 +102,7 @@ jobs:
 
       - name: Run constitution checks
         if: steps.scope.outputs.run_full == 'true'
-        run: ./scripts/quality-gates/check-constitution.mjs
+        run: node scripts/quality-gates/check-constitution.mjs
         env:
           CARGO_TERM_COLOR: always
 

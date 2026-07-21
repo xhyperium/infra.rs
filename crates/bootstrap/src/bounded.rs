@@ -5,42 +5,42 @@
 
 use crate::PlatformContext;
 use crate::traits::{
-    AccountSource, ExecutionVenue, InstrumentCatalog, KeyValueStore, MarketDataSource,
-    VenueTimeSource,
+    BoundedAccountSource, BoundedExecutionVenue, BoundedInstrumentCatalog, BoundedKeyValueStore,
+    BoundedMarketDataSource, BoundedVenueTimeSource,
 };
 use std::sync::Arc;
 
 /// 行情服务有界上下文（最小可用字段集）。
 pub struct MarketDataContext {
-    source: Arc<dyn MarketDataSource>,
-    catalog: Arc<dyn InstrumentCatalog>,
-    kv: Arc<dyn KeyValueStore>,
+    source: Arc<dyn BoundedMarketDataSource>,
+    catalog: Arc<dyn BoundedInstrumentCatalog>,
+    kv: Arc<dyn BoundedKeyValueStore>,
     platform: PlatformContext,
 }
 
 impl MarketDataContext {
     /// 构造（全部字段必须在组合边界注入）。
     pub fn new(
-        source: Arc<dyn MarketDataSource>,
-        catalog: Arc<dyn InstrumentCatalog>,
-        kv: Arc<dyn KeyValueStore>,
+        source: Arc<dyn BoundedMarketDataSource>,
+        catalog: Arc<dyn BoundedInstrumentCatalog>,
+        kv: Arc<dyn BoundedKeyValueStore>,
         platform: PlatformContext,
     ) -> Self {
         Self { source, catalog, kv, platform }
     }
 
     /// 行情源。
-    pub fn source(&self) -> &dyn MarketDataSource {
+    pub fn source(&self) -> &dyn BoundedMarketDataSource {
         self.source.as_ref()
     }
 
     /// 标的目录。
-    pub fn catalog(&self) -> &dyn InstrumentCatalog {
+    pub fn catalog(&self) -> &dyn BoundedInstrumentCatalog {
         self.catalog.as_ref()
     }
 
     /// KV 存储。
-    pub fn kv_store(&self) -> &dyn KeyValueStore {
+    pub fn kv_store(&self) -> &dyn BoundedKeyValueStore {
         self.kv.as_ref()
     }
 
@@ -52,35 +52,35 @@ impl MarketDataContext {
 
 /// 执行服务有界上下文（最小可用字段集）。
 pub struct ExecutionContext {
-    venue: Arc<dyn ExecutionVenue>,
-    account: Arc<dyn AccountSource>,
-    time: Arc<dyn VenueTimeSource>,
+    venue: Arc<dyn BoundedExecutionVenue>,
+    account: Arc<dyn BoundedAccountSource>,
+    time: Arc<dyn BoundedVenueTimeSource>,
     platform: PlatformContext,
 }
 
 impl ExecutionContext {
     /// 构造。
     pub fn new(
-        venue: Arc<dyn ExecutionVenue>,
-        account: Arc<dyn AccountSource>,
-        time: Arc<dyn VenueTimeSource>,
+        venue: Arc<dyn BoundedExecutionVenue>,
+        account: Arc<dyn BoundedAccountSource>,
+        time: Arc<dyn BoundedVenueTimeSource>,
         platform: PlatformContext,
     ) -> Self {
         Self { venue, account, time, platform }
     }
 
     /// 执行场所。
-    pub fn venue(&self) -> &dyn ExecutionVenue {
+    pub fn venue(&self) -> &dyn BoundedExecutionVenue {
         self.venue.as_ref()
     }
 
     /// 账户源。
-    pub fn account(&self) -> &dyn AccountSource {
+    pub fn account(&self) -> &dyn BoundedAccountSource {
         self.account.as_ref()
     }
 
     /// 场所时间。
-    pub fn time(&self) -> &dyn VenueTimeSource {
+    pub fn time(&self) -> &dyn BoundedVenueTimeSource {
         self.time.as_ref()
     }
 
@@ -96,32 +96,32 @@ mod tests {
     use crate::Bootstrap;
 
     struct Stub;
-    impl MarketDataSource for Stub {
+    impl BoundedMarketDataSource for Stub {
         fn label(&self) -> &str {
             "md"
         }
     }
-    impl InstrumentCatalog for Stub {
+    impl BoundedInstrumentCatalog for Stub {
         fn label(&self) -> &str {
             "cat"
         }
     }
-    impl KeyValueStore for Stub {
+    impl BoundedKeyValueStore for Stub {
         fn label(&self) -> &str {
             "kv"
         }
     }
-    impl ExecutionVenue for Stub {
+    impl BoundedExecutionVenue for Stub {
         fn venue_id(&self) -> &str {
             "venue-a"
         }
     }
-    impl AccountSource for Stub {
+    impl BoundedAccountSource for Stub {
         fn label(&self) -> &str {
             "acct"
         }
     }
-    impl VenueTimeSource for Stub {
+    impl BoundedVenueTimeSource for Stub {
         fn label(&self) -> &str {
             "clock"
         }
@@ -132,9 +132,9 @@ mod tests {
         let platform = Bootstrap::new().build().platform_cloned();
         let s = Arc::new(Stub);
         let mdx = MarketDataContext::new(
-            Arc::clone(&s) as Arc<dyn MarketDataSource>,
-            Arc::clone(&s) as Arc<dyn InstrumentCatalog>,
-            Arc::clone(&s) as Arc<dyn KeyValueStore>,
+            Arc::clone(&s) as Arc<dyn BoundedMarketDataSource>,
+            Arc::clone(&s) as Arc<dyn BoundedInstrumentCatalog>,
+            Arc::clone(&s) as Arc<dyn BoundedKeyValueStore>,
             platform,
         );
         assert_eq!(mdx.source().label(), "md");
@@ -149,9 +149,9 @@ mod tests {
         let platform = Bootstrap::new().build().platform_cloned();
         let s = Arc::new(Stub);
         let ex = ExecutionContext::new(
-            Arc::clone(&s) as Arc<dyn ExecutionVenue>,
-            Arc::clone(&s) as Arc<dyn AccountSource>,
-            Arc::clone(&s) as Arc<dyn VenueTimeSource>,
+            Arc::clone(&s) as Arc<dyn BoundedExecutionVenue>,
+            Arc::clone(&s) as Arc<dyn BoundedAccountSource>,
+            Arc::clone(&s) as Arc<dyn BoundedVenueTimeSource>,
             platform,
         );
         assert_eq!(ex.venue().venue_id(), "venue-a");
