@@ -13,7 +13,7 @@ sources_checked:
   - plan/spec-inventory.md (I-5/I-17/I-19)
   - plan/residual-open.md
   - plan/approval-packet.md
-  - .worktree/evidence-todo.md
+  - .worktrees/evidence-todo.md
 failed_checks: []
 omissions:
   - file segment header field list (magic/format_version/previous_segment_head) still by §ref + dual-len AC, not full header field table in tasks

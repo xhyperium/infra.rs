@@ -13,7 +13,7 @@ sources_checked:
   - plan/spec-inventory.md
   - plan/residual-open.md
   - plan/approval-packet.md
-  - .worktree/evidence-todo.md
+  - .worktrees/evidence-todo.md
   - round-01b-findings.md
 failed_checks: []
 omissions:

@@ -101,5 +101,5 @@
 - [evidence-plan-10x-verdict.md](./evidence-plan-10x-verdict.md)
 - [xhyper-evidence-complete-spec.md](../xhyper-evidence-complete-spec.md)
 - [alignment-2026-07-14.md](../../../../../evidence/evidence-002/alignment-2026-07-14.md)
-- [`.worktree/evidence-todo.md`](../../../../.worktree/evidence-todo.md)
+- [`.worktrees/evidence-todo.md`](../../../../.worktrees/evidence-todo.md)
 - PR: https://github.com/xhyperium/infra.rs/pull/253

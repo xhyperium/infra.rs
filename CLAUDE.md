@@ -13,7 +13,7 @@
 ## 上游 SSOT 与本仓落地
 
 - `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓可宣称 ship」
-  - infra 平面在 `.agents/ssot/infra/{bootstrap,configx,gate,…}`（保留 `infra/` 层级）
+  - infra 平面在 `.agents/ssot/{bootstrap,configx,gate,…}`（保留 `infra/` 层级）
   - adapters 平面在 `.agents/ssot/adapters/{exchange,storage}/…`（保留 `adapters/` 层级）
   - tools 平面在 `.agents/ssot/tools/{evidence,goalctl,xtask,verifyctl}/…`（保留 `tools/` 层级；verifyctl 为本仓扩展）
 - 本仓 members：`kernel` / `testkit` / `configx` / `schedulex` / `bootstrap` / `evidence` / `observex` / `resiliencx` / `transport` / `types/*` / `contracts` / `adapters/**`（adapters 为 scaffold；**无** `infra-core`；gate/goalctl/xtask/verifyctl 等未落地）

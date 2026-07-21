@@ -1,9 +1,9 @@
-# infra/bootstrap — Goal 管线契约
+# bootstrap — Goal 管线契约
 
 > 实现 / 代码唯一位置：`crates/bootstrap`  
 > **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-bootstrap-complete-spec.md](spec/xhyper-bootstrap-complete-spec.md)  
 > **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
-> **布局**：对齐 [`.agents/ssot/kernel/`](../../kernel/)（[AGENTS.md](../../../../AGENTS.md) §2）  
+> **布局**：对齐 [`.agents/ssot/kernel/`](../kernel/)（[AGENTS.md](../../../AGENTS.md) §2）  
 > **状态**：布局已对齐 kernel · 战役内容未宣称闭合
 
 ## 11 层映射
@@ -40,11 +40,11 @@
 ## 验证
 
 ```bash
-cmp .agents/ssot/infra/bootstrap/spec/spec.md \
-    .agents/ssot/infra/bootstrap/spec/xhyper-bootstrap-complete-spec.md
+cmp .agents/ssot/bootstrap/spec/spec.md \
+    .agents/ssot/bootstrap/spec/xhyper-bootstrap-complete-spec.md
 # 结构：README + 11 层目录 + evidence/ 横切
-test -f .agents/ssot/infra/bootstrap/README.md
-test -f .agents/ssot/infra/bootstrap/spec/spec.md
+test -f .agents/ssot/bootstrap/README.md
+test -f .agents/ssot/bootstrap/spec/spec.md
 ```
 
 **布局对齐：是 · 战役全闭合：未宣称 · 禁止假 Done。**

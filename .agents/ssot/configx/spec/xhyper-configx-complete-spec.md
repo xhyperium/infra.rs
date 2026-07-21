@@ -6,7 +6,7 @@
 - Implementation snapshot：`b0934baa`（2026-07-15）
 - Document commit：`e0b98df4`
 - Verified at：`e0b98df4`（相关实现路径未变化）
-- Candidate：[SPEC-INFRA-CONFIGX-002](../../../../draft/configx-complete-spec.md)（Draft，非权威，不覆盖本文）
+- Candidate：[SPEC-INFRA-CONFIGX-002](../../../draft/configx-complete-spec.md)（Draft，非权威，不覆盖本文）
 
 ## 0. 文档定位与裁定边界
 

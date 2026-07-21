@@ -12,7 +12,7 @@
 | Branch          | `feat/kernel-002-e2-migrate-banned-apis`                                          |
 | Ship PR         | [#235](https://github.com/xhyperium/infra.rs/pull/235)                           |
 | Residual SSOT   | [evidence/2026-07-14/residual-open.txt](../evidence/2026-07-14/residual-open.txt) |
-| Work Todo       | [`.worktree/kernel-todo.md`](../../../../.worktree/kernel-todo.md)                |
+| Work Todo       | [`.worktrees/kernel-todo.md`](../../../../.worktrees/kernel-todo.md)                |
 | Strategy        | **诚实台账 → 差距闭合 → 强化测试/门禁 → 十轮验收 → 人审 Approved → release**      |
 | Campaign status | **COMPLETE** · Spec Approved · 0.1.1 · stable · API-002 · crates.io `xhyper-kernel` |
 | Forbidden       | 假 §18 Done / registry `stable` / 无 Evidence 勾 PASS                             |
@@ -179,7 +179,7 @@ W8  §18 闭合声明（仅人审后）
 | **Executor-Test**    | LC-005 / 可选 trybuild          | `crates/kernel/tests/*`、`src/*` tests               |
 | **Executor-Gate**    | GATE-009 / 文档 defer           | `tools/archgate` 或 evidence                         |
 | **Executor-Quality** | 014/015/016 命令+证据           | `evidence/2026-07-14/*`                              |
-| **Doc-Sync**         | gate/tasks/matrix/review/goal   | `.agents/ssot/kernel/**`、`.worktree/kernel-todo.md` |
+| **Doc-Sync**         | gate/tasks/matrix/review/goal   | `.agents/ssot/kernel/**`、`.worktrees/kernel-todo.md` |
 | **Verifier**         | 十轮清单 + 汇总 verdict         | `EVID-KERNEL-002-R10b-*.md`                          |
 | **Skeptic**          | 反证：找假 PASS / 遗漏 residual | 只读 + 写 review 批注                                |
 
@@ -188,7 +188,7 @@ W8  §18 闭合声明（仅人审后）
 | Task ID       | Wave | 内容                                                           | AC                              | Status                                  |
 | ------------- | ---- | -------------------------------------------------------------- | ------------------------------- | --------------------------------------- |
 | T-PLAN-001    | W0   | 本 plan v2 落盘                                                | 文件存在且含 §0–§6              | **DONE**                                |
-| T-TODO-001    | W0   | `.worktree/kernel-todo.md`                                     | 全 OPEN 项可追踪                | **DONE**                                |
+| T-TODO-001    | W0   | `.worktrees/kernel-todo.md`                                     | 全 OPEN 项可追踪                | **DONE**                                |
 | T-DOC-001     | W0   | 刷新 gate.md / tasks / matrix / review / goal 与 residual 一致 | 无矛盾 FAIL 陈述                | **DONE**（Team-R10 再同步）             |
 | T-RES-001     | W0   | residual-open 登记 C 类 ID                                     | 全部 OPEN/CLOSED                | **DONE**                                |
 | T-API-001     | W1   | 删除或冻结 `context_cow`                                       | redisx 迁 `context()`；快照更新 | **DONE** · RES-ERR-010 CLOSED           |
@@ -246,7 +246,7 @@ write R10b verdict (honest §18 still OPEN if Approved missing)
 | ------------- | -------------------------------------------------------- |
 | 完整计划 v2   | `.agents/ssot/kernel/plan/plan.md`（本文件）             |
 | 章节差距附录  | `.agents/ssot/kernel/plan/gap-matrix-v2.md`              |
-| 工作台账      | `.worktree/kernel-todo.md`                               |
+| 工作台账      | `.worktrees/kernel-todo.md`                               |
 | residual 更新 | `evidence/2026-07-14/residual-open.txt`                  |
 | 十轮日志      | `evidence/2026-07-14/EVID-KERNEL-002-R10b-round-log.txt` |
 | 十轮裁定      | `evidence/2026-07-14/EVID-KERNEL-002-R10b-verdict.md`    |

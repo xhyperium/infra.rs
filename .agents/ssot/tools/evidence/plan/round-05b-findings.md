@@ -13,7 +13,7 @@ sources_checked:
   - plan/spec-inventory.md (I-6/I-7/I-8/I-20)
   - plan/residual-open.md
   - plan/approval-packet.md (A10 golden path)
-  - .worktree/evidence-todo.md
+  - .worktrees/evidence-todo.md
 failed_checks: []
 omissions:
   - T-CORE-030 AC still "§24.3 九类失败各一测" (enumerates count, not names — mitigated by count=9 AC)

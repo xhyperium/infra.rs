@@ -94,5 +94,5 @@
 
 - [plan.md](./plan.md)
 - Codex cosign: `evidence/architecture/gate-retirement/phase-0/codex-approval-cosign.txt`
-- [RFC](../../../../../docs/specs/retire-runtime-gate-service-locator.md)
-- [ADR-016](../../../../../docs/architecture/adr/016-bootstrap-sole-composition-root.md)
+- [RFC](../../../../docs/specs/retire-runtime-gate-service-locator.md)
+- [ADR-016](../../../../docs/architecture/adr/016-bootstrap-sole-composition-root.md)

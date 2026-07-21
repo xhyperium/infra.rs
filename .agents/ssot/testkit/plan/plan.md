@@ -15,7 +15,7 @@
 | Tasks | [`tasks.md`](./tasks.md) |
 | Residual | [`residual-open.md`](./residual-open.md) |
 | Approval Packet | [`approval-packet.md`](./approval-packet.md) |
-| Work Todo | [`.worktree/testkit-todo.md`](../../../../.worktree/testkit-todo.md) |
+| Work Todo | [`.worktrees/testkit-todo.md`](../../../../.worktrees/testkit-todo.md) |
 | 10x Verdict | [`testkit-plan-10x-verdict.md`](./testkit-plan-10x-verdict.md) |
 | Strategy | **诚实台账 → 冻结错误扩散 → ManualClock V2 → 退役无价值 API → contract-testkit 拆分 → 图隔离门禁 → 架构 SSOT 去重 → 十轮验收 → 人审** |
 | Campaign status | **STABLE** · W0–W6 · 0.1.1 · Spec **Stable** · mutation missed=0 · Miri PASS · CI testkit-quality |
@@ -132,7 +132,7 @@ Clock::{now -> Result, monotonic -> MonotonicInstant}
 | 旧文档 | 问题 | 处理 |
 |--------|------|------|
 | `.agents/ssot/testkit/spec/TESTKIT-SPEC-001.superseded.md` | 仍要求 `xlib_test!`/`mock!` 为职责 | Superseded → 指向 002（原 `testkit-spec.md`） |
-| `.agents/ssot/infra/testkitx/testkitx-spec.md` | 历史 L1 路径幽灵 | Superseded / archive |
+| `.agents/ssot/testkitx/testkitx-spec.md` | 历史 L1 路径幽灵 | Superseded / archive |
 | `docs/architecture/spec.md` | L0 列表含 testkit；职责写宏 | W5 对齐修订 |
 | ADR-010 | 批准宏最小范围 | W5 修订备注：002 退役宏 |
 | ADR-012 | harness/testkitx 合并叙述 | 交叉引用 002 终态 |
@@ -161,7 +161,7 @@ Clock::{now -> Result, monotonic -> MonotonicInstant}
 ```text
 plan 分支:   docs/testkit-002-plan
 实现分支:    feat/testkit-002-clock-v2  （PR 栈后续）
-worktree:    .worktree/workspaces/<branch-name>
+worktree:    .worktrees/workspaces/<branch-name>
 base:        origin/main HEAD
 ```
 
@@ -246,7 +246,7 @@ W9  §24 全勾 + 可选 stable 决策
 
 | 分片 | 可写路径 | 禁写 |
 |------|----------|------|
-| A Planner | `.agents/ssot/testkit/plan/**` · `.worktree/testkit-todo.md` | `crates/**` 实现 |
+| A Planner | `.agents/ssot/testkit/plan/**` · `.worktrees/testkit-todo.md` | `crates/**` 实现 |
 | B Clock | `crates/testkit/src/clock.rs` · `crates/testkit/tests/**` | adapters |
 | C Delete/Migrate | `crates/testkit/src/lib.rs` · binance/okx 测试入口 | kernel |
 | D Contract | `crates/test-support/contracts/**`（新建） | testkit core 宏回流 |

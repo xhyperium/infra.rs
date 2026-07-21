@@ -5,7 +5,7 @@
 | Round | **9** |
 | Role | Final Verifier · End-to-end production audit path |
 | Source | `xhyper-evidence-complete-spec.md` **# 34. 最终裁定**（及 §1.1 生产可信度组合） |
-| Plan pack | `plan.md` · `gap-matrix.md` · `tasks.md` · `approval-packet.md` · `.worktree/evidence-todo.md` |
+| Plan pack | `plan.md` · `gap-matrix.md` · `tasks.md` · `approval-packet.md` · `.worktrees/evidence-todo.md` |
 | Prior rounds | R3–R8 已 FAIL（不重复展开，本轮只走 §34 路径） |
 | Date | 2026-07-14 |
 | **result** | **FAIL** |

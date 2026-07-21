@@ -1,4 +1,4 @@
-# infra/gate — Goal
+# gate — Goal
 
 > **状态**：布局占位 · **not started / not claimed Done**  
 > Source Goal 待战役定义；无证据不得宣称 In Progress 闭合。

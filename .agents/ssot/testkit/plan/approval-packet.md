@@ -130,4 +130,4 @@
 - gap：`./gap-matrix.md`
 - inventory：`./spec-inventory.md`
 - residual：`./residual-open.md`
-- todo：`.worktree/testkit-todo.md`
+- todo：`.worktrees/testkit-todo.md`

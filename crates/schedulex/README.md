@@ -14,7 +14,7 @@ L1 **任务 ID 登记表**（active schedulex SSOT：无真实定时器）。
 > **不是** production timer scheduler。  
 > “登记任务 ID” ≠ 定时触发 / 执行 Job。
 
-规范镜像：[`../../.agents/ssot/infra/schedulex/spec/spec.md`](../../.agents/ssot/infra/schedulex/spec/spec.md)  
+规范镜像：[`../../.agents/ssot/schedulex/spec/spec.md`](../../.agents/ssot/schedulex/spec/spec.md)  
 对齐说明：[`../../docs/ssot/schedulex-ssot-alignment.md`](../../docs/ssot/schedulex-ssot-alignment.md)
 
 ## 公开面

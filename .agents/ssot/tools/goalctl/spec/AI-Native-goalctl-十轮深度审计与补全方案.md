@@ -573,7 +573,7 @@ ${XDG_STATE_HOME}/xhyper-goalctl/<repo-id>/
 --state-dir
 GOALCTL_STATE_DIR
 XDG_STATE_HOME/xhyper-goalctl/<repo-id>
-<repo>/.worktree/goalctl-state   （仅已批准时）
+<repo>/.worktrees/goalctl-state   （仅已批准时）
 ```
 
 不要复用 Cargo `target` 目录，因为：

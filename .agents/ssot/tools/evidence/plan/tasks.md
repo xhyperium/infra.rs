@@ -19,7 +19,7 @@
 | T-PLAN-002 | 落盘 gap-matrix.md | §0–§34 + T1–T18 + DEF-001…018 | — | Planner | **DONE** |
 | T-PLAN-003 | 落盘 tasks.md | 覆盖 §33 全部勾选项 | — | Planner | **DONE** |
 | T-PLAN-004 | 落盘 approval-packet.md | 人审闸门清晰 | — | Planner | **DONE** |
-| T-TODO-001 | 更新 `.worktree/evidence-todo.md` | 全 Wave/DEF 可追踪 | T-PLAN-* | Planner | **DONE** |
+| T-TODO-001 | 更新 `.worktrees/evidence-todo.md` | 全 Wave/DEF 可追踪 | T-PLAN-* | Planner | **DONE** |
 | T-DOC-001 | tools/evidence README 去「不可篡改」 | 改为 tamper-evident prototype | — | Doc | **DONE** |
 | T-DOC-002 | 标记旧 evidence-spec superseded 指向 | 页眉/链接到 002 | — | Doc | **DONE** |
 | T-DOC-003 | architecture/spec.md 路径备注「迁移中」 | 不假装已迁 crates/ | — | Doc | **DONE** |

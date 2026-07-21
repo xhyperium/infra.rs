@@ -19,7 +19,7 @@
 | ID | Check | Expected map | Result | Evidence |
 |----|-------|--------------|--------|----------|
 | CK-4.1 | §19.1–19.5 映射 I-27 + plan §3.7 | I-27 | **PASS** | source-inventory |
-| CK-4.2 | gate-todo 明确 §19 NOT DONE / crate STILL EXISTS | gate-todo 进度块 | **PASS** | .worktree/gate-todo.md |
+| CK-4.2 | gate-todo 明确 §19 NOT DONE / crate STILL EXISTS | gate-todo 进度块 | **PASS** | .worktrees/gate-todo.md |
 | CK-4.3 | approval 人审签字区 pending | approval-packet §4 | **PASS** | 全 pending |
 | CK-4.4 | residual DEF-PHYS/DEF-GOV 仍 OPEN | residual-open | **PASS** | OPEN 表 |
 | CK-4.5 | 非声称句 plan 10x ≠ crate deleted | plan 头 / gate-todo | **PASS** | 多处重复 |

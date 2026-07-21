@@ -1,7 +1,7 @@
 # AGENTS.md — schedulex
 
 > 仓库级规则见 [`../../AGENTS.md`](../../AGENTS.md) 与 [`../../docs/constitution/`](../../docs/constitution/)。  
-> 权威规范：active schedulex SSOT · [`.agents/ssot/infra/schedulex/spec/spec.md`](../../.agents/ssot/infra/schedulex/spec/spec.md)
+> 权威规范：active schedulex SSOT · [`.agents/ssot/schedulex/spec/spec.md`](../../.agents/ssot/schedulex/spec/spec.md)
 
 ## 身份
 
@@ -21,7 +21,7 @@
 
 ## 与 SSOT 镜像的关系
 
-- `.agents/ssot/infra/schedulex` 是上游镜像布局；active 规范定义当前为 **registry only**
+- `.agents/ssot/schedulex` 是上游镜像布局；active 规范定义当前为 **registry only**
 - **本 crate 是 infra.rs 落地**；完成声明以本仓 `cargo test` / llvm-cov 为准
 - 不得把 registry 冒充 production timer scheduler
 

@@ -2,7 +2,7 @@
 
 > **Status: SUPERSEDED（2026-07-15）**  
 > 生产方向与退役完成态见 [PLAN-GATE-RETIRE-001](../plan/xhyper-gate-retirement-complete-plan.md)（**Accepted**）与
-> [ADR-016](../../../../../docs/architecture/adr/016-bootstrap-sole-composition-root.md)（**Accepted**）。  
+> [ADR-016](../../../../docs/architecture/adr/016-bootstrap-sole-composition-root.md)（**Accepted**）。  
 > 物理路径 `crates/gate` 与 package `xhyper-gate` **已删除**。  
 > 组合根：`bootstrap` + typed `PlatformContext` / `AppContext` / `BootstrappedApp`。  
 > **保留** `.agent/gates/`、`tools/archgate`、CI/release policy gates（非本 crate）。  

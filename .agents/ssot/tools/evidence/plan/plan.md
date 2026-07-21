@@ -14,7 +14,7 @@
 | Tasks | [`tasks.md`](./tasks.md) |
 | Residual | [`residual-open.md`](./residual-open.md) |
 | Approval Packet | [`approval-packet.md`](./approval-packet.md) · **人审签字 DONE** |
-| Work Todo | [`.worktree/evidence-todo.md`](../../../../.worktree/evidence-todo.md) |
+| Work Todo | [`.worktrees/evidence-todo.md`](../../../../.worktrees/evidence-todo.md) |
 | 10x Verdict | [`evidence-plan-10x-verdict.md`](./evidence-plan-10x-verdict.md) |
 | Strategy | **诚实台账 → 冻结错误扩散 → Core V1 冻结 → 桥接 → 领域迁移 → 持久化 → 检查点 → 切换 → 十轮验收 → 人审** |
 | Campaign status | **IMPLEMENTATION + Spec Approved** · cutover DONE · **≠ package stable** · **≠ §33 全闭合** |
@@ -97,14 +97,14 @@ typed EvidenceDraft
 7. 禁止：core 引入 anyhow/serde/tokio/uuid/chrono
 8. 人审闸门：Spec Approved / 0.1.1 / stable 不由 AI 独断关闭
 9. 十轮验收：fail_rounds 必须为 0 才可宣称「十轮通过」
-10. 分支纪律：禁止 main 直接开发；worktree `.worktree/workspaces/<branch>`
+10. 分支纪律：禁止 main 直接开发；worktree `.worktrees/workspaces/<branch>`
 ```
 
 ### 1.1 分支与 worktree
 
 ```text
 branch:  feat/evidence-002-core-v1   （后续按波次可拆 PR 栈）
-worktree: .worktree/workspaces/feat-evidence-002-core-v1
+worktree: .worktrees/workspaces/feat-evidence-002-core-v1
 base:    origin/main HEAD
 ```
 
@@ -206,7 +206,7 @@ W9  §33 闭合声明（仅人审后）
 
 | Role | 职责 | 写入路径（互斥） |
 |------|------|------------------|
-| **Planner** | plan / gap / residual / todo | `.agents/ssot/tools/evidence/plan/*`、`.worktree/evidence-todo.md` |
+| **Planner** | plan / gap / residual / todo | `.agents/ssot/tools/evidence/plan/*`、`.worktrees/evidence-todo.md` |
 | **Executor-Core** | crates/evidence 全模块 | `crates/evidence/**` |
 | **Executor-Mem** | memory adapter | `crates/adapters/evidence/memory/**` |
 | **Executor-File** | file adapter | `crates/adapters/evidence/file/**` |

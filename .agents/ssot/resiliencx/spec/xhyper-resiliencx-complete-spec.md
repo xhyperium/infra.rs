@@ -8,7 +8,7 @@
 | Layer | L1 Infra |
 | Authority | 本文件是 active current-state spec |
 | Candidate / Draft | 历史 Draft 能力列表见 §3 OPEN；**不**覆盖本文 |
-| Path alias | 用户 `.agent/ssot/resiliencx` ≡ 本仓 `.agents/ssot/infra/resiliencx` |
+| Path alias | 用户 `.agent/ssot/resiliencx` ≡ 本仓 `.agents/ssot/resiliencx` |
 | Verified | 2026-07-21 · Lines Cover 100%（`cargo llvm-cov -p xhyper-resiliencx`） |
 
 ## 1. 定位与依赖
