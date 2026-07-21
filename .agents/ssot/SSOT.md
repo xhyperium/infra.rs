@@ -33,8 +33,6 @@
 └── .agents/skills/         ← 从 .claude/skills/ 投影
 ```
 
-> **路径约定**：保留 `infra/`、`adapters/`、`tools/` 层级，勿展平到 `.agents/ssot/` 根，以免相对链接断裂。
-
 ---
 
 ## 规则
@@ -113,6 +111,7 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v2.1.0 | 2026-07-21 | **展平 SSOT 结构**：移除 `infra/` 子目录；bootstrap/configx/gate/observex/resiliencx/schedulex/testkitx/transport 直接位于 `.agents/ssot/` 根 |
 | v2.0.0 | 2026-07-21 | **彻底本仓化**：`.agents/ssot` 不再表述为外仓镜像；清除外仓路径字面量；R6/R7/清单重写 |
 | v1.6.0 | 2026-07-21 | 本仓化 tools SSOT（evidence/goalctl/xtask/verifyctl） |
 | v1.5.0 | 2026-07-21 | 注册 contracts |

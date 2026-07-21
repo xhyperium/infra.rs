@@ -9,7 +9,7 @@ import {
   auditWorktreePaths,
   formatAuditWarning,
   resolveMainProjectRoot,
-} from "../../scripts/worktree-policy.mjs";
+} from "../../scripts/worktree/worktree-policy.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // hooks 可能从主仓或 worktree 内加载；统一解析为主仓根
