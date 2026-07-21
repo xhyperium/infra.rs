@@ -4,23 +4,26 @@
 
 ## 你现在要做什么
 
-1. 打开 [2026-07-21-signoff-DRAFT.md](./2026-07-21-signoff-DRAFT.md)
-2. 快速过 L1–L4 证据（Agent 已跑本地：`test` / `clippy` / `deny` / `public-api` / panicking 门禁 / canonical-align）
-3. **必读 Accept 风险**：真实后端 mock-only、二期 trait、仅 Linux、无完整 cargo-fuzz
-4. 在 **Maintainer 签核区** 填写：
-   - 推荐结论：**GO-with-Accepts**（实现闭环已合入；Accept 风险已知）
-   - 或 **NO-GO**（若你认为 mock-L3 不足以进入签核）
-5. 将 DRAFT 复制为正式文件（建议名）并提交 PR：
+1. 阅读 [2026-07-21-signoff-DRAFT.md](./2026-07-21-signoff-DRAFT.md) 中的 **证据** 与 **Accept 风险**
+2. **复制** DRAFT → 正式文件（**必须改名，禁止在 DRAFT 上终签**）：
 
-```text
-docs/plans/releases/0.3.0-signoff.md   # 或 v0.3.0-signoff.md
+```bash
+cp docs/plans/releases/2026-07-21-signoff-DRAFT.md \
+   docs/plans/releases/0.3.0-signoff.md
+# 编辑 0.3.0-signoff.md：去掉 DRAFT 标题/状态，填写结论与签名
 ```
 
-6. 勾选计划 §10.6 DEFER-7；关闭计划 §15 DONE（可选 follow-up docs PR）
+3. 在正式文件中：
+   - 勾选 L1–L5（你认可的项）
+   - **自行**选择结论：`GO` / `NO-GO` / `GO-with-Accepts`（Agent **不**预选）
+   - 按模板签名：`Signed-off-by: @handle  YYYY-MM-DD`
+4. 为 **MSRV 1.85 @ 当前基线** 补一条证据（CI URL 或本地 `rust-version` 复跑）— DRAFT 已标明 Agent 未复跑 1.85
+5. 开 PR 合入正式 signoff；可选：勾选计划 §10.6 DEFER-7、更新 §15 DONE
 
 ## 不要做什么
 
-- 不要让 Agent 代写 `Signed-off-by` / 结论字段
+- 不要在 `*-DRAFT.md` 文件上写最终 `Signed-off-by`
+- 不要让 Agent 代写结论或签名
 - 不要在未签核时把 README 改成「Production Ready」
 - 不要把 mock adapter 表述为已对接生产后端
 
@@ -28,18 +31,17 @@ docs/plans/releases/0.3.0-signoff.md   # 或 v0.3.0-signoff.md
 
 | 文档 | 用途 |
 |------|------|
-| [signoff DRAFT](./2026-07-21-signoff-DRAFT.md) | 证据 + 签核区 |
+| [signoff DRAFT](./2026-07-21-signoff-DRAFT.md) | 证据包（未签核） |
 | [计划 §15](../2026-07-21-core-crates-production-readiness.md) | DONE 条件（差人签） |
 | [DEFER 处置](../artifacts/defer-disposition.md) | 8 项 Close/Accept |
 | [审计 §12](../../report/2026-07-21/core-crates-production-readiness.md) | post-W5 状态 |
 | [支持矩阵](../../governance/support-matrix.md) | Linux + MSRV 1.85 |
+| [签核模板](../../governance/prod-signoff-TEMPLATE.md) | 正式签名格式 SSOT |
 
-## 建议结论口径（供参考，非代签）
+## 结论选项（中性列举 · 非推荐）
 
-```text
-GO-with-Accepts：
-  - 五核心 W0–W5 实现已合入 main
-  - L1/L2/mock-L3/L4 门禁证据充分
-  - Accept：真实后端、二期 trait、非 Linux、轻量 fuzz
-  - 禁止整体 Production Ready 对外营销直至本签核落盘
-```
+| 结论 | 含义 |
+|------|------|
+| **GO** | 接受当前证据与 Accept 风险，允许内部 Release Ready 声明 |
+| **GO-with-Accepts** | 同上，但必须在签核文件中列出 Accept 清单 |
+| **NO-GO** | 阻塞；写明缺口（例如要求真实后端后再签） |
