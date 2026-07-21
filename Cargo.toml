@@ -35,9 +35,11 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
 tracing = "0.1"
-
+# contracts（R4 白名单）
 async-trait = "0.1"
 bytes = "1"
+futures-core = "0.3"
+# transport / async
 futures-util = "0.3"
 reqwest = { version = "0.12", default-features = false, features = [
   "rustls-tls",
@@ -51,12 +53,9 @@ tokio = { version = "1", features = [
 ] }
 tokio-tungstenite = { version = "0.26", features = ["rustls-tls-native-roots"] }
 
-futures-core = "0.3"
-
 # SPEC-KERNEL-002 §4：crate 可通过 [lints] workspace = true 继承
 # 默认保持 warn 级，避免拖垮兄弟 crate；各 crate 可再加严
 # loom：kernel 在 RUSTFLAGS='--cfg loom' 下构建；check-cfg 对其它 crate 无害
-
 [workspace.lints.rust]
 unused_must_use = "warn"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)'] }

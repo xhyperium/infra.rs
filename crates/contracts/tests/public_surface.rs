@@ -20,4 +20,6 @@ fn _m(_: &dyn VenueAdapter) {}
 fn _n<T, Id, R: Repository<T, Id>>() {}
 fn _o<R: TxRunner>() {}
 #[test]
-fn fifteen_traits_are_reachable() { assert_eq!(15, 15); }
+fn fifteen_traits_are_reachable() {
+    assert_eq!(15, 15);
+}

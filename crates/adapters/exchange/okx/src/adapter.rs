@@ -20,22 +20,41 @@ impl OkxAdapter {
     pub fn new(name: impl Into<String>, base_url: impl Into<String>) -> Self {
         Self { name: name.into(), state: AdapterState::Uninitialized, base_url: base_url.into() }
     }
-    pub fn demo() -> Self { Self::new("okx-demo", "https://www.okx.com") }
-    pub fn mainnet() -> Self { Self::new("okx-mainnet", "https://www.okx.com") }
-    pub fn name(&self) -> &str { &self.name }
-    pub fn base_url(&self) -> &str { &self.base_url }
-    pub fn state(&self) -> AdapterState { self.state }
+    pub fn demo() -> Self {
+        Self::new("okx-demo", "https://www.okx.com")
+    }
+    pub fn mainnet() -> Self {
+        Self::new("okx-mainnet", "https://www.okx.com")
+    }
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn base_url(&self) -> &str {
+        &self.base_url
+    }
+    pub fn state(&self) -> AdapterState {
+        self.state
+    }
     pub fn connect(&mut self) -> Result<()> {
-        if self.state == AdapterState::Connected { return Err(Error::AlreadyConnected); }
-        self.state = AdapterState::Connected; Ok(())
+        if self.state == AdapterState::Connected {
+            return Err(Error::AlreadyConnected);
+        }
+        self.state = AdapterState::Connected;
+        Ok(())
     }
     pub fn disconnect(&mut self) -> Result<()> {
-        if self.state != AdapterState::Connected { return Err(Error::NotConnected); }
-        self.state = AdapterState::Disconnected; Ok(())
+        if self.state != AdapterState::Connected {
+            return Err(Error::NotConnected);
+        }
+        self.state = AdapterState::Disconnected;
+        Ok(())
     }
     pub fn fetch_ticker(&self, symbol: &str) -> Result<Ticker> {
-        if self.state != AdapterState::Connected { return Err(Error::NotConnected); }
-        let zero = Price(Decimal::try_new(0, 0).map_err(|e| Error::Internal(format!("zero: {e}")))?);
+        if self.state != AdapterState::Connected {
+            return Err(Error::NotConnected);
+        }
+        let zero =
+            Price(Decimal::try_new(0, 0).map_err(|e| Error::Internal(format!("zero: {e}")))?);
         Ok(Ticker { symbol: symbol.to_string(), bid: zero, ask: zero, last: zero, timestamp: 0 })
     }
 }
