@@ -150,5 +150,5 @@ git config --unset commit.template
 ## 相关
 
 - [Conventional Commits 规范](https://www.conventionalcommits.org/)
-- [工程宪章 §4.3.3](../constitution/04-code-standards.md#433-分支与提交)
+- [工程宪章 §4.3.3](../constitution/04-code-standards.md#433-分支与标签)
 - [编码与语言约定](编码与语言约定.md)
