@@ -1,38 +1,19 @@
 # ossx
 
-oss storage adapter
+oss storage adapter scaffold（进程内 KV）。
 
 Package：`ossx` · path：`crates/adapters/storage/oss`
 
-SSOT 镜像：[`.agents/ssot/adapters/storage/oss`](../../../../.agents/ssot/adapters/storage/oss/README.md)  
-本仓对齐：[docs/adapters-ssot-alignment.md](../../../../docs/adapters-ssot-alignment.md)
-
 ## 状态
 
-**scaffold** — 仅错误类型骨架，**未**宣称业务实现 / package stable / 真实 I/O。
-
-## 职责
-
-- storage 适配器实现位
-- 错误类型：`Error` / `Result`
-
-## 非目标（当前）
-
-- 真实网络 / SDK 集成
-- 生产交易或生产 I/O
-- package stable 宣称
+**scaffold** — 本地 `StorageAdapter` + HashMap；**非**真实 oss 客户端；不宣称 package stable。
 
 ## 最小用法
 
 ```rust
-use ossx::{Error, Result};
+use ossx::{OssAdapter, StorageAdapter};
 
-fn demo() -> Result<()> {
-    Err(Error::Internal("scaffold only".into()))
-}
+let mut a = OssAdapter::local();
+a.connect().expect("connect");
+a.write("k", b"v").expect("write");
 ```
-
-## 相关
-
-- 父级规则：[`crates/AGENTS.md`](../../../AGENTS.md)
-- 合约 trait：`xhyper-contracts`（`crates/contracts`）
