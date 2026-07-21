@@ -3,7 +3,7 @@
  * gen-crate-status.mjs — 扫描 workspace crates，生成进度看板
  *
  * 度量维度（机械可复现，不等于 Production Ready 签字）：
- *   1. 标准布局八项（crates/AGENTS.md）
+ *   1. 标准布局七项（crates/AGENTS.md）
  *   2. 源码/测试/示例实质（文件数、LOC、是否仅 scaffold）
  *   3. SSOT 对齐文档是否存在
  *
@@ -75,16 +75,15 @@ function shouldWriteTracked() {
   return b !== "main" && b !== "master" && b !== "HEAD";
 }
 
-/** 标准布局八项（顺序与 crates/AGENTS.md 一致） */
+/** 标准布局七项（顺序与 crates/AGENTS.md 一致） */
 const LAYOUT_ITEMS = [
   { key: "src", label: "src/", kind: "dir_rs" },
-  { key: "examples", label: "examples/", kind: "dir" },
-  { key: "docs", label: "docs/", kind: "dir" },
   { key: "tests", label: "tests/", kind: "dir" },
+  { key: "docs", label: "docs/", kind: "dir" },
   { key: "benches", label: "benches/", kind: "dir" },
-  { key: "CHANGELOG.md", label: "CHANGELOG.md", kind: "file" },
-  { key: "AGENTS.md", label: "AGENTS.md", kind: "file" },
   { key: "README.md", label: "README.md", kind: "file" },
+  { key: "review", label: "review/", kind: "dir" },
+  { key: "releases", label: "releases/", kind: "dir" },
 ];
 
 /** package 路径 → SSOT 对齐文档（相对仓库根） */
@@ -378,7 +377,7 @@ function renderMarkdown(crates, generatedAt) {
     "| 指标 | 值 |",
     "|------|-----|",
     `| workspace members | **${s.n}** |`,
-    `| 布局八项齐全 | **${s.layoutFull}** / ${s.n}（${pct(s.layoutFull, s.n)}%） |`,
+    `| 布局七项齐全 | **${s.layoutFull}** / ${s.n}（${pct(s.layoutFull, s.n)}%） |`,
     `| 含测试（单元或集成） | **${s.withTests}** / ${s.n}（${pct(s.withTests, s.n)}%） |`,
     `| scaffold 信号 | **${s.scaffold}** |`,
     `| **平均完成度** | **${s.avg}%** ${progressBar(s.avg)} |`,
@@ -387,7 +386,7 @@ function renderMarkdown(crates, generatedAt) {
     "",
     "| 标签 | 含义 | 数量 |",
     "|------|------|------|",
-    `| \`layout-incomplete\` | 标准八项缺项 | ${s.byMaturity["layout-incomplete"] || 0} |`,
+    `| \`layout-incomplete\` | 标准七项缺项 | ${s.byMaturity["layout-incomplete"] || 0} |`,
     `| \`scaffold\` | adapter/显式 scaffold 骨架 | ${s.byMaturity.scaffold || 0} |`,
     `| \`scaffold+mock\` | scaffold 且具备 mock/测试入口 | ${s.byMaturity["scaffold+mock"] || 0} |`,
     `| \`thin\` | 布局齐但实质偏薄 | ${s.byMaturity.thin || 0} |`,
@@ -397,7 +396,7 @@ function renderMarkdown(crates, generatedAt) {
     "## 完成度公式",
     "",
     "```text",
-    "completion = layout(8项)×50% + has_tests×25% + content×25%",
+    "completion = layout(7项)×50% + has_tests×25% + content×25%",
     "content    = LOC 桶 + 可运行 example + docs/README 实质",
     "scaffold   → content 上限 0.55（避免把内存桩当成生产实现）",
     "```",
@@ -439,16 +438,16 @@ function renderMarkdown(crates, generatedAt) {
     "- 示例列：数字 = `examples/*.rs` 个数；`·` = 仅 `.gitkeep` 占位",
     "- SSOT 列：链到 `docs/ssot/*-alignment.md`（存在即 ✓）",
     "",
-    "## 布局八项矩阵",
+    "## 布局七项矩阵",
     "",
-    "| Package | src | examples | docs | tests | benches | CHANGELOG | AGENTS | README |",
-    "|---------|:---:|:--------:|:----:|:-----:|:-------:|:---------:|:------:|:------:|",
+    "| Package | src | tests | docs | benches | README | review | releases |",
+    "|---------|:---:|:-----:|:----:|:-------:|:------:|:------:|:--------:|",
   );
 
   for (const c of crates) {
     const L = c.layout;
     lines.push(
-      `| \`${c.package}\` | ${mark(L.src)} | ${mark(L.examples)} | ${mark(L.docs)} | ${mark(L.tests)} | ${mark(L.benches)} | ${mark(L["CHANGELOG.md"])} | ${mark(L["AGENTS.md"])} | ${mark(L["README.md"])} |`,
+      `| \`${c.package}\` | ${mark(L.src)} | ${mark(L.tests)} | ${mark(L.docs)} | ${mark(L.benches)} | ${mark(L["README.md"])} | ${mark(L.review)} | ${mark(L.releases)} |`,
     );
   }
 
@@ -547,7 +546,7 @@ function renderSummary(crates) {
     "| 指标 | 值 |",
     "|------|-----|",
     `| members | ${s.n} |`,
-    `| 布局八项齐全 | ${s.layoutFull}/${s.n} |`,
+    `| 布局七项齐全 | ${s.layoutFull}/${s.n} |`,
     `| 含测试 | ${s.withTests}/${s.n} |`,
     `| scaffold | ${s.scaffold} |`,
     `| **平均完成度** | **${s.avg}%** |`,

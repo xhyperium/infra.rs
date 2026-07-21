@@ -15,8 +15,8 @@
 
 每个 workspace 成员 crate **必须**具备下列标准骨架。新增 crate 时先建齐，再写业务代码。
 
-> **规范八项（顺序固定）**  
-> `src/` · `examples/` · `docs/` · `tests/` · `benches/` · `CHANGELOG.md` · `AGENTS.md` · `README.md`  
+> **规范七项（顺序固定）**  
+> `src/` · `tests/` · `docs/` · `benches/` · `README.md` · `review/` · `releases/`  
 > 另加包清单 `Cargo.toml`（Cargo 硬性要求）。
 
 ```text
@@ -24,13 +24,12 @@ crates/<crate-name>/
 ├── Cargo.toml          # 包清单（必选）
 ├── src/                # 源码（必选）
 │   └── lib.rs          # 库入口（lib crate 必选）
-├── examples/           # 可运行示例（必选目录；暂无内容时 .gitkeep）
-├── docs/               # crate 级设计/契约/迁移（必选目录；暂无内容时 .gitkeep）
 ├── tests/              # 集成/契约/公开 API 测试（必选目录；暂无内容时 .gitkeep）
+├── docs/               # crate 级设计/契约/迁移（必选目录；暂无内容时 .gitkeep）
 ├── benches/            # 基准测试（必选目录；暂无内容时 .gitkeep）
-├── CHANGELOG.md        # 本 crate 变更日志（Keep a Changelog + SemVer）（必选）
-├── AGENTS.md           # 本 crate Agent 行为规则（必选）
-└── README.md           # 职责、用法、feature（必选）
+├── README.md           # 职责、用法、feature（必选）
+├── review/             # 审查记录与指南（必选目录；暂无内容时 .gitkeep）
+└── releases/           # 发布记录与签名（必选目录；暂无内容时 .gitkeep）
 ```
 
 ### 路径职责
@@ -39,13 +38,12 @@ crates/<crate-name>/
 |------|------|------|
 | `Cargo.toml` | 必选 | 包元数据、依赖、feature；版本跟 `workspace.package` |
 | `src/` | 必选 | 实现与单元测试（`#[cfg(test)] mod tests`） |
-| `examples/` | 必选目录 | 可 `cargo run --example` 的示例；无内容时保留 `.gitkeep` |
-| `docs/` | 必选目录 | 至少 `README.md`（入口索引 + 对齐链接）；设计笔记/API 契约/迁移；不替代 rustdoc |
 | `tests/` | 必选目录 | 集成测试、跨模块契约、公开 API 稳定性 |
+| `docs/` | 必选目录 | 至少 `README.md`（入口索引 + 对齐链接）；设计笔记/API 契约/迁移；不替代 rustdoc |
 | `benches/` | 必选目录 | `cargo bench` 基准（criterion 等）；无内容时保留 `.gitkeep` |
-| `CHANGELOG.md` | 必选 | 本 crate 版本变更；仓库根 `CHANGELOG.md` 记整体发布 |
-| `AGENTS.md` | 必选 | 本 crate 专属 Agent 规则；父级为 `crates/AGENTS.md` |
 | `README.md` | 必选 | 给人类与外部消费者的入口文档 |
+| `review/` | 必选目录 | 审查记录、审查指南、合规签名；无内容时保留 `.gitkeep` |
+| `releases/` | 必选目录 | 版本发布记录、签名、校验和；无内容时保留 `.gitkeep` |
 
 ### 分层边界（避免重复）
 
@@ -54,9 +52,10 @@ crates/<crate-name>/
 | 仓库根 `docs/`（`governance/` · `ssot/` · `status/` · `decisions/`） | 跨 crate 治理、SSOT 对齐、状态记录、DDR | 单个 crate 的 API 契约 |
 | 仓库根 `examples/` / `tests/` | 跨 crate 端到端示例与集成 | 单 crate 单元/契约测试 |
 | `crates/<name>/docs/` | 该 crate 设计、边界、迁移 | 全仓治理规则 |
-| `crates/<name>/examples/` | 只依赖本 crate（及声明的依赖）的示例 | workspace 级演示 |
 | `crates/<name>/tests/` | 本 crate 公开面契约 | 跨多个 crate 的 E2E |
 | `crates/<name>/benches/` | 本 crate 性能基准 | 跨多个 crate 的端到端压测 |
+| `crates/<name>/review/` | 本 crate 审查记录、审查指南 | 全仓审查策略 |
+| `crates/<name>/releases/` | 本 crate 发布记录、签名 | workspace 级发布编排 |
 
 ### 新增 crate 检查清单
 
@@ -64,10 +63,9 @@ crates/<crate-name>/
 2. `Cargo.toml` 使用 `*.workspace = true` 对齐 workspace 元数据
 3. 在根 `Cargo.toml` 的 `workspace.members` 注册
 4. 编写 `README.md`（职责一句话 + 最小用法）
-5. 编写 `AGENTS.md`（职责、本 crate 专属规则、目录树）
-6. 初始化 `CHANGELOG.md`（`## [Unreleased]`）
-7. 更新本文件「Crate 概览」表
-8. 更新 `ARCHITECTURE.md` 层次模型（如职责变更）
+5. 建立 `review/` 与 `releases/` 目录（暂无内容时 `.gitkeep`）
+6. 更新本文件「Crate 概览」表
+7. 更新 `ARCHITECTURE.md` 层次模型（如职责变更）
 
 ### 合规现状（自动同步）
 
@@ -83,7 +81,7 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 
 下表为规范说明快照；**权威入库完成度以 `STATUS.md` 为准**；日常查看用本地副本即可（改布局时在 feature PR 里顺带刷新入库文件）。
 
-| Crate | 路径 | 标准八项 |
+| Crate | 路径 | 标准七项 |
 |-------|------|----------|
 | `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | 见 STATUS.md |
 | `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | 见 STATUS.md |
@@ -92,8 +90,8 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 | `xhyper-contracts` | `crates/contracts/` | 见 STATUS.md |
 | adapters 九 package | `crates/adapters/**` | 见 STATUS.md |
 
-> `examples/` / `docs/` / 暂无集成测试时的 `tests/` / 暂无基准时的 `benches/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。  
-> adapters 多为 scaffold；标准八项齐全 **≠** 业务实现 / Production Ready。见 [docs/ssot/adapters-ssot-alignment.md](../docs/ssot/adapters-ssot-alignment.md) 与 STATUS.md 成熟度列。
+> `docs/` / 暂无集成测试时的 `tests/` / 暂无基准时的 `benches/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。  
+> adapters 多为 scaffold；标准七项齐全 **≠** 业务实现 / Production Ready。见 [docs/ssot/adapters-ssot-alignment.md](../docs/ssot/adapters-ssot-alignment.md) 与 STATUS.md 成熟度列。
 
 ---
 
@@ -140,7 +138,7 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 
 ### C7: 变更日志
 
-- 影响公共 API 或行为的变更必须写入本 crate `CHANGELOG.md`
+- 影响公共 API 或行为的变更必须写入本 crate `releases/` 发布记录
 - 破坏性变更须在 PR 中显式声明，并同步仓库根 `CHANGELOG.md`（发布维度）
 
 ---
@@ -187,6 +185,7 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v1.6.0 | 2026-07-21 | 规范八项 → 七项（去 examples/CHANGELOG/AGENTS，增 review/releases） |
 | v1.5.0 | 2026-07-21 | 标准布局新增 `benches/`（规范七项 → 八项） |
 | v1.4.0 | 2026-07-21 | adapters/contracts 标准布局全绿；补 bootstrap/contracts 概览 |
 | v1.3.0 | 2026-07-21 | 新增 `xhyper-bootstrap`（L1 组合根） |
@@ -202,4 +201,3 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 - path：`crates/testkit` · package：`xhyper-testkit` · lib：`testkit`
 - 仅允许 **dev-dependency** 消费；禁止进入生产 normal graph
 - 生产依赖仅 `xhyper-kernel`
-
