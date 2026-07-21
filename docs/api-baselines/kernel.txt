@@ -1,0 +1,534 @@
+pub mod kernel
+pub mod kernel::clock
+#[non_exhaustive] pub enum kernel::clock::ClockError
+pub kernel::clock::ClockError::BeforeUnixEpoch
+pub kernel::clock::ClockError::Overflow
+pub kernel::clock::ClockError::Unavailable
+impl core::cmp::Eq for kernel::clock::ClockError
+impl core::cmp::PartialEq for kernel::clock::ClockError
+pub fn kernel::clock::ClockError::eq(&self, &kernel::clock::ClockError) -> bool
+impl core::convert::From<kernel::clock::ClockError> for kernel::error::XError
+pub fn kernel::error::XError::from(kernel::clock::ClockError) -> Self
+impl core::error::Error for kernel::clock::ClockError
+impl core::fmt::Debug for kernel::clock::ClockError
+pub fn kernel::clock::ClockError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for kernel::clock::ClockError
+pub fn kernel::clock::ClockError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for kernel::clock::ClockError
+impl core::marker::Freeze for kernel::clock::ClockError
+impl core::marker::Send for kernel::clock::ClockError
+impl core::marker::Sync for kernel::clock::ClockError
+impl core::marker::Unpin for kernel::clock::ClockError
+impl core::marker::UnsafeUnpin for kernel::clock::ClockError
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::clock::ClockError
+impl core::panic::unwind_safe::UnwindSafe for kernel::clock::ClockError
+pub struct kernel::clock::ClockDomain(_)
+impl kernel::clock::ClockDomain
+pub const kernel::clock::ClockDomain::PROCESS: Self
+pub const fn kernel::clock::ClockDomain::as_raw(self) -> u64
+pub const fn kernel::clock::ClockDomain::from_raw(u64) -> Self
+impl core::clone::Clone for kernel::clock::ClockDomain
+pub fn kernel::clock::ClockDomain::clone(&self) -> kernel::clock::ClockDomain
+impl core::cmp::Eq for kernel::clock::ClockDomain
+impl core::cmp::PartialEq for kernel::clock::ClockDomain
+pub fn kernel::clock::ClockDomain::eq(&self, &kernel::clock::ClockDomain) -> bool
+impl core::fmt::Debug for kernel::clock::ClockDomain
+pub fn kernel::clock::ClockDomain::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for kernel::clock::ClockDomain
+pub fn kernel::clock::ClockDomain::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for kernel::clock::ClockDomain
+impl core::marker::StructuralPartialEq for kernel::clock::ClockDomain
+impl core::marker::Freeze for kernel::clock::ClockDomain
+impl core::marker::Send for kernel::clock::ClockDomain
+impl core::marker::Sync for kernel::clock::ClockDomain
+impl core::marker::Unpin for kernel::clock::ClockDomain
+impl core::marker::UnsafeUnpin for kernel::clock::ClockDomain
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::clock::ClockDomain
+impl core::panic::unwind_safe::UnwindSafe for kernel::clock::ClockDomain
+pub struct kernel::clock::MonotonicInstant
+impl kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::checked_duration_since(self, Self) -> core::option::Option<core::time::Duration>
+pub const fn kernel::clock::MonotonicInstant::domain(self) -> kernel::clock::ClockDomain
+impl core::clone::Clone for kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::clone(&self) -> kernel::clock::MonotonicInstant
+impl core::cmp::Eq for kernel::clock::MonotonicInstant
+impl core::cmp::PartialEq for kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::eq(&self, &kernel::clock::MonotonicInstant) -> bool
+impl core::cmp::PartialOrd for kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::partial_cmp(&self, &Self) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for kernel::clock::MonotonicInstant
+impl core::marker::StructuralPartialEq for kernel::clock::MonotonicInstant
+impl core::marker::Freeze for kernel::clock::MonotonicInstant
+impl core::marker::Send for kernel::clock::MonotonicInstant
+impl core::marker::Sync for kernel::clock::MonotonicInstant
+impl core::marker::Unpin for kernel::clock::MonotonicInstant
+impl core::marker::UnsafeUnpin for kernel::clock::MonotonicInstant
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::clock::MonotonicInstant
+impl core::panic::unwind_safe::UnwindSafe for kernel::clock::MonotonicInstant
+pub struct kernel::clock::SystemClock
+impl kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::new() -> Self
+impl core::clone::Clone for kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::clone(&self) -> kernel::clock::SystemClock
+impl core::default::Default for kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::default() -> Self
+impl core::fmt::Debug for kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl kernel::clock::Clock for kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::monotonic(&self) -> kernel::clock::MonotonicInstant
+pub fn kernel::clock::SystemClock::now(&self) -> core::result::Result<kernel::clock::Timestamp, kernel::clock::ClockError>
+impl core::marker::Freeze for kernel::clock::SystemClock
+impl core::marker::Send for kernel::clock::SystemClock
+impl core::marker::Sync for kernel::clock::SystemClock
+impl core::marker::Unpin for kernel::clock::SystemClock
+impl core::marker::UnsafeUnpin for kernel::clock::SystemClock
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::clock::SystemClock
+impl core::panic::unwind_safe::UnwindSafe for kernel::clock::SystemClock
+pub struct kernel::clock::Timestamp(_)
+impl kernel::clock::Timestamp
+pub const fn kernel::clock::Timestamp::as_unix_nanos(self) -> i64
+pub fn kernel::clock::Timestamp::checked_add(self, core::time::Duration) -> core::option::Option<Self>
+pub fn kernel::clock::Timestamp::checked_duration_since(self, Self) -> core::option::Option<core::time::Duration>
+pub fn kernel::clock::Timestamp::checked_sub(self, core::time::Duration) -> core::option::Option<Self>
+pub const fn kernel::clock::Timestamp::from_unix_nanos(i64) -> Self
+impl core::clone::Clone for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::clone(&self) -> kernel::clock::Timestamp
+impl core::cmp::Eq for kernel::clock::Timestamp
+impl core::cmp::Ord for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::cmp(&self, &kernel::clock::Timestamp) -> core::cmp::Ordering
+impl core::cmp::PartialEq for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::eq(&self, &kernel::clock::Timestamp) -> bool
+impl core::cmp::PartialOrd for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::partial_cmp(&self, &kernel::clock::Timestamp) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for kernel::clock::Timestamp
+impl core::marker::StructuralPartialEq for kernel::clock::Timestamp
+impl core::marker::Freeze for kernel::clock::Timestamp
+impl core::marker::Send for kernel::clock::Timestamp
+impl core::marker::Sync for kernel::clock::Timestamp
+impl core::marker::Unpin for kernel::clock::Timestamp
+impl core::marker::UnsafeUnpin for kernel::clock::Timestamp
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::clock::Timestamp
+impl core::panic::unwind_safe::UnwindSafe for kernel::clock::Timestamp
+pub trait kernel::clock::Clock: core::marker::Send + core::marker::Sync
+pub fn kernel::clock::Clock::monotonic(&self) -> kernel::clock::MonotonicInstant
+pub fn kernel::clock::Clock::now(&self) -> core::result::Result<kernel::clock::Timestamp, kernel::clock::ClockError>
+impl kernel::clock::Clock for kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::monotonic(&self) -> kernel::clock::MonotonicInstant
+pub fn kernel::clock::SystemClock::now(&self) -> core::result::Result<kernel::clock::Timestamp, kernel::clock::ClockError>
+pub mod kernel::error
+#[non_exhaustive] pub enum kernel::error::ErrorKind
+pub kernel::error::ErrorKind::Cancelled
+pub kernel::error::ErrorKind::Conflict
+pub kernel::error::ErrorKind::DeadlineExceeded
+pub kernel::error::ErrorKind::Internal
+pub kernel::error::ErrorKind::Invalid
+pub kernel::error::ErrorKind::Invariant
+pub kernel::error::ErrorKind::Missing
+pub kernel::error::ErrorKind::Transient
+pub kernel::error::ErrorKind::Unavailable
+impl core::clone::Clone for kernel::error::ErrorKind
+pub fn kernel::error::ErrorKind::clone(&self) -> kernel::error::ErrorKind
+impl core::cmp::Eq for kernel::error::ErrorKind
+impl core::cmp::PartialEq for kernel::error::ErrorKind
+pub fn kernel::error::ErrorKind::eq(&self, &kernel::error::ErrorKind) -> bool
+impl core::fmt::Debug for kernel::error::ErrorKind
+pub fn kernel::error::ErrorKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for kernel::error::ErrorKind
+pub fn kernel::error::ErrorKind::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for kernel::error::ErrorKind
+impl core::marker::StructuralPartialEq for kernel::error::ErrorKind
+impl core::marker::Freeze for kernel::error::ErrorKind
+impl core::marker::Send for kernel::error::ErrorKind
+impl core::marker::Sync for kernel::error::ErrorKind
+impl core::marker::Unpin for kernel::error::ErrorKind
+impl core::marker::UnsafeUnpin for kernel::error::ErrorKind
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::error::ErrorKind
+impl core::panic::unwind_safe::UnwindSafe for kernel::error::ErrorKind
+pub struct kernel::error::XError
+impl kernel::error::XError
+pub fn kernel::error::XError::cancelled(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::conflict(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::context(&self) -> &str
+pub fn kernel::error::XError::deadline_exceeded(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::internal(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::invalid(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::invariant(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::is_bug(&self) -> bool
+pub fn kernel::error::XError::is_retryable(&self) -> bool
+pub fn kernel::error::XError::kind(&self) -> kernel::error::ErrorKind
+pub fn kernel::error::XError::missing(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::retry_after(&self) -> core::option::Option<core::time::Duration>
+pub fn kernel::error::XError::transient(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::transient_after(impl core::convert::Into<alloc::string::String>, core::time::Duration) -> Self
+pub fn kernel::error::XError::unavailable(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::with_source(self, impl core::convert::Into<kernel::error::BoxError>) -> Self
+impl core::convert::From<kernel::clock::ClockError> for kernel::error::XError
+pub fn kernel::error::XError::from(kernel::clock::ClockError) -> Self
+impl core::error::Error for kernel::error::XError
+pub fn kernel::error::XError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for kernel::error::XError
+pub fn kernel::error::XError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for kernel::error::XError
+pub fn kernel::error::XError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for kernel::error::XError
+impl core::marker::Send for kernel::error::XError
+impl core::marker::Sync for kernel::error::XError
+impl core::marker::Unpin for kernel::error::XError
+impl core::marker::UnsafeUnpin for kernel::error::XError
+impl !core::panic::unwind_safe::RefUnwindSafe for kernel::error::XError
+impl !core::panic::unwind_safe::UnwindSafe for kernel::error::XError
+pub type kernel::error::BoxError = alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>
+pub type kernel::error::XResult<T> = core::result::Result<T, kernel::error::XError>
+pub mod kernel::lifecycle
+#[non_exhaustive] pub enum kernel::lifecycle::ComponentState
+pub kernel::lifecycle::ComponentState::Created
+pub kernel::lifecycle::ComponentState::Draining
+pub kernel::lifecycle::ComponentState::Failed
+pub kernel::lifecycle::ComponentState::Running
+pub kernel::lifecycle::ComponentState::Starting
+pub kernel::lifecycle::ComponentState::Stopped
+impl kernel::lifecycle::ComponentState
+pub const fn kernel::lifecycle::ComponentState::can_transition_to(self, kernel::lifecycle::ComponentState) -> bool
+pub fn kernel::lifecycle::ComponentState::try_transition(self, kernel::lifecycle::ComponentState) -> core::result::Result<kernel::lifecycle::ComponentState, kernel::lifecycle::LifecycleError>
+impl core::clone::Clone for kernel::lifecycle::ComponentState
+pub fn kernel::lifecycle::ComponentState::clone(&self) -> kernel::lifecycle::ComponentState
+impl core::cmp::Eq for kernel::lifecycle::ComponentState
+impl core::cmp::PartialEq for kernel::lifecycle::ComponentState
+pub fn kernel::lifecycle::ComponentState::eq(&self, &kernel::lifecycle::ComponentState) -> bool
+impl core::fmt::Debug for kernel::lifecycle::ComponentState
+pub fn kernel::lifecycle::ComponentState::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for kernel::lifecycle::ComponentState
+pub fn kernel::lifecycle::ComponentState::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for kernel::lifecycle::ComponentState
+impl core::marker::StructuralPartialEq for kernel::lifecycle::ComponentState
+impl core::marker::Freeze for kernel::lifecycle::ComponentState
+impl core::marker::Send for kernel::lifecycle::ComponentState
+impl core::marker::Sync for kernel::lifecycle::ComponentState
+impl core::marker::Unpin for kernel::lifecycle::ComponentState
+impl core::marker::UnsafeUnpin for kernel::lifecycle::ComponentState
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::lifecycle::ComponentState
+impl core::panic::unwind_safe::UnwindSafe for kernel::lifecycle::ComponentState
+pub struct kernel::lifecycle::LifecycleError
+pub kernel::lifecycle::LifecycleError::from: kernel::lifecycle::ComponentState
+pub kernel::lifecycle::LifecycleError::to: kernel::lifecycle::ComponentState
+impl core::clone::Clone for kernel::lifecycle::LifecycleError
+pub fn kernel::lifecycle::LifecycleError::clone(&self) -> kernel::lifecycle::LifecycleError
+impl core::cmp::Eq for kernel::lifecycle::LifecycleError
+impl core::cmp::PartialEq for kernel::lifecycle::LifecycleError
+pub fn kernel::lifecycle::LifecycleError::eq(&self, &kernel::lifecycle::LifecycleError) -> bool
+impl core::error::Error for kernel::lifecycle::LifecycleError
+impl core::fmt::Debug for kernel::lifecycle::LifecycleError
+pub fn kernel::lifecycle::LifecycleError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for kernel::lifecycle::LifecycleError
+pub fn kernel::lifecycle::LifecycleError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for kernel::lifecycle::LifecycleError
+impl core::marker::StructuralPartialEq for kernel::lifecycle::LifecycleError
+impl core::marker::Freeze for kernel::lifecycle::LifecycleError
+impl core::marker::Send for kernel::lifecycle::LifecycleError
+impl core::marker::Sync for kernel::lifecycle::LifecycleError
+impl core::marker::Unpin for kernel::lifecycle::LifecycleError
+impl core::marker::UnsafeUnpin for kernel::lifecycle::LifecycleError
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::lifecycle::LifecycleError
+impl core::panic::unwind_safe::UnwindSafe for kernel::lifecycle::LifecycleError
+pub struct kernel::lifecycle::ShutdownGuard
+impl kernel::lifecycle::ShutdownGuard
+pub fn kernel::lifecycle::ShutdownGuard::trigger(self)
+impl core::fmt::Debug for kernel::lifecycle::ShutdownGuard
+pub fn kernel::lifecycle::ShutdownGuard::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for kernel::lifecycle::ShutdownGuard
+impl core::marker::Send for kernel::lifecycle::ShutdownGuard
+impl core::marker::Sync for kernel::lifecycle::ShutdownGuard
+impl core::marker::Unpin for kernel::lifecycle::ShutdownGuard
+impl core::marker::UnsafeUnpin for kernel::lifecycle::ShutdownGuard
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::lifecycle::ShutdownGuard
+impl core::panic::unwind_safe::UnwindSafe for kernel::lifecycle::ShutdownGuard
+pub struct kernel::lifecycle::ShutdownSignal
+impl kernel::lifecycle::ShutdownSignal
+pub fn kernel::lifecycle::ShutdownSignal::is_triggered(&self) -> bool
+pub fn kernel::lifecycle::ShutdownSignal::new() -> (kernel::lifecycle::ShutdownGuard, kernel::lifecycle::ShutdownSignal)
+pub fn kernel::lifecycle::ShutdownSignal::wait(&self)
+pub fn kernel::lifecycle::ShutdownSignal::wait_timeout(&self, core::time::Duration) -> bool
+impl core::clone::Clone for kernel::lifecycle::ShutdownSignal
+pub fn kernel::lifecycle::ShutdownSignal::clone(&self) -> kernel::lifecycle::ShutdownSignal
+impl core::fmt::Debug for kernel::lifecycle::ShutdownSignal
+pub fn kernel::lifecycle::ShutdownSignal::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for kernel::lifecycle::ShutdownSignal
+impl core::marker::Send for kernel::lifecycle::ShutdownSignal
+impl core::marker::Sync for kernel::lifecycle::ShutdownSignal
+impl core::marker::Unpin for kernel::lifecycle::ShutdownSignal
+impl core::marker::UnsafeUnpin for kernel::lifecycle::ShutdownSignal
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::lifecycle::ShutdownSignal
+impl core::panic::unwind_safe::UnwindSafe for kernel::lifecycle::ShutdownSignal
+#[non_exhaustive] pub enum kernel::ClockError
+pub kernel::ClockError::BeforeUnixEpoch
+pub kernel::ClockError::Overflow
+pub kernel::ClockError::Unavailable
+impl core::cmp::Eq for kernel::clock::ClockError
+impl core::cmp::PartialEq for kernel::clock::ClockError
+pub fn kernel::clock::ClockError::eq(&self, &kernel::clock::ClockError) -> bool
+impl core::convert::From<kernel::clock::ClockError> for kernel::error::XError
+pub fn kernel::error::XError::from(kernel::clock::ClockError) -> Self
+impl core::error::Error for kernel::clock::ClockError
+impl core::fmt::Debug for kernel::clock::ClockError
+pub fn kernel::clock::ClockError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for kernel::clock::ClockError
+pub fn kernel::clock::ClockError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for kernel::clock::ClockError
+impl core::marker::Freeze for kernel::clock::ClockError
+impl core::marker::Send for kernel::clock::ClockError
+impl core::marker::Sync for kernel::clock::ClockError
+impl core::marker::Unpin for kernel::clock::ClockError
+impl core::marker::UnsafeUnpin for kernel::clock::ClockError
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::clock::ClockError
+impl core::panic::unwind_safe::UnwindSafe for kernel::clock::ClockError
+#[non_exhaustive] pub enum kernel::ComponentState
+pub kernel::ComponentState::Created
+pub kernel::ComponentState::Draining
+pub kernel::ComponentState::Failed
+pub kernel::ComponentState::Running
+pub kernel::ComponentState::Starting
+pub kernel::ComponentState::Stopped
+impl kernel::lifecycle::ComponentState
+pub const fn kernel::lifecycle::ComponentState::can_transition_to(self, kernel::lifecycle::ComponentState) -> bool
+pub fn kernel::lifecycle::ComponentState::try_transition(self, kernel::lifecycle::ComponentState) -> core::result::Result<kernel::lifecycle::ComponentState, kernel::lifecycle::LifecycleError>
+impl core::clone::Clone for kernel::lifecycle::ComponentState
+pub fn kernel::lifecycle::ComponentState::clone(&self) -> kernel::lifecycle::ComponentState
+impl core::cmp::Eq for kernel::lifecycle::ComponentState
+impl core::cmp::PartialEq for kernel::lifecycle::ComponentState
+pub fn kernel::lifecycle::ComponentState::eq(&self, &kernel::lifecycle::ComponentState) -> bool
+impl core::fmt::Debug for kernel::lifecycle::ComponentState
+pub fn kernel::lifecycle::ComponentState::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for kernel::lifecycle::ComponentState
+pub fn kernel::lifecycle::ComponentState::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for kernel::lifecycle::ComponentState
+impl core::marker::StructuralPartialEq for kernel::lifecycle::ComponentState
+impl core::marker::Freeze for kernel::lifecycle::ComponentState
+impl core::marker::Send for kernel::lifecycle::ComponentState
+impl core::marker::Sync for kernel::lifecycle::ComponentState
+impl core::marker::Unpin for kernel::lifecycle::ComponentState
+impl core::marker::UnsafeUnpin for kernel::lifecycle::ComponentState
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::lifecycle::ComponentState
+impl core::panic::unwind_safe::UnwindSafe for kernel::lifecycle::ComponentState
+#[non_exhaustive] pub enum kernel::ErrorKind
+pub kernel::ErrorKind::Cancelled
+pub kernel::ErrorKind::Conflict
+pub kernel::ErrorKind::DeadlineExceeded
+pub kernel::ErrorKind::Internal
+pub kernel::ErrorKind::Invalid
+pub kernel::ErrorKind::Invariant
+pub kernel::ErrorKind::Missing
+pub kernel::ErrorKind::Transient
+pub kernel::ErrorKind::Unavailable
+impl core::clone::Clone for kernel::error::ErrorKind
+pub fn kernel::error::ErrorKind::clone(&self) -> kernel::error::ErrorKind
+impl core::cmp::Eq for kernel::error::ErrorKind
+impl core::cmp::PartialEq for kernel::error::ErrorKind
+pub fn kernel::error::ErrorKind::eq(&self, &kernel::error::ErrorKind) -> bool
+impl core::fmt::Debug for kernel::error::ErrorKind
+pub fn kernel::error::ErrorKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for kernel::error::ErrorKind
+pub fn kernel::error::ErrorKind::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for kernel::error::ErrorKind
+impl core::marker::StructuralPartialEq for kernel::error::ErrorKind
+impl core::marker::Freeze for kernel::error::ErrorKind
+impl core::marker::Send for kernel::error::ErrorKind
+impl core::marker::Sync for kernel::error::ErrorKind
+impl core::marker::Unpin for kernel::error::ErrorKind
+impl core::marker::UnsafeUnpin for kernel::error::ErrorKind
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::error::ErrorKind
+impl core::panic::unwind_safe::UnwindSafe for kernel::error::ErrorKind
+pub struct kernel::ClockDomain(_)
+impl kernel::clock::ClockDomain
+pub const kernel::clock::ClockDomain::PROCESS: Self
+pub const fn kernel::clock::ClockDomain::as_raw(self) -> u64
+pub const fn kernel::clock::ClockDomain::from_raw(u64) -> Self
+impl core::clone::Clone for kernel::clock::ClockDomain
+pub fn kernel::clock::ClockDomain::clone(&self) -> kernel::clock::ClockDomain
+impl core::cmp::Eq for kernel::clock::ClockDomain
+impl core::cmp::PartialEq for kernel::clock::ClockDomain
+pub fn kernel::clock::ClockDomain::eq(&self, &kernel::clock::ClockDomain) -> bool
+impl core::fmt::Debug for kernel::clock::ClockDomain
+pub fn kernel::clock::ClockDomain::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for kernel::clock::ClockDomain
+pub fn kernel::clock::ClockDomain::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for kernel::clock::ClockDomain
+impl core::marker::StructuralPartialEq for kernel::clock::ClockDomain
+impl core::marker::Freeze for kernel::clock::ClockDomain
+impl core::marker::Send for kernel::clock::ClockDomain
+impl core::marker::Sync for kernel::clock::ClockDomain
+impl core::marker::Unpin for kernel::clock::ClockDomain
+impl core::marker::UnsafeUnpin for kernel::clock::ClockDomain
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::clock::ClockDomain
+impl core::panic::unwind_safe::UnwindSafe for kernel::clock::ClockDomain
+pub struct kernel::LifecycleError
+pub kernel::LifecycleError::from: kernel::lifecycle::ComponentState
+pub kernel::LifecycleError::to: kernel::lifecycle::ComponentState
+impl core::clone::Clone for kernel::lifecycle::LifecycleError
+pub fn kernel::lifecycle::LifecycleError::clone(&self) -> kernel::lifecycle::LifecycleError
+impl core::cmp::Eq for kernel::lifecycle::LifecycleError
+impl core::cmp::PartialEq for kernel::lifecycle::LifecycleError
+pub fn kernel::lifecycle::LifecycleError::eq(&self, &kernel::lifecycle::LifecycleError) -> bool
+impl core::error::Error for kernel::lifecycle::LifecycleError
+impl core::fmt::Debug for kernel::lifecycle::LifecycleError
+pub fn kernel::lifecycle::LifecycleError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for kernel::lifecycle::LifecycleError
+pub fn kernel::lifecycle::LifecycleError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for kernel::lifecycle::LifecycleError
+impl core::marker::StructuralPartialEq for kernel::lifecycle::LifecycleError
+impl core::marker::Freeze for kernel::lifecycle::LifecycleError
+impl core::marker::Send for kernel::lifecycle::LifecycleError
+impl core::marker::Sync for kernel::lifecycle::LifecycleError
+impl core::marker::Unpin for kernel::lifecycle::LifecycleError
+impl core::marker::UnsafeUnpin for kernel::lifecycle::LifecycleError
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::lifecycle::LifecycleError
+impl core::panic::unwind_safe::UnwindSafe for kernel::lifecycle::LifecycleError
+pub struct kernel::MonotonicInstant
+impl kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::checked_duration_since(self, Self) -> core::option::Option<core::time::Duration>
+pub const fn kernel::clock::MonotonicInstant::domain(self) -> kernel::clock::ClockDomain
+impl core::clone::Clone for kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::clone(&self) -> kernel::clock::MonotonicInstant
+impl core::cmp::Eq for kernel::clock::MonotonicInstant
+impl core::cmp::PartialEq for kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::eq(&self, &kernel::clock::MonotonicInstant) -> bool
+impl core::cmp::PartialOrd for kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::partial_cmp(&self, &Self) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for kernel::clock::MonotonicInstant
+pub fn kernel::clock::MonotonicInstant::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for kernel::clock::MonotonicInstant
+impl core::marker::StructuralPartialEq for kernel::clock::MonotonicInstant
+impl core::marker::Freeze for kernel::clock::MonotonicInstant
+impl core::marker::Send for kernel::clock::MonotonicInstant
+impl core::marker::Sync for kernel::clock::MonotonicInstant
+impl core::marker::Unpin for kernel::clock::MonotonicInstant
+impl core::marker::UnsafeUnpin for kernel::clock::MonotonicInstant
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::clock::MonotonicInstant
+impl core::panic::unwind_safe::UnwindSafe for kernel::clock::MonotonicInstant
+pub struct kernel::ShutdownGuard
+impl kernel::lifecycle::ShutdownGuard
+pub fn kernel::lifecycle::ShutdownGuard::trigger(self)
+impl core::fmt::Debug for kernel::lifecycle::ShutdownGuard
+pub fn kernel::lifecycle::ShutdownGuard::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for kernel::lifecycle::ShutdownGuard
+impl core::marker::Send for kernel::lifecycle::ShutdownGuard
+impl core::marker::Sync for kernel::lifecycle::ShutdownGuard
+impl core::marker::Unpin for kernel::lifecycle::ShutdownGuard
+impl core::marker::UnsafeUnpin for kernel::lifecycle::ShutdownGuard
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::lifecycle::ShutdownGuard
+impl core::panic::unwind_safe::UnwindSafe for kernel::lifecycle::ShutdownGuard
+pub struct kernel::ShutdownSignal
+impl kernel::lifecycle::ShutdownSignal
+pub fn kernel::lifecycle::ShutdownSignal::is_triggered(&self) -> bool
+pub fn kernel::lifecycle::ShutdownSignal::new() -> (kernel::lifecycle::ShutdownGuard, kernel::lifecycle::ShutdownSignal)
+pub fn kernel::lifecycle::ShutdownSignal::wait(&self)
+pub fn kernel::lifecycle::ShutdownSignal::wait_timeout(&self, core::time::Duration) -> bool
+impl core::clone::Clone for kernel::lifecycle::ShutdownSignal
+pub fn kernel::lifecycle::ShutdownSignal::clone(&self) -> kernel::lifecycle::ShutdownSignal
+impl core::fmt::Debug for kernel::lifecycle::ShutdownSignal
+pub fn kernel::lifecycle::ShutdownSignal::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for kernel::lifecycle::ShutdownSignal
+impl core::marker::Send for kernel::lifecycle::ShutdownSignal
+impl core::marker::Sync for kernel::lifecycle::ShutdownSignal
+impl core::marker::Unpin for kernel::lifecycle::ShutdownSignal
+impl core::marker::UnsafeUnpin for kernel::lifecycle::ShutdownSignal
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::lifecycle::ShutdownSignal
+impl core::panic::unwind_safe::UnwindSafe for kernel::lifecycle::ShutdownSignal
+pub struct kernel::SystemClock
+impl kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::new() -> Self
+impl core::clone::Clone for kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::clone(&self) -> kernel::clock::SystemClock
+impl core::default::Default for kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::default() -> Self
+impl core::fmt::Debug for kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl kernel::clock::Clock for kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::monotonic(&self) -> kernel::clock::MonotonicInstant
+pub fn kernel::clock::SystemClock::now(&self) -> core::result::Result<kernel::clock::Timestamp, kernel::clock::ClockError>
+impl core::marker::Freeze for kernel::clock::SystemClock
+impl core::marker::Send for kernel::clock::SystemClock
+impl core::marker::Sync for kernel::clock::SystemClock
+impl core::marker::Unpin for kernel::clock::SystemClock
+impl core::marker::UnsafeUnpin for kernel::clock::SystemClock
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::clock::SystemClock
+impl core::panic::unwind_safe::UnwindSafe for kernel::clock::SystemClock
+pub struct kernel::Timestamp(_)
+impl kernel::clock::Timestamp
+pub const fn kernel::clock::Timestamp::as_unix_nanos(self) -> i64
+pub fn kernel::clock::Timestamp::checked_add(self, core::time::Duration) -> core::option::Option<Self>
+pub fn kernel::clock::Timestamp::checked_duration_since(self, Self) -> core::option::Option<core::time::Duration>
+pub fn kernel::clock::Timestamp::checked_sub(self, core::time::Duration) -> core::option::Option<Self>
+pub const fn kernel::clock::Timestamp::from_unix_nanos(i64) -> Self
+impl core::clone::Clone for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::clone(&self) -> kernel::clock::Timestamp
+impl core::cmp::Eq for kernel::clock::Timestamp
+impl core::cmp::Ord for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::cmp(&self, &kernel::clock::Timestamp) -> core::cmp::Ordering
+impl core::cmp::PartialEq for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::eq(&self, &kernel::clock::Timestamp) -> bool
+impl core::cmp::PartialOrd for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::partial_cmp(&self, &kernel::clock::Timestamp) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for kernel::clock::Timestamp
+pub fn kernel::clock::Timestamp::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for kernel::clock::Timestamp
+impl core::marker::StructuralPartialEq for kernel::clock::Timestamp
+impl core::marker::Freeze for kernel::clock::Timestamp
+impl core::marker::Send for kernel::clock::Timestamp
+impl core::marker::Sync for kernel::clock::Timestamp
+impl core::marker::Unpin for kernel::clock::Timestamp
+impl core::marker::UnsafeUnpin for kernel::clock::Timestamp
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::clock::Timestamp
+impl core::panic::unwind_safe::UnwindSafe for kernel::clock::Timestamp
+pub struct kernel::XError
+impl kernel::error::XError
+pub fn kernel::error::XError::cancelled(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::conflict(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::context(&self) -> &str
+pub fn kernel::error::XError::deadline_exceeded(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::internal(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::invalid(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::invariant(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::is_bug(&self) -> bool
+pub fn kernel::error::XError::is_retryable(&self) -> bool
+pub fn kernel::error::XError::kind(&self) -> kernel::error::ErrorKind
+pub fn kernel::error::XError::missing(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::retry_after(&self) -> core::option::Option<core::time::Duration>
+pub fn kernel::error::XError::transient(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::transient_after(impl core::convert::Into<alloc::string::String>, core::time::Duration) -> Self
+pub fn kernel::error::XError::unavailable(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn kernel::error::XError::with_source(self, impl core::convert::Into<kernel::error::BoxError>) -> Self
+impl core::convert::From<kernel::clock::ClockError> for kernel::error::XError
+pub fn kernel::error::XError::from(kernel::clock::ClockError) -> Self
+impl core::error::Error for kernel::error::XError
+pub fn kernel::error::XError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for kernel::error::XError
+pub fn kernel::error::XError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for kernel::error::XError
+pub fn kernel::error::XError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for kernel::error::XError
+impl core::marker::Send for kernel::error::XError
+impl core::marker::Sync for kernel::error::XError
+impl core::marker::Unpin for kernel::error::XError
+impl core::marker::UnsafeUnpin for kernel::error::XError
+impl !core::panic::unwind_safe::RefUnwindSafe for kernel::error::XError
+impl !core::panic::unwind_safe::UnwindSafe for kernel::error::XError
+pub trait kernel::Clock: core::marker::Send + core::marker::Sync
+pub fn kernel::Clock::monotonic(&self) -> kernel::clock::MonotonicInstant
+pub fn kernel::Clock::now(&self) -> core::result::Result<kernel::clock::Timestamp, kernel::clock::ClockError>
+impl kernel::clock::Clock for kernel::clock::SystemClock
+pub fn kernel::clock::SystemClock::monotonic(&self) -> kernel::clock::MonotonicInstant
+pub fn kernel::clock::SystemClock::now(&self) -> core::result::Result<kernel::clock::Timestamp, kernel::clock::ClockError>
+pub type kernel::BoxError = alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>
+pub type kernel::XResult<T> = core::result::Result<T, kernel::error::XError>

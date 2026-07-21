@@ -1,0 +1,360 @@
+pub mod canonical
+pub use canonical::Money
+pub mod canonical::proposed_time
+pub const canonical::proposed_time::TS_UNIT: &str
+pub fn canonical::proposed_time::dto_ts_from_unix_millis(i64) -> core::option::Option<i64>
+pub fn canonical::proposed_time::ns_from_unix_millis(i64) -> core::option::Option<i64>
+pub fn canonical::proposed_time::proposed_dto_ts_from_unix_millis(i64) -> core::option::Option<i64>
+pub fn canonical::proposed_time::proposed_ns_from_unix_millis(i64) -> core::option::Option<i64>
+pub fn canonical::proposed_time::proposed_unix_millis_from_ns(i64) -> i64
+pub fn canonical::proposed_time::unix_millis_from_ns(i64) -> i64
+pub mod canonical::shape
+pub fn canonical::shape::cancel_request_shape_ok(&canonical::CancelOrderRequest) -> bool
+pub fn canonical::shape::is_nonempty_token(&str) -> bool
+pub fn canonical::shape::is_plausible_instrument_id(&str) -> bool
+pub fn canonical::shape::is_plausible_venue_slug(&str) -> bool
+pub fn canonical::shape::order_ref_payload_nonempty(&canonical::OrderRef) -> bool
+pub mod canonical::wire
+pub enum canonical::wire::WireCommitment
+pub canonical::wire::WireCommitment::CommittedV1
+pub canonical::wire::WireCommitment::Uncommitted
+impl core::clone::Clone for canonical::wire::WireCommitment
+pub fn canonical::wire::WireCommitment::clone(&self) -> canonical::wire::WireCommitment
+impl core::cmp::Eq for canonical::wire::WireCommitment
+impl core::cmp::PartialEq for canonical::wire::WireCommitment
+pub fn canonical::wire::WireCommitment::eq(&self, &canonical::wire::WireCommitment) -> bool
+impl core::fmt::Debug for canonical::wire::WireCommitment
+pub fn canonical::wire::WireCommitment::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for canonical::wire::WireCommitment
+impl core::marker::StructuralPartialEq for canonical::wire::WireCommitment
+impl core::marker::Freeze for canonical::wire::WireCommitment
+impl core::marker::Send for canonical::wire::WireCommitment
+impl core::marker::Sync for canonical::wire::WireCommitment
+impl core::marker::Unpin for canonical::wire::WireCommitment
+impl core::marker::UnsafeUnpin for canonical::wire::WireCommitment
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::wire::WireCommitment
+impl core::panic::unwind_safe::UnwindSafe for canonical::wire::WireCommitment
+pub const canonical::wire::COMMITTED_WIRE_V1: &[&str]
+pub fn canonical::wire::wire_commitment(&str) -> canonical::wire::WireCommitment
+pub enum canonical::OrderRef
+pub canonical::OrderRef::Client(alloc::string::String)
+pub canonical::OrderRef::Exchange(alloc::string::String)
+impl core::clone::Clone for canonical::OrderRef
+pub fn canonical::OrderRef::clone(&self) -> canonical::OrderRef
+impl core::cmp::Eq for canonical::OrderRef
+impl core::cmp::PartialEq for canonical::OrderRef
+pub fn canonical::OrderRef::eq(&self, &canonical::OrderRef) -> bool
+impl core::fmt::Debug for canonical::OrderRef
+pub fn canonical::OrderRef::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for canonical::OrderRef
+impl serde_core::ser::Serialize for canonical::OrderRef
+pub fn canonical::OrderRef::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::OrderRef
+pub fn canonical::OrderRef::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::OrderRef
+impl core::marker::Send for canonical::OrderRef
+impl core::marker::Sync for canonical::OrderRef
+impl core::marker::Unpin for canonical::OrderRef
+impl core::marker::UnsafeUnpin for canonical::OrderRef
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::OrderRef
+impl core::panic::unwind_safe::UnwindSafe for canonical::OrderRef
+pub enum canonical::OrderStatus
+pub canonical::OrderStatus::Cancelled
+pub canonical::OrderStatus::Filled
+pub canonical::OrderStatus::Open
+pub canonical::OrderStatus::PartiallyFilled
+pub canonical::OrderStatus::Pending
+pub canonical::OrderStatus::Rejected
+impl core::clone::Clone for canonical::OrderStatus
+pub fn canonical::OrderStatus::clone(&self) -> canonical::OrderStatus
+impl core::cmp::Eq for canonical::OrderStatus
+impl core::cmp::PartialEq for canonical::OrderStatus
+pub fn canonical::OrderStatus::eq(&self, &canonical::OrderStatus) -> bool
+impl core::fmt::Debug for canonical::OrderStatus
+pub fn canonical::OrderStatus::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for canonical::OrderStatus
+impl core::marker::StructuralPartialEq for canonical::OrderStatus
+impl serde_core::ser::Serialize for canonical::OrderStatus
+pub fn canonical::OrderStatus::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::OrderStatus
+pub fn canonical::OrderStatus::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::OrderStatus
+impl core::marker::Send for canonical::OrderStatus
+impl core::marker::Sync for canonical::OrderStatus
+impl core::marker::Unpin for canonical::OrderStatus
+impl core::marker::UnsafeUnpin for canonical::OrderStatus
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::OrderStatus
+impl core::panic::unwind_safe::UnwindSafe for canonical::OrderStatus
+pub enum canonical::Side
+pub canonical::Side::Buy
+pub canonical::Side::Sell
+impl core::clone::Clone for canonical::Side
+pub fn canonical::Side::clone(&self) -> canonical::Side
+impl core::cmp::Eq for canonical::Side
+impl core::cmp::PartialEq for canonical::Side
+pub fn canonical::Side::eq(&self, &canonical::Side) -> bool
+impl core::fmt::Debug for canonical::Side
+pub fn canonical::Side::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for canonical::Side
+impl core::marker::StructuralPartialEq for canonical::Side
+impl serde_core::ser::Serialize for canonical::Side
+pub fn canonical::Side::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::Side
+pub fn canonical::Side::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::Side
+impl core::marker::Send for canonical::Side
+impl core::marker::Sync for canonical::Side
+impl core::marker::Unpin for canonical::Side
+impl core::marker::UnsafeUnpin for canonical::Side
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::Side
+impl core::panic::unwind_safe::UnwindSafe for canonical::Side
+pub enum canonical::WireCommitment
+pub canonical::WireCommitment::CommittedV1
+pub canonical::WireCommitment::Uncommitted
+impl core::clone::Clone for canonical::wire::WireCommitment
+pub fn canonical::wire::WireCommitment::clone(&self) -> canonical::wire::WireCommitment
+impl core::cmp::Eq for canonical::wire::WireCommitment
+impl core::cmp::PartialEq for canonical::wire::WireCommitment
+pub fn canonical::wire::WireCommitment::eq(&self, &canonical::wire::WireCommitment) -> bool
+impl core::fmt::Debug for canonical::wire::WireCommitment
+pub fn canonical::wire::WireCommitment::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for canonical::wire::WireCommitment
+impl core::marker::StructuralPartialEq for canonical::wire::WireCommitment
+impl core::marker::Freeze for canonical::wire::WireCommitment
+impl core::marker::Send for canonical::wire::WireCommitment
+impl core::marker::Sync for canonical::wire::WireCommitment
+impl core::marker::Unpin for canonical::wire::WireCommitment
+impl core::marker::UnsafeUnpin for canonical::wire::WireCommitment
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::wire::WireCommitment
+impl core::panic::unwind_safe::UnwindSafe for canonical::wire::WireCommitment
+pub struct canonical::CancelOrderRequest
+pub canonical::CancelOrderRequest::id: canonical::OrderRef
+pub canonical::CancelOrderRequest::instrument: canonical::InstrumentId
+pub canonical::CancelOrderRequest::venue: canonical::VenueId
+impl core::clone::Clone for canonical::CancelOrderRequest
+pub fn canonical::CancelOrderRequest::clone(&self) -> canonical::CancelOrderRequest
+impl core::cmp::Eq for canonical::CancelOrderRequest
+impl core::cmp::PartialEq for canonical::CancelOrderRequest
+pub fn canonical::CancelOrderRequest::eq(&self, &canonical::CancelOrderRequest) -> bool
+impl core::fmt::Debug for canonical::CancelOrderRequest
+pub fn canonical::CancelOrderRequest::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for canonical::CancelOrderRequest
+impl serde_core::ser::Serialize for canonical::CancelOrderRequest
+pub fn canonical::CancelOrderRequest::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::CancelOrderRequest
+pub fn canonical::CancelOrderRequest::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::CancelOrderRequest
+impl core::marker::Send for canonical::CancelOrderRequest
+impl core::marker::Sync for canonical::CancelOrderRequest
+impl core::marker::Unpin for canonical::CancelOrderRequest
+impl core::marker::UnsafeUnpin for canonical::CancelOrderRequest
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::CancelOrderRequest
+impl core::panic::unwind_safe::UnwindSafe for canonical::CancelOrderRequest
+pub struct canonical::Order
+pub canonical::Order::id: alloc::string::String
+pub canonical::Order::price: decimalx::Price
+pub canonical::Order::qty: decimalx::Qty
+pub canonical::Order::side: canonical::Side
+pub canonical::Order::status: canonical::OrderStatus
+pub canonical::Order::symbol: alloc::string::String
+impl core::clone::Clone for canonical::Order
+pub fn canonical::Order::clone(&self) -> canonical::Order
+impl core::cmp::Eq for canonical::Order
+impl core::cmp::PartialEq for canonical::Order
+pub fn canonical::Order::eq(&self, &canonical::Order) -> bool
+impl core::fmt::Debug for canonical::Order
+pub fn canonical::Order::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for canonical::Order
+impl serde_core::ser::Serialize for canonical::Order
+pub fn canonical::Order::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::Order
+pub fn canonical::Order::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::Order
+impl core::marker::Send for canonical::Order
+impl core::marker::Sync for canonical::Order
+impl core::marker::Unpin for canonical::Order
+impl core::marker::UnsafeUnpin for canonical::Order
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::Order
+impl core::panic::unwind_safe::UnwindSafe for canonical::Order
+pub struct canonical::OrderAck
+pub canonical::OrderAck::id: alloc::string::String
+pub canonical::OrderAck::status: canonical::OrderStatus
+pub canonical::OrderAck::ts: i64
+impl core::clone::Clone for canonical::OrderAck
+pub fn canonical::OrderAck::clone(&self) -> canonical::OrderAck
+impl core::cmp::Eq for canonical::OrderAck
+impl core::cmp::PartialEq for canonical::OrderAck
+pub fn canonical::OrderAck::eq(&self, &canonical::OrderAck) -> bool
+impl core::fmt::Debug for canonical::OrderAck
+pub fn canonical::OrderAck::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for canonical::OrderAck
+impl serde_core::ser::Serialize for canonical::OrderAck
+pub fn canonical::OrderAck::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::OrderAck
+pub fn canonical::OrderAck::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::OrderAck
+impl core::marker::Send for canonical::OrderAck
+impl core::marker::Sync for canonical::OrderAck
+impl core::marker::Unpin for canonical::OrderAck
+impl core::marker::UnsafeUnpin for canonical::OrderAck
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::OrderAck
+impl core::panic::unwind_safe::UnwindSafe for canonical::OrderAck
+pub struct canonical::OrderBookSnapshot
+pub canonical::OrderBookSnapshot::asks: alloc::vec::Vec<canonical::PriceLevel>
+pub canonical::OrderBookSnapshot::bids: alloc::vec::Vec<canonical::PriceLevel>
+pub canonical::OrderBookSnapshot::symbol: alloc::string::String
+pub canonical::OrderBookSnapshot::ts: i64
+impl core::clone::Clone for canonical::OrderBookSnapshot
+pub fn canonical::OrderBookSnapshot::clone(&self) -> canonical::OrderBookSnapshot
+impl core::cmp::Eq for canonical::OrderBookSnapshot
+impl core::cmp::PartialEq for canonical::OrderBookSnapshot
+pub fn canonical::OrderBookSnapshot::eq(&self, &canonical::OrderBookSnapshot) -> bool
+impl core::fmt::Debug for canonical::OrderBookSnapshot
+pub fn canonical::OrderBookSnapshot::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for canonical::OrderBookSnapshot
+impl serde_core::ser::Serialize for canonical::OrderBookSnapshot
+pub fn canonical::OrderBookSnapshot::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::OrderBookSnapshot
+pub fn canonical::OrderBookSnapshot::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::OrderBookSnapshot
+impl core::marker::Send for canonical::OrderBookSnapshot
+impl core::marker::Sync for canonical::OrderBookSnapshot
+impl core::marker::Unpin for canonical::OrderBookSnapshot
+impl core::marker::UnsafeUnpin for canonical::OrderBookSnapshot
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::OrderBookSnapshot
+impl core::panic::unwind_safe::UnwindSafe for canonical::OrderBookSnapshot
+pub struct canonical::Position
+pub canonical::Position::entry_price: decimalx::Price
+pub canonical::Position::qty: decimalx::Qty
+pub canonical::Position::symbol: alloc::string::String
+impl core::clone::Clone for canonical::Position
+pub fn canonical::Position::clone(&self) -> canonical::Position
+impl core::cmp::Eq for canonical::Position
+impl core::cmp::PartialEq for canonical::Position
+pub fn canonical::Position::eq(&self, &canonical::Position) -> bool
+impl core::fmt::Debug for canonical::Position
+pub fn canonical::Position::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for canonical::Position
+impl serde_core::ser::Serialize for canonical::Position
+pub fn canonical::Position::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::Position
+pub fn canonical::Position::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::Position
+impl core::marker::Send for canonical::Position
+impl core::marker::Sync for canonical::Position
+impl core::marker::Unpin for canonical::Position
+impl core::marker::UnsafeUnpin for canonical::Position
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::Position
+impl core::panic::unwind_safe::UnwindSafe for canonical::Position
+pub struct canonical::PriceLevel
+pub canonical::PriceLevel::price: decimalx::Price
+pub canonical::PriceLevel::qty: decimalx::Qty
+impl core::clone::Clone for canonical::PriceLevel
+pub fn canonical::PriceLevel::clone(&self) -> canonical::PriceLevel
+impl core::cmp::Eq for canonical::PriceLevel
+impl core::cmp::PartialEq for canonical::PriceLevel
+pub fn canonical::PriceLevel::eq(&self, &canonical::PriceLevel) -> bool
+impl core::fmt::Debug for canonical::PriceLevel
+pub fn canonical::PriceLevel::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for canonical::PriceLevel
+impl core::marker::StructuralPartialEq for canonical::PriceLevel
+impl serde_core::ser::Serialize for canonical::PriceLevel
+pub fn canonical::PriceLevel::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::PriceLevel
+pub fn canonical::PriceLevel::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::PriceLevel
+impl core::marker::Send for canonical::PriceLevel
+impl core::marker::Sync for canonical::PriceLevel
+impl core::marker::Unpin for canonical::PriceLevel
+impl core::marker::UnsafeUnpin for canonical::PriceLevel
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::PriceLevel
+impl core::panic::unwind_safe::UnwindSafe for canonical::PriceLevel
+pub struct canonical::SymbolMeta
+pub canonical::SymbolMeta::base: alloc::string::String
+pub canonical::SymbolMeta::min_qty: decimalx::Qty
+pub canonical::SymbolMeta::quote: alloc::string::String
+pub canonical::SymbolMeta::symbol: alloc::string::String
+pub canonical::SymbolMeta::tick_size: decimalx::Decimal
+impl core::clone::Clone for canonical::SymbolMeta
+pub fn canonical::SymbolMeta::clone(&self) -> canonical::SymbolMeta
+impl core::cmp::Eq for canonical::SymbolMeta
+impl core::cmp::PartialEq for canonical::SymbolMeta
+pub fn canonical::SymbolMeta::eq(&self, &canonical::SymbolMeta) -> bool
+impl core::fmt::Debug for canonical::SymbolMeta
+pub fn canonical::SymbolMeta::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for canonical::SymbolMeta
+impl serde_core::ser::Serialize for canonical::SymbolMeta
+pub fn canonical::SymbolMeta::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::SymbolMeta
+pub fn canonical::SymbolMeta::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::SymbolMeta
+impl core::marker::Send for canonical::SymbolMeta
+impl core::marker::Sync for canonical::SymbolMeta
+impl core::marker::Unpin for canonical::SymbolMeta
+impl core::marker::UnsafeUnpin for canonical::SymbolMeta
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::SymbolMeta
+impl core::panic::unwind_safe::UnwindSafe for canonical::SymbolMeta
+pub struct canonical::Tick
+pub canonical::Tick::ask: decimalx::Price
+pub canonical::Tick::bid: decimalx::Price
+pub canonical::Tick::symbol: alloc::string::String
+pub canonical::Tick::ts: i64
+impl core::clone::Clone for canonical::Tick
+pub fn canonical::Tick::clone(&self) -> canonical::Tick
+impl core::cmp::Eq for canonical::Tick
+impl core::cmp::PartialEq for canonical::Tick
+pub fn canonical::Tick::eq(&self, &canonical::Tick) -> bool
+impl core::fmt::Debug for canonical::Tick
+pub fn canonical::Tick::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for canonical::Tick
+impl serde_core::ser::Serialize for canonical::Tick
+pub fn canonical::Tick::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::Tick
+pub fn canonical::Tick::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::Tick
+impl core::marker::Send for canonical::Tick
+impl core::marker::Sync for canonical::Tick
+impl core::marker::Unpin for canonical::Tick
+impl core::marker::UnsafeUnpin for canonical::Tick
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::Tick
+impl core::panic::unwind_safe::UnwindSafe for canonical::Tick
+pub struct canonical::Trade
+pub canonical::Trade::price: decimalx::Price
+pub canonical::Trade::qty: decimalx::Qty
+pub canonical::Trade::symbol: alloc::string::String
+pub canonical::Trade::ts: i64
+impl core::clone::Clone for canonical::Trade
+pub fn canonical::Trade::clone(&self) -> canonical::Trade
+impl core::cmp::Eq for canonical::Trade
+impl core::cmp::PartialEq for canonical::Trade
+pub fn canonical::Trade::eq(&self, &canonical::Trade) -> bool
+impl core::fmt::Debug for canonical::Trade
+pub fn canonical::Trade::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for canonical::Trade
+impl serde_core::ser::Serialize for canonical::Trade
+pub fn canonical::Trade::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for canonical::Trade
+pub fn canonical::Trade::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for canonical::Trade
+impl core::marker::Send for canonical::Trade
+impl core::marker::Sync for canonical::Trade
+impl core::marker::Unpin for canonical::Trade
+impl core::marker::UnsafeUnpin for canonical::Trade
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::Trade
+impl core::panic::unwind_safe::UnwindSafe for canonical::Trade
+pub const canonical::COMMITTED_WIRE_V1: &[&str]
+pub const canonical::TS_UNIT: &str
+pub fn canonical::cancel_request_shape_ok(&canonical::CancelOrderRequest) -> bool
+pub fn canonical::dto_ts_from_unix_millis(i64) -> core::option::Option<i64>
+pub fn canonical::is_nonempty_token(&str) -> bool
+pub fn canonical::is_plausible_instrument_id(&str) -> bool
+pub fn canonical::is_plausible_venue_slug(&str) -> bool
+pub fn canonical::ns_from_unix_millis(i64) -> core::option::Option<i64>
+pub fn canonical::order_ref_payload_nonempty(&canonical::OrderRef) -> bool
+pub fn canonical::proposed_dto_ts_from_unix_millis(i64) -> core::option::Option<i64>
+pub fn canonical::proposed_ns_from_unix_millis(i64) -> core::option::Option<i64>
+pub fn canonical::proposed_unix_millis_from_ns(i64) -> i64
+pub fn canonical::unix_millis_from_ns(i64) -> i64
+pub fn canonical::wire_commitment(&str) -> canonical::wire::WireCommitment
+pub type canonical::InstrumentId = alloc::string::String
+pub type canonical::VenueId = alloc::string::String

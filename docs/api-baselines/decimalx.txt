@@ -1,0 +1,313 @@
+pub mod decimalx
+pub enum decimalx::DecimalError
+pub decimalx::DecimalError::DivisionByZero
+pub decimalx::DecimalError::InvalidCurrency
+pub decimalx::DecimalError::MantissaOverflow
+pub decimalx::DecimalError::Parse(alloc::string::String)
+pub decimalx::DecimalError::RepresentationOverflow
+pub decimalx::DecimalError::RoundingOverflow
+pub decimalx::DecimalError::ScaleOutOfRange
+pub decimalx::DecimalError::ScaleOutOfRange::max: u8
+pub decimalx::DecimalError::ScaleOutOfRange::scale: u8
+impl decimalx::DecimalError
+pub fn decimalx::DecimalError::kind(&self) -> decimalx::DecimalErrorKind
+impl core::clone::Clone for decimalx::DecimalError
+pub fn decimalx::DecimalError::clone(&self) -> decimalx::DecimalError
+impl core::cmp::Eq for decimalx::DecimalError
+impl core::cmp::PartialEq for decimalx::DecimalError
+pub fn decimalx::DecimalError::eq(&self, &decimalx::DecimalError) -> bool
+impl core::convert::From<decimalx::DecimalError> for kernel::error::XError
+pub fn kernel::error::XError::from(decimalx::DecimalError) -> Self
+impl core::error::Error for decimalx::DecimalError
+impl core::fmt::Debug for decimalx::DecimalError
+pub fn decimalx::DecimalError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for decimalx::DecimalError
+pub fn decimalx::DecimalError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for decimalx::DecimalError
+impl core::marker::Freeze for decimalx::DecimalError
+impl core::marker::Send for decimalx::DecimalError
+impl core::marker::Sync for decimalx::DecimalError
+impl core::marker::Unpin for decimalx::DecimalError
+impl core::marker::UnsafeUnpin for decimalx::DecimalError
+impl core::panic::unwind_safe::RefUnwindSafe for decimalx::DecimalError
+impl core::panic::unwind_safe::UnwindSafe for decimalx::DecimalError
+pub enum decimalx::DecimalErrorKind
+pub decimalx::DecimalErrorKind::Currency
+pub decimalx::DecimalErrorKind::DivisionByZero
+pub decimalx::DecimalErrorKind::Mantissa
+pub decimalx::DecimalErrorKind::Parse
+pub decimalx::DecimalErrorKind::Representation
+pub decimalx::DecimalErrorKind::Rounding
+pub decimalx::DecimalErrorKind::Scale
+impl core::clone::Clone for decimalx::DecimalErrorKind
+pub fn decimalx::DecimalErrorKind::clone(&self) -> decimalx::DecimalErrorKind
+impl core::cmp::Eq for decimalx::DecimalErrorKind
+impl core::cmp::PartialEq for decimalx::DecimalErrorKind
+pub fn decimalx::DecimalErrorKind::eq(&self, &decimalx::DecimalErrorKind) -> bool
+impl core::fmt::Debug for decimalx::DecimalErrorKind
+pub fn decimalx::DecimalErrorKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for decimalx::DecimalErrorKind
+pub fn decimalx::DecimalErrorKind::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for decimalx::DecimalErrorKind
+impl core::marker::StructuralPartialEq for decimalx::DecimalErrorKind
+impl core::marker::Freeze for decimalx::DecimalErrorKind
+impl core::marker::Send for decimalx::DecimalErrorKind
+impl core::marker::Sync for decimalx::DecimalErrorKind
+impl core::marker::Unpin for decimalx::DecimalErrorKind
+impl core::marker::UnsafeUnpin for decimalx::DecimalErrorKind
+impl core::panic::unwind_safe::RefUnwindSafe for decimalx::DecimalErrorKind
+impl core::panic::unwind_safe::UnwindSafe for decimalx::DecimalErrorKind
+pub enum decimalx::RoundingStrategy
+pub decimalx::RoundingStrategy::Ceiling
+pub decimalx::RoundingStrategy::Floor
+pub decimalx::RoundingStrategy::HalfDown
+pub decimalx::RoundingStrategy::HalfEven
+pub decimalx::RoundingStrategy::HalfUp
+impl core::clone::Clone for decimalx::RoundingStrategy
+pub fn decimalx::RoundingStrategy::clone(&self) -> decimalx::RoundingStrategy
+impl core::cmp::Eq for decimalx::RoundingStrategy
+impl core::cmp::PartialEq for decimalx::RoundingStrategy
+pub fn decimalx::RoundingStrategy::eq(&self, &decimalx::RoundingStrategy) -> bool
+impl core::fmt::Debug for decimalx::RoundingStrategy
+pub fn decimalx::RoundingStrategy::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for decimalx::RoundingStrategy
+impl core::marker::StructuralPartialEq for decimalx::RoundingStrategy
+impl core::marker::Freeze for decimalx::RoundingStrategy
+impl core::marker::Send for decimalx::RoundingStrategy
+impl core::marker::Sync for decimalx::RoundingStrategy
+impl core::marker::Unpin for decimalx::RoundingStrategy
+impl core::marker::UnsafeUnpin for decimalx::RoundingStrategy
+impl core::panic::unwind_safe::RefUnwindSafe for decimalx::RoundingStrategy
+impl core::panic::unwind_safe::UnwindSafe for decimalx::RoundingStrategy
+pub struct decimalx::Currency(_)
+impl decimalx::Currency
+pub const fn decimalx::Currency::as_bytes(self) -> [u8; 3]
+pub fn decimalx::Currency::as_str(&self) -> &str
+pub fn decimalx::Currency::is_valid(self) -> bool
+pub fn decimalx::Currency::try_new([u8; 3]) -> decimalx::DecimalResult<Self>
+pub fn decimalx::Currency::validate(self) -> decimalx::DecimalResult<Self>
+impl core::clone::Clone for decimalx::Currency
+pub fn decimalx::Currency::clone(&self) -> decimalx::Currency
+impl core::cmp::Eq for decimalx::Currency
+impl core::cmp::PartialEq for decimalx::Currency
+pub fn decimalx::Currency::eq(&self, &decimalx::Currency) -> bool
+impl core::fmt::Debug for decimalx::Currency
+pub fn decimalx::Currency::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for decimalx::Currency
+pub fn decimalx::Currency::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for decimalx::Currency
+impl core::marker::StructuralPartialEq for decimalx::Currency
+impl core::str::traits::FromStr for decimalx::Currency
+pub type decimalx::Currency::Err = decimalx::DecimalError
+pub fn decimalx::Currency::from_str(&str) -> decimalx::DecimalResult<Self>
+impl serde_core::ser::Serialize for decimalx::Currency
+pub fn decimalx::Currency::serialize<S: serde_core::ser::Serializer>(&self, S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for decimalx::Currency
+pub fn decimalx::Currency::deserialize<D: serde_core::de::Deserializer<'de>>(D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error>
+impl core::marker::Freeze for decimalx::Currency
+impl core::marker::Send for decimalx::Currency
+impl core::marker::Sync for decimalx::Currency
+impl core::marker::Unpin for decimalx::Currency
+impl core::marker::UnsafeUnpin for decimalx::Currency
+impl core::panic::unwind_safe::RefUnwindSafe for decimalx::Currency
+impl core::panic::unwind_safe::UnwindSafe for decimalx::Currency
+pub struct decimalx::Decimal
+impl decimalx::Decimal
+pub const decimalx::Decimal::ZERO: Self
+pub fn decimalx::Decimal::checked_add(self, decimalx::Decimal) -> decimalx::DecimalResult<decimalx::Decimal>
+pub fn decimalx::Decimal::checked_div(self, decimalx::Decimal, decimalx::RoundingStrategy) -> decimalx::DecimalResult<decimalx::Decimal>
+pub fn decimalx::Decimal::checked_mul(self, decimalx::Decimal) -> decimalx::DecimalResult<decimalx::Decimal>
+pub fn decimalx::Decimal::checked_rescale(self, u8, decimalx::RoundingStrategy) -> decimalx::DecimalResult<decimalx::Decimal>
+pub fn decimalx::Decimal::checked_sub(self, decimalx::Decimal) -> decimalx::DecimalResult<decimalx::Decimal>
+pub fn decimalx::Decimal::cmp_value(self, decimalx::Decimal) -> core::cmp::Ordering
+pub fn decimalx::Decimal::div(self, decimalx::Decimal, decimalx::RoundingStrategy) -> decimalx::DecimalResult<decimalx::Decimal>
+pub fn decimalx::Decimal::eq_value(self, decimalx::Decimal) -> bool
+pub const fn decimalx::Decimal::is_within_limits(self) -> bool
+pub const fn decimalx::Decimal::mantissa(self) -> i128
+pub const fn decimalx::Decimal::new(i128, u8) -> Self
+pub fn decimalx::Decimal::normalize(self) -> decimalx::Decimal
+pub fn decimalx::Decimal::rescale(self, u8, decimalx::RoundingStrategy) -> decimalx::Decimal
+pub const fn decimalx::Decimal::scale(self) -> u8
+pub fn decimalx::Decimal::try_new(i128, u8) -> decimalx::DecimalResult<Self>
+pub fn decimalx::Decimal::validate(self) -> decimalx::DecimalResult<Self>
+impl core::clone::Clone for decimalx::Decimal
+pub fn decimalx::Decimal::clone(&self) -> decimalx::Decimal
+impl core::cmp::Eq for decimalx::Decimal
+impl core::cmp::Ord for decimalx::Decimal
+pub fn decimalx::Decimal::cmp(&self, &Self) -> core::cmp::Ordering
+impl core::cmp::PartialEq for decimalx::Decimal
+pub fn decimalx::Decimal::eq(&self, &Self) -> bool
+impl core::cmp::PartialOrd for decimalx::Decimal
+pub fn decimalx::Decimal::partial_cmp(&self, &Self) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for decimalx::Decimal
+pub fn decimalx::Decimal::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for decimalx::Decimal
+pub fn decimalx::Decimal::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for decimalx::Decimal
+pub fn decimalx::Decimal::hash<H: core::hash::Hasher>(&self, &mut H)
+impl core::marker::Copy for decimalx::Decimal
+impl core::ops::arith::Add for decimalx::Decimal
+pub type decimalx::Decimal::Output = decimalx::Decimal
+pub fn decimalx::Decimal::add(self, decimalx::Decimal) -> decimalx::Decimal
+impl core::ops::arith::Mul for decimalx::Decimal
+pub type decimalx::Decimal::Output = decimalx::Decimal
+pub fn decimalx::Decimal::mul(self, decimalx::Decimal) -> decimalx::Decimal
+impl core::ops::arith::Sub for decimalx::Decimal
+pub type decimalx::Decimal::Output = decimalx::Decimal
+pub fn decimalx::Decimal::sub(self, decimalx::Decimal) -> decimalx::Decimal
+impl core::str::traits::FromStr for decimalx::Decimal
+pub type decimalx::Decimal::Err = decimalx::DecimalError
+pub fn decimalx::Decimal::from_str(&str) -> decimalx::DecimalResult<Self>
+impl serde_core::ser::Serialize for decimalx::Decimal
+pub fn decimalx::Decimal::serialize<S: serde_core::ser::Serializer>(&self, S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for decimalx::Decimal
+pub fn decimalx::Decimal::deserialize<D: serde_core::de::Deserializer<'de>>(D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error>
+impl core::marker::Freeze for decimalx::Decimal
+impl core::marker::Send for decimalx::Decimal
+impl core::marker::Sync for decimalx::Decimal
+impl core::marker::Unpin for decimalx::Decimal
+impl core::marker::UnsafeUnpin for decimalx::Decimal
+impl core::panic::unwind_safe::RefUnwindSafe for decimalx::Decimal
+impl core::panic::unwind_safe::UnwindSafe for decimalx::Decimal
+pub struct decimalx::DecimalLimits
+impl decimalx::DecimalLimits
+pub const decimalx::DecimalLimits::MAX_SCALE: u8
+pub const decimalx::DecimalLimits::TECH_MAX_POW10_EXP: u32
+impl core::clone::Clone for decimalx::DecimalLimits
+pub fn decimalx::DecimalLimits::clone(&self) -> decimalx::DecimalLimits
+impl core::cmp::Eq for decimalx::DecimalLimits
+impl core::cmp::PartialEq for decimalx::DecimalLimits
+pub fn decimalx::DecimalLimits::eq(&self, &decimalx::DecimalLimits) -> bool
+impl core::fmt::Debug for decimalx::DecimalLimits
+pub fn decimalx::DecimalLimits::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for decimalx::DecimalLimits
+impl core::marker::StructuralPartialEq for decimalx::DecimalLimits
+impl core::marker::Freeze for decimalx::DecimalLimits
+impl core::marker::Send for decimalx::DecimalLimits
+impl core::marker::Sync for decimalx::DecimalLimits
+impl core::marker::Unpin for decimalx::DecimalLimits
+impl core::marker::UnsafeUnpin for decimalx::DecimalLimits
+impl core::panic::unwind_safe::RefUnwindSafe for decimalx::DecimalLimits
+impl core::panic::unwind_safe::UnwindSafe for decimalx::DecimalLimits
+pub struct decimalx::Money
+impl decimalx::Money
+pub const fn decimalx::Money::amount(self) -> decimalx::Decimal
+pub const fn decimalx::Money::currency(self) -> decimalx::Currency
+pub fn decimalx::Money::try_new(decimalx::Decimal, decimalx::Currency) -> decimalx::DecimalResult<Self>
+pub fn decimalx::Money::validate(self) -> decimalx::DecimalResult<Self>
+impl core::clone::Clone for decimalx::Money
+pub fn decimalx::Money::clone(&self) -> decimalx::Money
+impl core::cmp::Eq for decimalx::Money
+impl core::cmp::PartialEq for decimalx::Money
+pub fn decimalx::Money::eq(&self, &decimalx::Money) -> bool
+impl core::fmt::Debug for decimalx::Money
+pub fn decimalx::Money::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for decimalx::Money
+impl core::marker::StructuralPartialEq for decimalx::Money
+impl serde_core::ser::Serialize for decimalx::Money
+pub fn decimalx::Money::serialize<S: serde_core::ser::Serializer>(&self, S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for decimalx::Money
+pub fn decimalx::Money::deserialize<D: serde_core::de::Deserializer<'de>>(D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error>
+impl core::marker::Freeze for decimalx::Money
+impl core::marker::Send for decimalx::Money
+impl core::marker::Sync for decimalx::Money
+impl core::marker::Unpin for decimalx::Money
+impl core::marker::UnsafeUnpin for decimalx::Money
+impl core::panic::unwind_safe::RefUnwindSafe for decimalx::Money
+impl core::panic::unwind_safe::UnwindSafe for decimalx::Money
+pub struct decimalx::Price(_)
+impl decimalx::Price
+pub const fn decimalx::Price::as_decimal(self) -> decimalx::Decimal
+pub const fn decimalx::Price::into_inner(self) -> decimalx::Decimal
+pub const fn decimalx::Price::new(decimalx::Decimal) -> Self
+impl core::clone::Clone for decimalx::Price
+pub fn decimalx::Price::clone(&self) -> decimalx::Price
+impl core::cmp::Eq for decimalx::Price
+impl core::cmp::Ord for decimalx::Price
+pub fn decimalx::Price::cmp(&self, &decimalx::Price) -> core::cmp::Ordering
+impl core::cmp::PartialEq for decimalx::Price
+pub fn decimalx::Price::eq(&self, &decimalx::Price) -> bool
+impl core::cmp::PartialOrd for decimalx::Price
+pub fn decimalx::Price::partial_cmp(&self, &decimalx::Price) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for decimalx::Price
+pub fn decimalx::Price::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for decimalx::Price
+pub fn decimalx::Price::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for decimalx::Price
+impl core::marker::StructuralPartialEq for decimalx::Price
+impl serde_core::ser::Serialize for decimalx::Price
+pub fn decimalx::Price::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for decimalx::Price
+pub fn decimalx::Price::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for decimalx::Price
+impl core::marker::Send for decimalx::Price
+impl core::marker::Sync for decimalx::Price
+impl core::marker::Unpin for decimalx::Price
+impl core::marker::UnsafeUnpin for decimalx::Price
+impl core::panic::unwind_safe::RefUnwindSafe for decimalx::Price
+impl core::panic::unwind_safe::UnwindSafe for decimalx::Price
+pub struct decimalx::Qty(_)
+impl decimalx::Qty
+pub const fn decimalx::Qty::as_decimal(self) -> decimalx::Decimal
+pub const fn decimalx::Qty::into_inner(self) -> decimalx::Decimal
+pub const fn decimalx::Qty::new(decimalx::Decimal) -> Self
+impl core::clone::Clone for decimalx::Qty
+pub fn decimalx::Qty::clone(&self) -> decimalx::Qty
+impl core::cmp::Eq for decimalx::Qty
+impl core::cmp::Ord for decimalx::Qty
+pub fn decimalx::Qty::cmp(&self, &decimalx::Qty) -> core::cmp::Ordering
+impl core::cmp::PartialEq for decimalx::Qty
+pub fn decimalx::Qty::eq(&self, &decimalx::Qty) -> bool
+impl core::cmp::PartialOrd for decimalx::Qty
+pub fn decimalx::Qty::partial_cmp(&self, &decimalx::Qty) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for decimalx::Qty
+pub fn decimalx::Qty::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for decimalx::Qty
+pub fn decimalx::Qty::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for decimalx::Qty
+impl core::marker::StructuralPartialEq for decimalx::Qty
+impl serde_core::ser::Serialize for decimalx::Qty
+pub fn decimalx::Qty::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for decimalx::Qty
+pub fn decimalx::Qty::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for decimalx::Qty
+impl core::marker::Send for decimalx::Qty
+impl core::marker::Sync for decimalx::Qty
+impl core::marker::Unpin for decimalx::Qty
+impl core::marker::UnsafeUnpin for decimalx::Qty
+impl core::panic::unwind_safe::RefUnwindSafe for decimalx::Qty
+impl core::panic::unwind_safe::UnwindSafe for decimalx::Qty
+pub struct decimalx::Ratio(_)
+impl decimalx::Ratio
+pub const fn decimalx::Ratio::as_decimal(self) -> decimalx::Decimal
+pub const fn decimalx::Ratio::into_inner(self) -> decimalx::Decimal
+pub const fn decimalx::Ratio::new(decimalx::Decimal) -> Self
+impl core::clone::Clone for decimalx::Ratio
+pub fn decimalx::Ratio::clone(&self) -> decimalx::Ratio
+impl core::cmp::Eq for decimalx::Ratio
+impl core::cmp::Ord for decimalx::Ratio
+pub fn decimalx::Ratio::cmp(&self, &decimalx::Ratio) -> core::cmp::Ordering
+impl core::cmp::PartialEq for decimalx::Ratio
+pub fn decimalx::Ratio::eq(&self, &decimalx::Ratio) -> bool
+impl core::cmp::PartialOrd for decimalx::Ratio
+pub fn decimalx::Ratio::partial_cmp(&self, &decimalx::Ratio) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for decimalx::Ratio
+pub fn decimalx::Ratio::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for decimalx::Ratio
+pub fn decimalx::Ratio::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for decimalx::Ratio
+impl core::marker::StructuralPartialEq for decimalx::Ratio
+impl serde_core::ser::Serialize for decimalx::Ratio
+pub fn decimalx::Ratio::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for decimalx::Ratio
+pub fn decimalx::Ratio::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for decimalx::Ratio
+impl core::marker::Send for decimalx::Ratio
+impl core::marker::Sync for decimalx::Ratio
+impl core::marker::Unpin for decimalx::Ratio
+impl core::marker::UnsafeUnpin for decimalx::Ratio
+impl core::panic::unwind_safe::RefUnwindSafe for decimalx::Ratio
+impl core::panic::unwind_safe::UnwindSafe for decimalx::Ratio
+pub const decimalx::MAX_SCALE: u8
+pub const decimalx::TECH_MAX_POW10_EXP: u32
+pub type decimalx::DecimalResult<T> = core::result::Result<T, decimalx::DecimalError>

@@ -111,3 +111,12 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: 运行 canonical-align check
         run: node scripts/quality-gates/check-canonical-align.mjs
+
+  decimal-panicking-ops:
+    name: Decimal panicking-ops 门禁
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 扫描生产路径 panicking Decimal 用法
+        run: node scripts/quality-gates/check-decimal-no-panicking-ops.mjs

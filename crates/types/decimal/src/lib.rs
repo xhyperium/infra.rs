@@ -17,6 +17,10 @@
 //! - 中间值合同：`i128` 中间值溢出则 `Err`，即使约分后可表示
 //! - wire：serde 字段 shape 为**当前事实**，**不**等于跨版本稳定协议（见 `docs/WIRE.md`）
 
+#![forbid(unsafe_code)]
+#![deny(missing_docs)]
+#![deny(unreachable_pub)]
+
 use kernel::XError;
 use serde::de::{self, Deserializer};
 use serde::{Deserialize, Serialize, Serializer};
@@ -34,7 +38,12 @@ use std::str::FromStr;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DecimalError {
     /// scale 超出 [`MAX_SCALE`]。
-    ScaleOutOfRange { scale: u8, max: u8 },
+    ScaleOutOfRange {
+        /// 实际 scale。
+        scale: u8,
+        /// 允许的最大 scale（[`MAX_SCALE`]）。
+        max: u8,
+    },
     /// mantissa 解析或运算溢出。
     MantissaOverflow,
     /// 除数为零。
