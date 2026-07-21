@@ -15,7 +15,7 @@
  *   --reviewer <user> 指定审查者（可重复）
  *   --help           显示帮助信息
  *
- * SSOT: CONSTITUTION.md §6.0 / docs/worktree-policy.md
+ * SSOT: docs/constitution/06-governance.md §6.0 / docs/governance/worktree-policy.md
  */
 
 import { execSync } from "child_process";
