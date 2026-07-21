@@ -1900,7 +1900,9 @@ dependencies = [
  "async-trait",
  "bytes",
  "futures-core",
+ "tokio",
  "xhyper-canonical",
+ "xhyper-decimalx",
  "xhyper-kernel",
 ]
 

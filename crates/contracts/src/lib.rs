@@ -172,8 +172,9 @@ pub trait VenueTimeSource: Send + Sync {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use canonical::{CancelOrderRequest, OrderRef, Side};
+    use decimalx::{Decimal, Price, Qty};
 
-    /// 编译期验证：所有 trait 可被实现（mock 空实现）。
     struct MockKv;
     #[async_trait]
     impl KeyValueStore for MockKv {
@@ -185,9 +186,11 @@ mod tests {
         }
     }
 
-    #[test]
-    fn keyvaluestore_trait_implementable() {
-        let _m = MockKv;
+    #[tokio::test]
+    async fn keyvaluestore_methods_callable() {
+        let m = MockKv;
+        assert!(m.get("k").await.unwrap().is_none());
+        m.set("k", vec![1], None).await.unwrap();
     }
 
     struct MockInstr;
@@ -198,7 +201,95 @@ mod tests {
     }
 
     #[test]
-    fn instrumentation_trait_implementable() {
-        let _m = MockInstr;
+    fn instrumentation_methods_callable() {
+        let m = MockInstr;
+        m.record_retry("op", 1);
+        m.record_circuit_open("op");
+        m.record_circuit_close("op");
+        let d: &dyn Instrumentation = &m;
+        d.record_retry("op", 2);
+    }
+
+    struct MockVenue;
+    #[async_trait]
+    impl VenueAdapter for MockVenue {
+        async fn connect(&self) -> XResult<()> {
+            Ok(())
+        }
+        async fn disconnect(&self) -> XResult<()> {
+            Ok(())
+        }
+        async fn place_order(&self, _order: &Order) -> XResult<OrderAck> {
+            Err(XError::invalid("not implemented"))
+        }
+        async fn cancel_order(&self, _id: &str) -> XResult<()> {
+            Ok(())
+        }
+        async fn query_order(&self, _id: &str) -> XResult<OrderStatus> {
+            Ok(OrderStatus::Pending)
+        }
+        async fn query_position(&self) -> XResult<Vec<Position>> {
+            Ok(vec![])
+        }
+        async fn query_balance(&self) -> XResult<Vec<Money>> {
+            Ok(vec![])
+        }
+        async fn subscribe_ticks(&self, _symbol: &str) -> XResult<BoxStream<'static, Tick>> {
+            Err(XError::invalid("not implemented"))
+        }
+        async fn subscribe_orderbook(
+            &self,
+            _symbol: &str,
+        ) -> XResult<BoxStream<'static, OrderBookSnapshot>> {
+            Err(XError::invalid("not implemented"))
+        }
+        async fn subscribe_trades(&self, _symbol: &str) -> XResult<BoxStream<'static, Trade>> {
+            Err(XError::invalid("not implemented"))
+        }
+        async fn server_time(&self) -> XResult<i64> {
+            Ok(0)
+        }
+        async fn symbol_info(&self, _symbol: &str) -> XResult<SymbolMeta> {
+            Err(XError::invalid("not implemented"))
+        }
+        fn venue_id(&self) -> &'static str {
+            "mock"
+        }
+    }
+
+    #[tokio::test]
+    #[allow(deprecated)]
+    async fn venue_adapter_default_request_methods_error() {
+        let v = MockVenue;
+        let req = CancelOrderRequest {
+            venue: "mock".into(),
+            instrument: "BTCUSDT".into(),
+            id: OrderRef::Exchange("x".into()),
+        };
+        let e1 = v.cancel_order_request(&req).await.unwrap_err();
+        assert_eq!(e1.kind(), kernel::ErrorKind::Invalid);
+        let e2 = v.query_order_request(&req).await.unwrap_err();
+        assert_eq!(e2.kind(), kernel::ErrorKind::Invalid);
+        assert_eq!(v.venue_id(), "mock");
+        v.connect().await.unwrap();
+        v.disconnect().await.unwrap();
+        v.cancel_order("id").await.unwrap();
+        assert_eq!(v.query_order("id").await.unwrap(), OrderStatus::Pending);
+        assert!(v.query_position().await.unwrap().is_empty());
+        assert!(v.query_balance().await.unwrap().is_empty());
+        assert_eq!(v.server_time().await.unwrap(), 0);
+        assert!(v.subscribe_ticks("BTCUSDT").await.is_err());
+        assert!(v.subscribe_orderbook("BTCUSDT").await.is_err());
+        assert!(v.subscribe_trades("BTCUSDT").await.is_err());
+        assert!(v.symbol_info("BTCUSDT").await.is_err());
+        let order = Order {
+            id: "1".into(),
+            symbol: "BTCUSDT".into(),
+            side: Side::Buy,
+            price: Price(Decimal::new(1, 0)),
+            qty: Qty(Decimal::new(1, 0)),
+            status: OrderStatus::Pending,
+        };
+        assert!(v.place_order(&order).await.is_err());
     }
 }
