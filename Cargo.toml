@@ -9,6 +9,7 @@ members = [
   "crates/types/canonical",
   "crates/resiliencx",
   "crates/contracts",
+  "crates/evidence",
   "crates/bootstrap",
   "crates/observex",
   "crates/transport",

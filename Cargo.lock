@@ -1889,6 +1889,7 @@ name = "xhyper-bootstrap"
 version = "0.3.0"
 dependencies = [
  "xhyper-contracts",
+ "xhyper-evidence",
  "xhyper-kernel",
  "xhyper-observex",
 ]
@@ -1931,6 +1932,10 @@ dependencies = [
  "serde_json",
  "xhyper-kernel",
 ]
+
+[[package]]
+name = "xhyper-evidence"
+version = "0.1.0"
 
 [[package]]
 name = "xhyper-kernel"
