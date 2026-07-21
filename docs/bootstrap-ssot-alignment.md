@@ -23,7 +23,7 @@
 | ADR-016 唯一组合根；runtime gate 已退役 | **PASS** | 无 `Gate` 类型；`rg 'pub (struct\|enum\|type) Gate\|fn register\|fn resolve' crates/bootstrap` 无匹配 |
 | 运行时依赖经 typed `PlatformContext` / `AppContext` / bounded contexts | **PASS** | `src/lib.rs`、`src/bounded.rs` |
 | 禁止字符串 / `Any` / `TypeId` Service Locator；禁止通用 register/resolve | **PASS** | 公开 API 仅 builder + 只读访问器；`tests/public_api.rs` |
-| 可依赖其他 L1 完成装配，但不跨层 re-export adapter 类型 | **PASS** | 生产 dep 仅 `xhyper-kernel`；能力以 trait object 暴露 |
+| 可依赖其他 L1 完成装配，但不跨层 re-export adapter 类型 | **PASS** | 生产 dep：kernel + contracts + observex；不 re-export 交易所 adapter |
 | 非目标：通用 DI、配置解析、重试/调度/传输、业务状态机、Evidence 核心实现 | **PASS** | 本 crate 不实现上述能力 |
 
 ## §2 依赖
@@ -31,8 +31,8 @@
 | SSOT 依赖 | 本仓 | 判定 |
 |-----------|------|------|
 | `xhyper-kernel`（Shutdown / ErrorKind） | path `crates/kernel` | **PASS** |
-| `xhyper-contracts`（Instrumentation + venue/storage traits） | **最小对象安全替面** `bootstrap::traits` | **PASS**（语义保留）/ 全量 contracts **DEFER** |
-| `xhyper-observex`（`TracingInstrumentation`） | `NoopInstrumentation` 默认；可 `with_instrumentation` 注入 | **PASS**（组合语义）/ 真实 tracing 后端 **DEFER** |
+| `xhyper-contracts`（Instrumentation） | path `crates/contracts`；re-export `Instrumentation` | **PASS**（ADR-005 trait 权威）/ 全量 venue async 仍 **DEFER**（`traits` 最小替面） |
+| `xhyper-observex`（`TracingInstrumentation`） | path `crates/observex`；`Bootstrap::new` 默认 | **PASS**（ADR-005 默认实现） |
 | `xhyper-evidence`（`EvidenceAppender`） | 最小 `EvidenceAppender` + `EvidenceError` | **PASS**（注入/可选/require）/ 全量 evidence **DEFER** |
 | dev：binance / redisx / canonical / tokio e2e | 无 monorepo adapters | **DEFER**（见非目标）；以 stub trait double + 单元/集成测试替代组合证明 |
 

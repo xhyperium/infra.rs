@@ -2,7 +2,7 @@
 
 use bootstrap::{
     Bootstrap, BootstrapError, EvidenceAppender, EvidenceError, ExecutionContext, Instrumentation,
-    MarketDataContext, NoopInstrumentation, into_xresult,
+    MarketDataContext, NoopInstrumentation, TracingInstrumentation, into_xresult,
 };
 use kernel::ErrorKind;
 use std::sync::{Arc, Mutex};
@@ -117,6 +117,24 @@ fn error_mapping_and_into_xresult() {
 
     assert_eq!(into_xresult(Ok(1u8)).unwrap(), 1);
     let _ = NoopInstrumentation::new();
+    let _ = TracingInstrumentation::new();
+}
+
+#[test]
+fn default_is_tracing_instrumentation_contracts_trait() {
+    // ADR-005：Bootstrap::new 默认 observex 实现；trait 权威在 contracts
+    let ctx = Bootstrap::new().build();
+    let instr: &dyn Instrumentation = ctx.instrumentation();
+    instr.record_retry("public_api_boot", 1);
+    instr.record_circuit_open("public_api_boot");
+    instr.record_circuit_close("public_api_boot");
+
+    let silent = Bootstrap::new().with_instrumentation(NoopInstrumentation::new()).build();
+    silent.instrumentation().record_retry("silent", 1);
+
+    // 显式注入 TracingInstrumentation 与默认路径同型
+    let explicit = Bootstrap::new().with_instrumentation(TracingInstrumentation::new()).build();
+    explicit.instrumentation().record_retry("explicit", 1);
 }
 
 #[test]

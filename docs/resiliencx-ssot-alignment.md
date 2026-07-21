@@ -11,6 +11,6 @@
 
 - Active §2 retry 合同已落地并可测；**Lines Cover 100%**。
 - 熔断 / 限流 / async wait / package stable：**未交付**（residual OPEN/DEFER）。
-- Instrumentation 在本 crate 定义（无 `xhyper-contracts`）；禁止 observex。
+- Instrumentation re-export `contracts::Instrumentation`；本 crate 提供 `NoopInstrumentation`；**禁止**依赖 observex（ADR-005）。
 
 详见 `plan/alignment-matrix-infra-2026-07-21.md` 与 `plan/residual-open.md`。

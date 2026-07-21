@@ -11,8 +11,8 @@ L1 **重试**（active SSOT §2，ADR-005）。当前仅交付 `RetryConfig` + `
 | `RetryConfig` | `max_attempts`（含首次）、`base_delay_ms` |
 | `retry_fn` | 同步重试；仅 `XError::is_retryable()`（Transient）触发重试 |
 | `retry_ok` / `retry_downcast` | 成功值装箱 / 拆箱（`RetryValue`） |
-| `Instrumentation` | 可观测注入（本 crate 定义；本仓无 contracts） |
-| `NoopInstrumentation` | 空实现 |
+| `Instrumentation` | 可观测注入（re-export `contracts::Instrumentation`） |
+| `NoopInstrumentation` | 空实现（本 crate；生产由 bootstrap 注入 observex） |
 
 ## 依赖
 

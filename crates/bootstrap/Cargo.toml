@@ -13,6 +13,9 @@ name = "bootstrap"
 
 [dependencies]
 xhyper-kernel = { path = "../kernel", version = "0.3.0" }
+# ADR-005：Instrumentation 契约权威在 contracts；默认实现来自 observex
+xhyper-contracts = { path = "../contracts", version = "0.1.0" }
+xhyper-observex = { path = "../observex", version = "0.1.0" }
 
 [lints]
 workspace = true

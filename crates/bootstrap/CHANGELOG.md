@@ -8,6 +8,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **ADR-005 注入链闭合**：
+  - `Instrumentation` 改为 re-export `contracts::Instrumentation`（移除本地 trait 分叉）
+  - `Bootstrap::new` 默认注入 `observex::TracingInstrumentation`（不再默认 `NoopInstrumentation`）
+  - 新增生产依赖 `xhyper-contracts`、`xhyper-observex`
+  - 公开 re-export `TracingInstrumentation`；`NoopInstrumentation` 保留为可选静默实现
+
 ### Added
 
 - 初始落地：typed composition root（ADR-016）
@@ -16,7 +24,7 @@
   - `BootstrapError` → `kernel::ErrorKind`（Missing / Invalid / Unavailable）
   - 四条 build 路径：`build` / `try_build` / `build_app` / `try_build_app`
   - `require_evidence` fail-closed（仅 `try_*` 强制）
-- 可移植 `traits` 替面：`Instrumentation`、`EvidenceAppender`、六个有界上下文能力 trait、`NoopInstrumentation`
+- 可移植 `traits` 替面：`EvidenceAppender`、六个有界上下文能力 trait、`NoopInstrumentation`
 - 示例 `examples/minimal.rs`；集成测试 `tests/public_api.rs`
 - 本仓对齐文档：`docs/bootstrap-ssot-alignment.md`
 
