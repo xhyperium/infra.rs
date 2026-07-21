@@ -1,12 +1,15 @@
-//! `infra-contracts` — 适配器合约 trait。
+//! `infra-contracts` — 适配器与可观测性契约 trait。
 //!
-//! 定义交易所适配器和存储适配器必须实现的接口。
+//! - 交易所 / 存储适配器接口（`exchange` / `storage`）
+//! - 可观测性注入点 [`Instrumentation`]（ADR-005，供 `observex` 实现）
 
 pub mod exchange;
+pub mod instrumentation;
 pub mod storage;
 
 mod error;
 pub use error::{Error, Result};
+pub use instrumentation::Instrumentation;
 
 /// 适配器状态
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

@@ -1,0 +1,33 @@
+[package]
+name = "xhyper-observex"
+version = "0.1.0"
+publish = false
+edition.workspace = true
+rust-version.workspace = true
+description = "L1 tracing/metrics 封装（SPEC observex 0.1.0 / ADR-005）"
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "observex"
+
+[dependencies]
+# SPEC §2：kernel 依赖信封（预留，当前热路径不引用）
+xhyper-kernel = { path = "../kernel", version = "0.3.0" }
+# package infra-contracts · lib name infra_contracts
+infra-contracts = { path = "../contracts", version = "0.3.0" }
+tracing = { workspace = true }
+
+[dev-dependencies]
+# 捕获 tracing 事件字段（测试合同）
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+  "std",
+  "fmt",
+  "registry",
+] }
+
+[features]
+default = []
+
+[lints]
+workspace = true
