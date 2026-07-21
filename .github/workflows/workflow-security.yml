@@ -1,0 +1,141 @@
+name: Workflow Security
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: 审计工作流安全基线
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 运行工作流安全扫描
+        run: |
+          python3 << 'PYEOF'
+          import os, yaml, sys
+
+          workflows_dir = ".github/workflows"
+          errors = 0
+          warnings = 0
+          files_scanned = 0
+
+          # Security baseline rules
+          RULES = {
+              # HIGH severity — blocking violations
+              "high": {
+                  "permissions-required": {
+                      "check": lambda d: d.get('permissions') is not None,
+                      "msg": "Missing 'permissions' block — defaults to write-all access",
+                  },
+                  "no-pull-request-target": {
+                      "check": lambda d: 'pull_request_target' not in str(d.get('on', {})),
+                      "msg": "Uses 'pull_request_target' — can execute untrusted PR code",
+                  },
+                  "no-self-hosted-runner": {
+                      "check": lambda d: 'self-hosted' not in str(d).lower(),
+                      "msg": "Uses self-hosted runner — potential persistence risk",
+                  },
+              },
+              # MEDIUM severity — should fix
+              "medium": {
+                  "permissions-explicit": {
+                      "check": lambda d: _check_perms_explicit(d),
+                      "msg": "Permissions should be explicit (not 'read-all'/'write-all' string)",
+                  },
+              },
+              # LOW severity — recommended
+              "low": {
+                  "concurrency": {
+                      "check": lambda d: d.get('concurrency') is not None,
+                      "msg": "Missing 'concurrency' group — no cancel-in-progress protection",
+                  },
+                  "path-filter-on-pr": {
+                      "check": lambda d: _check_pr_path_filter(d),
+                      "msg": "PR-triggered workflow without path filter — runs on every PR",
+                  },
+                  "no-actions-checkout-v3": {
+                      "check": lambda d: not _has_v3_checkout(d),
+                      "msg": "Uses actions/checkout@v3 — upgrade to @v4",
+                  },
+              },
+          }
+
+          def _check_perms_explicit(d):
+              p = d.get('permissions', {})
+              if isinstance(p, str):
+                  return False
+              for k, v in p.items():
+                  if isinstance(v, str) and v in ('read-all', 'write-all'):
+                      return False
+              return True
+
+          def _check_pr_path_filter(d):
+              on_data = d.get('on', {})
+              has_pr = any(k in on_data for k in ['pull_request', 'pull_request_target'])
+              if not has_pr: return True  # No PR trigger, rule doesn't apply
+              for trigger in ['pull_request', 'pull_request_target']:
+                  if isinstance(on_data, dict) and trigger in on_data:
+                      pr_data = on_data[trigger]
+                      if isinstance(pr_data, dict) and 'paths' in pr_data:
+                          return True
+                      if isinstance(pr_data, list):
+                          if any(isinstance(item, dict) and 'paths' in item for item in pr_data):
+                              return True
+              return False
+
+          def _has_v3_checkout(d):
+              content = str(d)
+              return 'actions/checkout@v3' in content
+
+          # Scan all workflow files
+          for fname in sorted(os.listdir(workflows_dir)):
+              if not fname.endswith('.yml'): continue
+              fpath = os.path.join(workflows_dir, fname)
+              try:
+                  with open(fpath) as f:
+                      content = f.read()
+                      data = yaml.safe_load(content)
+              except Exception as e:
+                  print(f"❌ {fname}: YAML parse error — {e}")
+                  errors += 1
+                  continue
+
+              files_scanned += 1
+              name = data.get('name', fname)
+
+              for severity, rules in RULES.items():
+                  for rule_id, rule in rules.items():
+                      if not rule['check'](data):
+                          prefix = '❌' if severity == 'high' else '🟡' if severity == 'medium' else 'ℹ️'
+                          print(f"{prefix} {fname}: {rule['msg']}")
+                          if severity == 'high':
+                              errors += 1
+                          elif severity == 'medium':
+                              warnings += 1
+
+          # Summary
+          print(f"\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+          print(f"Files scanned: {files_scanned}")
+          print(f"Errors (HIGH): {errors}")
+          print(f"Warnings:      {warnings}")
+
+          if errors > 0:
+              print(f"\n❌ {errors} blocking violations found")
+              sys.exit(1)
+          else:
+              print(f"\n✅ All {files_scanned} workflows pass security baseline")
+              sys.exit(0)
+          PYEOF
