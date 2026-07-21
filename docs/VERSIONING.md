@@ -63,12 +63,12 @@ CI 中验证：
 | `Cargo.toml` (项目) | `0.3.0` |
 | `CHANGELOG.md` (最新) | `0.3.0` |
 | `CONSTITUTION.md` (宪章) | `v1.4.0` |
-| `.agents/ssot/SSOT.md` | `v1.1.0` |
+| `.agents/ssot/SSOT.md` | `v1.4.0` |
 | `xhyper-kernel` | workspace |
 | `xhyper-testkit` | `0.1.x` |
 | `xhyper-decimalx` | `0.1.x` |
 | `xhyper-canonical` | `0.1.x` |
-| `crates/AGENTS.md` | `v1.2.0` |
+| `crates/AGENTS.md` | `v1.4.0` |
 
 版本号已统一，下次发布按 R-V2 规则递增。
 

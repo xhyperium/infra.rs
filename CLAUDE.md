@@ -12,9 +12,10 @@
 
 ## 上游 SSOT 与本仓落地
 
-- `.agents/ssot/{kernel,testkit,types,infra}` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓可宣称 ship」
+- `.agents/ssot/{kernel,testkit,types,infra,adapters}` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓可宣称 ship」
   - infra 平面在 `.agents/ssot/infra/{bootstrap,configx,gate,…}`（保留 `infra/` 层级）
-- 本仓 members：`kernel` / `testkit` / `configx` / `types/decimal` / `types/canonical` / `bootstrap` / `resiliencx`（**无** `infra-core`；infra 其余域未落地）
+  - adapters 平面在 `.agents/ssot/adapters/{exchange,storage}/…`（保留 `adapters/` 层级）
+- 本仓 members：`kernel` / `testkit` / `configx` / `bootstrap` / `resiliencx` / `types/*` / `contracts` / `adapters/**`（adapters 为 scaffold；**无** `infra-core`；infra 其余域未落地）
 - 验证：`cargo test --workspace`；专项见对齐文档
 - 总览：[docs/workspace-ssot-alignment.md](./docs/workspace-ssot-alignment.md)
 - 域文档：
@@ -22,6 +23,7 @@
   - [docs/testkit-ssot-alignment.md](./docs/testkit-ssot-alignment.md)
   - [docs/types-ssot-alignment.md](./docs/types-ssot-alignment.md)
   - [docs/bootstrap-ssot-alignment.md](./docs/bootstrap-ssot-alignment.md)
+  - [docs/adapters-ssot-alignment.md](./docs/adapters-ssot-alignment.md)
 
 ## Hook 感知
 

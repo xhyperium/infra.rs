@@ -20,19 +20,23 @@
 
 ## 上游 SSOT 镜像与本仓落地
 
-- `.agents/ssot/{kernel,testkit,types,infra}/` 是 `xhyper.rs/.agent/SSOT/` 的**只读镜像**（见 `.agents/ssot/SSOT.md` R6）
+- `.agents/ssot/{kernel,testkit,types,infra,adapters}/` 是 `xhyper.rs/.agent/SSOT/` 的**只读镜像**（见 `.agents/ssot/SSOT.md` R6）
   - `infra/` 下含 bootstrap / configx / gate / observex / resiliencx / schedulex / testkitx / transport
-  - **保留 `infra/` 层级**（勿展平到 `.agents/ssot/` 根，否则镜像内相对链接断裂）
-- **镜像文档写 COMPLETE / Stable ≠ 本仓已有对应 crate**；必须以 `crates/` + `cargo metadata` 为准
+  - `adapters/` 下含 exchange（binance/okx）与 storage（clickhouse/kafka/nats/oss/postgres/redis/taos）
+  - **保留 `infra/`、`adapters/` 层级**（勿展平到 `.agents/ssot/` 根，否则镜像内相对链接断裂）
+- **镜像文档写 COMPLETE / Stable ≠ 本仓已有对应实现**；必须以 `crates/` + `cargo metadata` 为准
 - **当前 workspace members**（无 `infra-core`）：
   - `crates/kernel` → `xhyper-kernel`（L0）
   - `crates/testkit` → `xhyper-testkit`（core ManualClock；仅 dev-dep）
   - `crates/configx` → `xhyper-configx`（L1 内存字符串 KV；非多源热更新）
   - `crates/bootstrap` → `xhyper-bootstrap`（L1 组合根；contracts/observex/evidence 全量 DEFER）
-  - `crates/resiliencx` → `xhyper-resiliencx`（L1 重试）
+  - `crates/resiliencx` → `xhyper-resiliencx`（L1 重试；熔断/限流未实现）
   - `crates/types/decimal` → `xhyper-decimalx`
   - `crates/types/canonical` → `xhyper-canonical`
+  - `crates/contracts` → `infra-contracts`（adapter trait 出口；#43）
+  - `crates/adapters/**` → 9 个 adapter package（**scaffold**；见 adapters 对齐文）
 - `contract-testkit` **未**移植；**infra 其余域**（gate/observex/…）当前仅镜像，未宣称本仓实现
+- **adapters**：镜像已本地化；crate 为 scaffold，**未**宣称业务实现 / package stable
 - 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游变更用 **删除感知**同步（`rsync -a --delete`，见 SSOT.md R6）
 - 对齐审计总览：[docs/workspace-ssot-alignment.md](./docs/workspace-ssot-alignment.md)
   - kernel：[docs/kernel-ssot-alignment.md](./docs/kernel-ssot-alignment.md)
@@ -41,6 +45,7 @@
   - bootstrap：[docs/bootstrap-ssot-alignment.md](./docs/bootstrap-ssot-alignment.md)
   - configx：[docs/configx-ssot-alignment.md](./docs/configx-ssot-alignment.md)
   - resiliencx：[docs/resiliencx-ssot-alignment.md](./docs/resiliencx-ssot-alignment.md)
+  - adapters：[docs/adapters-ssot-alignment.md](./docs/adapters-ssot-alignment.md)
 
 ## 仓库结构
 

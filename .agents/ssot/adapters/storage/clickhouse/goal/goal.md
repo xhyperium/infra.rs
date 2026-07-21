@@ -1,0 +1,7 @@
+# adapters/storage/clickhouse — Goal
+
+> **状态**：布局占位 · **not started / not claimed Done**  
+> Source Goal 待战役定义；无证据不得宣称 In Progress 闭合。
+
+本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
+有实质战役内容时再改写本入口；禁止空目录批量标 DONE。

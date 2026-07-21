@@ -68,11 +68,12 @@ du -sh <src> <dst>  # 字节级一致
 ## 同步命令
 
 ```bash
-# 删除感知同步（推荐）；保留 infra/ 层级
-rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/kernel/  .agents/ssot/kernel/
-rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/testkit/ .agents/ssot/testkit/
-rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/types/   .agents/ssot/types/
-rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/   .agents/ssot/infra/
+# 删除感知同步（推荐）；保留 infra/、adapters/ 层级
+rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/kernel/   .agents/ssot/kernel/
+rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/testkit/  .agents/ssot/testkit/
+rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/types/    .agents/ssot/types/
+rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/    .agents/ssot/infra/
+rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/adapters/ .agents/ssot/adapters/
 ```
 
 ## 结论
@@ -87,6 +88,7 @@ rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/   .agents/ssot/in
 > | testkit | `crates/testkit` | **core 已落地**；contract-testkit DEFER | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
 > | types | `crates/types/{decimal,canonical}` | **已落地**；wire/package stable OPEN | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 > | infra 八域 | （镜像）`.agents/ssot/infra/*` | **仅镜像**，未宣称 crate 落地 | 见下节 |
+> | adapters 九域 | `.agents/ssot/adapters/*` + `crates/adapters/**` | **镜像已注册**；crate **scaffold** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 >
 > **总览**：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)  
 > **非 SSOT 域**：`infra-core` 已从 workspace **移除**（见根 `CHANGELOG`）；它从未属于 kernel/testkit/types 镜像三域。
@@ -115,3 +117,27 @@ rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/   .agents/ssot/in
 | **合计** | **146** | — | — | **0** |
 
 > 镜像 COMPLETE ≠ 本仓 crate 已落地。上述域当前仅为只读 SSOT；本仓 `crates/` 是否实现以 `Cargo.toml` members 为准。
+
+---
+
+## 补充：adapters 平面镜像（2026-07-21）
+
+**源**: `/home/workspace/xhyper.rs/.agent/SSOT/adapters/`  
+**目标**: `/home/workspace/infra.rs/.agents/ssot/adapters/`（**保留 `adapters/` 层级**）  
+**命令**: `rsync -a --delete …/SSOT/adapters/ .agents/ssot/adapters/`
+
+| 域 | 文件数 | 目录数 | 大小 | 与源 diff |
+|----|--------|--------|------|-----------|
+| exchange/binance | 16 | 14 | 120K | 0 |
+| exchange/okx | 16 | 14 | 120K | 0 |
+| storage/clickhouse | 16 | 14 | 120K | 0 |
+| storage/kafka | 16 | 14 | 120K | 0 |
+| storage/nats | 16 | 14 | 120K | 0 |
+| storage/oss | 16 | 14 | 120K | 0 |
+| storage/postgres | 16 | 14 | 120K | 0 |
+| storage/redis | 16 | 14 | 120K | 0 |
+| storage/taos | 16 | 14 | 120K | 0 |
+| **合计** | **144** | — | **1.1M** | **0** |
+
+> 镜像 COMPLETE ≠ 本仓业务实现。本仓 9 个 adapter crate 为 scaffold（#42）；状态见
+> [adapters-ssot-alignment.md](./adapters-ssot-alignment.md)。
