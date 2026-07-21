@@ -44,13 +44,14 @@ jobs:
     timeout-minutes: 10
     env:
       CARGO_INCREMENTAL: 0
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: stable
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.10
       - name: 检查
         run: cargo check --workspace --all-features
 
@@ -61,13 +62,14 @@ jobs:
     timeout-minutes: 15
     env:
       CARGO_INCREMENTAL: 0
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: stable
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.10
       - name: 安装 cargo-nextest
         uses: taiki-e/install-action@v2
         with:
@@ -83,11 +85,14 @@ jobs:
     timeout-minutes: 15
     env:
       CARGO_INCREMENTAL: 0
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v4
       - name: 安装 MSRV Rust 工具链
         uses: dtolnay/rust-toolchain@1.85
-      - uses: Swatinem/rust-cache@v2
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.10
       - name: 在 MSRV 上构建
         run: cargo build --workspace --all-features
 
@@ -99,13 +104,16 @@ jobs:
     timeout-minutes: 15
     env:
       CARGO_INCREMENTAL: 0
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
         with:
           components: llvm-tools-preview
-      - uses: Swatinem/rust-cache@v2
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.10
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
         with:
