@@ -1,6 +1,12 @@
 name: Beads Sync Test Suite
 
 on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "scripts/beads/**"
+      - ".github/workflows/beads-test.yml"
+      - "package.json"
   pull_request:
     branches: [main, develop]
     paths:
