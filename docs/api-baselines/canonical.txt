@@ -35,6 +35,9 @@ impl core::marker::UnsafeUnpin for canonical::wire::WireCommitment
 impl core::panic::unwind_safe::RefUnwindSafe for canonical::wire::WireCommitment
 impl core::panic::unwind_safe::UnwindSafe for canonical::wire::WireCommitment
 pub const canonical::wire::COMMITTED_WIRE_V1: &[&str]
+pub const canonical::wire::COMMITTED_WIRE_V1_1: &[&str]
+pub const canonical::wire::COMMITTED_WIRE_V1_2: &[&str]
+pub const canonical::wire::COMMITTED_WIRE_V1_3: &[&str]
 pub fn canonical::wire::wire_commitment(&str) -> canonical::wire::WireCommitment
 pub enum canonical::OrderRef
 pub canonical::OrderRef::Client(alloc::string::String)
@@ -343,6 +346,9 @@ impl core::marker::UnsafeUnpin for canonical::Trade
 impl core::panic::unwind_safe::RefUnwindSafe for canonical::Trade
 impl core::panic::unwind_safe::UnwindSafe for canonical::Trade
 pub const canonical::COMMITTED_WIRE_V1: &[&str]
+pub const canonical::COMMITTED_WIRE_V1_1: &[&str]
+pub const canonical::COMMITTED_WIRE_V1_2: &[&str]
+pub const canonical::COMMITTED_WIRE_V1_3: &[&str]
 pub const canonical::TS_UNIT: &str
 pub fn canonical::cancel_request_shape_ok(&canonical::CancelOrderRequest) -> bool
 pub fn canonical::dto_ts_from_unix_millis(i64) -> core::option::Option<i64>
