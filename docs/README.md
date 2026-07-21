@@ -22,7 +22,8 @@
 | [transport-ssot-alignment.md](transport-ssot-alignment.md) | transport L1 HTTP/WS SSOT 对齐与落地状态 |
 | [adapters-ssot-alignment.md](adapters-ssot-alignment.md) | adapters 九域 SSOT 镜像与 scaffold 落地状态 |
 | [contracts-ssot-alignment.md](contracts-ssot-alignment.md) | contracts SSOT 镜像与 trait 落地状态 |
-| [SSOT_SYNC_REPORT.md](SSOT_SYNC_REPORT.md) | 上游 SSOT 镜像同步完整性（≠ 实现落地） |
+| [SSOT_SYNC_REPORT.md](SSOT_SYNC_REPORT.md) | 上游 SSOT 镜像同步完整性（�� 实现落地） |
+| [SSOT_SYNC_OPS.md](SSOT_SYNC_OPS.md) | SSOT 同步操作手册 — 按域 rsync + 验证命令 |
 | [ASD-STE100.md](ASD-STE100.md) | 英文技术文档规范（ASD-STE100 受控语言） |
 | [编码与语言约定.md](编码与语言约定.md) | 中文编码与文档语言约定 |
 
