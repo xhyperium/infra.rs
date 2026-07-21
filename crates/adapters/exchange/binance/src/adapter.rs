@@ -30,6 +30,9 @@ fn map_transport_error(err: TransportError) -> XError {
         }
         TransportError::ProtocolViolation(msg) => XError::invalid(format!("transport: {msg}")),
         TransportError::Io(source) => XError::unavailable(format!("transport io: {source}")),
+        TransportError::PayloadTooLarge { kind, limit, got } => {
+            XError::invalid(format!("transport payload too large: {kind} limit={limit} got={got}"))
+        }
     }
 }
 
@@ -597,6 +600,15 @@ mod tests {
         assert_eq!(
             map_transport_error(TransportError::Io(Box::new(std::io::Error::other("e")))).kind(),
             kernel::ErrorKind::Unavailable
+        );
+        assert_eq!(
+            map_transport_error(TransportError::PayloadTooLarge {
+                kind: "response_body",
+                limit: 1,
+                got: 2,
+            })
+            .kind(),
+            kernel::ErrorKind::Invalid
         );
     }
 }

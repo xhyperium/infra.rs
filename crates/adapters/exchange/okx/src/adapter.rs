@@ -29,6 +29,9 @@ fn map_transport_error(err: TransportError) -> XError {
         }
         TransportError::ProtocolViolation(msg) => XError::invalid(format!("transport: {msg}")),
         TransportError::Io(source) => XError::unavailable(format!("transport io: {source}")),
+        TransportError::PayloadTooLarge { kind, limit, got } => {
+            XError::invalid(format!("transport payload too large: {kind} limit={limit} got={got}"))
+        }
     }
 }
 

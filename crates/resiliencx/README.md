@@ -39,3 +39,15 @@ node scripts/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
 
 `.agents/ssot/resiliencx/spec/spec.md`  
 对齐：[docs/ssot/resiliencx-ssot-alignment.md](../../docs/ssot/resiliencx-ssot-alignment.md)
+
+## 生产误用红线
+
+| 禁止 | 原因 |
+|------|------|
+| async 服务默认 `retry_fn` | 内部 `ThreadSleepWait` **阻塞线程**；用 `retry_fn_with_wait` + 非阻塞 Wait |
+| 假设熔断「N 秒后冷却」 | 本实现按 **拒绝次数** 推进，无墙钟 |
+| 假设限流自动按时间 refill | 必须显式 `refill` |
+| 宣称 STATUS 98%/100% = Production Ready | 结构进度 ≠ 语义签字 |
+
+示例：`cargo run -p resiliencx --example retry_sync`
+

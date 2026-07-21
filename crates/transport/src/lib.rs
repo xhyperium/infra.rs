@@ -18,6 +18,13 @@
 //! - 不成为组合根（`bootstrap`）
 //! - 不依赖其他 L1 crate（R3）
 //!
+//! ## 生产默认（`infra-s9t.16`）
+//!
+//! - [`HttpRequest`] / [`HttpResponse`] 默认 [`Debug`] **脱敏**（敏感 header / body 长度）
+//! - [`ReqwestHttpDriver::new`]：30s 总超时 + 16 MiB 请求/响应体上限
+//! - [`TungsteniteWsConnector::new`]：30s 连接超时 + 4 MiB 单帧上限
+//! - 超限 → [`TransportError::PayloadTooLarge`]（fail-closed）
+//!
 //! 实现合同：`.agents/ssot/infra/transport/spec/spec.md`
 
 use async_trait::async_trait;
@@ -26,6 +33,7 @@ use futures_util::{SinkExt, StreamExt};
 use kernel::{XError, XResult};
 use reqwest::{Client, Method};
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::RwLock;
 use std::time::Duration;
 use tokio::net::TcpStream;
@@ -56,6 +64,16 @@ pub enum TransportError {
         /// 建议等待时长（来自整数秒 `Retry-After`）。
         retry_after: Option<Duration>,
     },
+    /// 请求/响应/帧超过资源上限（fail-closed）。
+    #[error("载荷过大: {kind} 上限 {limit} 字节，实际 {got} 字节")]
+    PayloadTooLarge {
+        /// 资源类别（request_body / response_body / ws_frame）。
+        kind: &'static str,
+        /// 配置上限（字节）。
+        limit: usize,
+        /// 实际大小（字节）。
+        got: usize,
+    },
     /// 协议 / 方法 / URL 等不可恢复语义错误。
     #[error("protocol violation: {0}")]
     ProtocolViolation(String),
@@ -69,7 +87,9 @@ pub enum TransportError {
 // ---------------------------------------------------------------------------
 
 /// Request passed to an HTTP driver. Concrete HTTP clients stay behind this boundary.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// 默认 [`Debug`] **脱敏**：敏感 header 值显示为 `***`；body 仅显示字节长度。
+#[derive(Clone, PartialEq, Eq)]
 pub struct HttpRequest {
     /// HTTP method（如 `"GET"` / `"POST"`）。
     pub method: String,
@@ -81,15 +101,84 @@ pub struct HttpRequest {
     pub body: Option<Bytes>,
 }
 
+impl fmt::Debug for HttpRequest {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("HttpRequest")
+            .field("method", &self.method)
+            .field("url", &self.url)
+            .field("headers", &RedactedHeaders(&self.headers))
+            .field("body", &BodyDebug(self.body.as_ref().map(|b| b.len())))
+            .finish()
+    }
+}
+
 /// Transport-neutral HTTP response.
 ///
 /// 当前只保留 status/body，不保留 response headers（SSOT §4.4）。
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// 默认 [`Debug`] 不打印 body 原文，仅长度。
+#[derive(Clone, PartialEq, Eq)]
 pub struct HttpResponse {
     /// HTTP 状态码。
     pub status: u16,
     /// 响应体。
     pub body: Bytes,
+}
+
+impl fmt::Debug for HttpResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("HttpResponse")
+            .field("status", &self.status)
+            .field("body", &BodyDebug(Some(self.body.len())))
+            .finish()
+    }
+}
+
+/// Debug 辅助：body 仅长度。
+struct BodyDebug(Option<usize>);
+
+impl fmt::Debug for BodyDebug {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.0 {
+            None => write!(f, "None"),
+            Some(n) => write!(f, "Some(<{n} bytes>)"),
+        }
+    }
+}
+
+/// Debug 辅助：敏感 header 脱敏。
+struct RedactedHeaders<'a>(&'a [(String, String)]);
+
+impl fmt::Debug for RedactedHeaders<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut list = f.debug_list();
+        for (name, value) in self.0 {
+            if is_sensitive_header_name(name) {
+                list.entry(&(name.as_str(), "***"));
+            } else {
+                list.entry(&(name.as_str(), value.as_str()));
+            }
+        }
+        list.finish()
+    }
+}
+
+/// 判断 header 名是否敏感（Authorization / Cookie / *token* / *secret* / *api-key* 等）。
+#[must_use]
+pub fn is_sensitive_header_name(name: &str) -> bool {
+    let n = name.to_ascii_lowercase();
+    matches!(
+        n.as_str(),
+        "authorization"
+            | "proxy-authorization"
+            | "cookie"
+            | "set-cookie"
+            | "x-api-key"
+            | "x-auth-token"
+    ) || n.contains("token")
+        || n.contains("secret")
+        || n.contains("password")
+        || n.contains("api-key")
+        || n.contains("apikey")
 }
 
 /// Typed HTTP driver boundary.
@@ -99,6 +188,7 @@ pub trait HttpDriver: Send + Sync {
     ///
     /// - HTTP 429 → [`TransportError::RateLimited`]（整数秒 `Retry-After`）
     /// - 其他 4xx/5xx → [`Ok`]`(`[`HttpResponse`]`)`
+    /// - 体超限 → [`TransportError::PayloadTooLarge`]
     async fn execute(&self, request: HttpRequest) -> Result<HttpResponse, TransportError>;
 }
 
@@ -122,6 +212,7 @@ pub trait WsConnection: Send + Sync {
     /// - Ping / Pong / Frame → 跳过
     /// - Close → `Ok(None)`（不保留 code/reason）
     /// - 流自然结束 → [`TransportError::ConnectionClosed`] `{ clean: false }`
+    /// - 帧超限 → [`TransportError::PayloadTooLarge`]
     async fn next_frame(&mut self) -> Result<Option<Bytes>, TransportError>;
     /// 发送一帧 binary payload。
     async fn send_frame(&mut self, frame: Bytes) -> Result<(), TransportError>;
@@ -130,29 +221,74 @@ pub trait WsConnection: Send + Sync {
 }
 
 // ---------------------------------------------------------------------------
-// Reqwest HTTP driver
+// Limits & defaults（生产默认 fail-closed；0 = 关闭对应上限）
+// ---------------------------------------------------------------------------
+
+/// `ReqwestHttpDriver::new` 默认请求总超时。
+pub const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// 默认 HTTP 响应体上限（16 MiB）。
+pub const DEFAULT_MAX_RESPONSE_BODY_BYTES: usize = 16 * 1024 * 1024;
+
+/// 默认 HTTP 请求体上限（16 MiB）。
+pub const DEFAULT_MAX_REQUEST_BODY_BYTES: usize = 16 * 1024 * 1024;
+
+/// `TungsteniteWsConnector::new` 默认连接超时。
+pub const DEFAULT_WS_CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// 默认 WebSocket 单帧上限（4 MiB）。
+pub const DEFAULT_MAX_WS_FRAME_BYTES: usize = 4 * 1024 * 1024;
+
+// ---------------------------------------------------------------------------
+// reqwest HTTP driver
 // ---------------------------------------------------------------------------
 
 /// reqwest-backed HTTP driver. The reqwest type remains private to this crate.
-#[derive(Clone, Debug)]
+///
+/// 默认 [`Debug`] **不**展开内部 `Client`。
+#[derive(Clone)]
 pub struct ReqwestHttpDriver {
     client: Client,
+    max_response_body_bytes: usize,
+    max_request_body_bytes: usize,
+}
+
+impl fmt::Debug for ReqwestHttpDriver {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ReqwestHttpDriver")
+            .field("max_response_body_bytes", &self.max_response_body_bytes)
+            .field("max_request_body_bytes", &self.max_request_body_bytes)
+            .finish_non_exhaustive()
+    }
 }
 
 impl ReqwestHttpDriver {
-    /// Build a driver with reqwest's default timeout policy.
+    /// 构建驱动：默认 **30s** 总超时 + 16 MiB 请求/响应体上限。
     pub fn new() -> Result<Self, TransportError> {
-        Self::with_timeout(None)
+        Self::with_timeout(Some(DEFAULT_REQUEST_TIMEOUT))
     }
 
-    /// Build a driver with an optional total request timeout.
+    /// 构建驱动：可选总超时；体上限仍为默认 16 MiB。
+    ///
+    /// `timeout = None` 表示**显式**关闭超时（测试/特殊路径）；生产请优先 [`Self::new`]。
     pub fn with_timeout(timeout: Option<Duration>) -> Result<Self, TransportError> {
+        Self::with_limits(timeout, DEFAULT_MAX_RESPONSE_BODY_BYTES, DEFAULT_MAX_REQUEST_BODY_BYTES)
+    }
+
+    /// 完整限制构造。
+    ///
+    /// - `max_*_bytes == 0`：关闭对应体上限（仅测试逃生口）。
+    pub fn with_limits(
+        timeout: Option<Duration>,
+        max_response_body_bytes: usize,
+        max_request_body_bytes: usize,
+    ) -> Result<Self, TransportError> {
         let mut builder = Client::builder();
         if let Some(timeout) = timeout {
             builder = builder.timeout(timeout);
         }
         let client = builder.build().map_err(map_client_build_error)?;
-        Ok(Self { client })
+        Ok(Self { client, max_response_body_bytes, max_request_body_bytes })
     }
 }
 
@@ -181,6 +317,15 @@ pub(crate) fn map_reqwest_error(error: reqwest::Error) -> TransportError {
 #[async_trait]
 impl HttpDriver for ReqwestHttpDriver {
     async fn execute(&self, request: HttpRequest) -> Result<HttpResponse, TransportError> {
+        if let Some(ref body) = request.body {
+            if self.max_request_body_bytes > 0 && body.len() > self.max_request_body_bytes {
+                return Err(TransportError::PayloadTooLarge {
+                    kind: "request_body",
+                    limit: self.max_request_body_bytes,
+                    got: body.len(),
+                });
+            }
+        }
         let method = Method::from_bytes(request.method.as_bytes())
             .map_err(|error| TransportError::ProtocolViolation(error.to_string()))?;
         let mut builder = self.client.request(method, &request.url);
@@ -202,7 +347,24 @@ impl HttpDriver for ReqwestHttpDriver {
                 .map(Duration::from_secs);
             return Err(TransportError::RateLimited { retry_after });
         }
+        if let Some(cl) = response.content_length() {
+            let cl = cl as usize;
+            if self.max_response_body_bytes > 0 && cl > self.max_response_body_bytes {
+                return Err(TransportError::PayloadTooLarge {
+                    kind: "response_body",
+                    limit: self.max_response_body_bytes,
+                    got: cl,
+                });
+            }
+        }
         let body = response.bytes().await.map_err(map_reqwest_error)?;
+        if self.max_response_body_bytes > 0 && body.len() > self.max_response_body_bytes {
+            return Err(TransportError::PayloadTooLarge {
+                kind: "response_body",
+                limit: self.max_response_body_bytes,
+                got: body.len(),
+            });
+        }
         Ok(HttpResponse { status: status.as_u16(), body })
     }
 }
@@ -213,13 +375,32 @@ impl HttpDriver for ReqwestHttpDriver {
 
 /// tokio-tungstenite-backed WebSocket connector. Driver-specific stream types
 /// stay private behind [`WsConnection`].
-#[derive(Debug, Default, Clone, Copy)]
-pub struct TungsteniteWsConnector;
+///
+/// 默认：连接超时 30s、单帧上限 4 MiB。
+#[derive(Debug, Clone, Copy)]
+pub struct TungsteniteWsConnector {
+    connect_timeout: Duration,
+    max_frame_bytes: usize,
+}
+
+impl Default for TungsteniteWsConnector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl TungsteniteWsConnector {
-    /// 创建默认连接器。
+    /// 创建默认连接器（连接超时 + 帧上限见 `DEFAULT_WS_*`）。
     pub const fn new() -> Self {
-        Self
+        Self {
+            connect_timeout: DEFAULT_WS_CONNECT_TIMEOUT,
+            max_frame_bytes: DEFAULT_MAX_WS_FRAME_BYTES,
+        }
+    }
+
+    /// 自定义连接超时与单帧上限；`max_frame_bytes == 0` 关闭帧上限。
+    pub const fn with_limits(connect_timeout: Duration, max_frame_bytes: usize) -> Self {
+        Self { connect_timeout, max_frame_bytes }
     }
 }
 
@@ -227,6 +408,7 @@ type TungsteniteStream = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
 struct TungsteniteWsConnection {
     stream: TungsteniteStream,
+    max_frame_bytes: usize,
 }
 
 /// 将 tungstenite 错误映射为 [`TransportError`]。
@@ -245,11 +427,26 @@ pub(crate) fn map_tungstenite_error(
     }
 }
 
+fn enforce_frame_limit(max_frame_bytes: usize, payload: Bytes) -> Result<Bytes, TransportError> {
+    if max_frame_bytes > 0 && payload.len() > max_frame_bytes {
+        return Err(TransportError::PayloadTooLarge {
+            kind: "ws_frame",
+            limit: max_frame_bytes,
+            got: payload.len(),
+        });
+    }
+    Ok(payload)
+}
+
 #[async_trait]
 impl WsConnector for TungsteniteWsConnector {
     async fn connect(&self, url: &str) -> Result<Box<dyn WsConnection>, TransportError> {
-        let (stream, _) = connect_async(url).await.map_err(map_tungstenite_error)?;
-        Ok(Box::new(TungsteniteWsConnection { stream }))
+        let fut = connect_async(url);
+        let (stream, _) = tokio::time::timeout(self.connect_timeout, fut)
+            .await
+            .map_err(|_| TransportError::ConnectTimeout)?
+            .map_err(map_tungstenite_error)?;
+        Ok(Box::new(TungsteniteWsConnection { stream, max_frame_bytes: self.max_frame_bytes }))
     }
 }
 
@@ -258,8 +455,13 @@ impl WsConnection for TungsteniteWsConnection {
     async fn next_frame(&mut self) -> Result<Option<Bytes>, TransportError> {
         while let Some(message) = self.stream.next().await {
             match message.map_err(map_tungstenite_error)? {
-                Message::Text(text) => return Ok(Some(Bytes::copy_from_slice(text.as_bytes()))),
-                Message::Binary(bytes) => return Ok(Some(bytes)),
+                Message::Text(text) => {
+                    let bytes = Bytes::copy_from_slice(text.as_bytes());
+                    return Ok(Some(enforce_frame_limit(self.max_frame_bytes, bytes)?));
+                }
+                Message::Binary(bytes) => {
+                    return Ok(Some(enforce_frame_limit(self.max_frame_bytes, bytes)?));
+                }
                 Message::Ping(_) | Message::Pong(_) | Message::Frame(_) => continue,
                 Message::Close(_) => return Ok(None),
             }
@@ -268,6 +470,7 @@ impl WsConnection for TungsteniteWsConnection {
     }
 
     async fn send_frame(&mut self, frame: Bytes) -> Result<(), TransportError> {
+        let frame = enforce_frame_limit(self.max_frame_bytes, frame)?;
         self.stream.send(Message::Binary(frame)).await.map_err(map_tungstenite_error)
     }
 

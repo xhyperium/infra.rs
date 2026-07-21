@@ -11,3 +11,7 @@
 > 完成度看板见仓库根 [`STATUS.md`](../../../STATUS.md)。  
 > 生产修复计划见 [`docs/plans/2026-07-21-core-crates-production-readiness.md`](../../plans/2026-07-21-core-crates-production-readiness.md)。  
 > Beads epic：`bd show infra-s9t`
+
+## 七包双标尺分析（2026-07-21）
+
+- [seven-l1-contracts-dual-bar-readiness.md](./seven-l1-contracts-dual-bar-readiness.md)
