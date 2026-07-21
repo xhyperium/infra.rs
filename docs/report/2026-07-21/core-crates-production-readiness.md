@@ -348,7 +348,7 @@ crate 根文档已经明确声明：当前不是 Production Ready、package stab
 
 | ID | 项 | 说明 |
 |---|---|---|
-| DEFER-1 | 真实后端验证入口 | adapters 仍为内存 scaffold；非真实 DB/MQ/交易所联调 |
+| DEFER-1 | 真实后端验证入口 | **部分闭合**：redis live KV（#168）；Tx/Bus/交易所业务仍 scaffold |
 | DEFER-2 | contracts 全 trait 深度语义 | ObjectStore/Repository/TimeSeries 等一致性/分页/取消仍未全量合同套件 |
 | DEFER-3 | canonical 非 committed DTO | `Order`/`Tick`/`Trade` 等仍 Uncommitted |
 | DEFER-4 | decimal fuzz / 独立 oracle / mutants / Miri | 未在本批次宣称实测通过 |

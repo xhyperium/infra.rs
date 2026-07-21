@@ -61,12 +61,13 @@
 |----|------|
 | 入口 | `src/lib.rs` → `adapter::{BinanceAdapter, AdapterState, Candle, Timeframe}` |
 | LOC | ~611（STATUS 613） |
-| 测试 | 单元 13 项全绿（含 `MockHttpTransport` cancel/query/server_time） |
-| 集成测试目录 | `tests/` 仅 `.gitkeep` |
+| 测试 | 单元全绿（Mock HTTP cancel/query/**parsed** server_time） |
+| 集成测试 | `tests/live_server_time.rs`（`#[ignore]`；公共 REST） |
 | 扩展 | `fetch_candles` venue 扩展 DTO，非 contracts 面 |
+| `server_time` | **有** `parse_binance_server_time`；live 入口 ignore；非业务协议 |
 | 认证 | **无** API key / HMAC / 请求头签名 |
-| TLS | 不在本 crate 配置；依赖未来真实 `HttpDriver`（如 `transportx` 的 reqwest 驱动） |
-| 重试 | 无 adapter 级重试；`TransportError::RateLimited` 仅映射为 `XError::transient` |
+| TLS | 不在本 crate 配置；依赖注入的 `HttpDriver`（如 `ReqwestHttpDriver`） |
+| 重试 | 无 adapter 级重试；`TransportError::RateLimited` → `XError::transient` |
 
 ### 2.3 okxx
 
@@ -74,7 +75,8 @@
 |----|------|
 | 入口 | `src/lib.rs` → `adapter::{OkxAdapter, AdapterState}` |
 | LOC | ~477（STATUS 479） |
-| 测试 | 单元 9 项全绿（Mock HTTP cancel/query） |
+| 测试 | 单元全绿（Mock HTTP cancel/query/**parsed** server_time） |
+| 集成测试 | `tests/live_server_time.rs`（`#[ignore]`） |
 | 与 binance 差异 | path/venue_id 不同；无 candles 扩展；体量更薄 |
 | 认证 | **无** OK-ACCESS-* 头 / passphrase |
 
@@ -83,9 +85,10 @@
 | 问题 | 结论 |
 |------|------|
 | 能否作为「生产交易应用」依赖？ | **不能** |
-| 能否对接真实 Binance/OKX？ | **不能**（无协议、无签名、无 live feature） |
-| contracts 接线是否有价值？ | **有**（trait 形状 + override 门禁 + mock 传输边界可测） |
-| 下一步最小真实验证 | 注入真实 `transportx` HttpDriver + **testnet** 只读 `server_time`（`#[ignore]` live）；签名与私有 API 另战役 |
+| 能否对接真实 Binance/OKX **业务**？ | **不能**（无签名、无下单协议） |
+| 只读 `server_time` | **可以**（公共 REST + 真 `HttpDriver`；默认 ignore；CI 不挡 PR） |
+| contracts 接线是否有价值？ | **有**（trait 形状 + override 门禁 + mock + 时间解析） |
+| 下一步 | 签名 / 私有 API / testnet 业务读路径另战役 |
 
 ---
 
@@ -96,7 +99,7 @@
 | 包 | scaffold 类型 | mock 验证入口 | 证明点 | 真实 I/O |
 |----|---------------|----------------|--------|----------|
 | `postgresx` | `PostgresAdapter`：HashMap + `FakeTxContext`（begin_tx 无真实 staged） | `ObservingPostgresAdapter` / `MockPostgresBackend` + `MockTxContext` | staged 仅 commit 后可见；rollback 丢弃；可观察 commit/rollback 计数；`dyn TxRunner` | **无** |
-| `redisx` | `RedisAdapter`：KV **忽略 TTL** + 简易 PubSub | `MockRedisAdapter` | TTL 过期 `None`；PubSub 单调 id；`dyn KeyValueStore` | **无** |
+| `redisx` | `RedisAdapter`：KV **忽略 TTL** + 简易 PubSub | `MockRedisAdapter` + **`RedisLiveKv`（feature `live`）** | mock TTL/PubSub；**live** 真 Redis KV（`live_kv_conformance`） | **有（KV live）** |
 | `kafkax` | `KafkaAdapter`：per-topic 下标 id | `MockKafkaBus` | 跨 topic 全局单调 id；`dyn EventBus` | **无** |
 | `natsx` | `NatsAdapter`：与 kafka 同构内存 bus | `MockNatsBus` | 同上 | **无** |
 
@@ -116,9 +119,9 @@
 
 | 问题 | 结论 |
 |------|------|
-| 能否作为生产 DB/MQ/对象存储依赖？ | **全部不能** |
-| mock 是否替代集成测？ | **否**；mock 仅验证 contracts 语义与编排（commit 边界、TTL 等） |
-| 默认 CI | 离线绿灯；`contracts-live.yml` 名虽含 live，内容仍是 **mock-backend offline**（`workflow_dispatch`） |
+| 能否作为生产 DB/MQ/对象存储依赖？ | **默认不能**；`redisx` live KV 仅作验证/有限 KV 面 |
+| mock 是否替代集成测？ | **否**；mock 验证语义；live 另 feature + optional CI |
+| 默认 CI | 离线绿灯；`redisx-live.yml` 在 PR path 上跑 service；exchange live 仅 dispatch |
 
 ---
 
@@ -142,11 +145,11 @@
 | 关系点 | 状态 |
 |--------|------|
 | adapters 依赖 `contracts` path | **是**（9 包均声明） |
-| 是否实现目标 trait | **是**（签名级 scaffold / mock） |
-| `ExecutionVenue` 推荐生产入口 | binance/okx **已**实现；语义仍为占位 |
-| Venue override 门禁 | `crates/contracts/tests/venue_override_gate.rs` 依赖 `binancex`/`okxx`，断言非 additive default |
-| contracts 自身生产就绪 | **非**整体 PR（见 contracts 对齐：CT-9 真实后端 DEFER） |
-| 反向依赖 | 禁止 kernel/types 依赖 adapters（对齐文）——当前满足 |
+| 是否实现目标 trait | **是**（签名级 scaffold / mock；redis live 为真路径） |
+| `ExecutionVenue` 推荐生产入口 | binance/okx **已**实现；业务语义仍为占位 |
+| Venue override 门禁 | `venue_override_gate` + binancex/okxx |
+| contracts 自身生产就绪 | **L3 子集** KV+Instr；整体 **非** PR（CT-9 部分） |
+| 反向依赖 | 禁止 kernel/types 依赖 adapters——当前满足 |
 
 **生产应用若 `use redisx::RedisAdapter` 等：得到的是进程内 HashMap，不是 Redis。** 这是最危险的误用点：类型名像生产客户端，行为是测试桩。
 

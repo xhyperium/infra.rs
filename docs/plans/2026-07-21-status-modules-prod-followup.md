@@ -7,7 +7,7 @@
 | 输入审计 | [docs/report/2026-07-21/status-modules-production-readiness.md](../report/2026-07-21/status-modules-production-readiness.md) |
 | 上游计划 | [PLAN-CORE-PROD-002](./2026-07-21-core-crates-production-readiness.md)（**W0–W5 DONE** · 五核心分层签核） |
 | Beads epic | **`infra-s9t`** |
-| 状态 | **IN PROGRESS** · 本 PR 批量收敛多项；非 L5 发布批准 |
+| 状态 | **CLOSED**（epic 18/18 · #166–#168 · #172 · 对齐 #174）；**非** workspace L5 / Production Ready |
 | 性质 | 对照 W0–W5 语义，扩展 L1 / adapters 阻断收敛 |
 
 ---
@@ -20,7 +20,7 @@ PLAN-CORE-PROD-002 (DONE)
         │
         │  仍 Accept / DEFER：真实后端、二期 trait、非 Linux、应用级平台面
         ▼
-本 follow-up (OPEN)  = 审计 STATUS 21 模块后的「应用可生产」缺口
+本 follow-up (**CLOSED**)  = 审计 STATUS 21 模块后的「应用可生产」阻断收敛（L3 子集 + 真入口子集）
   W0+ 消费面冻结 · W1+/W2+ 残留 · W3 L3 真闭合 · W4 真实后端 · L1 平台 P0 · W5+ 治理
 ```
 
@@ -77,8 +77,8 @@ bd close <id> --reason="..."
 
 | 勾选 | Bead | 任务 | 完成物 | 验收 |
 |:----:|------|------|--------|------|
-| [ ] | `infra-s9t.1` | 冻结可生产消费面 | `docs/plans/artifacts/prod-consume-surface.md`（新建或扩 inventory） | 列出 allow/deny crate·trait；对照 STATUS 标签 |
-| [ ] | （文档） | 链到主报告 §0.3 表 | 本文件 §4 使用矩阵保持同步 | PR 描述引用 epic |
+| [x] | `infra-s9t.1` | 冻结可生产消费面 | `docs/plans/artifacts/prod-consume-surface.md`（新建或扩 inventory） | 列出 allow/deny crate·trait；对照 STATUS 标签 |
+| [x] | （文档） | 链到主报告 §0.3 表 | 本文件 §4 使用矩阵保持同步 | PR 描述引用 epic |
 
 **W0+ 完成标准**：应用集成方能回答「哪些 crate 可以 import，哪些绝对不能当生产后端」。
 
@@ -88,8 +88,8 @@ bd close <id> --reason="..."
 
 | 勾选 | Bead | 任务 | 验收 |
 |:----:|------|------|------|
-| [ ] | `infra-s9t.9` | `Decimal`/`Money` serde `deny_unknown_fields` **或** 文档冻结「忽略 extra」策略 | 测 + WIRE.md |
-| [ ] | `infra-s9t.9` | 复核 `check-decimal-no-panicking-ops.mjs` 覆盖生产路径 | CI 仍绿 |
+| [x] | `infra-s9t.9` | `Decimal`/`Money` serde `deny_unknown_fields` **或** 文档冻结「忽略 extra」策略 | 测 + WIRE.md |
+| [x] | `infra-s9t.9` | 复核 `check-decimal-no-panicking-ops.mjs` 覆盖生产路径 | CI 仍绿 |
 
 **对照 CORE W1**：不变量 P0 已闭；本波次只硬化 wire 与门禁。
 
@@ -99,7 +99,7 @@ bd close <id> --reason="..."
 
 | 勾选 | Bead | 任务 | 验收 |
 |:----:|------|------|------|
-| [ ] | `infra-s9t.10` | 方案 A：wire envelope（`schema_version`）**或** 方案 B：对外兼容矩阵 + 升级路径 Accept | ADR 或 `docs/` + 测 |
+| [x] | `infra-s9t.10` | 方案 A：wire envelope（`schema_version`）**或** 方案 B：对外兼容矩阵 + 升级路径 Accept | ADR 或 `docs/` + 测 |
 
 **对照 CORE W2**：v1–v1.3 committed 已合入；本波次闭合 B-C1。
 
@@ -109,9 +109,9 @@ bd close <id> --reason="..."
 
 | 勾选 | Bead | 任务 | 验收 |
 |:----:|------|------|------|
-| [ ] | `infra-s9t.3` | first-batch 语义文档齐全 | `docs/contracts/*` 覆盖签字子集 |
-| [ ] | `infra-s9t.3` | conformance 对 Fake **与** 真实入口（W4）跑通 | CI 证据 |
-| [ ] | `infra-s9t.3` | 二期 trait 标 `experimental` 或补文档 | README 诚实 |
+| [x] | `infra-s9t.3` | first-batch 语义文档齐全 | `docs/contracts/*` 覆盖签字子集 |
+| [x] | `infra-s9t.3` | conformance 对 Fake **与** 真实入口（W4）跑通 | CI 证据 |
+| [x] | `infra-s9t.3` | 二期 trait 标 `experimental` 或补文档 | README 诚实 |
 
 **L3 三条件**（全部满足才可讨论签字）：
 
@@ -125,9 +125,9 @@ bd close <id> --reason="..."
 
 | 勾选 | Bead | 任务 | 建议路径 | 验收 |
 |:----:|------|------|----------|------|
-| [ ] | `infra-s9t.2` | 非 scaffold 入口 | **优先** `redisx` KV 或 `postgresx` Tx | feature 门控 SDK + optional CI job |
-| [ ] | `infra-s9t.13` | exchange 只读 | testnet `server_time` + 真 `HttpDriver` | `#[ignore]` live；默认离线绿 |
-| [ ] | `infra-s9t.14` | scaffold 红线 | 9 adapter README 统一警示 | 类型名≠客户端 |
+| [x] | `infra-s9t.2` | 非 scaffold 入口 | **优先** `redisx` KV 或 `postgresx` Tx | feature 门控 SDK + optional CI job |
+| [x] | `infra-s9t.13` | exchange 只读 | testnet `server_time` + 真 `HttpDriver` | `#[ignore]` live；默认离线绿 |
+| [x] | `infra-s9t.14` | scaffold 红线 | 9 adapter README 统一警示 | 类型名≠客户端 |
 
 **对照 CORE W4**：原 W4 交付了 **mock** 入口；本波次闭合审计 **DEFER-1 / WS-P0-1**。
 
@@ -137,14 +137,14 @@ bd close <id> --reason="..."
 
 | 勾选 | Bead | 严重度 | 任务 | 验收 |
 |:----:|------|--------|------|------|
-| [ ] | `infra-s9t.4` | **P0** | `require_evidence` release fail-closed | release 测：缺 evidence → Err |
-| [ ] | `infra-s9t.5` | P1 | drain 合同 + 编排钩子 | docs + 可选 API |
-| [ ] | `infra-s9t.6` | P1 | resiliencx async Wait | feature 测；禁止默认 block async |
-| [ ] | `infra-s9t.7` | P1 | evidence 持久化合同 / configx schema 边界 | 文档红线 + 最小实现或机检 |
-| [ ] | `infra-s9t.8` | P2 | schedulex 名实 / observex OTEL 边界 | README/AGENTS |
-| [ ] | `infra-s9t.15` | **P0** | kernel timeout 溢出与 ClockDomain 伪造入口 | 极值/跨域回归测试 + SSOT |
-| [ ] | `infra-s9t.16` | **P0** | transport 脱敏、deadline、资源上限 | HTTP/WS 故障与超限测试 |
-| [ ] | `infra-s9t.17` | P1 | observex subscriber 隔离与导出闭环 | panic/阻塞/flush 端到端测试 |
+| [x] | `infra-s9t.4` | **P0** | `require_evidence` release fail-closed | release 测：缺 evidence → Err |
+| [x] | `infra-s9t.5` | P1 | drain 合同 + 编排钩子 | docs + 可选 API |
+| [x] | `infra-s9t.6` | P1 | resiliencx async Wait | feature 测；禁止默认 block async |
+| [x] | `infra-s9t.7` | P1 | evidence 持久化合同 / configx schema 边界 | 文档红线 + 最小实现或机检 |
+| [x] | `infra-s9t.8` | P2 | schedulex 名实 / observex OTEL 边界 | README/AGENTS |
+| [x] | `infra-s9t.15` | **P0** | kernel timeout 溢出与 ClockDomain 伪造入口 | 极值/跨域回归测试 + SSOT |
+| [x] | `infra-s9t.16` | **P0** | transport 脱敏、deadline、资源上限 | HTTP/WS 故障与超限测试 |
+| [x] | `infra-s9t.17` | P1 | observex subscriber 隔离与导出闭环 | panic/阻塞/flush 端到端测试 |
 
 ---
 
@@ -152,10 +152,10 @@ bd close <id> --reason="..."
 
 | 勾选 | Bead | 任务 | 验收 |
 |:----:|------|------|------|
-| [ ] | `infra-s9t.11` | `xhyper-*` vs Cargo 短名对齐 | 文档命令可复制运行 |
-| [ ] | `infra-s9t.12` | L1 中文错误抽查 | 清单或豁免 |
-| [ ] | `infra-s9t.18` | STATUS adapter 分类误报 | 生成器回归测试 + STATUS 刷新 |
-| [ ] | （人工） | 应用面 L5 再签 | 仅当 W3+W4+L1-P0 闭合后 |
+| [x] | `infra-s9t.11` | `xhyper-*` vs Cargo 短名对齐 | 文档命令可复制运行 |
+| [x] | `infra-s9t.12` | L1 中文错误抽查 | 清单或豁免 |
+| [x] | `infra-s9t.18` | STATUS adapter 分类误报 | 生成器回归测试 + STATUS 刷新 |
+| [ ] | （人工） | 应用面 L5 再签 | **仍未签**；需 Maintainer；本 epic 不代签 |
 
 ---
 
@@ -191,9 +191,9 @@ bd close <id> --reason="..."
 | 配置 | configx 仅进程内 KV | 唯一生产配置源 |
 | 审计 | 非 InMemory 实现出现前 | InMemoryEvidence 当合规 |
 | 调度 | — | schedulex 当 timer/cron |
-| 存储 / 交易所 | W4 真实入口合入前 | `*Adapter` 当生产客户端 |
+| 存储 / 交易所 | redis live KV / 只读 server_time（见 consume-surface） | 默认 `*Adapter` scaffold 当生产客户端 |
 
-正式冻结后以 `infra-s9t.1` 完成物为准。
+正式冻结见 `docs/plans/artifacts/prod-consume-surface.md`（`infra-s9t.1`）。
 
 ---
 
@@ -223,7 +223,8 @@ bd close <id> --reason="..."
 - PR：[#166](https://github.com/xhyperium/infra.rs/pull/166) · [#167](https://github.com/xhyperium/infra.rs/pull/167) · [#168](https://github.com/xhyperium/infra.rs/pull/168) · [#172](https://github.com/xhyperium/infra.rs/pull/172)
 - **已闭合**：阻断项与验证入口（redis live、L3 子集、L1 P0、scaffold 红线、只读 server_time）
 - **仍非**：workspace / first-batch **Production Ready**、Agent L5、Tx/Bus/Repo/Venue 业务 live
-- 对齐同步：`docs/ssot/*` 与本计划同步日 2026-07-21
+- 对齐同步：`docs/ssot/*` · #174；closeout partials 本 PR
+- **显式遗留（下波次，非本 epic）**：postgres live Tx、kafka/nats live Bus、exchange 签名/业务、full first-batch L3、应用面 L5 Maintainer 签
 
 ---
 

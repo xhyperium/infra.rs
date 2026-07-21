@@ -8,7 +8,7 @@
 | 版本 | `0.1.0` · `publish = false` |
 | 源码结构 | `src/lib.rs` + `src/fakes.rs`（无子模块拆分） |
 | 目标层级 | **L3 Contract Ready**（生产用 trait 子集） |
-| 本审计结论 | **未达 L3**；first-batch **部分闭合**（语义文档 + Fake/conformance + venue 运行时门禁）；**非** Production Ready / **非** L3 签字候选 |
+| 本审计结论 | **L3 子集**（KV+Instr）已闭合（#172）；first-batch **整体未** L3；**非** Production Ready / **非** first-batch 签字 |
 | 证据基线 | SSOT：`docs/ssot/contracts-ssot-alignment.md`；计划：`docs/plans/2026-07-21-core-crates-production-readiness.md` §2；core 报告：`docs/report/2026-07-21/core-crates-production-readiness.md` §4.3（**部分陈述相对 post-W3 源码已陈旧**） |
 | 测试命令 | `cargo test -p contracts --all-targets`（见 §6） |
 
@@ -16,34 +16,34 @@
 
 ## 1. 结论
 
-**`contracts` 是可用的 R4 trait 出口 + 最小 contract-testkit 入口，但尚未达到 L3 Contract Ready。**
+**`contracts` 是可用的 R4 trait 出口 + 最小 contract-testkit 入口；`KeyValueStore` 与 `Instrumentation` 满足 L3 三条件子集；first-batch 整体仍未 L3。**
 
 依据 L3 定义（语义合同 **+** conformance suite **+** 至少一**非 scaffold** 验证入口）：
 
 | L3 条件 | 状态 | 说明 |
 |---------|------|------|
-| 语义合同（trait 文档） | **部分** | first-batch **11** trait 有 `docs/contracts/*.md`；`ObjectStore` / `TimeSeriesStore` / `PubSub` / `AnalyticsSink` / 完整 `VenueAdapter` **无**独立语义文档 |
-| conformance suite | **部分** | `tests/conformance_first_batch.rs` 覆盖 KV / Repository / Tx / EventBus / Instrumentation；无 ObjectStore/PubSub/时序/分析/venue 能力拆分的通用套件 |
-| 非 scaffold 验证入口 | **未满足（DEFER / W4）** | 全部 adapters 为**进程内内存 scaffold**；postgres `TxRunner` 直接返回 `FakeTxContext`；无真实 DB/MQ/交易所入口 |
+| 语义合同（trait 文档） | **部分** | first-batch **11** trait 有 `docs/contracts/*.md`；`ObjectStore` / `TimeSeriesStore` / `PubSub` / `AnalyticsSink` **无**独立语义文档 |
+| conformance suite | **部分** | `tests/conformance_first_batch.rs` 覆盖 KV / Repository / Tx / EventBus / Instrumentation |
+| 非 scaffold 验证入口 | **部分 PASS（#168/#172）** | **KV**：`redisx::RedisLiveKv` + `live_kv_conformance`；**Instr**：`observex`；Tx/Bus/Repo/Venue 业务 live **仍 DEFER** |
 
-已闭合（相对早期 core 报告 §4.3 草稿）：
+已闭合（相对早期 core 报告 §4.3 草稿 + infra-s9t）：
 
 - `TxRunner::begin_tx` → `Box<dyn TxContext>`，**对象安全**；`run_tx_commit_on_ok` 编排 Ok→commit / Err→rollback
 - `BusMessage { id, payload }` + `MessageAck`；EventBus 流项带 ID（at-most-once 能力边界显式）
 - 最小 Fake/Recording 在 crate 内公开（`src/fakes.rs`）
 - bootstrap 同名能力面收敛为 `Bounded*`；`Instrumentation` re-export `contracts::Instrumentation`
-- Venue structured cancel/query：**中文** default Invalid + `is_default_*` + `venue_override_gate`（binancex/okxx 运行时非 default）
+- Venue structured cancel/query：**中文** default Invalid + `is_default_*` + `venue_override_gate`
+- **L3 子集文档**：`crates/contracts/docs/L3_FIRST_BATCH_STATUS.md`
 
-仍阻断 L3 / 生产宣称：
+仍阻断 **first-batch 全 L3** / 生产宣称：
 
-1. **无非 scaffold 后端**证明 trait 语义（CT-9 / W4）
-2. **二期 storage trait**（ObjectStore / TimeSeries / PubSub / Analytics）语义与 conformance 未闭合（CT-8 DEFER）
-3. **独立 contract-testkit crate** 仍 DEFER；当前为本 crate 内最小入口
-4. VenueAdapter additive default **无 compile-fail / 强制 lint**（仅运行时门禁）
+1. Tx / EventBus / Repository / Venue **业务** 无真实后端入口
+2. **二期 storage trait** 语义与 conformance 未闭合（CT-8 DEFER）
+3. **独立 contract-testkit crate** 仍 DEFER
+4. VenueAdapter additive default **无 compile-fail**（仅运行时门禁）
 5. Additive Only **无 API snapshot / semver diff 机控**
-6. `missing_docs` 未升 deny（文档债 follow-up）
 
-**判定：部分就绪 / 内部 scaffold 与接口探索可用 · L3 未过 · 禁止 Production Ready 宣称。**
+**判定：L3 子集（KV+Instr）可用 · first-batch 整体未 L3 · 禁止 Production Ready 宣称。**
 
 ---
 
@@ -63,7 +63,8 @@ crates/contracts/
     conformance_first_batch.rs
     venue_override_gate.rs
   docs/contracts/         # first-batch 11 篇语义
-  benches/ examples/      # 仅 .gitkeep
+  docs/L3_FIRST_BATCH_STATUS.md
+  benches/ examples/      # example 有 fake_surface
 ```
 
 依赖白名单：`kernel` + `canonical` + `async-trait` / `bytes` / `futures-core`。  
@@ -73,7 +74,7 @@ Lint：`forbid(unsafe_code)` · `deny(unreachable_pub)` · `[lints] workspace = 
 
 | # | Trait | 方法摘要 | 语义文档 | Fake / 合同测 | Adapter 实现 | 就绪度 |
 |---|--------|----------|----------|---------------|--------------|--------|
-| 1 | `KeyValueStore` | `get` / `set(+ttl)` | ✅ | Fake + conformance | redisx scaffold | **L3 子集候选（缺真实后端）** |
+| 1 | `KeyValueStore` | `get` / `set(+ttl)` | ✅ | Fake + conformance + **live** | redisx mock + **`RedisLiveKv`** | **L3 子集满足** |
 | 2 | `EventBus` | `publish` / `subscribe→BusMessage` | ✅ | Fake + conformance | kafkax/natsx scaffold | **部分**（at-most-once；无 ack API） |
 | 3 | `Repository<T,Id>` | `find` / `save` | ✅ | Fake + conformance | postgresx scaffold | **部分**（无分页/删除/并发） |
 | 4 | `TxContext` | `commit` / `rollback` | ✅ | Fake + Recording | 经 FakeTxContext | **部分**（无隔离级别；假上下文） |
@@ -82,7 +83,7 @@ Lint：`forbid(unsafe_code)` · `deny(unreachable_pub)` · `[lints] workspace = 
 | 7 | `ObjectStore` | `put_object` / `get_object` | ❌ | 无 Fake | ossx scaffold | **experimental / 未就绪** |
 | 8 | `AnalyticsSink` | `sink` | ❌ | 无 Fake | clickhousex scaffold | **experimental / 未就绪** |
 | 9 | `PubSub` | `pub_message` / `sub_channel→BusMessage` | ❌ | 无 Fake | redisx scaffold | **experimental / 与 EventBus 重叠** |
-| 10 | `Instrumentation` | `record_retry` / `record_circuit_*` | ✅ | Recording + conformance | observex 真实现；bootstrap/resiliencx 消费 | **最接近可用**（非 IO 契约） |
+| 10 | `Instrumentation` | `record_retry` / `record_circuit_*` | ✅ | Recording + conformance | observex 真实现；bootstrap/resiliencx 消费 | **L3 子集满足**（非 IO 契约） |
 | 11 | `VenueAdapter` | 连接/下单/cancel·query（legacy+request）/仓位余额/行情/时间/元数据 | 迁移 facade 文档散见 | default 行为测；无完整 Fake | binancex/okxx scaffold | **迁移面；非生产推荐入口** |
 | 12 | `MarketDataSource` | ticks / orderbook / trades 流 | ✅ | 无独立 Fake | 拆自 VenueAdapter | **部分**（仅文档+形状） |
 | 13 | `InstrumentCatalog` | `symbol_info` | ✅ | 无独立 Fake | 拆自 VenueAdapter | **部分** |
@@ -256,7 +257,8 @@ venue_override_gate: 4 passed
 | default 错误英文 | **中文** `VENUE_*_DEFAULT_MSG` |
 | public_surface `assert_eq!(15,15)` | 已改为 Fake 真路径断言 |
 
-**未过时且仍成立**：无完整幂等/取消/分页合同套件；无非 scaffold 入口；Venue 与拆分 trait 重复；ObjectStore 等语义空洞；独立 testkit crate DEFER；Additive Only 无机控。
+**未过时且仍成立（相对 first-batch 全 L3）**：无完整幂等/取消/分页合同套件；Tx/Bus/Repo/Venue **业务**无真入口；Venue 与拆分 trait 重复；ObjectStore 等语义空洞；独立 testkit crate DEFER；Additive Only 无机控。  
+**已过时（#168/#172）**：「无任何非 scaffold 入口」— 现有 redis live KV + observex Instrumentation。
 
 ---
 
