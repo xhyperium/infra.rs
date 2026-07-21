@@ -1,15 +1,6 @@
 name: 质量
 
 on:
-  push:
-    branches: [main, develop]
-    paths:
-      - "Cargo.toml"
-      - "**/*.rs"
-      - "**/Cargo.toml"
-      - "rustfmt.toml"
-      - "clippy.toml"
-      - ".github/workflows/quality.yml"
   pull_request:
     branches: [main, develop]
     paths:
@@ -20,6 +11,7 @@ on:
       - "clippy.toml"
       - ".github/workflows/quality.yml"
 
+  workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -36,7 +28,7 @@ jobs:
       has-rust: ${{ steps.check.outputs.has-rust }}
       has-src: ${{ steps.check.outputs.has-src }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - id: check
         run: |
           HAS_CARGO=false
@@ -55,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -70,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -88,7 +80,7 @@ jobs:
     env:
       RUSTDOCFLAGS: -D warnings
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2

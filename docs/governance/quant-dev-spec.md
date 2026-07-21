@@ -1,6 +1,6 @@
 # 量化开发领域规范
 
-> 量化金融 Rust 开发专项要求，与 [CONSTITUTION.md](../../CONSTITUTION.md) 通用规范互补。
+> 量化金融 Rust 开发专项要求，与 [docs/constitution/](../constitution/) 通用规范互补（§3.3 见 [03-architecture.md](../constitution/03-architecture.md#33-类型驱动设计)）。
 
 ## 数值精度
 

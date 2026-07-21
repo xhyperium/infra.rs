@@ -4,16 +4,6 @@ name: Observex Coverage
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main, develop]
-    paths:
-      - "crates/observex/**"
-      - "crates/contracts/**"
-      - "crates/kernel/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "scripts/cov-gate-100.mjs"
-      - ".github/workflows/observex-coverage.yml"
   pull_request:
     branches: [main, develop]
     paths:
@@ -22,7 +12,7 @@ on:
       - "crates/kernel/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - "scripts/cov-gate-100.mjs"
+      - "scripts/quality-gates/cov-gate-100.mjs"
       - ".github/workflows/observex-coverage.yml"
 
 concurrency:
@@ -51,4 +41,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p observex --filter crates/observex/src
+        run: node scripts/quality-gates/cov-gate-100.mjs -p observex --filter crates/observex/src

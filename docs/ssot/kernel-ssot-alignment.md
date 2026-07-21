@@ -18,6 +18,10 @@
 | 本仓 crates.io 再发布 | **不做**；`publish = false` 显式关闭 |
 | line/branch cov CI | **有** PR 门禁：`.github/workflows/kernel-coverage.yml` |
 | mutants / miri CI | **有** 周调度：`kernel-mutants.yml` / `kernel-miri.yml` |
+| loom CI | **有** PR/push 门禁：`kernel-loom.yml` + `scripts/quality-gates/run-kernel-loom.mjs` |
+| ClockDomain | **PASS**：SystemClock 共享进程 domain；跨 domain 间隔 → `None` |
+| 关停 deadline | **PASS**：`ShutdownSignal::wait_timeout` + 组合根测 |
+| 用户可见错误中文 | **PASS**：`ClockError` / `LifecycleError` Display 中文 |
 
 ## 本仓可观察事实
 
@@ -95,10 +99,11 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 | 6.2 | Timestamp i64 nanos；checked_*；无 Default | `clock.rs` + `assert_not_impl_any!(Timestamp: Default)` | PASS |
 | 6.2-ban | 禁 Display 人类时间 / From&lt;SystemTime&gt; / 饱和 | `assert_not_impl_any!(Timestamp: Display, From&lt;SystemTime&gt;)` | PASS |
 | 6.3 | MonotonicInstant 不透明；reverse → None | `checked_duration_since` + 单元/属性测 | PASS |
-| 6.3-hidden | `from_clock_elapsed` `const` + `doc(hidden)` | `clock.rs`；调用点仅 `src/clock.rs` 与 `testkit/*` | PASS（结构扫描；archgate TIME-004 DEFER） |
+| 6.3-domain | `ClockDomain`；跨 domain 间隔不可静默可靠 | `ClockDomain` + `partial_cmp`/`checked_duration_since` → None；`system_clocks_share_process_domain` | PASS |
+| 6.3-hidden | `from_clock_elapsed` / `from_clock_elapsed_in` `const` + `doc(hidden)` | `clock.rs`；调用点仅 `src/clock.rs` 与 `testkit/*` | PASS（结构扫描；archgate TIME-004 DEFER） |
 | 6.4 | Clock 无 monotonic 默认实现 | doctest `compile_fail` OnlyWall | PASS |
-| 6.5 | ClockError 三变体名 | `clock.rs` | PASS |
-| 6.6 | SystemClock origin.elapsed；!Copy；Default | `SystemClock` + `assert_not_impl_any!(SystemClock: Copy)` | PASS |
+| 6.5 | ClockError 三变体名 + 中文 Display | `clock.rs` thiserror | PASS |
+| 6.6 | SystemClock 进程共享原点；!Copy；Default→new | `OnceLock` origin + `assert_not_impl_any!(SystemClock: Copy)` | PASS |
 | 6.7 | SystemTime/Instant::now 仅 SystemClock | 生产 src 扫描 | PASS |
 
 ### §7 lifecycle
@@ -106,10 +111,11 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 | ID | 要求 | 本仓证据 | 判定 |
 |----|------|----------|------|
 | 7.2 | ComponentState 6 态 + 合法边 | `can_transition_to` + matrix 测 | PASS |
-| 7.3 | LifecycleError {from,to} + thiserror | `lifecycle.rs` | PASS |
+| 7.3 | LifecycleError {from,to} + 中文 thiserror | `lifecycle.rs` | PASS |
 | 7.4 | try_transition 不 panic | 全矩阵测 | PASS |
 | 7.5 | Signal/Guard 协议；must_use | `new/is_triggered/wait/trigger` | PASS |
-| 7.6 | Mutex&lt;bool&gt;+Condvar 同锁；loom | `lifecycle.rs` + `tests/lifecycle_concurrency_loom.rs` | PASS（loom 需 `--cfg loom`） |
+| 7.5-deadline | `wait_timeout`；组合根超时升级路径可测 | `wait_timeout_*` / `composition_root_deadline_upgrade_path`（`cfg(not(loom))`） | PASS |
+| 7.6 | Mutex&lt;bool&gt;+Condvar 同锁；loom | `lifecycle.rs` + `tests/lifecycle_concurrency_loom.rs` + **CI** `kernel-loom.yml` | PASS（本地：`RUSTFLAGS='--cfg loom'`） |
 | 7.7 | guard drop 不触发 | `test_guard_drop_does_not_trigger` | PASS |
 | 7.8 | 无 Component trait | doctest `compile_fail` + 无符号 | PASS |
 
@@ -144,7 +150,7 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 | 11.1-clock | SystemClock now/mono；错误映射；双通道 | `ControlledClock` 墙钟回退不牵连 mono；SystemClock 测 | PASS |
 | 11.1-ManualClock | ManualClock 独立 wall/mono | 属 `xhyper-testkit`；kernel 内 ControlledClock 覆盖 trait 合同 | PASS（跨 crate；见 testkit 对齐文） |
 | 11.1-lc | 合法/非法矩阵；trigger/wait；多 observer；1000 并发；poison；guard drop | unit + `lifecycle_concurrency`（1000 循环） | PASS |
-| 11.2 | loom 模型 | `lifecycle_concurrency_loom.rs`；默认构建 0 tests；`RUSTFLAGS='--cfg loom'` 启用 | PASS / 环境不可跑时见证据 DEFER |
+| 11.2 | loom 模型 + 持续门禁 | `lifecycle_concurrency_loom.rs`；默认 0 tests；`RUSTFLAGS='--cfg loom'`；CI `.github/workflows/kernel-loom.yml`；本地 `node scripts/quality-gates/run-kernel-loom.mjs` | PASS |
 | 11.3 | proptest：Timestamp×Duration；ComponentState 对；ErrorKind 一致 | `clock_contract.rs` proptest! | PASS |
 | 11.4 | compile-fail / static 负向面 | rustdoc compile_fail + `api_compile.rs` | PASS |
 | 11.5 | line ≥95% / branch ≥90% CI | `.github/workflows/kernel-coverage.yml` 解析 TOTAL 末列 branch% 并强制 ≥90；`--fail-under-lines 95` / functions 90。本会话实测 TOTAL branch **100%** / lines **99.69%** | PASS |
@@ -169,9 +175,16 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 ## 未做（follow-up，不阻塞本仓语义对齐）
 
 - archgate / `.architecture` 机控移植
-- line/branch cov、mutants、miri 的 CI 门禁化
+- mutants / miri 本会话全量实测通过声明（CI 入口已有）
 - crates.io 再发布与 `publish = true`
-- 上游 SSOT 镜像内部措辞收口（应在 xhyper.rs 修，再 `cp -rf` 同步）
+- 上游 SSOT 镜像内部措辞收口（应在 xhyper.rs 修，再删除感知同步）
+- 整体 Production Ready 签字（见 [core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) §8/§11）
+
+## 变更记录
+
+| 日期 | 说明 |
+|------|------|
+| 2026-07-21 | 生产就绪：ClockDomain、wait_timeout、loom CI、中文错误；PR #98 **合入 main** |
 
 ## Workspace 交叉引用
 

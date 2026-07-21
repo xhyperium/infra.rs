@@ -78,7 +78,7 @@ proptest! {
     /// 除法不 panic（除数非零时）
     #[test]
     fn div_no_panic(a in arb_decimal(), b in arb_decimal()) {
-        if b.mantissa != 0 {
+        if b.mantissa() != 0 {
             let _ = a.div(b, RoundingStrategy::HalfUp);
             let _ = a.div(b, RoundingStrategy::Floor);
             let _ = a.div(b, RoundingStrategy::Ceiling);
@@ -100,7 +100,7 @@ proptest! {
         let _ = a.checked_add(b);
         let _ = a.checked_sub(b);
         let _ = a.checked_mul(b);
-        if b.mantissa != 0 {
+        if b.mantissa() != 0 {
             let _ = a.div(b, RoundingStrategy::HalfUp);
         }
     }

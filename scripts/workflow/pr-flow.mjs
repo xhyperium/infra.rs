@@ -15,7 +15,7 @@
  *   --reviewer <user> 指定审查者（可重复）
  *   --help           显示帮助信息
  *
- * SSOT: CONSTITUTION.md §6.0 / docs/worktree-policy.md
+ * SSOT: docs/constitution/06-governance.md §6.0 / docs/governance/worktree-policy.md
  */
 
 import { execSync } from "child_process";
@@ -24,7 +24,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, "..");
+const ROOT = join(__dirname, "..", "..");
 const REVIEWS_DIR = join(ROOT, ".claude", "reviews");
 
 // ── 参数解析 ──────────────────────────────────────────────

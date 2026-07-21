@@ -50,8 +50,12 @@ fn monotonic_non_decreasing() {
 fn mono_from_elapsed_roundtrip() {
     let c = ManualClock::with_monotonic_elapsed(ts(1), Duration::from_millis(2));
     let m = c.monotonic();
-    let origin = MonotonicInstant::from_clock_elapsed(Duration::ZERO);
+    // 必须同 domain：from_clock_elapsed 默认 PROCESS，ManualClock 为独立 domain
+    let origin = MonotonicInstant::from_clock_elapsed_in(Duration::ZERO, c.domain());
     assert_eq!(m.checked_duration_since(origin).unwrap(), Duration::from_millis(2));
+    assert!(
+        m.checked_duration_since(MonotonicInstant::from_clock_elapsed(Duration::ZERO)).is_none()
+    );
 }
 
 /// §13.2：wall 与 monotonic 独立（ManualClockDeterminismContract）。

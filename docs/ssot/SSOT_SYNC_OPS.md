@@ -22,7 +22,7 @@ test -f Cargo.toml || { echo "ERROR: 请在 infra.rs 仓库根目录执行"; exi
 | kernel | `.agents/ssot/kernel/` | — |
 | testkit | `.agents/ssot/testkit/` | — |
 | types | `.agents/ssot/types/` | decimal, canonical |
-| infra | `.agents/ssot/infra/` | bootstrap, configx, gate, observex, resiliencx, schedulex, testkitx, transport |
+| infra | `.agents/ssot/` | bootstrap, configx, gate, observex, resiliencx, schedulex, testkitx, transport（已展平） |
 | adapters | `.agents/ssot/adapters/` | binance, okx, redis, kafka, nats, postgres, taos, oss, clickhouse |
 | contracts | `.agents/ssot/contracts/` | — |
 | tools | `.agents/ssot/tools/` | evidence, goalctl, xtask, verifyctl（**本仓 SSOT**，不从外仓 rsync） |
@@ -33,9 +33,14 @@ test -f Cargo.toml || { echo "ERROR: 请在 infra.rs 仓库根目录执行"; exi
 SRC=/home/workspace/xhyper.rs/.agent/SSOT
 DST=/home/workspace/infra.rs/.agents/ssot
 
-for domain in kernel testkit types infra adapters contracts; do
+for domain in kernel testkit types adapters contracts; do
   echo "→ syncing $domain..."
   rsync -a --delete "$SRC/$domain/" "$DST/$domain/"
+done
+# infra（8 子域，源为 $SRC/infra/，目标已展平到 $DST/）
+for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
+  echo "→ syncing infra/$sub..."
+  rsync -a --delete "$SRC/infra/$sub/" "$DST/$sub/"
 done
 # tools：路径本地化（.agent/SSOT → .agents/ssot）；verifyctl 等本仓扩展见 tools 节
 find "$DST/tools" -type f \( -name '*.md' -o -name '*.sh' -o -name '*.json' -o -name '*.yaml' \) \
@@ -63,10 +68,12 @@ rsync -a --delete "$SRC/testkit/" "$DST/testkit/"
 rsync -a --delete "$SRC/types/" "$DST/types/"
 ```
 
-### infra（8 子域）
+### infra（8 子域，已展平）
 
 ```bash
-rsync -a --delete "$SRC/infra/" "$DST/infra/"
+for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
+  rsync -a --delete "$SRC/infra/$sub/" "$DST/$sub/"
+done
 ```
 
 ### adapters（9 子域）
@@ -101,7 +108,7 @@ cp -r "$DST" "$DST.bak.$(date +%Y%m%d-%H%M%S)"
 
 ```bash
 # 文件数对比（一键）
-for domain in kernel testkit types infra adapters contracts; do
+for domain in kernel testkit types adapters contracts; do
   src_n=$(find "$SRC/$domain" -type f 2>/dev/null | wc -l)
   dst_n=$(find "$DST/$domain" -type f 2>/dev/null | wc -l)
   if [ "$src_n" -eq "$dst_n" ]; then
@@ -109,6 +116,16 @@ for domain in kernel testkit types infra adapters contracts; do
   else
     # tools 允许本仓扩展导致 dst > src
     printf "  ~ %-12s src=%d dst=%d\n" "$domain" "$src_n" "$dst_n"
+  fi
+done
+# infra（8 子域，已展平；源在 $SRC/infra/，目标在 $DST/）
+for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
+  src_n=$(find "$SRC/infra/$sub" -type f 2>/dev/null | wc -l)
+  dst_n=$(find "$DST/$sub" -type f 2>/dev/null | wc -l)
+  if [ "$src_n" -eq "$dst_n" ]; then
+    printf "  ✓ %-12s %4d files\n" "infra/$sub" "$dst_n"
+  else
+    printf "  ~ %-12s src=%d dst=%d\n" "infra/$sub" "$src_n" "$dst_n"
   fi
 done
 

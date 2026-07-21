@@ -4,21 +4,13 @@ name: Kernel Coverage
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main, develop]
-    paths:
-      - "crates/kernel/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "scripts/cov-gate-100.mjs"
-      - ".github/workflows/kernel-coverage.yml"
   pull_request:
     branches: [main, develop]
     paths:
       - "crates/kernel/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - "scripts/cov-gate-100.mjs"
+      - "scripts/quality-gates/cov-gate-100.mjs"
       - ".github/workflows/kernel-coverage.yml"
 
 concurrency:
@@ -47,7 +39,7 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p kernel --filter crates/kernel/src --all-features
+        run: node scripts/quality-gates/cov-gate-100.mjs -p kernel --filter crates/kernel/src --all-features
       - name: 分支覆盖率 ≥90%
         env:
           RUSTUP_TOOLCHAIN: nightly

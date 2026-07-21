@@ -2,8 +2,8 @@
 
 | 字段 | 值 |
 |------|-----|
-| Spec | active configx 0.1.0（`.agents/ssot/infra/configx/spec/spec.md` ≡ `xhyper-configx-complete-spec.md`） |
-| 镜像 | `.agents/ssot/infra/configx/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
+| Spec | active configx 0.1.0（`.agents/ssot/configx/spec/spec.md` ≡ `xhyper-configx-complete-spec.md`） |
+| 镜像 | `.agents/ssot/configx/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 本仓实现 | `crates/configx` · package `xhyper-configx` · lib `configx` · version `0.1.0` |
 | 审计日期 | 2026-07-21 |
 | 结论 | **active 合同面（§2–§7 可移植条款）无 FAIL 残留**；上位多源/热更新能力统一 **DEFER** |
@@ -44,7 +44,7 @@ cargo llvm-cov -p configx --summary-only
 
 ## 与镜像文档的关系
 
-- `.agents/ssot/infra/configx/**`：只读镜像；禁止本地改 Done/COMPLETE 叙事冒充同步
+- `.agents/ssot/configx/**`：只读镜像；禁止本地改 Done/COMPLETE 叙事冒充同步
 - 实现 SSOT 以 **源码 + 本仓测试输出** 为准
 - 文件名 `xhyper-configx-complete-spec.md` 与 `spec.md` 同构，内容仍是 0.1.0 **最小内存 KV 合同**，不是完整配置平台
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`

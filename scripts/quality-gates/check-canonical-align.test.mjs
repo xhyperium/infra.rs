@@ -19,7 +19,7 @@ import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "..");
+const ROOT = resolve(__dirname, "../..");
 const SCRIPT = resolve(__dirname, "check-canonical-align.mjs");
 
 let failed = 0;

@@ -14,6 +14,7 @@
 
 **不应放入本目录：**
 
+- 工程宪章正文 / 条款导航 → `docs/constitution/`（根 `CONSTITUTION.md` 仅为兼容索引）
 - SSOT 对齐矩阵 / 同步报告 → `docs/ssot/`
 - CI 运行快照、配置检查记录 → `docs/status/`
 - 架构决策（DDR）→ `docs/decisions/`

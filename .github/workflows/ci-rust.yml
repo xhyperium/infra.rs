@@ -1,15 +1,6 @@
 name: CI（Rust）
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "**/Cargo.toml"
-      - "crates/**"
-      - "rust-toolchain.toml"
-      - ".github/workflows/ci-rust.yml"
   pull_request:
     branches: [main]
     paths:
@@ -20,6 +11,7 @@ on:
       - "rust-toolchain.toml"
       - ".github/workflows/ci-rust.yml"
 
+  workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -35,7 +27,7 @@ jobs:
     outputs:
       has-rust: ${{ steps.check.outputs.has-rust }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - id: check
         run: |
           if [ -f Cargo.toml ] && [ -d crates ]; then
@@ -51,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -64,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -82,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 安装 MSRV Rust 工具链
         uses: dtolnay/rust-toolchain@1.85
       - uses: Swatinem/rust-cache@v2
@@ -96,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
         with:

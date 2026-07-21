@@ -68,13 +68,32 @@ du -sh <src> <dst>  # 字节级一致
 ## 同步命令
 
 ```bash
-# 删除感知同步（推荐）；保留 infra/、adapters/ 层级
+# 删除感知同步（推荐）；保留 adapters/ 层级（infra 已展平到 ssot 根）
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/kernel/   .agents/ssot/kernel/
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/testkit/  .agents/ssot/testkit/
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/types/    .agents/ssot/types/
-rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/    .agents/ssot/infra/
+# infra（8 子域，源为 upstream/infra/，目标已展平到 ssot 根）
+for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
+  rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/$sub/ .agents/ssot/$sub/
+done
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/adapters/ .agents/ssot/adapters/
 ```
+
+## 本仓实现落地（≠ 镜像同步）
+
+镜像完整性只证明 `.agents/ssot/**` 与上游一致或已本地化。  
+**实现落地**以各域 `*-ssot-alignment.md` + `crates/` 为准。
+
+2026-07-21（PR #98 **已合入 main**）核心五 crate 生产就绪闭合后，本仓实现对齐文已同步更新：
+
+- [workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
+- [types-ssot-alignment.md](./types-ssot-alignment.md)
+- [contracts-ssot-alignment.md](./contracts-ssot-alignment.md)
+- [kernel-ssot-alignment.md](./kernel-ssot-alignment.md)
+- [testkit-ssot-alignment.md](./testkit-ssot-alignment.md)
+- [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md)
+
+审计报告：[docs/report/2026-07-21/core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md)。
 
 ## 结论
 
@@ -87,7 +106,7 @@ rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/adapters/ .agents/ssot/a
 > | kernel | `crates/kernel` | **已落地** | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
 > | testkit | `crates/testkit` | **core 已落地**；contract-testkit DEFER | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
 > | types | `crates/types/{decimal,canonical}` | **已落地**；wire/package stable OPEN | [types-ssot-alignment.md](./types-ssot-alignment.md) |
-> | infra 八域 | （镜像）`.agents/ssot/infra/*` | **仅镜像**，未宣称 crate 落地 | 见下节 |
+> | infra 八域 | `.agents/ssot/{bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport}` | **仅镜像**，未宣称 crate 落地 | 见下节 |
 > | adapters 九域 | `.agents/ssot/adapters/*` + `crates/adapters/**` | **镜像已注册**；crate **scaffold** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 >
 > **总览**：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)  
@@ -95,14 +114,13 @@ rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/adapters/ .agents/ssot/a
 
 ---
 
-## 补充：infra 平面镜像（2026-07-21）
+## 补充：infra 平面镜像（2026-07-21，v0.3.18 最终确定）
 
-**源**: `/home/workspace/xhyper.rs/.agent/SSOT/infra/`  
-**目标**: `/home/workspace/infra.rs/.agents/ssot/infra/`（**保留 `infra/` 层级**）  
-**命令**: `rsync -a --delete …/SSOT/infra/ .agents/ssot/infra/`
+infra 的 8 个子域已从 `.agents/ssot/infra/` 展平到 `.agents/ssot/` 根：
 
-> **修正（同日）**：初版 `cp -rf …/infra/* .agents/ssot/` 将域展平到 ssot 根，破坏 README 内
-> `../../kernel/` 等相对链接。现迁回 `.agents/ssot/infra/*`，与上游目录深度一致。
+**源**: `/home/workspace/xhyper.rs/.agent/SSOT/infra/`（上游仍保留 `infra/` 层级）  
+**目标**: `/home/workspace/infra.rs/.agents/ssot/`（本仓展平，各子域为直接子目录）  
+**命令**: `for sub in ...; do rsync -a --delete $SRC/infra/$sub/ $DST/$sub/; done`
 
 | 域 | 文件数 | 目录数 | 大小 | 与源 diff |
 |----|--------|--------|------|-----------|

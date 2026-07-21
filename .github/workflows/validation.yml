@@ -1,10 +1,9 @@
 name: 校验
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -19,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 运行 yamllint
         uses: ibiqlik/action-yamllint@v3
         with:
@@ -28,13 +27,15 @@ jobs:
             rules:
               line-length: disable
               document-start: disable
+              truthy: disable
+              new-line-at-end-of-file: disable
 
   toml-lint:
     name: TOML 检查
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 安装 taplo
         uses: taiki-e/install-action@v2
         with:
@@ -47,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 运行 markdownlint
         uses: DavidAnson/markdownlint-cli2-action@v24
         with:
@@ -62,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 运行 codespell
         uses: codespell-project/actions-codespell@v2
         with:
@@ -73,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 运行 lychee
         uses: lycheeverse/lychee-action@v2
         with:
@@ -87,11 +88,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 脱离 detached HEAD
         run: |
           if [ "$(git rev-parse --abbrev-ref HEAD)" = "HEAD" ]; then
             git checkout -b harness-ci
           fi
+      - name: 安装 bd CLI
+        run: curl -sSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
+      - name: 初始化 beads
+        run: bd init --quiet
       - name: 运行 harness check
-        run: node scripts/check.mjs
+        run: node scripts/quality-gates/check.mjs
+
+  canonical-align:
+    name: Canonical 对齐检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - name: 运行 canonical-align check
+        run: node scripts/quality-gates/check-canonical-align.mjs

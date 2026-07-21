@@ -42,7 +42,7 @@ fn test_system_clock_now_returns_valid_timestamp() {
 
 #[test]
 fn test_system_clock_default_works() {
-    let clock = SystemClock::default();
+    let clock = SystemClock::new();
     let ts = clock.now().expect("墙钟应可用");
     assert!(ts.as_unix_nanos() > 0);
 }

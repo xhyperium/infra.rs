@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
-| Active SSOT | `.agents/ssot/infra/schedulex/spec/spec.md` ≡ `spec/schedulex-complete-spec.md` |
+| Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ `spec/schedulex-complete-spec.md` |
 | 本仓 crate | `crates/schedulex` · package `xhyper-schedulex` · lib `schedulex` · `0.1.0` |
 | 合同范围 | **内存任务 ID 登记表**（非 production timer scheduler） |
 
@@ -30,8 +30,8 @@ graceful shutdown / 持久化恢复 / 分布式调度 —— active §3；Candid
 ## 验证
 
 ```bash
-cmp .agents/ssot/infra/schedulex/spec/spec.md \
-    .agents/ssot/infra/schedulex/spec/schedulex-complete-spec.md
+cmp .agents/ssot/schedulex/spec/spec.md \
+    .agents/ssot/schedulex/spec/schedulex-complete-spec.md
 cargo test -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
 cargo fmt --all --check
@@ -40,6 +40,6 @@ cargo llvm-cov -p schedulex --fail-under-lines 100 --summary-only
 
 ## 追溯
 
-- Active SSOT：`.agents/ssot/infra/schedulex/spec/spec.md`
+- Active SSOT：`.agents/ssot/schedulex/spec/spec.md`
 - 实现：`crates/schedulex/`
 - 总览：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)

@@ -1,8 +1,5 @@
 name: 模块自验证
 on:
-  push:
-    branches: [main]
-    paths: ["scripts/**", ".claude/hooks/**", ".claude/settings.json", ".github/workflows/self-test.yml"]
   pull_request:
     branches: [main]
     paths: ["scripts/**", ".claude/hooks/**", ".claude/settings.json", ".github/workflows/self-test.yml"]
@@ -17,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: Scripts L0 语法检查
         run: node scripts/self-test.mjs --scripts --lint-only
   hooks-lint:
@@ -25,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: Hooks L0 语法检查
         run: node scripts/self-test.mjs --hooks --lint-only
   scripts-test:
@@ -33,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: Scripts L1 逻辑测试
         run: node scripts/self-test.mjs --scripts
     continue-on-error: false

@@ -14,8 +14,11 @@
 |------|------|
 | 上游 SSOT 镜像 COMPLETE 叙事 | 仍是 xhyper 战役文档；**禁止**单独当作本仓交付证明 |
 | 本仓 `crates/testkit` core（ManualClock 族） | **已闭合**（§7 / §13.1–§13.5 / §24.1–§24.3 core / §24.5 core → 见 clause matrix） |
-| 本仓 `contract-testkit` | **DEFER**（缺 `xhyper-contracts` 平面；§24.4） |
+| 本仓 `contract-testkit` | **部分闭合**：`crates/contracts` 内最小 Fake/Recording 入口已可运行；**独立** `test-support/contracts` crate 与全套件仍 **DEFER**（§24.4） |
 | integration harness | **DEFER**（跨 crate INFRA；§3.3 / §24.0 residual） |
+| ClockDomain 跟随 | **PASS**：每 `ManualClock` 实例独立 domain；跨实例 `checked_duration_since` → `None` |
+| 用户可见错误中文 | **PASS**：`ManualClockError` Display 中文 |
+| `[lints] workspace = true` | **PASS** |
 | 本仓质量证据 | **本仓实测** line-cov / mutants / miri；不复制上游 `2026-07-14-stable-gates` |
 
 ## 本仓可观察事实
@@ -70,7 +73,8 @@ CI 入口（与 kernel 同级 paths 过滤）：
 | 7.1 | 独立墙钟/单调钟、fault、snapshot、多线程、无真实时间、无静默溢出 | PASS | `src/clock.rs` + unit/contract/concurrency |
 | 7.2 | `Mutex<State>{wall, mono, fault}` 一致模型 | PASS | `clock.rs` State |
 | 7.3 | `ManualClockFault` 三变体映射 ClockError | PASS | unit `fault_variants_map_to_clock_error` |
-| 7.4 | `ManualClockError` + Display/Error，无 anyhow | PASS | unit `error_display_*` |
+| 7.4 | `ManualClockError` + 中文 Display/Error，无 anyhow | PASS | unit `error_display_*` |
+| 7.14 | 独立 `ClockDomain`；跨实例间隔不可靠 | PASS | `domain()` + `cross_manual_clock_domain_*` |
 | 7.5 | Snapshot 私有字段 + 只读 getter | PASS | unit `snapshot_getters_*` |
 | 7.6 | `new` / `with_monotonic_elapsed`；无 Default | PASS | unit 构造 + `api_compile` `!Default` |
 | 7.7 | wall set/advance/rewind checked；失败不改状态；可回拨 | PASS | unit wall_* + property advance/rewind |
@@ -93,7 +97,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 | 13.6 | mutation score ≥90% | PASS | 本仓 `cargo mutants`：missed=0（caught=10, unviable=20） |
 | 13.7 | line ≥95%；branch ≥90% OPTIONAL | PASS / DEFER | line **99.65%** PASS；branch 本工具 summary 无分支数据 → **OPTIONAL/DEFER**（与上游 residual 一致） |
 | 13.8 | Miri | PASS | `cargo +nightly miri test -p xhyper-testkit`（见 evidence） |
-| 13.9 | contract-testkit 自测 | DEFER | 无 contract-testkit crate |
+| 13.9 | contract-testkit 自测 | PARTIAL | 最小面在 `contracts` crate（FakeTx/FakeBus）；独立 test-support crate DEFER |
 
 ### §24 验收清单（core 相关）
 
@@ -106,7 +110,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 | 24.3 | branch ≥90% | DEFER | OPTIONAL（上游 residual；本仓不升强制） |
 | 24.3 | mutation ≥90% | PASS | missed=0 |
 | 24.3 | Miri | PASS | 本仓 miri 日志 |
-| 24.4 | Contract 闭合 | DEFER | 缺 contracts 平面；另开战役 |
+| 24.4 | Contract 闭合 | PARTIAL / DEFER | **contracts 平面已存在**；最小 Fake 入口在 contracts；全 trait conformance + 真实后端仍 DEFER |
 | 24.5 | 消费为 dev-dep / 无 build-dep / 无 normal graph 泄漏（core 侧） | PASS | crate 自身 `publish=false` + prod deps only kernel；全仓 machine gate/xtask **DEFER**（无 infra-xtask graph check） |
 | 24.5 | feature 不泄漏 | PASS | `default=[]` 无其它 feature |
 | 24.6 | 治理（RFC / archgate / xtask…） | DEFER | 战役级；CHANGELOG + Evidence 本仓已有 |
@@ -129,7 +133,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 
 ## 未做（follow-up / DEFER）
 
-- `crates/test-support/contracts`（contract-testkit，§24.4）
+- 独立 `crates/test-support/contracts` crate 与全 trait conformance suite（§24.4 残余）
 - 全仓 production-graph machine gate（xtask，依赖缺失）
 - branch coverage ≥90% 强制（OPTIONAL residual）
 - 上游 SSOT 文档内部 STALE 收口（应在 xhyper.rs 修，再镜像同步）
@@ -139,3 +143,20 @@ CI 入口（与 kernel 同级 paths 过滤）：
 ```text
 core 必选 GAP = 0
 ```
+
+## 跟进（2026-07-21 生产就绪）
+
+| 项 | 状态 |
+|----|------|
+| contracts 平面 | **已存在**（纠正旧文「缺 contracts」） |
+| 最小 contract-testkit 入口 | **在 contracts**：`FakeTxRunner` / `FakeEventBus` / `RecordingTxRunner` |
+| contracts 生产语义 | **部分闭合**（Tx/消息）；其余 trait 深度仍 DEFER |
+| ManualClock × ClockDomain | **PASS**；跨实例比较 → `None` |
+| 中文 Display / workspace lints | **PASS** |
+| 整体 Production Ready | **否**；见 [core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) §11 |
+
+## 变更记录
+
+| 日期 | 说明 |
+|------|------|
+| 2026-07-21 | 生产就绪文档同步：contracts 存在性、domain、中文错误、PARTIAL contract-testkit；PR #98 **合入 main** |

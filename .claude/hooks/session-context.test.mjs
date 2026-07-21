@@ -17,7 +17,7 @@ import { tmpdir } from "os";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "../..");
 
-const WORKTREE_POLICY_PATH = resolve(projectRoot, "scripts/worktree-policy.mjs");
+const WORKTREE_POLICY_PATH = resolve(projectRoot, "scripts/worktree/worktree-policy.mjs");
 const SESSION_CONTEXT_PATH = resolve(__dirname, "session-context.mjs");
 
 // ── 测试框架 ────────────────────────────────

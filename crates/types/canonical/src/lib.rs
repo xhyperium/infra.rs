@@ -4,7 +4,9 @@
 //!
 //! # 生产就绪（诚实边界）
 //!
-//! - **不是** Production Ready / package stable / 跨版本 wire 全面承诺。
+//! - **不是** 整体 Production Ready / package stable。
+//! - **已承诺 wire v1**：[`CancelOrderRequest`] / [`OrderRef`] / [`OrderAck`] /
+//!   [`OrderStatus`] / [`Side`]（见 [`wire`]）；其余 DTO 仍 Uncommitted。
 //! - `ts: i64` = Unix epoch **纳秒**（CAN-TIME-001 Approved 2026-07-17；与 kernel 同刻度）。
 //! - 新执行接口优先 [`OrderRef`] / [`CancelOrderRequest`]（CAN-ID Approved）。
 //! - 订单 wire id 为普通 [`String`]（`OrderId` 类型别名已删除）。
@@ -17,6 +19,7 @@
 
 pub mod proposed_time;
 pub mod shape;
+pub mod wire;
 
 use decimalx::{Decimal, Price, Qty};
 use serde::{Deserialize, Serialize};
@@ -32,6 +35,7 @@ pub use shape::{
     cancel_request_shape_ok, is_nonempty_token, is_plausible_instrument_id,
     is_plausible_venue_slug, order_ref_payload_nonempty,
 };
+pub use wire::{COMMITTED_WIRE_V1, WireCommitment, wire_commitment};
 
 /// Venue identifier string alias（CAN-ID：adapter 用 shape 校验）。
 pub type VenueId = String;
@@ -40,8 +44,9 @@ pub type InstrumentId = String;
 
 /// An order reference with an explicit identifier namespace.
 ///
-/// Preferred at adapter cancel/query boundaries (wire-commitment: Committed-candidate).
+/// Preferred at adapter cancel/query boundaries (wire-commitment: Committed v1).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub enum OrderRef {
     Client(String),
     Exchange(String),
@@ -49,16 +54,18 @@ pub enum OrderRef {
 
 /// Structured cancellation request; OKX needs both instrument and order ID.
 ///
-/// Wire: Committed-candidate — see `fixtures/market/order_cancel_okx.json`.
+/// Wire: **Committed v1** — see `fixtures/market/order_cancel_okx.json` 与 [`wire`]。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CancelOrderRequest {
     pub venue: VenueId,
     pub instrument: InstrumentId,
     pub id: OrderRef,
 }
 
-/// 订单状态（spec §4.2）。
+/// 订单状态（spec §4.2）。Wire: **Committed v1**（variant 名 = JSON 字符串）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub enum OrderStatus {
     Pending,
     Open,
@@ -68,8 +75,9 @@ pub enum OrderStatus {
     Rejected,
 }
 
-/// 买卖方向（spec §4.2）。
+/// 买卖方向（spec §4.2）。Wire: **Committed v1**（variant 名 = JSON 字符串）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub enum Side {
     Buy,
     Sell,
@@ -77,6 +85,7 @@ pub enum Side {
 
 /// 订单 DTO（spec §4.2，ADR-001）。
 ///
+/// Wire：**Uncommitted**（无跨版本承诺；见 [`wire`]）。
 /// `id` 为 wire 字符串；结构化引用见 [`OrderRef`]。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Order {
@@ -90,8 +99,9 @@ pub struct Order {
 
 /// 订单确认（spec §4.2）。
 ///
-/// Wire: Committed-legacy JSON shape until migration completes.
+/// Wire: **Committed v1**（legacy JSON shape 冻结）。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct OrderAck {
     /// Wire order id string.
     pub id: String,
@@ -100,7 +110,7 @@ pub struct OrderAck {
     pub ts: i64,
 }
 
-/// 持仓 DTO（spec §4.2）。
+/// 持仓 DTO（spec §4.2）。Wire：**Uncommitted**。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Position {
     pub symbol: String,
@@ -108,7 +118,7 @@ pub struct Position {
     pub entry_price: Price,
 }
 
-/// 行情快照（spec §4.2）。
+/// 行情快照（spec §4.2）。Wire：**Uncommitted**。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Tick {
     pub symbol: String,
@@ -117,14 +127,14 @@ pub struct Tick {
     pub ts: i64,
 }
 
-/// 价格档位（spec §4.2，OrderBookSnapshot 内部结构）。
+/// 价格档位（spec §4.2，OrderBookSnapshot 内部结构）。Wire：**Uncommitted**。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PriceLevel {
     pub price: Price,
     pub qty: Qty,
 }
 
-/// 订单簿快照（仅快照结构体，不含更新/diff 逻辑，ADR-001）。
+/// 订单簿快照（仅快照结构体，不含更新/diff 逻辑，ADR-001）。Wire：**Uncommitted**。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OrderBookSnapshot {
     pub symbol: String,
@@ -133,7 +143,7 @@ pub struct OrderBookSnapshot {
     pub ts: i64,
 }
 
-/// 成交 DTO（spec §4.2）。
+/// 成交 DTO（spec §4.2）。Wire：**Uncommitted**。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Trade {
     pub symbol: String,
@@ -142,7 +152,7 @@ pub struct Trade {
     pub ts: i64,
 }
 
-/// 标的元数据（spec §4.2）。
+/// 标的元数据（spec §4.2）。Wire：**Uncommitted**。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SymbolMeta {
     pub symbol: String,
@@ -158,11 +168,11 @@ mod tests {
     use decimalx::Money as DecimalxMoney;
 
     fn price(v: i128) -> Price {
-        Price(Decimal::new(v, 0))
+        Price::new(Decimal::new(v, 0))
     }
 
     fn qty(v: i128) -> Qty {
-        Qty(Decimal::new(v, 0))
+        Qty::new(Decimal::new(v, 0))
     }
 
     fn assert_roundtrip<T>(value: &T)
@@ -315,10 +325,8 @@ mod tests {
     #[test]
     fn money_is_decimalx_money_type_identity() {
         // Compile-time + runtime: re-export must be the same type, not a copy.
-        let m: Money = DecimalxMoney {
-            amount: Decimal::new(1, 0),
-            currency: "USD".parse().expect("currency"),
-        };
+        let m: Money = DecimalxMoney::try_new(Decimal::new(1, 0), "USD".parse().expect("currency"))
+            .expect("money");
         let as_decimalx: DecimalxMoney = m;
         assert_eq!(m, as_decimalx);
         assert_roundtrip(&m);

@@ -52,7 +52,7 @@
 
 ### Constitution
 
-**触发**: Rust 源文件 / 配置文件 / CONSTITUTION.md 变更
+**触发**: Rust 源文件 / 配置文件 / CONSTITUTION.md / docs/constitution/** 变更
 
 | Job | 说明 | 超时 |
 |----|----|----|
@@ -150,5 +150,5 @@ make check-quick                  exit 0
 - [x] 解释器全部为 `node`（shebang 或显式）
 - [x] 路径过滤器无 `.sh` 残留
 - [x] 14 个引用文件已更新（docs、config、Makefile、nix）
-- [x] CONSTITUTION.md §4.8 已更新（移除 shell 例外）
+- [x] docs/constitution/04-code-standards.md §4.8 已更新（移除 shell 例外）
 - [x] 本地脚本全部通过测试

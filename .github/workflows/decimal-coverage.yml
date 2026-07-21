@@ -4,21 +4,13 @@ name: Decimal Coverage
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main, develop]
-    paths:
-      - "crates/types/decimal/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "scripts/cov-gate-100.mjs"
-      - ".github/workflows/decimal-coverage.yml"
   pull_request:
     branches: [main, develop]
     paths:
       - "crates/types/decimal/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - "scripts/cov-gate-100.mjs"
+      - "scripts/quality-gates/cov-gate-100.mjs"
       - ".github/workflows/decimal-coverage.yml"
 
 concurrency:
@@ -47,4 +39,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p decimalx --filter crates/types/decimal/src
+        run: node scripts/quality-gates/cov-gate-100.mjs -p decimalx --filter crates/types/decimal/src

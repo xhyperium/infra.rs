@@ -22,5 +22,6 @@
 
 ### Notes
 
-- 字段仍 `pub`；独立 `DecimalError`、wire stable、Spec Approved 仍开放（见 SSOT residual）
-- agent-safe 对账完成 **≠** Goal Achieved
+- 字段已私有（非法 scale / 币种不可在 crate 外表示）；`DecimalError` 可分类 + 中文 Display
+- wire stable、Spec Approved、fuzz/oracle/mutants 仍开放（见 SSOT residual / 报告 DEFER）
+- agent-safe 对账完成 **≠** Goal Achieved **≠** 整体 Production Ready

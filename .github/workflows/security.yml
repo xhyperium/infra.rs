@@ -1,15 +1,6 @@
 name: 安全
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "**/Cargo.toml"
-      - "deny.toml"
-      - "rust-toolchain.toml"
-      - ".github/workflows/security.yml"
   pull_request:
     branches: [main]
     paths:
@@ -22,6 +13,7 @@ on:
   schedule:
     - cron: "0 2 * * 1" # 每周一 02:00 UTC
 
+  workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -37,7 +29,7 @@ jobs:
     outputs:
       has-rust: ${{ steps.check.outputs.has-rust }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - id: check
         run: |
           if [ -f Cargo.toml ]; then
@@ -53,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: Install cargo-deny
         uses: taiki-e/install-action@v2
         with:
@@ -68,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: 安装 cargo-audit
         uses: taiki-e/install-action@v2
         with:
