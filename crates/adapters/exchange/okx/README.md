@@ -13,3 +13,11 @@ okx exchange adapter scaffold。
 - 禁止把 `*Adapter` 类型名当成已对接真实 Binance/Postgres/Redis/…
 - 真实入口须有显式 feature（如 redisx `live`）与文档/CI 证据
 - 详见 `docs/plans/artifacts/prod-consume-surface.md`
+
+## Live 只读 server_time（infra-s9t.13）
+
+```bash
+cargo test -p okxx --test live_server_time -- --ignored --nocapture
+```
+
+注入真实 `ReqwestHttpDriver` + 公共 REST 时间接口；默认 CI 离线绿（`#[ignore]`）。

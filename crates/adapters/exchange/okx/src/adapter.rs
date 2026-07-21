@@ -19,6 +19,20 @@ use futures_util::stream;
 use kernel::{XError, XResult};
 use transportx::{HttpDriver, HttpRequest, HttpResponse, TransportError};
 
+/// 解析 OKX `/api/v5/public/time` JSON：`data[0].ts` 毫秒字符串。
+pub(crate) fn parse_okx_server_time(body: &[u8]) -> XResult<i64> {
+    let v: serde_json::Value = serde_json::from_slice(body)
+        .map_err(|e| XError::invalid(format!("server_time json: {e}")))?;
+    let ts = v
+        .get("data")
+        .and_then(|d| d.as_array())
+        .and_then(|a| a.first())
+        .and_then(|o| o.get("ts"))
+        .and_then(|x| x.as_str())
+        .ok_or_else(|| XError::invalid("server_time missing data[0].ts"))?;
+    ts.parse::<i64>().map_err(|e| XError::invalid(format!("server_time ts parse: {e}")))
+}
+
 fn map_transport_error(err: TransportError) -> XError {
     match err {
         TransportError::RateLimited { .. } => XError::transient("transport rate limited"),
@@ -269,7 +283,10 @@ impl VenueAdapter for OkxAdapter {
         if self.http.is_some() {
             let resp = self.http_get("/api/v5/public/time").await?;
             if resp.status == 200 {
-                return Ok(0);
+                if resp.body.is_empty() {
+                    return Ok(0);
+                }
+                return parse_okx_server_time(&resp.body);
             }
             return Err(XError::unavailable(format!("server_time http status {}", resp.status)));
         }
@@ -412,6 +429,13 @@ mod tests {
         assert!(VenueAdapter::query_position(&a).await.unwrap().is_empty());
     }
 
+    #[test]
+    fn parse_okx_server_time_ok() {
+        let body = br#"{"code":"0","data":[{"ts":"1710000000456"}]}"#;
+        assert_eq!(parse_okx_server_time(body).unwrap(), 1710000000456);
+        assert!(parse_okx_server_time(br"{}").is_err());
+    }
+
     #[tokio::test]
     async fn http_driver_get_and_server_time() {
         use bytes::Bytes;
@@ -419,13 +443,13 @@ mod tests {
 
         let mock = Arc::new(MockHttpTransport::new());
         let url = "https://www.okx.com/api/v5/public/time";
-        mock.set_get(url, Bytes::from_static(b"{\"code\":\"0\"}"));
+        mock.set_get(url, Bytes::from_static(br#"{"code":"0","data":[{"ts":"1710000000888"}]}"#));
         let a = OkxAdapter::mainnet().with_http(mock);
         assert!(a.has_http());
         VenueAdapter::connect(&a).await.unwrap();
         let resp = a.http_get("/api/v5/public/time").await.unwrap();
         assert_eq!(resp.status, 200);
-        assert_eq!(VenueAdapter::server_time(&a).await.unwrap(), 0);
+        assert_eq!(VenueAdapter::server_time(&a).await.unwrap(), 1710000000888);
     }
 
     #[tokio::test]

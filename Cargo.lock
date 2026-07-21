@@ -83,6 +83,7 @@ dependencies = [
  "futures-core",
  "futures-util",
  "kernel",
+ "serde_json",
  "tokio",
  "transportx",
 ]
@@ -919,6 +920,7 @@ dependencies = [
  "futures-core",
  "futures-util",
  "kernel",
+ "serde_json",
  "tokio",
  "transportx",
 ]

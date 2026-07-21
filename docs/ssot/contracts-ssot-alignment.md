@@ -64,7 +64,7 @@ cargo test -p bootstrap --all-targets   # Bounded* 与 Instrumentation re-export
 | CT-6 | public_surface 非空断言 | PASS | 驱动 FakeTx/FakeBus/KV/Instr 真路径（无 `assert_eq!(15,15)`） |
 | CT-7 | bootstrap 无静默同名冲突 | PASS | bootstrap `Bounded*` 前缀；见 bootstrap 对齐文 |
 | CT-8 | 全 trait 幂等/取消/分页/一致性文档+套件 | **部分** | first-batch 11 篇语义文档 + `conformance_first_batch`；ObjectStore/TimeSeries/PubSub/Analytics 仍 DEFER |
-| CT-9 | 非 scaffold 真实后端验证入口 | **部分** | `redisx` feature `live` + `RedisLiveKv` + ignore 测 / optional CI（infra-s9t.2）；postgres 仍 DEFER |
+| CT-9 | 非 scaffold 真实后端验证入口 | **部分 PASS** | KV：`redisx` live + `tests/live_kv_conformance.rs`；Instrumentation：observex；Tx/Bus/Venue 业务 live 仍 DEFER |
 | CT-10 | VenueAdapter additive override 编译/运行门禁 | **部分** | `is_default_*_error` + `tests/venue_override_gate.rs`（binancex/okxx）；非强制 compile-fail |
 | CT-11 | `[lints] workspace = true` | PASS | `Cargo.toml` |
 
@@ -96,3 +96,7 @@ cargo test -p bootstrap --all-targets   # Bounded* 与 Instrumentation re-export
 | 2026-07-21 | 生产就绪：Tx/消息语义、Fake/Recording testkit、与 bootstrap Bounded* 收敛；PR #98 |
 | 2026-07-21 | PR #98 合入 main |
 | 2026-07-21 | W3（infra-asa.4）：first-batch 语义文档、`fakes` 模块、venue override 运行时门禁；CT-8/CT-10 部分闭合；**非** Production Ready |
+
+## L3 子集（infra-s9t.3）
+
+见 [`crates/contracts/docs/L3_FIRST_BATCH_STATUS.md`](../../crates/contracts/docs/L3_FIRST_BATCH_STATUS.md)。
