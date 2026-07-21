@@ -1,12 +1,12 @@
-//! `kafkax` — 生产级 Kafka 适配（`rdkafka`）。
+//! `kafkax` — 生产级 Kafka 适配（纯 Rust `rskafka`）。
 //!
 //! ## 默认入口
 //!
 //! - [`KafkaConfig`] / [`KafkaConfig::from_env`]
 //! - [`KafkaPool`]：`connect` / `producer` / `consumer` / `health` / `stats` / `close`
-//! - [`KafkaProducer`]：`publish` 等待 delivery report
-//! - [`KafkaConsumer`]：`subscribe` + 消息流
-//! - [`KafkaEventBus`]：[`contracts::EventBus`] facade（**at-most-once**；见模块文档）
+//! - [`KafkaProducer`]：`publish` 等待 broker 确认
+//! - [`KafkaConsumer`]：按分区流式消费（不依赖 group coordinator）
+//! - [`KafkaEventBus`]：[`contracts::EventBus`] facade（**at-most-once**）
 //!
 //! ## scaffold feature
 //!

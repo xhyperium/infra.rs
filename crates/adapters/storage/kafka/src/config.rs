@@ -113,20 +113,11 @@ impl KafkaConfig {
             return Err(XError::invalid("kafkax: brokers 不能为空"));
         }
         if self.sasl_mechanism.is_some() {
-            #[cfg(not(feature = "sasl"))]
-            {
-                return Err(XError::invalid(
-                    "kafkax: 配置了 SASL，但未启用 feature `sasl`（需要 libsasl2）",
-                ));
+            if self.sasl_username.as_ref().map(|s| s.is_empty()).unwrap_or(true) {
+                return Err(XError::invalid("kafkax: 已启用 SASL 但缺少 username"));
             }
-            #[cfg(feature = "sasl")]
-            {
-                if self.sasl_username.as_ref().map(|s| s.is_empty()).unwrap_or(true) {
-                    return Err(XError::invalid("kafkax: 已启用 SASL 但缺少 username"));
-                }
-                if self.sasl_password.as_ref().map(|s| s.is_empty()).unwrap_or(true) {
-                    return Err(XError::invalid("kafkax: 已启用 SASL 但缺少 password"));
-                }
+            if self.sasl_password.as_ref().map(|s| s.is_empty()).unwrap_or(true) {
+                return Err(XError::invalid("kafkax: 已启用 SASL 但缺少 password"));
             }
         }
         Ok(())

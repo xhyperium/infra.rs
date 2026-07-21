@@ -1,136 +1,99 @@
-//! Kafka 消费者会话：每 group 独占 `StreamConsumer`。
+//! Kafka 消费者：分区流式读取。
 
 use std::sync::Arc;
 use std::time::Duration;
 
 use bytes::Bytes;
+use futures_util::StreamExt;
 use kernel::{XError, XResult};
-use rdkafka::Message;
-use rdkafka::consumer::{Consumer, StreamConsumer};
-use rdkafka::message::BorrowedMessage;
-use rdkafka::topic_partition_list::{Offset, TopicPartitionList};
+use rskafka::client::consumer::{StartOffset, StreamConsumerBuilder};
 use tokio::sync::mpsc;
 
-use crate::error_map::map_kafka_error;
 use crate::message::KafkaMessage;
+use crate::pool::KafkaPool;
 
-/// 消费组配置。
+/// 消费配置。
 #[derive(Debug, Clone)]
 pub struct ConsumerConfig {
-    /// group.id
+    /// topic。
+    pub topic: String,
+    /// 分区（默认 0；纯协议客户端按分区消费）。
+    pub partition: i32,
+    /// 兼容字段：group id（仅用于 EventBus 文档语义；rskafka 分区消费不依赖 coordinator）。
     pub group_id: String,
-    /// auto.offset.reset：`earliest` / `latest`
-    pub auto_offset_reset: String,
-    /// 是否自动提交（默认 false；EventBus at-most-once 面可开启简化）。
-    pub enable_auto_commit: bool,
+    /// 从最早还是最新开始。
+    pub from_beginning: bool,
 }
 
 impl ConsumerConfig {
-    /// 以 group_id 构造默认配置（earliest、auto-commit 关）。
-    pub fn new(group_id: impl Into<String>) -> Self {
-        Self {
-            group_id: group_id.into(),
-            auto_offset_reset: "earliest".into(),
-            enable_auto_commit: false,
-        }
+    /// 订阅 topic，分区 0。
+    pub fn subscribe(topic: impl Into<String>, group_id: impl Into<String>) -> Self {
+        Self { topic: topic.into(), partition: 0, group_id: group_id.into(), from_beginning: true }
+    }
+
+    /// 手动指定分区。
+    pub fn assign(topic: impl Into<String>, partition: i32, group_id: impl Into<String>) -> Self {
+        Self { topic: topic.into(), partition, group_id: group_id.into(), from_beginning: true }
     }
 }
 
-/// 独占消费会话。
+/// 消费者会话。
 pub struct KafkaConsumer {
-    pub(crate) inner: Arc<StreamConsumer>,
-    pub(crate) group_id: String,
+    rx: mpsc::Receiver<XResult<KafkaMessage>>,
+    _pool: KafkaPool,
 }
 
 impl KafkaConsumer {
-    /// 消费组 id。
-    #[must_use]
-    pub fn group_id(&self) -> &str {
-        &self.group_id
-    }
-
-    /// 订阅 topic 列表（消费组 rebalance）。
-    ///
-    /// 需要 broker 上 **group coordinator 可用**。若 `FindCoordinator`
-    /// 返回 `COORDINATOR_NOT_AVAILABLE`，请改用 [`Self::assign`]。
-    pub fn subscribe(&self, topics: &[&str]) -> XResult<()> {
-        if topics.is_empty() {
-            return Err(XError::invalid("kafkax: subscribe topics 不能为空"));
+    pub(crate) async fn connect(pool: KafkaPool, cfg: ConsumerConfig) -> XResult<Self> {
+        if cfg.topic.trim().is_empty() {
+            return Err(XError::invalid("kafkax: consumer topic 不能为空"));
         }
-        self.inner.subscribe(topics).map_err(|e| map_kafka_error("subscribe", e))
-    }
-
-    /// 手动分配分区（不依赖 group coordinator）。
-    ///
-    /// `partitions` 为 `(partition, Offset::Beginning|End|Offset(...))` 列表。
-    pub fn assign(&self, topic: &str, partitions: &[(i32, i64)]) -> XResult<()> {
-        if topic.is_empty() || partitions.is_empty() {
-            return Err(XError::invalid("kafkax: assign topic/partitions 不能为空"));
-        }
-        let mut tpl = TopicPartitionList::new();
-        for (p, off) in partitions {
-            let offset = if *off < 0 {
-                // -1=end, -2=beginning（与 librdkafka 特殊值对齐）
-                if *off == -1 { Offset::End } else { Offset::Beginning }
-            } else {
-                Offset::Offset(*off)
-            };
-            tpl.add_partition_offset(topic, *p, offset)
-                .map_err(|e| map_kafka_error("assign_add", e))?;
-        }
-        self.inner.assign(&tpl).map_err(|e| map_kafka_error("assign", e))
-    }
-
-    /// 当前分区分配数量。
-    pub fn assignment_count(&self) -> XResult<usize> {
-        let tpl = self.inner.assignment().map_err(|e| map_kafka_error("assignment", e))?;
-        Ok(tpl.count())
-    }
-
-    /// 将底层 stream 转为有界 mpsc 消息流（`'static`）。
-    ///
-    /// 错误会结束流；因 `contracts::EventBus` 流项不能表达 `Result`，
-    /// 可靠业务请直接使用本类型 + 指标/日志观察错误。
-    pub fn into_message_stream(self) -> mpsc::Receiver<KafkaMessage> {
-        let (tx, rx) = mpsc::channel(256);
-        let consumer = Arc::clone(&self.inner);
+        let client = Arc::new(pool.partition_client(&cfg.topic, cfg.partition).await?);
+        let start = if cfg.from_beginning { StartOffset::Earliest } else { StartOffset::Latest };
+        let mut stream = StreamConsumerBuilder::new(client, start).build();
+        let (tx, rx) = mpsc::channel(64);
+        let topic = cfg.topic.clone();
+        let partition = cfg.partition;
         tokio::spawn(async move {
-            loop {
-                match consumer.recv().await {
-                    Ok(msg) => {
-                        let km = borrowed_to_owned(&msg);
-                        if tx.send(km).await.is_err() {
+            while let Some(item) = stream.next().await {
+                match item {
+                    Ok((record_offset, _hw)) => {
+                        let rec = record_offset.record;
+                        let payload = Bytes::from(rec.value.unwrap_or_default());
+                        let msg = KafkaMessage {
+                            topic: topic.clone(),
+                            partition,
+                            offset: record_offset.offset,
+                            key: rec.key.map(Bytes::from),
+                            payload,
+                        };
+                        if tx.send(Ok(msg)).await.is_err() {
                             break;
                         }
                     }
-                    Err(err) => {
-                        tracing::warn!(error = %err, "kafkax consumer stream error; ending stream");
+                    Err(e) => {
+                        let _ =
+                            tx.send(Err(XError::unavailable(format!("kafkax fetch: {e}")))).await;
                         break;
                     }
                 }
             }
         });
-        rx
+        Ok(Self { rx, _pool: pool })
     }
 
-    /// 有 deadline 的单次接收。
-    pub async fn recv_timeout(&self, timeout: Duration) -> XResult<Option<KafkaMessage>> {
-        match tokio::time::timeout(timeout, self.inner.recv()).await {
-            Ok(Ok(msg)) => Ok(Some(borrowed_to_owned(&msg))),
-            Ok(Err(e)) => Err(map_kafka_error("recv", e)),
-            Err(_) => Ok(None),
+    /// 取下一条消息。
+    pub async fn recv(&mut self) -> Option<XResult<KafkaMessage>> {
+        self.rx.recv().await
+    }
+
+    /// 带超时接收。
+    pub async fn recv_timeout(&mut self, timeout: Duration) -> XResult<Option<KafkaMessage>> {
+        match tokio::time::timeout(timeout, self.rx.recv()).await {
+            Ok(Some(Ok(m))) => Ok(Some(m)),
+            Ok(Some(Err(e))) => Err(e),
+            Ok(None) => Ok(None),
+            Err(_) => Err(XError::deadline_exceeded("kafkax consumer recv timeout")),
         }
-    }
-}
-
-fn borrowed_to_owned(msg: &BorrowedMessage<'_>) -> KafkaMessage {
-    let payload = msg.payload().map(Bytes::copy_from_slice).unwrap_or_default();
-    let key = msg.key().map(Bytes::copy_from_slice);
-    KafkaMessage {
-        topic: msg.topic().to_string(),
-        partition: msg.partition(),
-        offset: msg.offset(),
-        payload,
-        key,
     }
 }
