@@ -102,8 +102,10 @@ wt
 |-------|------|------|
 | `xhyper-kernel` | `crates/kernel/` | L0 语义信任根（clock / lifecycle） |
 | `xhyper-testkit` | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
+| `xhyper-configx` | `crates/configx/` | L1 配置存储（MemoryConfigStore） |
 | `xhyper-decimalx` | `crates/types/decimal/` | 十进制数值 / Money |
 | `xhyper-canonical` | `crates/types/canonical/` | 跨层共享纯 DTO（Money 复用 decimalx） |
+| `xhyper-resiliencx` | `crates/resiliencx/` | L1 重试（熔断/限流未实现） |
 
 Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTURE.md)。
 

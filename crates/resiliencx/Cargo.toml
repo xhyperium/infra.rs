@@ -1,0 +1,19 @@
+[package]
+name = "xhyper-resiliencx"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+description = "L1 重试（active SSOT §2）；熔断/限流未实现"
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+name = "resiliencx"
+
+[dependencies]
+# path + version：满足 cargo-deny bans.wildcards=deny
+xhyper-kernel = { path = "../kernel", version = "0.3.0" }
+
+[lints]
+workspace = true
