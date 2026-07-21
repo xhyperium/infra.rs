@@ -6,7 +6,7 @@
 | 镜像 | `.agents/ssot/types/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 审计日期 | 2026-07-21 |
 | 跟进 | 2026-07-21 生产就绪 P0/P1 **已合入 main**（PR #98）；**非**整体 Production Ready / package stable |
-| 结论 | **两 crate 均已注册 workspace 并有可运行测试**；decimal 不变量已硬化；canonical **仅** committed wire v1 五类型有冻结策略 |
+| 结论 | **两 crate 均已注册 workspace 并有可运行测试**；decimal 不变量已硬化；canonical committed wire 覆盖 v1–v1.3 公开 DTO 子集（**≠** package Production Ready） |
 
 ## 结论摘要
 
@@ -14,10 +14,10 @@
 |------|------|
 | 上游镜像 COMPLETE / Spec Approved 叙事 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
 | 本仓 `crates/types/decimal` | **已落地**（package `xhyper-decimalx` / lib `decimalx`）；字段私有 + 校验 serde + `DecimalError` |
-| 本仓 `crates/types/canonical` | **已落地**（package `xhyper-canonical` / lib `canonical`）；committed wire v1 子集冻结 |
+| 本仓 `crates/types/canonical` | **已落地**（package `xhyper-canonical` / lib `canonical`）；committed wire v1 / v1.1 / v1.2 / v1.3 子集冻结 |
 | `infra-core` | **已移除**；types 不依赖它 |
 | package stable / crates.io | **未**宣称；`publish = false` |
-| 全量 wire stable | **未**宣称；仅见 `wire::COMMITTED_WIRE_V1` 与各 residual / WIRE 文档 |
+| 全量 wire stable / package stable | **未**宣称；见 `wire::COMMITTED_WIRE_V1{,_1,_2,_3}` 与 residual |
 
 ## 本仓可观察事实
 
@@ -37,7 +37,7 @@ crates/types/canonical/         EXISTS · members 已注册
   publish                       false
   生产依赖                      decimalx + serde
   Active SSOT                   .agents/ssot/types/canonical/spec/spec.md
-  wire 模块                     src/wire.rs（Committed v1 清单与策略）
+  wire 模块                     src/wire.rs（Committed v1 / v1.1 / v1.2 / v1.3 清单与策略）
 ```
 
 验证（本仓权威命令）：
@@ -93,11 +93,11 @@ canonical  →  decimalx  →  kernel
 | C-6 | `shape::*` / `proposed_time::*` 公开 | PASS | 模块 + `tests/public_api.rs` |
 | C-7 | 依赖仅 decimalx + serde | PASS | `Cargo.toml` |
 | C-8 | align script 可跑 | PASS | `node scripts/quality-gates/check-canonical-align.mjs` |
-| C-9 | 全 wire Production Ready / package stable | OPEN | **未**宣称；仅 committed v1 子集 |
-| C-10 | Committed wire v1 清单 | PASS | `wire::COMMITTED_WIRE_V1`：CancelOrderRequest / OrderRef / OrderAck / OrderStatus / Side |
-| C-11 | committed 类型 `deny_unknown_fields` | PASS | 五类型 derive + wire 拒绝测 |
-| C-12 | 双向 golden / N-1 / 拒绝样例 | PASS | `wire` 单元测 + fixture + `order_cancel_okx` |
-| C-13 | Uncommitted DTO 显式标注 | PASS | Order/Tick/Trade/… rustdoc `Wire：**Uncommitted**` |
+| C-9 | 全 wire Production Ready / package stable | OPEN | **未**宣称；committed 仅限清单类型，无 package stable |
+| C-10 | Committed wire 清单 | PASS | `COMMITTED_WIRE_V1` 五类型 + `V1_1` Order + `V1_2` Tick/Trade + `V1_3` Position/OrderBookSnapshot/PriceLevel/SymbolMeta |
+| C-11 | committed 类型 `deny_unknown_fields` | PASS | 全部 committed DTO derive + wire 拒绝测 |
+| C-12 | 双向 golden / N-1 / 拒绝样例 | PASS | `wire` 单元测 + `fixtures/market/canonical/v1{,.1,.2,.3}/` |
+| C-13 | 未晋升类型诚实标注 | PASS | 公开市场 DTO 均已晋升；Money/alias 不在 committed 清单（wire SSOT 在 decimalx / alias） |
 | C-14 | `[lints] workspace = true` | PASS | `Cargo.toml` |
 
 ## 与镜像文档的关系
@@ -111,7 +111,7 @@ canonical  →  decimalx  →  kernel
 ## 未做（follow-up / OPEN / DEFER）
 
 - decimal：fuzz / 独立高精度 oracle / mutants / Miri 实测通过声明；wire 跨版本稳定协议
-- canonical：非 committed DTO 的 wire 承诺与兼容矩阵；package stable
+- canonical：package stable / 跨语言 wire 协议；镜像 `wire-commitment-matrix.md` 与实现清单同步（上游 R6）
 - types 专用 coverage / mutants / miri CI（若需要与 kernel/testkit 同级）
 - 上游 SSOT 镜像措辞收口（应在 xhyper.rs 修，再删除感知同步）
 
@@ -122,3 +122,4 @@ canonical  →  decimalx  →  kernel
 | 2026-07-21 | 初版：decimal + canonical 本仓落地状态；配合移除 `infra-core` 后的 workspace 地图 |
 | 2026-07-21 | 生产就绪闭合：字段私有 / DecimalError / committed wire v1 / Uncommitted 标注；同步 PR #98 |
 | 2026-07-21 | PR #98 合入 main：本对齐文随主干生效 |
+| 2026-07-21 | infra-asa.3：晋升 Order/Tick/Trade/Position/OrderBookSnapshot/PriceLevel/SymbolMeta 为 committed v1.1–v1.3；**≠** package Production Ready |
