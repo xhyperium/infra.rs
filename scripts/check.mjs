@@ -10,9 +10,13 @@
  * SSOT: .claude/hooks/ / .agents/ssot/SSOT.md
  */
 import { existsSync, readFileSync, readdirSync } from "fs";
-import { join, dirname } from "path";
+import { join, dirname, isAbsolute, resolve } from "path";
 import { fileURLToPath } from "url";
 import { execSync } from "child_process";
+import {
+  describePrePushHookFailure,
+  inspectPrePushHook,
+} from "./git-hook-policy.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -65,6 +69,30 @@ const hooksPresent = existsSync(hooksDir)
   : new Set();
 for (const h of requiredHooks) {
   ok(`Hook 文件: ${h}`, hooksPresent.has(h), `缺失 .claude/hooks/${h}`);
+}
+
+// 活动 Git pre-push 可能来自全局 core.hooksPath。只在 hook 含 Beads managed
+// block 时检查组合可达性；CI 没有本地 hook 时保持可复现。
+const configuredHooksPath = run("git config --path core.hooksPath 2>/dev/null");
+const gitCommonDir = run("git rev-parse --git-common-dir 2>/dev/null");
+const hooksBase = configuredHooksPath
+  ? isAbsolute(configuredHooksPath)
+    ? configuredHooksPath
+    : resolve(root, configuredHooksPath)
+  : gitCommonDir
+    ? resolve(root, gitCommonDir, "hooks")
+    : "";
+const activePrePushPath = hooksBase ? join(hooksBase, "pre-push") : "";
+if (activePrePushPath && existsSync(activePrePushPath)) {
+  const activePrePush = readFileSync(activePrePushPath, "utf8");
+  const result = inspectPrePushHook(activePrePush);
+  if (result.hasBeadsIntegration) {
+    ok("活动 pre-push hook 组合健康", result.ok, describePrePushHookFailure(result));
+  } else {
+    ok("活动 pre-push hook 无 Beads managed block（跳过组合检查）", true);
+  }
+} else {
+  ok("未配置活动 pre-push hook（跳过组合检查）", true);
 }
 
 const settings = read(".claude/settings.json");
