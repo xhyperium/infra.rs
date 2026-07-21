@@ -36,10 +36,15 @@ Package：`xhyper-decimalx` · lib：`decimalx` · path：`crates/types/decimal`
 ## 测试
 
 ```bash
-cargo test -p xhyper-decimalx
-cargo check -p decimalx --all-targets
+cargo test -p decimalx --all-targets
 cargo clippy -p decimalx --all-targets -- -D warnings
+# oracle / 边界 / 对抗 serde（W1）
+cargo test -p decimalx --test oracle_diff --test boundary_matrix --test adversarial_serde
+# 生产路径 panicking 运算符门禁
+node scripts/quality-gates/check-decimal-no-panicking-ops.mjs
 ```
+
+证据：`tests/oracle_diff.rs`（BigDecimal）、`boundary_matrix.rs`、`adversarial_serde.rs`；CI scheduled：`decimal-mutants.yml` / `decimal-miri.yml`。
 
 ## 版本
 

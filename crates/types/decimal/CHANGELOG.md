@@ -5,6 +5,9 @@
 ### Added
 
 - 按 crates 子模块标准补齐 `examples/` 骨架（`.gitkeep`）
+- W1 证据硬化：`tests/oracle_diff.rs`（BigDecimal 差分）、`boundary_matrix.rs`、`adversarial_serde.rs`
+- 生产路径 panicking 运算符门禁：`scripts/quality-gates/check-decimal-no-panicking-ops.mjs`
+- scheduled CI：`decimal-mutants.yml` / `decimal-miri.yml`
 
 ## 0.1.0 — 2026-07-21
 
