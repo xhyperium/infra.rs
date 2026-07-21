@@ -1,15 +1,6 @@
 name: 安全
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "**/Cargo.toml"
-      - "deny.toml"
-      - "rust-toolchain.toml"
-      - ".github/workflows/security.yml"
   pull_request:
     branches: [main]
     paths:
@@ -21,6 +12,7 @@ on:
       - ".github/workflows/security.yml"
   schedule:
     - cron: "0 2 * * 1" # 每周一 02:00 UTC
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

@@ -1,8 +1,5 @@
 name: 模块自验证
 on:
-  push:
-    branches: [main]
-    paths: ["scripts/**", ".claude/hooks/**", ".claude/settings.json", ".github/workflows/self-test.yml"]
   pull_request:
     branches: [main]
     paths: ["scripts/**", ".claude/hooks/**", ".claude/settings.json", ".github/workflows/self-test.yml"]

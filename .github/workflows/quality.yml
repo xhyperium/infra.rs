@@ -1,15 +1,6 @@
 name: 质量
 
 on:
-  push:
-    branches: [main, develop]
-    paths:
-      - "Cargo.toml"
-      - "**/*.rs"
-      - "**/Cargo.toml"
-      - "rustfmt.toml"
-      - "clippy.toml"
-      - ".github/workflows/quality.yml"
   pull_request:
     branches: [main, develop]
     paths:
@@ -19,6 +10,7 @@ on:
       - "rustfmt.toml"
       - "clippy.toml"
       - ".github/workflows/quality.yml"
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

@@ -4,15 +4,6 @@ name: Testkit Coverage
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main, develop]
-    paths:
-      - "crates/testkit/**"
-      - "crates/kernel/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "scripts/quality-gates/cov-gate-100.mjs"
-      - ".github/workflows/testkit-coverage.yml"
   pull_request:
     branches: [main, develop]
     paths:

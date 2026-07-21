@@ -4,16 +4,6 @@ name: Observex Coverage
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main, develop]
-    paths:
-      - "crates/observex/**"
-      - "crates/contracts/**"
-      - "crates/kernel/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "scripts/quality-gates/cov-gate-100.mjs"
-      - ".github/workflows/observex-coverage.yml"
   pull_request:
     branches: [main, develop]
     paths:
