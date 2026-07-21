@@ -1,0 +1,32 @@
+[package]
+name = "goalctl"
+version = "0.2.0"
+edition.workspace = true
+rust-version.workspace = true
+description = "Minimal Goal → Contract compiler (doctor / validate / compile)"
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+name = "goalctl"
+path = "src/lib.rs"
+
+[[bin]]
+name = "goalctl"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+hex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[lints]
+workspace = true

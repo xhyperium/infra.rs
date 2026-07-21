@@ -1,6 +1,6 @@
 # clickhousex docs
 
-**Package**：`clickhousex` · **lib**：`clickhousex` · **角色**：storage adapter scaffold
+**Package**：`clickhousex` · **lib**：`clickhousex` · **角色**：storage adapter（HTTP 生产默认）
 
 本目录存放 **crate 级**设计 / 契约补充 / 迁移笔记。
 不替代 rustdoc；不重复仓库根治理文档（见分层边界 `crates/AGENTS.md`）。
@@ -16,20 +16,17 @@
 | 上游 SSOT 镜像 | `.agents/ssot/adapters/storage/clickhouse/` |
 | Workspace 总览 | [`docs/ssot/workspace-ssot-alignment.md`](../../../../../docs/ssot/workspace-ssot-alignment.md) |
 
-## 边界
+## 公开 API（P0）
 
-- **放这里**：本 crate 设计决策、公开 API 契约补充、迁移 / 升级笔记
-- **不放这里**：全仓治理、跨 crate SSOT 总览、CI 状态（见仓库根 `docs/{governance,ssot,status,decisions}/`）
+| 符号 | 说明 |
+|------|------|
+| `ClickHouseConfig` | env / 默认值；`password` Debug 脱敏 |
+| `ClickHousePool` | `connect` / `client` / `ping` / `execute` / `query_text` / `query_rows` / `insert_json_each_row` / `ensure_analytics_table` / `close` |
+| `ClickHouseClient` | `ClickHousePool` 类型别名 |
+| `AnalyticsSink` impl | `sink(event, payload)` → `analytics_events` 表 |
+| `ClickHouseAdapter` | 仅 `feature = "scaffold"` |
 
 ## 状态声明
 
-本 crate 当前为 **scaffold**：标准布局与 trait 接线可能已齐，**不等于**业务实现或 package stable。
-以对齐矩阵与 `cargo metadata` 为准。
-
-## 生产误用警示（infra-s9t.14）
-
-**默认实现是进程内 scaffold/mock，不是生产客户端。**
-
-- 禁止把 `*Adapter` 类型名当成已对接真实 Binance/Postgres/Redis/…
-- 真实入口须有显式 feature（如 redisx `live`）与文档/CI 证据
-- 详见 `docs/plans/artifacts/prod-consume-surface.md`
+- 默认路径为 **HTTP 生产客户端**（非 scaffold）。
+- 未宣称：官方 `clickhouse` crate 原生协议、集群路由、强类型 RowBinary batcher、exactly-once。

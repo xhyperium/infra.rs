@@ -1,4 +1,6 @@
-//! OSS 内存 scaffold：`ObjectStore`。
+//! OSS 内存 scaffold：`ObjectStore`（feature `scaffold`）。
+//!
+//! **非生产**：禁止当作真实 OSS 客户端。
 
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -8,6 +10,7 @@ use bytes::Bytes;
 use contracts::ObjectStore;
 use kernel::{XError, XResult};
 
+/// 进程内对象表 scaffold。
 pub struct OssAdapter {
     name: String,
     endpoint: String,

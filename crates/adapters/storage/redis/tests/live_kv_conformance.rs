@@ -1,18 +1,18 @@
-//! first-batch KeyValueStore 合同在 **非 scaffold** `RedisLiveKv` 上的验证（infra-s9t.3）。
+//! first-batch KeyValueStore 合同在生产 [`RedisClient`] 上的验证。
 //!
 //! 默认 ignore；有 Redis 时：
-//! `REDIS_URL=redis://127.0.0.1:6379 cargo test -p redisx --features live --test live_kv_conformance -- --ignored`
-
-#![cfg(feature = "live")]
+//! ```bash
+//! cargo test -p redisx --test live_kv_conformance -- --ignored
+//! ```
 
 use std::time::Duration;
 
 use contracts::KeyValueStore;
-use redisx::RedisLiveKv;
+use redisx::{RedisConfig, RedisLiveKv, RedisPool};
 
 async fn connect() -> RedisLiveKv {
-    let url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".into());
-    RedisLiveKv::connect(&url).await.expect("redis connect")
+    let cfg = RedisConfig::from_env().expect("RedisConfig::from_env");
+    RedisPool::connect(cfg).await.expect("redis connect").client()
 }
 
 #[tokio::test]

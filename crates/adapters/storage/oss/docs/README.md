@@ -23,13 +23,14 @@
 
 ## 状态声明
 
-本 crate 当前为 **scaffold**：标准布局与 trait 接线可能已齐，**不等于**业务实现或 package stable。
-以对齐矩阵与 `cargo metadata` 为准。
+本 crate **默认生产入口**为 `OssClient`（reqwest + OSS V1 签名，`FOUNDATIONX_OSSX_*`）。
 
-## 生产误用警示（infra-s9t.14）
+- feature `scaffold`：进程内 `OssAdapter`（**非**生产）
+- multipart / lifecycle / package stable：**未**宣称
+- 以对齐矩阵与 `cargo test -p ossx` / live `#[ignore]` 证据为准
 
-**默认实现是进程内 scaffold/mock，不是生产客户端。**
+## 生产误用警示
 
-- 禁止把 `*Adapter` 类型名当成已对接真实 Binance/Postgres/Redis/…
-- 真实入口须有显式 feature（如 redisx `live`）与文档/CI 证据
-- 详见 `docs/plans/artifacts/prod-consume-surface.md`
+- **不要**把 feature `scaffold` 的 `OssAdapter` 当成真实 OSS
+- 密钥仅经环境变量 / `scripts/live/export-foundationx-env.sh` 注入；**禁止**提交 secret
+- `Debug` 对 AccessKeySecret 脱敏

@@ -5,8 +5,8 @@
 | 域 | `adapters/`（exchange + storage） |
 | 镜像 | `.agents/ssot/adapters/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 本仓路径 | `crates/adapters/{exchange,storage}/<name>` |
-| 审计日期 | 2026-07-21 |
-| 结论 | **SSOT 镜像已本地化注册**；**9 adapter + contracts 已 workspace 注册**；mock-first + **redisx live KV** + exchange **只读 server_time**（infra-s9t.2/.13，#168/#172）；**未**宣称业务实现 / package stable / ship / Production Ready |
+| 审计日期 | 2026-07-22 |
+| 结论 | **7 个 storage 默认生产客户端已落地**（RedisPool / PostgresPool / KafkaPool / NatsPool / OssClient / ClickHousePool / TaosPool）+ live `#[ignore]` + benches；scaffold 改 `feature = "scaffold"`；exchange 仍只读 server_time；**未**宣称 package stable / Cluster·JetStream·EOS 全量 / crates.io |
 
 ## 结论摘要
 
@@ -14,7 +14,7 @@
 |------|------|
 | 上游镜像 COMPLETE / Spec Approved 叙事 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
 | 镜像同步 | **完整**：与 `xhyper.rs/.agent/SSOT/adapters/` `diff -rq` = 0（144 文件 / 1.1M） |
-| 本仓 adapter crates | **scaffold 已注册**；exchange 可选 `HttpDriver` + **公共 `server_time` JSON 解析**；其余业务协议 **DEFER**；`redisx` feature `live` → `RedisLiveKv` |
+| 本仓 adapter crates | **storage 生产默认路径已落地**（见下表）；scaffold → `feature = "scaffold"`；exchange 可选 `HttpDriver` + **公共 `server_time` JSON 解析**；Cluster / Sentinel / JetStream / EOS / multipart / migrations **DEFER** |
 | `crates/AGENTS.md` 标准八项布局 | **已齐**（README / AGENTS / CHANGELOG / examples / docs / tests / benches） |
 | `publish = false` | **已**在 adapter + contracts `Cargo.toml` 显式关闭 |
 | package stable / crates.io | **未**宣称 |
@@ -50,7 +50,7 @@ Cargo.toml members              含 crates/contracts + 9 个 crates/adapters/**
 package 命名                    xhyper-contracts；binancex / okxx / redisx / …（adapter 无 xhyper- 前缀）
 lib 入口                        adapters: Error/Result；contracts: ExchangeAdapter/StorageAdapter
 生产依赖                        adapters: thiserror；contracts: serde + thiserror
-实现深度                        scaffold 为主；redis live KV + exchange 公共 time 为有限真路径
+实现深度                        storage **生产默认客户端** + live/bench；exchange 公共 time；Cluster/JetStream 等 DEFER
 标准布局八项                    已齐
 publish                         false（显式）
 version                         workspace 0.3.0
@@ -60,13 +60,13 @@ version                         workspace 0.3.0
 |----------|----------|---------|----------|
 | `.agents/ssot/adapters/exchange/binance` | `crates/adapters/exchange/binance` | `binancex` | scaffold + mock HTTP + **`parse_binance_server_time`** + `#[ignore]` live |
 | `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | scaffold + mock HTTP + **`parse_okx_server_time`** + `#[ignore]` live |
-| `.agents/ssot/adapters/storage/clickhouse` | `crates/adapters/storage/clickhouse` | `clickhousex` | pure scaffold |
-| `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | scaffold + **`MockKafkaBus`**（EventBus） |
-| `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | scaffold + **`MockNatsBus`**（EventBus） |
-| `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | pure scaffold |
-| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | scaffold（本地 **`ScaffoldTxContext`**，不依赖 contract-testkit）+ **`ObservingPostgresAdapter` / `MockPostgresBackend`**（staged Tx） |
-| `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | mock KV + **`RedisLiveKv`（feature `live`）** + `live_kv_conformance` |
-| `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | pure scaffold |
+| `.agents/ssot/adapters/storage/clickhouse` | `crates/adapters/storage/clickhouse` | `clickhousex` | **生产 `ClickHousePool` HTTP** + `AnalyticsSink` + `FOUNDATIONX_CLICKHOUSEX_*` + live；scaffold feature |
+| `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **生产 `KafkaPool`/`Producer`/`Consumer`** + `EventBus`（at-most-once）+ SASL + live；scaffold feature |
+| `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **生产 `NatsPool`** + `EventBus` + `FOUNDATIONX_NATS_*` + live；scaffold feature |
+| `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | **生产 `OssClient`（OSS V1 签名）** + `FOUNDATIONX_OSSX_*` + live；scaffold feature；multipart **DEFER** |
+| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **生产 `PostgresPool`/`PgTransaction`** + SQLSTATE 映射 + `FOUNDATIONX_POSTGRESX_*` + live；scaffold feature |
+| `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **生产 `RedisPool`/`RedisClient`** + `KeyValueStore` + `FOUNDATIONX_REDISX_*` + live/bench；scaffold feature |
+| `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **生产 `TaosPool` REST** + `TimeSeriesStore` + `FOUNDATIONX_TAOSX_*` + live；scaffold feature |
 
 验证（本仓权威命令）：
 
@@ -97,12 +97,13 @@ cargo test --workspace --all-targets
 | A-3 | 9 域均有 README + 11 层 + dual-spec | PASS | 镜像树；`cmp` 全 OK |
 | A-4 | 本仓 crate 路径与 SSOT Code 列一致 | PASS | `crates/adapters/...` 与镜像 README Code 列同构 |
 | A-5 | workspace members 已注册 9 package | PASS | 根 `Cargo.toml` |
-| A-6 | scaffold 可 `cargo check` / `cargo test` | PASS | 0 业务测试；编译通过 |
+| A-6 | scaffold 可 `cargo check` / `cargo test` | PASS | feature `scaffold` 可选；默认生产路径可编译测试 |
 | A-7 | 标准八项布局 | PASS | 9 adapters + contracts 均已补齐（含 benches/） |
 | A-8 | `publish = false` | PASS | 各 `Cargo.toml` 显式关闭 |
-| A-9 | 实现真实 I/O / adapter 业务 | **部分** | redis live KV + public server_time；下单/签名/Tx/Bus 业务仍 OPEN |
-| A-10 | package stable / Spec Approved 本仓宣称 | OPEN | **禁止**用镜像 COMPLETE 代替 |
+| A-9 | 实现真实 I/O / adapter 业务 | **部分（storage P0）** | 7 storage 生产客户端 + live 内容断言；exchange 交易 / Cluster / JetStream / EOS / multipart **OPEN** |
+| A-10 | package stable / Spec Approved 本仓宣称 | OPEN | **禁止**用镜像 COMPLETE 代替；P0 生产入口 ≠ package stable |
 | A-11 | contracts workspace 注册 | PASS | #43 `crates/contracts` → `xhyper-contracts` |
+| A-12 | `FOUNDATIONX_*` 环境注入 + 密钥不入库 | PASS | `from_env` + live tests；secrets 仅进程 env |
 
 ## 与镜像文档的关系
 

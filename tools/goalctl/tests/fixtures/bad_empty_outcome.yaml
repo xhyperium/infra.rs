@@ -1,0 +1,6 @@
+id: GOAL-BAD-EMPTY
+outcome: ""
+risk: R2
+acceptance:
+  - id: AC-1
+    statement: "should fail before this"

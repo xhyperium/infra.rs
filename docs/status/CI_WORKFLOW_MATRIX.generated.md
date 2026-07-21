@@ -37,19 +37,21 @@
 | `release.yml` | Release | workflow_dispatch | `release-build`, `release-test`, `release-clippy`, `release-doc` |
 | `resiliencx-coverage.yml` | Resiliencx Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `schedulex-coverage.yml` | Schedulex Coverage | pull_request, workflow_dispatch | `line-coverage` |
+| `secrets-lint.yml` | Secrets Lint | pull_request, workflow_dispatch | `check-changes`, `lint-tables`, `lint-dotenv`, `summary` |
 | `security.yml` | 安全 | pull_request, schedule, workflow_dispatch | `check-rust`, `deny`, `audit` |
 | `self-test.yml` | 模块自验证 | pull_request | `scripts-lint`, `hooks-lint`, `scripts-test` |
 | `testkit-coverage.yml` | Testkit Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `testkit-miri.yml` | Testkit Miri | schedule, workflow_dispatch | `miri` |
 | `testkit-mutants.yml` | Testkit Mutants | schedule, workflow_dispatch | `mutants` |
 | `validation.yml` | 校验 | pull_request, workflow_dispatch | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness`, `canonical-align`, `decimal-panicking-ops`, `settings-hooks`, `crate-status` |
+| `workflow-security.yml` | Workflow Security | pull_request, workflow_dispatch | `audit` |
 
 ## 统计
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 34 |
-| Job 总数（解析） | 64 |
+| 工作流文件数 | 36 |
+| Job 总数（解析） | 69 |
 
 ## 维护
 

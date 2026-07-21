@@ -1,0 +1,6 @@
+id: GOAL-BAD-AC
+outcome: "something measurable"
+risk: R2
+acceptance:
+  - id: ""
+    statement: "missing id must fail"

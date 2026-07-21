@@ -1,6 +1,6 @@
 [package]
 name = "natsx"
-description = "nats storage adapter (EventBus scaffold)"
+description = "nats storage adapter (NatsPool + EventBus; optional scaffold)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,16 +8,28 @@ repository.workspace = true
 rust-version.workspace = true
 publish = false
 
+[features]
+default = []
+# 旧内存 scaffold / mock（迁移与离线演示）
+scaffold = []
+
 [dependencies]
 async-trait = { workspace = true }
+async-nats = { workspace = true }
 bytes = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
 contracts = { path = "../../../contracts", version = "0.1.0" }
 kernel = { path = "../../../kernel", version = "0.3.0" }
+tokio = { workspace = true }
+tracing = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
+
+[[bench]]
+name = "hot_path"
+harness = false
 
 [lints]
 workspace = true

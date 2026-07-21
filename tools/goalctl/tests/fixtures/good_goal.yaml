@@ -1,0 +1,16 @@
+id: GOAL-2026-DEMO-001
+outcome: "cargo test -p goalctl passes with fixtures"
+risk: R1
+acceptance:
+  - id: AC-1
+    statement: "doctor exits 0"
+  - id: AC-2
+    statement: "compile emits stable digest"
+invariants:
+  - "unit tests do not require network"
+forbidden:
+  - "embed production secrets"
+not_in_scope:
+  - "full monorepo authority plane"
+touches:
+  - "tools/goalctl"

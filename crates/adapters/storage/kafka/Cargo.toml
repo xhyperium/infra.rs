@@ -1,6 +1,6 @@
 [package]
 name = "kafkax"
-description = "kafka storage adapter (EventBus scaffold)"
+description = "kafka storage adapter (KafkaPool + EventBus via pure-Rust rskafka)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,16 +8,31 @@ repository.workspace = true
 rust-version.workspace = true
 publish = false
 
+[features]
+default = []
+# 旧内存 scaffold / mock（迁移与离线演示）
+scaffold = []
+# 兼容旧 feature 名：SASL 已内置于 rskafka（rsasl）
+sasl = []
+
 [dependencies]
 async-trait = { workspace = true }
 bytes = { workspace = true }
+chrono = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
 contracts = { path = "../../../contracts", version = "0.1.0" }
 kernel = { path = "../../../kernel", version = "0.3.0" }
+rskafka = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
+
+[[bench]]
+name = "hot_path"
+harness = false
 
 [lints]
 workspace = true

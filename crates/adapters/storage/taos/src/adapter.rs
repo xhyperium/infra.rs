@@ -1,4 +1,4 @@
-//! TDengine 内存 scaffold：`TimeSeriesStore`。
+//! TDengine 内存 scaffold：`TimeSeriesStore`（feature `scaffold`）。
 
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -8,6 +8,7 @@ use canonical::Tick;
 use contracts::TimeSeriesStore;
 use kernel::{XError, XResult};
 
+/// 进程内序列缓冲（**非**真实 TDengine I/O）。
 pub struct TaosAdapter {
     name: String,
     endpoint: String,
@@ -15,18 +16,22 @@ pub struct TaosAdapter {
 }
 
 impl TaosAdapter {
+    /// 构造命名 scaffold。
     pub fn new(name: impl Into<String>, endpoint: impl Into<String>) -> Self {
         Self { name: name.into(), endpoint: endpoint.into(), series: Mutex::new(HashMap::new()) }
     }
 
+    /// 本地默认端点。
     pub fn local() -> Self {
         Self::new("taos-local", "taos://127.0.0.1:6030")
     }
 
+    /// 名称。
     pub fn name(&self) -> &str {
         &self.name
     }
 
+    /// 端点。
     pub fn endpoint(&self) -> &str {
         &self.endpoint
     }
