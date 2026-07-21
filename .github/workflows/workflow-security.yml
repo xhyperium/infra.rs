@@ -45,7 +45,7 @@ jobs:
                       "msg": "Uses 'pull_request_target' — can execute untrusted PR code",
                   },
                   "no-self-hosted-runner": {
-                      "check": lambda d: 'self-hosted' not in str(d).lower(),
+                      "check": lambda d: not _has_self_hosted(d),
                       "msg": "Uses self-hosted runner — potential persistence risk",
                   },
               },
@@ -96,9 +96,26 @@ jobs:
                               return True
               return False
 
+          def _has_self_hosted(d):
+              """Check only 'runs-on' fields, not run: script content."""
+              for job in (d.get('jobs') or {}).values():
+                  runs_on = job.get('runs-on', '')
+                  if isinstance(runs_on, str) and 'self-hosted' in runs_on.lower():
+                      return True
+                  if isinstance(runs_on, list):
+                      for r in runs_on:
+                          if isinstance(r, str) and 'self-hosted' in r.lower():
+                              return True
+              return False
+
           def _has_v3_checkout(d):
-              content = str(d)
-              return 'actions/checkout@v3' in content
+              """Check only step uses: fields, not run: script content."""
+              for job in (d.get('jobs') or {}).values():
+                  for step in job.get('steps', []):
+                      uses = step.get('uses', '')
+                      if 'actions/checkout@v3' in str(uses):
+                          return True
+              return False
 
           # Scan all workflow files
           for fname in sorted(os.listdir(workflows_dir)):
