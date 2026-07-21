@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-21T18:04:15Z
+> **生成时间**：2026-07-21T19:21:06Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -51,18 +51,18 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `schedulex` | `crates/schedulex` | L1 | 7/7 | ✅ 2i+u | 550 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/schedulex-ssot-alignment.md) |
 | `contract-testkit` | `crates/test-support/contracts` | L1 | 7/7 | ✅ 1i | 1022 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/testkit-ssot-alignment.md) |
 | `transportx` | `crates/transport` | L1 | 7/7 | ✅ 5i | 620 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/transport-ssot-alignment.md) |
-| `goalctl` | `tools/goalctl` | L1 | 4/7 | ✅ 1i+u | 527 | · | `layout-incomplete` | **76%** ██████░░ | — |
-| `verifyctl` | `tools/verifyctl` | L1 | 3/7 | ✅ 1i+u | 597 | · | `layout-incomplete` | **68%** █████░░░ | — |
+| `goalctl` | `tools/goalctl` | L1 | 4/7 | ✅ 1i+u | 536 | · | `layout-incomplete` | **76%** ██████░░ | — |
+| `verifyctl` | `tools/verifyctl` | L1 | 3/7 | ✅ 1i+u | 634 | · | `layout-incomplete` | **68%** █████░░░ | — |
 | `contracts` | `crates/contracts` | contracts | 7/7 | ✅ 4i+u | 616 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/contracts-ssot-alignment.md) |
 | `binancex` | `crates/adapters/exchange/binance` | adapter | 7/7 | ✅ 1i+u | 644 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx` | adapter | 7/7 | ✅ 1i+u | 506 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
-| `clickhousex` | `crates/adapters/storage/clickhouse` | adapter | 7/7 | ✅ 1i+u | 477 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
-| `kafkax` | `crates/adapters/storage/kafka` | adapter | 7/7 | ✅ 1i+u | 987 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
-| `natsx` | `crates/adapters/storage/nats` | adapter | 7/7 | ✅ 1i+u | 648 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
+| `clickhousex` | `crates/adapters/storage/clickhouse` | adapter | 7/7 | ✅ 1i+u | 513 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
+| `kafkax` | `crates/adapters/storage/kafka` | adapter | 7/7 | ✅ 1i+u | 1051 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
+| `natsx` | `crates/adapters/storage/nats` | adapter | 7/7 | ✅ 1i+u | 672 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
 | `ossx` | `crates/adapters/storage/oss` | adapter | 7/7 | ✅ 1i+u | 698 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
-| `postgresx` | `crates/adapters/storage/postgres` | adapter | 7/7 | ✅ 1i+u | 1671 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
-| `redisx` | `crates/adapters/storage/redis` | adapter | 7/7 | ✅ 2i+u | 1458 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
-| `taosx` | `crates/adapters/storage/taos` | adapter | 7/7 | ✅ 1i+u | 723 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
+| `postgresx` | `crates/adapters/storage/postgres` | adapter | 7/7 | ✅ 1i+u | 1702 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
+| `redisx` | `crates/adapters/storage/redis` | adapter | 7/7 | ✅ 2i+u | 1516 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
+| `taosx` | `crates/adapters/storage/taos` | adapter | 7/7 | ✅ 1i+u | 759 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
 
 ### 图例
 
