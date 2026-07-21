@@ -34,4 +34,3 @@ node scripts/quality-gates/cov-gate-100.mjs -p evidence --filter crates/evidence
 | 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
 
 自验证：`cargo test -p evidence --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p evidence`；`cargo run -p evidence --example …`；`cargo bench -p evidence --bench hot_path -- --quick`。
-

@@ -154,4 +154,3 @@ cargo llvm-cov -p configx --summary-only
 | 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
 
 自验证：`cargo test -p configx --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p configx`；`cargo run -p configx --example …`；`cargo bench -p configx --bench hot_path -- --quick`。
-

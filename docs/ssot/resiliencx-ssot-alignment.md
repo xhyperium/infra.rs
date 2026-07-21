@@ -59,4 +59,3 @@ cargo tree -p resiliencx -i observex  # 须无匹配
 | 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
 
 自验证：`cargo test -p resiliencx --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p resiliencx`；`cargo run -p resiliencx --example …`；`cargo bench -p resiliencx --bench hot_path -- --quick`。
-

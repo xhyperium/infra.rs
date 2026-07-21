@@ -145,4 +145,3 @@ core 0.1.0 GAP = 0
 | 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
 
 自验证：`cargo test -p observex --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p observex`；`cargo run -p observex --example …`；`cargo bench -p observex --bench hot_path -- --quick`。
-

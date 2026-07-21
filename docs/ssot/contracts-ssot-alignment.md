@@ -123,4 +123,3 @@ cargo test -p redisx --features live --test live_kv_conformance -- --ignored
 | 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
 
 自验证：`cargo test -p contracts --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p contracts`；`cargo run -p contracts --example …`；`cargo bench -p contracts --bench hot_path -- --quick`。
-

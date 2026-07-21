@@ -62,4 +62,3 @@ cargo llvm-cov -p schedulex --fail-under-lines 100 --summary-only
 | 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
 
 自验证：`cargo test -p schedulex --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p schedulex`；`cargo run -p schedulex --example …`；`cargo bench -p schedulex --bench hot_path -- --quick`。
-
