@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * gc-scan.mjs — 仓库垃圾扫描
  *

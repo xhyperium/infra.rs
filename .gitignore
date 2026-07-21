@@ -106,3 +106,4 @@ desktop.ini
 .cargo/cache/
 .worktrees/
 .worktree/
+.cargo/draft/
