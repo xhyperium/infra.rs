@@ -1,6 +1,6 @@
 //! `infra-contracts` — 适配器合约 trait。
 //!
-//! 定义交易所适配器和存储适配��必须实现的接口。
+//! 定义交易所适配器和存储适配器必须实现的接口。
 
 pub mod exchange;
 pub mod storage;

@@ -2,6 +2,7 @@
 //!
 //! 实现 `ExchangeAdapter` trait。
 
+use decimalx::{Decimal, Price};
 use infra_contracts::exchange::{ExchangeAdapter, Ticker};
 use infra_contracts::{AdapterState, Result};
 
@@ -15,11 +16,7 @@ pub struct BinanceAdapter {
 impl BinanceAdapter {
     /// 创建新的 Binance 适配器
     pub fn new(name: impl Into<String>, base_url: impl Into<String>) -> Self {
-        Self {
-            name: name.into(),
-            state: AdapterState::Uninitialized,
-            base_url: base_url.into(),
-        }
+        Self { name: name.into(), state: AdapterState::Uninitialized, base_url: base_url.into() }
     }
 
     /// 默认测试网
@@ -30,6 +27,11 @@ impl BinanceAdapter {
     /// 默认主网
     pub fn mainnet() -> Self {
         Self::new("binance-mainnet", "https://api.binance.com")
+    }
+
+    /// 配置的 REST base URL（scaffold 阶段供观测；真实 HTTP 未接入）。
+    pub fn base_url(&self) -> &str {
+        &self.base_url
     }
 }
 
@@ -62,14 +64,12 @@ impl ExchangeAdapter for BinanceAdapter {
         if self.state != AdapterState::Connected {
             return Err(infra_contracts::Error::NotConnected);
         }
-        // 返回占位 ticker（实际实现需 HTTP 请求）
-        Ok(Ticker {
-            symbol: symbol.to_string(),
-            bid: 0.0,
-            ask: 0.0,
-            last: 0.0,
-            timestamp: 0,
-        })
+        // 占位 ticker（实际实现需 HTTP 请求）；价格使用 decimalx::Price
+        let zero =
+            Price(Decimal::try_new(0, 0).map_err(|e| {
+                infra_contracts::Error::Internal(format!("zero price construct: {e}"))
+            })?);
+        Ok(Ticker { symbol: symbol.to_string(), bid: zero, ask: zero, last: zero, timestamp: 0 })
     }
 }
 
@@ -83,17 +83,17 @@ mod tests {
         let mut adapter = BinanceAdapter::testnet();
         assert_eq!(adapter.state(), AdapterState::Uninitialized);
 
-        adapter.connect().unwrap();
+        adapter.connect().expect("connect");
         assert_eq!(adapter.state(), AdapterState::Connected);
 
-        adapter.disconnect().unwrap();
+        adapter.disconnect().expect("disconnect");
         assert_eq!(adapter.state(), AdapterState::Disconnected);
     }
 
     #[test]
     fn test_double_connect_fails() {
         let mut adapter = BinanceAdapter::testnet();
-        adapter.connect().unwrap();
+        adapter.connect().expect("connect");
         assert!(adapter.connect().is_err());
     }
 
@@ -109,13 +109,16 @@ mod tests {
         assert!(adapter.fetch_ticker("BTCUSDT").is_err());
 
         let mut adapter = BinanceAdapter::testnet();
-        adapter.connect().unwrap();
-        assert!(adapter.fetch_ticker("BTCUSDT").is_ok());
+        adapter.connect().expect("connect");
+        let ticker = adapter.fetch_ticker("BTCUSDT").expect("ticker");
+        assert_eq!(ticker.symbol, "BTCUSDT");
+        assert_eq!(ticker.bid.0, Decimal::try_new(0, 0).expect("zero"));
     }
 
     #[test]
-    fn test_name() {
+    fn test_name_and_base_url() {
         let adapter = BinanceAdapter::mainnet();
         assert_eq!(adapter.name(), "binance-mainnet");
+        assert_eq!(adapter.base_url(), "https://api.binance.com");
     }
 }

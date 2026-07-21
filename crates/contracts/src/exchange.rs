@@ -3,6 +3,7 @@
 //! 定义所有交易所适配器必须实现的统一接口。
 
 use crate::{AdapterState, Result};
+use decimalx::Price;
 
 /// 订单方向
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -28,13 +29,16 @@ pub enum OrderStatus {
     Rejected,
 }
 
-/// 交易所返回的统一 ticker 结构
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+/// 交易所返回的统一 ticker 结构。
+///
+/// 价格字段使用 [`Price`]（`decimalx`），禁止 `f32`/`f64` 金额。
+/// `timestamp`：Unix epoch **毫秒**（交易所 wire 常见单位；入口到 domain 时再转 ns）。
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Ticker {
     pub symbol: String,
-    pub bid: f64,
-    pub ask: f64,
-    pub last: f64,
+    pub bid: Price,
+    pub ask: Price,
+    pub last: Price,
     pub timestamp: u64,
 }
 

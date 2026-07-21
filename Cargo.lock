@@ -21,7 +21,8 @@ checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 name = "binancex"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "infra-contracts",
+ "xhyper-decimalx",
 ]
 
 [[package]]
@@ -140,6 +141,7 @@ version = "0.3.0"
 dependencies = [
  "serde",
  "thiserror",
+ "xhyper-decimalx",
 ]
 
 [[package]]

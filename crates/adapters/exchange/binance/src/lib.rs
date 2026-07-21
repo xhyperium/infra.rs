@@ -1,8 +1,8 @@
-//! `binancex` — Binance exchange adapter.
+//! `binancex` — Binance exchange adapter。
 //!
-//! Implements `ExchangeAdapter` trait for Binance.
+//! 实现 [`infra_contracts::exchange::ExchangeAdapter`]。
 
 pub use adapter::BinanceAdapter;
+pub use infra_contracts::{AdapterState, Error, Result};
 
 mod adapter;
-mod error;
