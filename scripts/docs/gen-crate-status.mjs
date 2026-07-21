@@ -1,17 +1,24 @@
 #!/usr/bin/env node
 /**
- * gen-crate-status.mjs — 扫描 workspace crates，生成根目录 STATUS.md
+ * gen-crate-status.mjs — 扫描 workspace crates，生成进度看板
  *
  * 度量维度（机械可复现，不等于 Production Ready 签字）：
  *   1. 标准布局七项（crates/AGENTS.md）
  *   2. 源码/测试/示例实质（文件数、LOC、是否仅 scaffold）
  *   3. SSOT 对齐文档是否存在
  *
+ * 双写策略（减轻 worktree / main 摩擦）：
+ *   - 始终写入 gitignore 本地副本 docs/status/CRATES_STATUS.local.md（主仓可刷、不脏 git）
+ *   - 入库 STATUS.md：仅在非 main 分支默认写入；main 上需 --tracked 才写
+ *   - 不必「每改一次 crate 就开 PR」；改布局/加成员的 feature PR 顺带 make status 即可
+ *
  * 用法:
- *   node scripts/docs/gen-crate-status.mjs              # 写入 STATUS.md
+ *   node scripts/docs/gen-crate-status.mjs              # 本地副本 +（非 main）STATUS.md
+ *   node scripts/docs/gen-crate-status.mjs --tracked    # 强制写入库 STATUS.md
+ *   node scripts/docs/gen-crate-status.mjs --local-only # 只写本地副本
  *   node scripts/docs/gen-crate-status.mjs --check      # 校验已提交 STATUS.md 是否过期
  *   node scripts/docs/gen-crate-status.mjs --json       # 额外打印 JSON 摘要到 stdout
- *   node scripts/docs/gen-crate-status.mjs --watch 30   # 每 30s 重扫（自动监控）
+ *   node scripts/docs/gen-crate-status.mjs --watch 30   # 每 30s 重扫（默认行为同上）
  *
  * SSOT: STATUS.md / docs/status/README.md / crates/AGENTS.md
  */
@@ -23,22 +30,48 @@ import {
   readdirSync,
   statSync,
   watch as fsWatch,
+  mkdirSync,
 } from "fs";
 import { join, dirname, relative, extname } from "path";
 import { fileURLToPath } from "url";
+import { execSync } from "child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..", "..");
 const OUT = join(ROOT, "STATUS.md");
+/** 本地实时副本（gitignore）；主仓/任意目录可刷，不污染 tracked tree */
+const OUT_LOCAL = join(ROOT, "docs", "status", "CRATES_STATUS.local.md");
 const CARGO_TOML = join(ROOT, "Cargo.toml");
 
 const CHECK = process.argv.includes("--check");
 const JSON_OUT = process.argv.includes("--json");
+const FORCE_TRACKED = process.argv.includes("--tracked");
+const LOCAL_ONLY = process.argv.includes("--local-only");
 const watchIdx = process.argv.indexOf("--watch");
 const WATCH =
   watchIdx >= 0
     ? Math.max(5, Number(process.argv[watchIdx + 1]) || 30)
     : 0;
+
+function currentBranch() {
+  try {
+    return execSync("git rev-parse --abbrev-ref HEAD", {
+      cwd: ROOT,
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+    }).trim();
+  } catch {
+    return "";
+  }
+}
+
+function shouldWriteTracked() {
+  if (LOCAL_ONLY) return false;
+  if (FORCE_TRACKED) return true;
+  const b = currentBranch();
+  // main 主工作区默认不写 tracked，避免脏 tree / 与 worktree 门禁打架
+  return b !== "main" && b !== "master" && b !== "HEAD";
+}
 
 /** 标准布局七项（顺序与 crates/AGENTS.md 一致） */
 const LAYOUT_ITEMS = [
@@ -445,14 +478,21 @@ function renderMarkdown(crates, generatedAt) {
 
   lines.push(
     "",
-    "## 维护",
+    "## 维护（不必每次手同步）",
     "",
-    "```bash",
-    "node scripts/docs/gen-crate-status.mjs           # 重新生成 STATUS.md",
-    "node scripts/docs/gen-crate-status.mjs --check   # CI/本地一致性检查",
-    "node scripts/docs/gen-crate-status.mjs --watch 30  # 每 30s 自动重扫（监控）",
-    "node scripts/quality-gates/check.mjs             # 含本看板新鲜度门禁",
+    "```text",
+    "日常查看     make status                 → 写本地副本（gitignore，主仓可跑）",
+    "持续监控     make status-watch           → 同上 + 定时/变更重扫",
+    "入库更新     在 feature worktree 中 make status",
+    "            （非 main 会写根目录 STATUS.md，随 crate PR 一并提交）",
+    "强制入库     node scripts/docs/gen-crate-status.mjs --tracked",
+    "CI 门禁     node scripts/docs/gen-crate-status.mjs --check",
     "```",
+    "",
+    "**何时更新入库 STATUS.md**：`Cargo.toml` members / crate 标准布局 / 测试面实质变化时，",
+    "在同一 feature PR 里顺带刷新即可；**不要**为刷进度单独开 PR。",
+    "",
+    "本地实时副本：`docs/status/CRATES_STATUS.local.md`（已 gitignore）。",
     "",
     "相关：",
     "",
@@ -479,35 +519,69 @@ function normalize(body) {
   );
 }
 
+function ensureParentDir(filePath) {
+  const dir = dirname(filePath);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+}
+
+function writeLocalCopy(body) {
+  ensureParentDir(OUT_LOCAL);
+  const banner =
+    "<!-- LOCAL COPY (gitignore) — 主仓/任意 cwd 可刷；入库以根目录 STATUS.md 为准 -->\n";
+  writeFileSync(OUT_LOCAL, banner + body, "utf8");
+}
+
 function runOnce() {
+  if (CHECK && (FORCE_TRACKED || LOCAL_ONLY || WATCH > 0)) {
+    console.error("--check 不可与 --tracked / --local-only / --watch 混用");
+    process.exit(2);
+  }
+
   const crates = scanAll();
   const generatedAt = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
   const body = renderMarkdown(crates, generatedAt);
 
   if (CHECK) {
     if (!existsSync(OUT)) {
-      console.error(`FAIL: missing ${OUT}; run without --check first`);
+      console.error(
+        `FAIL: missing ${OUT}; run in a feature worktree: node scripts/docs/gen-crate-status.mjs`,
+      );
       process.exit(1);
     }
     const cur = readFileSync(OUT, "utf8");
     if (normalize(cur) !== normalize(body)) {
       console.error(
-        "FAIL: STATUS.md is stale; run: node scripts/docs/gen-crate-status.mjs",
+        "FAIL: STATUS.md is stale; in a feature worktree run: node scripts/docs/gen-crate-status.mjs",
+      );
+      console.error(
+        "hint: 日常查看用 make status（写 docs/status/CRATES_STATUS.local.md，不脏 main）",
       );
       process.exit(1);
     }
     console.log("OK: STATUS.md is up to date");
+    // check 时也刷新本地副本，方便主仓即时查看
+    writeLocalCopy(body);
     if (JSON_OUT) {
       console.log(JSON.stringify({ summary: summarize(crates), crates }, null, 2));
     }
     process.exit(0);
   }
 
-  writeFileSync(OUT, body, "utf8");
+  writeLocalCopy(body);
   const s = summarize(crates);
-  console.log(
-    `wrote ${OUT} (${s.n} crates, avg ${s.avg}%, layout-full ${s.layoutFull}/${s.n})`,
-  );
+  const stats = `${s.n} crates, avg ${s.avg}%, layout-full ${s.layoutFull}/${s.n}`;
+  console.log(`wrote ${OUT_LOCAL} (${stats})`);
+
+  if (shouldWriteTracked()) {
+    writeFileSync(OUT, body, "utf8");
+    console.log(`wrote ${OUT} (tracked)`);
+  } else {
+    const branch = currentBranch() || "(unknown)";
+    console.log(
+      `skip tracked STATUS.md (branch=${branch}; use --tracked in worktree when crates layout changed)`,
+    );
+  }
+
   if (JSON_OUT) {
     console.log(JSON.stringify({ summary: s, crates }, null, 2));
   }
@@ -559,3 +633,15 @@ if (WATCH > 0) {
 } else {
   runOnce();
 }
+
+// 供测试/复用
+export {
+  OUT,
+  OUT_LOCAL,
+  shouldWriteTracked,
+  currentBranch,
+  normalize,
+  scanAll,
+  renderMarkdown,
+  summarize,
+};

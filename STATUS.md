@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-21T10:33:41Z
+> **生成时间**：2026-07-21T11:03:46Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -97,14 +97,21 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 
 _当前无成员低于 70%。_
 
-## 维护
+## 维护（不必每次手同步）
 
-```bash
-node scripts/docs/gen-crate-status.mjs           # 重新生成 STATUS.md
-node scripts/docs/gen-crate-status.mjs --check   # CI/本地一致性检查
-node scripts/docs/gen-crate-status.mjs --watch 30  # 每 30s 自动重扫（监控）
-node scripts/quality-gates/check.mjs             # 含本看板新鲜度门禁
+```text
+日常查看     make status                 → 写本地副本（gitignore，主仓可跑）
+持续监控     make status-watch           → 同上 + 定时/变更重扫
+入库更新     在 feature worktree 中 make status
+            （非 main 会写根目录 STATUS.md，随 crate PR 一并提交）
+强制入库     node scripts/docs/gen-crate-status.mjs --tracked
+CI 门禁     node scripts/docs/gen-crate-status.mjs --check
 ```
+
+**何时更新入库 STATUS.md**：`Cargo.toml` members / crate 标准布局 / 测试面实质变化时，
+在同一 feature PR 里顺带刷新即可；**不要**为刷进度单独开 PR。
+
+本地实时副本：`docs/status/CRATES_STATUS.local.md`（已 gitignore）。
 
 相关：
 

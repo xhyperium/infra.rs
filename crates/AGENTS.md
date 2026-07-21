@@ -68,16 +68,17 @@ crates/<crate-name>/
 
 ### 合规现状（自动同步）
 
-**实时看板（勿手改）**：[根目录 STATUS.md](../STATUS.md)
+**入库看板（勿手改）**：[根目录 STATUS.md](../STATUS.md)  
+**本地实时副本（gitignore）**：`docs/status/CRATES_STATUS.local.md`（主仓可刷，不脏 git）
 
 ```bash
-node scripts/docs/gen-crate-status.mjs           # 重扫 workspace → STATUS.md
-node scripts/docs/gen-crate-status.mjs --check   # 新鲜度门禁
-node scripts/docs/gen-crate-status.mjs --watch 30  # 自动监控
-# 或: make status / make status-watch
+make status                    # 本地副本必写；非 main 顺带写 STATUS.md
+make status-watch              # 定时监控
+node scripts/docs/gen-crate-status.mjs --local-only  # 主仓只看本地
+node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 ```
 
-下表为规范说明快照；**权威完成度与布局矩阵以 `STATUS.md` 为准**（由 `gen-crate-status.mjs` 从 `Cargo.toml` members 扫描生成）。
+下表为规范说明快照；**权威入库完成度以 `STATUS.md` 为准**；日常查看用本地副本即可（改布局时在 feature PR 里顺带刷新入库文件）。
 
 | Crate | 路径 | 标准七项 |
 |-------|------|----------|
