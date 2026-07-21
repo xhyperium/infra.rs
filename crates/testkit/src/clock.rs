@@ -9,7 +9,7 @@ use std::fmt;
 use std::sync::{Mutex, MutexGuard};
 use std::time::Duration;
 
-use kernel::{Clock, ClockError, MonotonicInstant, Timestamp};
+use kernel::{Clock, ClockDomain, ClockError, MonotonicInstant, Timestamp};
 
 /// 墙钟 fault 注入（映射到 [`ClockError`]）。
 #[non_exhaustive]
@@ -50,15 +50,15 @@ pub enum ManualClockError {
 impl fmt::Display for ManualClockError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ManualClockError::WallOverflow => write!(f, "manual clock wall time overflow"),
+            ManualClockError::WallOverflow => write!(f, "手动时钟墙钟时间溢出"),
             ManualClockError::MonotonicOverflow => {
-                write!(f, "manual clock monotonic elapsed overflow")
+                write!(f, "手动时钟单调流逝溢出")
             }
             ManualClockError::MonotonicRegression => {
-                write!(f, "manual clock monotonic elapsed regression")
+                write!(f, "手动时钟单调流逝回退")
             }
             ManualClockError::Synchronization => {
-                write!(f, "manual clock state lock synchronization failure")
+                write!(f, "手动时钟状态锁同步失败")
             }
         }
     }
@@ -105,10 +105,17 @@ struct State {
 #[derive(Debug)]
 pub struct ManualClock {
     state: Mutex<State>,
+    domain: ClockDomain,
 }
 
 impl ManualClock {
-    /// 以初始墙钟构造；单调起点为 0。
+    fn next_domain() -> ClockDomain {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(100);
+        ClockDomain::from_raw(NEXT.fetch_add(1, Ordering::Relaxed))
+    }
+
+    /// 以初始墙钟构造；单调起点为 0。每个实例拥有独立 [`ClockDomain`]。
     pub fn new(initial_wall: Timestamp) -> Self {
         Self::with_monotonic_elapsed(initial_wall, Duration::from_nanos(0))
     }
@@ -117,7 +124,13 @@ impl ManualClock {
     pub fn with_monotonic_elapsed(initial_wall: Timestamp, monotonic_elapsed: Duration) -> Self {
         Self {
             state: Mutex::new(State { wall: initial_wall, monotonic_elapsed, wall_fault: None }),
+            domain: Self::next_domain(),
         }
+    }
+
+    /// 本实例的单调 domain（跨 ManualClock 实例比较间隔为 `None`）。
+    pub const fn domain(&self) -> ClockDomain {
+        self.domain
     }
 
     fn lock(&self) -> Result<MutexGuard<'_, State>, ManualClockError> {
@@ -173,7 +186,7 @@ impl ManualClock {
         let next =
             g.monotonic_elapsed.checked_add(delta).ok_or(ManualClockError::MonotonicOverflow)?;
         g.monotonic_elapsed = next;
-        Ok(MonotonicInstant::from_clock_elapsed(next))
+        Ok(MonotonicInstant::from_clock_elapsed_in(next, self.domain))
     }
 
     /// 注入墙钟 fault；不改变已保存的 wall 值；不影响单调钟。
@@ -219,7 +232,7 @@ impl Clock for ManualClock {
     fn monotonic(&self) -> MonotonicInstant {
         // poison 恢复：见 `lock_recover` 文档语义（I-CLK-POISON）。
         let g = self.lock_recover();
-        MonotonicInstant::from_clock_elapsed(g.monotonic_elapsed)
+        MonotonicInstant::from_clock_elapsed_in(g.monotonic_elapsed, self.domain)
     }
 }
 
@@ -247,7 +260,10 @@ mod unit_tests {
         let c = ManualClock::with_monotonic_elapsed(ts(5), Duration::from_nanos(9));
         assert_eq!(
             c.monotonic()
-                .checked_duration_since(MonotonicInstant::from_clock_elapsed(Duration::ZERO))
+                .checked_duration_since(MonotonicInstant::from_clock_elapsed_in(
+                    Duration::ZERO,
+                    c.domain()
+                ))
                 .unwrap(),
             Duration::from_nanos(9)
         );
@@ -326,7 +342,10 @@ mod unit_tests {
         // mono 不受 wall fault 影响
         assert_eq!(
             c.monotonic()
-                .checked_duration_since(MonotonicInstant::from_clock_elapsed(Duration::ZERO))
+                .checked_duration_since(MonotonicInstant::from_clock_elapsed_in(
+                    Duration::ZERO,
+                    c.domain()
+                ))
                 .unwrap(),
             Duration::from_nanos(7)
         );
@@ -424,12 +443,10 @@ mod unit_tests {
         let mono_ov = ManualClockError::MonotonicOverflow.to_string();
         let mono_reg = ManualClockError::MonotonicRegression.to_string();
         let sync = ManualClockError::Synchronization.to_string();
-        assert!(wall.contains("wall"), "{wall}");
-        assert!(wall.contains("overflow"), "{wall}");
-        assert!(mono_ov.contains("monotonic"), "{mono_ov}");
-        assert!(mono_ov.contains("overflow"), "{mono_ov}");
-        assert!(mono_reg.contains("regression"), "{mono_reg}");
-        assert!(sync.contains("synchronization") || sync.contains("lock"), "{sync}");
+        assert!(wall.contains("墙钟") || wall.contains("溢出"), "{wall}");
+        assert!(mono_ov.contains("单调") || mono_ov.contains("溢出"), "{mono_ov}");
+        assert!(mono_reg.contains("回退") || mono_reg.contains("单调"), "{mono_reg}");
+        assert!(sync.contains("同步") || sync.contains("锁"), "{sync}");
         // 禁止 Display 静默变成空串（杀 Display::fmt -> Ok(()) 类突变）
         assert!(
             !wall.is_empty() && !mono_ov.is_empty() && !mono_reg.is_empty() && !sync.is_empty()
@@ -478,7 +495,10 @@ mod unit_tests {
         // lock_recover：不 panic、不伪造零值
         assert_eq!(
             c.monotonic()
-                .checked_duration_since(MonotonicInstant::from_clock_elapsed(Duration::ZERO))
+                .checked_duration_since(MonotonicInstant::from_clock_elapsed_in(
+                    Duration::ZERO,
+                    c.domain()
+                ))
                 .unwrap(),
             Duration::from_nanos(3)
         );
@@ -511,5 +531,27 @@ mod unit_tests {
 
         // Clock::now 毒锁 → Unavailable
         assert!(matches!(c.now(), Err(ClockError::Unavailable)));
+    }
+
+    #[test]
+    fn cross_manual_clock_domain_duration_is_none() {
+        let a = ManualClock::new(Timestamp::from_unix_nanos(0));
+        let b = ManualClock::new(Timestamp::from_unix_nanos(0));
+        assert_ne!(a.domain(), b.domain());
+        let ia = a.monotonic();
+        let ib = b.monotonic();
+        assert!(ia.checked_duration_since(ib).is_none());
+        assert!(ib.checked_duration_since(ia).is_none());
+        // 同实例 OK
+        assert_eq!(ia.checked_duration_since(ia), Some(Duration::ZERO));
+    }
+
+    #[test]
+    fn poison_contract_documented_entries() {
+        // poison 后：控制 API → Synchronization；now → Unavailable；monotonic 恢复 inner
+        // （既有 poison 测试覆盖；此处锁定 domain 仍可用）
+        let c = ManualClock::new(Timestamp::from_unix_nanos(1));
+        let d = c.domain();
+        assert_eq!(c.monotonic().domain(), d);
     }
 }

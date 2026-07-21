@@ -90,7 +90,7 @@ proptest! {
                 let expect = Duration::from_nanos(start)
                     .checked_add(delta)
                     .expect("ok path implies checked_add");
-                let origin = kernel::MonotonicInstant::from_clock_elapsed(Duration::ZERO);
+                let origin = kernel::MonotonicInstant::from_clock_elapsed_in(Duration::ZERO, c.domain());
                 assert_eq!(
                     inst.checked_duration_since(origin).expect("duration since origin"),
                     expect

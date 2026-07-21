@@ -30,9 +30,9 @@ pub use bounded::{ExecutionContext, MarketDataContext};
 pub use error::{BootstrapError, into_xresult};
 pub use observex::TracingInstrumentation;
 pub use traits::{
-    AccountSource, AppendReceipt, EvidenceAppender, EvidenceError, ExecutionVenue,
-    InMemoryEvidenceAppender, InstrumentCatalog, Instrumentation, KeyValueStore, MarketDataSource,
-    NoopInstrumentation, VenueTimeSource,
+    AppendReceipt, BoundedAccountSource, BoundedExecutionVenue, BoundedInstrumentCatalog,
+    BoundedKeyValueStore, BoundedMarketDataSource, BoundedVenueTimeSource, EvidenceAppender,
+    EvidenceError, InMemoryEvidenceAppender, Instrumentation, NoopInstrumentation,
 };
 
 use kernel::{ShutdownGuard, ShutdownSignal};

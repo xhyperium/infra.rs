@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 use async_trait::async_trait;
-use contracts::{Repository, TxRunner};
+use contracts::{FakeTxContext, Repository, TxContext, TxRunner};
 use kernel::{XError, XResult};
 
 /// 简单可持久化记录（scaffold entity）。
@@ -57,19 +57,15 @@ impl Repository<Record, String> for PostgresAdapter {
 
 #[async_trait]
 impl TxRunner for PostgresAdapter {
-    async fn run_tx<F, R>(&self, f: F) -> XResult<R>
-    where
-        F: std::future::Future<Output = XResult<R>> + Send,
-        R: Send,
-    {
-        // scaffold：无真实事务边界，直接执行
-        f.await
+    async fn begin_tx(&self) -> XResult<Box<dyn TxContext>> {
+        Ok(Box::new(FakeTxContext::new()))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use contracts::run_tx_commit_on_ok;
 
     #[tokio::test]
     async fn repository_roundtrip() {
@@ -80,9 +76,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn tx_runner_executes() {
+    async fn tx_runner_commit_path() {
         let a = PostgresAdapter::local();
-        let v = a.run_tx(async { Ok::<_, kernel::XError>(42) }).await.expect("tx");
+        let v = run_tx_commit_on_ok(&a, |_ctx| async move { Ok::<_, kernel::XError>(42) })
+            .await
+            .expect("tx");
         assert_eq!(v, 42);
     }
 

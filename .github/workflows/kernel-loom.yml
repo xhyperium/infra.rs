@@ -1,0 +1,28 @@
+# Kernel loom concurrency models — continuous gate (SPEC-KERNEL lifecycle)
+name: kernel-loom
+
+on:
+  pull_request:
+    paths:
+      - "crates/kernel/**"
+      - ".github/workflows/kernel-loom.yml"
+      - "Cargo.toml"
+      - "Cargo.lock"
+  push:
+    branches: [main, develop]
+    paths:
+      - "crates/kernel/**"
+      - ".github/workflows/kernel-loom.yml"
+  workflow_dispatch:
+
+jobs:
+  loom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: loom lifecycle concurrency
+        env:
+          RUSTFLAGS: "--cfg loom"
+        run: cargo test -p kernel --test lifecycle_concurrency_loom --release

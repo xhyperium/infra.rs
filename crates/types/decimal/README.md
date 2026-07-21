@@ -14,9 +14,9 @@ Package：`xhyper-decimalx` · lib：`decimalx` · path：`crates/types/decimal`
 
 ## 生产路径
 
-1. 构造：`Decimal::try_new` 或 `"1.25".parse()`（强制 `scale ≤ MAX_SCALE(18)`）
+1. 构造：`Decimal::try_new` 或 `"1.25".parse()`（强制 `scale ≤ MAX_SCALE(18)`）；字段私有，非法 scale 不可表示
 2. 运算：仅 `checked_*`；不要在资金路径依赖 `+/-/*` / `rescale`
-3. 校验：公开字段可绕过时，入口处 `validate()`
+3. 校验：serde 反序列化走 `try_new`；已构造值可用 `validate()` 复核
 4. wire：serde 字段 shape 为当前事实，**不**等于跨版本 stable（见 `docs/WIRE.md`）
 
 ## 定位
@@ -28,9 +28,10 @@ Package：`xhyper-decimalx` · lib：`decimalx` · path：`crates/types/decimal`
 
 ## 限制与安全
 
-- 字段当前 `pub`：可构造任意 `scale`；`MAX_SCALE` 治理层正式批准仍开放（residual T-HUM-001）。
-- `Currency::from_str` 校验 3 位大写 ASCII；公开字段仍可绕过。
+- 字段私有：`Decimal` / `Currency` / `Money` 非法状态不可在 crate 外构造；`MAX_SCALE` 治理层正式批准仍开放（residual T-HUM-001）。
+- `Currency::try_new` / `from_str` 校验 3 位大写 ASCII；serde 同样拒绝非法币种。
 - 不提供汇率、跨币种运算、tick/step、会计/手续费政策。
+- **≠** 整体 Production Ready / package stable。
 
 ## 测试
 

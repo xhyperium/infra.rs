@@ -149,11 +149,15 @@ impl BinanceAdapter {
     }
 
     fn zero_price() -> XResult<Price> {
-        Ok(Price(Decimal::try_new(0, 0).map_err(|e| XError::internal(format!("zero price: {e}")))?))
+        Ok(Price::new(
+            Decimal::try_new(0, 0).map_err(|e| XError::internal(format!("zero price: {e}")))?,
+        ))
     }
 
     fn zero_qty() -> XResult<Qty> {
-        Ok(Qty(Decimal::try_new(0, 0).map_err(|e| XError::internal(format!("zero qty: {e}")))?))
+        Ok(Qty::new(
+            Decimal::try_new(0, 0).map_err(|e| XError::internal(format!("zero qty: {e}")))?,
+        ))
     }
 
     /// venue 扩展：占位 K 线（非 contracts 面）。
@@ -352,8 +356,8 @@ mod tests {
             id: "o1".into(),
             symbol: "BTCUSDT".into(),
             side: Side::Buy,
-            price: Price(Decimal::try_new(1, 0).unwrap()),
-            qty: Qty(Decimal::try_new(1, 0).unwrap()),
+            price: Price::new(Decimal::try_new(1, 0).unwrap()),
+            qty: Qty::new(Decimal::try_new(1, 0).unwrap()),
             status: OrderStatus::Pending,
         }
     }

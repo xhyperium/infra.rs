@@ -139,3 +139,9 @@ CI 入口（与 kernel 同级 paths 过滤）：
 ```text
 core 必选 GAP = 0
 ```
+
+## 跟进（2026-07-21）
+
+- contract-testkit：`xhyper-contracts` 已存在；最小 reference fake（`FakeTxRunner`/`FakeEventBus`）落地于 contracts crate。
+- 真实状态：contracts 生产语义部分闭合；完整 conformance suite 与真实后端入口仍 DEFER。
+- ManualClock：跟随 kernel `ClockDomain`；跨实例比较间隔为 `None`。

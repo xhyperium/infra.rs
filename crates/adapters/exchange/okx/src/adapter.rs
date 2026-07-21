@@ -124,7 +124,9 @@ impl OkxAdapter {
     }
 
     fn zero_qty() -> XResult<Qty> {
-        Ok(Qty(Decimal::try_new(0, 0).map_err(|e| XError::internal(format!("zero qty: {e}")))?))
+        Ok(Qty::new(
+            Decimal::try_new(0, 0).map_err(|e| XError::internal(format!("zero qty: {e}")))?,
+        ))
     }
 }
 
@@ -299,8 +301,8 @@ mod tests {
             id: "o1".into(),
             symbol: "BTC-USDT".into(),
             side: Side::Buy,
-            price: Price(Decimal::try_new(1, 0).unwrap()),
-            qty: Qty(Decimal::try_new(1, 0).unwrap()),
+            price: Price::new(Decimal::try_new(1, 0).unwrap()),
+            qty: Qty::new(Decimal::try_new(1, 0).unwrap()),
             status: OrderStatus::Pending,
         }
     }

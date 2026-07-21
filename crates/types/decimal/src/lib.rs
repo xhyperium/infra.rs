@@ -10,18 +10,105 @@
 //! - 溢出：checked API 返回 `Err`；运算符在溢出时 panic（禁止静默回绕）
 //!
 //! ## 生产路径（P0）
-//! - 推荐构造：[`Decimal::try_new`] / [`str::parse`]（`FromStr` 强制 [`MAX_SCALE`]）
-//! - 推荐运算：`checked_*`；资金路径禁止依赖 panicking `+/-/*` / [`Decimal::rescale`]
-//! - 字段仍 `pub`（兼容）；绕过校验的值须经 [`Decimal::validate`] 再进入生产逻辑
+//! - 构造：[`Decimal::try_new`] / [`str::parse`] / [`Decimal::new`]（均强制 `scale ≤ MAX_SCALE`）
+//! - 字段私有：非法 scale 不可表示；serde 反序列化走校验路径
+//! - 运算：`checked_*` 对可达状态只返回 `Ok/Err`，不 panic；资金路径禁用 panicking `+/-/*`
+//! - 错误：[`DecimalError`] 区分 scale / mantissa / 除零 / 舍入 / 表示范围（中文 Display）
+//! - 中间值合同：`i128` 中间值溢出则 `Err`，即使约分后可表示
 //! - wire：serde 字段 shape 为**当前事实**，**不**等于跨版本稳定协议（见 `docs/WIRE.md`）
 
-use kernel::{XError, XResult};
-use serde::{Deserialize, Serialize};
+use kernel::XError;
+use serde::de::{self, Deserializer};
+use serde::{Deserialize, Serialize, Serializer};
 use std::cmp::Ordering;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::{Add, Mul, Sub};
 use std::str::FromStr;
+
+// ---------------------------------------------------------------------------
+// DecimalError
+// ---------------------------------------------------------------------------
+
+/// 十进制运算与构造错误（可分类；用户可见 `Display` 为中文）。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DecimalError {
+    /// scale 超出 [`MAX_SCALE`]。
+    ScaleOutOfRange { scale: u8, max: u8 },
+    /// mantissa 解析或运算溢出。
+    MantissaOverflow,
+    /// 除数为零。
+    DivisionByZero,
+    /// 舍入步进导致溢出。
+    RoundingOverflow,
+    /// 表示范围不足（对齐/中间值等）。
+    RepresentationOverflow,
+    /// 解析失败。
+    Parse(String),
+    /// 币种非法。
+    InvalidCurrency,
+}
+
+impl DecimalError {
+    /// 错误分类（便于 match，不依赖字符串）。
+    pub fn kind(&self) -> DecimalErrorKind {
+        match self {
+            Self::ScaleOutOfRange { .. } => DecimalErrorKind::Scale,
+            Self::MantissaOverflow => DecimalErrorKind::Mantissa,
+            Self::DivisionByZero => DecimalErrorKind::DivisionByZero,
+            Self::RoundingOverflow => DecimalErrorKind::Rounding,
+            Self::RepresentationOverflow => DecimalErrorKind::Representation,
+            Self::Parse(_) => DecimalErrorKind::Parse,
+            Self::InvalidCurrency => DecimalErrorKind::Currency,
+        }
+    }
+}
+
+/// [`DecimalError`] 的稳定分类标签。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum DecimalErrorKind {
+    /// scale 越界
+    Scale,
+    /// mantissa 溢出
+    Mantissa,
+    /// 除零
+    DivisionByZero,
+    /// 舍入溢出
+    Rounding,
+    /// 表示/中间值范围
+    Representation,
+    /// 解析
+    Parse,
+    /// 币种
+    Currency,
+}
+
+impl fmt::Display for DecimalError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ScaleOutOfRange { scale, max } => {
+                write!(f, "十进制 scale {scale} 超过上限 {max}")
+            }
+            Self::MantissaOverflow => write!(f, "十进制 mantissa 溢出"),
+            Self::DivisionByZero => write!(f, "十进制除零"),
+            Self::RoundingOverflow => write!(f, "十进制舍入溢出"),
+            Self::RepresentationOverflow => write!(f, "十进制表示范围不足（中间值溢出）"),
+            Self::Parse(msg) => write!(f, "十进制解析失败: {msg}"),
+            Self::InvalidCurrency => write!(f, "币种必须为 3 个大写 ASCII 字母"),
+        }
+    }
+}
+
+impl std::error::Error for DecimalError {}
+
+impl From<DecimalError> for XError {
+    fn from(err: DecimalError) -> Self {
+        XError::invalid(err.to_string())
+    }
+}
+
+/// 十进制 API 的 `Result` 别名。
+pub type DecimalResult<T> = Result<T, DecimalError>;
 
 /// 生产 fallible API 强制的最大 scale（常见 NUMERIC(38,18) / 交易所精度）。
 pub const MAX_SCALE: u8 = 18;
@@ -43,39 +130,54 @@ impl DecimalLimits {
 /// 十进制数：`mantissa × 10^(-scale)`（spec §4.2）。
 ///
 /// 相等性与排序按**数值**（scale 对齐后）比较，而非按字段结构。
-/// serde 仍按 `{mantissa, scale}` 字段序列化（未裁定 canonical wire format）。
-/// 字段公开是兼容事实：生产应使用 [`Self::try_new`] / [`Self::validate`]。
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+/// serde 按 `{mantissa, scale}` 字段序列化；**反序列化强制** `scale ≤ MAX_SCALE`。
+/// 字段私有：非法 scale 不可表示。
+#[derive(Debug, Clone, Copy)]
 pub struct Decimal {
     /// 定点整数 mantissa。
-    pub mantissa: i128,
-    /// 小数位数；生产 fallible 路径限制 `≤ MAX_SCALE`。
-    pub scale: u8,
+    mantissa: i128,
+    /// 小数位数；恒满足 `≤ MAX_SCALE`。
+    scale: u8,
 }
 
 impl Decimal {
-    /// 未校验 scale 的构造（兼容保留）。生产请用 [`Self::try_new`]。
+    /// 构造合法十进制；`scale > MAX_SCALE` 时 panic（const 友好）。
+    ///
+    /// 生产 fallible 路径请用 [`Self::try_new`]。
+    ///
+    /// # Panics
+    ///
+    /// `scale > MAX_SCALE` 时 panic。
     pub const fn new(mantissa: i128, scale: u8) -> Self {
+        assert!(scale <= MAX_SCALE, "decimal scale exceeds MAX_SCALE");
         Self { mantissa, scale }
     }
 
     /// 生产推荐构造：拒绝 `scale > MAX_SCALE`。
-    pub fn try_new(mantissa: i128, scale: u8) -> XResult<Self> {
+    pub fn try_new(mantissa: i128, scale: u8) -> DecimalResult<Self> {
         if scale > MAX_SCALE {
-            return Err(XError::invalid(format!(
-                "decimal scale {scale} exceeds MAX_SCALE ({MAX_SCALE})"
-            )));
+            return Err(DecimalError::ScaleOutOfRange { scale, max: MAX_SCALE });
         }
         Ok(Self { mantissa, scale })
     }
 
-    /// 当前值是否满足生产 scale 上限。
+    /// 定点 mantissa。
+    pub const fn mantissa(self) -> i128 {
+        self.mantissa
+    }
+
+    /// 小数位数。
+    pub const fn scale(self) -> u8 {
+        self.scale
+    }
+
+    /// 当前值是否满足生产 scale 上限（构造成功后恒为 true）。
     pub const fn is_within_limits(self) -> bool {
         self.scale <= MAX_SCALE
     }
 
-    /// 校验 scale 上限；失败返回 `Err`。
-    pub fn validate(self) -> XResult<Self> {
+    /// 校验 scale 上限；失败返回 `Err`（对已构造值恒 Ok）。
+    pub fn validate(self) -> DecimalResult<Self> {
         Self::try_new(self.mantissa, self.scale)
     }
 
@@ -83,7 +185,7 @@ impl Decimal {
     pub const ZERO: Self = Self { mantissa: 0, scale: 0 };
 
     /// 运算结果检查：若 scale 越界，先 `normalize` 去掉尾随零再判定（保留可精确表示的乘积）。
-    fn finish(self) -> XResult<Self> {
+    fn finish(self) -> DecimalResult<Self> {
         if self.scale <= MAX_SCALE {
             return Ok(self);
         }
@@ -91,10 +193,7 @@ impl Decimal {
         if n.scale <= MAX_SCALE {
             return Ok(n);
         }
-        Err(XError::invalid(format!(
-            "decimal scale {} exceeds MAX_SCALE ({MAX_SCALE})",
-            self.scale
-        )))
+        Err(DecimalError::ScaleOutOfRange { scale: self.scale, max: MAX_SCALE })
     }
 
     /// `10^exp`，溢出时返回 `None`。
@@ -103,22 +202,17 @@ impl Decimal {
     }
 
     /// 对齐到 `target` scale（`target >= self.scale` 时乘以 10 的幂）；禁止静默回绕。
-    fn try_align_scale(self, target: u8) -> XResult<Decimal> {
+    fn try_align_scale(self, target: u8) -> DecimalResult<Decimal> {
         if target > MAX_SCALE {
-            return Err(XError::invalid(format!(
-                "decimal scale {target} exceeds MAX_SCALE ({MAX_SCALE})"
-            )));
+            return Err(DecimalError::ScaleOutOfRange { scale: target, max: MAX_SCALE });
         }
         if self.scale >= target {
             return Ok(self);
         }
         let diff = u32::from(target - self.scale);
-        // `target <= MAX_SCALE` 保证 10^diff 可装入 i128
-        let factor = Self::pow10(diff).expect("diff <= MAX_SCALE ensures pow10 fits i128");
-        let mantissa = self
-            .mantissa
-            .checked_mul(factor)
-            .ok_or_else(|| XError::invalid("decimal overflow in scale alignment"))?;
+        let factor = Self::pow10(diff).ok_or(DecimalError::RepresentationOverflow)?;
+        let mantissa =
+            self.mantissa.checked_mul(factor).ok_or(DecimalError::RepresentationOverflow)?;
         Ok(Decimal { mantissa, scale: target })
     }
 
@@ -164,39 +258,33 @@ impl Decimal {
     }
 
     /// 加减法：scale 对齐到较大值；溢出返回 `Err`（ADR-006 `checked_add`）。
-    pub fn checked_add(self, rhs: Decimal) -> XResult<Decimal> {
+    pub fn checked_add(self, rhs: Decimal) -> DecimalResult<Decimal> {
         let scale = self.scale.max(rhs.scale);
         let a = self.try_align_scale(scale)?;
         let b = rhs.try_align_scale(scale)?;
-        let mantissa = a
-            .mantissa
-            .checked_add(b.mantissa)
-            .ok_or_else(|| XError::invalid("decimal overflow in addition"))?;
+        let mantissa =
+            a.mantissa.checked_add(b.mantissa).ok_or(DecimalError::RepresentationOverflow)?;
         Decimal { mantissa, scale }.finish()
     }
 
     /// 减法：scale 对齐到较大值；溢出返回 `Err`（ADR-006 `checked_sub`）。
-    pub fn checked_sub(self, rhs: Decimal) -> XResult<Decimal> {
+    pub fn checked_sub(self, rhs: Decimal) -> DecimalResult<Decimal> {
         let scale = self.scale.max(rhs.scale);
         let a = self.try_align_scale(scale)?;
         let b = rhs.try_align_scale(scale)?;
-        let mantissa = a
-            .mantissa
-            .checked_sub(b.mantissa)
-            .ok_or_else(|| XError::invalid("decimal overflow in subtraction"))?;
+        let mantissa =
+            a.mantissa.checked_sub(b.mantissa).ok_or(DecimalError::RepresentationOverflow)?;
         Decimal { mantissa, scale }.finish()
     }
 
     /// 乘法：mantissa 相乘、scale 相加；溢出返回 `Err`。
-    pub fn checked_mul(self, rhs: Decimal) -> XResult<Decimal> {
-        let mantissa = self
-            .mantissa
-            .checked_mul(rhs.mantissa)
-            .ok_or_else(|| XError::invalid("decimal overflow in multiplication"))?;
+    pub fn checked_mul(self, rhs: Decimal) -> DecimalResult<Decimal> {
+        let mantissa =
+            self.mantissa.checked_mul(rhs.mantissa).ok_or(DecimalError::MantissaOverflow)?;
         let scale = self
             .scale
             .checked_add(rhs.scale)
-            .ok_or_else(|| XError::invalid("decimal scale overflow in multiplication"))?;
+            .ok_or(DecimalError::ScaleOutOfRange { scale: u8::MAX, max: MAX_SCALE })?;
         Decimal { mantissa, scale }.finish()
     }
 
@@ -204,40 +292,28 @@ impl Decimal {
     ///
     /// 结果 scale = `max(self.scale, other.scale)`。
     /// 数值：`round(m1 * 10^(s_r - s1 + s2) / m2)`，等价于对齐双方后再按目标 scale 定点除。
-    pub fn checked_div(self, other: Decimal, strategy: RoundingStrategy) -> XResult<Decimal> {
+    pub fn checked_div(self, other: Decimal, strategy: RoundingStrategy) -> DecimalResult<Decimal> {
         if other.mantissa == 0 {
-            return Err(XError::invalid("division by zero"));
+            return Err(DecimalError::DivisionByZero);
         }
         let target_scale = self.scale.max(other.scale);
         if target_scale > MAX_SCALE {
-            return Err(XError::invalid(format!(
-                "decimal scale {target_scale} exceeds MAX_SCALE ({MAX_SCALE})"
-            )));
+            return Err(DecimalError::ScaleOutOfRange { scale: target_scale, max: MAX_SCALE });
         }
         // exp = (target_scale - self.scale) + other.scale ≥ 0
         let exp = u32::from(target_scale - self.scale) + u32::from(other.scale);
-        // target ≤ MAX_SCALE 时 exp ≤ 2*MAX_SCALE=36，10^36 可装入 i128
-        let factor = Self::pow10(exp).expect("exp <= 2*MAX_SCALE ensures pow10 fits i128");
-        let numerator = self
-            .mantissa
-            .checked_mul(factor)
-            .ok_or_else(|| XError::invalid("decimal overflow in division"))?;
+        let factor = Self::pow10(exp).ok_or(DecimalError::RepresentationOverflow)?;
+        let numerator = self.mantissa.checked_mul(factor).ok_or(DecimalError::MantissaOverflow)?;
         let denominator = other.mantissa;
         // i128::MIN / -1 会溢出；div 成功则 rem 必成功
-        let q = numerator
-            .checked_div(denominator)
-            .ok_or_else(|| XError::invalid("decimal overflow in division"))?;
-        let r = numerator
-            .checked_rem(denominator)
-            .expect("checked_rem succeeds when checked_div succeeds");
-        // |q| ≤ |numerator| < 2^127，round-away ±1 在 i128 内可达；仍走 fallible 以保留错误类型
-        let rounded = apply_rounding(q, r, denominator, strategy)
-            .expect("rounding ±1 cannot overflow i128 for decimal quotients");
+        let q = numerator.checked_div(denominator).ok_or(DecimalError::MantissaOverflow)?;
+        let r = numerator.checked_rem(denominator).ok_or(DecimalError::MantissaOverflow)?;
+        let rounded = apply_rounding(q, r, denominator, strategy)?;
         Decimal { mantissa: rounded, scale: target_scale }.finish()
     }
 
     /// 除法（与 [`Self::checked_div`] 相同；保留既有公开名）。
-    pub fn div(self, other: Decimal, strategy: RoundingStrategy) -> XResult<Decimal> {
+    pub fn div(self, other: Decimal, strategy: RoundingStrategy) -> DecimalResult<Decimal> {
         self.checked_div(other, strategy)
     }
 
@@ -253,11 +329,13 @@ impl Decimal {
     }
 
     /// 显式缩位/扩位；溢出/非法返回 `Err`。
-    pub fn checked_rescale(self, target_scale: u8, strategy: RoundingStrategy) -> XResult<Decimal> {
+    pub fn checked_rescale(
+        self,
+        target_scale: u8,
+        strategy: RoundingStrategy,
+    ) -> DecimalResult<Decimal> {
         if target_scale > MAX_SCALE {
-            return Err(XError::invalid(format!(
-                "decimal scale {target_scale} exceeds MAX_SCALE ({MAX_SCALE})"
-            )));
+            return Err(DecimalError::ScaleOutOfRange { scale: target_scale, max: MAX_SCALE });
         }
         if target_scale == self.scale {
             return self.finish();
@@ -266,15 +344,10 @@ impl Decimal {
             return self.try_align_scale(target_scale);
         }
         let diff = u32::from(self.scale - target_scale);
-        // self.scale ≤ MAX_SCALE 时 diff ≤ MAX_SCALE，pow10 必成功
-        let factor = Self::pow10(diff).expect("diff <= MAX_SCALE ensures pow10 fits i128");
-        // factor 为 10^k (k≥1) 恒正：i128 对正除数的 checked_div/rem 不会失败
-        let q =
-            self.mantissa.checked_div(factor).expect("div by positive pow10 never fails for i128");
-        let r =
-            self.mantissa.checked_rem(factor).expect("rem by positive pow10 never fails for i128");
-        let rounded = apply_rounding(q, r, factor, strategy)
-            .expect("rounding ±1 cannot overflow i128 for decimal quotients");
+        let factor = Self::pow10(diff).ok_or(DecimalError::RepresentationOverflow)?;
+        let q = self.mantissa.checked_div(factor).ok_or(DecimalError::MantissaOverflow)?;
+        let r = self.mantissa.checked_rem(factor).ok_or(DecimalError::MantissaOverflow)?;
+        let rounded = apply_rounding(q, r, factor, strategy)?;
         Decimal { mantissa: rounded, scale: target_scale }.finish()
     }
 
@@ -319,24 +392,23 @@ impl Hash for Decimal {
 }
 
 impl FromStr for Decimal {
-    type Err = XError;
+    type Err = DecimalError;
 
     /// 解析十进制字符串（如 `"100"` / `"100.5"` / `"-1.25"`）。
     ///
-    /// 禁止 `NaN` / `Inf` 等非有限表示；非法输入返回 [`XError::invalid`]。
-    fn from_str(s: &str) -> XResult<Self> {
+    /// 禁止 `NaN` / `Inf` 等非有限表示；非法输入返回 [`DecimalError`]。
+    fn from_str(s: &str) -> DecimalResult<Self> {
         let s = s.trim();
         if s.is_empty() {
-            return Err(XError::invalid("empty decimal string"));
+            return Err(DecimalError::Parse("空字符串".into()));
         }
 
-        // 禁止 NaN / Inf（大小写不敏感）
         let lower = s.to_ascii_lowercase();
         if matches!(
             lower.as_str(),
             "nan" | "inf" | "+inf" | "-inf" | "infinity" | "+infinity" | "-infinity"
         ) {
-            return Err(XError::invalid("NaN/Inf not allowed for Decimal"));
+            return Err(DecimalError::Parse("不允许 NaN/Inf".into()));
         }
 
         let (negative, body) = if let Some(rest) = s.strip_prefix('-') {
@@ -348,12 +420,11 @@ impl FromStr for Decimal {
         };
 
         if body.is_empty() {
-            return Err(XError::invalid(format!("invalid decimal: {s}")));
+            return Err(DecimalError::Parse(format!("非法十进制: {s}")));
         }
 
-        // 至多一个小数点
         if body.bytes().filter(|&b| b == b'.').count() > 1 {
-            return Err(XError::invalid(format!("invalid decimal: {s}")));
+            return Err(DecimalError::Parse(format!("非法十进制: {s}")));
         }
 
         let (int_part, frac_part) = match body.split_once('.') {
@@ -361,27 +432,24 @@ impl FromStr for Decimal {
             None => (body, ""),
         };
 
-        // 允许 "5." / ".5"；拒绝单独 "."
         if int_part.is_empty() && frac_part.is_empty() {
-            return Err(XError::invalid(format!("invalid decimal: {s}")));
+            return Err(DecimalError::Parse(format!("非法十进制: {s}")));
         }
         if !int_part.is_empty() && !int_part.bytes().all(|b| b.is_ascii_digit()) {
-            return Err(XError::invalid(format!("invalid decimal: {s}")));
+            return Err(DecimalError::Parse(format!("非法十进制: {s}")));
         }
         if !frac_part.bytes().all(|b| b.is_ascii_digit()) {
-            return Err(XError::invalid(format!("invalid decimal: {s}")));
+            return Err(DecimalError::Parse(format!("非法十进制: {s}")));
         }
 
-        // 生产 FromStr：scale 受 MAX_SCALE 约束
         if frac_part.len() > MAX_SCALE as usize {
-            return Err(XError::invalid(format!(
-                "decimal scale {} exceeds MAX_SCALE ({MAX_SCALE})",
-                frac_part.len()
-            )));
+            return Err(DecimalError::ScaleOutOfRange {
+                scale: frac_part.len() as u8,
+                max: MAX_SCALE,
+            });
         }
         let scale = frac_part.len() as u8;
 
-        // 拼接整数与小数位再解析为 i128
         let digits = if int_part.is_empty() {
             frac_part.to_string()
         } else if frac_part.is_empty() {
@@ -390,13 +458,10 @@ impl FromStr for Decimal {
             format!("{int_part}{frac_part}")
         };
 
-        // 全零或空（如 "." 已拒绝）→ 0
         let abs_mantissa: i128 = if digits.is_empty() || digits.bytes().all(|b| b == b'0') {
             0
         } else {
-            digits
-                .parse::<i128>()
-                .map_err(|_| XError::invalid(format!("decimal mantissa overflow: {s}")))?
+            digits.parse::<i128>().map_err(|_| DecimalError::MantissaOverflow)?
         };
 
         let mantissa = if negative && abs_mantissa != 0 { -abs_mantissa } else { abs_mantissa };
@@ -417,7 +482,10 @@ impl fmt::Display for Decimal {
 
         let neg = n.mantissa < 0;
         let abs = n.mantissa.unsigned_abs();
-        let divisor = 10u128.pow(n.scale as u32);
+        let divisor = match 10u128.checked_pow(u32::from(n.scale)) {
+            Some(d) => d,
+            None => return Err(fmt::Error),
+        };
         let int_part = abs / divisor;
         let frac_part = abs % divisor;
         if neg {
@@ -488,7 +556,7 @@ pub enum RoundingStrategy {
 /// 对向零截断的 `(q, r)` 按策略舍入；`r` 为余数（与 Rust `%` 同号于被除数）。
 ///
 /// 中点判定用 `2·|r| ? |d|`，避免 `abs_d/2` 在奇数分母上把非中点当成中点。
-fn apply_rounding(q: i128, r: i128, d: i128, strategy: RoundingStrategy) -> XResult<i128> {
+fn apply_rounding(q: i128, r: i128, d: i128, strategy: RoundingStrategy) -> DecimalResult<i128> {
     if r == 0 {
         return Ok(q);
     }
@@ -519,60 +587,126 @@ fn apply_rounding(q: i128, r: i128, d: i128, strategy: RoundingStrategy) -> XRes
         return Ok(q);
     }
     if neg {
-        q.checked_sub(1).ok_or_else(|| XError::invalid("decimal overflow in rounding"))
+        q.checked_sub(1).ok_or(DecimalError::RoundingOverflow)
     } else {
-        q.checked_add(1).ok_or_else(|| XError::invalid("decimal overflow in rounding"))
+        q.checked_add(1).ok_or(DecimalError::RoundingOverflow)
     }
 }
 
-/// 价格（newtype，spec §4.2）。
+/// 价格（newtype，spec §4.2）。内部值私有，仅能包裹已校验 [`Decimal`]。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct Price(pub Decimal);
+#[serde(transparent)]
+pub struct Price(Decimal);
+
+impl Price {
+    /// 由已校验 [`Decimal`] 构造。
+    pub const fn new(d: Decimal) -> Self {
+        Self(d)
+    }
+    /// 查看内部十进制值。
+    pub const fn as_decimal(self) -> Decimal {
+        self.0
+    }
+    /// 取出内部十进制值。
+    pub const fn into_inner(self) -> Decimal {
+        self.0
+    }
+}
 
 /// 数量（newtype，spec §4.2）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct Qty(pub Decimal);
+#[serde(transparent)]
+pub struct Qty(Decimal);
+
+impl Qty {
+    /// 由已校验 [`Decimal`] 构造。
+    pub const fn new(d: Decimal) -> Self {
+        Self(d)
+    }
+    /// 查看内部十进制值。
+    pub const fn as_decimal(self) -> Decimal {
+        self.0
+    }
+    /// 取出内部十进制值。
+    pub const fn into_inner(self) -> Decimal {
+        self.0
+    }
+}
 
 /// 比率（newtype，spec §4.2）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct Ratio(pub Decimal);
+#[serde(transparent)]
+pub struct Ratio(Decimal);
 
-/// ISO 4217 风格币种标识（3 字节大写 ASCII）。字段公开是兼容事实；生产用 try_new/parse。
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Currency(pub [u8; 3]);
+impl Ratio {
+    /// 由已校验 [`Decimal`] 构造。
+    pub const fn new(d: Decimal) -> Self {
+        Self(d)
+    }
+    /// 查看内部十进制值。
+    pub const fn as_decimal(self) -> Decimal {
+        self.0
+    }
+    /// 取出内部十进制值。
+    pub const fn into_inner(self) -> Decimal {
+        self.0
+    }
+}
+
+/// ISO 4217 风格币种标识（3 字节大写 ASCII）。字段私有；仅合法币种可构造。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Currency([u8; 3]);
 
 impl Currency {
-    /// 将内部 3 字节解释为 UTF-8；非法字节时返回空串。
+    /// 将内部 3 字节解释为 UTF-8（构造不变量保证合法大写 ASCII）。
     pub fn as_str(&self) -> &str {
-        std::str::from_utf8(&self.0).unwrap_or("")
+        std::str::from_utf8(&self.0).expect("currency invariant: uppercase ASCII")
+    }
+
+    /// 原始三字节。
+    pub const fn as_bytes(self) -> [u8; 3] {
+        self.0
     }
 
     /// 生产构造：三字节均须为大写 ASCII 字母。
-    pub fn try_new(bytes: [u8; 3]) -> XResult<Self> {
+    pub fn try_new(bytes: [u8; 3]) -> DecimalResult<Self> {
         if !bytes.iter().all(|c| c.is_ascii_uppercase()) {
-            return Err(XError::invalid("currency must be 3 uppercase ASCII letters"));
+            return Err(DecimalError::InvalidCurrency);
         }
         Ok(Self(bytes))
     }
 
-    /// 当前字节是否全部为大写 ASCII。
+    /// 当前字节是否全部为大写 ASCII（构造成功后恒 true）。
     pub fn is_valid(self) -> bool {
         self.0.iter().all(|c| c.is_ascii_uppercase())
     }
 
     /// 校验后返回自身，否则 `Err`。
-    pub fn validate(self) -> XResult<Self> {
+    pub fn validate(self) -> DecimalResult<Self> {
         Self::try_new(self.0)
     }
 }
 
-impl std::str::FromStr for Currency {
-    type Err = XError;
+impl Serialize for Currency {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.0.serialize(serializer)
+    }
+}
 
-    fn from_str(s: &str) -> XResult<Self> {
+impl<'de> Deserialize<'de> for Currency {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let bytes = <[u8; 3]>::deserialize(deserializer)?;
+        Currency::try_new(bytes).map_err(de::Error::custom)
+    }
+}
+
+impl std::str::FromStr for Currency {
+    type Err = DecimalError;
+
+    fn from_str(s: &str) -> DecimalResult<Self> {
         let b = s.as_bytes();
         if b.len() != 3 {
-            return Err(XError::invalid("currency must be 3 uppercase ASCII letters"));
+            return Err(DecimalError::InvalidCurrency);
         }
         let mut arr = [0u8; 3];
         arr.copy_from_slice(b);
@@ -580,26 +714,82 @@ impl std::str::FromStr for Currency {
     }
 }
 
-/// 金额（spec §4.2）。生产请用 [`Money::try_new`]。
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// 金额（spec §4.2）。字段私有；生产请用 [`Money::try_new`]。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Money {
-    /// 金额数值。
-    pub amount: Decimal,
-    /// 币种。
-    pub currency: Currency,
+    amount: Decimal,
+    currency: Currency,
 }
 
 impl Money {
     /// 生产构造：同时校验 amount scale 与 currency 合法性。
-    pub fn try_new(amount: Decimal, currency: Currency) -> XResult<Self> {
+    pub fn try_new(amount: Decimal, currency: Currency) -> DecimalResult<Self> {
         let amount = amount.validate()?;
         let currency = currency.validate()?;
         Ok(Self { amount, currency })
     }
 
+    /// 金额数值。
+    pub const fn amount(self) -> Decimal {
+        self.amount
+    }
+
+    /// 币种。
+    pub const fn currency(self) -> Currency {
+        self.currency
+    }
+
     /// 校验 amount/currency 后返回自身。
-    pub fn validate(self) -> XResult<Self> {
+    pub fn validate(self) -> DecimalResult<Self> {
         Self::try_new(self.amount, self.currency)
+    }
+}
+
+impl Serialize for Money {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeStruct;
+        let mut st = serializer.serialize_struct("Money", 2)?;
+        st.serialize_field("amount", &self.amount)?;
+        st.serialize_field("currency", &self.currency)?;
+        st.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for Money {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        struct MoneyWire {
+            amount: Decimal,
+            currency: Currency,
+        }
+        let w = MoneyWire::deserialize(deserializer)?;
+        Money::try_new(w.amount, w.currency).map_err(de::Error::custom)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Decimal serde（校验型）
+// ---------------------------------------------------------------------------
+
+impl Serialize for Decimal {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeStruct;
+        let mut st = serializer.serialize_struct("Decimal", 2)?;
+        st.serialize_field("mantissa", &self.mantissa)?;
+        st.serialize_field("scale", &self.scale)?;
+        st.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for Decimal {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        struct DecimalWire {
+            mantissa: i128,
+            scale: u8,
+        }
+        let w = DecimalWire::deserialize(deserializer)?;
+        Decimal::try_new(w.mantissa, w.scale).map_err(de::Error::custom)
     }
 }
 
@@ -621,8 +811,8 @@ mod tests {
         let a = Decimal::new(1, 0);
         let b = Decimal::new(25, 2);
         let c = a + b;
-        assert_eq!(c.scale, 2);
-        assert_eq!(c.mantissa, 125);
+        assert_eq!(c.scale(), 2);
+        assert_eq!(c.mantissa(), 125);
     }
 
     #[test]
@@ -630,7 +820,7 @@ mod tests {
         let a = Decimal::new(10, 1);
         let b = Decimal::new(1, 0);
         let c = a - b;
-        assert_eq!(c.mantissa, 0);
+        assert_eq!(c.mantissa(), 0);
         assert!(c.eq_value(Decimal::ZERO));
     }
 
@@ -639,8 +829,8 @@ mod tests {
         let a = Decimal::new(2, 1);
         let b = Decimal::new(3, 0);
         let c = a * b;
-        assert_eq!(c.scale, 1);
-        assert_eq!(c.mantissa, 6);
+        assert_eq!(c.scale(), 1);
+        assert_eq!(c.mantissa(), 6);
     }
 
     #[test]
@@ -688,7 +878,7 @@ mod tests {
         let b = Decimal::new(50, 2);
         let c = a.checked_div(b, RoundingStrategy::HalfUp).unwrap();
         assert_eq!(c, Decimal::new(200, 2));
-        assert_eq!(c.scale, 2);
+        assert_eq!(c.scale(), 2);
     }
 
     #[test]
@@ -706,8 +896,8 @@ mod tests {
         let a = Decimal::new(10, 0);
         let b = Decimal::new(3, 0);
         let c = a.div(b, RoundingStrategy::HalfUp).unwrap();
-        assert_eq!(c.mantissa, 3);
-        assert_eq!(c.scale, 0);
+        assert_eq!(c.mantissa(), 3);
+        assert_eq!(c.scale(), 0);
     }
 
     #[test]
@@ -715,7 +905,7 @@ mod tests {
         let a = Decimal::new(10, 0);
         let b = Decimal::new(3, 0);
         let c = a.div(b, RoundingStrategy::Floor).unwrap();
-        assert_eq!(c.mantissa, 3);
+        assert_eq!(c.mantissa(), 3);
     }
 
     #[test]
@@ -723,7 +913,7 @@ mod tests {
         let a = Decimal::new(1, 0);
         let b = Decimal::ZERO;
         let err = a.div(b, RoundingStrategy::Floor).unwrap_err();
-        assert!(err.to_string().contains("division by zero"));
+        assert_eq!(err.kind(), DecimalErrorKind::DivisionByZero);
     }
 
     #[test]
@@ -740,7 +930,15 @@ mod tests {
             RoundingStrategy::HalfEven,
         ] {
             let err = a.checked_div(b, strategy).expect_err("must not panic");
-            assert!(err.to_string().contains("overflow"), "strategy={strategy:?}: {err}");
+            assert!(
+                matches!(
+                    err.kind(),
+                    DecimalErrorKind::Mantissa
+                        | DecimalErrorKind::Representation
+                        | DecimalErrorKind::Rounding
+                ),
+                "strategy={strategy:?}: {err}"
+            );
             // div 别名同一路径
             assert!(a.div(b, strategy).is_err());
         }
@@ -754,31 +952,31 @@ mod tests {
     fn half_up_exact_half_away_from_zero() {
         // 15/2 = 7.5 → HalfUp → 8
         let c = Decimal::new(15, 0).div(Decimal::new(2, 0), RoundingStrategy::HalfUp).unwrap();
-        assert_eq!(c.mantissa, 8);
+        assert_eq!(c.mantissa(), 8);
         // -15/2 = -7.5 → HalfUp → -8
         let c = Decimal::new(-15, 0).div(Decimal::new(2, 0), RoundingStrategy::HalfUp).unwrap();
-        assert_eq!(c.mantissa, -8);
+        assert_eq!(c.mantissa(), -8);
     }
 
     #[test]
     fn half_down_exact_half_toward_zero() {
         let c = Decimal::new(15, 0).div(Decimal::new(2, 0), RoundingStrategy::HalfDown).unwrap();
-        assert_eq!(c.mantissa, 7);
+        assert_eq!(c.mantissa(), 7);
         let c = Decimal::new(-15, 0).div(Decimal::new(2, 0), RoundingStrategy::HalfDown).unwrap();
-        assert_eq!(c.mantissa, -7);
+        assert_eq!(c.mantissa(), -7);
     }
 
     #[test]
     fn half_even_ties_to_even() {
         // 15/2 = 7.5 → 向偶数 8
         let c = Decimal::new(15, 0).div(Decimal::new(2, 0), RoundingStrategy::HalfEven).unwrap();
-        assert_eq!(c.mantissa, 8);
+        assert_eq!(c.mantissa(), 8);
         // 13/2 = 6.5 → 向偶数 6
         let c = Decimal::new(13, 0).div(Decimal::new(2, 0), RoundingStrategy::HalfEven).unwrap();
-        assert_eq!(c.mantissa, 6);
+        assert_eq!(c.mantissa(), 6);
         // -13/2 = -6.5 → -6（偶数）
         let c = Decimal::new(-13, 0).div(Decimal::new(2, 0), RoundingStrategy::HalfEven).unwrap();
-        assert_eq!(c.mantissa, -6);
+        assert_eq!(c.mantissa(), -6);
     }
 
     #[test]
@@ -787,16 +985,22 @@ mod tests {
         // 10/3 = 3.333… HalfUp → 3；Ceiling → 4
         let a = Decimal::new(10, 0);
         let b = Decimal::new(3, 0);
-        assert_eq!(a.div(b, RoundingStrategy::HalfUp).unwrap().mantissa, 3);
-        assert_eq!(a.div(b, RoundingStrategy::Ceiling).unwrap().mantissa, 4);
+        assert_eq!(a.div(b, RoundingStrategy::HalfUp).unwrap().mantissa(), 3);
+        assert_eq!(a.div(b, RoundingStrategy::Ceiling).unwrap().mantissa(), 4);
         // 2/5 = 0.4 < 0.5 → HalfUp 保持 0
         assert_eq!(
-            Decimal::new(2, 0).div(Decimal::new(5, 0), RoundingStrategy::HalfUp).unwrap().mantissa,
+            Decimal::new(2, 0)
+                .div(Decimal::new(5, 0), RoundingStrategy::HalfUp)
+                .unwrap()
+                .mantissa(),
             0
         );
         // 3/5 = 0.6 > 0.5 → HalfUp → 1
         assert_eq!(
-            Decimal::new(3, 0).div(Decimal::new(5, 0), RoundingStrategy::HalfUp).unwrap().mantissa,
+            Decimal::new(3, 0)
+                .div(Decimal::new(5, 0), RoundingStrategy::HalfUp)
+                .unwrap()
+                .mantissa(),
             1
         );
     }
@@ -806,8 +1010,8 @@ mod tests {
         // -10/3 = -3.333… Floor → -4, Ceiling → -3
         let a = Decimal::new(-10, 0);
         let b = Decimal::new(3, 0);
-        assert_eq!(a.div(b, RoundingStrategy::Floor).unwrap().mantissa, -4);
-        assert_eq!(a.div(b, RoundingStrategy::Ceiling).unwrap().mantissa, -3);
+        assert_eq!(a.div(b, RoundingStrategy::Floor).unwrap().mantissa(), -4);
+        assert_eq!(a.div(b, RoundingStrategy::Ceiling).unwrap().mantissa(), -3);
     }
 
     // ── rescale ────────────────────────────────────────────────────
@@ -816,24 +1020,24 @@ mod tests {
     fn rescale_expand_and_shrink() {
         let d = Decimal::new(125, 2); // 1.25
         let up = d.rescale(4, RoundingStrategy::HalfUp);
-        assert_eq!(up.mantissa, 12500);
-        assert_eq!(up.scale, 4);
+        assert_eq!(up.mantissa(), 12500);
+        assert_eq!(up.scale(), 4);
 
         // 1.25 → scale 1 HalfUp → 1.3
         let down = d.rescale(1, RoundingStrategy::HalfUp);
-        assert_eq!(down.mantissa, 13);
-        assert_eq!(down.scale, 1);
+        assert_eq!(down.mantissa(), 13);
+        assert_eq!(down.scale(), 1);
 
         // 1.25 → scale 1 HalfEven → 1.2（2 为偶数）
         let down_e = d.rescale(1, RoundingStrategy::HalfEven);
-        assert_eq!(down_e.mantissa, 12);
+        assert_eq!(down_e.mantissa(), 12);
     }
 
     #[test]
     fn rescale_half_up_midpoint() {
         // 1.25 → scale 1 HalfUp → 1.3；1.35 → 1.4
-        assert_eq!(Decimal::new(125, 2).rescale(1, RoundingStrategy::HalfUp).mantissa, 13);
-        assert_eq!(Decimal::new(135, 2).rescale(1, RoundingStrategy::HalfUp).mantissa, 14);
+        assert_eq!(Decimal::new(125, 2).rescale(1, RoundingStrategy::HalfUp).mantissa(), 13);
+        assert_eq!(Decimal::new(135, 2).rescale(1, RoundingStrategy::HalfUp).mantissa(), 14);
     }
 
     // ── 溢出 ──────────────────────────────────────────────────────
@@ -842,7 +1046,16 @@ mod tests {
     fn align_scale_overflow_errors() {
         let d = Decimal::new(i128::MAX, 0);
         let err = d.try_align_scale(1).unwrap_err();
-        assert!(err.to_string().contains("overflow"));
+        assert!(
+            matches!(
+                err.kind(),
+                DecimalErrorKind::Mantissa
+                    | DecimalErrorKind::Representation
+                    | DecimalErrorKind::Rounding
+                    | DecimalErrorKind::Scale
+            ),
+            "{err}"
+        );
     }
 
     #[test]
@@ -861,8 +1074,8 @@ mod tests {
 
     #[test]
     fn checked_mul_scale_overflow_errors() {
-        let a = Decimal::new(1, 200);
-        let b = Decimal::new(1, 200);
+        let a = Decimal::new(3, 10);
+        let b = Decimal::new(1, 10);
         assert!(a.checked_mul(b).is_err());
     }
 
@@ -877,7 +1090,7 @@ mod tests {
     fn cmp_value_overflow_safe_magnitude() {
         // 对齐会溢出时仍应正确比较量级
         let huge = Decimal::new(i128::MAX, 0);
-        let small = Decimal::new(1, 40); // 1e-40
+        let small = Decimal::new(1, MAX_SCALE); // 极小正数
         assert!(huge > small);
         assert!(Decimal::new(i128::MIN, 0) < small);
     }
@@ -889,14 +1102,14 @@ mod tests {
         let d = Decimal::new(-12345, 3);
         let json = serde_json::to_string(&d).unwrap();
         let back: Decimal = serde_json::from_str(&json).unwrap();
-        assert_eq!(back.mantissa, -12345);
-        assert_eq!(back.scale, 3);
+        assert_eq!(back.mantissa(), -12345);
+        assert_eq!(back.scale(), 3);
         assert_eq!(back, d);
     }
 
     #[test]
     fn serde_roundtrip_money() {
-        let m = Money { amount: Decimal::new(999, 2), currency: "USD".parse().unwrap() };
+        let m = Money::try_new(Decimal::new(999, 2), "USD".parse().unwrap()).unwrap();
         let json = serde_json::to_string(&m).unwrap();
         let back: Money = serde_json::from_str(&json).unwrap();
         assert_eq!(back, m);
@@ -923,7 +1136,7 @@ mod tests {
     #[test]
     fn no_f32_f64_in_api() {
         let d = Decimal::new(1, 0);
-        let _ = (d.mantissa, d.scale);
+        let _ = (d.mantissa(), d.scale());
     }
 
     #[test]
@@ -1013,23 +1226,52 @@ mod tests {
         let d = Decimal::new(199, 2); // 1.99
         let c = d.checked_rescale(1, RoundingStrategy::HalfUp).unwrap();
         assert_eq!(c, d.rescale(1, RoundingStrategy::HalfUp));
-        assert_eq!(c.mantissa, 20);
-        assert_eq!(c.scale, 1);
+        assert_eq!(c.mantissa(), 20);
+        assert_eq!(c.scale(), 1);
     }
 
     #[test]
-    fn currency_public_field_invalid_as_str_empty() {
-        // 公开字段可绕过 FromStr；as_str 对非 UTF-8 返回空串（当前兼容事实）
-        let bad = Currency([0xff, 0xfe, 0xfd]);
-        assert_eq!(bad.as_str(), "");
+    fn currency_rejects_invalid_bytes_at_construction() {
+        assert_eq!(
+            Currency::try_new([0xff, 0xfe, 0xfd]).unwrap_err().kind(),
+            DecimalErrorKind::Currency
+        );
+        assert_eq!(Currency::try_new(*b"USD").unwrap().as_str(), "USD");
     }
 
     #[test]
-    fn public_new_accepts_any_u8_scale_baseline() {
-        // MAX_SCALE 未批准：new 接受任意 u8 是当前事实，非长期不变量
-        let d = Decimal::new(1, u8::MAX);
-        assert_eq!(d.scale, u8::MAX);
-        assert_eq!(d.mantissa, 1);
+    #[should_panic(expected = "decimal scale exceeds MAX_SCALE")]
+    fn new_panics_on_scale_above_max() {
+        let _ = Decimal::new(1, u8::MAX);
+    }
+
+    #[test]
+    fn try_new_and_serde_reject_illegal_scale() {
+        let err = Decimal::try_new(1, MAX_SCALE + 1).unwrap_err();
+        assert_eq!(err.kind(), DecimalErrorKind::Scale);
+        let json = format!(r#"{{"mantissa":1,"scale":{}}}"#, MAX_SCALE + 1);
+        assert!(serde_json::from_str::<Decimal>(&json).is_err());
+        let ok = Decimal::try_new(-12345, 3).unwrap();
+        let back: Decimal = serde_json::from_str(&serde_json::to_string(&ok).unwrap()).unwrap();
+        assert_eq!(back, ok);
+    }
+
+    #[test]
+    fn error_kinds_are_distinguishable() {
+        assert_eq!(Decimal::try_new(1, 255).unwrap_err().kind(), DecimalErrorKind::Scale);
+        assert_eq!(
+            Decimal::new(1, 0)
+                .checked_div(Decimal::ZERO, RoundingStrategy::Floor)
+                .unwrap_err()
+                .kind(),
+            DecimalErrorKind::DivisionByZero
+        );
+        assert_eq!(
+            Decimal::new(i128::MAX, 0).checked_add(Decimal::new(1, 0)).unwrap_err().kind(),
+            DecimalErrorKind::Representation
+        );
+        assert!(DecimalError::DivisionByZero.to_string().contains("除零"));
+        assert!(DecimalError::ScaleOutOfRange { scale: 20, max: 18 }.to_string().contains("scale"));
     }
 
     #[test]
@@ -1059,7 +1301,7 @@ mod tests {
         assert_eq!(MAX_SCALE, 18);
         assert!(Decimal::try_new(1, MAX_SCALE).is_ok());
         assert!(Decimal::try_new(1, MAX_SCALE + 1).is_err());
-        assert!(!Decimal::new(1, MAX_SCALE + 1).is_within_limits());
+        assert!(Decimal::new(1, MAX_SCALE).is_within_limits());
     }
 
     #[test]
@@ -1067,7 +1309,7 @@ mod tests {
         let s = format!("0.{}", "1".repeat((MAX_SCALE as usize) + 1));
         assert!(s.parse::<Decimal>().is_err());
         let s_ok = format!("0.{}", "1".repeat(MAX_SCALE as usize));
-        assert_eq!(s_ok.parse::<Decimal>().unwrap().scale, MAX_SCALE);
+        assert_eq!(s_ok.parse::<Decimal>().unwrap().scale(), MAX_SCALE);
     }
 
     #[test]
@@ -1101,19 +1343,17 @@ mod tests {
         assert!(c.is_valid());
         assert!(Currency::try_new(*b"usd").is_err());
         assert!(Money::try_new(Decimal::try_new(100, 2).unwrap(), c).is_ok());
-        assert!(Money::try_new(Decimal::new(1, MAX_SCALE + 1), c).is_err());
+        assert!(Decimal::try_new(1, MAX_SCALE + 1).is_err());
     }
 
     #[test]
-    fn align_and_div_reject_target_scale_above_max() {
-        // Decimal::new 可构造 > MAX_SCALE；对齐/除法目标 scale 必须拒绝
-        let hi = Decimal::new(1, MAX_SCALE + 2);
+    fn checked_rescale_and_ops_reject_illegal_target() {
         let lo = Decimal::new(1, 0);
-        assert!(hi.checked_add(lo).is_err());
-        assert!(lo.checked_add(hi).is_err());
-        assert!(hi.checked_sub(lo).is_err());
-        assert!(hi.checked_div(lo, RoundingStrategy::HalfUp).is_err());
-        assert!(lo.checked_div(hi, RoundingStrategy::HalfUp).is_err());
+        assert!(lo.checked_rescale(MAX_SCALE + 1, RoundingStrategy::HalfUp).is_err());
+        let a = Decimal::try_new(1, MAX_SCALE).unwrap();
+        let b = Decimal::try_new(1, 0).unwrap();
+        let _ = a.checked_add(b);
+        assert!(a.checked_div(b, RoundingStrategy::HalfUp).is_ok());
     }
 
     #[test]
@@ -1134,21 +1374,15 @@ mod tests {
 
     #[test]
     fn money_and_currency_validate_surface() {
-        let ok = Money {
-            amount: Decimal::try_new(1, 2).unwrap(),
-            currency: Currency::try_new(*b"USD").unwrap(),
-        };
+        let ok =
+            Money::try_new(Decimal::try_new(1, 2).unwrap(), Currency::try_new(*b"USD").unwrap())
+                .unwrap();
         assert!(ok.validate().is_ok());
-        let bad_amount = Money {
-            amount: Decimal::new(1, MAX_SCALE + 1),
-            currency: Currency::try_new(*b"USD").unwrap(),
-        };
-        assert!(bad_amount.validate().is_err());
-        let bad_ccy = Currency(*b"usd");
-        assert!(bad_ccy.validate().is_err());
-        assert!(Currency::try_new(*b"USD").unwrap().validate().is_ok());
-        // try_new 第二步 currency.validate 失败路径
-        assert!(Money::try_new(Decimal::try_new(1, 0).unwrap(), Currency(*b"usd")).is_err());
+        assert_eq!(ok.amount().mantissa(), 1);
+        assert_eq!(ok.currency().as_str(), "USD");
+        assert!(Currency::try_new(*b"usd").is_err());
+        let bad_json = r#"{"amount":{"mantissa":1,"scale":0},"currency":[117,115,100]}"#;
+        assert!(serde_json::from_str::<Money>(bad_json).is_err());
     }
 
     #[test]
