@@ -392,9 +392,9 @@ crate 根文档已经明确声明：当前不是 Production Ready、package stab
 
 ## 12. 附录：PLAN-CORE-PROD-002 post-W5 状态（2026-07-21）
 
-> **性质**：在 §1–§11 审计快照与 §11 PR #98 闭合之上，记录 **W0–W5 实现合入后** 的状态。  
-> **不**改写被审计快照的命令结果；**不**构成 L5 / Production Ready 批准。  
-> 执行计划：[docs/plans/2026-07-21-core-crates-production-readiness.md](../../plans/2026-07-21-core-crates-production-readiness.md) · DEFER 处置：[docs/plans/artifacts/defer-disposition.md](../../plans/artifacts/defer-disposition.md)
+> **性质**：在 §1–§11 审计快照与 §11 PR #98 闭合之上，记录 **W0–W5 实现合入后** 及 **L5 签核** 状态。  
+> **不**改写被审计快照的命令结果。  
+> 执行计划：[docs/plans/2026-07-21-core-crates-production-readiness.md](../../plans/2026-07-21-core-crates-production-readiness.md) · DEFER 处置：[docs/plans/artifacts/defer-disposition.md](../../plans/artifacts/defer-disposition.md) · 正式签核：[docs/plans/releases/0.3.0-signoff.md](../../plans/releases/0.3.0-signoff.md)
 
 ### 12.1 合入链路
 
@@ -407,51 +407,54 @@ crate 根文档已经明确声明：当前不是 Production Ready、package stab
 | W3 | [#128](https://github.com/xhyperium/infra.rs/pull/128) | contracts 语义文档 + Fake/conformance + venue override 门禁 |
 | W4 | [#125](https://github.com/xhyperium/infra.rs/pull/125) | adapters **离线 mock** 验证入口 |
 | W5 | [#127](https://github.com/xhyperium/infra.rs/pull/127) | support-matrix / public-api baselines / 签核模板 |
-| 收尾 | [#138](https://github.com/xhyperium/infra.rs/pull/138) | 计划状态回写 + 签核 **DRAFT** |
+| 收尾 | [#138](https://github.com/xhyperium/infra.rs/pull/138) / [#141](https://github.com/xhyperium/infra.rs/pull/141) | 计划状态回写 + 验收勾选 + §12 |
+| L5 签核 | 见 `0.3.0-signoff.md` | **GO-with-Accepts** · `@ZoneCNH` · 2026-07-21 |
 
-beads epic `infra-asa`：6/6 子任务 closed（实现交付）；**DEFER-7 仍挡 Production Ready 宣称**。
+beads epic `infra-asa`：6/6 子任务 closed（实现交付）；**DEFER-7 已 Close**（L5 分层放行；整体 Production Ready 仍否）。
 
-### 12.2 §11.2 DEFER 对照（post-W5）
+### 12.2 §11.2 DEFER 对照（post-W5 + L5）
 
-| ID | 审计时（§11.2） | post-W5 状态 |
-|----|-----------------|--------------|
+| ID | 审计时（§11.2） | post-W5 / L5 状态 |
+|----|-----------------|-------------------|
 | DEFER-1 | 真实后端未做 | **Close（mock 入口）** + **Accept（真实云端）** |
 | DEFER-2 | 全 trait 深度语义 | **Close 首批** + **Accept 二期** |
 | DEFER-3 | Order/Tick/Trade 等 Uncommitted | **Close 分批**（v1.1–v1.3 清单已合入；其余仍 Uncommitted） |
 | DEFER-4 | fuzz/oracle/mutants/Miri 未宣称 | **Close**（oracle + 边界 + proptest 轻量 fuzz + scheduled miri/mutants；无完整 cargo-fuzz 靶） |
 | DEFER-5 | 无 API snapshot | **Close**（`docs/api-baselines/*` + public-api 门禁） |
 | DEFER-6 | 非 Linux | **Accept** 仅 Linux x86_64 + MSRV 1.85 |
-| DEFER-7 | 人签 | **仍 open · Defer-with-sign**（`docs/plans/releases/2026-07-21-signoff-DRAFT.md` **未签**） |
+| DEFER-7 | 人签 | **Close** · [`0.3.0-signoff.md`](../../plans/releases/0.3.0-signoff.md) · **GO-with-Accepts** · `@ZoneCNH` |
 | DEFER-8 | Venue override 无门禁 | **Close**（运行时 `venue_override_gate` 测；非 compile-fail） |
 
 ### 12.3 模块判定更新（相对 §11.3）
 
-| 模块 | §11.3（#98 后） | post-W5 | 仍不可宣称 |
-|------|-----------------|---------|------------|
-| `decimalx` | 有条件就绪（内部） | **L1 候选**（oracle/门禁证据链） | package stable / 跨版本 wire 协议 |
-| `canonical` | 部分就绪（仅 v1 五类型） | **L2 候选（committed 清单含 v1.1–v1.3）** | 全 DTO wire / envelope |
-| `contracts` | 部分就绪 | **mock-L3 候选（首批）** | 真实后端语义 / 二期 trait 全量 |
-| `kernel` | 接近就绪 | **L1 + L4 矩阵声明** | 非 Linux 官方支持 |
-| `testkit` | ManualClock 有条件就绪 | **L1（测试支持）** | 生产 runtime |
+| 模块 | §11.3（#98 后） | post-W5 + L5 | 仍不可宣称 |
+|------|-----------------|--------------|------------|
+| `decimalx` | 有条件就绪（内部） | **L1**（签核确认） | package stable / 跨版本 wire 协议 |
+| `canonical` | 部分就绪（仅 v1 五类型） | **L2**（committed 清单含 v1.1–v1.3） | 全 DTO wire / envelope |
+| `contracts` | 部分就绪 | **mock-L3**（首批） | 真实后端语义 / 二期 trait 全量 |
+| `kernel` | 接近就绪 | **L1 + L4** | 非 Linux 官方支持 |
+| `testkit` | ManualClock 有条件就绪 | **L1**（测试支持） | 生产 runtime |
 
 ### 12.4 分层 Production Ready（计划口径）
 
-| 层级 | post-W5 |
-|------|---------|
-| L1 Internal Ready | 证据已备；**待 Maintainer 在签核包勾选确认** |
-| L2 Wire Ready | committed 子集证据已备；同上 |
-| L3 Contract Ready | **mock-L3** 证据已备；真实后端 Accept |
-| L4 Platform Ready | 矩阵 + API baseline 门禁已合入 |
-| L5 Release Ready | **否**（DEFER-7 未签） |
-| **整体 Production Ready** | **否** |
+| 层级 | post-W5 + L5 |
+|------|--------------|
+| L1 Internal Ready | **是**（签核确认） |
+| L2 Wire Ready | **是**（committed 子集） |
+| L3 Contract Ready | **mock-L3**；真实后端 Accept |
+| L4 Platform Ready | **是**（矩阵 + API baseline） |
+| L5 Release Ready | **GO-with-Accepts**（分层放行；非 crates.io 发布） |
+| **整体 Production Ready** | **否**（Accept 残留 + 禁止营销式整体 PR） |
 
 ### 12.5 签核与禁止表述
 
-- 签核草稿：[`docs/plans/releases/2026-07-21-signoff-DRAFT.md`](../../plans/releases/2026-07-21-signoff-DRAFT.md) — **DRAFT · Agent 不得代签**
-- **禁止**：五个 crate 整体 Production Ready；把 mock 写成真实 DB/MQ/交易所客户端；把 DRAFT 当 GO
+- 正式签核：[`docs/plans/releases/0.3.0-signoff.md`](../../plans/releases/0.3.0-signoff.md) — **SIGNED · GO-with-Accepts** · `@ZoneCNH` · 2026-07-21
+- 草稿归档：[`docs/plans/releases/2026-07-21-signoff-DRAFT.md`](../../plans/releases/2026-07-21-signoff-DRAFT.md) — **SUPERSEDED**
+- **禁止**：五个 crate 整体 Production Ready；把 mock 写成真实 DB/MQ/交易所客户端；把 L5 GO-with-Accepts 写成 crates.io 发布批准
 
 ### 12.6 本附录维护
 
 | 日期 | 说明 |
 |------|------|
 | 2026-07-21 | 初版：W0–W5 合入后状态；与计划验收勾选回写同步 |
+| 2026-07-21 | L5 签核：`0.3.0-signoff.md` GO-with-Accepts；DEFER-7 Close；整体 PR 仍否 |

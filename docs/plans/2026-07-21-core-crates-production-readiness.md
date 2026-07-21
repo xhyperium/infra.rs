@@ -10,19 +10,18 @@
 | 目标 | 五个核心 crate 达到可签字的 **Production Ready**（按模块分轨，不假装整体一次过线） |
 | 范围 | `xhyper-contracts` · `xhyper-decimalx` · `xhyper-canonical` · `xhyper-kernel` · `xhyper-testkit`；以及阻断生产语义的 adapters 验证入口 |
 | 性质 | **可执行修复计划**（含顺序、验收、门禁、签字）；**不是**发布批准本身 |
-| 状态 | **W0–W5 已合入 main**（2026-07-21）· **验收勾选已回写** · **L5 / DEFER-7 待 Maintainer 签核** · 整体 Production Ready：**否** |
+| 状态 | **W0–W5 已合入 main**（2026-07-21）· **验收勾选已回写** · **L5 GO-with-Accepts**（[`releases/0.3.0-signoff.md`](./releases/0.3.0-signoff.md) · `@ZoneCNH`）· 计划 **DONE** · 整体 Production Ready：**否**（分层 + Accept） |
 
 ---
 
 ## 0. 一句话结论
 
 PR #98 闭合了审计 **P0/P1 可机器验证子集**；PLAN-CORE-PROD-002 **W0–W5 实现已于 2026-07-21 合入 `main`**（见上表 PR）。  
-**§8.8 / DEFER-7 人工签核尚未完成**，因此：
+**§8.8 / DEFER-7 已由 Maintainer 签核**：[`releases/0.3.0-signoff.md`](./releases/0.3.0-signoff.md) · **GO-with-Accepts** · `@ZoneCNH` · 2026-07-21。
 
 > 证据链与门禁已显著加强（decimal oracle、wire v1.1–v1.3、contracts 合同测、adapter mock 验证入口、public-api / 支持矩阵）。  
-> **五个 crate 整体 Production Ready：否**（待 Maintainer 签核 + 真实后端仍 Accept）。
-
-本计划把报告 §11.2 的 8 个 DEFER 与 §8 的 8 条门槛映射为 **6 个可交付波次（W0–W5）**；实现波次已闭合，剩余为签核与真实后端 Accept 项。
+> **五个 crate 整体 Production Ready：否**（分层 L1/L2/mock-L3/L4 + Accept：真实后端 / 二期 trait / 非 Linux 等）。  
+> 本计划按 §15 **DONE**。
 
 ---
 
@@ -448,14 +447,14 @@ rg -n 'impl (fmt::)?Display for' crates/kernel crates/testkit crates/types crate
 
 ### 10.6 验收 → 治理门禁（实现）/ L5（人签）
 
-> **实现回写（2026-07-21）**：PR [#127](https://github.com/xhyperium/infra.rs/pull/127) 门禁与模板；签核草稿 [`releases/2026-07-21-signoff-DRAFT.md`](./releases/2026-07-21-signoff-DRAFT.md)。
+> **实现回写（2026-07-21）**：PR [#127](https://github.com/xhyperium/infra.rs/pull/127) 门禁与模板；正式签核 [`releases/0.3.0-signoff.md`](./releases/0.3.0-signoff.md)（草稿 [`releases/2026-07-21-signoff-DRAFT.md`](./releases/2026-07-21-signoff-DRAFT.md) 已 SUPERSEDED）。
 
 - [x] API snapshot / public-api baselines 落盘（`docs/api-baselines/*` + `check-public-api.mjs` / `public-api.yml`）
 - [x] 支持矩阵声明（`docs/governance/support-matrix.md`；DEFER-6 Accept 仅 Linux）
-- [x] 签核模板 + **DRAFT** 证据指针（Agent 仅填充；**非**已签核）
-- [ ] **DEFER-7 Maintainer 手签**（Signed-off-by / GO|NO-GO）— **未完成 · 阻塞 L5 与计划 §15 DONE**
+- [x] 签核模板 + DRAFT 证据指针
+- [x] **DEFER-7 Maintainer 手签** — **GO-with-Accepts** · `@ZoneCNH` · 2026-07-21 · [`releases/0.3.0-signoff.md`](./releases/0.3.0-signoff.md)
 
-**禁止**：Agent 代签 DEFER-7。
+**禁止**：把分层就绪写成「五个 crate 整体 Production Ready」营销表述。
 
 ---
 
@@ -471,7 +470,7 @@ rg -n 'impl (fmt::)?Display for' crates/kernel crates/testkit crates/types crate
 | DEFER-4 | fuzz/oracle/mutants/Miri | **Close** | W1 | open · 已分类 |
 | DEFER-5 | API snapshot / semver | **Close** | W5 | open · 已分类 |
 | DEFER-6 | 非 Linux 矩阵 | **Accept** 仅 Linux | W0 | **closed as Accept** |
-| DEFER-7 | §8 人工签字 | **Defer-with-sign** | W5 | open · 仅人签 |
+| DEFER-7 | §8 人工签字 | **Close**（GO-with-Accepts） | W5 | **closed** · [`releases/0.3.0-signoff.md`](./releases/0.3.0-signoff.md) |
 | DEFER-8 | VenueAdapter override 门禁 | **Close** | W3 | open · 已分类 |
 
 ---
@@ -552,14 +551,14 @@ node scripts/quality-gates/check.mjs
 | # | 条件 | 实现回写状态（2026-07-21） |
 |---|------|---------------------------|
 | 1 | W0 清单冻结且无未分类 DEFER | ✅ 完成 |
-| 2 | decimalx 达 L1（W1 验收勾选） | ✅ 验收项已勾；**L1 候选**（待人在签核包确认） |
-| 3 | canonical 本轮 committed 子集达 L2（W2） | ✅ 验收项已勾；清单内 L2 |
-| 4 | contracts 首批 trait 达 L3（W3+W4） | ✅ **mock-L3 候选**；真实后端 Accept |
-| 5 | kernel/testkit 维持/完成 L1（+ kernel L4 矩阵声明） | ✅ 矩阵 + loom/MSRV 门禁在 |
-| 6 | W5 门禁合并；**maintainer 完成 DEFER-7 签字包** | ⚠️ 门禁 ✅ · **人签 ❌** |
-| 7 | 审计报告 follow-up 更新；**禁止**签字前改写整体 Production Ready | ✅ 见报告 **§12 post-W5 附录**；整体 PR 仍 **否** |
+| 2 | decimalx 达 L1（W1 验收勾选） | ✅ **L1**（签核包确认） |
+| 3 | canonical 本轮 committed 子集达 L2（W2） | ✅ 清单内 **L2** |
+| 4 | contracts 首批 trait 达 L3（W3+W4） | ✅ **mock-L3**；真实后端 Accept |
+| 5 | kernel/testkit 维持/完成 L1（+ kernel L4 矩阵声明） | ✅ kernel **L1+L4**；testkit **L1** |
+| 6 | W5 门禁合并；**maintainer 完成 DEFER-7 签字包** | ✅ 门禁 + [`releases/0.3.0-signoff.md`](./releases/0.3.0-signoff.md) **GO-with-Accepts** |
+| 7 | 审计报告 follow-up 更新；**禁止**签字前改写整体 Production Ready | ✅ 报告 §12 同步；整体 PR 仍 **否**（分层 + Accept） |
 
-**计划关闭**：❌ 仍待 DEFER-7。
+**计划关闭**：✅ **DONE**（2026-07-21 · DEFER-7 已签）。
 
 ---
 
@@ -576,12 +575,13 @@ node scripts/quality-gates/check.mjs
 
 ---
 
-## 17. 立即下一步（合入后）
+## 17. 立即下一步（计划 DONE 后）
 
-1. **Maintainer**：阅读 [`releases/2026-07-21-signoff-DRAFT.md`](./releases/2026-07-21-signoff-DRAFT.md)，手签正式 signoff（DEFER-7）。
+1. ~~**Maintainer** 手签 DEFER-7~~ → 已完成：[`releases/0.3.0-signoff.md`](./releases/0.3.0-signoff.md)。
 2. 可选 follow-up：真实后端 live feature、二期 trait、非 Linux 矩阵、完整 `cargo fuzz`。
-3. 合并后若 public-api baseline 漂移：`node scripts/quality-gates/check-public-api.mjs --update` 并开文档 PR。
+3. 若 public-api baseline 漂移：`node scripts/quality-gates/check-public-api.mjs --update` 并开文档 PR。
 4. 任何实现会话：**worktree 隔离**，禁止 main 直改。
+5. **禁止**把本计划 DONE 写成「五个 crate 整体 Production Ready」对外营销。
 
 ---
 
@@ -593,3 +593,4 @@ node scripts/quality-gates/check.mjs
 | 2026-07-21 | **W0 Frozen**：`artifacts/` 落盘 trait/wire/支持矩阵/DEFER 处置；beads `infra-asa.1`…`.6` |
 | 2026-07-21 | **W0–W5 已合入 main**（PR #120–#128）；签核草稿；DEFER 表更新实现状态 |
 | 2026-07-21 | **验收勾选回写**：§5.4–§10.6 按合入证据勾选；§15 状态表；**DEFER-7 仍未签**；审计报告增 §12 |
+| 2026-07-21 | **DEFER-7 签核 + 计划 DONE**：`releases/0.3.0-signoff.md` · GO-with-Accepts · `@ZoneCNH`；整体 PR 仍否 |
