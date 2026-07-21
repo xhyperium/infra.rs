@@ -3,8 +3,8 @@
 | 字段 | 值 |
 |------|-----|
 | 日期 | 2026-07-21 |
-| crate | `crates/evidence` · `xhyper-evidence` / lib `evidence` |
-| 消费者 | `xhyper-bootstrap`（注入） |
+| crate | `crates/evidence` · `evidence` / lib `evidence`（文档名 xhyper-evidence） |
+| 消费者 | `bootstrap`（注入） |
 | SSOT 镜像 | `.agents/ssot/tools/evidence/`（tools 平面；见 [tools-ssot-alignment.md](./tools-ssot-alignment.md)） |
 
 ## 结论

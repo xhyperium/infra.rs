@@ -4,7 +4,7 @@
 |------|-----|
 | 审计日期 | 2026-07-21 |
 | SSOT（只读） | `.agents/ssot/bootstrap/spec/spec.md` ≡ `spec/bootstrap-complete-spec.md`（`cmp` 同构） |
-| 实现路径 | `crates/bootstrap`（package `xhyper-bootstrap` / lib `bootstrap`） |
+| 实现路径 | `crates/bootstrap`（package `bootstrap` / lib `bootstrap`） |
 | 权威 | 本文件描述 **本仓** 落地状态；**不**编辑 `.agents/ssot/**` 镜像 |
 | 上游参考 | `xhyper.rs/crates/infra/bootstrap`（可移植源，非本仓 member） |
 
@@ -33,8 +33,8 @@
 | `xhyper-kernel`（Shutdown / ErrorKind） | path `crates/kernel` | **PASS** |
 | `xhyper-contracts`（Instrumentation） | path `crates/contracts`；re-export `Instrumentation` | **PASS**（ADR-005 trait 权威） |
 | 有界 venue/storage 替面 | `BoundedMarketDataSource` / `BoundedKeyValueStore` / …（**非** contracts 同名 trait） | **PASS**（命名收敛，消除静默双平面）/ 完整 async contracts 能力仍 **DEFER** |
-| `xhyper-observex`（`TracingInstrumentation`） | path `crates/observex`；`Bootstrap::new` 默认 | **PASS**（ADR-005 默认实现） |
-| `xhyper-evidence`（`EvidenceAppender`） | path `crates/evidence`；re-export + `InMemoryEvidenceAppender` | **PASS**（注入/可选/require；内存实现）/ 远程持久化 wire **DEFER** |
+| `observex`（`TracingInstrumentation`） | path `crates/observex`；`Bootstrap::new` 默认 | **PASS**（ADR-005 默认实现） |
+| `evidence`（`EvidenceAppender`） | path `crates/evidence`；re-export + `InMemoryEvidenceAppender` | **PASS**（注入/可选/require；内存实现）/ 远程持久化 wire **DEFER** |
 | dev：binance / redisx / canonical / tokio e2e | 无 monorepo adapters | **DEFER**（见非目标）；以 stub trait double + 单元/集成测试替代组合证明 |
 
 ## §3 公开 API

@@ -189,7 +189,7 @@ Lint：`forbid(unsafe_code)` · `deny(unreachable_pub)` · `[lints] workspace = 
 | public_surface | **通过** | 15 trait 可达 + 真路径（已非空 `assert_eq!(15,15)` 占位） |
 | venue override 运行时门禁 | **部分（CT-10）** | `venue_override_gate.rs` + binancex/okxx |
 | 失败注入 | **一类** | `FakeTxContext::with_commit_failure`（Transient） |
-| 真实后端验证入口 | **DEFER（W4 / CT-9）** | adapters scaffold only |
+| 真实后端验证入口 | **部分 PASS（CT-9）** | KV live + observex；Tx/Bus/Venue 业务 **DEFER** |
 | mock-first adapter 入口 | **有（非 L3 替代）** | adapters SSOT：first-batch 进程内 mock；**≠** 非 scaffold |
 
 ---
@@ -297,7 +297,7 @@ venue_override_gate: 4 passed
 | 3 | 通用 conformance suite 驱动真实 trait 方法 | ⚠️ first-batch 5 场景；非全 trait |
 | 4 | 失败注入至少覆盖主失败类 | ⚠️ 仅 Tx commit Transient |
 | 5 | 最小 Fake/Recording 可运行 | ✅ |
-| 6 | 至少一非 scaffold 验证入口 | ❌ |
+| 6 | 至少一非 scaffold 验证入口（子集） | ✅ KV+Instr；first-batch 全绿 ❌ |
 | 7 | Venue 生产入口无静默 default 风险 | ⚠️ ExecutionVenue 无 default；VenueAdapter 仅运行时门禁 |
 | 8 | 与 bootstrap 无静默双平面 | ✅ Bounded* / re-export |
 | 9 | 对象安全（需要 dyn 的入口） | ✅ TxRunner 等已测 |

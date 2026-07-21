@@ -3,15 +3,15 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
-| Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ `spec/schedulex-complete-spec.md` |
-| 本仓 crate | `crates/schedulex` · package `xhyper-schedulex` · lib `schedulex` · `0.1.0` |
+| Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ `spec/xhyper-schedulex-complete-spec.md` |
+| 本仓 crate | `crates/schedulex` · package `schedulex` · lib `schedulex` · `0.1.0` |
 | 合同范围 | **内存任务 ID 登记表**（非 production timer scheduler） |
 
 ## 合同矩阵
 
 | 表面 | Active SSOT | 本仓 | 状态 |
 |------|-------------|------|------|
-| Package / lib / path | `xhyper-schedulex` / `schedulex` / `crates/schedulex` | 同左 | ✅ |
+| Package / lib / path | `schedulex` / `schedulex` / `crates/schedulex` | 同左 | ✅ |
 | 依赖 | std-only，无生产依赖 | `[dependencies]` 空 | ✅ |
 | `new` / `Default` | 空登记表 | `Scheduler::{new, default}` | ✅ |
 | `schedule(id)` | 插入；重复 ID 幂等覆盖 | `HashMap::insert` | ✅ |
@@ -40,7 +40,7 @@ graceful shutdown / 持久化恢复 / 分布式调度 —— active §3；Candid
 
 ```bash
 cmp .agents/ssot/schedulex/spec/spec.md \
-    .agents/ssot/schedulex/spec/schedulex-complete-spec.md
+    .agents/ssot/schedulex/spec/xhyper-schedulex-complete-spec.md
 cargo test -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
 cargo fmt --all --check

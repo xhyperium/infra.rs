@@ -4,7 +4,7 @@
 |------|-----|
 | Spec | active configx 0.1.0（`.agents/ssot/configx/spec/spec.md` ≡ `xhyper-configx-complete-spec.md`） |
 | 镜像 | `.agents/ssot/configx/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
-| 本仓实现 | `crates/configx` · package `xhyper-configx` · lib `configx` · version `0.1.0` |
+| 本仓实现 | `crates/configx` · package `configx` · lib `configx` · version `0.1.0` |
 | 审计日期 | 2026-07-21 |
 | 结论 | **active 合同面（§2–§7 可移植条款）无 FAIL 残留**；上位多源/热更新能力统一 **DEFER** |
 
@@ -15,7 +15,7 @@
 | 上游镜像 COMPLETE / 布局对齐 | 描述的是 **goal 管线布局**；**禁止**单独当作本仓实现证明 |
 | 本仓 `crates/configx` | **已落地**并与 active SSOT §2–§6 可移植子集对齐 |
 | 多源加载 / 热更新 / secret | **DEFER**（SSOT Unknown；未批准前不实现） |
-| line/branch cov | 目标 100%（`cargo llvm-cov -p xhyper-configx`） |
+| line/branch cov | 目标 100%（`cargo llvm-cov -p configx`） |
 | 本仓 crates.io 再发布 | **不做**；`publish = false` |
 
 ## 本仓可观察事实
@@ -23,7 +23,7 @@
 ```text
 crates/configx/                 EXISTS
 Cargo.toml members              含 crates/configx
-package name                    xhyper-configx
+package name                    configx
 lib name                        configx
 version                         0.1.0
 publish                         false
@@ -61,7 +61,7 @@ cargo llvm-cov -p configx --summary-only
 | ID | 要求 | 本仓证据 | 判定 |
 |----|------|----------|------|
 | 2.1 | 路径 `crates/configx`，L1 Infra | `crates/configx/`；根 `Cargo.toml` members | PASS |
-| 2.2 | package `xhyper-configx` / lib `configx` | `Cargo.toml` `[package]` / `[lib]` | PASS |
+| 2.2 | package `configx` / lib `configx` | `Cargo.toml` `[package]` / `[lib]` | PASS |
 | 2.3 | 版本独立维护；当前 `0.1.0` | `Cargo.toml` `version = "0.1.0"` | PASS |
 | 2.4 | 普通依赖仅 `xhyper-kernel` | `Cargo.toml` `[dependencies]` 唯一 path 依赖 | PASS |
 | 2.5 | 不得增加其他 L1 依赖 | 生产 deps 扫描无 observex/其他 L1 | PASS |
@@ -109,7 +109,7 @@ cargo llvm-cov -p configx --summary-only
 | ID | 要求 | 本仓证据 | 判定 |
 |----|------|----------|------|
 | 6.1 | 空存储 / set-get / 覆盖 / Default / 多 key 隔离 | `src/lib.rs` tests + `tests/public_api.rs` | PASS |
-| 6.2 | 命令：`cargo test/check/clippy/fmt -p xhyper-configx` | 本仓可执行；见验证入口 | PASS |
+| 6.2 | 命令：`cargo test/check/clippy/fmt -p configx` | 本仓可执行；见验证入口 | PASS |
 | 6.3 | 锁中毒语义 | `read_lock_poison_folds_to_none` / `write_lock_poison_returns_invalid` | PASS |
 | 6.4 | 并发读写 | `tests/concurrency.rs` + 单元 concurrent smoke | PASS |
 | 6.5 | 源优先级 / 解析失败保留旧快照 / 更新通知 / secret 脱敏 / watch 关闭 | 未批准能力 | DEFER（Unknown；非 0.1.0 面） |

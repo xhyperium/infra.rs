@@ -16,7 +16,7 @@
 | 路径约定 | 统一 `.agents/ssot/tools/**`（保留 `tools/` 层级） |
 | `verifyctl` | 本仓扩展域；11 层布局 + 生产 Goal/Spec 已入树 |
 | `goalctl` 生产增补 | `goal/goalctl-production-goal.md` · `spec/goalctl-production-spec.md` |
-| 本仓 crate 落地 | **仅** `crates/evidence`（`xhyper-evidence`）最小面；见 [evidence-ssot-alignment.md](./evidence-ssot-alignment.md) |
+| 本仓 crate 落地 | **仅** `crates/evidence`（package `evidence`）最小面；见 [evidence-ssot-alignment.md](./evidence-ssot-alignment.md) |
 | `tools/goalctl` · `tools/xtask` · `tools/verifyctl` | **未** workspace member · **未**宣称 ship |
 
 ## 目录
@@ -24,7 +24,7 @@
 ```text
 .agents/ssot/tools/
 ├── README.md              # 本仓索引
-├── evidence/              # → crates/evidence · xhyper-evidence
+├── evidence/              # → crates/evidence · package evidence
 ├── goalctl/               # → tools/goalctl（期望；未落地）
 ├── xtask/                 # → tools/xtask / infra-xtask（期望；未落地）
 └── verifyctl/             # → tools/verifyctl（期望；未落地）
@@ -55,7 +55,7 @@ needle=$'xhyper\x2ers'
 cmp "$DST/verifyctl/spec/spec.md" "$DST/verifyctl/spec/xhyper-verifyctl-complete-spec.md"
 
 # 本仓 evidence 实现
-cargo test -p xhyper-evidence -p xhyper-bootstrap --all-targets
+cargo test -p evidence -p bootstrap --all-targets
 ```
 
 ## 相关
