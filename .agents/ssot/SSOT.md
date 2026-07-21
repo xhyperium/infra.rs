@@ -32,6 +32,13 @@
     ├── schedulex/
     ├── testkitx/
     ├── transport/
+    ├── configx/
+    ├── gate/
+    ├── observex/
+    ├── resiliencx/
+    ├── schedulex/
+    ├── testkitx/
+    ├── transport/
     ├── adapters/           # exchange + storage
     ├── contracts/
     └── tools/              # evidence / goalctl / xtask / verifyctl
