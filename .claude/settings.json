@@ -4,7 +4,7 @@
       {
         "hooks": [
           {
-            "command": "node .claude/hooks/post-tool-check.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/post-tool-check.mjs",
             "type": "command"
           }
         ],
@@ -13,7 +13,7 @@
       {
         "hooks": [
           {
-            "command": "node .claude/hooks/edit-guard-reset.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/edit-guard-reset.mjs",
             "type": "command"
           }
         ],
@@ -23,7 +23,7 @@
         "description": "Link-check after markdown edits",
         "hooks": [
           {
-            "command": "node .claude/hooks/link-check.cjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/link-check.cjs",
             "type": "command"
           }
         ],
@@ -34,7 +34,7 @@
       {
         "hooks": [
           {
-            "command": "node .claude/hooks/pre-compact.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/pre-compact.mjs",
             "type": "command"
           }
         ],
@@ -45,7 +45,7 @@
       {
         "hooks": [
           {
-            "command": "node .claude/hooks/pre-tool-check.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/pre-tool-check.mjs",
             "type": "command"
           }
         ],
@@ -54,7 +54,7 @@
       {
         "hooks": [
           {
-            "command": "node .claude/hooks/edit-guard.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/edit-guard.mjs",
             "type": "command"
           }
         ],
@@ -63,7 +63,7 @@
       {
         "hooks": [
           {
-            "command": "node .claude/hooks/count-guard.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/count-guard.mjs",
             "type": "command"
           }
         ],
@@ -74,7 +74,7 @@
       {
         "hooks": [
           {
-            "command": "node .claude/hooks/session-context.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/session-context.mjs",
             "type": "command"
           }
         ],
@@ -94,15 +94,15 @@
       {
         "hooks": [
           {
-            "command": "node .claude/hooks/session-review.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/session-review.mjs",
             "type": "command"
           },
           {
-            "command": "node .claude/hooks/version-guard.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/version-guard.mjs",
             "type": "command"
           },
           {
-            "command": "node .claude/hooks/branch-protect.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/branch-protect.mjs",
             "type": "command"
           }
         ],

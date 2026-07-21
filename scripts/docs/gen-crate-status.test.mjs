@@ -50,7 +50,7 @@ assert(
 const body = readFileSync(statusPath, "utf8");
 assert("标题正确", body.includes("crates 子模块进度看板"));
 assert("含 workspace members 表头", body.includes("| Package | 路径 | 层 |"));
-assert("含 layout 矩阵", body.includes("## 布局七项矩阵"));
+assert("含 layout 矩阵", body.includes("## 布局八项矩阵"));
 assert("含完成度公式", body.includes("completion = layout"));
 assert("含 kernel 成员", body.includes("xhyper-kernel") || body.includes("`kernel`"));
 assert("含 adapters 路径", body.includes("crates/adapters/"));

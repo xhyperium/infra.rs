@@ -57,6 +57,6 @@ CI：`.github/workflows/validation.yml` job **crates 进度看板** 跑 `--check
 
 **SessionStart**：`.claude/hooks/session-context.mjs` 会自动 `gen-crate-status --local-only` 刷新本地副本，并打印一行平均完成度；**不**写入库 `STATUS.md`、**不**阻断会话。
 
-`STATUS.md` 完成度是**结构进度**（布局七项 · 测试 · 源码实质），**不是** Production Ready 签字。
+`STATUS.md` 完成度是**结构进度**（布局八项 · 测试 · 源码实质），**不是** Production Ready 签字。
 
 上级索引：[docs/README.md](../README.md)。
