@@ -192,6 +192,15 @@ ok(
   statusCheck.slice(0, 240) || "node scripts/docs/gen-docs-status.mjs --check 失败",
 );
 
+// ── crates 进度看板 STATUS.md ─────────────────────────────
+const crateStatusCheck = run("node scripts/docs/gen-crate-status.mjs --check 2>&1");
+ok(
+  "STATUS.md crates 看板新鲜",
+  !crateStatusCheck.includes("FAIL") &&
+    (crateStatusCheck.includes("OK") || crateStatusCheck.includes("up to date")),
+  crateStatusCheck.slice(0, 240) || "node scripts/docs/gen-crate-status.mjs --check 失败",
+);
+
 // ── 输出 ──────────────────────────────────────────────────
 const failed = checks.filter((c) => !c.ok);
 const passed = checks.filter((c) => c.ok);

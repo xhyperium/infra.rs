@@ -92,8 +92,10 @@
 | [CI_WORKFLOW_MATRIX.generated.md](status/CI_WORKFLOW_MATRIX.generated.md) | 自动生成：工作流文件 / jobs 矩阵 |
 | [CI_STATUS_REPORT.md](status/CI_STATUS_REPORT.md) | 人工叙事：CI 说明与迁移验证 |
 | [CONFIG_SUMMARY.md](status/CONFIG_SUMMARY.md) | 人工叙事：配置、分支保护、测试验证总览 |
+| [../STATUS.md](../STATUS.md) | **自动生成**：crates 子模块进度/完成度看板（`make status`） |
 
-> 状态类文档会随时间过期；规则类文档请放在 `governance/`。
+> 状态类文档会随时间过期；规则类文档请放在 `governance/`。  
+> crates 进度看板在仓库根 `STATUS.md`（由 `scripts/docs/gen-crate-status.mjs` 生成，支持 `--watch` 自动监控）。
 
 ---
 

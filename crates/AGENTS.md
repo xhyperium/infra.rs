@@ -66,24 +66,30 @@ crates/<crate-name>/
 7. 更新本文件「Crate 概览」表
 8. 更新 `ARCHITECTURE.md` 层次模型（如职责变更）
 
-### 合规现状（2026-07-21）
+### 合规现状（自动同步）
 
-| Crate | 路径 | src | examples | docs | tests | CHANGELOG | AGENTS | README |
-|-------|------|:---:|:--------:|:----:|:-----:|:---------:|:------:|:------:|
-| `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `xhyper-configx`（lib `configx`） | `crates/configx/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `xhyper-schedulex`（lib `schedulex`） | `crates/schedulex/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `xhyper-decimalx`（lib `decimalx`） | `crates/types/decimal/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `xhyper-resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `xhyper-bootstrap`（lib `bootstrap`） | `crates/bootstrap/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `xhyper-contracts` | `crates/contracts/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| adapters 九 package（见概览） | `crates/adapters/**` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `xhyper-transportx`（lib `transportx`） | `crates/transport/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+**实时看板（勿手改）**：[根目录 STATUS.md](../STATUS.md)
+
+```bash
+node scripts/docs/gen-crate-status.mjs           # 重扫 workspace → STATUS.md
+node scripts/docs/gen-crate-status.mjs --check   # 新鲜度门禁
+node scripts/docs/gen-crate-status.mjs --watch 30  # 自动监控
+# 或: make status / make status-watch
+```
+
+下表为规范说明快照；**权威完成度与布局矩阵以 `STATUS.md` 为准**（由 `gen-crate-status.mjs` 从 `Cargo.toml` members 扫描生成）。
+
+| Crate | 路径 | 标准七项 |
+|-------|------|----------|
+| `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | 见 STATUS.md |
+| `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | 见 STATUS.md |
+| `xhyper-configx` / `schedulex` / `bootstrap` / `evidence` / `observex` / `resiliencx` / `transportx` | `crates/<name>/` | 见 STATUS.md |
+| `xhyper-decimalx` / `xhyper-canonical` | `crates/types/*` | 见 STATUS.md |
+| `xhyper-contracts` | `crates/contracts/` | 见 STATUS.md |
+| adapters 九 package | `crates/adapters/**` | 见 STATUS.md |
 
 > `examples/` / `docs/` / 暂无集成测试时的 `tests/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。  
-> adapters / contracts 为 scaffold；标准七项已补齐，**≠** 业务实现完成。见 [docs/ssot/adapters-ssot-alignment.md](../docs/ssot/adapters-ssot-alignment.md)。
+> adapters 多为 scaffold；标准七项齐全 **≠** 业务实现 / Production Ready。见 [docs/ssot/adapters-ssot-alignment.md](../docs/ssot/adapters-ssot-alignment.md) 与 STATUS.md 成熟度列。
 
 ---
 
