@@ -273,16 +273,16 @@ venue_override_gate: 4 passed
 
 ### P1
 
-4. 扩展 conformance：ObjectStore / PubSub / TimeSeries / Analytics / venue 能力拆分  
-5. EventBus/PubSub：ack 边界裁定（扩展 trait 或文档冻结「无 ack」）  
-6. VenueAdapter override：**compile-fail 或 CI lint** 强制树内实现  
-7. 独立 contract-testkit crate（从 `fakes` 迁出或冻结本 crate 为 SSOT 入口）
+1. 扩展 conformance：ObjectStore / PubSub / TimeSeries / Analytics / venue 能力拆分  
+2. EventBus/PubSub：ack 边界裁定（扩展 trait 或文档冻结「无 ack」）  
+3. VenueAdapter override：**compile-fail 或 CI lint** 强制树内实现  
+4. 独立 contract-testkit crate（从 `fakes` 迁出或冻结本 crate 为 SSOT 入口）
 
 ### P2
 
-8. Additive Only API snapshot / semver diff  
-9. `deny(missing_docs)` 与 trait 方法文档债  
-10. 收敛 bootstrap `Bounded*` 与 contracts 的长期关系（文档化或统一）
+1. Additive Only API snapshot / semver diff  
+2. `deny(missing_docs)` 与 trait 方法文档债  
+3. 收敛 bootstrap `Bounded*` 与 contracts 的长期关系（文档化或统一）
 
 ---
 

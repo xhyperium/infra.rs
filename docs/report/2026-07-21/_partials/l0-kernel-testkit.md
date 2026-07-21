@@ -155,14 +155,14 @@ cargo test -p kernel -p testkit --all-targets
 
 ### 4.3 测试合同覆盖摘要
 
-**kernel**
+#### kernel
 
 - error：9 构造器、source 链、Display/Debug 脱敏、ClockError→Unavailable  
 - clock：i64 边界 checked_*、跨 domain、SystemClock 非减单调、ControlledClock 墙钟回退不牵连 mono  
 - lifecycle：合法/非法边、多 observer、stress、poison、`wait_timeout`、guard drop 不触发  
 - 负向：rustdoc `compile_fail` + `static_assertions`（!Default、!serde、!From&lt;str&gt;、!Component…）
 
-**testkit**
+#### testkit
 
 - unit：溢出/回归不改状态、fault 映射、poison 路径、跨实例 domain  
 - contract / property / concurrency / public_surface（退役符号 + prod deps 仅 `kernel`）
