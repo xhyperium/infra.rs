@@ -1,0 +1,16 @@
+# Optional: exchange public server_time（infra-s9t.13）
+# 仅 workflow_dispatch：GitHub-hosted runner 常被 Binance 以 HTTP 451 拒绝，
+# 不得阻断 PR 默认离线绿。手动外网验证时再触发。
+name: Exchange Live Readonly
+on:
+  workflow_dispatch:
+jobs:
+  public-time:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: ignored live server_time
+        run: |
+          cargo test -p binancex --test live_server_time -- --ignored --nocapture
+          cargo test -p okxx --test live_server_time -- --ignored --nocapture

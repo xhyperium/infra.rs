@@ -19,6 +19,15 @@ use futures_util::stream;
 use kernel::{XError, XResult};
 use transportx::{HttpDriver, HttpRequest, HttpResponse, TransportError};
 
+/// 解析 Binance `/api/v3/time` JSON：`{"serverTime": <ms>}`。
+pub(crate) fn parse_binance_server_time(body: &[u8]) -> XResult<i64> {
+    let v: serde_json::Value = serde_json::from_slice(body)
+        .map_err(|e| XError::invalid(format!("server_time json: {e}")))?;
+    v.get("serverTime")
+        .and_then(|x| x.as_i64())
+        .ok_or_else(|| XError::invalid("server_time missing serverTime field"))
+}
+
 /// 将 [`TransportError`] 映射为 kernel [`XError`]。
 fn map_transport_error(err: TransportError) -> XError {
     match err {
@@ -323,8 +332,11 @@ impl VenueAdapter for BinanceAdapter {
         if self.http.is_some() {
             let resp = self.http_get("/api/v3/time").await?;
             if resp.status == 200 {
-                // 业务 JSON 解析 DEFER；transport 接线成功返回占位 0
-                return Ok(0);
+                // 有 body 则解析；空 body 保持占位 0（mock 兼容）
+                if resp.body.is_empty() {
+                    return Ok(0);
+                }
+                return parse_binance_server_time(&resp.body);
             }
             return Err(XError::unavailable(format!("server_time http status {}", resp.status)));
         }
@@ -493,6 +505,13 @@ mod tests {
         assert_eq!(VenueAdapter::query_balance(&a).await.unwrap().len(), 1);
     }
 
+    #[test]
+    fn parse_binance_server_time_ok() {
+        let body = br#"{"serverTime":1710000000123}"#;
+        assert_eq!(parse_binance_server_time(body).unwrap(), 1710000000123);
+        assert!(parse_binance_server_time(br"{}").is_err());
+    }
+
     #[tokio::test]
     async fn http_driver_get_and_server_time() {
         use bytes::Bytes;
@@ -500,7 +519,7 @@ mod tests {
 
         let mock = Arc::new(MockHttpTransport::new());
         let url = "https://api.binance.com/api/v3/time";
-        mock.set_get(url, Bytes::from_static(b"{\"serverTime\":1}"));
+        mock.set_get(url, Bytes::from_static(br#"{"serverTime":1710000000999}"#));
 
         let a = BinanceAdapter::mainnet().with_http(mock);
         assert!(a.has_http());
@@ -510,7 +529,7 @@ mod tests {
         assert_eq!(resp.status, 200);
 
         let t = VenueAdapter::server_time(&a).await.unwrap();
-        assert_eq!(t, 0);
+        assert_eq!(t, 1710000000999);
 
         // absolute URL path
         let resp2 = a.http_get(url).await.unwrap();

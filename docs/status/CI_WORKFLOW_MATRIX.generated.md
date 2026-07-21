@@ -24,6 +24,7 @@
 | `decimal-miri.yml` | Decimal Miri | schedule, workflow_dispatch | `miri` |
 | `decimal-mutants.yml` | Decimal Mutants | schedule, workflow_dispatch | `mutants` |
 | `evidence-coverage.yml` | Evidence Coverage | pull_request, workflow_dispatch | `line-coverage` |
+| `exchange-live-readonly.yml` | Exchange Live Readonly | workflow_dispatch | `public-time` |
 | `kernel-coverage.yml` | Kernel Coverage | pull_request, workflow_dispatch | `coverage` |
 | `kernel-loom.yml` | kernel-loom | pull_request, workflow_dispatch | `loom` |
 | `kernel-miri.yml` | Kernel Miri | schedule, workflow_dispatch | `miri` |
@@ -47,8 +48,8 @@
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 33 |
-| Job 总数（解析） | 63 |
+| 工作流文件数 | 34 |
+| Job 总数（解析） | 64 |
 
 ## 维护
 

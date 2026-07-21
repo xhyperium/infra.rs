@@ -25,4 +25,6 @@ jobs:
       - name: live ignored tests
         env:
           REDIS_URL: redis://127.0.0.1:6379
-        run: cargo test -p redisx --features live -- --ignored --nocapture
+        run: |
+          cargo test -p redisx --features live -- --ignored --nocapture
+          cargo test -p redisx --features live --test live_kv_conformance -- --ignored --nocapture

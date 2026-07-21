@@ -8,6 +8,11 @@ repository.workspace = true
 rust-version.workspace = true
 publish = false
 
+[features]
+default = []
+## 文档/测门控：启用 live-test 用例编译路径（网络测仍 #[ignore]）
+live-test = []
+
 [dependencies]
 async-trait = { workspace = true }
 bytes = { workspace = true }
@@ -18,6 +23,7 @@ contracts = { path = "../../../contracts", version = "0.1.0" }
 decimalx = { path = "../../../types/decimal", version = "0.1.0" }
 kernel = { path = "../../../kernel", version = "0.3.0" }
 transportx = { path = "../../../transport", version = "0.1.0" }
+serde_json = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
