@@ -82,3 +82,8 @@ if [[ -d "$target" ]]; then
 else
   load_file "$target"
 fi
+
+# 从 ZoneCNH secrets/env/*.md 生成 .env（推荐 live 测试入口）:
+#   node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
+#   set -a; source /tmp/foundationx-live.env; set +a
+#   cargo test -p redisx --test live_kv -- --ignored
