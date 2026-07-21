@@ -9,7 +9,7 @@
 
 | 文件 | name | 触发（启发式） | Jobs |
 |------|------|----------------|------|
-| `beads-e2e.yml` | Beads E2E | push, pull_request, workflow_dispatch | `beads-smoke` |
+| `beads-e2e.yml` | Beads E2E | pull_request, workflow_dispatch | `beads-smoke` |
 | `canonical-coverage.yml` | Canonical Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
 | `ci-rust.yml` | CI（Rust） | push, pull_request | `check-rust`, `build`, `test`, `msrv`, `coverage` |
 | `ci-summary.yml` | CI Summary | (see workflow) | `summary` |
