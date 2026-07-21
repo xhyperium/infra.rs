@@ -68,10 +68,11 @@ du -sh <src> <dst>  # 字节级一致
 ## 同步命令
 
 ```bash
-cp -rf /home/workspace/xhyper.rs/.agent/SSOT/kernel  .agents/ssot/
-cp -rf /home/workspace/xhyper.rs/.agent/SSOT/testkit .agents/ssot/
-cp -rf /home/workspace/xhyper.rs/.agent/SSOT/types   .agents/ssot/
-cp -rf /home/workspace/xhyper.rs/.agent/SSOT/infra/* .agents/ssot/
+# 删除感知同步（推荐）；保留 infra/ 层级
+rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/kernel/  .agents/ssot/kernel/
+rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/testkit/ .agents/ssot/testkit/
+rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/types/   .agents/ssot/types/
+rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/   .agents/ssot/infra/
 ```
 
 ## 结论
@@ -85,6 +86,7 @@ cp -rf /home/workspace/xhyper.rs/.agent/SSOT/infra/* .agents/ssot/
 > | kernel | `crates/kernel` | **已落地** | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
 > | testkit | `crates/testkit` | **core 已落地**；contract-testkit DEFER | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
 > | types | `crates/types/{decimal,canonical}` | **已落地**；wire/package stable OPEN | [types-ssot-alignment.md](./types-ssot-alignment.md) |
+> | infra 八域 | （镜像）`.agents/ssot/infra/*` | **仅镜像**，未宣称 crate 落地 | 见下节 |
 >
 > **总览**：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)  
 > **非 SSOT 域**：`infra-core` 已从 workspace **移除**（见根 `CHANGELOG`）；它从未属于 kernel/testkit/types 镜像三域。
@@ -93,9 +95,12 @@ cp -rf /home/workspace/xhyper.rs/.agent/SSOT/infra/* .agents/ssot/
 
 ## 补充：infra 平面镜像（2026-07-21）
 
-**源**: `/home/workspace/xhyper.rs/.agent/SSOT/infra/*`  
-**目标**: `/home/workspace/infra.rs/.agents/ssot/{bootstrap,configx,gate,…}`  
-**命令**: `cp -rf …/infra/* .agents/ssot/`
+**源**: `/home/workspace/xhyper.rs/.agent/SSOT/infra/`  
+**目标**: `/home/workspace/infra.rs/.agents/ssot/infra/`（**保留 `infra/` 层级**）  
+**命令**: `rsync -a --delete …/SSOT/infra/ .agents/ssot/infra/`
+
+> **修正（同日）**：初版 `cp -rf …/infra/* .agents/ssot/` 将域展平到 ssot 根，破坏 README 内
+> `../../kernel/` 等相对链接。现迁回 `.agents/ssot/infra/*`，与上游目录深度一致。
 
 | 域 | 文件数 | 目录数 | 大小 | 与源 diff |
 |----|--------|--------|------|-----------|
