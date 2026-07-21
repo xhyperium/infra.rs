@@ -21,3 +21,7 @@ evidence = { path = "../evidence", version = "0.1.0" }
 
 [lints]
 workspace = true
+
+[[bench]]
+name = "hot_path"
+harness = false

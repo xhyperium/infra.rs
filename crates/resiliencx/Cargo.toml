@@ -18,3 +18,7 @@ contracts = { path = "../contracts", version = "0.1.0" }
 
 [lints]
 workspace = true
+
+[[bench]]
+name = "hot_path"
+harness = false

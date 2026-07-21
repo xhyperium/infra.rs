@@ -25,10 +25,11 @@
 //! ## Lint
 //!
 //! - `forbid(unsafe_code)` / `deny(unreachable_pub)` 已启用。
-//! - `missing_docs`：**follow-up**（DTO 字段/variant 文档债未清；对齐 kernel 后再升 `deny`）。
+//! - `missing_docs`：已 `deny`（公开 DTO 字段/variant 须有文档）。
 
 #![forbid(unsafe_code)]
 #![deny(unreachable_pub)]
+#![deny(missing_docs)]
 
 pub mod proposed_time;
 pub mod shape;
@@ -64,7 +65,9 @@ pub type InstrumentId = String;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub enum OrderRef {
+    /// Client-assigned order id.
     Client(String),
+    /// Exchange-assigned order id.
     Exchange(String),
 }
 
@@ -74,8 +77,11 @@ pub enum OrderRef {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CancelOrderRequest {
+    /// Venue slug (e.g. `okx`).
     pub venue: VenueId,
+    /// Instrument / symbol id on that venue.
     pub instrument: InstrumentId,
+    /// Order reference namespace (client or exchange).
     pub id: OrderRef,
 }
 
@@ -83,11 +89,17 @@ pub struct CancelOrderRequest {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub enum OrderStatus {
+    /// 已接受，尚未进入簿。
     Pending,
+    /// 在簿可成交。
     Open,
+    /// 部分成交。
     PartiallyFilled,
+    /// 全部成交。
     Filled,
+    /// 已取消。
     Cancelled,
+    /// 被拒绝。
     Rejected,
 }
 
@@ -95,7 +107,9 @@ pub enum OrderStatus {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub enum Side {
+    /// 买。
     Buy,
+    /// 卖。
     Sell,
 }
 
@@ -106,11 +120,17 @@ pub enum Side {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Order {
+    /// Wire order id string.
     pub id: String,
+    /// 交易对符号。
     pub symbol: String,
+    /// 买卖方向。
     pub side: Side,
+    /// 限价（或展示价）。
     pub price: Price,
+    /// 数量。
     pub qty: Qty,
+    /// 订单状态。
     pub status: OrderStatus,
 }
 
@@ -122,6 +142,7 @@ pub struct Order {
 pub struct OrderAck {
     /// Wire order id string.
     pub id: String,
+    /// 确认时的订单状态。
     pub status: OrderStatus,
     /// Unix epoch **nanoseconds** (CAN-TIME-001). Adapters must convert exchange ms → ns.
     pub ts: i64,
@@ -131,8 +152,11 @@ pub struct OrderAck {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Position {
+    /// 交易对。
     pub symbol: String,
+    /// 持仓数量（符号约定由消费方解释）。
     pub qty: Qty,
+    /// 开仓均价。
     pub entry_price: Price,
 }
 
@@ -142,9 +166,13 @@ pub struct Position {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Tick {
+    /// 交易对。
     pub symbol: String,
+    /// 最优买价。
     pub bid: Price,
+    /// 最优卖价。
     pub ask: Price,
+    /// Unix epoch 纳秒。
     pub ts: i64,
 }
 
@@ -152,7 +180,9 @@ pub struct Tick {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PriceLevel {
+    /// 档位价格。
     pub price: Price,
+    /// 档位数量。
     pub qty: Qty,
 }
 
@@ -162,9 +192,13 @@ pub struct PriceLevel {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OrderBookSnapshot {
+    /// 交易对。
     pub symbol: String,
+    /// 买盘档位（通常价降序，顺序由生产者约定）。
     pub bids: Vec<PriceLevel>,
+    /// 卖盘档位（通常价升序，顺序由生产者约定）。
     pub asks: Vec<PriceLevel>,
+    /// Unix epoch 纳秒。
     pub ts: i64,
 }
 
@@ -174,9 +208,13 @@ pub struct OrderBookSnapshot {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Trade {
+    /// 交易对。
     pub symbol: String,
+    /// 成交价。
     pub price: Price,
+    /// 成交量。
     pub qty: Qty,
+    /// Unix epoch 纳秒。
     pub ts: i64,
 }
 
@@ -184,10 +222,15 @@ pub struct Trade {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SymbolMeta {
+    /// 交易对符号。
     pub symbol: String,
+    /// 基础资产。
     pub base: String,
+    /// 计价资产。
     pub quote: String,
+    /// 最小价格步进。
     pub tick_size: Decimal,
+    /// 最小下单量。
     pub min_qty: Qty,
 }
 

@@ -4,6 +4,13 @@
 
 ### Added
 
+- 真实 `benches/hot_path`（`cargo bench -- --quick` 可测）
+- 公开 API 集成覆盖扩展（`tests/public_api_surface.rs` 等）
+- `docs/API.md`：公开消费面与最小用法
+
+
+### Added
+
 - 按 crates 子模块标准补齐 `examples/` 骨架（`.gitkeep`）
 - W1 证据硬化：`tests/oracle_diff.rs`（BigDecimal 差分）、`boundary_matrix.rs`、`adversarial_serde.rs`
 - 生产路径 panicking 运算符门禁：`scripts/quality-gates/check-decimal-no-panicking-ops.mjs`

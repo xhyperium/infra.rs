@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- 真实 `benches/hot_path`（`cargo bench -- --quick` 可测）
+- 公开 API 集成覆盖扩展（`tests/public_api_surface.rs` 等）
+- `docs/API.md`：公开消费面与最小用法
+
+
 ### 新增
 
 - 将 `xhyper-testkit` 0.1.1（ManualClock V2）移植到 **infra.rs** workspace

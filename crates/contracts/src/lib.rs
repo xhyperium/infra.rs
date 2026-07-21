@@ -7,7 +7,7 @@
 //! ## Lint
 //!
 //! - `forbid(unsafe_code)` / `deny(unreachable_pub)` 已启用。
-//! - `missing_docs`：**follow-up**（trait 方法文档债较大；对齐 kernel 后再升 `deny`）。
+//! - `missing_docs`：已 `deny`（公开 trait 方法与字段须有文档）。
 //!
 //! # 生产入口建议
 //!
@@ -21,6 +21,7 @@
 
 #![forbid(unsafe_code)]
 #![deny(unreachable_pub)]
+#![deny(missing_docs)]
 
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -47,7 +48,9 @@ pub use fakes::{
 /// 语义文档：`docs/contracts/key_value_store.md`。
 #[async_trait]
 pub trait KeyValueStore: Send + Sync {
+    /// 读取 key；不存在返回 `Ok(None)`。
     async fn get(&self, key: &str) -> XResult<Option<Vec<u8>>>;
+    /// 写入 key；`ttl` 为可选过期时间。
     async fn set(&self, key: &str, val: Vec<u8>, ttl: Option<Duration>) -> XResult<()>;
 }
 
@@ -82,7 +85,9 @@ pub enum MessageAck {
 /// 语义文档：`docs/contracts/event_bus.md`。
 #[async_trait]
 pub trait EventBus: Send + Sync {
+    /// 发布消息到 topic。
     async fn publish(&self, topic: &str, payload: Bytes) -> XResult<()>;
+    /// 订阅 topic，返回消息流。
     async fn subscribe(&self, topic: &str) -> XResult<BoxStream<'static, BusMessage>>;
 }
 
@@ -91,7 +96,9 @@ pub trait EventBus: Send + Sync {
 /// 语义文档：`docs/contracts/repository.md`。
 #[async_trait]
 pub trait Repository<T, Id>: Send + Sync {
+    /// 按 id 查找实体。
     async fn find(&self, id: Id) -> XResult<Option<T>>;
+    /// 保存/更新实体。
     async fn save(&self, entity: &T) -> XResult<()>;
 }
 
@@ -147,20 +154,25 @@ where
 /// 时序数据存储（待新增，ADR-003，taosx 实现，native/rest 双 feature）。
 #[async_trait]
 pub trait TimeSeriesStore: Send + Sync {
+    /// 写入时间序列点。
     async fn write_series(&self, table: &str, points: Vec<Tick>) -> XResult<()>;
+    /// 按时间范围查询（纳秒 epoch）。
     async fn query_series(&self, table: &str, start: i64, end: i64) -> XResult<Vec<Tick>>;
 }
 
 /// 对象存储（待新增，ossx 实现）。
 #[async_trait]
 pub trait ObjectStore: Send + Sync {
+    /// 上传对象。
     async fn put_object(&self, key: &str, data: Bytes) -> XResult<()>;
+    /// 下载对象。
     async fn get_object(&self, key: &str) -> XResult<Bytes>;
 }
 
 /// 分析数据汇聚（待新增，clickhousex 实现）。
 #[async_trait]
 pub trait AnalyticsSink: Send + Sync {
+    /// 写入分析事件。
     async fn sink(&self, event: &str, payload: Bytes) -> XResult<()>;
 }
 
@@ -169,7 +181,9 @@ pub trait AnalyticsSink: Send + Sync {
 /// 与 [`EventBus`] 类似，stream 项为 [`BusMessage`]；能力边界：至少 at-most-once。
 #[async_trait]
 pub trait PubSub: Send + Sync {
+    /// 发布到 channel。
     async fn pub_message(&self, channel: &str, msg: Bytes) -> XResult<()>;
+    /// 订阅 channel。
     async fn sub_channel(&self, channel: &str) -> XResult<BoxStream<'static, BusMessage>>;
 }
 
@@ -179,8 +193,11 @@ pub trait PubSub: Send + Sync {
 ///
 /// 语义文档：`docs/contracts/instrumentation.md`。
 pub trait Instrumentation: Send + Sync {
+    /// 记录一次重试（`attempt` 从 1 起或由调用方约定）。
     fn record_retry(&self, op: &str, attempt: u32);
+    /// 记录熔断打开。
     fn record_circuit_open(&self, op: &str);
+    /// 记录熔断关闭。
     fn record_circuit_close(&self, op: &str);
 }
 
@@ -195,8 +212,11 @@ pub trait Instrumentation: Send + Sync {
 /// [`XError::invalid`]；树内 adapter 必须覆盖（DEFER-8 / CT-10）。
 #[async_trait]
 pub trait VenueAdapter: Send + Sync {
+    /// 建立与交易所的会话/连接。
     async fn connect(&self) -> XResult<()>;
+    /// 断开连接。
     async fn disconnect(&self) -> XResult<()>;
+    /// 下单。
     async fn place_order(&self, order: &Order) -> XResult<OrderAck>;
     /// Legacy cancel by opaque wire id string (often `{symbol}:{exchange_id}`).
     ///
@@ -224,15 +244,22 @@ pub trait VenueAdapter: Send + Sync {
         let _ = request;
         Err(XError::invalid(VENUE_QUERY_REQUEST_DEFAULT_MSG))
     }
+    /// 查询持仓。
     async fn query_position(&self) -> XResult<Vec<Position>>;
+    /// 查询余额。
     async fn query_balance(&self) -> XResult<Vec<Money>>;
+    /// 订阅 tick 流。
     async fn subscribe_ticks(&self, symbol: &str) -> XResult<BoxStream<'static, Tick>>;
+    /// 订阅订单簿快照流。
     async fn subscribe_orderbook(
         &self,
         symbol: &str,
     ) -> XResult<BoxStream<'static, OrderBookSnapshot>>;
+    /// 订阅成交流。
     async fn subscribe_trades(&self, symbol: &str) -> XResult<BoxStream<'static, Trade>>;
+    /// 交易所服务器时间（纳秒 epoch 或实现约定刻度；见对齐文档）。
     async fn server_time(&self) -> XResult<i64>;
+    /// 查询交易对元数据。
     async fn symbol_info(&self, symbol: &str) -> XResult<SymbolMeta>;
     /// 静态标识，无异步语义。
     fn venue_id(&self) -> &'static str;
@@ -243,11 +270,14 @@ pub trait VenueAdapter: Send + Sync {
 /// 语义文档：`docs/contracts/market_data_source.md`。
 #[async_trait]
 pub trait MarketDataSource: Send + Sync {
+    /// 订阅 tick 流。
     async fn subscribe_ticks(&self, symbol: &str) -> XResult<BoxStream<'static, Tick>>;
+    /// 订阅订单簿快照流。
     async fn subscribe_orderbook(
         &self,
         symbol: &str,
     ) -> XResult<BoxStream<'static, OrderBookSnapshot>>;
+    /// 订阅成交流。
     async fn subscribe_trades(&self, symbol: &str) -> XResult<BoxStream<'static, Trade>>;
 }
 
@@ -256,6 +286,7 @@ pub trait MarketDataSource: Send + Sync {
 /// 语义文档：`docs/contracts/instrument_catalog.md`。
 #[async_trait]
 pub trait InstrumentCatalog: Send + Sync {
+    /// 查询交易对元数据。
     async fn symbol_info(&self, symbol: &str) -> XResult<SymbolMeta>;
 }
 
@@ -266,9 +297,13 @@ pub trait InstrumentCatalog: Send + Sync {
 /// 语义文档：`docs/contracts/execution_venue.md`。
 #[async_trait]
 pub trait ExecutionVenue: Send + Sync {
+    /// 下单。
     async fn place_order(&self, order: &Order) -> XResult<OrderAck>;
+    /// 结构化撤单。
     async fn cancel_order(&self, request: &CancelOrderRequest) -> XResult<()>;
+    /// 结构化查单。
     async fn query_order(&self, request: &CancelOrderRequest) -> XResult<OrderStatus>;
+    /// 场所标识。
     fn venue_id(&self) -> VenueId;
 }
 
@@ -277,7 +312,9 @@ pub trait ExecutionVenue: Send + Sync {
 /// 语义文档：`docs/contracts/account_source.md`。
 #[async_trait]
 pub trait AccountSource: Send + Sync {
+    /// 查询持仓。
     async fn query_position(&self) -> XResult<Vec<Position>>;
+    /// 查询余额。
     async fn query_balance(&self) -> XResult<Vec<Money>>;
 }
 
@@ -286,6 +323,7 @@ pub trait AccountSource: Send + Sync {
 /// 语义文档：`docs/contracts/venue_time_source.md`。
 #[async_trait]
 pub trait VenueTimeSource: Send + Sync {
+    /// 交易所服务器时间。
     async fn server_time(&self) -> XResult<i64>;
 }
 

@@ -281,11 +281,22 @@ where
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InstrEvent {
     /// 重试。
-    Retry { op: String, attempt: u32 },
+    Retry {
+        /// 操作名。
+        op: String,
+        /// 尝试序号。
+        attempt: u32,
+    },
     /// 熔断打开。
-    CircuitOpen { op: String },
+    CircuitOpen {
+        /// 操作名。
+        op: String,
+    },
     /// 熔断关闭。
-    CircuitClose { op: String },
+    CircuitClose {
+        /// 操作名。
+        op: String,
+    },
 }
 
 /// 可观察的 [`Instrumentation`]：将调用写入内存向量。

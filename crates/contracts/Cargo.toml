@@ -28,3 +28,7 @@ decimalx = { path = "../types/decimal", version = "0.1.0" }
 futures-core = { workspace = true }
 okxx = { path = "../adapters/exchange/okx", version = "0.3.0" }
 tokio = { workspace = true }
+
+[[bench]]
+name = "hot_path"
+harness = false
