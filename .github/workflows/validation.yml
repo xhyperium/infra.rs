@@ -95,7 +95,7 @@ jobs:
             git checkout -b harness-ci
           fi
       - name: 安装 bd CLI
-        run: npm install -g @beads/bd
+        run: curl -sSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
       - name: 初始化 beads
         run: bd init --quiet
       - name: 运行 harness check
