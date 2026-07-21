@@ -29,7 +29,7 @@
 
 - 人审：[plan/approval-packet.md](../plan/approval-packet.md)
 - 十轮：[plan/testkit-plan-10x-verdict.md](../plan/testkit-plan-10x-verdict.md)
-- Ship：PR [#247](https://github.com/xhyperium/xhyper.rs/pull/247) · [#254](https://github.com/xhyperium/xhyper.rs/pull/254) · [#255](https://github.com/xhyperium/xhyper.rs/pull/255)
+- Ship：PR [#247](https://github.com/xhyperium/infra.rs/pull/247) · [#254](https://github.com/xhyperium/infra.rs/pull/254) · [#255](https://github.com/xhyperium/infra.rs/pull/255)
 - Stable gates：仓库根 [`evidence/testkit/2026-07-14-stable-gates/`](../../../../evidence/testkit/2026-07-14-stable-gates)
 - Residual：[plan/residual-open.md](../plan/residual-open.md)
 

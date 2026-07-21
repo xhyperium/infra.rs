@@ -30,7 +30,7 @@
   },
   "residual_hygiene": "RES-API-003..008 + RES-LC-004 mid-meanings registered",
   "ci_fix": "fmt + ErrorKind test-only imports + rustdoc XError::ctor links + coverage tests + xtask nonminimal_bool",
-  "pr": "https://github.com/xhyperium/xhyper.rs/pull/235",
+  "pr": "https://github.com/xhyperium/infra.rs/pull/235",
   "alignment_docs": "synced 2026-07-14 to PR #235 ship state",
   "github_ci": {
     "head_sha_235": "7af048f131583899f0d649d929cc6cbaf884f372",

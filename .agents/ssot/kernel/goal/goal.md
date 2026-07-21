@@ -8,7 +8,7 @@
 | Design | [design.md](../design/design.md) |
 | Package | path `crates/kernel` · crates.io **`xhyper-kernel` `0.1.1`** · lib **`kernel`** |
 | Registry | **`stable`** |
-| Ship | [#235](https://github.com/xhyperium/xhyper.rs/pull/235) MERGED · tag `kernel-v0.1.1` · crates.io published |
+| Ship | [#235](https://github.com/xhyperium/infra.rs/pull/235) MERGED · tag `kernel-v0.1.1` · crates.io published |
 | Residual | [residual-open.txt](../evidence/2026-07-14/residual-open.txt) · **OPEN=0** |
 | Campaign evidence | [EVID-KERNEL-002-CAMPAIGN-COMPLETE.md](../evidence/2026-07-14/EVID-KERNEL-002-CAMPAIGN-COMPLETE.md) |
 

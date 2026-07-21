@@ -3,14 +3,14 @@
 | 字段 | 值 |
 |------|-----|
 | Design ID | `DESIGN-KERNEL-002` |
-| Source Spec | `SPEC-KERNEL-002`（`.agent/SSOT/kernel/spec/spec.md`） |
+| Source Spec | `SPEC-KERNEL-002`（`.agents/ssot/kernel/spec/spec.md`） |
 | Supersedes | 过薄清单 design（PR-1 已替换） |
 | Package / lib | `xhyper-kernel` / `kernel` @ `crates/kernel` |
 | Version | **0.1.1**（已 merge main · 已 tag `kernel-v0.1.1` · 已 publish crates.io） |
 | Layer | L0 / Kernel |
 | Registry / distribution | **`stable`** / `publish = true`；0.1.1 已发布 |
 | Spec Status | **Approved** |
-| Ship baseline | PR [#235](https://github.com/xhyperium/xhyper.rs/pull/235) · **MERGED** 2026-07-14 · merge `e7bda98e` · tag `kernel-v0.1.1` · head `feat/kernel-002-e2-migrate-banned-apis` · base `main` · 实际标题见 PR Plan PR-0 |
+| Ship baseline | PR [#235](https://github.com/xhyperium/infra.rs/pull/235) · **MERGED** 2026-07-14 · merge `e7bda98e` · tag `kernel-v0.1.1` · head `feat/kernel-002-e2-migrate-banned-apis` · base `main` · 实际标题见 PR Plan PR-0 |
 | Current task SSOT | Beads `xhyper-g09` |
 | Production certification | **NOT CLAIMED** |
 | Author | platform / AI design pass |
@@ -46,7 +46,7 @@
 
 ## Overview
 
-`kernel` 是 xhyper.rs workspace 的 **L0 语义信任根**。它不提供业务能力、不承担 DI / IO / 观测 / 网络 / async runtime，只冻结全系统被迫共享的三类语义：
+`kernel` 是 infra.rs workspace 的 **L0 语义信任根**。它不提供业务能力、不承担 DI / IO / 观测 / 网络 / async runtime，只冻结全系统被迫共享的三类语义：
 
 1. **error** — 错误如何按「调用方应如何反应」分类与传播（opaque `XError` + `ErrorKind` ×9 + `XResult`）
 2. **clock** — 墙钟与单调钟如何获取、表示与比较（`Timestamp` / `MonotonicInstant` / `Clock` / `SystemClock`）
@@ -715,7 +715,7 @@ cargo run -p xtask -- lint-deps
 
 ### Evidence 包位置
 
-战役证据：`.agent/SSOT/kernel/evidence/2026-07-14/`  
+战役证据：`.agents/ssot/kernel/evidence/2026-07-14/`  
 关键释放：`EVID-KERNEL-002-18-RELEASE.md`  
 Residual SSOT：`residual-open.txt`（OPEN=0）
 
@@ -825,7 +825,7 @@ kernel **不**依赖 tracing/log/metrics（永久非目标）。
 ```text
 状态: 主路径代码 + 测试 + archgate 15 规则（含 API-002 + TIME-004） + registry stable + 0.1.1
       已 merge main（campaign 闭合）
-PR:   https://github.com/xhyperium/xhyper.rs/pull/235
+PR:   https://github.com/xhyperium/infra.rs/pull/235
       state=MERGED · merge=e7bda98e · base=main
       tag=kernel-v0.1.1 · crates.io=xhyper-kernel 0.1.1（已 publish）
 残余 OPEN: 0（014/015/016 已 ad-hoc 实测 PASS；CI 门禁化见 P1）
@@ -961,8 +961,8 @@ PR:   https://github.com/xhyperium/xhyper.rs/pull/235
 
 | 资源 | 路径 |
 |------|------|
-| 实现契约 SSOT | `.agent/SSOT/kernel/spec/spec.md`（SPEC-KERNEL-002） |
-| 仓库内薄设计（**Active，直至 PR-1**） | `.agent/SSOT/kernel/design/design.md`（ID 现写 `DESIGN-kernel-002`） |
+| 实现契约 SSOT | `.agents/ssot/kernel/spec/spec.md`（SPEC-KERNEL-002） |
+| 仓库内薄设计（**Active，直至 PR-1**） | `.agents/ssot/kernel/design/design.md`（ID 现写 `DESIGN-kernel-002`） |
 | 源码（实现细节 SSOT） | `crates/kernel/src/{lib,error,clock,lifecycle}.rs` |
 | Cargo / 文档 | `crates/kernel/{Cargo.toml,README.md,AGENTS.md,CHANGELOG.md}` |
 | AGENTS | `crates/kernel/AGENTS.md` 已与源码对齐（PR-1） |
@@ -971,10 +971,10 @@ PR:   https://github.com/xhyperium/xhyper.rs/pull/235
 | Registry | `.architecture/workspace.toml`（`crates/kernel` → stable，`publish = true`） |
 | archgate 规则 | `tools/archgate/src/kernel_rules.rs` |
 | Loom CI 执行 | `.github/workflows/ci.yml` job `kernel-loom` |
-| Historical residual snapshot | `.agent/SSOT/kernel/evidence/2026-07-14/residual-open.txt`（immutable） |
-| §18 释放证据 | `.agent/SSOT/kernel/evidence/2026-07-14/EVID-KERNEL-002-18-RELEASE.md` |
+| Historical residual snapshot | `.agents/ssot/kernel/evidence/2026-07-14/residual-open.txt`（immutable） |
+| §18 释放证据 | `.agents/ssot/kernel/evidence/2026-07-14/EVID-KERNEL-002-18-RELEASE.md` |
 | testkit ManualClock | `crates/testkit/src/lib.rs` |
-| Ship PR（**MERGED**） | https://github.com/xhyperium/xhyper.rs/pull/235 · merge `e7bda98e`（2026-07-14）· 实际 title：`feat(kernel): SPEC-KERNEL-002 E1–E3/C/L code path + alignment` |
+| Ship PR（**MERGED**） | https://github.com/xhyperium/infra.rs/pull/235 · merge `e7bda98e`（2026-07-14）· 实际 title：`feat(kernel): SPEC-KERNEL-002 E1–E3/C/L code path + alignment` |
 | 宪法 / 贡献 | `CONSTITUTION.md` · `docs/governance/` |
 
 ---

@@ -6,7 +6,7 @@
 |------|-----|
 | Status | §18.3 全实测 PASS（line/branch/mutants/miri）；mutants/miri/branch 为 ad-hoc 本地跑，CI 门禁待补（P1） |
 | Source Spec | `SPEC-KERNEL-002` |
-| Ship PR | [#235](https://github.com/xhyperium/xhyper.rs/pull/235)（merged e7bda98e） |
+| Ship PR | [#235](https://github.com/xhyperium/infra.rs/pull/235)（merged e7bda98e） |
 
 ## 当前证据
 

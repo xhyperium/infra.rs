@@ -77,7 +77,7 @@ publish = false
 ```bash
 rg -n '^version' crates/kernel/Cargo.toml          # 0.1.1
 rg -n 'status' -A2 -B2 'crates/kernel' .architecture/workspace.toml
-rg -n '^RES-.*: OPEN' .agent/SSOT/kernel/evidence/2026-07-14/residual-open.txt
+rg -n '^RES-.*: OPEN' .agents/ssot/kernel/evidence/2026-07-14/residual-open.txt
 # 期望: 无 OPEN（或仅无关）
 cargo test -p kernel
 cargo run -p archgate -- --json

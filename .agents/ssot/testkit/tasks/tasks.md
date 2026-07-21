@@ -9,8 +9,8 @@
 
 | Wave / Task | 状态 | 证据 |
 |-------------|------|------|
-| W0 计划/冻结/计划 10× | **done** | PR [#247](https://github.com/xhyperium/xhyper.rs/pull/247) |
-| W1 ManualClock V2 | **done** | PR [#254](https://github.com/xhyperium/xhyper.rs/pull/254) |
+| W0 计划/冻结/计划 10× | **done** | PR [#247](https://github.com/xhyperium/infra.rs/pull/247) |
+| W1 ManualClock V2 | **done** | PR [#254](https://github.com/xhyperium/infra.rs/pull/254) |
 | W2 时钟消费者迁移 | **done** | PR #254 |
 | W3 删宏/FixtureBuilder | **done** | PR #254 |
 | W4 contract-testkit | **done** | PR #254 · package `contract-testkit` |
@@ -19,7 +19,7 @@
 | W7 十轮实现验收 | **done** | fail_rounds=0 · mutants missed=0 · Miri PASS |
 | W8 人审（A1–A10） | **done** | [plan/approval-packet.md](../plan/approval-packet.md) |
 | W9 §24 闭合 / Stable 决策 | **done** | Stable CLAIMED 2026-07-14 |
-| 0.1.1 release | **done** | PR [#255](https://github.com/xhyperium/xhyper.rs/pull/255) · tag `testkit-v0.1.1` |
+| 0.1.1 release | **done** | PR [#255](https://github.com/xhyperium/infra.rs/pull/255) · tag `testkit-v0.1.1` |
 
 > 完整任务明细见 [plan/tasks.md](../plan/tasks.md)（按 Wave 分块的原子任务表 + v1.1/v1.2 补丁）。
 

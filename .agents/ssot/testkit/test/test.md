@@ -6,7 +6,7 @@
 |------|-----|
 | Status | **PASS**（主体）· branch cov ≥90% OPTIONAL |
 | Source Spec | `SPEC-TESTKIT-002` · §24.3 |
-| Ship PR | [#247](https://github.com/xhyperium/xhyper.rs/pull/247) · [#254](https://github.com/xhyperium/xhyper.rs/pull/254) · [#255](https://github.com/xhyperium/xhyper.rs/pull/255) |
+| Ship PR | [#247](https://github.com/xhyperium/infra.rs/pull/247) · [#254](https://github.com/xhyperium/infra.rs/pull/254) · [#255](https://github.com/xhyperium/infra.rs/pull/255) |
 
 ## 当前证据（2026-07-14 ship 时点）
 

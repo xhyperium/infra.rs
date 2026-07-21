@@ -156,6 +156,6 @@ CLOSED (API-002): RES-GATE-009 implemented; baseline=0.1.1 freeze; empty allowli
 CLOSED (design-fix 2026-07-14): RES-PERF-001 additive static API; RES-GATE-010 TIME-004; design PR-1 Active
 STILL OPEN (honest): **none** for SPEC-KERNEL-002 residual ledger
 §18 full close: **CLOSED**（18.3 末三项为 human waiver，非实测分数）
-Plan SSOT: .agent/SSOT/kernel/plan/plan.md (PLAN-KERNEL-002-v2-complete)
+Plan SSOT: .agents/ssot/kernel/plan/plan.md (PLAN-KERNEL-002-v2-complete)
 Line coverage (llvm-cov -p kernel): 98.82% lines (≥95% PASS); branch not measured on stable (waived)
 

@@ -90,7 +90,7 @@ OBJECTIVE 要求「目标全部完成 DONE」与 Goal/Spec 中多项 `PROPOSED`/
 
 | Wave | 角色 | 路径 | 产出 |
 |------|------|------|------|
-| W0 | plan-writer | `.agent/SSOT/types/decimal/plan/**` · `todo.md` | 台账 + gap |
+| W0 | plan-writer | `.agents/ssot/types/decimal/plan/**` · `todo.md` | 台账 + gap |
 | W1 | inventory | `rg` / metadata / evidence/ | M0 baseline |
 | W2 | tests | `crates/types/decimal/src/lib.rs` tests · `tests/fuzz.rs` | 边界/Eq/Hash/parse |
 | W3 | docs | rustdoc `# Panics` · README · active spec 链接 · CHANGELOG | 非破坏对齐 |
@@ -119,7 +119,7 @@ cargo check -p xhyper-decimalx --all-targets
 cargo clippy -p xhyper-decimalx --all-targets -- -D warnings
 cargo fmt -- --check
 # 未改依赖图：可不跑 lint-deps；若改 Cargo.toml 则必须
-.agent/SSOT/types/decimal/plan/scripts/run_10x_gate.sh
+.agents/ssot/types/decimal/plan/scripts/run_10x_gate.sh
 ```
 
 10x checklist 见 [`checklist-10x.md`](./checklist-10x.md)。

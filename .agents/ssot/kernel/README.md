@@ -5,7 +5,7 @@
 > 实现代码唯一位置：[`crates/kernel`](../../../crates/kernel)  
 > **当前 SSOT Spec**：`SPEC-KERNEL-002`（[spec/spec.md](spec/spec.md) ≡ [xhyper-kernel-complete-spec.md](spec/xhyper-kernel-complete-spec.md)）  
 > **Source Goal**：`GOAL-KERNEL-RUNTIME-SEMANTICS` — **Done**（§18 闭合 · stable · published）  
-> **Ship PR**：[\#235](https://github.com/xhyperium/xhyper.rs/pull/235) · 分支 `feat/kernel-002-e2-migrate-banned-apis`  
+> **Ship PR**：[\#235](https://github.com/xhyperium/infra.rs/pull/235) · 分支 `feat/kernel-002-e2-migrate-banned-apis`  
 > **历史**：`SPEC-KERNEL-001` → [spec/SPEC-KERNEL-001.superseded.md](spec/SPEC-KERNEL-001.superseded.md)
 
 ## 11 层映射
@@ -44,7 +44,7 @@
 ## 验证
 
 ```bash
-cmp .agent/SSOT/kernel/spec/spec.md .agent/SSOT/kernel/spec/xhyper-kernel-complete-spec.md
+cmp .agents/ssot/kernel/spec/spec.md .agents/ssot/kernel/spec/xhyper-kernel-complete-spec.md
 cargo test -p kernel
 rg -n "status = \"stable\"" .architecture/workspace.toml | grep kernel
 ```

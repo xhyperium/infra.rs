@@ -2,7 +2,7 @@
 
 ```text
 Spec ID:          SPEC-TESTKIT-002
-Title:            xhyper.rs Deterministic Test Support
+Title:            infra.rs Deterministic Test Support
 Status:           Stable
 Target Status:    Stable
 Owner:            platform / quality
@@ -15,7 +15,7 @@ Current Version:  0.1.1
 Target Version:   0.1.1
 Supersedes:       existing testkit-spec.md and infra/testkitx-spec.md
 Source Goal:      GOAL-DETERMINISTIC-TEST-SUPPORT
-Active Path:      .agent/SSOT/testkit/spec/spec.md
+Active Path:      .agents/ssot/testkit/spec/spec.md
 Ship:             main@testkit-v0.1.1 · PR #247 #254 #255
 ```
 
@@ -1871,7 +1871,7 @@ real/testnet contract
 .architecture/workspace.toml
 docs/architecture/spec.md
 STRUCTURE.md
-.agent/SSOT/testkit/
+.agents/ssot/testkit/
 旧 infra/testkitx active spec
 README
 AGENTS
@@ -1881,14 +1881,14 @@ CHANGELOG
 删除双重 spec：
 
 ```text
-.agent/SSOT/testkit/testkit-spec.md        # → 已归档为 spec/TESTKIT-SPEC-001.superseded.md
-.agent/SSOT/infra/testkitx/testkitx-spec.md
+.agents/ssot/testkit/testkit-spec.md        # → 已归档为 spec/TESTKIT-SPEC-001.superseded.md
+.agents/ssot/infra/testkitx/testkitx-spec.md
 ```
 
 保留一个活动权威：
 
 ```text
-.agent/SSOT/testkit/spec/spec.md
+.agents/ssot/testkit/spec/spec.md
 ```
 
 历史文档标记 Superseded 或移入 archive。
@@ -2232,13 +2232,13 @@ testkit 的质量不由公开 API 数量决定，
 
 | Wave | 状态 | 证据 |
 |------|------|------|
-| W0 计划/冻结 | **CLOSED** | PR [#247](https://github.com/xhyperium/xhyper.rs/pull/247) |
-| W1 ManualClock V2 | **CLOSED** | PR [#254](https://github.com/xhyperium/xhyper.rs/pull/254) |
-| W3 删宏/FixtureBuilder | **CLOSED** | PR [#254](https://github.com/xhyperium/xhyper.rs/pull/254) |
-| W4 contract-testkit | **CLOSED** | PR [#254](https://github.com/xhyperium/xhyper.rs/pull/254) · package `contract-testkit` |
-| W5 layer=test-support | **CLOSED** | PR [#254](https://github.com/xhyperium/xhyper.rs/pull/254) · `workspace.toml` |
-| W6 test-graph-check | **CLOSED** | PR [#254](https://github.com/xhyperium/xhyper.rs/pull/254) · `cargo xtl test-graph-check` |
-| 0.1.1 release | **CLOSED** | PR [#255](https://github.com/xhyperium/xhyper.rs/pull/255) · tag `testkit-v0.1.1` |
+| W0 计划/冻结 | **CLOSED** | PR [#247](https://github.com/xhyperium/infra.rs/pull/247) |
+| W1 ManualClock V2 | **CLOSED** | PR [#254](https://github.com/xhyperium/infra.rs/pull/254) |
+| W3 删宏/FixtureBuilder | **CLOSED** | PR [#254](https://github.com/xhyperium/infra.rs/pull/254) |
+| W4 contract-testkit | **CLOSED** | PR [#254](https://github.com/xhyperium/infra.rs/pull/254) · package `contract-testkit` |
+| W5 layer=test-support | **CLOSED** | PR [#254](https://github.com/xhyperium/infra.rs/pull/254) · `workspace.toml` |
+| W6 test-graph-check | **CLOSED** | PR [#254](https://github.com/xhyperium/infra.rs/pull/254) · `cargo xtl test-graph-check` |
+| 0.1.1 release | **CLOSED** | PR [#255](https://github.com/xhyperium/infra.rs/pull/255) · tag `testkit-v0.1.1` |
 
 > 诚实声明：Ship record 记录战役执行进度，**不**等于 §24 全闭合以外的额外质量保证。residual 见 `plan/residual-open.md`（DEF-001…010 全 CLOSED + 1 OPTIONAL）。
 
@@ -2249,8 +2249,8 @@ testkit 的质量不由公开 API 数量决定，
 本文件 `xhyper-testkit-complete-spec.md` 与短名 `spec/spec.md` 是**字节级双镜像**（AGENTS.md §2.4）。任一侧改动必须同步另一侧，合并前 `cmp` 必须 exit 0：
 
 ```bash
-cmp .agent/SSOT/testkit/spec/spec.md \
-    .agent/SSOT/testkit/xhyper-testkit-complete-spec.md
+cmp .agents/ssot/testkit/spec/spec.md \
+    .agents/ssot/testkit/xhyper-testkit-complete-spec.md
 ```
 
 - 短名 `spec/spec.md` 是管线入口；`xhyper-testkit-complete-spec.md` 是完整合同副本（长描述性文件名，便于外部引用）。

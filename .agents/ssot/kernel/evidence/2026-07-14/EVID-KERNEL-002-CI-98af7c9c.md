@@ -4,7 +4,7 @@
 |------|-----|
 | Date | 2026-07-14 |
 | Commit | `98af7c9c` — fix(kernel): drop from_std and harden Timestamp bounds tests |
-| PR | [#235](https://github.com/xhyperium/xhyper.rs/pull/235) |
+| PR | [#235](https://github.com/xhyperium/infra.rs/pull/235) |
 | §18 | **仍 OPEN**（Spec Proposed；禁止 stable） |
 
 ## 范围

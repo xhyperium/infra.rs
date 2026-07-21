@@ -1,6 +1,6 @@
-   Compiling kernel v0.1.0 (/home/workspace/xhyper.rs/crates/kernel)
+   Compiling kernel v0.1.0 (/home/workspace/infra.rs/crates/kernel)
     Finished `test` profile [unoptimized + debuginfo] target(s) in 1.11s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-7c2d371062655107)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-7c2d371062655107)
 
 running 19 tests
 test clock::tests::from_clock_elapsed_advances_with_elapsed ... ok
@@ -25,7 +25,7 @@ test lifecycle::tests::shutdown_multi_observer ... ok
 
 test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-8db42b7c16267b44)
+     Running tests/public_api.rs (../.cargo/target/debug/deps/public_api-8db42b7c16267b44)
 
 running 3 tests
 test error_kind_query_surface ... ok
