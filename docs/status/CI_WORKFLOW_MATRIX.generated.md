@@ -10,29 +10,29 @@
 | 文件 | name | 触发（启发式） | Jobs |
 |------|------|----------------|------|
 | `beads-e2e.yml` | Beads E2E | pull_request, workflow_dispatch | `beads-smoke` |
-| `canonical-coverage.yml` | Canonical Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
-| `ci-rust.yml` | CI（Rust） | push, pull_request | `check-rust`, `build`, `test`, `msrv`, `coverage` |
+| `canonical-coverage.yml` | Canonical Coverage | pull_request, workflow_dispatch | `line-coverage` |
+| `ci-rust.yml` | CI（Rust） | pull_request, workflow_dispatch | `check-rust`, `build`, `test`, `msrv`, `coverage` |
 | `ci-summary.yml` | CI Summary | (see workflow) | `summary` |
-| `configx-coverage.yml` | ConfigX Coverage | push, pull_request, workflow_dispatch | `coverage` |
-| `constitution.yml` | Constitution | push, pull_request, workflow_dispatch | `constitution` |
-| `contracts-coverage.yml` | Contracts Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
-| `decimal-coverage.yml` | Decimal Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
-| `evidence-coverage.yml` | Evidence Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
-| `kernel-coverage.yml` | Kernel Coverage | push, pull_request, workflow_dispatch | `coverage` |
-| `kernel-loom.yml` | kernel-loom | push, pull_request, workflow_dispatch | `loom` |
+| `configx-coverage.yml` | ConfigX Coverage | pull_request, workflow_dispatch | `coverage` |
+| `constitution.yml` | Constitution | pull_request, workflow_dispatch | `constitution` |
+| `contracts-coverage.yml` | Contracts Coverage | pull_request, workflow_dispatch | `line-coverage` |
+| `decimal-coverage.yml` | Decimal Coverage | pull_request, workflow_dispatch | `line-coverage` |
+| `evidence-coverage.yml` | Evidence Coverage | pull_request, workflow_dispatch | `line-coverage` |
+| `kernel-coverage.yml` | Kernel Coverage | pull_request, workflow_dispatch | `coverage` |
+| `kernel-loom.yml` | kernel-loom | pull_request, workflow_dispatch | `loom` |
 | `kernel-miri.yml` | Kernel Miri | schedule, workflow_dispatch | `miri` |
 | `kernel-mutants.yml` | Kernel Mutants | schedule, workflow_dispatch | `mutants` |
-| `observex-coverage.yml` | Observex Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
+| `observex-coverage.yml` | Observex Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `pr-template-check.yml` | PR Template Check | pull_request | `template-check` |
-| `quality.yml` | 质量 | push, pull_request | `check-rust`, `fmt`, `clippy`, `doc` |
-| `resiliencx-coverage.yml` | Resiliencx Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
-| `schedulex-coverage.yml` | Schedulex Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
-| `security.yml` | 安全 | push, pull_request, schedule, workflow_dispatch | `check-rust`, `deny`, `audit` |
-| `self-test.yml` | 模块自验证 | push, pull_request | `scripts-lint`, `hooks-lint`, `scripts-test` |
-| `testkit-coverage.yml` | Testkit Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
+| `quality.yml` | 质量 | pull_request, workflow_dispatch | `check-rust`, `fmt`, `clippy`, `doc` |
+| `resiliencx-coverage.yml` | Resiliencx Coverage | pull_request, workflow_dispatch | `line-coverage` |
+| `schedulex-coverage.yml` | Schedulex Coverage | pull_request, workflow_dispatch | `line-coverage` |
+| `security.yml` | 安全 | pull_request, schedule, workflow_dispatch | `check-rust`, `deny`, `audit` |
+| `self-test.yml` | 模块自验证 | pull_request | `scripts-lint`, `hooks-lint`, `scripts-test` |
+| `testkit-coverage.yml` | Testkit Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `testkit-miri.yml` | Testkit Miri | schedule, workflow_dispatch | `miri` |
 | `testkit-mutants.yml` | Testkit Mutants | schedule, workflow_dispatch | `mutants` |
-| `validation.yml` | 校验 | push, pull_request, workflow_dispatch | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness`, `canonical-align` |
+| `validation.yml` | 校验 | pull_request, workflow_dispatch | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness`, `canonical-align` |
 
 ## 统计
 
