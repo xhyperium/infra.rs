@@ -3,8 +3,8 @@
 | 字段 | 值 |
 |------|-----|
 | 日期 | 2026-07-21 |
-| Active SSOT | `.agents/ssot/infra/resiliencx/spec/spec.md` |
-| 用户路径别名 | `.agent/ssot/resiliencx` → `.agents/ssot/infra/resiliencx` |
+| Active SSOT | `.agents/ssot/resiliencx/spec/spec.md` |
+| 用户路径别名 | `.agent/ssot/resiliencx` → `.agents/ssot/resiliencx` |
 | 实现 | `crates/resiliencx` · package `xhyper-resiliencx` |
 
 ## 结论

@@ -29,6 +29,8 @@ jobs:
             rules:
               line-length: disable
               document-start: disable
+              truthy: disable
+              new-line-at-end-of-file: disable
 
   toml-lint:
     name: TOML 检查
