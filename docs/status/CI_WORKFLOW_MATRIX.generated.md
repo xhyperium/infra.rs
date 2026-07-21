@@ -10,7 +10,7 @@
 | 文件 | name | 触发（启发式） | Jobs |
 |------|------|----------------|------|
 | `beads-e2e.yml` | Beads E2E | pull_request, workflow_dispatch | `beads-smoke` |
-| `beads-test.yml` | Beads Sync Test Suite | pull_request, workflow_dispatch | `check-changes`, `test-unit`, `test-interactive`, `test-complex`, `test-stress`, `test-i18n`, `summary` |
+| `beads-test.yml` | Beads Sync Test Suite | push, pull_request, workflow_dispatch | `check-changes`, `test-unit`, `test-interactive`, `test-complex`, `test-stress`, `test-i18n`, `summary` |
 | `benchmark.yml` | Benchmark | workflow_dispatch | `bench` |
 | `canonical-coverage.yml` | Canonical Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `ci-rust-org.yml` | CI Rust（组织复用） | push, pull_request, workflow_dispatch | `org-rust` |
