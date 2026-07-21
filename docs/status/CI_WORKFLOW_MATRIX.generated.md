@@ -24,6 +24,7 @@
 | `resiliencx-coverage.yml` | Resiliencx Coverage | push, pull_request | `line-coverage` |
 | `schedulex-coverage.yml` | Schedulex Coverage | push, pull_request | `line-coverage` |
 | `security.yml` | 安全 | push, pull_request, schedule, workflow_dispatch | `check-rust`, `deny`, `audit` |
+| `self-test.yml` | 模块自验证 | push, pull_request | `scripts-lint`, `hooks-lint`, `scripts-test` |
 | `testkit-coverage.yml` | Testkit Coverage | push, pull_request | `line-coverage` |
 | `testkit-miri.yml` | Testkit Miri | schedule, workflow_dispatch | `miri` |
 | `testkit-mutants.yml` | Testkit Mutants | schedule, workflow_dispatch | `mutants` |
@@ -33,8 +34,8 @@
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 19 |
-| Job 总数（解析） | 33 |
+| 工作流文件数 | 20 |
+| Job 总数（解析） | 36 |
 
 ## 维护
 
