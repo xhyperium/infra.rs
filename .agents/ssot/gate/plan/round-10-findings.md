@@ -26,7 +26,7 @@ inventory/plan/rounds 引用的 T-XXX-NNN ⊆ 定义集
 |----|-------|--------------|--------|----------|
 | CK-10.1 | 路径互斥表 plan §1.1 | plan §1.1 | **PASS** | Writer 角色表 |
 | CK-10.2 | tasks 状态 enum + AC 可验证 | tasks.md 头 | **PASS** | DONE 禁无输出 |
-| CK-10.3 | gate-todo 机器可读 | .worktree/gate-todo.md | **PASS** | Waves/人审/诚实 STILL EXISTS |
+| CK-10.3 | gate-todo 机器可读 | .worktrees/gate-todo.md | **PASS** | Waves/人审/诚实 STILL EXISTS |
 | CK-10.4 | alignment 诚实非假 DONE | docs/audits/gate-plan-alignment-2026-07-15.md | **PASS** | crate 仍存在 |
 | CK-10.5 | I-1…I-28 且 **Mapped ID 可解析** | source-inventory + IDSCAN | **PASS** | ghost_count=0；无幽灵 BOUND/EVID Mapped；I-11→DEFER-BOUND-CTX；I-22→T-EVID-000/010…015 |
 | CK-10.6 | T-KEEP/T-VER/T-RB/T-EVID 独立行 | tasks.md | **PASS** | 非范围一行；T-IDSCAN-001 DONE |

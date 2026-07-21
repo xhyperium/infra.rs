@@ -13,7 +13,7 @@
   - 消费方（resiliencx 等）只依赖 contracts，禁止依赖 observex
 - evidence 全量协议仍 DEFER；有界 venue 能力以 `traits` 最小对象安全替面保留。
 - 禁止新增 `register` / `resolve` / 公开 `Gate` 类型。
-- 对应 SSOT：`.agents/ssot/infra/bootstrap/spec/spec.md`。
+- 对应 SSOT：`.agents/ssot/bootstrap/spec/spec.md`。
 
 ## 目录
 

@@ -152,7 +152,7 @@ plan §8 目录模板与规范 §32 **字段级一致**（manifest / logs / cove
 | Task | Status | 问题 |
 |------|--------|------|
 | `T-PLAN-001`…`004` | **DONE** | 文件存在 → 文档 DONE 可接受 |
-| `T-TODO-001` | **DONE** | `.worktree/evidence-todo.md` 存在，但 **被 gitignore**，非仓内持久证据 |
+| `T-TODO-001` | **DONE** | `.worktrees/evidence-todo.md` 存在，但 **被 gitignore**，非仓内持久证据 |
 | `T-PLAN-003` AC | 「覆盖 §33 **全部**勾选项」 | 映射表 **未真正全部**（T-ATOM、external、33.5 规划桶）→ **AC 过称** |
 | `T-PLAN-002` | DONE | gap 有 §0–§34/DEF — OK |
 | 任何实现/Approved/stable | — | **未错误声称** |

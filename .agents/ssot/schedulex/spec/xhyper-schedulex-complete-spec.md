@@ -7,7 +7,7 @@
 | Path | `crates/schedulex` |
 | Layer | L1 Infra |
 | Authority | 本文件是 active current-state spec |
-| Candidate | [SPEC-INFRA-SCHEDULEX-002](../../../../draft/schedulex-complete-spec.md)（Draft，非权威，不覆盖本文） |
+| Candidate | [SPEC-INFRA-SCHEDULEX-002](../../../draft/schedulex-complete-spec.md)（Draft，非权威，不覆盖本文） |
 | Implementation snapshot | `b0934baa`（2026-07-15） |
 | Document commit | `e0b98df4` |
 | Verified at | `e0b98df4`（相关实现路径未变化） |

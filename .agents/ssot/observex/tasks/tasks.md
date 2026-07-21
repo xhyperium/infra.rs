@@ -1,4 +1,4 @@
-# infra/observex — Tasks
+# observex — Tasks
 
 > **状态**：布局占位 · **not started / not claimed Done**  
 > 可执行任务清单待战役填充。

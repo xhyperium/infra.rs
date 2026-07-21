@@ -13,7 +13,7 @@ sources_checked:
   - plan/spec-inventory.md (I-15/I-16)
   - plan/residual-open.md
   - plan/approval-packet.md
-  - .worktree/evidence-todo.md
+  - .worktrees/evidence-todo.md
 failed_checks: []
 omissions:
   - gap-matrix §2 still has no explicit T_n → Task ID matrix (coverage strategy phrases only; checklist requires 策略 not Task binding)

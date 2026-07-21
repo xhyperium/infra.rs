@@ -1,4 +1,4 @@
-# infra/testkitx — Gate
+# testkitx — Gate
 
 > **状态**：布局占位 · **not started / not claimed Done**  
 > 模块门禁清单（≠ .agent/gates/ 机器规格）。

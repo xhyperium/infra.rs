@@ -31,7 +31,7 @@
 | T-GOV-001 | 起草 RFC Retire Runtime Gate | 答满源 §6.1 八问 | T-INV-001 | Gov | **DONE**（Proposed） |
 | T-GOV-002 | 起草 ADR Bootstrap Sole Composition Root | 源 §6.2 七点 | T-GOV-001 | Gov | **DONE**（Proposed） |
 | T-GOV-003 | RFC/ADR 人审 Approved | approval-packet 签字 | T-GOV-001 T-GOV-002 | Human | **DONE**（A12 除外 Keep-OPEN） |
-| T-TODO-001 | 更新 `.worktree/gate-todo.md` | Waves/PR/residual/人审/Next | T-PLAN-* | Planner | **DONE** |
+| T-TODO-001 | 更新 `.worktrees/gate-todo.md` | Waves/PR/residual/人审/Next | T-PLAN-* | Planner | **DONE** |
 | T-ALIGN-001 | 对齐文档包 | audits + CLAUDE/AGENTS 诚实状态 | T-PLAN-001 | Doc | **DONE** |
 | T-V10-000 | 计划完备性十轮 | fail_rounds=0；verdict 文件 | T-PLAN-* T-TODO-001 | Verifier | **DONE** |
 | T-BRANCH-001 | 非 main 分支/worktree | docs/gate-retirement-plan-package | — | Lead | **DONE** |

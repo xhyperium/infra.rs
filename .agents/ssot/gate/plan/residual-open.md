@@ -2,7 +2,7 @@
 
 | 字段 | 值 |
 |------|-----|
-| SSOT | 本文件 + `.worktree/gate-todo.md` |
+| SSOT | 本文件 + `.worktrees/gate-todo.md` |
 | Baseline | main（#355 退役 + #357 收尾 + #360–#369 CI 闭环） |
 | 更新 | 2026-07-15 v1.5 quality/loom required |
 

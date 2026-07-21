@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | Matrix ID | `ALIGN-INFRA-RESILIENCX-20260721` |
-| Scope | `.agents/ssot/infra/resiliencx/**` ↔ `crates/resiliencx` |
+| Scope | `.agents/ssot/resiliencx/**` ↔ `crates/resiliencx` |
 | 更新 | 2026-07-21 |
 
 ## 图例

@@ -4,7 +4,7 @@
 |------|-----|
 | Scope | 计划完备性（非实现验收） |
 | Spec | `SPEC-TESTKIT-002` §10–§13 |
-| Plan package | `plan.md` · `tasks.md` · `spec-inventory.md` · `gap-matrix.md` · `residual-open.md` · `approval-packet.md` · `.worktree/testkit-todo.md` |
+| Plan package | `plan.md` · `tasks.md` · `spec-inventory.md` · `gap-matrix.md` · `residual-open.md` · `approval-packet.md` · `.worktrees/testkit-todo.md` |
 | 日期 | 2026-07-14 |
 
 ## 检查项

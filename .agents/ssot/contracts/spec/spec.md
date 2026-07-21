@@ -93,5 +93,5 @@ cargo fmt -- --check
 - [ADR-001](../../../../docs/architecture/adr/001-venue-adapter-boundary.md)
 - [ADR-005](../../../../docs/architecture/adr/005-resiliencx-observability-boundary.md)
 - [ADR-007](../../../../docs/architecture/adr/007-spec-consistency-revision.md)
-- [PLAN-GATE-RETIRE-001](../../infra/gate/plan/xhyper-gate-retirement-complete-plan.md)
+- [PLAN-GATE-RETIRE-001](../gate/plan/xhyper-gate-retirement-complete-plan.md)
 - `crates/contracts/{Cargo.toml,src/lib.rs}`

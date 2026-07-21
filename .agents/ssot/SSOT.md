@@ -24,7 +24,14 @@
     ├── kernel/
     ├── testkit/
     ├── types/
-    ├── infra/              # bootstrap / configx / gate / observex / …
+    ├── bootstrap/
+    ├── configx/
+    ├── gate/
+    ├── observex/
+    ├── resiliencx/
+    ├── schedulex/
+    ├── testkitx/
+    ├── transport/
     ├── adapters/           # exchange + storage
     ├── contracts/
     └── tools/              # evidence / goalctl / xtask / verifyctl
@@ -66,7 +73,7 @@
 
 ### R6: 本仓域规格树
 
-- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 **infra.rs 本仓** 的域规格 SSOT
+- `.agents/ssot/{kernel,testkit,types,bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport,adapters,contracts,tools}/` 是 **infra.rs 本仓** 的域规格 SSOT
 - 禁止在 SSOT 树内写入 `src/`、`Cargo.toml`、`*.rs` 实现副本
 - 禁止用 SSOT 文档中的 COMPLETE / Stable 叙事冒充 crate 已 ship
 - 路径一律使用 `.agents/ssot/`（禁止旧 monorepo 单数 agent 路径写法）
@@ -99,7 +106,7 @@
 | Kernel | `.agents/ssot/kernel/` | L0 规格；实现 `crates/kernel` |
 | Testkit | `.agents/ssot/testkit/` | 规格；实现 `crates/testkit` |
 | Types | `.agents/ssot/types/` | decimal / canonical |
-| Infra | `.agents/ssot/infra/` | bootstrap / configx / gate / … |
+| Infra | `.agents/ssot/{bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport}/` | bootstrap / configx / gate / … |
 | Adapters | `.agents/ssot/adapters/` | exchange + storage |
 | Contracts | `.agents/ssot/contracts/` | trait 出口规格 |
 | Tools | `.agents/ssot/tools/` | evidence / goalctl / xtask / verifyctl |

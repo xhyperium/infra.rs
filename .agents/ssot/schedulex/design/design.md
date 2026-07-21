@@ -1,4 +1,4 @@
-# infra/schedulex — Design
+# schedulex — Design
 
 > **状态**：布局占位 · **not started / not claimed Done**  
 > Design 入口；无完整稿时不伪造 DESIGN-* 双镜像。

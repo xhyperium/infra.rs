@@ -2,7 +2,7 @@
 
 | 字段 | 值 |
 |------|-----|
-| SSOT | 本文件（仓内）+ `.worktree/evidence-todo.md`（本地镜像） |
+| SSOT | 本文件（仓内）+ `.worktrees/evidence-todo.md`（本地镜像） |
 | Baseline | `main@007ca7b5` |
 | 更新 | 2026-07-14 v1.1 |
 

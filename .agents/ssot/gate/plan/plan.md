@@ -3,8 +3,8 @@
 | 字段 | 值 |
 |------|-----|
 | Plan ID | `PLAN-GATE-RETIRE-001-v1-complete` |
-| Source Plan | [`.agents/ssot/infra/gate/xhyper-gate-retirement-complete-plan.md`](../plan/xhyper-gate-retirement-complete-plan.md) |
-| Source Spec | [`.agents/ssot/infra/gate/gate-spec.md`](../gate-spec.md)（active；退役后 Superseded） |
+| Source Plan | [`.agents/ssot/gate/xhyper-gate-retirement-complete-plan.md`](../plan/xhyper-gate-retirement-complete-plan.md) |
+| Source Spec | [`.agents/ssot/gate/gate-spec.md`](../gate-spec.md)（active；退役后 Superseded） |
 | Source Plan ID | `PLAN-GATE-RETIRE-001` · Status **Proposed** |
 | Goal | `GOAL-GATE-RETIRE-PLAN-PACKAGE`（本包：计划完备性 + 10x + todo + 对齐） |
 | Package | `xhyper-gate` / lib `gate` @ `crates/gate` **0.1.0** |
@@ -18,9 +18,9 @@
 | Tasks | [`tasks.md`](./tasks.md) |
 | Residual | [`residual-open.md`](./residual-open.md) |
 | Approval Packet | [`approval-packet.md`](./approval-packet.md) · **人审签字 OPEN** |
-| Work Todo | [`.worktree/gate-todo.md`](../../../../.worktree/gate-todo.md) |
+| Work Todo | [`.worktrees/gate-todo.md`](../../../../.worktrees/gate-todo.md) |
 | 10x Verdict | [`gate-plan-10x-verdict.md`](./gate-plan-10x-verdict.md) |
-| Alignment | [`docs/audits/gate-plan-alignment-2026-07-15.md`](../../../../../docs/audits/gate-plan-alignment-2026-07-15.md) |
+| Alignment | [`docs/audits/gate-plan-alignment-2026-07-15.md`](../../../../docs/audits/gate-plan-alignment-2026-07-15.md) |
 | Strategy | **冻结 → 批准 RFC/ADR → typed bootstrap → 迁移消费者 → 移除 API → 删 crate → 防回流** |
 | Campaign status | **PLAN PACKAGE COMPLETE · 10x fail_rounds=0** · **≠ crate deleted** · **≠ RFC/ADR Approved** · **≠ production retirement DONE** |
 | Forbidden | 见 **I-28 / 源 §20**（移动目录 / TypeId registry / Any downcast / sealed 后留 registry / 并入 kernel / 复制进 bootstrap / 为插件预建 / Big Bang） |
@@ -107,7 +107,7 @@ Bounded contexts（`MarketDataContext` / `ExecutionContext`）按真实服务需
 |----------|------------|
 | 完整执行计划包 + inventory + tasks | 物理删除 `crates/gate` |
 | 10 轮计划完备性（adversarial） | RFC/ADR 人审签字关闭 |
-| `.worktree/gate-todo.md` | PR-2…PR-5 代码 cutover |
+| `.worktrees/gate-todo.md` | PR-2…PR-5 代码 cutover |
 | 对齐文档（诚实状态） | CI job 改名 `policy-gates` |
 | live 消费者存证 | 宣称 retirement DONE |
 
@@ -128,7 +128,7 @@ plan 10x PASS ≠ crate deleted ≠ RFC/ADR Approved ≠ production retirement D
 6. 禁止：TypeId/Any registry、Big Bang、误删 .agent/gates / archgate
 7. 人审闸门：RFC/ADR/物理删除不得由 AI 独断 CLOSED
 8. 十轮验收：fail_rounds 必须为 0 才可宣称「十轮通过」
-9. 分支纪律：禁止 main 直接开发；实现波用 `.worktree/workspaces/<branch>`
+9. 分支纪律：禁止 main 直接开发；实现波用 `.worktrees/workspaces/<branch>`
 10. 命名消歧：文档始终区分 runtime gate crate vs CI/arch gates
 ```
 
@@ -139,7 +139,7 @@ plan 10x PASS ≠ crate deleted ≠ RFC/ADR Approved ≠ production retirement D
 | Planner | `plan/plan.md`, `source-inventory.md`, `gap-matrix.md`, `tasks.md` |
 | Inventory | `consumer-inventory.md`, Evidence 快照 |
 | Residual/Approval | `residual-open.md`, `approval-packet.md` |
-| Todo | `.worktree/gate-todo.md` |
+| Todo | `.worktrees/gate-todo.md` |
 | Alignment | `docs/audits/gate-plan-alignment-*.md` + CLAUDE/AGENTS 指针 |
 | Verifier R1–R10 | `round-NN-findings.md`, `gate-plan-10x-verdict.md`（只读其余） |
 
@@ -263,7 +263,7 @@ Gate::register / resolve
 Bootstrap::register_capability
 AppContext::gate
 gate mock feature
-active .agents/ssot/infra/gate/  # 移出 active；非物理 shred 历史
+active .agents/ssot/gate/  # 移出 active；非物理 shred 历史
 architecture registry active gate unit
 ```
 
@@ -467,7 +467,7 @@ compiler 验证依赖
 | 7 | 人审 packet | `plan/approval-packet.md` |
 | 8 | 10 轮 findings | `plan/round-01…10-findings.md` |
 | 9 | 10x verdict | `plan/gate-plan-10x-verdict.md` |
-| 10 | work todo | `.worktree/gate-todo.md` |
+| 10 | work todo | `.worktrees/gate-todo.md` |
 | 11 | 对齐审计 | `docs/audits/gate-plan-alignment-2026-07-15.md` |
 | 12 | Evidence 快照 | `evidence/gate-retirement/plan-package-2026-07-15/` |
 

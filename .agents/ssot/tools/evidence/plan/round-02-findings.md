@@ -11,7 +11,7 @@ sources_checked:
   - .agents/ssot/tools/evidence/plan/gap-matrix.md
   - .agents/ssot/tools/evidence/plan/tasks.md
   - .agents/ssot/tools/evidence/plan/approval-packet.md
-  - .worktree/evidence-todo.md
+  - .worktrees/evidence-todo.md
   - round-01-findings.md (prior adversarial pass)
 failed_checks:
   - R-SPEC-003

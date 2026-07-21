@@ -8,7 +8,7 @@ crate 路径：`crates/transport`
 - Implementation snapshot：`b0934baa`（2026-07-15）
 - Document commit：`e0b98df4`
 - Verified at：`e0b98df4`（相关实现路径未变化）
-- Candidate：[SPEC-INFRA-TRANSPORTX-002](../../../../draft/transportx-complete-spec.md)（Draft，非权威，不覆盖本文）
+- Candidate：[SPEC-INFRA-TRANSPORTX-002](../../../draft/transportx-complete-spec.md)（Draft，非权威，不覆盖本文）
 
 > **证据优先**：本文描述当前代码事实，不是生产就绪证明。TLS 策略、连接池、认证、gRPC、生产级故障矩阵仍为 Unknown / 未闭环。
 

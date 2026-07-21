@@ -3,7 +3,7 @@
 L1 **唯一组合根**（R3.1 豁免 / ADR-016）：启动期把 instrumentation、关停信号、可选 evidence 组装成 typed 只读上下文。
 
 库名（`lib`）为 `bootstrap`。  
-契约 SSOT：`.agents/ssot/infra/bootstrap/spec/spec.md`。  
+契约 SSOT：`.agents/ssot/bootstrap/spec/spec.md`。  
 本仓对齐矩阵：[docs/ssot/bootstrap-ssot-alignment.md](../../docs/ssot/bootstrap-ssot-alignment.md)。
 
 ## 职责

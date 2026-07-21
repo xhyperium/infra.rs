@@ -5,7 +5,7 @@
 | Round | **10** |
 | Role | Final Verifier · Independent heading coverage |
 | Spec | `.agents/ssot/tools/evidence/xhyper-evidence-complete-spec.md` |
-| Plan pack | `plan.md` · `gap-matrix.md` · `tasks.md` · `approval-packet.md` · `.worktree/evidence-todo.md` |
+| Plan pack | `plan.md` · `gap-matrix.md` · `tasks.md` · `approval-packet.md` · `.worktrees/evidence-todo.md` |
 | Rule | 每个 `##` / `###`：**M** = 明确提及 · **W** = 仅章节号/弱代理 · **Z** = **零提及**（omission） |
 | Date | 2026-07-14 |
 | **result** | **FAIL** |
@@ -288,7 +288,7 @@ fail_count ≥ 16 → round-10 对「计划完备」= FAIL
 
 ```text
 .agents/ssot/tools/evidence/plan/{plan,gap-matrix,tasks,approval-packet}.md
-.worktree/evidence-todo.md
+.worktrees/evidence-todo.md
 ```
 
 Z 判定：无标题编号、无规范专名、无对应 Task/DEF 行。

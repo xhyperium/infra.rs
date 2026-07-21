@@ -1,6 +1,6 @@
 > **状态：Superseded（已被取代）**  
-> 历史 L1/`testkitx` 路径文档。权威：[`../../testkit/testkit-complete-spec.md`](../../../testkit/testkit-complete-spec.md)  
-> 计划：[`../../testkit/plan/plan.md`](../../../testkit/plan/plan.md)  
+> 历史 L1/`testkitx` 路径文档。权威：[`../../testkit/testkit-complete-spec.md`](../../testkit/testkit-complete-spec.md)  
+> 计划：[`../../testkit/plan/plan.md`](../../testkit/plan/plan.md)  
 > **不得**被读成第二实现或并行 SSOT。物理包为 `testkit` @ `crates/testkit`（T0 test-support，非 L0 runtime）。
 
 ---

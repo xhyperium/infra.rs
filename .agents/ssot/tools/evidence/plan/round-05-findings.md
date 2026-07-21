@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | Round | **5** |
-| Scope | `xhyper-evidence-complete-spec.md` §24.1–§24.11 vs `plan/*` · `tasks.md` · `.worktree/evidence-todo.md` |
+| Scope | `xhyper-evidence-complete-spec.md` §24.1–§24.11 vs `plan/*` · `tasks.md` · `.worktrees/evidence-todo.md` |
 | Code skim | `tools/evidence/src/lib.rs` · `crates/domain/macro/src/lib.rs` · `crates/infra/gate/src/lib.rs` |
 | Result | **FAIL** |
 | Date | 2026-07-14 |

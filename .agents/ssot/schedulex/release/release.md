@@ -1,4 +1,4 @@
-# infra/schedulex — Release
+# schedulex — Release
 
 > **状态**：布局占位 · **not started / not claimed Done**  
 > 发布清单 · 默认 BLOCKED until Spec/AC 证据。
