@@ -17,7 +17,7 @@
 | 舱壁（bulkhead） | **PASS**（并发上限；RAII） | `bulkhead.rs` + unit/public_api |
 | Instrumentation | **PASS** | re-export `contracts::Instrumentation`；禁止 observex |
 | LCOV 行 100% | **PASS** | `cov-gate-100.mjs -p xhyper-resiliencx` |
-| async wait | **PASS** | `retry_async` + `AsyncWait`；feature `tokio` → `TokioSleepWait` |
+| async wait | **PASS**（infra-s9t.6 / #167） | `retry_async` + `AsyncWait`；feature `tokio` → `TokioSleepWait` |
 | backoff / budget / stable | **DEFER** | residual OPEN |
 
 ## 熔断合同（本仓）

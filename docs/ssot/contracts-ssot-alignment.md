@@ -5,8 +5,8 @@
 | package | `xhyper-contracts` / lib `contracts` |
 | path | `crates/contracts` |
 | Active Spec | `.agents/ssot/contracts/spec/spec.md`（若存在；以本仓源码为准） |
-| 审计/跟进 | 2026-07-21 W3 语义深化 + Venue override gate（`infra-asa.4`） |
-| 状态 | R4 trait 面已落地；first-batch 语义文档 + Fake/conformance 可运行；**非**整体 Production Ready |
+| 审计/跟进 | 2026-07-21 W3 语义 + Venue gate（`infra-asa.4`）+ **L3 子集**（`infra-s9t.3` / #172） |
+| 状态 | R4 trait 面 + first-batch 语义/conformance；**L3 子集** KV+Instr；**非** first-batch / 整体 Production Ready |
 
 ## 结论摘要
 
@@ -18,7 +18,7 @@
 | contract-testkit | **最小入口已落地**（本 crate 内 Fake/Recording；非独立 `test-support` crate） |
 | first-batch 语义文档 + 套件 | **部分闭合**（CT-8）：见 `crates/contracts/docs/contracts/` |
 | VenueAdapter override 门禁 | **部分闭合**（CT-10 / DEFER-8）：`tests/venue_override_gate.rs` |
-| 全 trait 深度合同 / 真实后端 | **部分**（redis live KV）；其余 W4 DEFER |
+| 全 trait 深度合同 / 真实后端 | **L3 子集 PASS**（KV live + Instr）；Tx/Bus/Repo/Venue 业务 live **DEFER** |
 | bootstrap 双平面 | **已收敛命名**：bootstrap 用 `Bounded*`；`Instrumentation` re-export contracts |
 
 替换 `#43`/`#46`/`#53` 的 `xhyper-contracts` 草图。消费者：`observex` 实现 `Instrumentation`；`resiliencx` 消费；adapters 为 scaffold 实现面。
@@ -50,6 +50,8 @@ cargo test -p contracts --all-targets
 cargo clippy -p contracts --all-targets -- -D warnings
 cargo test -p okxx -p binancex --all-targets
 cargo test -p bootstrap --all-targets   # Bounded* 与 Instrumentation re-export
+# L3 KV 真实入口（需 Redis）
+cargo test -p redisx --features live --test live_kv_conformance -- --ignored
 ```
 
 ## 条款矩阵（本仓）
@@ -84,7 +86,7 @@ cargo test -p bootstrap --all-targets   # Bounded* 与 Instrumentation re-export
 ## 未做（DEFER）
 
 - 独立 contract-testkit crate 与 **全** trait conformance suite（含 ObjectStore 等）
-- 真实 postgres/kafka/nats/交易所验证入口（非 scaffold）— W4
+- 真实 postgres Tx / kafka·nats Bus / 交易所 **业务** live（非只读 time）— 超出 L3 子集
 - VenueAdapter 能力矩阵与 **强制 compile-fail** override 机控
 - Additive Only 的 API snapshot / semver diff 门禁
 
@@ -96,7 +98,14 @@ cargo test -p bootstrap --all-targets   # Bounded* 与 Instrumentation re-export
 | 2026-07-21 | 生产就绪：Tx/消息语义、Fake/Recording testkit、与 bootstrap Bounded* 收敛；PR #98 |
 | 2026-07-21 | PR #98 合入 main |
 | 2026-07-21 | W3（infra-asa.4）：first-batch 语义文档、`fakes` 模块、venue override 运行时门禁；CT-8/CT-10 部分闭合；**非** Production Ready |
+| 2026-07-21 | **infra-s9t.3 / #172**：CT-9 部分 PASS（redis live KV + observex Instr）；`L3_FIRST_BATCH_STATUS.md`；禁止 first-batch 全绿宣称 |
 
-## L3 子集（infra-s9t.3）
+## L3 子集（infra-s9t.3 · closed）
 
 见 [`crates/contracts/docs/L3_FIRST_BATCH_STATUS.md`](../../crates/contracts/docs/L3_FIRST_BATCH_STATUS.md)。
+
+| Trait | L3 三条件 | 本仓 |
+|-------|-----------|------|
+| KeyValueStore | 语义 + Fake conformance + 非 scaffold 入口 | **满足**（`RedisLiveKv`） |
+| Instrumentation | 同上 | **满足**（`observex::TracingInstrumentation`） |
+| Tx / Bus / Repository / Venue 业务 | — | **不满足**（仍 DEFER） |

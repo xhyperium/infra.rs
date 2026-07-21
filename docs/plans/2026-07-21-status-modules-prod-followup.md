@@ -209,14 +209,21 @@ bd close <id> --reason="..."
 
 ## 6. 完成定义（Epic `infra-s9t`）
 
-全部满足：
+| # | 条件 | 状态 |
+|---|------|------|
+| 1 | `infra-s9t.2` + `.3` 闭合（L3 **子集**可讨论） | **DONE**（#168 · #172；KV+Instr L3；非 first-batch 全绿） |
+| 2 | `infra-s9t.4` release fail-closed | **DONE**（#168） |
+| 3 | `infra-s9t.1` + `.14` 消费面 + 误用红线 | **DONE**（`prod-consume-surface.md` + adapter README） |
+| 4 | 其余子任务 closed 或显式 Defer | **DONE**（18/18 children closed） |
+| 5 | 主报告应用 follow-up 状态可更新 | **DONE**（见 §6.1） |
+| 6 | epic 进度可解释 | **DONE** — epic **closed** |
 
-1. [ ] `infra-s9t.2` + `infra-s9t.3` 闭合（L3 可讨论）  
-2. [ ] `infra-s9t.4` 闭合（release fail-closed）  
-3. [ ] `infra-s9t.1` + `infra-s9t.14` 闭合（消费面 + 误用红线）  
-4. [ ] 其余 P1 子任务 closed 或显式 Defer-with-sign  
-5. [ ] 主报告 §8 签字清单可更新为「应用 follow-up 进行中 / 完成」  
-6. [ ] `bd epic status infra-s9t` 进度可解释  
+### 6.1 关闭说明（诚实）
+
+- PR：[#166](https://github.com/xhyperium/infra.rs/pull/166) · [#167](https://github.com/xhyperium/infra.rs/pull/167) · [#168](https://github.com/xhyperium/infra.rs/pull/168) · [#172](https://github.com/xhyperium/infra.rs/pull/172)
+- **已闭合**：阻断项与验证入口（redis live、L3 子集、L1 P0、scaffold 红线、只读 server_time）
+- **仍非**：workspace / first-batch **Production Ready**、Agent L5、Tx/Bus/Repo/Venue 业务 live
+- 对齐同步：`docs/ssot/*` 与本计划同步日 2026-07-21
 
 ---
 
@@ -225,11 +232,13 @@ bd close <id> --reason="..."
 | 资源 | 路径 |
 |------|------|
 | 主审计报告 | [status-modules-production-readiness.md](../report/2026-07-21/status-modules-production-readiness.md) |
+| 双栏七包 | [seven-l1-contracts-dual-bar-readiness.md](../report/2026-07-21/seven-l1-contracts-dual-bar-readiness.md) |
+| SSOT 总览 | [workspace-ssot-alignment.md](../ssot/workspace-ssot-alignment.md) |
 | partials | [report/2026-07-21/_partials/](../report/2026-07-21/_partials/) |
 | 五核心计划（DONE） | [2026-07-21-core-crates-production-readiness.md](./2026-07-21-core-crates-production-readiness.md) |
 | 签核 | [releases/0.3.0-signoff.md](./releases/0.3.0-signoff.md) |
-| Beads | `bd show infra-s9t` |
+| Beads | epic `infra-s9t` **closed** |
 
 ---
 
-*创建：2026-07-21 · Agent Team 审计后落地 · epic `infra-s9t`*
+*创建：2026-07-21 · Agent Team 审计后落地 · epic `infra-s9t` closed*
