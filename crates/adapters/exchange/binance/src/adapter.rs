@@ -4,8 +4,9 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use async_trait::async_trait;
+use bytes::Bytes;
 use canonical::{
-    CancelOrderRequest, Money, Order, OrderAck, OrderBookSnapshot, OrderStatus, Position,
+    CancelOrderRequest, Money, Order, OrderAck, OrderBookSnapshot, OrderRef, OrderStatus, Position,
     SymbolMeta, Tick, Trade, VenueId,
 };
 use contracts::{
@@ -135,6 +136,19 @@ impl BinanceAdapter {
         if path.starts_with('/') { format!("{base}{path}") } else { format!("{base}/{path}") }
     }
 
+    /// 经注入的 [`HttpDriver`] 发起 POST（需已 `with_http`）。
+    pub async fn http_post(&self, path: &str, body: Bytes) -> XResult<HttpResponse> {
+        let http =
+            self.http.as_ref().ok_or_else(|| XError::unavailable("http driver not configured"))?;
+        let request = HttpRequest {
+            method: "POST".into(),
+            url: self.join_url(path),
+            headers: vec![],
+            body: Some(body),
+        };
+        http.execute(request).await.map_err(map_transport_error)
+    }
+
     /// 经注入的 [`HttpDriver`] 发起 GET（需已 `with_http`）。
     pub async fn http_get(&self, path: &str) -> XResult<HttpResponse> {
         let http =
@@ -219,13 +233,55 @@ impl VenueAdapter for BinanceAdapter {
         Ok(OrderStatus::Open)
     }
 
-    async fn cancel_order_request(&self, _request: &CancelOrderRequest) -> XResult<()> {
+    async fn cancel_order_request(&self, request: &CancelOrderRequest) -> XResult<()> {
         self.require_connected()?;
+        if self.http.is_some() {
+            // mock-first 结构化路径：经 HttpDriver POST 取消；非真实协议解析
+            let id = match &request.id {
+                OrderRef::Exchange(s) | OrderRef::Client(s) => s.as_str(),
+            };
+            let path = format!("/api/v3/order?symbol={}&orderId={}", request.instrument, id);
+            let resp = self.http_post(&path, Bytes::new()).await?;
+            if resp.status == 200 {
+                return Ok(());
+            }
+            return Err(XError::unavailable(format!(
+                "cancel_order_request http status {}",
+                resp.status
+            )));
+        }
         Ok(())
     }
 
-    async fn query_order_request(&self, _request: &CancelOrderRequest) -> XResult<OrderStatus> {
+    async fn query_order_request(&self, request: &CancelOrderRequest) -> XResult<OrderStatus> {
         self.require_connected()?;
+        if self.http.is_some() {
+            // mock-first 结构化路径：经 HttpDriver GET 查询；body 含 Canceled → Canceled，否则 Open
+            let id = match &request.id {
+                OrderRef::Exchange(s) | OrderRef::Client(s) => s.as_str(),
+            };
+            let path = format!("/api/v3/order?symbol={}&orderId={}", request.instrument, id);
+            let resp = self.http_get(&path).await?;
+            if resp.status != 200 {
+                return Err(XError::unavailable(format!(
+                    "query_order_request http status {}",
+                    resp.status
+                )));
+            }
+            let body = String::from_utf8_lossy(&resp.body);
+            // 最小面状态识别（非完整协议解析）
+            if body.contains("Cancelled")
+                || body.contains("Canceled")
+                || body.contains("CANCELED")
+                || body.contains("CANCELLED")
+            {
+                return Ok(OrderStatus::Cancelled);
+            }
+            if body.contains("Filled") || body.contains("FILLED") {
+                return Ok(OrderStatus::Filled);
+            }
+            return Ok(OrderStatus::Open);
+        }
         Ok(OrderStatus::Open)
     }
 
@@ -475,6 +531,43 @@ mod tests {
         let a = BinanceAdapter::mainnet().with_http(mock);
         VenueAdapter::connect(&a).await.unwrap();
         let e = VenueAdapter::server_time(&a).await.expect_err("missing mock");
+        assert_eq!(e.kind(), kernel::ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn http_cancel_and_query_order_request_paths() {
+        use bytes::Bytes;
+        use transportx::MockHttpTransport;
+
+        let mock = Arc::new(MockHttpTransport::new());
+        let cancel_url = "https://api.binance.com/api/v3/order?symbol=BTCUSDT&orderId=e1";
+        let query_url = cancel_url;
+        mock.set_post(cancel_url, Bytes::from_static(b"{\"status\":\"CANCELED\"}"));
+        mock.set_get(query_url, Bytes::from_static(b"{\"status\":\"CANCELED\"}"));
+
+        let a = BinanceAdapter::mainnet().with_http(mock);
+        VenueAdapter::connect(&a).await.unwrap();
+        let req = CancelOrderRequest {
+            venue: "binance".into(),
+            instrument: "BTCUSDT".into(),
+            id: OrderRef::Exchange("e1".into()),
+        };
+        a.cancel_order_request(&req).await.unwrap();
+        assert_eq!(a.query_order_request(&req).await.unwrap(), OrderStatus::Cancelled);
+    }
+
+    #[tokio::test]
+    async fn http_query_order_request_missing_mock_errors() {
+        use transportx::MockHttpTransport;
+        let mock = Arc::new(MockHttpTransport::new());
+        let a = BinanceAdapter::mainnet().with_http(mock);
+        VenueAdapter::connect(&a).await.unwrap();
+        let req = CancelOrderRequest {
+            venue: "binance".into(),
+            instrument: "BTCUSDT".into(),
+            id: OrderRef::Exchange("missing".into()),
+        };
+        let e = a.query_order_request(&req).await.expect_err("missing");
         assert_eq!(e.kind(), kernel::ErrorKind::Invalid);
     }
 

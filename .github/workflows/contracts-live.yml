@@ -1,0 +1,35 @@
+name: Contracts Mock Verification
+
+# DEFER-1 mock-first 入口：进程内 mock 后端验证 first-batch contracts traits。
+# 默认不依赖 Docker / 外部服务；仅 workflow_dispatch 手动触发。
+# 非真实云凭证 / 非真实下单。
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  mock-backend:
+    name: mock-backend offline verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: first-batch adapter mock tests
+        run: |
+          cargo test -p postgresx -p redisx -p kafkax -p natsx -p okxx -p binancex --all-targets
+      - name: contracts surface
+        run: |
+          cargo test -p contracts --all-targets
+      - name: clippy first-batch
+        run: |
+          cargo clippy -p postgresx -p redisx -p kafkax -p natsx -p okxx -p binancex --all-targets -- -D warnings
