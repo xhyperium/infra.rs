@@ -14,11 +14,20 @@ L1 **唯一组合根**（R3.1 豁免 / ADR-016）：启动期把 instrumentation
 4. **`MarketDataContext` / `ExecutionContext`** — 有界服务上下文  
 5. **`BootstrapError`** — Missing / Invalid / Unavailable → `kernel::ErrorKind`
 
+## ADR-005 注入链
+
+| 角色 | 本仓 |
+|------|------|
+| trait 权威 | `contracts::Instrumentation`（本 crate re-export 为 `Instrumentation`） |
+| 默认实现 | `observex::TracingInstrumentation`（`Bootstrap::new`） |
+| 静默替面 | `NoopInstrumentation`（可选 `with_instrumentation`） |
+| 消费方 | resiliencx 等只依赖 `contracts`，**禁止**依赖 observex |
+
 ## 非目标
 
 - 通用 DI / 插件框架、配置解析、重试/调度/传输实现  
 - runtime `gate` / 字符串 `register`/`resolve`  
-- 完整 monorepo `xhyper-contracts` / `xhyper-observex` / `xhyper-evidence` 生产实现（本仓以 `traits` 可移植替面保留组合语义）
+- 完整 evidence wire 协议与完整 async venue trait（仍 DEFER，以 `traits` 最小对象安全替面保留组合语义）
 
 ## 最小用法
 
@@ -40,6 +49,8 @@ fn main() {
 | 依赖 | 用途 |
 |------|------|
 | `xhyper-kernel` | `ShutdownGuard` / `ShutdownSignal`、`XError` / `ErrorKind` |
+| `xhyper-contracts` | `Instrumentation` trait（ADR-005） |
+| `xhyper-observex` | 默认 `TracingInstrumentation` |
 
 ## 验证
 

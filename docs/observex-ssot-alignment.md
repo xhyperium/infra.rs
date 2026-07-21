@@ -18,7 +18,7 @@
 | 本仓 Instrumentation 契约 | 已并入既有 `crates/contracts`（`xhyper-contracts` / lib `contracts`） |
 | OTEL exporter / flush / shutdown | **DEFER** |
 | 完整 VenueAdapter 等 contracts | **DEFER** |
-| resiliencx / bootstrap 注入链 | **DEFER** |
+| resiliencx / bootstrap 注入链 | **PASS**（resiliencx → contracts；bootstrap 默认 TracingInstrumentation） |
 | LCOV 行覆盖率 100% | **PASS**（本仓实测） |
 
 ## 本仓可观察事实
@@ -106,7 +106,7 @@ CI：`.github/workflows/observex-coverage.yml` · `contracts-coverage.yml`
 | 6.3 | 捕获 tracing 字段 | PASS | unit `tracing_fields_*` |
 | 6.4 | cargo test / clippy / fmt | PASS | 本仓日志 |
 | 6.5 | LCOV 100% | PASS | cov-gate-100 |
-| 6.6 | resiliencx 无 observex 依赖图 | DEFER | 本仓无 resiliencx |
+| 6.6 | resiliencx 无 observex 依赖图 | PASS | `xhyper-resiliencx` dep 仅 kernel+contracts |
 | 6.7 | exporter/flush 测试 | DEFER | API 未批 |
 
 ### §7 验收清单
@@ -116,7 +116,7 @@ CI：`.github/workflows/observex-coverage.yml` · `contracts-coverage.yml`
 | 7.1 | 依赖/API/测试与源码一致 | PASS | 本仓 |
 | 7.2 | ADR 命名 | PASS | 别名 `ObservexInstrumentation` |
 | 7.3 | 不把 tracing 宣称为 OTEL 完成 | PASS | 文档明确 |
-| 7.4 | bootstrap 注入链 | DEFER | 无 bootstrap |
+| 7.4 | bootstrap 注入链 | PASS | bootstrap dep observex；默认 TracingInstrumentation |
 | 7.5 | 版本步进规则 | PASS | 初始 0.1.0 |
 
 ## Core 0.1.0 必选 GAP 计数
@@ -127,9 +127,8 @@ core 0.1.0 GAP = 0
 
 ## 未做（follow-up / DEFER）
 
-- 完整 `xhyper-contracts`（VenueAdapter / PubSub…）
 - OpenTelemetry SDK / exporter / metric 名称 / 采样 / 缓冲 / flush / shutdown
-- resiliencx 消费与 bootstrap 注入证明
+- evidence 全量 wire 协议接入 bootstrap
 - `op` 受控集合强制校验
 
 ## 与镜像文档的关系

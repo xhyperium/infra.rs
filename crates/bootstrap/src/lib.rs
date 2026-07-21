@@ -9,8 +9,14 @@
 //!
 //! **不再**依赖 runtime `gate` crate。禁止 TypeId/Any/字符串 Service Locator。
 //!
-//! 本仓依赖仅 [`xhyper-kernel`](kernel)；`contracts` / `observex` / `evidence` 以
-//! [`traits`] 模块内可移植对象安全替面保留注入语义（完整 monorepo 平面 DEFER）。
+//! # ADR-005 注入链
+//!
+//! - trait：[`contracts::Instrumentation`]（经本 crate re-export 为 [`Instrumentation`]）
+//! - 默认实现：[`observex::TracingInstrumentation`]（[`Bootstrap::new`]）
+//! - 静默替面：[`NoopInstrumentation`]（`with_instrumentation` 可选）
+//! - 消费方（如 resiliencx）只依赖 `contracts`，**禁止**依赖 observex
+//!
+//! evidence 全量协议与完整 venue async API 仍 DEFER；本 crate 保留最小对象安全替面。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -21,12 +27,14 @@ pub mod traits;
 
 pub use bounded::{ExecutionContext, MarketDataContext};
 pub use error::{BootstrapError, into_xresult};
+pub use observex::TracingInstrumentation;
 pub use traits::{
     AccountSource, EvidenceAppender, EvidenceError, ExecutionVenue, InstrumentCatalog,
     Instrumentation, KeyValueStore, MarketDataSource, NoopInstrumentation, VenueTimeSource,
 };
 
 use kernel::{ShutdownGuard, ShutdownSignal};
+use observex::TracingInstrumentation as TracingInstr;
 use std::sync::Arc;
 use traits::{EvidenceAppender as EvidenceAppenderTrait, Instrumentation as InstrumentationTrait};
 
@@ -114,11 +122,13 @@ pub struct Bootstrap {
 }
 
 impl Bootstrap {
-    /// 默认 [`NoopInstrumentation`] + 关停信号对；无 evidence。
+    /// 默认 [`TracingInstrumentation`] + 关停信号对；无 evidence。
+    ///
+    /// 需要静默观测时：`with_instrumentation(NoopInstrumentation::new())`。
     pub fn new() -> Self {
         let (guard, signal) = ShutdownSignal::new();
         Self {
-            instrumentation: Arc::new(NoopInstrumentation::new()),
+            instrumentation: Arc::new(TracingInstr::new()),
             evidence: None,
             require_evidence: false,
             shutdown_guard: Some(guard),
@@ -253,8 +263,37 @@ mod tests {
     #[test]
     fn new_creates_default_instrumentation() {
         let ctx = Bootstrap::new().build();
+        // 默认 TracingInstrumentation：无 subscriber 时 tracing 为 no-op，不 panic
         ctx.instrumentation().record_retry("op", 1);
+        ctx.instrumentation().record_circuit_open("op");
+        ctx.instrumentation().record_circuit_close("op");
         assert!(ctx.platform().evidence().is_none());
+    }
+
+    #[test]
+    fn default_instrumentation_is_tracing_and_overridable_to_noop() {
+        // 构造路径与 Bootstrap::new 一致：TracingInstrumentation 可装箱为 dyn
+        let tracing: Arc<dyn InstrumentationTrait> = Arc::new(TracingInstr::new());
+        tracing.record_retry("prove_tracing", 1);
+
+        let ctx = Bootstrap::new().with_instrumentation(NoopInstrumentation::new()).build();
+        ctx.instrumentation().record_retry("silent", 1);
+        ctx.instrumentation().record_circuit_open("silent");
+        ctx.instrumentation().record_circuit_close("silent");
+    }
+
+    #[test]
+    fn contracts_and_resiliencx_share_instrumentation_trait() {
+        // 同一 trait 对象可同时满足 contracts / bootstrap / 计数 double
+        let (instr, counter) = CountingInstr::paired();
+        let boxed: Arc<dyn contracts::Instrumentation> = Arc::new(instr);
+        boxed.record_retry("shared", 1);
+        assert_eq!(*counter.lock().expect("lock"), 1);
+        let ctx = Bootstrap::new()
+            .with_instrumentation(CountingInstr { count: Arc::clone(&counter) })
+            .build();
+        ctx.instrumentation().record_retry("shared", 2);
+        assert_eq!(*counter.lock().expect("lock"), 2);
     }
 
     #[test]

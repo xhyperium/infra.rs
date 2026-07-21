@@ -1,22 +1,18 @@
-//! 可移植契约替面（本仓无 monorepo `xhyper-contracts` / `xhyper-evidence` / `xhyper-observex`）。
+//! 可移植契约替面与 ADR-005 注入面。
 //!
-//! 保留 SSOT §3 所需的对象安全注入形状；完整 venue/evidence 协议见对齐文档 DEFER。
+//! - [`Instrumentation`]：权威定义在 [`contracts::Instrumentation`]；本模块 re-export。
+//! - [`NoopInstrumentation`]：静默空实现（测试/显式关闭观测时用）。
+//! - Evidence / 有界 venue 能力：完整 monorepo 平面仍 DEFER；保留最小对象安全形状。
 
-// ── observability ──────────────────────────────────────────────────────────
+// ── observability（ADR-005）────────────────────────────────────────────────
 
-/// 可观测性注入点（ADR-005 / contracts::Instrumentation 形状）。
-pub trait Instrumentation: Send + Sync {
-    /// 记录一次重试。
-    fn record_retry(&self, op: &str, attempt: u32);
-    /// 记录熔断打开。
-    fn record_circuit_open(&self, op: &str);
-    /// 记录熔断关闭。
-    fn record_circuit_close(&self, op: &str);
-}
+/// 可观测性注入点（ADR-005）——权威定义在 `xhyper-contracts`。
+pub use contracts::Instrumentation;
 
-/// 默认 no-op instrumentation（替代 monorepo `observex::TracingInstrumentation`）。
+/// 静默 no-op instrumentation。
 ///
-/// 不引入 `tracing` 依赖；生产侧可 `with_instrumentation` 注入真实实现。
+/// 默认生产路径使用 [`observex::TracingInstrumentation`]（见 [`crate::Bootstrap::new`]）。
+/// 需要零观测副作用时，通过 `with_instrumentation(NoopInstrumentation::new())` 注入。
 #[derive(Debug, Default, Clone, Copy)]
 pub struct NoopInstrumentation;
 
@@ -152,6 +148,16 @@ mod tests {
         d.record_circuit_open("op");
         d.record_circuit_close("op");
         let _: NoopInstrumentation = NoopInstrumentation;
+    }
+
+    #[test]
+    fn contracts_instrumentation_is_same_trait() {
+        // bootstrap::Instrumentation ≡ contracts::Instrumentation（类型别名 re-export）
+        fn accept(_: &dyn Instrumentation) {}
+        fn accept_contracts(_: &dyn contracts::Instrumentation) {}
+        let n = NoopInstrumentation::new();
+        accept(&n);
+        accept_contracts(&n);
     }
 
     #[test]
