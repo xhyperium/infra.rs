@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
-| 跟进 | P0/P1 **#98**；PLAN-CORE-PROD-002 W0–W5 + L5 **0.3.0-signoff**；四包内部 GO **#159** · tag **`v0.3.0-four-crates`**；**不**宣称 workspace 整体 Production Ready |
+| 跟进 | P0/P1 **#98**；L5 **0.3.0-signoff**；四包 GO **#159** · tag/GH Release **`v0.3.0-four-crates`**；**kernel 内部发布已执行**（#163 · `crates/kernel/releases/0.3.0-internal.md`）；**不**宣称 workspace 整体 Production Ready |
 | 用途 | 一眼看清：**镜像有什么** vs **本仓落地了什么** |
 | 权威 members | 根 `Cargo.toml` `[workspace.members]` + `cargo metadata --no-deps`（**package 名以 metadata 为准**） |
 
@@ -11,7 +11,7 @@
 
 | Package（`cargo -p`） | 路径 | lib | 角色 | 对齐文档 |
 |---------|------|-----|------|----------|
-| `kernel` | `crates/kernel/` | `kernel` | L0 语义信任根 · **L1+L4** | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
+| `kernel` | `crates/kernel/` | `kernel` | L0 语义信任根 · **L1+L4 已内部发布** | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
 | `testkit` | `crates/testkit/` | `testkit` | T0 test-support（仅 dev-dep）· **L1** | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
 | `configx` | `crates/configx/` | `configx` | L1 内存字符串 KV（非多源热更新） | [configx-ssot-alignment.md](./configx-ssot-alignment.md) |
 | `schedulex` | `crates/schedulex/` | `schedulex` | L1 任务 ID 登记表（registry only） | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) |
@@ -124,15 +124,16 @@ cargo test -p evidence --all-targets
 
 | crate | 本仓判定（分层） | 权威细节 |
 |-------|------------------|----------|
-| `kernel` | **L1 + L4 内部 GO**（#159） | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
-| `testkit` | **L1 ManualClock test-support**（非 runtime） | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
-| `decimalx` | **L1 Internal Ready** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
-| `canonical` | **L2 committed wire subset**（v1–v1.3） | 同上 |
+| `kernel` | **L1 + L4 已内部发布**（#159 · #163 · GH Release） | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) · [0.3.0-internal](../../crates/kernel/releases/0.3.0-internal.md) |
+| `testkit` | **L1 ManualClock test-support**（非 runtime；四包 GO 内） | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
+| `decimalx` | **L1 Internal Ready**（四包 GO 内） | [types-ssot-alignment.md](./types-ssot-alignment.md) |
+| `canonical` | **L2 committed wire subset**（v1–v1.3；四包 GO 内） | 同上 |
 | `contracts` | **部分就绪**（不在四包 GO 范围） | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
 
 - 四包证据：[`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md)
+- kernel crate 发布记录：[`../../crates/kernel/releases/0.3.0-internal.md`](../../crates/kernel/releases/0.3.0-internal.md)
 - L5 权威：[`../plans/releases/0.3.0-signoff.md`](../plans/releases/0.3.0-signoff.md) · GO-with-Accepts
-- 内部 tag：`v0.3.0-four-crates`
+- 内部 tag / GH Release：[`v0.3.0-four-crates`](https://github.com/xhyperium/infra.rs/releases/tag/v0.3.0-four-crates)
 - 审计与 DEFER：[`../report/2026-07-21/core-crates-production-readiness.md`](../report/2026-07-21/core-crates-production-readiness.md) §11  
 
 **禁止**将上表误读为「五 crate / workspace 整体 Production Ready」或 crates.io 已发布。
@@ -162,3 +163,4 @@ cargo test -p evidence --all-targets
 |------|------|
 | 2026-07-21 | PR #98 合入：五 crate 生产就绪快照与验证入口（loom/align 路径）写入总览 |
 | 2026-07-21 | 四包内部 GO：members 表 package 名对齐 Cargo metadata；分层 L1/L2/L4；#159 · tag `v0.3.0-four-crates` |
+| 2026-07-21 | kernel **内部发布已执行**：#163 · `crates/kernel/releases/0.3.0-internal.md` · GH Release；对齐快照更新 |
