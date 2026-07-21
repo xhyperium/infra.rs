@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * worktree-policy.mjs — Git Worktree 路径策略与审计
  *
@@ -395,6 +396,7 @@ export function auditWorktreePaths({ root, worktreeState, homeDir }) {
  * 审计结果 → 人读警告行。
  */
 export function formatAuditWarning(audit) {
+  if (!audit) return [];
   const lines = [];
 
   for (const { branch, path, expectedPath } of audit.nonCompliant || []) {

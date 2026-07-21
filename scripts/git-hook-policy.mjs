@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Git hook 组合健康检查。
  *
