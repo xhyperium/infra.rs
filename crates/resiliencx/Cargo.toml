@@ -11,10 +11,20 @@ publish = false
 [lib]
 name = "resiliencx"
 
+[features]
+default = []
+## 启用 [`TokioSleepWait`]（非阻塞 `tokio::time::sleep`）
+tokio = ["dep:tokio"]
+
 [dependencies]
 # path + version：满足 cargo-deny bans.wildcards=deny
 kernel = { path = "../kernel", version = "0.3.0" }
 contracts = { path = "../contracts", version = "0.1.0" }
+async-trait = { workspace = true }
+tokio = { workspace = true, optional = true, features = ["time"] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "time"] }
 
 [lints]
 workspace = true

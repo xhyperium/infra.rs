@@ -10,8 +10,8 @@ use std::sync::Arc;
 
 #[test]
 fn wait_impls_and_delay_helpers() {
-    ThreadSleepWait.wait_ms(0);
-    NoWait.wait_ms(99_000);
+    Wait::wait_ms(&ThreadSleepWait, 0);
+    Wait::wait_ms(&NoWait, 99_000);
     let rec = RecordingWait::new();
     rec.wait_ms(7);
     assert_eq!(rec.delays(), vec![7]);
