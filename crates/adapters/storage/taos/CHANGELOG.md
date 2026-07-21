@@ -2,7 +2,6 @@
 
 ## [Unreleased]
 
-### Added
+### Changed
 
-- `TaosAdapter` 内存 scaffold（connect/write/read/delete）
-- 5 个单元测试；`publish = false`
+- 收敛到 `xhyper-contracts::TimeSeriesStore`

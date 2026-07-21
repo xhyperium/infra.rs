@@ -1,143 +1,77 @@
-//! `taosx` — taos 存储适配器。
-//!
-//! 实现本地 `StorageAdapter` trait。scaffold 使用进程内 HashMap 模拟 KV，
-//! **非**真实 taos 客户端。
+//! TDengine 内存 scaffold：`TimeSeriesStore`。
 
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use crate::{AdapterState, Error, Result, StorageAdapter};
+use async_trait::async_trait;
+use canonical::Tick;
+use contracts::TimeSeriesStore;
+use kernel::{XError, XResult};
 
-/// taos 存储适配器（内存 scaffold）。
 pub struct TaosAdapter {
     name: String,
-    state: AdapterState,
     endpoint: String,
-    store: Mutex<HashMap<String, Vec<u8>>>,
+    series: Mutex<HashMap<String, Vec<Tick>>>,
 }
 
 impl TaosAdapter {
-    /// 创建适配器。
     pub fn new(name: impl Into<String>, endpoint: impl Into<String>) -> Self {
-        Self {
-            name: name.into(),
-            state: AdapterState::Uninitialized,
-            endpoint: endpoint.into(),
-            store: Mutex::new(HashMap::new()),
-        }
+        Self { name: name.into(), endpoint: endpoint.into(), series: Mutex::new(HashMap::new()) }
     }
 
-    /// 默认本地 endpoint。
     pub fn local() -> Self {
         Self::new("taos-local", "taos://127.0.0.1:6030")
     }
 
-    /// 配置的 endpoint（scaffold 观测用）。
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
     pub fn endpoint(&self) -> &str {
         &self.endpoint
     }
 
-    fn require_connected(&self) -> Result<()> {
-        if self.state != AdapterState::Connected {
-            return Err(Error::NotConnected);
-        }
-        Ok(())
+    fn lock(&self) -> XResult<std::sync::MutexGuard<'_, HashMap<String, Vec<Tick>>>> {
+        self.series.lock().map_err(|e| XError::internal(format!("series lock poisoned: {e}")))
     }
 }
 
-impl StorageAdapter for TaosAdapter {
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn connect(&mut self) -> Result<()> {
-        if self.state == AdapterState::Connected {
-            return Err(Error::AlreadyConnected);
-        }
-        self.state = AdapterState::Connected;
+#[async_trait]
+impl TimeSeriesStore for TaosAdapter {
+    async fn write_series(&self, table: &str, points: Vec<Tick>) -> XResult<()> {
+        self.lock()?.entry(table.to_string()).or_default().extend(points);
         Ok(())
     }
 
-    fn disconnect(&mut self) -> Result<()> {
-        if self.state != AdapterState::Connected {
-            return Err(Error::NotConnected);
-        }
-        self.state = AdapterState::Disconnected;
-        Ok(())
-    }
-
-    fn state(&self) -> AdapterState {
-        self.state
-    }
-
-    fn write(&self, key: &str, value: &[u8]) -> Result<()> {
-        self.require_connected()?;
-        let mut guard =
-            self.store.lock().map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
-        guard.insert(key.to_string(), value.to_vec());
-        Ok(())
-    }
-
-    fn read(&self, key: &str) -> Result<Option<Vec<u8>>> {
-        self.require_connected()?;
-        let guard =
-            self.store.lock().map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
-        Ok(guard.get(key).cloned())
-    }
-
-    fn delete(&self, key: &str) -> Result<()> {
-        self.require_connected()?;
-        let mut guard =
-            self.store.lock().map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
-        guard.remove(key);
-        Ok(())
+    async fn query_series(&self, table: &str, start: i64, end: i64) -> XResult<Vec<Tick>> {
+        let guard = self.lock()?;
+        let Some(rows) = guard.get(table) else {
+            return Ok(Vec::new());
+        };
+        Ok(rows.iter().filter(|t| t.ts >= start && t.ts <= end).cloned().collect())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::StorageAdapter;
+    use decimalx::{Decimal, Price};
 
-    #[test]
-    fn connect_disconnect() {
-        let mut a = TaosAdapter::local();
-        assert_eq!(a.state(), AdapterState::Uninitialized);
-        a.connect().expect("connect");
-        assert_eq!(a.state(), AdapterState::Connected);
-        a.disconnect().expect("disconnect");
-        assert_eq!(a.state(), AdapterState::Disconnected);
+    fn tick(ts: i64) -> Tick {
+        Tick {
+            symbol: "BTC".into(),
+            bid: Price(Decimal::try_new(1, 0).expect("d")),
+            ask: Price(Decimal::try_new(2, 0).expect("d")),
+            ts,
+        }
     }
 
-    #[test]
-    fn double_connect_fails() {
-        let mut a = TaosAdapter::local();
-        a.connect().expect("connect");
-        assert!(a.connect().is_err());
-    }
-
-    #[test]
-    fn ops_require_connect() {
+    #[tokio::test]
+    async fn write_query_range() {
         let a = TaosAdapter::local();
-        assert!(a.write("k", b"v").is_err());
-        assert!(a.read("k").is_err());
-        assert!(a.delete("k").is_err());
-    }
-
-    #[test]
-    fn write_read_delete_roundtrip() {
-        let mut a = TaosAdapter::local();
-        a.connect().expect("connect");
-        a.write("k1", b"hello").expect("write");
-        assert_eq!(a.read("k1").expect("read"), Some(b"hello".to_vec()));
-        a.delete("k1").expect("delete");
-        assert_eq!(a.read("k1").expect("read after del"), None);
-    }
-
-    #[test]
-    fn name_and_endpoint() {
-        let a = TaosAdapter::local();
-        assert_eq!(a.name(), "taos-local");
-        assert_eq!(a.endpoint(), "taos://127.0.0.1:6030");
+        a.write_series("t", vec![tick(10), tick(20), tick(30)]).await.expect("write");
+        let got = a.query_series("t", 15, 25).await.expect("query");
+        assert_eq!(got.len(), 1);
+        assert_eq!(got[0].ts, 20);
     }
 }

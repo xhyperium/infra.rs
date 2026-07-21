@@ -1,22 +1,15 @@
 # redisx
 
-redis storage adapter。
+Redis storage adapter scaffold。
 
-Package：`redisx` · path：`crates/adapters/storage/redis`
-
-合约：`infra-contracts::StorageAdapter`
-
-## 状态
-
-**scaffold** — 进程内 HashMap 模拟 KV；**非**真实 redis 客户端；不宣称 package stable。
-
-## 最小用法
+实现 `contracts::KeyValueStore` + `contracts::PubSub`（进程内内存；非真实 Redis）。
 
 ```rust
-use crate::StorageAdapter;
+use contracts::KeyValueStore;
 use redisx::RedisAdapter;
 
-let mut a = RedisAdapter::local();
-a.connect().expect("connect");
-a.write("k", b"v").expect("write");
+# async fn demo() {
+let a = RedisAdapter::local();
+a.set("k", b"v".to_vec(), None).await.unwrap();
+# }
 ```

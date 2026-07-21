@@ -127,7 +127,11 @@ dependencies = [
 name = "clickhousex"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "async-trait",
+ "bytes",
+ "tokio",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -582,7 +586,13 @@ dependencies = [
 name = "kafkax"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "async-trait",
+ "bytes",
+ "futures-core",
+ "futures-util",
+ "tokio",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -664,7 +674,13 @@ dependencies = [
 name = "natsx"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "async-trait",
+ "bytes",
+ "futures-core",
+ "futures-util",
+ "tokio",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -709,7 +725,11 @@ checksum = "7c87def4c32ab89d880effc9e097653c8da5d6ef28e6b539d313baaacfbafcbe"
 name = "ossx"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "async-trait",
+ "bytes",
+ "tokio",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -728,7 +748,10 @@ checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 name = "postgresx"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "async-trait",
+ "tokio",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -928,7 +951,13 @@ dependencies = [
 name = "redisx"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "async-trait",
+ "bytes",
+ "futures-core",
+ "futures-util",
+ "tokio",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1295,7 +1324,12 @@ dependencies = [
 name = "taosx"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "async-trait",
+ "tokio",
+ "xhyper-canonical",
+ "xhyper-contracts",
+ "xhyper-decimalx",
+ "xhyper-kernel",
 ]
 
 [[package]]

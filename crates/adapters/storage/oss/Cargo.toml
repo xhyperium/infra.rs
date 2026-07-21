@@ -1,6 +1,6 @@
 [package]
 name = "ossx"
-description = "oss storage adapter"
+description = "oss storage adapter (ObjectStore scaffold)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,7 +9,13 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
-thiserror = { workspace = true }
+async-trait = { workspace = true }
+bytes = { workspace = true }
+xhyper-contracts = { path = "../../../contracts", version = "0.1.0" }
+xhyper-kernel = { path = "../../../kernel", version = "0.3.0" }
+
+[dev-dependencies]
+tokio = { workspace = true }
 
 [lints]
 workspace = true

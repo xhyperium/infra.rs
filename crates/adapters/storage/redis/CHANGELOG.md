@@ -2,8 +2,6 @@
 
 ## [Unreleased]
 
-### Added
+### Changed
 
-- `RedisAdapter` 实现 `StorageAdapter`（内存 scaffold）
-- 连接状态机 + write/read/delete 轮转测试
-- `publish = false`
+- 收敛到 `xhyper-contracts`：`KeyValueStore` + `PubSub`（移除本地 StorageAdapter）
