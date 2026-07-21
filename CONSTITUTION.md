@@ -88,10 +88,46 @@ crates/
 - `unsafe` 代码须标注原因并附带 safety proof 注释
 
 ### 4.3 命名
-- crate 名：`kebab-case`
-- 类型/枚举：`UpperCamelCase`
-- 函数/方法/变量：`snake_case`
-- 常量/静态变量：`SCREAMING_SNAKE_CASE`
+
+#### 4.3.1 Rust 标识符
+
+- crate 名：`kebab-case`，Cargo 包名与目录名一致
+- 类型/枚举：`UpperCamelCase`（`BinanceAdapter`, `OrderSide`）
+- 函数/方法/变量：`snake_case`（`fetch_ticker`, `base_url`）
+- 常量/静态变量：`SCREAMING_SNAKE_CASE`（`MAX_POSITION_SIZE`）
+- 测试函数：`snake_case`，描述行为而非实现（`test_connect_disconnect`）
+
+#### 4.3.2 Crate 命名
+
+| 层级 | 包名 (Cargo.toml) | 目录 | 说明 |
+|------|-------------------|------|------|
+| 可发布核心 | `xhyper-<domain>x` | `crates/<domain>x/` | 如 `xhyper-configx` |
+| 可发布（历史） | `xhyper-<domain>` | `crates/<domain>/` | `xhyper-kernel`, `xhyper-testkit` |
+| 内部适配器 | `<provider>x` | `crates/adapters/<kind>/<provider>/` | `binancex`, `redisx` |
+| 内部类型 | `xhyper-<domain>x` | `crates/types/<domain>/` | `xhyper-decimalx` |
+
+**规则**：
+- **`x` 后缀**：所有新 crate 包名统一以 `x` 结尾（xhyper extension）
+- **`xhyper-` 前缀**：crates.io 可发布的包加 `xhyper-` 前缀
+- **适配器**：无 `xhyper-` 前缀，包名 = `<provider>x`
+- **历史 crate**（kernel, testkit, canonical, evidence, contracts, bootstrap）暂不重命名，新 crate 遵循新规则
+
+#### 4.3.3 分支与标签
+
+- **分支**：`{type}/{description}`，type ∈ `feat | fix | chore | docs | test | refactor`
+  - 例：`feat/order-balance`, `fix/miri-isolation`, `chore/update-deps`
+- **标签**：`v{MAJOR}.{MINOR}.{PATCH}`（[SemVer](https://semver.org/)）
+  - 例：`v0.3.0`, `v1.0.0`
+- **commit**：[Conventional Commits](https://www.conventionalcommits.org/)
+  - 例：`feat(binancex): add order management scaffold`
+
+#### 4.3.4 文件与目录
+
+- **脚本**：`.mjs`（ESM），禁止 `.sh`（§4.8）
+- **配置**：`.toml` 优先，避免 `.yaml` / `.json` 碎片化
+- **Markdown**：文件名 `SCREAMING_SNAKE_CASE.md`（`CONSTITUTION.md`, `CHANGELOG.md`）
+- **Rust 模块**：`snake_case.rs`
+- **Cargo 包目录**：与包名一致（`crates/configx/` → 包名 `xhyper-configx`）
 
 ### 4.4 测试
 - 单元测试与源码同文件，置于 `#[cfg(test)] mod tests`
