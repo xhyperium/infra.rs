@@ -12,6 +12,7 @@
 |---------|------|-----|------|----------|
 | `xhyper-kernel` | `crates/kernel/` | `kernel` | L0 语义信任根 | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
 | `xhyper-testkit` | `crates/testkit/` | `testkit` | T0 test-support（仅 dev-dep） | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
+| `xhyper-configx` | `crates/configx/` | `configx` | L1 内存字符串 KV（非多源热更新） | [configx-ssot-alignment.md](./configx-ssot-alignment.md) |
 | `xhyper-decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `xhyper-canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 
@@ -24,17 +25,17 @@
                     │ xhyper-kernel│  L0
                     └──────▲───────┘
                            │
-              ┌────────────┼────────────┐
-              │            │            │
-     ┌────────┴───┐  ┌─────┴─────┐     │
-     │xhyper-     │  │xhyper-    │     │
-     │decimalx    │  │testkit    │ dev-only
-     └────────▲───┘  └───────────┘
-              │
-     ┌────────┴───┐
-     │xhyper-     │
-     │canonical   │
-     └────────────┘
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+┌───────┴────┐    ┌────────┴───┐     ┌───────┴────┐
+│xhyper-     │    │xhyper-     │     │xhyper-     │
+│decimalx    │    │configx     │     │testkit     │ dev-only
+└───────▲────┘    └────────────┘     └────────────┘
+        │
+┌───────┴────┐
+│xhyper-     │
+│canonical   │
+└────────────┘
 ```
 
 ## 镜像 vs 落地（R7）
@@ -44,6 +45,7 @@
 | kernel | `.agents/ssot/kernel/` | `crates/kernel` | **已落地**；见 kernel 对齐文 |
 | testkit | `.agents/ssot/testkit/` | `crates/testkit` | **core 已落地**；contract-testkit DEFER |
 | types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；wire/package stable OPEN |
+| infra/configx | `.agents/ssot/infra/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
 
 规则：
 
@@ -61,6 +63,7 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 # 域专项
 cargo test -p xhyper-kernel --all-targets
 cargo test -p xhyper-testkit --all-targets
+cargo test -p xhyper-configx --all-targets
 cargo test -p xhyper-decimalx --all-targets
 cargo test -p xhyper-canonical --all-targets
 node scripts/check-canonical-align.mjs
@@ -72,6 +75,7 @@ node scripts/check-canonical-align.mjs
 |------|------|
 | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) | SPEC-KERNEL-002 本仓矩阵 |
 | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) | SPEC-TESTKIT-002 core 本仓矩阵 |
+| [configx-ssot-alignment.md](./configx-ssot-alignment.md) | configx 0.1.0 本仓矩阵 |
 | [types-ssot-alignment.md](./types-ssot-alignment.md) | decimal + canonical 本仓状态 |
 | [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md) | 镜像同步完整性（≠ 实现落地） |
 | [crates/AGENTS.md](../crates/AGENTS.md) | crate 子模块标准布局 + 概览 |

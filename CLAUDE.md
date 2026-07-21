@@ -14,7 +14,7 @@
 
 - `.agents/ssot/{kernel,testkit,types,infra}` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓可宣称 ship」
   - infra 平面在 `.agents/ssot/infra/{bootstrap,configx,gate,…}`（保留 `infra/` 层级）
-- 本仓 members：`kernel` / `testkit` / `types/decimal` / `types/canonical`（**无** `infra-core`；infra 八域未落地）
+- 本仓 members：`kernel` / `testkit` / `configx` / `types/decimal` / `types/canonical`（**无** `infra-core`；infra 其余域未落地）
 - 验证：`cargo test --workspace`；专项见对齐文档
 - 总览：[docs/workspace-ssot-alignment.md](./docs/workspace-ssot-alignment.md)
 - 域文档：
