@@ -184,6 +184,14 @@ if (branch === "main") {
   ok(`当前分支: ${branch}`, true);
 }
 
+// ── docs/status 自动生成矩阵 ──────────────────────────────
+const statusCheck = run("node scripts/gen-docs-status.mjs --check 2>&1");
+ok(
+  "docs status matrix 新鲜",
+  !statusCheck.includes("FAIL") && (statusCheck.includes("OK") || statusCheck.includes("up to date")),
+  statusCheck.slice(0, 240) || "node scripts/gen-docs-status.mjs --check 失败",
+);
+
 // ── 输出 ──────────────────────────────────────────────────
 const failed = checks.filter((c) => !c.ok);
 const passed = checks.filter((c) => c.ok);

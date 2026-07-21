@@ -63,8 +63,9 @@
 
 | 文档 | 说明 |
 |------|------|
-| [CI_STATUS_REPORT.md](status/CI_STATUS_REPORT.md) | CI 工作流矩阵与迁移验证 |
-| [CONFIG_SUMMARY.md](status/CONFIG_SUMMARY.md) | 仓库配置、分支保护、测试验证总览 |
+| [CI_WORKFLOW_MATRIX.generated.md](status/CI_WORKFLOW_MATRIX.generated.md) | 自动生成：工作流文件 / jobs 矩阵 |
+| [CI_STATUS_REPORT.md](status/CI_STATUS_REPORT.md) | 人工叙事：CI 说明与迁移验证 |
+| [CONFIG_SUMMARY.md](status/CONFIG_SUMMARY.md) | 人工叙事：配置、分支保护、测试验证总览 |
 
 > 状态类文档会随时间过期；规则类文档请放在 `governance/`。
 
