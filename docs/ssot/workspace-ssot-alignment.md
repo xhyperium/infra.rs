@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
-| 跟进 | P0/P1 **#98**；L5 **0.3.0-signoff**；四包 GO **#159** · tag **`v0.3.0-four-crates`**；kernel 内部发布 **#163**；**STATUS-PROD epic `infra-s9t` 18/18 闭合**（#166–#168 · #172）；**不**宣称 workspace 整体 Production Ready / L5 |
+| 跟进 | P0/P1 **#98**；L5 **0.3.0-signoff**；四包 GO **#159** · **`v0.3.0-four-crates`**；kernel **#163**；**`infra-s9t` 18/18 closed**（#166–#168 · #172）· 对齐 **#174** · closeout **#175**；**不**宣称 workspace Production Ready / L5 |
 | 用途 | 一眼看清：**镜像有什么** vs **本仓落地了什么** |
 | 权威 members | 根 `Cargo.toml` `[workspace.members]` + `cargo metadata --no-deps`（**package 名以 metadata 为准**） |
 
@@ -170,3 +170,4 @@ cargo test -p evidence --all-targets
 | 2026-07-21 | 四包内部 GO：members 表 package 名对齐 Cargo metadata；分层 L1/L2/L4；#159 · tag `v0.3.0-four-crates` |
 | 2026-07-21 | kernel **内部发布已执行**：#163 · `crates/kernel/releases/0.3.0-internal.md` · GH Release；对齐快照更新 |
 | 2026-07-21 | **infra-s9t** 闭合（#166–#168 · #172）：L1 P0、redis live KV、contracts L3 子集、exchange `server_time`；总览与分域对齐同步 |
+| 2026-07-21 | 对齐/同步文档刷新 #174；follow-up CLOSED + report partials closeout #175；本文件补引用 |

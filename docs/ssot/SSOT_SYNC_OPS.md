@@ -1,6 +1,8 @@
 # SSOT 同步操作手册
 
-> 从上游 `xhyper.rs` 镜像 SSOT 到本仓 `.agents/ssot/`。
+> 从上游 `xhyper.rs` 镜像 SSOT 到本仓 `.agents/ssot/`。  
+> **实现落地状态**不由本手册 rsync 决定——见 [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md) 与各 `*-ssot-alignment.md`。  
+> 同步后必须：对照 `Cargo.toml` members、重读本仓 OOS/落地裁定（**禁止**用上游覆盖冲掉 #164 archgate OOS 等）。
 
 ## 前置条件
 

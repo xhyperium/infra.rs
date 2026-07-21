@@ -27,6 +27,15 @@
 Once / FixedDelay / FixedRate / cron / misfire / 并发 lease / timeout token /
 graceful shutdown / 持久化恢复 / 分布式调度 —— active §3；Candidate Draft 非权威。
 
+## 生产误用红线（infra-s9t.8）
+
+| 允许 | 禁止 |
+|------|------|
+| 进程内任务 **ID 登记** / 幂等 cancel | 把 `Scheduler` 当 timer / cron / 调度执行器 |
+| 单测与组合根登记表 | 依赖墙钟触发、持久化恢复、分布式 lease |
+
+见 crate README 与 [prod-consume-surface.md](../plans/artifacts/prod-consume-surface.md)。
+
 ## 验证
 
 ```bash

@@ -99,6 +99,7 @@ cargo test -p redisx --features live --test live_kv_conformance -- --ignored
 | 2026-07-21 | PR #98 合入 main |
 | 2026-07-21 | W3（infra-asa.4）：first-batch 语义文档、`fakes` 模块、venue override 运行时门禁；CT-8/CT-10 部分闭合；**非** Production Ready |
 | 2026-07-21 | **infra-s9t.3 / #172**：CT-9 部分 PASS（redis live KV + observex Instr）；`L3_FIRST_BATCH_STATUS.md`；禁止 first-batch 全绿宣称 |
+| 2026-07-21 | 对齐同步 #174 / closeout #175：总览与报告 partials 与 L3 子集叙事一致 |
 
 ## L3 子集（infra-s9t.3 · closed）
 

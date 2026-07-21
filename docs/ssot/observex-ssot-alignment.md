@@ -4,22 +4,22 @@
 |------|-----|
 | 策略 | **B — 本仓移植 observex 0.1.0 最小面** |
 | 日期 | 2026-07-21 |
-| 分支 | `feat/observex-ssot-align` |
-| 规范 | `.agents/ssot/observex/spec/spec.md`（OBJECTIVE 中 `.agent/ssot/observex` = 上游习惯路径） |
+| 规范 | `.agents/ssot/observex/spec/spec.md` |
 | package | `xhyper-observex` 0.1.0 · lib `observex` |
-| 契约面 | `xhyper-contracts` · lib `contracts`（adapters + **Instrumentation**） |
+| 契约面 | `xhyper-contracts` · lib `contracts`（**Instrumentation**） |
+| 跟进 | L3 Instrumentation 真入口（`infra-s9t.3` / #172）；OTEL 仍 DEFER |
 
 ## 结论摘要
 
 | 问题 | 状态 |
 |------|------|
 | 上游/镜像 COMPLETE 叙事 | **禁止**单独当作本仓交付证明 |
-| 本仓 `crates/observex` | **已落地**（TracingInstrumentation + tracing 三方法） |
-| 本仓 Instrumentation 契约 | 已并入既有 `crates/contracts`（`xhyper-contracts` / lib `contracts`） |
-| OTEL exporter / flush / shutdown | **DEFER** |
-| 完整 VenueAdapter 等 contracts | **DEFER** |
-| resiliencx / bootstrap 注入链 | **PASS**（resiliencx → contracts；bootstrap 默认 TracingInstrumentation） |
-| LCOV 行覆盖率 100% | **PASS**（本仓实测） |
+| 本仓 `crates/observex` | **已落地**（`TracingInstrumentation` + tracing 三方法） |
+| 本仓 Instrumentation 契约 | `contracts::Instrumentation`；本 crate 为 **L3 子集**非 scaffold 入口之一 |
+| OTEL exporter / flush / shutdown | **DEFER**（禁止宣称 OTEL 栈完成） |
+| 完整 VenueAdapter 等 contracts | **DEFER**（非 observex 职责） |
+| resiliencx / bootstrap 注入链 | **PASS**（bootstrap 默认 `TracingInstrumentation`） |
+| LCOV 行覆盖率 100% | **PASS** |
 
 ## 本仓可观察事实
 
