@@ -9,7 +9,7 @@
 | 目标 | 五个核心 crate 达到可签字的 **Production Ready**（按模块分轨，不假装整体一次过线） |
 | 范围 | `xhyper-contracts` · `xhyper-decimalx` · `xhyper-canonical` · `xhyper-kernel` · `xhyper-testkit`；以及阻断生产语义的 adapters 验证入口 |
 | 性质 | **可执行修复计划**（含顺序、验收、门禁、签字）；**不是**发布批准本身 |
-| 状态 | Draft · 待 maintainer 确认优先级与 DEFER 裁剪 |
+| 状态 | **W0 Frozen**（2026-07-21）· 产物见 `docs/plans/artifacts/` · 待 W1–W5 执行与 L5 签字 |
 
 ---
 
@@ -160,9 +160,11 @@ W5  治理门禁 + 人工签字   ──►  L4/L5 · §8 全过
 
 ### 5.4 验收
 
-- [ ] 生产 trait 清单与 wire 升格清单有文件落盘且 PR 评审通过
-- [ ] DEFER 处置表无「未分类」项
-- [ ] beads epic 可 `bd ready` 拉到子任务
+- [x] 生产 trait 清单与 wire 升格清单有文件落盘：[`artifacts/prod-trait-inventory.md`](./artifacts/prod-trait-inventory.md)、[`artifacts/wire-promotion-candidates.md`](./artifacts/wire-promotion-candidates.md)
+- [x] DEFER 处置表无「未分类」项：[`artifacts/defer-disposition.md`](./artifacts/defer-disposition.md)
+- [x] 支持矩阵声明：[`artifacts/support-matrix.md`](./artifacts/support-matrix.md)（Accept 仅 Linux）
+- [x] beads epic 可 `bd ready`：`infra-asa` + `infra-asa.1`…`.6`
+- [ ] PR 评审通过（随文档 PR 合入）
 
 ---
 
@@ -431,18 +433,20 @@ rg -n 'impl (fmt::)?Display for' crates/kernel crates/testkit crates/types crate
 
 ---
 
-## 11. DEFER 处置表（执行时更新）
+## 11. DEFER 处置表（W0 已冻结）
 
-| ID | 项 | 建议处置 | 波次 | 状态 |
-|----|----|----------|------|------|
-| DEFER-1 | 真实后端验证入口 | **Close**（首批 trait） | W4 | open |
-| DEFER-2 | 全 trait 深度语义 | **Close 首批 / Accept 二期** | W3 | open |
-| DEFER-3 | 非 committed DTO | **分批 Close** | W2 | open |
-| DEFER-4 | fuzz/oracle/mutants/Miri | **Close 证据链** | W1 | open |
-| DEFER-5 | API snapshot / semver | **Close** | W5 | open |
-| DEFER-6 | 非 Linux 矩阵 | **Accept 仅 Linux** 或 **Close 多平台** | W0/W5 | open |
-| DEFER-7 | §8 人工签字 | **Human only** | W5 | open |
-| DEFER-8 | VenueAdapter override 门禁 | **Close** | W3 | open |
+权威全文：[`artifacts/defer-disposition.md`](./artifacts/defer-disposition.md)。
+
+| ID | 项 | 处置 | 波次 | 状态 |
+|----|----|------|------|------|
+| DEFER-1 | 真实后端验证入口 | **Close**（首批） | W4 | open · 已分类 |
+| DEFER-2 | 全 trait 深度语义 | **Close 首批** + **Accept 二期** | W3 | open · 已分类 |
+| DEFER-3 | 非 committed DTO | **Close 分批** | W2 | open · 已分类 |
+| DEFER-4 | fuzz/oracle/mutants/Miri | **Close** | W1 | open · 已分类 |
+| DEFER-5 | API snapshot / semver | **Close** | W5 | open · 已分类 |
+| DEFER-6 | 非 Linux 矩阵 | **Accept** 仅 Linux | W0 | **closed as Accept** |
+| DEFER-7 | §8 人工签字 | **Defer-with-sign** | W5 | open · 仅人签 |
+| DEFER-8 | VenueAdapter override 门禁 | **Close** | W3 | open · 已分类 |
 
 ---
 
@@ -557,3 +561,4 @@ node scripts/quality-gates/check.mjs
 | 日期 | 说明 |
 |------|------|
 | 2026-07-21 | 初版：基于审计报告 §11 DEFER 与 main（含 PR #98）源码事实的生产级修复方案 |
+| 2026-07-21 | **W0 Frozen**：`artifacts/` 落盘 trait/wire/支持矩阵/DEFER 处置；beads `infra-asa.1`…`.6` |

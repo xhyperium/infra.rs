@@ -9,7 +9,16 @@
 
 | 计划 | 状态 | 说明 |
 |------|------|------|
-| [2026-07-21-core-crates-production-readiness.md](./2026-07-21-core-crates-production-readiness.md) | Draft | 五核心 crate 生产级修复（W0–W5）；输入审计 `docs/report/2026-07-21/` |
+| [2026-07-21-core-crates-production-readiness.md](./2026-07-21-core-crates-production-readiness.md) | W0 Frozen | 五核心 crate 生产级修复（W0–W5）；输入审计 `docs/report/2026-07-21/` |
+
+## 冻结产物（W0）
+
+| 文件 | 说明 |
+|------|------|
+| [artifacts/prod-trait-inventory.md](./artifacts/prod-trait-inventory.md) | 首批 / 二期生产 trait |
+| [artifacts/wire-promotion-candidates.md](./artifacts/wire-promotion-candidates.md) | committed wire 升格批次 |
+| [artifacts/support-matrix.md](./artifacts/support-matrix.md) | OS/MSRV（Accept 仅 Linux） |
+| [artifacts/defer-disposition.md](./artifacts/defer-disposition.md) | DEFER-1…8 分类 |
 
 ## 约定
 
