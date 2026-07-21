@@ -68,11 +68,11 @@ tokio-postgres = { version = "0.7", default-features = false, features = [
   "with-chrono-0_4",
 ] }
 deadpool-postgres = { version = "0.14", features = ["rt_tokio_1"] }
+# 默认无 sasl：CI 无 libsasl2 时仍可编译；启用 `kafkax/sasl` 再链接 SASL
 rdkafka = { version = "0.37", default-features = false, features = [
   "cmake-build",
   "tokio",
   "ssl",
-  "sasl",
 ] }
 async-nats = "0.50"
 clickhouse = { version = "0.13", default-features = false, features = [

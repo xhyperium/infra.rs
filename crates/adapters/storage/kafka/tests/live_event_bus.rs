@@ -1,3 +1,4 @@
+//! 需要 `--features sasl` 与真实 broker。
 //! 真实 broker 往返（默认 ignore）。
 //!
 //! ```text
@@ -20,7 +21,8 @@ fn unique_suffix() -> String {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-#[ignore = "requires live Kafka; run with --ignored when broker available"]
+#[cfg_attr(not(feature = "sasl"), ignore = "needs feature sasl + live Kafka")]
+#[cfg_attr(feature = "sasl", ignore = "requires live Kafka; run with --ignored when broker available")]
 async fn live_publish_consume_content() {
     let cfg = KafkaConfig::from_env();
     let pool = KafkaPool::connect(cfg).await.expect("connect");
@@ -81,7 +83,8 @@ async fn live_publish_consume_content() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-#[ignore = "requires live Kafka; EventBus publish + id encoding"]
+#[cfg_attr(not(feature = "sasl"), ignore = "needs feature sasl + live Kafka")]
+#[cfg_attr(feature = "sasl", ignore = "requires live Kafka; EventBus publish + id encoding")]
 async fn live_event_bus_publish_and_id() {
     // EventBus::subscribe 依赖 group coordinator；本环境可能不可用。
     // 本用例验证 EventBus::publish（delivery report）+ 用 assign 消费校验 id 格式。

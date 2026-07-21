@@ -12,6 +12,8 @@ publish = false
 default = []
 # 旧内存 scaffold / mock（迁移与离线演示）
 scaffold = []
+# 需要系统 libsasl2；CI 默认关闭以避免 sasl2-sys 构建失败
+sasl = ["rdkafka/sasl"]
 
 [dependencies]
 async-trait = { workspace = true }

@@ -118,6 +118,9 @@ jobs:
           # Scan all workflow files
           for fname in sorted(os.listdir(workflows_dir)):
               if not fname.endswith('.yml'): continue
+              # 跳过本审计工作流自身，避免规则文案中的 self-hosted 触发误报
+              if fname == 'workflow-security.yml':
+                  continue
               fpath = os.path.join(workflows_dir, fname)
               try:
                   with open(fpath) as f:
