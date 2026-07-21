@@ -3,10 +3,10 @@
 | 字段 | 值 |
 |------|-----|
 | Plan | [PLAN-CORE-PROD-002](../2026-07-21-core-crates-production-readiness.md) |
-| Beads | `infra-asa.1`（W0）· 执行 `infra-asa.3`（W2） |
+| Beads | `infra-asa.1`（W0）· 执行 `infra-asa.3`（W2，已 close） |
 | 冻结日期 | 2026-07-21 |
-| 源码权威 | `crates/types/canonical/src/wire.rs` · `COMMITTED_WIRE_V1` |
-| 状态 | **Frozen** 升格顺序；每批合并后更新本表状态列 |
+| 源码权威 | `crates/types/canonical/src/wire.rs` · `COMMITTED_WIRE_V1`…`V1_3` |
+| 状态 | **v1.1–v1.3 已合入**（PR #124）；envelope 仍 Accept |
 
 ## 1. 已冻结（Committed v1）
 
@@ -22,11 +22,11 @@
 
 ## 2. 升格批次（本轮目标）
 
-| 批次 | 类型 | 依赖 | 目标状态 |
-|------|------|------|----------|
-| **v1.1** | `Order` | 字段集人审；decimal 字段走校验反序列化 | W2 优先 |
-| **v1.2** | `Tick`, `Trade` | 行情回放；`ts` ns 语义 | W2 |
-| **v1.3** | `Position`, `OrderBookSnapshot`, `PriceLevel`, `SymbolMeta` | 账户/盘口；可后置 | W2 可拆 |
+| 批次 | 类型 | 依赖 | 目标状态 | 实现状态 |
+|------|------|------|----------|----------|
+| **v1.1** | `Order` | 字段集人审；decimal 字段走校验反序列化 | W2 优先 | **已合入** PR #124 · `COMMITTED_WIRE_V1_1` |
+| **v1.2** | `Tick`, `Trade` | 行情回放；`ts` ns 语义 | W2 | **已合入** PR #124 · `COMMITTED_WIRE_V1_2` |
+| **v1.3** | `Position`, `OrderBookSnapshot`, `PriceLevel`, `SymbolMeta` | 账户/盘口；可后置 | W2 可拆 | **已合入** PR #124 · `COMMITTED_WIRE_V1_3` |
 
 每一类型升格必须满足计划 §7.3 八项（字段冻结、deny_unknown、双向 golden、N-1、拒绝样例、decimal 校验、清单更新、align 脚本）。
 
@@ -49,3 +49,4 @@
 | 日期 | 说明 |
 |------|------|
 | 2026-07-21 | W0 初冻：v1 已有；v1.1–v1.3 升格顺序 |
+| 2026-07-21 | W2 合入后：v1.1–v1.3 状态列更新为已合入（PR #124） |
