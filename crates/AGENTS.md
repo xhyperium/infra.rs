@@ -79,6 +79,7 @@ crates/<crate-name>/
 | `xhyper-bootstrap`（lib `bootstrap`） | `crates/bootstrap/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `infra-contracts` | `crates/contracts/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | adapters 九 package（见概览） | `crates/adapters/**` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `xhyper-transportx`（lib `transportx`） | `crates/transport/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 > `examples/` / `docs/` / 暂无集成测试时的 `tests/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。  
 > adapters / contracts 为 scaffold；标准七项已补齐，**≠** 业务实现完成。见 [docs/adapters-ssot-alignment.md](../docs/adapters-ssot-alignment.md)。
@@ -97,7 +98,7 @@ crates/<crate-name>/
 - 新增 crate 前先评估：是否可以用现有 crate 的模块替代
 - crate 间依赖方向单向，禁止循环引用
 - L0 信任根为 `xhyper-kernel`；`testkit` 仅允许 dev-dependency 消费
-- 依赖方向：`canonical` → `decimalx` → `kernel`；`testkit` → `kernel`；`configx` → `kernel`（L1，禁止其他 L1）；`resiliencx` → `kernel`；`bootstrap` → `kernel`
+- 依赖方向：`canonical` → `decimalx` → `kernel`；`testkit` → `kernel`；`configx` → `kernel`（L1，禁止其他 L1）；`resiliencx` → `kernel`；`bootstrap` → `kernel`；`transportx` → `kernel`（L1，R3 禁止其他 L1）
 - 每个 crate 目录必须符合上文「子模块标准布局」
 
 ### C3: 错误处理

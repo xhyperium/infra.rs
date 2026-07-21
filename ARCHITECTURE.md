@@ -17,7 +17,7 @@
 ### 非目标
 
 - 不是 xhyper.rs 的镜像或子模块
-- 不包含产品级运行时代码 — 仅基础设施与工具链
+- 以基础设施库与工具链为主；L1 传输等可复用运行时库按 SSOT 落地
 - 不替代上游运营 — 治理与 CI 约束通过配置声明而非强制同步
 
 ---
@@ -40,6 +40,7 @@ infra.rs/
 │   ├── kernel/                # L0 语义信任根
 │   ├── testkit/               # 测试支持（dev-only）
 │   ├── configx/               # L1 内存字符串 KV 配置存储
+│   ├── transport/             # L1 HTTP/WS 传输（transportx）
 │   └── types/
 │       ├── decimal/           # 十进制数值 / Money
 │       └── canonical/         # 跨层共享 DTO

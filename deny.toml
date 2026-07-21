@@ -12,6 +12,8 @@ allow = [
   "Apache-2.0",
   "Apache-2.0 WITH LLVM-exception",
   "BSD-3-Clause",
+  "CDLA-Permissive-2.0",
+  "ISC",
   "Unicode-3.0",
   "Unlicense",
   "Zlib",
@@ -21,7 +23,9 @@ confidence-threshold = 0.8
 [bans]
 multiple-versions = "deny"
 wildcards = "deny"
-# tracing-attributes 仍依赖 syn 2；workspace 其余通过 serde_derive 使用 syn 3
+# tracing-attributes / transportx rustls 栈常见双版本
 skip = [
+  { name = "getrandom", version = "0.2" },
   { name = "syn", version = "2" },
+  { name = "windows-sys", version = "0.52" },
 ]

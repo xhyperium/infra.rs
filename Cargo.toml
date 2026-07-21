@@ -10,6 +10,7 @@ members = [
   "crates/contracts",
   "crates/bootstrap",
   "crates/observex",
+  "crates/transport",
   "crates/adapters/exchange/binance",
   "crates/adapters/exchange/okx",
   "crates/adapters/storage/redis",
@@ -34,6 +35,21 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
 tracing = "0.1"
+
+async-trait = "0.1"
+bytes = "1"
+futures-util = "0.3"
+reqwest = { version = "0.12", default-features = false, features = [
+  "rustls-tls",
+  "json",
+] }
+tokio = { version = "1", features = [
+  "rt-multi-thread",
+  "macros",
+  "sync",
+  "time",
+] }
+tokio-tungstenite = { version = "0.26", features = ["rustls-tls-native-roots"] }
 
 # SPEC-KERNEL-002 §4：crate 可通过 [lints] workspace = true 继承
 # 默认保持 warn 级，避免拖垮兄弟 crate；各 crate 可再加严

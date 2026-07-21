@@ -1,0 +1,54 @@
+# transportx
+
+L1 统一网络客户端抽象（SSOT `infra/transport`，ADR-007）。提供 `HttpDriver` / `WsConnector` 边界、内存 mock，以及由本 crate 私有化的 reqwest / tokio-tungstenite 默认驱动。
+
+## 主要内容
+
+- `HttpDriver`：带 headers/body 的 typed HTTP 请求
+- `WsConnector` / `WsConnection`：帧级 WebSocket 生命周期边界
+- `ReqwestHttpDriver` / `TungsteniteWsConnector`：真实驱动（客户端类型 crate-private）
+- `MockHttpTransport`：`set_get` / `set_post` 预置响应，并实现 `HttpDriver`
+- 遗留 `HttpTransport`：`#[deprecated(note = "use HttpDriver")]`
+
+## 最小用法
+
+```rust
+use bytes::Bytes;
+use transportx::{HttpDriver, HttpRequest, MockHttpTransport};
+
+# async fn demo() {
+let mock = MockHttpTransport::new();
+mock.set_get("https://api/ping", Bytes::from_static(b"{}"));
+let response = mock
+    .execute(HttpRequest {
+        method: "GET".into(),
+        url: "https://api/ping".into(),
+        headers: vec![],
+        body: None,
+    })
+    .await
+    .unwrap();
+assert_eq!(response.status, 200);
+# }
+```
+
+## 定位
+
+L1 基础设施层。**R3 禁止依赖其他 L1 crate**，保持网络抽象独立。
+
+## 非职责
+
+- 不解析具体交易所业务协议（归 adapter）
+- 不实现重试 / 熔断 / 调度（`resiliencx` / `schedulex`）
+- 不成为 bootstrap 组合根
+- 不承诺生产 TLS / 连接池 / gRPC 矩阵（M3 Unknown）
+
+## 限制与安全
+
+- 所有外部 I/O 须支持 timeout
+- 禁止在日志中输出完整 Authorization 头或私钥材料
+- 真实外网测试须 `#[ignore]` 或显式环境门控；本仓默认用 loopback
+
+## 版本
+
+`0.1.0`（见 `Cargo.toml`）。实现合同：`.agents/ssot/infra/transport/spec/spec.md`。
