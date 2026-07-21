@@ -147,7 +147,7 @@ testkit     →  kernel          # 仅 [dev-dependencies]
 | 质量 | .rs / rustfmt.toml / clippy.toml 变更 | — |
 | 校验 | 全部 push / PR | — |
 | 安全 | Cargo / deny.toml 变更 | 每周一 02:00 |
-| Constitution | Rust / config / CONSTITUTION.md 变更 | — |
+| Constitution | Rust / config / CONSTITUTION.md / docs/constitution/** 变更 | — |
 
 详见 [CI_STATUS_REPORT.md](docs/status/CI_STATUS_REPORT.md)。
 
@@ -160,7 +160,7 @@ testkit     →  kernel          # 仅 [dev-dependencies]
 
 ## 治理系统
 
-### 宪章（CONSTITUTION.md）
+### 宪章（[docs/constitution/](docs/constitution/)，根索引 [CONSTITUTION.md](CONSTITUTION.md)）
 
 五大核心价值观决定了所有技术决策：
 
