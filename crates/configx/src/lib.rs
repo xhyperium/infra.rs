@@ -66,8 +66,22 @@ impl Default for ConfigStore {
     }
 }
 
+/// 配置键存在性校验（schema 边界最小面，infra-s9t.7）。
+///
+/// **不是** 类型化 schema / 多源配置。仅检查内存 [`ConfigStore`] 是否包含必填 key。
+pub fn require_keys(store: &ConfigStore, keys: &[&str]) -> XResult<()> {
+    for k in keys {
+        if store.get(k).is_none() {
+            return Err(XError::invalid(format!("missing required config key: {k}")));
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
+    use super::require_keys;
+
     use super::*;
     use kernel::ErrorKind;
     use std::panic::{self, AssertUnwindSafe};
@@ -186,5 +200,16 @@ mod tests {
         // 至少能读到最后写入过的 writer key
         assert!(store.get("w0").is_some());
         assert_eq!(store.get("n").as_deref(), Some("0"));
+    }
+
+    #[test]
+    fn require_keys_ok_and_missing() {
+        let s = ConfigStore::new();
+        s.set("a", "1").unwrap();
+        require_keys(&s, &["a"]).expect("present");
+        let err = require_keys(&s, &["a", "b"]).expect_err("missing b");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        let msg = format!("{err}");
+        assert!(msg.contains("missing required config key: b"), "{msg}");
     }
 }

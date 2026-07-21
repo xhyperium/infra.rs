@@ -54,6 +54,11 @@ tokio = { version = "1", features = [
   "time",
 ] }
 tokio-tungstenite = { version = "0.26", features = ["rustls-tls-native-roots"] }
+redis = { version = "0.27", default-features = false, features = [
+  "tokio-comp",
+  "connection-manager",
+] }
+url = "2"
 
 # SPEC-KERNEL-002 §4：crate 可通过 [lints] workspace = true 继承
 # 默认保持 warn 级，避免拖垮兄弟 crate；各 crate 可再加严

@@ -67,7 +67,8 @@ jobs:
       - name: 运行 codespell
         uses: codespell-project/actions-codespell@v2
         with:
-          ignore_words_list: ser
+          ignore_words_list: ser,ans,implementors,multiplikation,methoden
+          skip: scripts/beads/gh-sync-i18n-test.mjs
 
   link-check:
     name: 链接检查

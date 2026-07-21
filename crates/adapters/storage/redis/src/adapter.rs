@@ -1,4 +1,4 @@
-//! Redis 内存 scaffold：`KeyValueStore` + `PubSub`。
+//! Redis 内存 scaffold：`KeyValueStore` + `PubSub`（默认路径；生产请用 feature `live`）。
 
 use std::collections::HashMap;
 use std::sync::Mutex;

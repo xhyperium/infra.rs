@@ -187,13 +187,14 @@ impl Bootstrap {
 
     /// 消费 builder，返回 [`AppContext`]（不绑定 ShutdownController）。
     ///
-    /// 为保持简单默认路径：未 `require_evidence` 时总是成功。
-    /// 若 `require_evidence` 且未注入，应使用 [`try_build`](Self::try_build)。
+    /// 未 `require_evidence` 时总是成功。
+    /// 若 `require_evidence` 且未注入：**release/debug 均 panic**（fail-closed，infra-s9t.4）。
+    /// 可恢复路径请用 [`try_build`](Self::try_build)。
     pub fn build(self) -> AppContext {
-        debug_assert!(
-            self.validate().is_ok(),
-            "Bootstrap::build called with unsatisfied require_evidence; use try_build"
-        );
+        if let Err(e) = self.validate() {
+            // PANIC: require_evidence 未满足时禁止静默成功（含 release）
+            panic!("Bootstrap::build 失败: {e}；请注入 evidence 或使用 try_build");
+        }
         self.into_app_context()
     }
 
@@ -372,6 +373,12 @@ mod tests {
         let e = ctx.platform().evidence().expect("injected");
         assert_eq!(e.append_named("probe"), Err(EvidenceError::DurabilityFailure));
         assert_eq!(*count.lock().expect("lock"), 1);
+    }
+
+    #[test]
+    #[should_panic(expected = "try_build")]
+    fn require_evidence_build_panics_without_injection() {
+        let _ = Bootstrap::new().require_evidence().build();
     }
 
     #[test]

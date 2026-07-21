@@ -65,3 +65,8 @@ cargo llvm-cov -p configx --summary-only
 
 示例：`cargo run -p configx --example basic`
 
+
+## Schema 边界（infra-s9t.7）
+
+- `require_keys(&store, &["host", "port"])`：必填 key 存在性校验（最小 schema）。
+- **不是**类型化 JSON Schema / 多源合并；生产仍须上层配置加载器。

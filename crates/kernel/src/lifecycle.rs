@@ -162,7 +162,9 @@ impl ShutdownSignal {
     #[cfg(not(loom))]
     pub fn wait_timeout(&self, timeout: Duration) -> bool {
         let mut triggered = self.inner.triggered.lock().unwrap_or_else(|e| e.into_inner());
-        let deadline = std::time::Instant::now() + timeout;
+        // 使用 checked_add：极端 timeout 不 panic（infra-s9t.15）
+        let now0 = std::time::Instant::now();
+        let deadline = now0.checked_add(timeout).unwrap_or(now0);
         while !*triggered {
             let now = std::time::Instant::now();
             if now >= deadline {
@@ -482,6 +484,13 @@ mod tests {
     fn lifecycle_error_display_is_chinese() {
         let err = LifecycleError { from: ComponentState::Running, to: ComponentState::Starting };
         assert!(err.to_string().contains("非法"));
+    }
+
+    #[test]
+    fn wait_timeout_huge_timeout_checked_add_no_panic() {
+        let (_g, s) = ShutdownSignal::new();
+        // Instant::checked_add(Duration::MAX) 常为 None → deadline=now → 立即 false
+        assert!(!s.wait_timeout(Duration::MAX));
     }
 
     #[test]

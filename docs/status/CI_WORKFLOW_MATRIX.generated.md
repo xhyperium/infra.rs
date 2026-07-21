@@ -10,6 +10,7 @@
 | 文件 | name | 触发（启发式） | Jobs |
 |------|------|----------------|------|
 | `beads-e2e.yml` | Beads E2E | pull_request, workflow_dispatch | `beads-smoke` |
+| `beads-test.yml` | Beads Sync Test Suite | push, pull_request, workflow_dispatch | `check-changes`, `test-unit`, `test-interactive`, `test-complex`, `test-stress`, `test-i18n`, `summary` |
 | `benchmark.yml` | Benchmark | workflow_dispatch | `bench` |
 | `canonical-coverage.yml` | Canonical Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `ci-rust-org.yml` | CI Rust（组织复用） | push, pull_request, workflow_dispatch | `org-rust` |
@@ -31,6 +32,7 @@
 | `pr-template-check.yml` | PR Template Check | pull_request | `template-check` |
 | `public-api.yml` | 公开 API | pull_request, workflow_dispatch | `public-api` |
 | `quality.yml` | 质量 | pull_request, workflow_dispatch | `check-rust`, `fmt`, `clippy`, `doc` |
+| `redisx-live.yml` | Redisx Live | pull_request, workflow_dispatch | `live` |
 | `release.yml` | Release | workflow_dispatch | `release-build`, `release-test`, `release-clippy`, `release-doc` |
 | `resiliencx-coverage.yml` | Resiliencx Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `schedulex-coverage.yml` | Schedulex Coverage | pull_request, workflow_dispatch | `line-coverage` |
@@ -45,8 +47,8 @@
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 31 |
-| Job 总数（解析） | 55 |
+| 工作流文件数 | 33 |
+| Job 总数（解析） | 63 |
 
 ## 维护
 

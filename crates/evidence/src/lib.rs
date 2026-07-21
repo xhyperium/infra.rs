@@ -4,14 +4,18 @@
 //! |------|------|
 //! | [`EvidenceError`] | 追加失败（Durability / Unavailable） |
 //! | [`EvidenceAppender`] | 对象安全追加 trait |
-//! | [`InMemoryEvidenceAppender`] | 进程内实现（测试 / 开发默认） |
+//! | [`InMemoryEvidenceAppender`] | 进程内实现（测试 / 开发默认；**非**合规审计） |
+//! | [`FileEvidenceAppender`] | 本地文件追加（最小持久化合同，infra-s9t.7） |
 //! | [`AppendReceipt`] | 成功回执（序号 + 名称） |
 //!
-//! **非目标**：远程持久化、签名链、跨进程证据总线、完整 AppendRequest wire。
+//! **非目标**：远程签名链、跨进程证据总线、完整 AppendRequest wire。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+use std::fs::OpenOptions;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 /// 证据追加错误。
@@ -104,6 +108,73 @@ impl InMemoryEvidenceAppender {
     }
 }
 
+/// 本地文件证据追加器（最小持久化合同）。
+///
+/// 每行：`{seq}<TAB>{name}` UTF-8。进程崩溃前已 `flush` 的行可恢复。
+/// **不是**签名链 / 远程总线；生产合规仍须上层策略。
+pub struct FileEvidenceAppender {
+    path: PathBuf,
+    inner: Mutex<FileState>,
+}
+
+struct FileState {
+    next_seq: u64,
+    file: std::fs::File,
+}
+
+impl FileEvidenceAppender {
+    /// 打开或创建 `path` 并追加写入。
+    ///
+    /// # Errors
+    ///
+    /// 打开/创建失败 → [`EvidenceError::Unavailable`]。
+    pub fn open(path: impl Into<PathBuf>) -> Result<Self, EvidenceError> {
+        let path = path.into();
+        match path.parent() {
+            Some(parent) if !parent.as_os_str().is_empty() => {
+                std::fs::create_dir_all(parent).map_err(|_| EvidenceError::Unavailable)?;
+            }
+            _ => {}
+        }
+        let file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .read(true)
+            .open(&path)
+            .map_err(|_| EvidenceError::Unavailable)?;
+        let existing = std::fs::read_to_string(&path).unwrap_or_default();
+        let mut next_seq = 0u64;
+        for line in existing.lines() {
+            if let Some((seq_s, _)) = line.split_once('\t') {
+                if let Ok(s) = seq_s.parse::<u64>() {
+                    next_seq = next_seq.max(s);
+                }
+            }
+        }
+        Ok(Self { path, inner: Mutex::new(FileState { next_seq, file }) })
+    }
+
+    /// 日志文件路径。
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl EvidenceAppender for FileEvidenceAppender {
+    fn append_named(&self, name: &str) -> Result<AppendReceipt, EvidenceError> {
+        let mut g = self.inner.lock().map_err(|_| EvidenceError::Unavailable)?;
+        g.next_seq = g.next_seq.saturating_add(1);
+        let seq = g.next_seq;
+        if name.contains('\n') || name.contains('\r') {
+            return Err(EvidenceError::DurabilityFailure);
+        }
+        writeln!(g.file, "{seq}\t{name}").map_err(|_| EvidenceError::DurabilityFailure)?;
+        g.file.flush().map_err(|_| EvidenceError::DurabilityFailure)?;
+        Ok(AppendReceipt { name: name.to_string(), seq })
+    }
+}
+
 impl EvidenceAppender for InMemoryEvidenceAppender {
     fn append_named(&self, name: &str) -> Result<AppendReceipt, EvidenceError> {
         let mut g = self.inner.lock().map_err(|_| EvidenceError::Unavailable)?;
@@ -171,5 +242,71 @@ mod tests {
         let a = InMemoryEvidenceAppender::default();
         assert!(a.is_empty());
         assert_eq!(a.len(), 0);
+    }
+
+    #[test]
+    fn file_appender_persists_across_open() {
+        let dir = std::env::temp_dir().join(format!("evidence-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("ev.log");
+        {
+            let a = FileEvidenceAppender::open(&path).expect("open");
+            let r = a.append_named("boot").expect("append");
+            assert_eq!(r.seq, 1);
+            assert_eq!(a.path(), path.as_path());
+        }
+        let a2 = FileEvidenceAppender::open(&path).expect("reopen");
+        let r2 = a2.append_named("ready").expect("append2");
+        assert_eq!(r2.seq, 2);
+        let body = std::fs::read_to_string(&path).unwrap();
+        assert!(body.contains("boot"));
+        assert!(body.contains("ready"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn file_appender_rejects_newline_name() {
+        let path = std::env::temp_dir().join(format!("evidence-nl-{}", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        let a = FileEvidenceAppender::open(&path).expect("open");
+        assert_eq!(a.append_named("bad\nname"), Err(EvidenceError::DurabilityFailure));
+        assert_eq!(a.append_named("bad\rname"), Err(EvidenceError::DurabilityFailure));
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn file_appender_parses_existing_and_skips_junk() {
+        let path = std::env::temp_dir().join(format!("evidence-parse-{}", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        std::fs::write(&path, "junk\n2\talready\n").unwrap();
+        let a = FileEvidenceAppender::open(&path).expect("open");
+        let r = a.append_named("next").expect("append");
+        assert_eq!(r.seq, 3);
+        assert!(a.path().exists());
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn file_appender_open_relative_filename() {
+        // parent 为空字符串分支：覆盖 if !parent.is_empty() 的 false 路径
+        let name = format!("evidence-rel-{}.log", std::process::id());
+        let _ = std::fs::remove_file(&name);
+        let a = FileEvidenceAppender::open(&name).expect("open relative");
+        let _ = a.append_named("x").expect("append");
+        let _ = std::fs::remove_file(&name);
+    }
+
+    #[test]
+    fn file_appender_open_invalid_path_errors() {
+        // 父路径是已存在的文件 → create_dir_all 失败 → Unavailable
+        let base = std::env::temp_dir().join(format!("evidence-as-file-{}", std::process::id()));
+        let _ = std::fs::remove_file(&base);
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::write(&base, b"not-a-dir").unwrap();
+        let child = base.join("child.log");
+        let r = FileEvidenceAppender::open(&child);
+        assert_eq!(r.err(), Some(EvidenceError::Unavailable));
+        let _ = std::fs::remove_file(&base);
     }
 }

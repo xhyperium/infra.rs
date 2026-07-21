@@ -10,3 +10,8 @@
 | [defer-disposition.md](./defer-disposition.md) | W0 | DEFER 处置 |
 
 后续可增：`prod-signoff-YYYY-MM-DD.md`（W5 / DEFER-7）。
+
+- [prod-consume-surface.md](./prod-consume-surface.md) — infra-s9t.1 可生产消费面
+- [wire-compatibility-matrix.md](./wire-compatibility-matrix.md) — infra-s9t.10
+- [package-name-alignment.md](./package-name-alignment.md) — infra-s9t.11
+- [l1-zh-error-audit.md](./l1-zh-error-audit.md) — infra-s9t.12

@@ -98,6 +98,7 @@ impl ClockDomain {
 
     /// 构造测试/自定义 domain（`id == 0` 或 `1` 保留给进程域时仍可用，但勿与
     /// [`Self::PROCESS`] 混用语义）。
+    /// 测试/仿真入口。生产路径请使用 [`ClockDomain::PROCESS`]（infra-s9t.15）。
     pub const fn from_raw(id: u64) -> Self {
         Self(id)
     }

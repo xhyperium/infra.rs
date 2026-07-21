@@ -27,7 +27,7 @@ git config commit.template
 
 ### 标题行（必填）
 
-```
+```text
 <type>[!][(scope)]: <中文简述>
 ```
 
@@ -46,19 +46,19 @@ git config commit.template
 
 当标题行带有 `!` 时，正文中必须包含：
 
-```
+```text
 BREAKING CHANGE: <说明具体破坏内容及迁移方式>
 ```
 
 ### 引用（可选）
 
-```
+```text
 Refs: #123
 ```
 
 或关联多个 Issue：
 
-```
+```text
 Refs: #123, #456
 ```
 

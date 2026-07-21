@@ -59,3 +59,10 @@ cargo test -p bootstrap --all-targets
 cargo clippy -p bootstrap --all-targets -- -D warnings
 cargo llvm-cov -p bootstrap --all-targets --fail-under-lines 100 --summary-only
 ```
+
+## 关停与 drain 合同（infra-s9t.5）
+
+1. `Bootstrap::build_app` 给出 `ShutdownController`（触发）与 `AppContext.shutdown_signal`（观察）。
+2. **本 crate 不编排** 连接/任务 drain：应用须在收到信号后自行：停收新请求 → 排空 in-flight → 关闭依赖（倒序）。
+3. 可用 `ShutdownSignal::wait` / `wait_timeout` 阻塞观察；async runtime 须自适配（kernel 无 tokio）。
+4. `require_evidence`：release 下 `build`/`build_app` 在未注入时 **fail-closed（panic）**；可恢复路径用 `try_build` / `try_build_app`。

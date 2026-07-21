@@ -18,7 +18,7 @@
 | contract-testkit | **最小入口已落地**（本 crate 内 Fake/Recording；非独立 `test-support` crate） |
 | first-batch 语义文档 + 套件 | **部分闭合**（CT-8）：见 `crates/contracts/docs/contracts/` |
 | VenueAdapter override 门禁 | **部分闭合**（CT-10 / DEFER-8）：`tests/venue_override_gate.rs` |
-| 全 trait 深度合同 / 真实后端 | **DEFER**（W4） |
+| 全 trait 深度合同 / 真实后端 | **部分**（redis live KV）；其余 W4 DEFER |
 | bootstrap 双平面 | **已收敛命名**：bootstrap 用 `Bounded*`；`Instrumentation` re-export contracts |
 
 替换 `#43`/`#46`/`#53` 的 `xhyper-contracts` 草图。消费者：`observex` 实现 `Instrumentation`；`resiliencx` 消费；adapters 为 scaffold 实现面。
@@ -64,7 +64,7 @@ cargo test -p bootstrap --all-targets   # Bounded* 与 Instrumentation re-export
 | CT-6 | public_surface 非空断言 | PASS | 驱动 FakeTx/FakeBus/KV/Instr 真路径（无 `assert_eq!(15,15)`） |
 | CT-7 | bootstrap 无静默同名冲突 | PASS | bootstrap `Bounded*` 前缀；见 bootstrap 对齐文 |
 | CT-8 | 全 trait 幂等/取消/分页/一致性文档+套件 | **部分** | first-batch 11 篇语义文档 + `conformance_first_batch`；ObjectStore/TimeSeries/PubSub/Analytics 仍 DEFER |
-| CT-9 | 非 scaffold 真实后端验证入口 | DEFER | adapters 仍内存 scaffold（W4） |
+| CT-9 | 非 scaffold 真实后端验证入口 | **部分** | `redisx` feature `live` + `RedisLiveKv` + ignore 测 / optional CI（infra-s9t.2）；postgres 仍 DEFER |
 | CT-10 | VenueAdapter additive override 编译/运行门禁 | **部分** | `is_default_*_error` + `tests/venue_override_gate.rs`（binancex/okxx）；非强制 compile-fail |
 | CT-11 | `[lints] workspace = true` | PASS | `Cargo.toml` |
 

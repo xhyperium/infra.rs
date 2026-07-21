@@ -168,11 +168,19 @@ function hasCfgTest(srcFiles) {
 }
 
 function scaffoldSignal(cratePath, srcFiles) {
-  if (cratePath.startsWith("crates/adapters/")) return true;
-  for (const f of srcFiles.slice(0, 20)) {
-    const head = readSafe(f).slice(0, 4000);
+  // infra-s9t.18：仅以源码信号判定，避免 adapters 路径一律 scaffold+mock 误报。
+  // 有 live 实现模块时，若生产路径不再写 scaffold 字样，则不再强制 scaffold。
+  const hasLiveMod =
+    cratePath.startsWith("crates/adapters/") &&
+    existsSync(join(ROOT, cratePath, "src", "live.rs"));
+  for (const f of srcFiles.slice(0, 40)) {
+    const head = readSafe(f).slice(0, 6000);
     if (/\bscaffold\b/i.test(head)) return true;
   }
+  // adapters 无 scaffold 字样但无 live 模块 → 仍视为 scaffold（保守）
+  if (cratePath.startsWith("crates/adapters/") && !hasLiveMod) return true;
+  // 有 live.rs 且源码未标 scaffold → 非 scaffold（真实入口存在）
+  if (hasLiveMod) return false;
   return false;
 }
 

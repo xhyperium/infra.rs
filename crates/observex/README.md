@@ -57,3 +57,9 @@ node scripts/cov-gate-100.mjs -p observex --filter crates/observex/src
 
 示例：`cargo run -p observex --example trace_events`
 
+
+## Subscriber 故障隔离（infra-s9t.17）
+
+- `TracingInstrumentation` 仅调用 `tracing::info!`；**无**自定义 subscriber 时为 no-op，不 panic。
+- 若业务安装阻塞/panic 的 subscriber，隔离责任在**安装方**（本 crate 不包裹 catch_unwind，避免掩盖错误）。
+- 默认导出闭环（OTEL flush/shutdown）仍 **DEFER**；本轮明确边界而非假实现。
