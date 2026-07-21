@@ -4,9 +4,9 @@
 |------|-----|
 | 策略 | **B — 本仓移植 core testkit** |
 | 日期 | 2026-07-21 |
-| 分支 | `feat/testkit-ssot-align` |
 | 规范 | SPEC-TESTKIT-002（镜像 `.agents/ssot/testkit/spec/spec.md`） |
-| package | `xhyper-testkit` 0.1.1 · lib `testkit` |
+| package | **`testkit`** 0.1.1 · lib `testkit`（Cargo 选择器 `-p testkit`；历史名 `xhyper-testkit` 已废弃） |
+| 内部生产层级 | **L1 ManualClock test-support**（**不是**生产 runtime；PR #159 · tag `v0.3.0-four-crates`） |
 
 ## 结论摘要
 
@@ -14,11 +14,14 @@
 |------|------|
 | 上游 SSOT 镜像 COMPLETE 叙事 | 仍是 xhyper 战役文档；**禁止**单独当作本仓交付证明 |
 | 本仓 `crates/testkit` core（ManualClock 族） | **已闭合**（§7 / §13.1–§13.5 / §24.1–§24.3 core / §24.5 core → 见 clause matrix） |
+| 内部生产 GO（声明层级） | **L1 test-support only**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
 | 本仓 `contract-testkit` | **部分闭合**：`crates/contracts` 内最小 Fake/Recording 入口已可运行；**独立** `test-support/contracts` crate 与全套件仍 **DEFER**（§24.4） |
 | integration harness | **DEFER**（跨 crate INFRA；§3.3 / §24.0 residual） |
 | ClockDomain 跟随 | **PASS**：每 `ManualClock` 实例独立 domain；跨实例 `checked_duration_since` → `None` |
 | 用户可见错误中文 | **PASS**：`ManualClockError` Display 中文 |
 | `[lints] workspace = true` | **PASS** |
+| public-api 棘轮 | **PASS**：`docs/api-baselines/testkit.txt` |
+| 公开面 / 示例 / bench | **PASS**：`tests/public_api_surface.rs` · `examples/basic.rs` · `benches/hot_path` |
 | 本仓质量证据 | **本仓实测** line-cov / mutants / miri；不复制上游 `2026-07-14-stable-gates` |
 
 ## 本仓可观察事实
@@ -26,23 +29,28 @@
 ```text
 crates/testkit/                 EXISTS
 Cargo.toml members              含 crates/testkit
-package name                    xhyper-testkit
+package name                    testkit
 lib name                        testkit
 publish                         false
 prod deps                       kernel only
 dev deps                        proptest, static_assertions
 features.default                []
+examples                        examples/basic.rs
+API baseline                    docs/api-baselines/testkit.txt
 ```
 
 ## 验证命令（本仓可复现）
 
 ```bash
 # 功能与合同
-cargo test -p xhyper-testkit
+cargo test -p testkit --all-targets
 cargo clippy -p testkit --all-targets -- -D warnings
-cargo fmt --all --check
+cargo fmt --all -- --check
+cargo run -p testkit --example basic
+cargo bench -p testkit --bench hot_path -- --quick
+node scripts/quality-gates/check-public-api.mjs
 
-# §13.7 line coverage（≥95%）
+# §13.7 line coverage（≥95%；CI 为 100% gate）
 cargo llvm-cov -p testkit --fail-under-lines 95 --summary-only
 
 # §13.6 mutants（目标 score≥90%；本仓期望 missed=0）
@@ -50,7 +58,7 @@ mkdir -p .cargo/cache/mutants
 cargo mutants -p testkit --timeout 60
 
 # §13.8 Miri
-cargo +nightly miri test -p xhyper-testkit
+cargo +nightly miri test -p testkit
 ```
 
 CI 入口（与 kernel 同级 paths 过滤）：
@@ -96,7 +104,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 | 13.5 | compile assertions：!Default/!Clone/Send+Sync；不导出退役符号 | PASS | `tests/api_compile.rs` + `tests/public_surface.rs` |
 | 13.6 | mutation score ≥90% | PASS | 本仓 `cargo mutants`：missed=0（caught=10, unviable=20） |
 | 13.7 | line ≥95%；branch ≥90% OPTIONAL | PASS / DEFER | line **99.65%** PASS；branch 本工具 summary 无分支数据 → **OPTIONAL/DEFER**（与上游 residual 一致） |
-| 13.8 | Miri | PASS | `cargo +nightly miri test -p xhyper-testkit`（见 evidence） |
+| 13.8 | Miri | PASS | `cargo +nightly miri test -p testkit`（见 evidence） |
 | 13.9 | contract-testkit 自测 | PARTIAL | 最小面在 `contracts` crate（FakeTx/FakeBus）；独立 test-support crate DEFER |
 
 ### §24 验收清单（core 相关）
@@ -153,6 +161,7 @@ core 必选 GAP = 0
 | contracts 生产语义 | **部分闭合**（Tx/消息）；其余 trait 深度仍 DEFER |
 | ManualClock × ClockDomain | **PASS**；跨实例比较 → `None` |
 | 中文 Display / workspace lints | **PASS** |
+| 四包内部 GO（#159） | **L1 test-support**；tag `v0.3.0-four-crates`；**≠** 生产 runtime |
 | 整体 Production Ready | **否**；见 [core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) §11 |
 
 ## 变更记录
@@ -160,3 +169,4 @@ core 必选 GAP = 0
 | 日期 | 说明 |
 |------|------|
 | 2026-07-21 | 生产就绪文档同步：contracts 存在性、domain、中文错误、PARTIAL contract-testkit；PR #98 **合入 main** |
+| 2026-07-21 | 四包内部 GO：package 名对齐 `testkit`；全部 `cargo -p testkit`；examples/surface/baseline；PR #159 · tag `v0.3.0-four-crates` |
