@@ -122,6 +122,17 @@ jobs:
       - name: 扫描生产路径 panicking Decimal 用法
         run: node scripts/quality-gates/check-decimal-no-panicking-ops.mjs
 
+  settings-hooks:
+    name: settings hooks 门禁
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 校验 settings.json hook 命令格式
+        run: node scripts/quality-gates/check-settings-hooks.mjs
+      - name: L1 单元测试
+        run: node scripts/quality-gates/check-settings-hooks.test.mjs
+
   crate-status:
     name: crates 进度看板
     runs-on: ubuntu-latest
