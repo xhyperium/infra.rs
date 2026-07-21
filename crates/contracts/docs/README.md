@@ -21,3 +21,8 @@
 
 - **放这里**：本 crate 设计决策、公开 API 契约补充、迁移 / 升级笔记
 - **不放这里**：全仓治理、跨 crate SSOT 总览、CI 状态（见仓库根 `docs/{governance,ssot,status,decisions}/`）
+
+## 公开 API 说明
+
+详见 [API.md](./API.md)（公开消费面 + 最小用法）。
+

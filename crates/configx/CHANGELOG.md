@@ -11,3 +11,11 @@
 - 锁失败不对称：读中毒 → `None`；写中毒 → `XError::Invalid("config lock poisoned")`
 - 单元/集成/并发测试与 `examples/basic`
 - 生产依赖仅 `xhyper-kernel`；`default = []`
+
+## [Unreleased]
+
+### Added
+
+- 真实 `benches/hot_path`
+- 公开 API 集成覆盖扩展
+- `docs/API.md`

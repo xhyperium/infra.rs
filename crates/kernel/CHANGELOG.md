@@ -10,6 +10,13 @@
 
 ### Added
 
+- 真实 `benches/hot_path`（`cargo bench -- --quick` 可测）
+- 公开 API 集成覆盖扩展（`tests/public_api_surface.rs` 等）
+- `docs/API.md`：公开消费面与最小用法
+
+
+### Added
+
 - 对齐 **SPEC-KERNEL-002** 可移植合同（§3–§8 / §11）：error / clock / lifecycle 生产面
 - `tests/lifecycle_concurrency_loom.rs`（`cfg(loom)` Shutdown 模型测试）
 - dev-deps：`static_assertions`；`cfg(loom)` 条件依赖 `loom`

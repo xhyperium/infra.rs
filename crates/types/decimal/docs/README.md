@@ -26,3 +26,8 @@
 | 文件 | 说明 |
 |------|------|
 | [WIRE.md](WIRE.md) | serde / Display / SQL 边界（当前事实 ≠ stable 承诺） |
+
+## 公开 API 说明
+
+详见 [API.md](./API.md)（公开消费面 + 最小用法）。
+

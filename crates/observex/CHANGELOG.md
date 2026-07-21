@@ -9,3 +9,11 @@
 - ADR-005 兼容别名 `ObservexInstrumentation`
 - unit + 消费者侧 + tracing 字段捕获测试
 - LCOV 行覆盖率 100% 门禁（`scripts/cov-gate-100.mjs`）
+
+## [Unreleased]
+
+### Added
+
+- 真实 `benches/hot_path`
+- 公开 API 集成覆盖扩展
+- `docs/API.md`

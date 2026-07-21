@@ -20,3 +20,11 @@
 ### 状态说明
 
 - **非**整体 Production Ready；CT-8 其余 trait / 真实后端 / 编译期 override lint 仍 DEFER
+
+## [Unreleased]
+
+### Added
+
+- 真实 `benches/hot_path`
+- 公开 API 集成覆盖扩展
+- `docs/API.md`
