@@ -17,7 +17,7 @@
 | `xhyper-resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
 | `xhyper-decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `xhyper-canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO | [types-ssot-alignment.md](./types-ssot-alignment.md) |
-| `infra-contracts` | `crates/contracts/` | `infra_contracts` | adapter trait 出口（#43） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `xhyper-contracts` | `crates/contracts/` | `contracts` | adapter trait 出口（#43） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `binancex` | `crates/adapters/exchange/binance/` | `binancex` | exchange adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx/` | `okxx` | exchange adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
@@ -49,7 +49,7 @@
 └─────────┘
 
   adapters/* (scaffold) ── thiserror（+ contracts/decimalx when implementing）
-  infra-contracts ── serde + thiserror + decimalx（trait 出口；#43）
+  xhyper-contracts ── serde + thiserror + decimalx（trait 出口；#43）
   （kernel/types MUST NOT depend on adapters）
 ```
 
@@ -94,7 +94,7 @@ cargo test -p xhyper-transportx --all-targets
 node scripts/check-canonical-align.mjs
 
 # adapters / contracts scaffold
-cargo check -p infra-contracts -p binancex -p okxx -p redisx -p kafkax \
+cargo check -p xhyper-contracts -p binancex -p okxx -p redisx -p kafkax \
   -p natsx -p postgresx -p taosx -p ossx -p clickhousex
 diff -rq /home/workspace/xhyper.rs/.agent/SSOT/adapters .agents/ssot/adapters
 cargo test -p okxx --all-targets

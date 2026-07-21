@@ -4,7 +4,7 @@
 
 ### 新增
 
-- `TracingInstrumentation`：零字段 `Copy` 实现 `infra_contracts::Instrumentation`
+- `TracingInstrumentation`：零字段 `Copy` 实现 `contracts::Instrumentation`
 - 三方法：`record_retry` / `record_circuit_open` / `record_circuit_close` → `tracing::info!`
 - ADR-005 兼容别名 `ObservexInstrumentation`
 - unit + 消费者侧 + tracing 字段捕获测试

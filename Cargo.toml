@@ -35,9 +35,11 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
 tracing = "0.1"
-
+# contracts（R4 白名单）
 async-trait = "0.1"
 bytes = "1"
+futures-core = "0.3"
+# transport / async
 futures-util = "0.3"
 reqwest = { version = "0.12", default-features = false, features = [
   "rustls-tls",

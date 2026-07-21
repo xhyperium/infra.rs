@@ -11,7 +11,7 @@
 
 ## 本 crate 约束
 
-- 生产依赖：`xhyper-kernel`（信封）、`infra-contracts`（lib `contracts`）、`tracing`
+- 生产依赖：`xhyper-kernel`（信封）、`xhyper-contracts`（lib `contracts`）、`tracing`
 - `default = []`；禁止 feature 泄漏
 - 观测调用不得 panic、不得改变业务结果
 - 禁止在本战役引入 OTEL SDK / exporter

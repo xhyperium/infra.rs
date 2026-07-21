@@ -7,7 +7,7 @@
 | 分支 | `feat/observex-ssot-align` |
 | 规范 | `.agents/ssot/infra/observex/spec/spec.md`（OBJECTIVE 中 `.agent/ssot/observex` = 上游习惯路径） |
 | package | `xhyper-observex` 0.1.0 · lib `observex` |
-| 契约面 | `infra-contracts` · lib `infra_contracts`（adapters + **Instrumentation**） |
+| 契约面 | `xhyper-contracts` · lib `contracts`（adapters + **Instrumentation**） |
 
 ## 结论摘要
 
@@ -15,7 +15,7 @@
 |------|------|
 | 上游/镜像 COMPLETE 叙事 | **禁止**单独当作本仓交付证明 |
 | 本仓 `crates/observex` | **已落地**（TracingInstrumentation + tracing 三方法） |
-| 本仓 Instrumentation 契约 | 已并入既有 `crates/contracts`（`infra-contracts` / lib `infra_contracts`） |
+| 本仓 Instrumentation 契约 | 已并入既有 `crates/contracts`（`xhyper-contracts` / lib `contracts`） |
 | OTEL exporter / flush / shutdown | **DEFER** |
 | 完整 VenueAdapter 等 contracts | **DEFER** |
 | resiliencx / bootstrap 注入链 | **DEFER** |
@@ -24,24 +24,24 @@
 ## 本仓可观察事实
 
 ```text
-crates/contracts/               EXISTS（infra-contracts + Instrumentation）
+crates/contracts/               EXISTS（xhyper-contracts + Instrumentation）
 crates/observex/                EXISTS
 Cargo.toml members              含 contracts + observex + adapters
-package names                   infra-contracts / xhyper-observex
+package names                   xhyper-contracts / xhyper-observex
 lib names                       contracts / observex
 publish                         false
-observex prod deps              xhyper-kernel, infra-contracts, tracing
+observex prod deps              xhyper-kernel, xhyper-contracts, tracing
 features.default                []
 ```
 
 ## 验证命令
 
 ```bash
-cargo test -p infra-contracts -p xhyper-observex
-cargo clippy -p infra-contracts -p xhyper-observex --all-targets -- -D warnings
+cargo test -p xhyper-contracts -p xhyper-observex
+cargo clippy -p xhyper-contracts -p xhyper-observex --all-targets -- -D warnings
 cargo fmt --all --check
 node scripts/cov-gate-100.mjs -p xhyper-observex --filter crates/observex/src
-node scripts/cov-gate-100.mjs -p infra-contracts --filter crates/contracts/src
+node scripts/cov-gate-100.mjs -p xhyper-contracts --filter crates/contracts/src
 ```
 
 CI：`.github/workflows/observex-coverage.yml` · `contracts-coverage.yml`
@@ -127,7 +127,7 @@ core 0.1.0 GAP = 0
 
 ## 未做（follow-up / DEFER）
 
-- 完整 `infra-contracts`（VenueAdapter / PubSub…）
+- 完整 `xhyper-contracts`（VenueAdapter / PubSub…）
 - OpenTelemetry SDK / exporter / metric 名称 / 采样 / 缓冲 / flush / shutdown
 - resiliencx 消费与 bootstrap 注入证明
 - `op` 受控集合强制校验

@@ -1,16 +1,7 @@
-# infra-contracts
+# contracts
 
-Adapter and observability contracts for the infra.rs workspace.
+R4 跨层 trait 出口（Additive Only）。Package `xhyper-contracts` / lib `contracts`。
 
-Package：`infra-contracts` · path：`crates/contracts`  
-SSOT 镜像：`.agents/ssot/contracts/`
+依赖白名单：kernel + canonical + async-trait / bytes / futures-core。
 
-## Modules
-
-- `exchange` / `storage` — adapter traits
-- `Instrumentation` — ADR-005 observability injection（由 `xhyper-observex` 实现）
-
-## 硬限制
-
-- 只放 trait / type，不放具体 adapter / 驱动实现
-- 价格使用 `decimalx::Price`，禁止 `f32`/`f64` 金额
+Active Spec：`.agents/ssot/contracts/spec/spec.md`

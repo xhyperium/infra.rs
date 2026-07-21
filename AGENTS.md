@@ -33,7 +33,7 @@
   - `crates/resiliencx` → `xhyper-resiliencx`（L1 重试；熔断/限流未实现）
   - `crates/types/decimal` → `xhyper-decimalx`
   - `crates/types/canonical` → `xhyper-canonical`
-  - `crates/contracts` → `infra-contracts`（adapter trait 出口；#43）
+  - `crates/contracts` → `xhyper-contracts`（adapter trait 出口；#43）
   - `crates/adapters/**` → 9 个 adapter package（**scaffold**；见 adapters 对齐文）
 - `contract-testkit` **未**移植；**infra 其余域**（gate/observex/…）当前仅镜像，未宣称本仓实现
 - **adapters**：镜像已本地化；crate 为 scaffold，**未**宣称业务实现 / package stable

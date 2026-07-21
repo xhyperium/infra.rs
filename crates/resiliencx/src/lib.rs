@@ -4,8 +4,8 @@
 //! **未交付**：熔断、限流、bulkhead、async wait、backoff/jitter、retry budget
 //! （见 SSOT §3 / residual OPEN）。
 //!
-//! 可观测性通过本 crate 的 [`Instrumentation`] trait 注入；**禁止**直接依赖 observex
-//! （ADR-005）。本仓无 `xhyper-contracts`，trait 定义在本 crate（与上游 contracts 语义对齐）。
+//! 可观测性通过 [`contracts::Instrumentation`] 注入；**禁止**直接依赖 observex
+//! （ADR-005）。本 crate re-export 该 trait，并提供 [`NoopInstrumentation`]。
 //!
 //! # 实现注记
 //!
@@ -18,18 +18,8 @@ use std::any::Any;
 use std::thread;
 use std::time::Duration;
 
-/// 可观测性注入点（ADR-005）。
-///
-/// 上游权威面在 `contracts::Instrumentation`；本仓将 trait 放在本 crate，
-/// 供 `retry_fn` 与测试 mock 使用，避免引入 contracts / observex 依赖。
-pub trait Instrumentation: Send + Sync {
-    /// 在真正发起一次重试**之前**记录（`attempt` 为刚失败的那次尝试序号，从 1 起）。
-    fn record_retry(&self, op: &str, attempt: u32);
-    /// 熔断打开（当前 `retry_fn` 不调用；预留给未来 circuit 能力）。
-    fn record_circuit_open(&self, op: &str);
-    /// 熔断关闭（当前 `retry_fn` 不调用）。
-    fn record_circuit_close(&self, op: &str);
-}
+/// 可观测性注入点（ADR-005）——权威定义在 `xhyper-contracts`。
+pub use contracts::Instrumentation;
 
 /// 空操作 instrumentation（生产可注入真实实现）。
 #[derive(Debug, Default, Clone, Copy)]

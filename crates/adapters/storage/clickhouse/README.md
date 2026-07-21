@@ -35,4 +35,4 @@ fn demo() -> Result<()> {
 ## 相关
 
 - 父级规则：[`crates/AGENTS.md`](../../../AGENTS.md)
-- 合约 trait：`infra-contracts`（`crates/contracts`）
+- 合约 trait：`xhyper-contracts`（`crates/contracts`）
