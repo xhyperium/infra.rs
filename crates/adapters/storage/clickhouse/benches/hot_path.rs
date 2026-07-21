@@ -1,49 +1,29 @@
-//! clickhousex 热路径：配置构造 +（可选）HTTP ping。
-//!
-//! ```text
-//! cargo run -p clickhousex --bench hot_path -- --quick
-//! FOUNDATIONX_CLICKHOUSEX_PASSWORD=... cargo run -p clickhousex --bench hot_path -- --live
-//! ```
-
-use std::hint::black_box;
+//! clickhousex 核心路径：ping + execute SELECT 1（有服务时）。
 use std::time::Instant;
 
-use clickhousex::ClickHouseConfig;
+use clickhousex::{ClickHouseConfig, ClickHousePool};
 
 fn iters() -> u32 {
-    if std::env::args().any(|a| a == "--quick") { 2_000 } else { 50_000 }
+    if std::env::args().any(|a| a == "--quick") { 20 } else { 100 }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let n = iters();
+    let cfg = ClickHouseConfig::from_env();
+    let Ok(pool) = ClickHousePool::connect(cfg).await else {
+        println!("bench_clickhousex_select1: skipped (no clickhouse)");
+        return;
+    };
+    pool.ping().await.expect("ping");
     let start = Instant::now();
     for _ in 0..n {
-        let c = ClickHouseConfig::default();
-        black_box(c.base_url());
+        pool.execute("SELECT 1").await.expect("select");
     }
     let elapsed = start.elapsed();
-    println!("bench_clickhousex_config: iters={n} total={elapsed:?} per_iter={:?}", elapsed / n);
-
-    if std::env::args().any(|a| a == "--live") {
-        let rt = tokio::runtime::Runtime::new().expect("rt");
-        rt.block_on(async {
-            let cfg = ClickHouseConfig::from_env();
-            match clickhousex::ClickHousePool::connect(cfg).await {
-                Ok(pool) => {
-                    let start = Instant::now();
-                    let m = if std::env::args().any(|a| a == "--quick") { 20 } else { 200 };
-                    for _ in 0..m {
-                        pool.ping().await.expect("ping");
-                    }
-                    let elapsed = start.elapsed();
-                    println!(
-                        "bench_clickhousex_ping: iters={m} total={elapsed:?} per_iter={:?}",
-                        elapsed / m
-                    );
-                    let _ = pool.close().await;
-                }
-                Err(e) => eprintln!("live bench skipped: {e}"),
-            }
-        });
-    }
+    println!(
+        "bench_clickhousex_select1: iters={n} total={elapsed:?} per_iter={:?}",
+        elapsed / n.max(1)
+    );
+    let _ = pool.close().await;
 }

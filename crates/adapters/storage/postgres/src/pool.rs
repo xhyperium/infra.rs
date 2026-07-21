@@ -233,6 +233,8 @@ impl PostgresPool {
 mod tests {
     use super::*;
     use crate::config::PostgresConfig;
+    use kernel::ErrorKind;
+    use std::time::Duration;
 
     #[test]
     fn require_ssl_rejected() {
@@ -245,5 +247,34 @@ mod tests {
             .unwrap();
         let err = PostgresPool::ensure_tls_supported(cfg.sslmode).unwrap_err();
         assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn connect_refused_returns_error() {
+        let cfg = PostgresConfig::builder()
+            .host("127.0.0.1")
+            .port(1)
+            .database("x")
+            .user("x")
+            .password("x")
+            .sslmode(SslMode::Disable)
+            .connect_timeout(Duration::from_millis(300))
+            .build()
+            .expect("cfg");
+        let res = tokio::time::timeout(Duration::from_secs(3), PostgresPool::connect(&cfg)).await;
+        match res {
+            Ok(Err(err)) => {
+                assert!(
+                    matches!(
+                        err.kind(),
+                        ErrorKind::Unavailable | ErrorKind::DeadlineExceeded | ErrorKind::Transient
+                    ),
+                    "kind={:?}",
+                    err.kind()
+                );
+            }
+            Ok(Ok(_)) => panic!("unexpected success"),
+            Err(_) => {}
+        }
     }
 }

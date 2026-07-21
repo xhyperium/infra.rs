@@ -51,3 +51,5 @@ cargo bench -p natsx --bench hot_path -- --quick
 ## 生产误用警示
 
 默认实现为真实 `async-nats` 客户端。`scaffold` feature 才是进程内假实现。
+
+文档：[docs/usage.md](docs/usage.md) · [docs/config.md](docs/config.md) · [docs/operations.md](docs/operations.md)

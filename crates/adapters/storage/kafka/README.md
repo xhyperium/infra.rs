@@ -1,59 +1,37 @@
 # kafkax
 
-生产级 Kafka 适配（`rdkafka`）：
+生产级 Kafka 适配（**纯 Rust `rskafka`**，无 librdkafka 系统依赖）：
 
 - [`KafkaPool`](src/pool.rs)：`connect` / `producer` / `consumer` / `health` / `stats` / `close`
-- [`KafkaProducer::publish`](src/producer.rs)：等待 delivery report
-- [`KafkaConsumer`](src/consumer.rs)：subscribe + stream
+- [`KafkaProducer::publish`](src/producer.rs)：等待 broker produce 确认
+- [`KafkaConsumer`](src/consumer.rs)：按分区流式消费（不依赖 group coordinator）
 - [`KafkaEventBus`](src/bus.rs)：`contracts::EventBus` facade（**at-most-once**）
 - feature `scaffold`：旧内存 `KafkaAdapter` / `MockKafkaBus`
 
-## 配置
+详见 [docs/usage.md](docs/usage.md) · [docs/config.md](docs/config.md) · [docs/operations.md](docs/operations.md)。
 
-环境变量 `FOUNDATIONX_KAFKAX_*`：
-
-| 变量 | 默认（本地草稿） |
-|------|------------------|
-| `BROKERS` | `127.0.0.1:9092` |
-| `SASL_MECHANISM` | `PLAIN` |
-| `SASL_USERNAME` | `admin` |
-| `SASL_PASSWORD` | （本地草稿默认；生产必须覆盖） |
-| `TLS` | `false` |
-
-**禁止**把草稿默认凭据用于生产；`Debug` 已脱敏密码。
-
-## 示例
+## 快速开始
 
 ```rust
+use kafkax::{KafkaConfig, KafkaPool};
 use bytes::Bytes;
-use contracts::EventBus;
-use kafkax::{KafkaConfig, KafkaEventBus, KafkaPool};
 
-# async fn demo() -> kernel::XResult<()> {
+# async fn demo() {
 let pool = KafkaPool::connect(KafkaConfig::from_env()).await?;
-let bus = KafkaEventBus::new(pool.clone());
-bus.publish("orders", Bytes::from_static(b"p")).await?;
-# Ok(())
+let d = pool.producer().publish("topic", Bytes::from_static(b"hi")).await?;
+assert!(d.offset >= 0);
+pool.close(std::time::Duration::from_secs(3)).await?;
+# Ok::<(), kernel::XError>(())
 # }
 ```
 
-## EventBus 限制
+## 配置
 
-- `BusMessage.id` = `topic/partition/offset`
-- 无 ack API → 仅 at-most-once；可靠消费请用 `KafkaConsumer` 专属面
-- 流错误结束 stream（合同 item 无法表达 `Result`）
-- `KafkaConsumer::subscribe` 依赖 group coordinator；若 broker 返回
-  `COORDINATOR_NOT_AVAILABLE`，可用 `KafkaConsumer::assign` 手动分配分区
+环境变量 `FOUNDATIONX_KAFKAX_*`（**无默认密码**；生产必须注入）：
 
-## 测试
-
-```bash
-cargo test -p kafkax
-cargo test -p kafkax --features scaffold
-cargo test -p kafkax --test live_event_bus -- --ignored
-cargo bench -p kafkax --bench hot_path -- --quick
-```
-
-## 生产误用警示
-
-默认实现为真实 `rdkafka` 客户端（非内存 mock）。`scaffold` feature 才是进程内假实现。
+| 变量 | 说明 |
+|------|------|
+| `BROKERS` | bootstrap，默认 `127.0.0.1:9092` |
+| `SASL_MECHANISM` | 如 `PLAIN`；空则关闭 SASL |
+| `SASL_USERNAME` / `SASL_PASSWORD` | SASL 凭据 |
+| `TLS` | `true`/`false`（TLS 需额外 feature 路径时见 ops） |

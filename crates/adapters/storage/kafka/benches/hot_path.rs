@@ -1,36 +1,37 @@
-//! kafkax 热路径：配置解析 + bus id 编码（离线，无 broker）。
-use std::hint::black_box;
+//! kafkax 核心路径：produce（有 broker 时）或 config+id（离线）。
 use std::time::Instant;
 
-use kafkax::{KafkaConfig, encode_bus_id};
+use bytes::Bytes;
+use kafkax::{KafkaConfig, KafkaPool, encode_bus_id};
 
 fn iters() -> u32 {
-    if std::env::args().any(|a| a == "--quick") { 10_000 } else { 200_000 }
+    if std::env::args().any(|a| a == "--quick") { 20 } else { 200 }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let n = iters();
-    // 预热
-    for i in 0..n.min(100) {
-        let _ = encode_bus_id("bench", (i % 12) as i32, i as i64);
-        let _ = KafkaConfig::default();
-    }
-
+    // 离线微基准
     let start = Instant::now();
     let mut acc = 0usize;
+    for i in 0..n.max(1000) {
+        acc = acc.wrapping_add(encode_bus_id("bench", (i % 12) as i32, i as i64).len());
+    }
+    println!("bench_kafkax_encode_id: iters={} total={:?} acc={acc}", n.max(1000), start.elapsed());
+
+    let cfg = KafkaConfig::from_env();
+    let Ok(pool) = KafkaPool::connect(cfg).await else {
+        println!("bench_kafkax_produce: skipped (no broker)");
+        return;
+    };
+    let topic = format!("infra-bench-kafkax-{}", std::process::id());
+    let _ = pool.ensure_topic(&topic, 1, 1).await;
+    let start = Instant::now();
     for i in 0..n {
-        let id = encode_bus_id("bench-topic", (i % 12) as i32, i as i64);
-        acc = acc.wrapping_add(id.len());
-        if i % 1024 == 0 {
-            let c = KafkaConfig::default();
-            acc = acc.wrapping_add(c.brokers.len());
-            black_box(c.security_protocol());
-        }
+        let payload = Bytes::from(format!("bench-{i}"));
+        pool.producer().publish(&topic, payload).await.expect("publish");
     }
     let elapsed = start.elapsed();
-    println!(
-        "bench_kafkax: iters={n} total={elapsed:?} per_iter={:?} acc={}",
-        elapsed / n,
-        black_box(acc)
-    );
+    println!("bench_kafkax_produce: iters={n} total={elapsed:?} per_iter={:?}", elapsed / n.max(1));
+    let _ = pool.close(std::time::Duration::from_secs(3)).await;
 }

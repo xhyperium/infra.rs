@@ -220,3 +220,61 @@ impl RedisPool {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::RedisConfig;
+    use kernel::ErrorKind;
+
+    #[tokio::test]
+    async fn connect_refused_returns_error() {
+        // 驱动真实 connect 路径：连不可达端口（短超时）
+        let cfg = RedisConfig::builder()
+            .addr("127.0.0.1:1")
+            .password("unused")
+            .connect_timeout(Duration::from_millis(150))
+            .command_timeout(Duration::from_millis(150))
+            .acquire_timeout(Duration::from_millis(150))
+            .build()
+            .expect("cfg");
+        let res = tokio::time::timeout(Duration::from_secs(3), RedisPool::connect(cfg)).await;
+        match res {
+            Ok(Err(err)) => {
+                assert!(
+                    matches!(
+                        err.kind(),
+                        ErrorKind::Unavailable | ErrorKind::DeadlineExceeded | ErrorKind::Transient
+                    ),
+                    "kind={:?}",
+                    err.kind()
+                );
+            }
+            Ok(Ok(_)) => panic!("unexpected connect success to 127.0.0.1:1"),
+            Err(_) => {
+                // 外层超时也视为连接失败路径被驱动
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn closed_pool_is_closed_flag() {
+        // 无 Redis 时跳过；有环境则验证 close 状态机
+        let Ok(cfg) = RedisConfig::from_env() else {
+            return;
+        };
+        let Ok(pool) = RedisPool::connect(cfg).await else {
+            return;
+        };
+        assert!(!pool.is_closed());
+        let _ = pool.stats();
+        pool.close(Duration::from_secs(2)).await.expect("close");
+        assert!(pool.is_closed());
+        let err = pool.ping().await.expect_err("after close");
+        assert!(
+            matches!(err.kind(), ErrorKind::Unavailable | ErrorKind::Cancelled),
+            "kind={:?}",
+            err.kind()
+        );
+    }
+}

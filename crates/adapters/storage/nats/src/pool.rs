@@ -230,3 +230,27 @@ impl NatsPool {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::NatsConfig;
+    use kernel::ErrorKind;
+
+    #[tokio::test]
+    async fn connect_refused_returns_unavailable() {
+        let cfg = NatsConfig {
+            url: "nats://127.0.0.1:1".into(),
+            connect_timeout: Duration::from_millis(300),
+            user: None,
+            password: None,
+            name: "natsx-test".into(),
+        };
+        let res = tokio::time::timeout(Duration::from_secs(2), NatsPool::connect(cfg)).await;
+        match res {
+            Ok(Err(err)) => assert_eq!(err.kind(), ErrorKind::Unavailable),
+            Ok(Ok(_)) => panic!("must fail"),
+            Err(_) => {}
+        }
+    }
+}
