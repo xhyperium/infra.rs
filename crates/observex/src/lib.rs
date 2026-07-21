@@ -8,7 +8,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
-use infra_infra_contracts::Instrumentation;
+use infra_contracts::Instrumentation;
 
 // kernel 为 SPEC §2 / §4.4 依赖信封预留；0.1.0 热路径不直接引用。
 #[allow(unused_imports)]
@@ -52,7 +52,7 @@ impl Instrumentation for TracingInstrumentation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use infra_infra_contracts::Instrumentation;
+    use infra_contracts::Instrumentation;
     use std::io::{self, Write};
     use std::sync::{Arc, Mutex};
     use tracing_subscriber::fmt::MakeWriter;

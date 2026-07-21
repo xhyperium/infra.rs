@@ -8,10 +8,6 @@ repository.workspace = true
 rust-version.workspace = true
 publish = false
 
-[lib]
-# 与上游/observex 习惯 import 路径 `contracts::` 对齐
-name = "contracts"
-
 [dependencies]
 # path + version：满足 cargo-deny bans.wildcards=deny
 serde = { workspace = true }

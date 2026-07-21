@@ -1,6 +1,6 @@
 //! 消费者侧导入面：crate 外使用 `observex::` 与 `infra_contracts::Instrumentation`。
 
-use infra_infra_contracts::Instrumentation;
+use infra_contracts::Instrumentation;
 use observex::{ObservexInstrumentation, TracingInstrumentation};
 
 #[test]
