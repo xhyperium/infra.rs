@@ -2,6 +2,15 @@
 //!
 //! 只放 trait/type，不放实现。一旦发布不可修改签名，只能新增（Additive Only）。
 //! 依赖白名单（R4）：kernel + canonical + async-trait/bytes/futures-core。
+//!
+//! ## Lint
+//!
+//! - `forbid(unsafe_code)` / `deny(unreachable_pub)` 已启用。
+//! - `missing_docs`：**follow-up**（trait 方法文档债较大；对齐 kernel 后再升 `deny`）。
+
+#![forbid(unsafe_code)]
+#![deny(unreachable_pub)]
+
 use async_trait::async_trait;
 use bytes::Bytes;
 use canonical::{
@@ -614,17 +623,10 @@ mod tests {
         bus.publish("t", Bytes::from_static(b"p")).await.unwrap();
         let mut stream = bus.subscribe("t").await.unwrap();
         use std::pin::Pin;
-        use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
-        fn dummy_raw_waker() -> RawWaker {
-            fn no(_: *const ()) {}
-            fn clone(_: *const ()) -> RawWaker {
-                dummy_raw_waker()
-            }
-            static VTABLE: RawWakerVTable = RawWakerVTable::new(clone, no, no, no);
-            RawWaker::new(std::ptr::null(), &VTABLE)
-        }
-        let waker = unsafe { Waker::from_raw(dummy_raw_waker()) };
-        let waker2 = waker.clone(); // hit clone vtable
+        use std::task::{Context, Poll, Waker};
+        // MSRV 1.85+：`Waker::noop` 避免测试路径 `unsafe`（与 forbid(unsafe_code) 对齐）
+        let waker = Waker::noop();
+        let waker2 = waker.clone();
         let mut cx = Context::from_waker(&waker2);
         match Pin::new(&mut stream).poll_next(&mut cx) {
             Poll::Ready(Some(msg)) => assert_eq!(msg.payload.as_ref(), b"p"),

@@ -21,6 +21,14 @@
 //!   `.agents/ssot/types/canonical/plan/validation-owners.md`。
 //! - 禁止在本 crate 做业务校验、codec、hash/sign。
 //! - 形状辅助：[`shape`]；时间工具：[`proposed_time`]。
+//!
+//! ## Lint
+//!
+//! - `forbid(unsafe_code)` / `deny(unreachable_pub)` 已启用。
+//! - `missing_docs`：**follow-up**（DTO 字段/variant 文档债未清；对齐 kernel 后再升 `deny`）。
+
+#![forbid(unsafe_code)]
+#![deny(unreachable_pub)]
 
 pub mod proposed_time;
 pub mod shape;

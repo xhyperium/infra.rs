@@ -1,0 +1,92 @@
+pub mod testkit
+#[non_exhaustive] pub enum testkit::ManualClockError
+pub testkit::ManualClockError::MonotonicOverflow
+pub testkit::ManualClockError::MonotonicRegression
+pub testkit::ManualClockError::Synchronization
+pub testkit::ManualClockError::WallOverflow
+impl core::clone::Clone for testkit::ManualClockError
+pub fn testkit::ManualClockError::clone(&self) -> testkit::ManualClockError
+impl core::cmp::Eq for testkit::ManualClockError
+impl core::cmp::PartialEq for testkit::ManualClockError
+pub fn testkit::ManualClockError::eq(&self, &testkit::ManualClockError) -> bool
+impl core::error::Error for testkit::ManualClockError
+impl core::fmt::Debug for testkit::ManualClockError
+pub fn testkit::ManualClockError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for testkit::ManualClockError
+pub fn testkit::ManualClockError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for testkit::ManualClockError
+impl core::marker::StructuralPartialEq for testkit::ManualClockError
+impl core::marker::Freeze for testkit::ManualClockError
+impl core::marker::Send for testkit::ManualClockError
+impl core::marker::Sync for testkit::ManualClockError
+impl core::marker::Unpin for testkit::ManualClockError
+impl core::marker::UnsafeUnpin for testkit::ManualClockError
+impl core::panic::unwind_safe::RefUnwindSafe for testkit::ManualClockError
+impl core::panic::unwind_safe::UnwindSafe for testkit::ManualClockError
+#[non_exhaustive] pub enum testkit::ManualClockFault
+pub testkit::ManualClockFault::BeforeUnixEpoch
+pub testkit::ManualClockFault::Overflow
+pub testkit::ManualClockFault::Unavailable
+impl core::clone::Clone for testkit::ManualClockFault
+pub fn testkit::ManualClockFault::clone(&self) -> testkit::ManualClockFault
+impl core::cmp::Eq for testkit::ManualClockFault
+impl core::cmp::PartialEq for testkit::ManualClockFault
+pub fn testkit::ManualClockFault::eq(&self, &testkit::ManualClockFault) -> bool
+impl core::fmt::Debug for testkit::ManualClockFault
+pub fn testkit::ManualClockFault::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for testkit::ManualClockFault
+impl core::marker::StructuralPartialEq for testkit::ManualClockFault
+impl core::marker::Freeze for testkit::ManualClockFault
+impl core::marker::Send for testkit::ManualClockFault
+impl core::marker::Sync for testkit::ManualClockFault
+impl core::marker::Unpin for testkit::ManualClockFault
+impl core::marker::UnsafeUnpin for testkit::ManualClockFault
+impl core::panic::unwind_safe::RefUnwindSafe for testkit::ManualClockFault
+impl core::panic::unwind_safe::UnwindSafe for testkit::ManualClockFault
+pub struct testkit::ManualClock
+impl testkit::ManualClock
+pub fn testkit::ManualClock::advance_monotonic(&self, core::time::Duration) -> core::result::Result<kernel::clock::MonotonicInstant, testkit::ManualClockError>
+pub fn testkit::ManualClock::advance_wall(&self, core::time::Duration) -> core::result::Result<kernel::clock::Timestamp, testkit::ManualClockError>
+pub fn testkit::ManualClock::clear_wall_fault(&self) -> core::result::Result<(), testkit::ManualClockError>
+pub const fn testkit::ManualClock::domain(&self) -> kernel::clock::ClockDomain
+pub fn testkit::ManualClock::new(kernel::clock::Timestamp) -> Self
+pub fn testkit::ManualClock::rewind_wall(&self, core::time::Duration) -> core::result::Result<kernel::clock::Timestamp, testkit::ManualClockError>
+pub fn testkit::ManualClock::set_monotonic_elapsed(&self, core::time::Duration) -> core::result::Result<(), testkit::ManualClockError>
+pub fn testkit::ManualClock::set_wall(&self, kernel::clock::Timestamp) -> core::result::Result<(), testkit::ManualClockError>
+pub fn testkit::ManualClock::set_wall_fault(&self, testkit::ManualClockFault) -> core::result::Result<(), testkit::ManualClockError>
+pub fn testkit::ManualClock::snapshot(&self) -> core::result::Result<testkit::ManualClockSnapshot, testkit::ManualClockError>
+pub fn testkit::ManualClock::wall_fault(&self) -> core::result::Result<core::option::Option<testkit::ManualClockFault>, testkit::ManualClockError>
+pub fn testkit::ManualClock::with_monotonic_elapsed(kernel::clock::Timestamp, core::time::Duration) -> Self
+impl core::fmt::Debug for testkit::ManualClock
+pub fn testkit::ManualClock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl kernel::clock::Clock for testkit::ManualClock
+pub fn testkit::ManualClock::monotonic(&self) -> kernel::clock::MonotonicInstant
+pub fn testkit::ManualClock::now(&self) -> core::result::Result<kernel::clock::Timestamp, kernel::clock::ClockError>
+impl !core::marker::Freeze for testkit::ManualClock
+impl core::marker::Send for testkit::ManualClock
+impl core::marker::Sync for testkit::ManualClock
+impl core::marker::Unpin for testkit::ManualClock
+impl core::marker::UnsafeUnpin for testkit::ManualClock
+impl core::panic::unwind_safe::RefUnwindSafe for testkit::ManualClock
+impl core::panic::unwind_safe::UnwindSafe for testkit::ManualClock
+pub struct testkit::ManualClockSnapshot
+impl testkit::ManualClockSnapshot
+pub const fn testkit::ManualClockSnapshot::monotonic_elapsed(&self) -> core::time::Duration
+pub const fn testkit::ManualClockSnapshot::wall(&self) -> kernel::clock::Timestamp
+pub const fn testkit::ManualClockSnapshot::wall_fault(&self) -> core::option::Option<testkit::ManualClockFault>
+impl core::clone::Clone for testkit::ManualClockSnapshot
+pub fn testkit::ManualClockSnapshot::clone(&self) -> testkit::ManualClockSnapshot
+impl core::cmp::Eq for testkit::ManualClockSnapshot
+impl core::cmp::PartialEq for testkit::ManualClockSnapshot
+pub fn testkit::ManualClockSnapshot::eq(&self, &testkit::ManualClockSnapshot) -> bool
+impl core::fmt::Debug for testkit::ManualClockSnapshot
+pub fn testkit::ManualClockSnapshot::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for testkit::ManualClockSnapshot
+impl core::marker::StructuralPartialEq for testkit::ManualClockSnapshot
+impl core::marker::Freeze for testkit::ManualClockSnapshot
+impl core::marker::Send for testkit::ManualClockSnapshot
+impl core::marker::Sync for testkit::ManualClockSnapshot
+impl core::marker::Unpin for testkit::ManualClockSnapshot
+impl core::marker::UnsafeUnpin for testkit::ManualClockSnapshot
+impl core::panic::unwind_safe::RefUnwindSafe for testkit::ManualClockSnapshot
+impl core::panic::unwind_safe::UnwindSafe for testkit::ManualClockSnapshot

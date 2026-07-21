@@ -25,9 +25,13 @@
 | 文档 | 宪章锚点 | 说明 |
 |------|----------|------|
 | [VERSIONING.md](VERSIONING.md) | 版本策略 | 项目 / 宪章 / Crate 版本规则 |
+| [support-matrix.md](support-matrix.md) | 发布 / CI | 官方支持矩阵（Linux x86_64 + MSRV 1.85） |
+| [prod-signoff-TEMPLATE.md](prod-signoff-TEMPLATE.md) | 发布签核 | L1–L5 模板；**仅 Maintainer 签核** |
 | [worktree-policy.md](worktree-policy.md) | §6.0.5 | Git Worktree 强制策略 |
 | [编码与语言约定.md](编码与语言约定.md) | §4.5 | UTF-8、中文注释、文档语言 |
 | [ASD-STE100.md](ASD-STE100.md) | §4.6 | 英文技术文档 STE 落地指南 |
 | [quant-dev-spec.md](quant-dev-spec.md) | 领域扩展 | 量化金融专项要求 |
 
-上级索引：[docs/README.md](../README.md)。
+上级索引：[docs/README.md](../README.md)。  
+API baseline：[`../api-baselines/`](../api-baselines/)。  
+发布签核副本目录：[`../plans/releases/`](../plans/releases/)。

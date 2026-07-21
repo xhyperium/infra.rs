@@ -12,6 +12,8 @@
 | [`plans/`](plans/) | 跨 crate 可执行修复/晋级计划（波次、验收、门禁） | 一次性审计报告、长期治理条文、对齐矩阵 |
 | [`status/`](status/) | CI/仓库配置的**状态与验证记录**（可过期） | 长期有效的规则与策略 |
 | [`decisions/`](decisions/) | 架构决策记录（DDR） | 日常状态报告、对齐矩阵 |
+| [`api-baselines/`](api-baselines/) | 核心 crate 公开 API 文本快照（semver 门禁） | 叙事文档、一次性报告 |
+| [`plans/`](plans/) | 执行计划副本、发布签核包 | 宪章正文、SSOT 对齐矩阵 |
 | [`report/`](report/) | 只读审计/就绪度报告（可过期） | 可执行计划（→ `plans/`） |
 
 **根目录只允许**：本 `README.md`、分类子目录、`.gitkeep`。
@@ -38,12 +40,16 @@
 | 文档 | 说明 |
 |------|------|
 | [VERSIONING.md](governance/VERSIONING.md) | 统一版本管理（项目 / 宪章 / Crate） |
+| [support-matrix.md](governance/support-matrix.md) | 官方支持矩阵（Linux x86_64 + MSRV 1.85；DEFER-6） |
+| [prod-signoff-TEMPLATE.md](governance/prod-signoff-TEMPLATE.md) | 生产签核包模板（L1–L5；仅 Maintainer 签核） |
 | [worktree-policy.md](governance/worktree-policy.md) | Git Worktree 强制开发策略（宪章 §6.0.5） |
 | [编码与语言约定.md](governance/编码与语言约定.md) | UTF-8 与中文/英文文档语言约定 |
 | [ASD-STE100.md](governance/ASD-STE100.md) | 英文技术文档受控语言（STE）落地指南 |
 | [quant-dev-spec.md](governance/quant-dev-spec.md) | 量化开发领域专项规范 |
 
 相关根文档：[CONSTITUTION.md](../CONSTITUTION.md)（兼容索引 → [`constitution/`](constitution/)）、[ARCHITECTURE.md](../ARCHITECTURE.md)。
+
+公开 API baseline：[`api-baselines/`](api-baselines/)（DEFER-5；`scripts/quality-gates/check-public-api.mjs`）。
 
 ---
 
