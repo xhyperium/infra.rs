@@ -8,11 +8,6 @@ on:
       - ".github/workflows/kernel-loom.yml"
       - "Cargo.toml"
       - "Cargo.lock"
-  push:
-    branches: [main, develop]
-    paths:
-      - "crates/kernel/**"
-      - ".github/workflows/kernel-loom.yml"
   workflow_dispatch:
 
 jobs:
