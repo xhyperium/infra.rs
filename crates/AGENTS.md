@@ -159,6 +159,7 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 |-------|------|------|
 | `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | xhyper L0 语义信任根（clock / lifecycle） |
 | `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
+| `contract-testkit`（lib `contract_testkit`） | `crates/test-support/contracts/` | Fake + per-trait suite（仅 dev-dep） |
 | `xhyper-configx`（lib `configx`） | `crates/configx/` | L1 配置存储（MemoryConfigStore） |
 | `xhyper-schedulex`（lib `schedulex`） | `crates/schedulex/` | L1 任务 ID 登记表（active SSOT：无真实定时器） |
 | `xhyper-decimalx`（lib `decimalx`） | `crates/types/decimal/` | 十进制数值 / Money（ADR-006/007） |
@@ -198,6 +199,12 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 
 ## testkit（test-support）
 
-- path：`crates/testkit` · package：`xhyper-testkit` · lib：`testkit`
+- path：`crates/testkit` · package：`testkit` · lib：`testkit`
 - 仅允许 **dev-dependency** 消费；禁止进入生产 normal graph
-- 生产依赖仅 `xhyper-kernel`
+- 生产依赖仅 `kernel`
+
+## contract-testkit（test-support）
+
+- path：`crates/test-support/contracts` · package：`contract-testkit` · lib：`contract_testkit`
+- 仅允许 **dev-dependency** 消费；禁止进入 production normal graph
+- Fake/Recording + `assert_*` suite；权威规格 SPEC-TESTKIT-002 §3.2

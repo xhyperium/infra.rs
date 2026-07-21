@@ -67,4 +67,6 @@ assert_tx_runner(&my_runner).await?;
 ```bash
 cargo test -p contract-testkit --all-targets
 cargo clippy -p contract-testkit --all-targets -- -D warnings
+cargo run -p contract-testkit --example basic
+cargo bench -p contract-testkit --bench hot_path -- --quick
 ```

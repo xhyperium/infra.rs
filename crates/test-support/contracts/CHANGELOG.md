@@ -1,5 +1,13 @@
 # Changelog — contract-testkit
 
+## Unreleased
+
+### Added
+
+- 标准七项布局：`docs/` · `benches/` · `examples/` · `review/` · `releases/`
+- `examples/basic.rs`：Fake KV + Tx suite 最小消费者路径
+- `benches/hot_path`：RecordingInstrumentation + FakeKeyValueStore
+
 ## 0.1.0 — 2026-07-21
 
 ### Added
