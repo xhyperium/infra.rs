@@ -383,7 +383,7 @@ crate 根文档已经明确声明：当前不是 Production Ready、package stab
 
 | 项 | 状态 |
 |---|---|
-| PR | https://github.com/xhyperium/infra.rs/pull/98 **MERGED** |
+| PR | [#98](https://github.com/xhyperium/infra.rs/pull/98) **MERGED** |
 | CI | 合入前全绿（含 coverage 100%、loom、Constitution、Harness、MSRV 1.85） |
 | SSOT 对齐文 | `docs/ssot/{workspace,types,contracts,kernel,testkit,bootstrap}-ssot-alignment.md` 等已与本批次同步；见各文变更记录 |
 | 整体 Production Ready | **否**（§11.2 DEFER 仍有效） |

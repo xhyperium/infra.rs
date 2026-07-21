@@ -154,4 +154,3 @@ adapters/*  →  (future) contracts / types / kernel
 |----|------|
 | scaffold 签名适配 | **PASS**：EventBus/PubSub 流项为 `BusMessage`（kafka/nats/redis）；TxRunner `begin_tx`（postgres） |
 | 业务协议 / 真实后端 | **仍 DEFER**（内存 scaffold，非生产实现） |
-
