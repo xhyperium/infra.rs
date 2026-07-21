@@ -31,7 +31,8 @@ try {
     echo "$repos" | xargs -P 10 -I {} sh -c "gh api repos/ZoneCNH/{} -q .name 2>/dev/null || echo NOT_FOUND:{}"
   '`;
 
-  const output = execSync(cmd, { encoding: 'utf8', timeout: 60000, maxBuffer: 1024 * 1024 }).trim();
+  // 内部超时 < settings 外层 timeout(30s)，确保本脚本 catch 能先跑完并 exit 0（warn-only）
+  const output = execSync(cmd, { encoding: 'utf8', timeout: 25000, maxBuffer: 1024 * 1024 }).trim();
 
   const broken = output.split('\n').filter(l => l.startsWith('NOT_FOUND:'));
   if (broken.length > 0) {

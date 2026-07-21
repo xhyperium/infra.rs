@@ -45,7 +45,7 @@
       {
         "hooks": [
           {
-            "command": "nice -n 19 timeout 30 node .claude/hooks/pre-tool-check.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/pre-tool-check.mjs || exit 2",
             "type": "command"
           }
         ],
@@ -54,7 +54,7 @@
       {
         "hooks": [
           {
-            "command": "nice -n 19 timeout 30 node .claude/hooks/edit-guard.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/edit-guard.mjs || exit 2",
             "type": "command"
           }
         ],
@@ -63,7 +63,7 @@
       {
         "hooks": [
           {
-            "command": "nice -n 19 timeout 30 node .claude/hooks/count-guard.mjs",
+            "command": "nice -n 19 timeout 30 node .claude/hooks/count-guard.mjs || exit 2",
             "type": "command"
           }
         ],

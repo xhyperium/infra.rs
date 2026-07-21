@@ -117,6 +117,19 @@ for (const event of ["PreToolUse", "PostToolUse", "SessionStart", "Stop", "PreCo
 ok("scripts/worktree/worktree-policy.mjs", exists("scripts/worktree/worktree-policy.mjs"), "hooks 依赖 worktree-policy");
 ok("scripts/harness/gc-scan.mjs", exists("scripts/harness/gc-scan.mjs"), "session-review / RSI 依赖 gc-scan");
 ok("scripts/quality-gates/check.mjs", exists("scripts/quality-gates/check.mjs"), "自身");
+ok(
+  "scripts/quality-gates/check-settings-hooks.mjs",
+  exists("scripts/quality-gates/check-settings-hooks.mjs"),
+  "settings hook 格式门禁缺失",
+);
+
+// settings.json nice/timeout/fail-closed 门禁（与 validation.yml settings-hooks job 同源）
+const settingsHooksCheck = run("node scripts/quality-gates/check-settings-hooks.mjs 2>&1", 15000);
+ok(
+  "settings hooks nice/timeout 门禁",
+  settingsHooksCheck.includes("All settings commands pass") && !/\bFAIL\b/.test(settingsHooksCheck),
+  settingsHooksCheck.slice(0, 240) || "node scripts/quality-gates/check-settings-hooks.mjs 失败",
+);
 
 // worktree-policy 可导入 + 单元自检 + 硬门禁源码存在
 let worktreeImportOk = false;
