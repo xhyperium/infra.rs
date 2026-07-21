@@ -12,6 +12,7 @@
 | `beads-e2e.yml` | Beads E2E | pull_request, workflow_dispatch | `beads-smoke` |
 | `benchmark.yml` | Benchmark | workflow_dispatch | `bench` |
 | `canonical-coverage.yml` | Canonical Coverage | pull_request, workflow_dispatch | `line-coverage` |
+| `ci-rust-org.yml` | CI Rust（组织复用） | push, pull_request, workflow_dispatch | `org-rust` |
 | `ci-rust.yml` | CI（Rust） | pull_request, workflow_dispatch | `check-rust`, `build`, `test`, `msrv`, `coverage` |
 | `ci-summary.yml` | CI Summary | (see workflow) | `summary` |
 | `configx-coverage.yml` | ConfigX Coverage | pull_request, workflow_dispatch | `coverage` |
@@ -44,8 +45,8 @@
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 30 |
-| Job 总数（解析） | 51 |
+| 工作流文件数 | 31 |
+| Job 总数（解析） | 52 |
 
 ## 维护
 
