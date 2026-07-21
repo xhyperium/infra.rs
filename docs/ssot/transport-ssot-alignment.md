@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
-| SSOT | `.agents/ssot/infra/transport/spec/spec.md` |
+| SSOT | `.agents/ssot/transport/spec/spec.md` |
 | 本仓 crate | `crates/transport` → package `xhyper-transportx` / lib `transportx` |
 | 版本 | `0.1.0` |
 | 覆盖率门禁 | `cargo llvm-cov -p transportx --fail-under-lines 100` |

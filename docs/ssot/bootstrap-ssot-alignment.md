@@ -14,7 +14,7 @@
 |-----------------|------|
 | `crates/bootstrap`（infra.rs README） | `crates/bootstrap` |
 | `crates/infra/bootstrap`（上游 monorepo） | 映射为本仓扁平 `crates/bootstrap` |
-| `.agent/ssot/bootstrap` | `.agents/ssot/infra/bootstrap`（R6 保留 `infra/`） |
+| `.agent/ssot/bootstrap` | `.agents/ssot/bootstrap`（SSOT 已展平） |
 
 ## §1 定位与边界
 
@@ -100,6 +100,6 @@ rg -n 'fn register|fn resolve|pub struct Gate|pub enum Gate' crates/bootstrap/sr
 
 ## 追溯
 
-- SSOT：`.agents/ssot/infra/bootstrap/spec/spec.md`
+- SSOT：`.agents/ssot/bootstrap/spec/spec.md`
 - 上游：`xhyper.rs/crates/infra/bootstrap`
 - 本仓实现：`crates/bootstrap/**`

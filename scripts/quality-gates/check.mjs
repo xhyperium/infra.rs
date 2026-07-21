@@ -16,10 +16,10 @@ import { execSync } from "child_process";
 import {
   describePrePushHookFailure,
   inspectPrePushHook,
-} from "./git-hook-policy.mjs";
+} from "../docs/git-hook-policy.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = join(__dirname, "..");
+const root = join(__dirname, "..", "..");
 
 const checks = [];
 
@@ -136,11 +136,11 @@ ok(
   "session-context 应引导 node scripts/worktree/worktree.mjs create",
 );
 
-const policyTest = run("node scripts/worktree-policy.test.mjs 2>&1");
+const policyTest = run("node scripts/worktree/worktree-policy.test.mjs 2>&1");
 ok(
   "worktree-policy 单元自检",
   /all passed/.test(policyTest) && !/FAIL/.test(policyTest),
-  policyTest.slice(0, 400) || "node scripts/worktree-policy.test.mjs 失败",
+  policyTest.slice(0, 400) || "node scripts/worktree/worktree-policy.test.mjs 失败",
 );
 
 // ── Harness 状态 ──────────────────────────────────────────

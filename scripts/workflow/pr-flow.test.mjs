@@ -22,7 +22,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const srcPath = join(__dirname, "pr-flow.mjs");
-const ROOT = join(__dirname, "..");
+const ROOT = join(__dirname, "..", "..");
 
 let pass = 0,
   fail = 0;

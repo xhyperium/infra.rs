@@ -61,16 +61,16 @@
 |------------|----------|------------|------|
 | kernel | `.agents/ssot/kernel/` | `crates/kernel` | **已落地**；见 kernel 对齐文 |
 | testkit | `.agents/ssot/testkit/` | `crates/testkit` | **core 已落地**；contract-testkit DEFER |
-| schedulex | `.agents/ssot/infra/schedulex/` | `crates/schedulex` | **registry 已落地**（active SSOT 最小合同） |
+| schedulex | `.agents/ssot/schedulex/` | `crates/schedulex` | **registry 已落地**（active SSOT 最小合同） |
 | types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；wire/package stable OPEN |
-| infra/configx | `.agents/ssot/infra/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
-| infra/bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/bootstrap` | **组合根已落地**；evidence crate 已注入 |
-| infra/resiliencx | `.agents/ssot/infra/resiliencx/` | `crates/resiliencx` | **重试已落地**；熔断/限流 DEFER |
-| infra 其余域 | `.agents/ssot/infra/*` | — | **仅镜像**，未宣称 crate 落地 |
+| configx | `.agents/ssot/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
+| bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根已落地**；evidence crate 已注入 |
+| resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试已落地**；熔断/限流 DEFER |
+| infra 其余域 | `.agents/ssot/{gate,observex,testkitx,transport}` | — | **仅镜像**，未宣称 crate 落地 |
 | adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **镜像已注册**；crate 为 **scaffold**，未宣称实现 |
 | （本仓）contracts | —（无独立上游 SSOT 域） | `crates/contracts` | **trait 出口已注册**（#43）；非业务实现 |
-| infra/bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/bootstrap` | **组合根已落地**（可移植 trait 替面）；contracts/observex/evidence 全量 **DEFER** |
-| infra/transport | `.agents/ssot/infra/transport/` | `crates/transport` | **active 合同已落地**（未达 M3）；见 transport 对齐文 |
+| bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根已落地**（可移植 trait 替面）；contracts/observex/evidence 全量 **DEFER** |
+| transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（未达 M3）；见 transport 对齐文 |
 | tools | `.agents/ssot/tools/` | `crates/evidence`（仅 evidence） | **镜像已本地化**；evidence 最小面落地；goalctl/xtask/verifyctl **未**落地 |
 
 规则：
@@ -78,7 +78,7 @@
 1. 镜像写 COMPLETE / Stable ≠ 本仓可宣称 ship
 2. 本仓完成声明必须以 **members + 源码 + 本仓测试输出** 为准
 3. 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游用删除感知同步（见 [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md)）
-4. 保留上游层级：`infra/`、`adapters/`、`tools/` 勿展平到 `.agents/ssot/` 根
+4. 保留上游层级：`adapters/`、`tools/` 勿展平到 `.agents/ssot/` 根（`infra/` 已展平）
 
 ## 验证入口
 

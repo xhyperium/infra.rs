@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
-| Active SSOT | `.agents/ssot/infra/schedulex/spec/spec.md` ≡ `spec/schedulex-complete-spec.md` |
+| Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ `spec/schedulex-complete-spec.md` |
 | 本仓 crate | `crates/schedulex` · package `xhyper-schedulex` · lib `schedulex` · `0.1.0` |
 | 合同范围 | **内存任务 ID 登记表**（非 production timer scheduler） |
 
