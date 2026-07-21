@@ -34,13 +34,23 @@
 node scripts/docs/gen-docs-status.mjs          # 从 .github/workflows 重写矩阵
 node scripts/docs/gen-docs-status.mjs --check  # 校验已提交矩阵是否过期
 
-# crates 进度看板（仓库根 STATUS.md）
-node scripts/docs/gen-crate-status.mjs           # 扫描 workspace members → STATUS.md
-node scripts/docs/gen-crate-status.mjs --check   # 校验看板是否过期
-node scripts/docs/gen-crate-status.mjs --watch 30  # 自动监控：每 30s / crates 变更时重扫
+# crates 进度看板
+node scripts/docs/gen-crate-status.mjs              # 始终写本地副本；非 main 写入库 STATUS.md
+node scripts/docs/gen-crate-status.mjs --local-only # 只写本地副本（主仓推荐）
+node scripts/docs/gen-crate-status.mjs --tracked    # 强制写入库 STATUS.md
+node scripts/docs/gen-crate-status.mjs --check      # CI：校验入库 STATUS.md
+node scripts/docs/gen-crate-status.mjs --watch 30   # 自动监控
 ```
 
-工作流 YAML 变更后应重跑 `gen-docs-status`；crate 布局或成员变更后应重跑 `gen-crate-status`，并提交对应生成物。
+### 双写策略（减轻 worktree 摩擦）
+
+| 产物 | 路径 | 何时写 | 是否入库 |
+|------|------|--------|----------|
+| **本地实时副本** | `docs/status/CRATES_STATUS.local.md` | 每次 `make status` | **否**（gitignore） |
+| **入库看板** | 根目录 `STATUS.md` | 非 `main` 默认写；`main` 需 `--tracked` | **是** |
+
+**不必**「同步一次就单独开 PR」。日常在主仓 `make status` 只刷本地副本；  
+改了 `Cargo.toml` members / 标准布局时，在 **同一 feature worktree PR** 里顺带 `make status` 更新 `STATUS.md` 即可。
 
 `STATUS.md` 完成度是**结构进度**（布局七项 · 测试 · 源码实质），**不是** Production Ready 签字。
 

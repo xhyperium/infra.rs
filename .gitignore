@@ -107,3 +107,9 @@ desktop.ini
 .worktrees/
 .worktree/
 .cargo/draft/
+
+# =============================================================================
+# Generated local status snapshots (main 可刷，不入库)
+# =============================================================================
+docs/status/*.local.md
+docs/status/CRATES_STATUS.local.md
