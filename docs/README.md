@@ -9,8 +9,10 @@
 | [`constitution/`](constitution/) | 工程宪章正文 SSOT（分章）+ 索引 | 落地细则、对齐矩阵、状态报告、DDR |
 | [`governance/`](governance/) | 宪章落地细则、强制工程约定、领域规范 | 对齐审计矩阵、一次性状态报告、DDR |
 | [`ssot/`](ssot/) | SSOT 镜像同步手册、域对齐矩阵、落地状态 | 通用治理条文、CI 配置快照 |
+| [`plans/`](plans/) | 跨 crate 可执行修复/晋级计划（波次、验收、门禁） | 一次性审计报告、长期治理条文、对齐矩阵 |
 | [`status/`](status/) | CI/仓库配置的**状态与验证记录**（可过期） | 长期有效的规则与策略 |
 | [`decisions/`](decisions/) | 架构决策记录（DDR） | 日常状态报告、对齐矩阵 |
+| [`report/`](report/) | 只读审计/就绪度报告（可过期） | 可执行计划（→ `plans/`） |
 
 **根目录只允许**：本 `README.md`、分类子目录、`.gitkeep`。
 
@@ -67,6 +69,15 @@
 | [tools-ssot-alignment.md](ssot/tools-ssot-alignment.md) | tools（evidence / goalctl / xtask / verifyctl） |
 
 ---
+
+## 执行计划 — [`plans/`](plans/)
+
+| 文档 | 说明 |
+|------|------|
+| [README.md](plans/README.md) | 计划目录约定与索引 |
+| [2026-07-21-core-crates-production-readiness.md](plans/2026-07-21-core-crates-production-readiness.md) | 五核心 crate 生产级修复方案（W0–W5） |
+
+> 计划是**可执行**的；审计结论见 [`report/`](report/)。
 
 ## 状态与验证记录 — [`status/`](status/)
 
