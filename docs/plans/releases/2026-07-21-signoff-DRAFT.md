@@ -47,10 +47,12 @@ DEFER 表：[`../artifacts/defer-disposition.md`](../artifacts/defer-disposition
 
 - [ ] 核心 crate 测试在官方矩阵通过  
   **建议证据命令：**
+
   ```bash
   cargo test -p contracts -p decimalx -p canonical -p kernel -p testkit --all-targets
   cargo clippy -p contracts -p decimalx -p canonical -p kernel -p testkit --all-targets -- -D warnings
   ```
+
 - [ ] decimalx：非法 scale 不可表示；checked 路径；oracle 差分见 `crates/types/decimal/tests/oracle_diff.rs`
 - [ ] 无「整体 Production Ready」错误对外表述
 

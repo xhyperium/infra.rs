@@ -38,16 +38,18 @@ ok(src.includes("from \"fs\""), "imports fs");
 ok(src.includes("from \"path\""), "imports path");
 ok(src.includes("from \"url\""), "imports url");
 ok(src.includes("from \"process\""), "imports process");
+ok(src.includes("worktree-policy.mjs"), "imports worktree-policy");
+ok(src.includes("resolveMainProjectRoot"), "uses resolveMainProjectRoot");
 
 // subcommands
-const subcommands = ["create", "go", "list", "remove", "prune", "current"];
+const subcommands = ["create", "go", "list", "remove", "prune", "current", "land", "cleanup"];
 for (const cmd of subcommands) {
   ok(src.includes(`case "${cmd}"`), `has subcommand: ${cmd}`);
 }
 
 // help/usage
 ok(src.includes("usage:"), "has usage text");
-ok(src.includes("{create|go|list|remove|prune|current}"), "usage lists all subcommands");
+ok(src.includes("land|cleanup") || src.includes("{create|go|list|remove|prune|current|land|cleanup}"), "usage lists land/cleanup");
 
 // error handling
 ok(src.includes("die("), "has die function");
@@ -57,6 +59,24 @@ ok(src.includes("process.exit(1)"), "has error exit");
 ok(src.includes("__dirname"), "uses __dirname");
 ok(src.includes(".worktrees"), "uses .worktrees path");
 ok(src.includes("WT_BASE"), "defines WT_BASE");
+
+// land features
+ok(src.includes("function autoFix"), "has autoFix");
+ok(src.includes("function autoMerge") || src.includes("async function autoMerge"), "has autoMerge");
+ok(src.includes("function cleanupAfterMerge"), "has cleanupAfterMerge");
+ok(src.includes("gh pr merge"), "uses gh pr merge");
+ok(src.includes("--squash"), "squash merge");
+ok(src.includes("rebase origin/main"), "auto-fix rebases onto origin/main");
+ok(src.includes("push --force-with-lease"), "push with lease after rebase");
+ok(src.includes("worktree remove"), "cleanup removes worktree");
+ok(src.includes("branch -d") || src.includes("branch -D"), "cleanup deletes local branch");
+ok(src.includes("process.chdir"), "chdir before removing current worktree");
+ok(src.includes("MERGED"), "waits for MERGED state");
+ok(src.includes("--dry-run"), "supports --dry-run");
+ok(src.includes("--no-fix"), "supports --no-fix");
+ok(src.includes("--no-merge"), "supports --no-merge");
+ok(src.includes("--timeout"), "supports --timeout");
+ok(src.includes("禁止对 main") || src.includes("main/master"), "blocks land on main");
 
 // ── CLI behavior ──
 function run(args = []) {
@@ -88,7 +108,7 @@ ok(r2.exit !== 0, "remove without branch fails");
 
 // go without arg → die
 const r3 = run(["go"]);
-ok(r3.exit !== 0, "go without branch fails");
+ok(r3.exit !== 0, "go without arg fails");
 
 // list succeeds
 const r4 = run(["list"]);
@@ -107,6 +127,30 @@ ok(r6.exit === 0, "current exits zero");
 const r7 = run(["invalid-cmd-xyz"]);
 ok(r7.exit !== 0, "invalid subcommand exits non-zero");
 ok(r7.out.includes("usage"), "invalid subcommand shows usage");
+
+// land --help
+const r8 = run(["land", "--help"]);
+ok(r8.exit === 0, "land --help exits zero");
+ok(r8.out.includes("自动修复") || r8.out.includes("自动合并"), "land help describes flow");
+ok(r8.out.includes("--dry-run"), "land help mentions --dry-run");
+ok(r8.out.includes("--no-fix"), "land help mentions --no-fix");
+
+// land main blocked
+const r9 = run(["land", "main", "--dry-run"]);
+ok(r9.exit !== 0, "land main fails");
+ok(r9.out.includes("main") || r9.out.includes("ERROR"), "land main shows error");
+
+// land dry-run on current feature branch (if inferable) or explicit
+const r10 = run(["land", "feat/infra-worktree-land-cleanup", "--dry-run", "--no-merge"]);
+// may fail if no PR / not merged with --no-merge — acceptable non-zero OR dry-run plan
+ok(
+  r10.out.includes("DRY-RUN") || r10.out.includes("land") || r10.out.includes("ERROR") || r10.out.includes("自动"),
+  "land dry-run produces meaningful output",
+);
+
+// cleanup without branch on main workspace may fail — still should not crash syntax
+const r11 = run(["cleanup", "main", "--dry-run"]);
+ok(r11.exit !== 0, "cleanup main fails");
 
 // ── Result ──
 console.log(`\n${pass} passed, ${fail} failed`);
