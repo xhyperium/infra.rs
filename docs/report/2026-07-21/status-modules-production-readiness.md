@@ -11,6 +11,7 @@
 | 关联计划 | [core-crates 生产修复方案](../../plans/2026-07-21-core-crates-production-readiness.md) · [核心五件套审计](./core-crates-production-readiness.md) |
 | Follow-up | [status-modules-prod-followup.md](../../plans/2026-07-21-status-modules-prod-followup.md) · Beads epic **`infra-s9t`** |
 | partial 证据 | [`_partials/`](./_partials/)（分平面明细，本文件为合成主报告） |
+| 二次深审 | [workspace-production-readiness.md](./workspace-production-readiness.md)（增量正确性、安全、资源与治理阻断） |
 
 ---
 

@@ -56,6 +56,10 @@ Epic：`infra-s9t` — *[STATUS-PROD] 全模块生产就绪阻断收敛*
 | `infra-s9t.12` | W5 | P3 | L1 用户可见错误中文化抽查 | — |
 | `infra-s9t.13` | W4+ | P2 | exchange testnet 只读 `server_time` | ← `.2` |
 | `infra-s9t.14` | Docs | P1 | adapters scaffold 生产误用警示统一 | — |
+| `infra-s9t.15` | Core | **P0** | kernel `wait_timeout` 溢出与 ClockDomain 封闭 | — |
+| `infra-s9t.16` | L1 | **P0** | transport 敏感 Debug、deadline 与资源上限 | — |
+| `infra-s9t.17` | L1 | P1 | observex subscriber 故障隔离与默认导出闭环 | — |
+| `infra-s9t.18` | Docs | P1 | 修正 STATUS `scaffold+mock` false-positive | — |
 
 ```bash
 bd show infra-s9t
@@ -138,6 +142,9 @@ bd close <id> --reason="..."
 | [ ] | `infra-s9t.6` | P1 | resiliencx async Wait | feature 测；禁止默认 block async |
 | [ ] | `infra-s9t.7` | P1 | evidence 持久化合同 / configx schema 边界 | 文档红线 + 最小实现或机检 |
 | [ ] | `infra-s9t.8` | P2 | schedulex 名实 / observex OTEL 边界 | README/AGENTS |
+| [ ] | `infra-s9t.15` | **P0** | kernel timeout 溢出与 ClockDomain 伪造入口 | 极值/跨域回归测试 + SSOT |
+| [ ] | `infra-s9t.16` | **P0** | transport 脱敏、deadline、资源上限 | HTTP/WS 故障与超限测试 |
+| [ ] | `infra-s9t.17` | P1 | observex subscriber 隔离与导出闭环 | panic/阻塞/flush 端到端测试 |
 
 ---
 
@@ -147,6 +154,7 @@ bd close <id> --reason="..."
 |:----:|------|------|------|
 | [ ] | `infra-s9t.11` | `xhyper-*` vs Cargo 短名对齐 | 文档命令可复制运行 |
 | [ ] | `infra-s9t.12` | L1 中文错误抽查 | 清单或豁免 |
+| [ ] | `infra-s9t.18` | STATUS adapter 分类误报 | 生成器回归测试 + STATUS 刷新 |
 | [ ] | （人工） | 应用面 L5 再签 | 仅当 W3+W4+L1-P0 闭合后 |
 
 ---
