@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * check.mjs — Harness 健康检查
  *
