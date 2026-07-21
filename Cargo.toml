@@ -5,6 +5,7 @@ members = [
   "crates/testkit",
   "crates/types/decimal",
   "crates/types/canonical",
+  "crates/contracts",
   "crates/adapters/exchange/binance",
   "crates/adapters/exchange/okx",
   "crates/adapters/storage/redis",
