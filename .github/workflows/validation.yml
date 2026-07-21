@@ -94,6 +94,10 @@ jobs:
           if [ "$(git rev-parse --abbrev-ref HEAD)" = "HEAD" ]; then
             git checkout -b harness-ci
           fi
+      - name: 安装 bd CLI
+        run: npm install -g @beads/bd
+      - name: 初始化 beads
+        run: bd init --quiet
       - name: 运行 harness check
         run: node scripts/quality-gates/check.mjs
 
