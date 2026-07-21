@@ -1,11 +1,9 @@
 # Optional: exchange public server_time（infra-s9t.13）
+# 仅 workflow_dispatch：GitHub-hosted runner 常被 Binance 以 HTTP 451 拒绝，
+# 不得阻断 PR 默认离线绿。手动外网验证时再触发。
 name: Exchange Live Readonly
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - "crates/adapters/exchange/**"
-      - ".github/workflows/exchange-live-readonly.yml"
 jobs:
   public-time:
     runs-on: ubuntu-latest

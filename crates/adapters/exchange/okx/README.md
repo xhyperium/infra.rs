@@ -21,3 +21,4 @@ cargo test -p okxx --test live_server_time -- --ignored --nocapture
 ```
 
 注入真实 `ReqwestHttpDriver` + 公共 REST 时间接口；默认 CI 离线绿（`#[ignore]`）。
+可选 workflow `Exchange Live Readonly` 仅 `workflow_dispatch`（Binance 等同理，不阻断 PR）。
