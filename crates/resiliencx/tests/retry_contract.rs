@@ -2,7 +2,8 @@
 
 use kernel::{ErrorKind, XError};
 use resiliencx::{
-    Instrumentation, NoopInstrumentation, RetryConfig, retry_downcast, retry_fn, retry_ok,
+    Backoff, Instrumentation, NoopInstrumentation, RecordingWait, RetryConfig, retry_delay_ms,
+    retry_downcast, retry_fn, retry_fn_with_wait, retry_ok,
 };
 use std::sync::{Arc, Mutex};
 
@@ -45,7 +46,7 @@ impl Instrumentation for MockInstr {
 #[test]
 fn retry_succeeds_first_try_no_retries() {
     let instr = MockInstr::new();
-    let cfg = RetryConfig { max_attempts: 3, base_delay_ms: 0 };
+    let cfg = RetryConfig::fixed(3, 0);
     let mut op = || Ok(retry_ok(42u32));
     let result = retry_fn(&cfg, &instr, "op", &mut op).expect("ok");
     assert_eq!(retry_downcast::<u32>(result).expect("ty"), 42);
@@ -55,7 +56,7 @@ fn retry_succeeds_first_try_no_retries() {
 #[test]
 fn retry_succeeds_after_failures() {
     let instr = MockInstr::new();
-    let cfg = RetryConfig { max_attempts: 3, base_delay_ms: 0 };
+    let cfg = RetryConfig::fixed(3, 0);
     let counter = Arc::new(Mutex::new(0u32));
     let c = counter.clone();
     let mut op = move || {
@@ -73,7 +74,7 @@ fn retry_succeeds_after_failures() {
 #[test]
 fn retry_all_failures_returns_last_error() {
     let instr = MockInstr::new();
-    let cfg = RetryConfig { max_attempts: 2, base_delay_ms: 0 };
+    let cfg = RetryConfig::fixed(2, 0);
     let mut op = || Err(XError::transient("boom"));
     let result = retry_fn(&cfg, &instr, "op", &mut op);
     assert!(result.is_err());
@@ -84,7 +85,7 @@ fn retry_all_failures_returns_last_error() {
 #[test]
 fn non_retryable_errors_are_not_retried() {
     let instr = MockInstr::new();
-    let cfg = RetryConfig { max_attempts: 5, base_delay_ms: 0 };
+    let cfg = RetryConfig::fixed(5, 0);
     let counter = Arc::new(Mutex::new(0u32));
     let c = counter.clone();
     let mut op = move || {
@@ -100,7 +101,7 @@ fn non_retryable_errors_are_not_retried() {
 #[test]
 fn retry_zero_attempts_returns_invalid() {
     let instr = MockInstr::new();
-    let cfg = RetryConfig { max_attempts: 0, base_delay_ms: 0 };
+    let cfg = RetryConfig::fixed(0, 0);
     let mut op = || Ok(retry_ok(()));
     let result = retry_fn(&cfg, &instr, "op", &mut op);
     assert!(result.is_err());
@@ -112,11 +113,13 @@ fn retry_config_default() {
     let cfg = RetryConfig::default();
     assert_eq!(cfg.max_attempts, 3);
     assert_eq!(cfg.base_delay_ms, 0);
+    assert_eq!(cfg.backoff, Backoff::Constant);
+    assert_eq!(cfg.jitter_bps, 0);
 }
 
 #[test]
 fn retry_config_and_noop_derive_surface() {
-    let a = RetryConfig { max_attempts: 1, base_delay_ms: 2 };
+    let a = RetryConfig::fixed(1, 2);
     let b = a;
     assert_eq!(a, b);
     assert_ne!(a, RetryConfig::default());
@@ -127,11 +130,11 @@ fn retry_config_and_noop_derive_surface() {
     let _nd = format!("{n:?}");
 }
 
-/// 覆盖 `base_delay_ms > 0` 的 sleep 分支（短延迟，仅为行覆盖；非生产 wait 合同）。
+/// 覆盖 `base_delay_ms > 0` 的默认 ThreadSleep 分支（短延迟；非生产 async wait 合同）。
 #[test]
 fn retry_with_base_delay_sleeps_before_retry() {
     let instr = MockInstr::new();
-    let cfg = RetryConfig { max_attempts: 2, base_delay_ms: 1 };
+    let cfg = RetryConfig::fixed(2, 1);
     let counter = Arc::new(Mutex::new(0u32));
     let c = counter.clone();
     let mut op = move || {
@@ -143,6 +146,33 @@ fn retry_with_base_delay_sleeps_before_retry() {
     assert_eq!(retry_downcast::<u32>(result).expect("ty"), 7);
     assert_eq!(instr.retry_count(), 1);
     assert_eq!(instr.retry_events()[0], ("delay-op".to_string(), 1));
+}
+
+#[test]
+fn retry_with_wait_records_exponential_delays() {
+    let instr = MockInstr::new();
+    let cfg = RetryConfig {
+        max_attempts: 4,
+        base_delay_ms: 3,
+        backoff: Backoff::Exponential { factor: 2, max_delay_ms: 50 },
+        jitter_bps: 0,
+    };
+    assert_eq!(retry_delay_ms(&cfg, 1), 3);
+    assert_eq!(retry_delay_ms(&cfg, 2), 6);
+    assert_eq!(retry_delay_ms(&cfg, 3), 12);
+
+    let wait = RecordingWait::new();
+    let hits = Arc::new(Mutex::new(0u32));
+    let h = hits.clone();
+    let mut op = move || {
+        let mut g = h.lock().expect("h");
+        *g += 1;
+        if *g < 4 { Err(XError::transient("t")) } else { Ok(retry_ok(1u8)) }
+    };
+    let out = retry_fn_with_wait(&cfg, &instr, "exp", &wait, &mut op).expect("ok");
+    assert_eq!(retry_downcast::<u8>(out).expect("ty"), 1);
+    assert_eq!(wait.delays(), vec![3, 6, 12]);
+    assert_eq!(instr.retry_count(), 3);
 }
 
 #[test]
