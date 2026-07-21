@@ -33,6 +33,7 @@
 | [worktree-policy.md](worktree-policy.md) | §6.0.5 | Git Worktree 强制策略 |
 | [编码与语言约定.md](编码与语言约定.md) | §4.5 | UTF-8、中文注释、文档语言 |
 | [ASD-STE100.md](ASD-STE100.md) | §4.6 | 英文技术文档 STE 落地指南 |
+| [commit-template.md](commit-template.md) | §4.3.3 | `.gitmessage` 提交信息模板使用指南 |
 | [quant-dev-spec.md](quant-dev-spec.md) | 领域扩展 | 量化金融专项要求 |
 
 上级索引：[docs/README.md](../README.md)。  
