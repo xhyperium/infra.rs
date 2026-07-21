@@ -20,15 +20,17 @@
 
 ## 上游 SSOT 镜像与本仓落地
 
-- `.agents/ssot/{kernel,testkit,types}/` 是 `xhyper.rs/.agent/SSOT/` 的**只读镜像**（见 `.agents/ssot/SSOT.md` R6）
+- `.agents/ssot/{kernel,testkit,types,infra}/` 是 `xhyper.rs/.agent/SSOT/` 的**只读镜像**（见 `.agents/ssot/SSOT.md` R6）
+  - `infra/` 下含 bootstrap / configx / gate / observex / resiliencx / schedulex / testkitx / transport
+  - **保留 `infra/` 层级**（勿展平到 `.agents/ssot/` 根，否则镜像内相对链接断裂）
 - **镜像文档写 COMPLETE / Stable ≠ 本仓已有对应 crate**；必须以 `crates/` + `cargo metadata` 为准
 - **当前 workspace members**（无 `infra-core`）：
   - `crates/kernel` → `xhyper-kernel`（L0）
   - `crates/testkit` → `xhyper-testkit`（core ManualClock；仅 dev-dep）
   - `crates/types/decimal` → `xhyper-decimalx`
   - `crates/types/canonical` → `xhyper-canonical`
-- `contract-testkit` **未**移植（依赖 contracts 平面，另开战役）
-- 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游变更用 `cp -rf` 同步
+- `contract-testkit` **未**移植；**infra 八域**当前仅镜像，未宣称本仓实现
+- 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游变更用 **删除感知**同步（`rsync -a --delete`，见 SSOT.md R6）
 - 对齐审计总览：[docs/workspace-ssot-alignment.md](./docs/workspace-ssot-alignment.md)
   - kernel：[docs/kernel-ssot-alignment.md](./docs/kernel-ssot-alignment.md)
   - testkit：[docs/testkit-ssot-alignment.md](./docs/testkit-ssot-alignment.md)

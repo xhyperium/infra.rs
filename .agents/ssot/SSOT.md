@@ -20,7 +20,7 @@
 ├── AGENTS.md               ← 多 Agent 协作规则的 SSOT
 ├── .github/                ← CI/CD 的 SSOT
 ├── docs/                   ← 项目文档的 SSOT
-└── .agents/ssot/           ← 上游 hyperware SSOT 镜像
+└── .agents/ssot/           ← 上游 hyperware SSOT 镜像根
 
 上游 hyperware 源 (xhyper.rs)
 ├── .agent/SSOT/kernel/     ← xhyper kernel 规格 SSOT
@@ -33,9 +33,18 @@
 ├── .agents/ssot/kernel/    ← 从 xhyper.rs/.agent/SSOT/kernel/ 镜像
 ├── .agents/ssot/testkit/   ← 从 xhyper.rs/.agent/SSOT/testkit/ 镜像
 ├── .agents/ssot/types/     ← 从 xhyper.rs/.agent/SSOT/types/ 镜像
-└── .agents/ssot/{bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport}/
-                            ← 从 xhyper.rs/.agent/SSOT/infra/* 镜像
+└── .agents/ssot/infra/     ← 从 xhyper.rs/.agent/SSOT/infra/ 镜像
+    ├── bootstrap/
+    ├── configx/
+    ├── gate/
+    ├── observex/
+    ├── resiliencx/
+    ├── schedulex/
+    ├── testkitx/
+    └── transport/
 ```
+
+> **路径约定**：保留上游 `infra/` 层级，使镜像内相对链接（如 `../../kernel/`、`../../../../AGENTS.md`）与源树一致。
 
 ---
 
@@ -64,17 +73,20 @@
 - 投影层必须同步更新
 
 ### R6: 上游 hyperware 镜像
-- `.agents/ssot/kernel/`、`.agents/ssot/testkit/`、`.agents/ssot/types/` 以及 infra 域
-  （`bootstrap` / `configx` / `gate` / `observex` / `resiliencx` / `schedulex` / `testkitx` / `transport`）
+- `.agents/ssot/kernel/`、`.agents/ssot/testkit/`、`.agents/ssot/types/`、`.agents/ssot/infra/`
   是 `xhyper.rs/.agent/SSOT/` 的只读镜像
-- 镜像更新命令：
+- **禁止**在上述镜像目录内直接编辑
+- 镜像更新必须使用**删除感知**同步（避免上游删改后残留陈旧文件）：
   ```bash
-  cp -rf /home/workspace/xhyper.rs/.agent/SSOT/kernel  .agents/ssot/
-  cp -rf /home/workspace/xhyper.rs/.agent/SSOT/testkit .agents/ssot/
-  cp -rf /home/workspace/xhyper.rs/.agent/SSOT/types   .agents/ssot/
-  cp -rf /home/workspace/xhyper.rs/.agent/SSOT/infra/* .agents/ssot/
+  # kernel / testkit / types：整目录覆盖（先删目标再拷，或 rsync --delete）
+  rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/kernel/  .agents/ssot/kernel/
+  rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/testkit/ .agents/ssot/testkit/
+  rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/types/   .agents/ssot/types/
+
+  # infra：保留 infra/ 层级（勿把 infra/* 展平到 .agents/ssot/）
+  rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/   .agents/ssot/infra/
   ```
-- 禁止在镜像副本中直接编辑
+- 同步后校验：`diff -rq <src> <dst>` 应无输出
 - 上游变更后需手动执行镜像同步
 
 ---
@@ -85,7 +97,8 @@
 - 镜像内 `review COMPLETE` / `Stable CLAIMED` 描述的是**上游 xhyper.rs 战役状态**
 - 本仓是否落地以 `Cargo.toml` workspace members + `crates/` 路径为准
 - **testkit**：本仓已落地 `crates/testkit`（`xhyper-testkit`）；`contract-testkit` 未落地
-- 审计基线见 `docs/testkit-ssot-alignment.md`
+- **infra 八域**：当前仅镜像文档，本仓对应 `crates/infra/*` **未**宣称落地
+- 审计基线见 `docs/testkit-ssot-alignment.md` / `docs/kernel-ssot-alignment.md`
 
 ---
 
@@ -102,9 +115,10 @@
 | Cargo 配置 | `.cargo/config.toml` | — | 直接引用 |
 | Crate 规则 | `crates/AGENTS.md` | `crates/*/AGENTS.md` | 按 crate 细化 |
 | 宪章合规 | `scripts/check-constitution.sh` | — | 直接引用 |
-| xhyper Kernel | `xhyper.rs/.agent/SSOT/kernel/` | `.agents/ssot/kernel/` | 手动镜像 (`cp -rf`) |
-| xhyper Testkit | `xhyper.rs/.agent/SSOT/testkit/` | `.agents/ssot/testkit/` | 手动镜像 (`cp -rf`) |
-| xhyper Types | `xhyper.rs/.agent/SSOT/types/` | `.agents/ssot/types/` | 手动镜像 (`cp -rf`) |
+| xhyper Kernel | `xhyper.rs/.agent/SSOT/kernel/` | `.agents/ssot/kernel/` | `rsync --delete` |
+| xhyper Testkit | `xhyper.rs/.agent/SSOT/testkit/` | `.agents/ssot/testkit/` | `rsync --delete` |
+| xhyper Types | `xhyper.rs/.agent/SSOT/types/` | `.agents/ssot/types/` | `rsync --delete` |
+| xhyper Infra | `xhyper.rs/.agent/SSOT/infra/` | `.agents/ssot/infra/` | `rsync --delete` |
 | SSOT 规则 | `.agents/ssot/SSOT.md` | — | 自引 |
 
 ---
@@ -113,6 +127,7 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v1.3.0 | 2026-07-21 | infra 保留 `infra/` 层级；R6 改用 rsync --delete；清单补 infra |
 | v1.2.0 | 2026-07-21 | R7：镜像≠实现；记录 testkit 本仓落地 |
 | v1.1.0 | 2026-07-21 | 添加 xhyper.rs kernel/testkit/types 上游 SSOT 镜像条目 |
 | v1.0.0 | 2026-07-21 | 初始 SSOT 规则定义 |
