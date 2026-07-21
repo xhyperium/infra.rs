@@ -5,7 +5,7 @@ Spec ID:       SPEC-TYPES-CANONICAL-002
 Status:        **Approved** (2026-07-17 liukongqiang5; ≠ package stable)
 Active SSOT:   .agent/SSOT/types/canonical/canonical-spec.md
 Source Goal:   GOAL-TYPES-CANONICAL-002
-Package:       xhyper-canonical 0.1.0
+Package:       canonical 0.1.0
 Lib / Path:    canonical / crates/types/canonical
 Layer:         Types / shared DTO
 Snapshot:      4fe8e988 (2026-07-17 campaign baseline)
@@ -139,8 +139,8 @@ canonical 不拒绝负 Qty、交叉盘口、非法状态迁移或未知 symbol�
 
 ```bash
 cargo test -p xhyper-canonical
-cargo check -p xhyper-canonical --all-targets
-cargo clippy -p xhyper-canonical --all-targets -- -D warnings
+cargo check -p canonical --all-targets
+cargo clippy -p canonical --all-targets -- -D warnings
 cargo xtl lint-deps
 cargo fmt -- --check
 ```

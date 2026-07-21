@@ -2,7 +2,7 @@
 //!
 //! 运行：
 //! ```text
-//! RUSTFLAGS="--cfg loom" cargo test -p xhyper-kernel --test lifecycle_concurrency_loom --release
+//! RUSTFLAGS="--cfg loom" cargo test -p kernel --test lifecycle_concurrency_loom --release
 //! ```
 //!
 //! 仅在 `--cfg loom` 下编译，避免默认 `cargo test` 拉入 loom 模型成本。

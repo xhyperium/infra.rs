@@ -26,13 +26,13 @@ public_surface:              4 passed
 
 ### cargo clippy / fmt
 
-- `cargo clippy -p xhyper-testkit --all-targets -- -D warnings` → PASS
+- `cargo clippy -p testkit --all-targets -- -D warnings` → PASS
 - `cargo fmt --all --check` → PASS
 
 ### line coverage（§13.7）
 
 ```text
-cargo llvm-cov -p xhyper-testkit --fail-under-lines 95 --summary-only
+cargo llvm-cov -p testkit --fail-under-lines 95 --summary-only
 Lines: 99.65%  (missed 1 / 283)
 Functions: 100%
 ```
@@ -40,7 +40,7 @@ Functions: 100%
 ### mutants（§13.6）
 
 ```text
-cargo mutants -p xhyper-testkit --timeout 60
+cargo mutants -p testkit --timeout 60
 30 mutants tested: 10 caught, 20 unviable, missed=0
 ```
 

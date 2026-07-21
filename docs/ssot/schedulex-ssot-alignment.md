@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
-| Active SSOT | `.agents/ssot/infra/schedulex/spec/spec.md` ≡ `spec/xhyper-schedulex-complete-spec.md` |
+| Active SSOT | `.agents/ssot/infra/schedulex/spec/spec.md` ≡ `spec/schedulex-complete-spec.md` |
 | 本仓 crate | `crates/schedulex` · package `xhyper-schedulex` · lib `schedulex` · `0.1.0` |
 | 合同范围 | **内存任务 ID 登记表**（非 production timer scheduler） |
 
@@ -20,7 +20,7 @@
 | Clock / timer / Job·Run | **禁止**（§3） | 生产源码无此类类型/依赖 | ✅ |
 | async runtime / 持久化 / shutdown | **禁止**（§3） | 无 | ✅ |
 | 测试五条 | schedule+list / cancel / cancel missing / Default 空 / 重复幂等 | `src/lib.rs` unit + `tests/public_api.rs` | ✅ |
-| 覆盖率 | 目标 100% lines（本仓 goal） | `cargo llvm-cov -p xhyper-schedulex --fail-under-lines 100` | ✅（见 evidence） |
+| 覆盖率 | 目标 100% lines（本仓 goal） | `cargo llvm-cov -p schedulex --fail-under-lines 100` | ✅（见 evidence） |
 
 ## 明确非目标
 
@@ -31,11 +31,11 @@ graceful shutdown / 持久化恢复 / 分布式调度 —— active §3；Candid
 
 ```bash
 cmp .agents/ssot/infra/schedulex/spec/spec.md \
-    .agents/ssot/infra/schedulex/spec/xhyper-schedulex-complete-spec.md
-cargo test -p xhyper-schedulex --all-targets
-cargo clippy -p xhyper-schedulex --all-targets -- -D warnings
+    .agents/ssot/infra/schedulex/spec/schedulex-complete-spec.md
+cargo test -p schedulex --all-targets
+cargo clippy -p schedulex --all-targets -- -D warnings
 cargo fmt --all --check
-cargo llvm-cov -p xhyper-schedulex --fail-under-lines 100 --summary-only
+cargo llvm-cov -p schedulex --fail-under-lines 100 --summary-only
 ```
 
 ## 追溯

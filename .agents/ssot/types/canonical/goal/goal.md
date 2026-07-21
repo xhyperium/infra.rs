@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | Goal ID | `GOAL-TYPES-CANONICAL-002` |
-| Complete | [../20260717/xhyper-canonical-complete-goal.md](../20260717/xhyper-canonical-complete-goal.md) |
+| Complete | [../20260717/canonical-complete-goal.md](../20260717/canonical-complete-goal.md) |
 | 状态 | **agent-safe 表面 PASS** · package stable / 全 wire **未宣称 ACHIEVED** |
 | 更新 | 2026-07-21 |
 

@@ -15,8 +15,8 @@
 - `default = []`；禁止 feature 泄漏
 - **禁止** 在生产源码引入 timer / Clock / Job / Run / tokio / async runtime / 持久化 / shutdown
 - 重复 `schedule(id)` 必须幂等覆盖；`cancel` 必须返回此前是否存在；`list` 顺序未承诺
-- 验证：`cargo test -p xhyper-schedulex` · `cargo clippy -p xhyper-schedulex --all-targets -- -D warnings`
-- 覆盖率：`cargo llvm-cov -p xhyper-schedulex --fail-under-lines 100`
+- 验证：`cargo test -p xhyper-schedulex` · `cargo clippy -p schedulex --all-targets -- -D warnings`
+- 覆盖率：`cargo llvm-cov -p schedulex --fail-under-lines 100`
 - 对齐矩阵：[`../../docs/ssot/schedulex-ssot-alignment.md`](../../docs/ssot/schedulex-ssot-alignment.md)
 
 ## 与 SSOT 镜像的关系

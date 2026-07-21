@@ -19,8 +19,8 @@
 | 文档 | 角色 |
 |------|------|
 | [canonical-spec.md](../canonical-spec.md) | **active** 当前实现合同 SSOT |
-| [20260717/xhyper-canonical-complete-spec.md](../20260717/xhyper-canonical-complete-spec.md) | **Approved S1** complete-spec（≠ package stable）；与 active 对齐 |
-| [20260717/xhyper-canonical-complete-goal.md](../20260717/xhyper-canonical-complete-goal.md) | Goal（当前事实已重写；历史 M* 叙事） |
+| [20260717/canonical-complete-spec.md](../20260717/canonical-complete-spec.md) | **Approved S1** complete-spec（≠ package stable）；与 active 对齐 |
+| [20260717/canonical-complete-goal.md](../20260717/canonical-complete-goal.md) | Goal（当前事实已重写；历史 M* 叙事） |
 | [alignment-matrix-infra-2026-07-21.md](./alignment-matrix-infra-2026-07-21.md) | **当前 1:1 权威矩阵** |
 | [plan/](./) | 本战役执行包 |
 | [todo.md](../todo.md) | 工作台账（≠ package stable） |

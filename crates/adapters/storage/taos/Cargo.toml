@@ -10,13 +10,13 @@ publish = false
 
 [dependencies]
 async-trait = { workspace = true }
-xhyper-canonical = { path = "../../../types/canonical", version = "0.1.0" }
-xhyper-contracts = { path = "../../../contracts", version = "0.1.0" }
-xhyper-kernel = { path = "../../../kernel", version = "0.3.0" }
+canonical = { path = "../../../types/canonical", version = "0.1.0" }
+contracts = { path = "../../../contracts", version = "0.1.0" }
+kernel = { path = "../../../kernel", version = "0.3.0" }
 
 [dev-dependencies]
 tokio = { workspace = true }
-xhyper-decimalx = { path = "../../../types/decimal", version = "0.1.0" }
+decimalx = { path = "../../../types/decimal", version = "0.1.0" }
 
 [lints]
 workspace = true

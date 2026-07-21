@@ -12,8 +12,8 @@
 | Spec Approved + §18 | **PASS** | |
 | version `0.1.1` | **PASS** | package **`xhyper-kernel`** |
 | registry stable | **PASS** | crates/kernel only |
-| crates.io | **PASS** | https://crates.io/crates/xhyper-kernel/0.1.1 |
-| cargo test -p xhyper-kernel | **PASS** | lib 名仍 `kernel` |
+| crates.io | **PASS** | https://crates.io/crates/kernel/0.1.1 |
+| cargo test -p kernel | **PASS** | lib 名仍 `kernel` |
 | loom CI 资产 | **PASS** | |
 | archgate KERNEL-* | **PASS 15/15** | 含 **TIME-004** + **API-002** |
 | API 快照 + baseline | **PASS** | snapshot ≡ baseline @ 0.1.1 |

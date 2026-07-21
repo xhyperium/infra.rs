@@ -6,4 +6,4 @@
 > 布局对齐：`.agent/SSOT/kernel/`（见 `.agent/SSOT/AGENTS.md` §2）。
 
 - 入口：[`spec/spec.md`](spec/spec.md)
-- 双镜像：[`spec/xhyper-transportx-complete-spec.md`](spec/xhyper-transportx-complete-spec.md)（须 `cmp` 同构）
+- 双镜像：[`spec/transportx-complete-spec.md`](spec/transportx-complete-spec.md)（须 `cmp` 同构）

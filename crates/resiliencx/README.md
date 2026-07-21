@@ -28,9 +28,9 @@ L1 **弹性**（重试 + 熔断 + 限流；ADR-005）。
 ## 验证
 
 ```bash
-cargo test -p xhyper-resiliencx --all-targets
-cargo clippy -p xhyper-resiliencx --all-targets -- -D warnings
-node scripts/cov-gate-100.mjs -p xhyper-resiliencx --filter crates/resiliencx/src
+cargo test -p resiliencx --all-targets
+cargo clippy -p resiliencx --all-targets -- -D warnings
+node scripts/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
 ```
 
 ## SSOT

@@ -1,5 +1,5 @@
 [package]
-name = "xhyper-bootstrap"
+name = "bootstrap"
 description = "L1 启动期依赖组装（R3.1 豁免 / ADR-016）；typed composition root"
 version.workspace = true
 edition.workspace = true
@@ -12,12 +12,12 @@ publish = false
 name = "bootstrap"
 
 [dependencies]
-xhyper-kernel = { path = "../kernel", version = "0.3.0" }
+kernel = { path = "../kernel", version = "0.3.0" }
 # ADR-005：Instrumentation 契约权威在 contracts；默认实现来自 observex
-xhyper-contracts = { path = "../contracts", version = "0.1.0" }
-xhyper-observex = { path = "../observex", version = "0.1.0" }
+contracts = { path = "../contracts", version = "0.1.0" }
+observex = { path = "../observex", version = "0.1.0" }
 # 审计证据追加权威在 evidence
-xhyper-evidence = { path = "../evidence", version = "0.1.0" }
+evidence = { path = "../evidence", version = "0.1.0" }
 
 [lints]
 workspace = true

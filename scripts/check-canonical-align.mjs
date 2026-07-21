@@ -30,7 +30,7 @@ try {
     const meta = JSON.parse(execSync("cargo metadata --no-deps --format-version 1", { encoding: "utf8" }));
     names = meta.packages.map(p => p.name);
 } catch { fail("cargo metadata failed"); }
-if (!names.includes("xhyper-canonical") || !names.includes("xhyper-decimalx"))
+if (!names.includes("canonical") || !names.includes("decimalx"))
     fail("missing packages: " + JSON.stringify(names));
 console.log("Packages: " + JSON.stringify(names));
 
@@ -73,13 +73,13 @@ if (quiet(`${rg} '\\\\bf32\\\\b|\\\\bf64\\\\b' ${crate}/src --glob '*.rs'`)) fai
 
 // spec mirror
 const specMD5 = quiet("md5sum " + join(ssot, "spec/spec.md") + " | cut -d' ' -f1");
-const mirrorMD5 = quiet("md5sum " + join(ssot, "spec/xhyper-canonical-complete-spec.md") + " | cut -d' ' -f1");
+const mirrorMD5 = quiet("md5sum " + join(ssot, "spec/canonical-complete-spec.md") + " | cut -d' ' -f1");
 if (specMD5 !== mirrorMD5) fail("dual-mirror mismatch");
 ok("authority facts");
 
 // post-S1 checks
 if (planMd.includes("当前仅 5 测")) fail("plan DRIFT-04 still claims 5 tests");
-const cgoal = quiet("cat " + join(ssot, "20260717/xhyper-canonical-complete-goal.md"));
+const cgoal = quiet("cat " + join(ssot, "20260717/canonical-complete-goal.md"));
 if (cgoal.includes("未假装批准")) fail("complete-goal §7 still pretends ID/time OPEN");
 if (!quiet("cat " + join(ssot, "plan/approval-packet.md")).includes("SUPERSEDED for current-state"))
     fail("approval-packet.md missing SUPERSEDED banner");
@@ -91,8 +91,8 @@ if (driftOpen.length > 0) fail("plan DRIFT still has open agent-safe disposition
 ok("post-S1 drift/goal/approval/crate wording");
 
 // cargo test + clippy + fmt
-try { run("cargo test -p xhyper-canonical -p xhyper-decimalx 2>&1"); } catch { fail("tests failed"); }
-try { run("cargo clippy -p xhyper-canonical -p xhyper-decimalx --all-targets -- -D warnings 2>&1"); } catch { fail("clippy failed"); }
-try { run("cargo fmt -p xhyper-canonical -p xhyper-decimalx -- --check"); } catch { fail("fmt failed"); }
+try { run("cargo test -p canonical -p decimalx 2>&1"); } catch { fail("tests failed"); }
+try { run("cargo clippy -p canonical -p decimalx --all-targets -- -D warnings 2>&1"); } catch { fail("clippy failed"); }
+try { run("cargo fmt -p canonical -p decimalx -- --check"); } catch { fail("fmt failed"); }
 
 console.log("=== ALL CHECKS PASSED ===");

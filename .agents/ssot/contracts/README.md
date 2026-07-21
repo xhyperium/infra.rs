@@ -1,7 +1,7 @@
 # contracts — Goal 管线契约
 
 > 实现 / 代码唯一位置：`crates/contracts`  
-> **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-contracts-complete-spec.md](spec/xhyper-contracts-complete-spec.md)  
+> **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/contracts-complete-spec.md](spec/contracts-complete-spec.md)  
 > **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
 > **布局**：对齐 [`.agents/ssot/kernel/`](../kernel/)（[AGENTS.md](../../AGENTS.md) §2）  
 > **状态**：布局已对齐 kernel · 战役内容未宣称闭合
@@ -35,13 +35,13 @@
 1. 无证据不得宣称 Done / 全闭合 / 5/5 / Spec Approved（除非既有战役文件已证明）。
 2. 本树禁止 `src/`、`Cargo.toml`、`*.rs` 实现副本（C-LINT-007）。
 3. 布局迁移 **≠** 实现完成 **≠** package stable。
-4. 双镜像：`spec/spec.md` 与 `spec/xhyper-contracts-complete-spec.md` 须 `cmp` 同构。
+4. 双镜像：`spec/spec.md` 与 `spec/contracts-complete-spec.md` 须 `cmp` 同构。
 
 ## 验证
 
 ```bash
 cmp .agents/ssot/contracts/spec/spec.md \
-    .agents/ssot/contracts/spec/xhyper-contracts-complete-spec.md
+    .agents/ssot/contracts/spec/contracts-complete-spec.md
 # 结构：README + 11 层目录 + evidence/ 横切
 test -f .agents/ssot/contracts/README.md
 test -f .agents/ssot/contracts/spec/spec.md

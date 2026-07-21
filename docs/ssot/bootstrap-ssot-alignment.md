@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
-| SSOT（只读） | `.agents/ssot/infra/bootstrap/spec/spec.md` ≡ `spec/xhyper-bootstrap-complete-spec.md`（`cmp` 同构） |
+| SSOT（只读） | `.agents/ssot/infra/bootstrap/spec/spec.md` ≡ `spec/bootstrap-complete-spec.md`（`cmp` 同构） |
 | 实现路径 | `crates/bootstrap`（package `xhyper-bootstrap` / lib `bootstrap`） |
 | 权威 | 本文件描述 **本仓** 落地状态；**不**编辑 `.agents/ssot/**` 镜像 |
 | 上游参考 | `xhyper.rs/crates/infra/bootstrap`（可移植源，非本仓 member） |
@@ -76,11 +76,11 @@
 ## §6 验收命令（本仓）
 
 ```bash
-cargo test -p xhyper-bootstrap --all-targets
-cargo check -p xhyper-bootstrap --all-targets
-cargo clippy -p xhyper-bootstrap --all-targets -- -D warnings
+cargo test -p bootstrap --all-targets
+cargo check -p bootstrap --all-targets
+cargo clippy -p bootstrap --all-targets -- -D warnings
 cargo fmt --all --check
-cargo llvm-cov -p xhyper-bootstrap --all-targets --fail-under-lines 100 --summary-only
+cargo llvm-cov -p bootstrap --all-targets --fail-under-lines 100 --summary-only
 # 静态：无 Service Locator / Gate
 rg -n 'fn register|fn resolve|pub struct Gate|pub enum Gate' crates/bootstrap/src || true
 ```

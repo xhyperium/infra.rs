@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | Plan | PLAN-TYPES-DECIMALX-002-agent-safe-v1 |
-| Package | xhyper-decimalx 0.1.0 |
+| Package | decimalx 0.1.0 |
 | fail_rounds | 0 |
 | pass_rounds | 10 |
 | final | PASS |

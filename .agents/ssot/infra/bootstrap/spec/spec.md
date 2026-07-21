@@ -7,7 +7,7 @@
 | Path | `crates/bootstrap` |
 | Layer | L1 唯一组合根（R3.1） |
 | Authority | 本文件是 active current-state spec |
-| Candidate | [SPEC-INFRA-BOOTSTRAP-002](../../../../draft/xhyper-bootstrap-complete-spec.md)（Draft，非权威，不覆盖本文） |
+| Candidate | [SPEC-INFRA-BOOTSTRAP-002](../../../../draft/bootstrap-complete-spec.md)（Draft，非权威，不覆盖本文） |
 | Implementation snapshot | `b0934baa`（2026-07-15） |
 | Document commit | `e0b98df4` |
 | Verified at | `e0b98df4`（相关实现路径未变化） |
@@ -75,8 +75,8 @@ dev-dependencies 含 `xhyper-binance`、`xhyper-redisx`、`xhyper-canonical`、`
 
 ```bash
 cargo test -p xhyper-bootstrap
-cargo check -p xhyper-bootstrap --all-targets
-cargo clippy -p xhyper-bootstrap --all-targets -- -D warnings
+cargo check -p bootstrap --all-targets
+cargo clippy -p bootstrap --all-targets -- -D warnings
 cargo xtl lint-deps
 cargo xtl no-new-gate
 cargo fmt -- --check

@@ -1,7 +1,7 @@
 # Round 5 — §9 Contract Testkit 规范
 
 > Verifier: 只读计划完备性检查（非实现验收）  
-> Source Spec: `.agent/SSOT/testkit/xhyper-testkit-complete-spec.md`  
+> Source Spec: `.agent/SSOT/testkit/testkit-complete-spec.md`  
 > Plan pack: `plan.md` · `tasks.md` · `gap-matrix.md` · `spec-inventory.md` · `residual-open.md` · `approval-packet.md` · `.worktree/testkit-todo.md`  
 > 日期: 2026-07-14
 

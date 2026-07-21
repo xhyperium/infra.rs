@@ -10,7 +10,7 @@
 | T-M0-002 | GAP-004 | 边界测试补强（parse/Display/cmp/Hash/Currency） | `src/lib.rs` tests · fuzz | AGENT_SAFE | cargo test |
 | T-M0-003 | GAP-016 | float/panic 扫描摘要 | evidence | AGENT_SAFE | rg 输出 |
 | T-M2-001 | GAP-005 | panicking API `# Panics` rustdoc | `src/lib.rs` | AGENT_SAFE | rustdoc 文本 |
-| T-VER-001 | gates | cargo test/check/clippy/fmt -p xhyper-decimalx | — | AGENT_SAFE | SCRATCH logs |
+| T-VER-001 | gates | cargo test/check/clippy/fmt -p decimalx | — | AGENT_SAFE | SCRATCH logs |
 | T-VER-002 | 10x | 十轮检查 fail_rounds=0 | 10x-verdict · scripts | AGENT_SAFE | 10x logs |
 | T-VER-003 | approve | PR + liukongqiang5 APPROVE readback | GitHub | AGENT_SAFE* | readback JSON |
 | T-HUM-001 | GAP-007 | 批准 MAX_SCALE / DecimalLimits | — | HUMAN_ONLY | residual |

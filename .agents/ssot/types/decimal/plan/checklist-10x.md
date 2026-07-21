@@ -8,8 +8,8 @@
 4. **inventory**：`plan/evidence/m0-consumer-inventory-2026-07-17.txt` 存在且含 consumers。
 5. **# Panics**：`src/lib.rs` 中 Add/Sub/Mul/rescale 有 `# Panics` 或等价 panic 文档。
 6. **cargo test -p xhyper-decimalx** 成功。
-7. **cargo check -p xhyper-decimalx --all-targets** 成功。
-8. **cargo clippy -p xhyper-decimalx --all-targets -- -D warnings** 成功。
+7. **cargo check -p decimalx --all-targets** 成功。
+8. **cargo clippy -p decimalx --all-targets -- -D warnings** 成功。
 9. **cargo fmt -- --check**（触及路径）成功。
 10. **对齐不越权**：alignment 不宣称 Approved/Achieved/wire stable/package stable。
 11. **tip-stable**：round 内 `git rev-parse HEAD` 不变（或记录变更原因）。

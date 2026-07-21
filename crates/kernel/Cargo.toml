@@ -1,12 +1,12 @@
 [package]
-name = "xhyper-kernel"
+name = "kernel"
 description = "infra.rs L0 kernel: opaque XError/ErrorKind, Clock/Timestamp, ShutdownSignal (SPEC-KERNEL-002)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-# 本仓不向 crates.io 再发布；与 xhyper-testkit 一致显式关闭
+# 本仓不向 crates.io 再发布；与 testkit 一致显式关闭
 publish = false
 
 [lib]

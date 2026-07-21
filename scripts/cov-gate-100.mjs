@@ -6,7 +6,7 @@
  * 不存在 `DA:<line>,0`（每条可插桩行至少执行一次）。
  *
  * 用法:
- *   node scripts/cov-gate-100.mjs -p xhyper-kernel --filter crates/kernel/src
+ *   node scripts/cov-gate-100.mjs -p kernel --filter crates/kernel/src
  */
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";

@@ -4,7 +4,7 @@
 |------|-----|
 | Plan ID | `PLAN-TESTKIT-002-v1-complete` |
 | Plan version | **v1.2.0** |
-| Source Spec | [`.agent/SSOT/testkit/xhyper-testkit-complete-spec.md`](../xhyper-testkit-complete-spec.md) |
+| Source Spec | [`.agent/SSOT/testkit/testkit-complete-spec.md`](../testkit-complete-spec.md) |
 | Spec ID | `SPEC-TESTKIT-002` · Status **Approved** → Target **Stable** |
 | Goal | `GOAL-DETERMINISTIC-TEST-SUPPORT` |
 | Package | `testkit` @ `crates/testkit` **0.1.1**（`publish = false`） |
