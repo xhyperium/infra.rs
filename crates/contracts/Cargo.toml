@@ -1,6 +1,6 @@
 [package]
 name = "infra-contracts"
-description = "Adapter contracts (traits) for exchange and storage adapters"
+description = "Adapter + observability contracts (exchange/storage/Instrumentation)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
