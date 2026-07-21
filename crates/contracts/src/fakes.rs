@@ -302,13 +302,13 @@ impl RecordingInstrumentation {
 
     /// 已记录事件的快照。
     pub fn snapshot(&self) -> XResult<Vec<InstrEvent>> {
-        let g = self.events.lock().map_err(|_| XError::internal("instr lock 中毒"))?;
+        let g = self.events.lock().expect("instr lock");
         Ok(g.clone())
     }
 
     /// 清空记录。
     pub fn clear(&self) -> XResult<()> {
-        let mut g = self.events.lock().map_err(|_| XError::internal("instr lock 中毒"))?;
+        let mut g = self.events.lock().expect("instr lock");
         g.clear();
         Ok(())
     }
@@ -316,21 +316,18 @@ impl RecordingInstrumentation {
 
 impl Instrumentation for RecordingInstrumentation {
     fn record_retry(&self, op: &str, attempt: u32) {
-        if let Ok(mut g) = self.events.lock() {
-            g.push(InstrEvent::Retry { op: op.to_string(), attempt });
-        }
+        let mut g = self.events.lock().expect("instr lock");
+        g.push(InstrEvent::Retry { op: op.to_string(), attempt });
     }
 
     fn record_circuit_open(&self, op: &str) {
-        if let Ok(mut g) = self.events.lock() {
-            g.push(InstrEvent::CircuitOpen { op: op.to_string() });
-        }
+        let mut g = self.events.lock().expect("instr lock");
+        g.push(InstrEvent::CircuitOpen { op: op.to_string() });
     }
 
     fn record_circuit_close(&self, op: &str) {
-        if let Ok(mut g) = self.events.lock() {
-            g.push(InstrEvent::CircuitClose { op: op.to_string() });
-        }
+        let mut g = self.events.lock().expect("instr lock");
+        g.push(InstrEvent::CircuitClose { op: op.to_string() });
     }
 }
 
@@ -361,7 +358,7 @@ mod tests {
     use crate::run_tx_commit_on_ok;
     use futures_core::Stream;
     use std::pin::Pin;
-    use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+    use std::task::{Context, Poll, Waker};
 
     #[tokio::test]
     async fn fake_tx_context_commit_success_sets_flags() {
@@ -403,13 +400,81 @@ mod tests {
         assert!(!*runner.committed.lock().expect("lock"));
     }
 
+    #[test]
+    fn recording_tx_runner_default_constructs() {
+        let runner = RecordingTxRunner::default();
+        assert!(!*runner.committed.lock().expect("lock"));
+        assert!(!*runner.rolled_back.lock().expect("lock"));
+    }
+
+    fn poison_mutex(m: &Mutex<bool>) {
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _g = m.lock().expect("lock");
+            panic!("poison");
+        }));
+    }
+
+    #[tokio::test]
+    async fn recording_tx_context_poison_on_commit_and_rollback() {
+        // commit：poison committed → 覆盖 commit 中第一把锁的 map_err
+        let runner = RecordingTxRunner::new();
+        let mut ctx = runner.begin_tx().await.expect("begin");
+        poison_mutex(&runner.committed);
+        let err = ctx.commit().await.unwrap_err();
+        assert_eq!(err.kind(), kernel::ErrorKind::Internal);
+
+        // commit：仅 poison rolled_back → 覆盖 commit 中第二把锁的 map_err
+        let runner = RecordingTxRunner::new();
+        let mut ctx = runner.begin_tx().await.expect("begin");
+        poison_mutex(&runner.rolled_back);
+        let err = ctx.commit().await.unwrap_err();
+        assert_eq!(err.kind(), kernel::ErrorKind::Internal);
+
+        // rollback：poison committed
+        let runner = RecordingTxRunner::new();
+        let mut ctx = runner.begin_tx().await.expect("begin");
+        poison_mutex(&runner.committed);
+        let err = ctx.rollback().await.unwrap_err();
+        assert_eq!(err.kind(), kernel::ErrorKind::Internal);
+
+        // rollback：仅 poison rolled_back
+        let runner = RecordingTxRunner::new();
+        let mut ctx = runner.begin_tx().await.expect("begin");
+        poison_mutex(&runner.rolled_back);
+        let err = ctx.rollback().await.unwrap_err();
+        assert_eq!(err.kind(), kernel::ErrorKind::Internal);
+    }
+
     #[tokio::test]
     async fn fake_kv_get_set_roundtrip() {
         let kv = FakeKeyValueStore::new();
+        assert!(kv.is_empty().unwrap());
         assert!(kv.get("k").await.unwrap().is_none());
         kv.set("k", b"v".to_vec(), Some(Duration::from_secs(1))).await.unwrap();
         assert_eq!(kv.get("k").await.unwrap().as_deref(), Some(b"v".as_ref()));
         assert_eq!(kv.len().unwrap(), 1);
+        assert!(!kv.is_empty().unwrap());
+    }
+
+    #[tokio::test]
+    async fn fake_kv_poison_returns_internal() {
+        let kv = FakeKeyValueStore::new();
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _g = kv.inner.lock().expect("lock");
+            panic!("poison kv");
+        }));
+        match kv.get("k").await {
+            Err(e) => assert_eq!(e.kind(), kernel::ErrorKind::Internal),
+            Ok(_) => panic!("get 应在 lock 中毒后失败"),
+        }
+        match kv.set("k", b"v".to_vec(), None).await {
+            Err(e) => assert_eq!(e.kind(), kernel::ErrorKind::Internal),
+            Ok(()) => panic!("set 应在 lock 中毒后失败"),
+        }
+        match kv.len() {
+            Err(e) => assert_eq!(e.kind(), kernel::ErrorKind::Internal),
+            Ok(_) => panic!("len 应在 lock 中毒后失败"),
+        }
     }
 
     #[tokio::test]
@@ -420,11 +485,42 @@ mod tests {
             name: String,
         }
         let repo = FakeRepository::new(|e: &Entity| e.id);
+        assert!(repo.is_empty().unwrap());
         assert!(repo.find(1).await.unwrap().is_none());
         repo.save(&Entity { id: 1, name: "a".into() }).await.unwrap();
         let got = repo.find(1).await.unwrap().expect("found");
         assert_eq!(got.name, "a");
         assert_eq!(repo.len().unwrap(), 1);
+        assert!(!repo.is_empty().unwrap());
+    }
+
+    #[tokio::test]
+    async fn fake_repository_poison_returns_internal() {
+        #[derive(Clone)]
+        struct Entity {
+            id: u64,
+        }
+        let repo = FakeRepository::new(|e: &Entity| e.id);
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _g = repo.inner.lock().expect("lock");
+            panic!("poison repo");
+        }));
+        match repo.find(1).await {
+            Err(e) => assert_eq!(e.kind(), kernel::ErrorKind::Internal),
+            Ok(_) => panic!("find 应在 lock 中毒后失败"),
+        }
+        match repo.save(&Entity { id: 1 }).await {
+            Err(e) => assert_eq!(e.kind(), kernel::ErrorKind::Internal),
+            Ok(()) => panic!("save 应在 lock 中毒后失败"),
+        }
+        match repo.len() {
+            Err(e) => assert_eq!(e.kind(), kernel::ErrorKind::Internal),
+            Ok(_) => panic!("len 应在 lock 中毒后失败"),
+        }
+        match repo.is_empty() {
+            Err(e) => assert_eq!(e.kind(), kernel::ErrorKind::Internal),
+            Ok(_) => panic!("is_empty 应在 lock 中毒后失败"),
+        }
     }
 
     #[test]
@@ -450,16 +546,8 @@ mod tests {
         let bus = FakeEventBus::new();
         bus.publish("t", Bytes::from_static(b"p")).await.unwrap();
         let mut stream = bus.subscribe("t").await.unwrap();
-        fn dummy_raw_waker() -> RawWaker {
-            fn no(_: *const ()) {}
-            fn clone(_: *const ()) -> RawWaker {
-                dummy_raw_waker()
-            }
-            static VTABLE: RawWakerVTable = RawWakerVTable::new(clone, no, no, no);
-            RawWaker::new(std::ptr::null(), &VTABLE)
-        }
-        let waker = unsafe { Waker::from_raw(dummy_raw_waker()) };
-        let mut cx = Context::from_waker(&waker);
+        let waker = Waker::noop();
+        let mut cx = Context::from_waker(waker);
         match Pin::new(&mut stream).poll_next(&mut cx) {
             Poll::Ready(Some(msg)) => {
                 assert!(!msg.id.is_empty());
