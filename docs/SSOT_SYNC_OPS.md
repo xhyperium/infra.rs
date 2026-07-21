@@ -26,38 +26,46 @@ rsync -a --delete "$SRC/contracts/" "$DST/contracts/"
 ## 按域同步
 
 ### kernel
+
 ```bash
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/kernel/ \
   .agents/ssot/kernel/
 ```
 
 ### testkit
+
 ```bash
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/testkit/ \
   .agents/ssot/testkit/
 ```
 
 ### types (decimal + canonical)
+
 ```bash
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/types/ \
   .agents/ssot/types/
 ```
 
 ### infra (8 域)
+
 ```bash
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/ \
   .agents/ssot/infra/
 ```
+
 包含: bootstrap, configx, gate, observex, resiliencx, schedulex, testkitx, transport
 
 ### adapters (9 域)
+
 ```bash
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/adapters/ \
   .agents/ssot/adapters/
 ```
+
 包含: binance, okx, redis, kafka, nats, postgres, taos, oss, clickhouse
 
 ### contracts
+
 ```bash
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/contracts/ \
   .agents/ssot/contracts/
