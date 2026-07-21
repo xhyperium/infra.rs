@@ -26,4 +26,4 @@ jobs:
         with:
           tool: cargo-mutants
       - name: 运行变异测试
-        run: cargo mutants -p xhyper-testkit --timeout 60
+        run: cargo mutants -p testkit --timeout 60

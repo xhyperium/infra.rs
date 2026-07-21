@@ -108,8 +108,8 @@ console.log("\n§6 cargo metadata 查询");
 
 assert("调用 cargo metadata --no-deps", raw.includes("cargo metadata --no-deps"));
 assert("解析 metadata JSON", raw.includes("JSON.parse(execSync"));
-assert("检查 xhyper-canonical package", raw.includes("xhyper-canonical"));
-assert("检查 xhyper-decimalx package", raw.includes("xhyper-decimalx"));
+assert("检查 canonical package", raw.includes("canonical"));
+assert("检查 decimalx package", raw.includes("decimalx"));
 
 // ============================================================
 // §7 文件存在性检查
@@ -148,9 +148,9 @@ assert("检查 plan DRIFT agent-safe 处置已闭", raw.includes("agent-safe 补
 // ============================================================
 console.log("\n§10 cargo 质量门");
 
-assert("运行 cargo test -p xhyper-canonical", raw.includes("cargo test -p xhyper-canonical -p xhyper-decimalx"));
-assert("运行 cargo clippy -p xhyper-canonical", raw.includes("cargo clippy -p xhyper-canonical -p xhyper-decimalx"));
-assert("运行 cargo fmt -p xhyper-canonical", raw.includes("cargo fmt -p xhyper-canonical -p xhyper-decimalx"));
+assert("运行 cargo test -p canonical", raw.includes("cargo test -p canonical -p decimalx"));
+assert("运行 cargo clippy -p canonical", raw.includes("cargo clippy -p canonical -p decimalx"));
+assert("运行 cargo fmt -p canonical", raw.includes("cargo fmt -p canonical -p decimalx"));
 assert("ALL CHECKS PASSED", raw.includes("ALL CHECKS PASSED"));
 
 // ============================================================
