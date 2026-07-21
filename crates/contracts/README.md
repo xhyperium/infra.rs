@@ -27,3 +27,14 @@ Active Spec：`.agents/ssot/contracts/spec/spec.md`
 - SSOT 对齐：[`docs/ssot/contracts-ssot-alignment.md`](../../docs/ssot/contracts-ssot-alignment.md)
 
 **非**整体 Production Ready（真实后端见后续工作项）。
+
+## 生产误用红线
+
+| 禁止 | 原因 |
+|------|------|
+| 宣称 L3 Contract Ready | 缺 **非 scaffold** 真实后端验证入口（W4） |
+| 把 Fake/*Adapter scaffold 当生产客户端 | 进程内内存，无真实 DB/MQ/交易所 |
+| Agent 自签 Production Ready | 仅 Maintainer L5（`prod-signoff-TEMPLATE.md`） |
+
+示例：`cargo run -p contracts --example fake_surface`（**仅 Fake 形状**）
+

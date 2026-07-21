@@ -47,3 +47,13 @@ node scripts/cov-gate-100.mjs -p observex --filter crates/observex/src
 - OpenTelemetry exporter / flush / shutdown / 采样 / 缓冲
 - 业务审计（`xhyper-evidence`）
 - 重试/熔断策略本身（属 resiliencx）
+
+## 生产误用红线
+
+| 禁止 | 原因 |
+|------|------|
+| 宣称 OTEL / 生产可观测完成 | 仅 `tracing::info!` 三方法 |
+| 依赖本 crate 做 flush/shutdown | API 不存在（DEFER） |
+
+示例：`cargo run -p observex --example trace_events`
+

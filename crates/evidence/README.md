@@ -26,3 +26,13 @@ cargo test -p evidence --all-targets
 cargo clippy -p evidence --all-targets -- -D warnings
 node scripts/cov-gate-100.mjs -p evidence --filter crates/evidence/src
 ```
+
+## 生产误用红线
+
+| 禁止 | 原因 |
+|------|------|
+| `InMemoryEvidenceAppender` 作合规审计 | 仅内存；进程退出即失 |
+| 宣称远程/签名证据链完成 | SSOT DEFER |
+
+示例：`cargo run -p evidence --example append_memory`
+

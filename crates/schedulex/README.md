@@ -41,3 +41,13 @@ cargo clippy -p schedulex --all-targets -- -D warnings
 cargo fmt --all --check
 cargo llvm-cov -p schedulex --fail-under-lines 100 --summary-only
 ```
+
+## 生产误用红线
+
+| 禁止 | 原因 |
+|------|------|
+| 当 production timer / cron | **SSOT §3 禁止**；仅任务 ID 集合 |
+| 假设 `schedule` 会触发回调 | 永不自动执行任何 Job |
+
+示例：`cargo run -p schedulex --example registry_only`
+

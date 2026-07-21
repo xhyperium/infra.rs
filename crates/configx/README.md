@@ -55,3 +55,13 @@ cargo llvm-cov -p configx --summary-only
 - 类型化配置 / schema 校验
 - secret 管理 / 脱敏 Debug
 - 全局 service locator / 订阅通知
+
+## 生产误用红线
+
+| 禁止 | 原因 |
+|------|------|
+| 作为唯一生产配置源 | 无 schema / 多源 / 热更新（SSOT DEFER） |
+| 存 secret 并假设脱敏 | value 为明文 `String` |
+
+示例：`cargo run -p configx --example basic`
+
