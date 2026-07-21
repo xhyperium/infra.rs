@@ -117,9 +117,10 @@ function toolAvailable() {
 }
 
 function capturePublicApi(pkg) {
+  // cargo-public-api needs rustdoc JSON (nightly). Prefer +nightly when available.
   const r = spawnSync(
     "cargo",
-    ["public-api", "-p", pkg, "--simplified", "--color", "never"],
+    ["+nightly", "public-api", "-p", pkg, "--simplified", "--color", "never"],
     {
       encoding: "utf8",
       cwd: ROOT,

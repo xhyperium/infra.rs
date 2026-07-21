@@ -24,6 +24,7 @@
 | `kernel-mutants.yml` | Kernel Mutants | schedule, workflow_dispatch | `mutants` |
 | `observex-coverage.yml` | Observex Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `pr-template-check.yml` | PR Template Check | pull_request | `template-check` |
+| `public-api.yml` | 公开 API | pull_request, workflow_dispatch | `public-api` |
 | `quality.yml` | 质量 | pull_request, workflow_dispatch | `check-rust`, `fmt`, `clippy`, `doc` |
 | `resiliencx-coverage.yml` | Resiliencx Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `schedulex-coverage.yml` | Schedulex Coverage | pull_request, workflow_dispatch | `line-coverage` |
@@ -32,14 +33,14 @@
 | `testkit-coverage.yml` | Testkit Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `testkit-miri.yml` | Testkit Miri | schedule, workflow_dispatch | `miri` |
 | `testkit-mutants.yml` | Testkit Mutants | schedule, workflow_dispatch | `mutants` |
-| `validation.yml` | 校验 | pull_request, workflow_dispatch | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness`, `canonical-align` |
+| `validation.yml` | 校验 | pull_request, workflow_dispatch | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness`, `canonical-align`, `decimal-panicking-ops` |
 
 ## 统计
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 24 |
-| Job 总数（解析） | 41 |
+| 工作流文件数 | 25 |
+| Job 总数（解析） | 43 |
 
 ## 维护
 
