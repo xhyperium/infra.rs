@@ -62,7 +62,7 @@ CI 中验证：
 |----|----|
 | `Cargo.toml` (项目) | `0.3.0` |
 | `CHANGELOG.md` (最新) | `0.3.0` |
-| 宪章（`docs/constitution/`） | `v1.5.0` |
+| 宪章（`docs/constitution/`） | `v1.6.0` |
 | `.agents/ssot/SSOT.md` | `v1.4.0` |
 | `xhyper-kernel` | workspace |
 | `xhyper-testkit` | `0.1.x` |

@@ -24,6 +24,7 @@
 
 | 文档 | 宪章锚点 | 说明 |
 |------|----------|------|
+| [组织 Rust 编码规范完整版 v2.0](https://github.com/bytechainx/.github/blob/main/rulesets/rust/RULES.md) | §4.0 | 上位全局标准 SSOT（`bytechainx/.github` `rulesets/rust/`）；本仓可加严不可削弱 |
 | [VERSIONING.md](VERSIONING.md) | 版本策略 | 项目 / 宪章 / Crate 版本规则 |
 | [support-matrix.md](support-matrix.md) | 发布 / CI | 官方支持矩阵（Linux x86_64 + MSRV 1.85） |
 | [prod-signoff-TEMPLATE.md](prod-signoff-TEMPLATE.md) | 发布签核 | L1–L5 模板；**仅 Maintainer 签核** |

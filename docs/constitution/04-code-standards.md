@@ -1,5 +1,42 @@
 # 四、代码标准
 
+## 4.0 Rust 全局编码规范（强制上位）
+
+本仓库 **Rust 编码**以上位组织标准为基线，本分章及项目细则可**加严**，**不可削弱**其 P0 条款。
+
+| 项 | 说明 |
+|----|------|
+| **标准名** | 《Rust 编码规范（完整版）》**v2.0** |
+| **组织 SSOT** | [`bytechainx/.github`](https://github.com/bytechainx/.github) → `rulesets/rust/RULES.md` |
+| **专项文档** | 同目录：`security` / `async-runtime` / `api-design` / `testing` / `observability` / `release` / `clippy` / `ci` / `cheatsheet` |
+| **Agent 本机加载** | `~/.claude/rules/rust.md`（symlink 至上述 `RULES.md`；由 `org-config` / `setup-global-rules.sh` 分发） |
+| **本仓关系** | 本章 §4.1–§4.8 与 [质量门禁](./05-quality-gates.md) 为**项目加严与落地**；冲突时：**不可削弱完整版 P0，可以加严** |
+
+### 4.0.1 必须遵守的完整版 P0 摘要
+
+Agent 与人类编写本仓 Rust 代码时，至少遵守：
+
+- 提交前：`fmt` + `clippy -D warnings` + `test`（证据在当前会话）
+- 库：类型化错误（`thiserror`）+ `source` 链；禁止裸 `unwrap`；默认禁止无文档的 `expect`/`panic`
+- 应用启动 fail-fast：`expect`/`panic` 仅允许且须 `// PANIC:` 注释
+- `unsafe` 紧邻 `// SAFETY:`；生产路径禁止 `println!`/`eprintln!`/`dbg!`，使用 `tracing`
+- 异步统一 `tokio`；禁止持锁跨 `.await`；通道/缓存有界；外部调用有 timeout
+- 敏感信息禁止硬编码与日志明文；默认 TLS 校验
+
+完整条款与规则 ID 以组织 `rulesets/rust/` 为准；本仓领域加严见 [quant-dev-spec.md](../governance/quant-dev-spec.md) 等。
+
+### 4.0.2 本仓加严示例（不削弱上位）
+
+| 上位基线 | 本仓加严 |
+|----------|----------|
+| 命名 / 模块惯例 | §4.3 crate `*x` 后缀、适配器路径 |
+| 语言编码 | §4.5 中文注释 + UTF-8 强制 |
+| 英文技术文档 | §4.6 ASD-STE100 |
+| 脚本 | §4.8 仅 ESM `.mjs` |
+| 门禁 | [§5](./05-quality-gates.md) `cargo deny`、宪章校验脚本等 |
+
+落地索引：[docs/governance/README.md](../governance/README.md)。
+
 ## 4.1 格式
 
 - 统一使用 `rustfmt`，配置见 `rustfmt.toml`
@@ -11,6 +48,7 @@
 - 启用 `clippy`，`-D warnings`
 - 禁止 `#[allow(...)]` 无注释说明
 - `unsafe` 代码须标注原因并附带 safety proof 注释
+- 库代码对齐完整版：`unwrap_used` deny；`expect_used` 默认 deny（启动路径见 §4.0.1）
 
 ## 4.3 命名
 
