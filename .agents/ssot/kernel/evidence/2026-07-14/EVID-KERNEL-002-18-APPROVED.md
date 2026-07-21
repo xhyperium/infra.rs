@@ -29,7 +29,7 @@
 | 文件 | 变更 |
 |------|------|
 | `.agent/SSOT/kernel/spec/spec.md` | `Status: Proposed` → **`Approved`** |
-| `.agent/SSOT/kernel/spec/xhyper-kernel-complete-spec.md` | 同上（与 SSOT 镜像） |
+| `.agent/SSOT/kernel/spec/kernel-complete-spec.md` | 同上（与 SSOT 镜像） |
 | `residual-open.txt` | RES-18-APPROVED **CLOSED** |
 | gate / matrix / review / goal / tasks / plan / todo / approval-packet | 对齐 §18.1 Approved PASS；OPEN 去掉 RES-18-APPROVED |
 
@@ -43,7 +43,7 @@
 ## 校验
 
 ```bash
-rg -n '^Status:' .agent/SSOT/kernel/spec/spec.md .agent/SSOT/kernel/spec/xhyper-kernel-complete-spec.md
+rg -n '^Status:' .agent/SSOT/kernel/spec/spec.md .agent/SSOT/kernel/spec/kernel-complete-spec.md
 # 期望: Status:         Approved
 
 rg -n '^RES-18-APPROVED:' .agent/SSOT/kernel/evidence/2026-07-14/residual-open.txt

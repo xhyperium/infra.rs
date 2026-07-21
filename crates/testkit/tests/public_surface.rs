@@ -147,7 +147,7 @@ fn cargo_toml_production_deps_only_kernel() {
     prod_deps.sort_unstable();
     assert_eq!(
         prod_deps,
-        vec!["xhyper-kernel"],
+        vec!["kernel"],
         "production deps must be only xhyper-kernel, got {prod_deps:?}"
     );
     assert!(

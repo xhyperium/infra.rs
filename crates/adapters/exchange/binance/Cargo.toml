@@ -12,11 +12,11 @@ publish = false
 async-trait = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-xhyper-canonical = { path = "../../../types/canonical", version = "0.1.0" }
-xhyper-contracts = { path = "../../../contracts", version = "0.1.0" }
-xhyper-decimalx = { path = "../../../types/decimal", version = "0.1.0" }
-xhyper-kernel = { path = "../../../kernel", version = "0.3.0" }
-xhyper-transportx = { path = "../../../transport", version = "0.1.0" }
+canonical = { path = "../../../types/canonical", version = "0.1.0" }
+contracts = { path = "../../../contracts", version = "0.1.0" }
+decimalx = { path = "../../../types/decimal", version = "0.1.0" }
+kernel = { path = "../../../kernel", version = "0.3.0" }
+transportx = { path = "../../../transport", version = "0.1.0" }
 
 [dev-dependencies]
 bytes = { workspace = true }

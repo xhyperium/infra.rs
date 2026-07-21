@@ -6,7 +6,7 @@
 | Status         | **Approved production path (S1, 2026-07-17)** · **≠** package stable |
 | Package / lib  | `xhyper-canonical` / `canonical`                                |
 | Path / version | `crates/types/canonical` / `0.1.0`                              |
-| Candidate Spec | [SPEC-TYPES-CANONICAL-002](./xhyper-canonical-complete-spec.md) |
+| Candidate Spec | [SPEC-TYPES-CANONICAL-002](./canonical-complete-spec.md) |
 | Active SSOT    | [../spec/spec.md](../spec/spec.md)（指针 [canonical-spec.md](../canonical-spec.md)） |
 | Snapshot       | `95102919`（2026-07-15）                                        |
 | Supersedes     | Draft campaign baseline；current-state 以 active + residual 为准 |

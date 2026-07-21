@@ -1270,9 +1270,9 @@ cargo miri test -p kernel
 
 ```bash
 cargo fmt -- --check
-cargo clippy -p xhyper-kernel --all-targets -- -D warnings
-cargo test -p xhyper-kernel --all-features
-cargo llvm-cov -p xhyper-kernel --fail-under-lines 95
+cargo clippy -p kernel --all-targets -- -D warnings
+cargo test -p kernel --all-features
+cargo llvm-cov -p kernel --fail-under-lines 95
 cargo run -p xhyper-archgate -- --json
 cargo xtl lint-deps
 cargo xtl crate-standard --check

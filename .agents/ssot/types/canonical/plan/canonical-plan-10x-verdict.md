@@ -15,8 +15,8 @@
 
 ```text
 cargo test -p xhyper-canonical
-cargo check -p xhyper-canonical --all-targets
-cargo clippy -p xhyper-canonical --all-targets -- -D warnings
+cargo check -p canonical --all-targets
+cargo clippy -p canonical --all-targets -- -D warnings
 cargo xtl lint-deps
 cargo fmt -- --check
 # 负向：无 f32/f64；无 codec 表面；fixture/plan/todo 存在；无 draft 死链；active 保留 OPEN

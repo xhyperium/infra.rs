@@ -7,7 +7,7 @@
 
 | # | 门禁 | 裁决 |
 |---|------|------|
-| G1 | `cargo test -p xhyper-canonical -p xhyper-decimalx` | **PASS** |
+| G1 | `cargo test -p canonical -p xhyper-decimalx` | **PASS** |
 | G2 | clippy `-D warnings` | **PASS** |
 | G3 | fmt `--check` | **PASS** |
 | G4 | dual-mirror cmp | **PASS** |

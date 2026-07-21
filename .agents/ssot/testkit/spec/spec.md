@@ -452,7 +452,7 @@ crates/test-support/contracts/
 ```toml
 [dependencies]
 kernel = {
-    package = "xhyper-kernel",
+    package = "kernel",
     path = "../kernel",
 }
 ```
@@ -2250,7 +2250,7 @@ testkit 的质量不由公开 API 数量决定，
 
 ```bash
 cmp .agent/SSOT/testkit/spec/spec.md \
-    .agent/SSOT/testkit/xhyper-testkit-complete-spec.md
+    .agent/SSOT/testkit/testkit-complete-spec.md
 ```
 
 - 短名 `spec/spec.md` 是管线入口；`xhyper-testkit-complete-spec.md` 是完整合同副本（长描述性文件名，便于外部引用）。

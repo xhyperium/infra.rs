@@ -32,6 +32,6 @@ crates/bootstrap/
 ## 验证
 
 ```bash
-cargo test -p xhyper-bootstrap --all-targets
-cargo clippy -p xhyper-bootstrap --all-targets -- -D warnings
+cargo test -p bootstrap --all-targets
+cargo clippy -p bootstrap --all-targets -- -D warnings
 ```

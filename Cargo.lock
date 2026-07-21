@@ -46,14 +46,14 @@ version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
+ "canonical",
+ "contracts",
+ "decimalx",
  "futures-core",
  "futures-util",
+ "kernel",
  "tokio",
- "xhyper-canonical",
- "xhyper-contracts",
- "xhyper-decimalx",
- "xhyper-kernel",
- "xhyper-transportx",
+ "transportx",
 ]
 
 [[package]]
@@ -87,6 +87,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bootstrap"
+version = "0.3.0"
+dependencies = [
+ "contracts",
+ "evidence",
+ "kernel",
+ "observex",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -97,6 +107,15 @@ name = "bytes"
 version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
+
+[[package]]
+name = "canonical"
+version = "0.1.0"
+dependencies = [
+ "decimalx",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "cc"
@@ -137,9 +156,29 @@ version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
+ "contracts",
+ "kernel",
  "tokio",
- "xhyper-contracts",
- "xhyper-kernel",
+]
+
+[[package]]
+name = "configx"
+version = "0.1.0"
+dependencies = [
+ "kernel",
+]
+
+[[package]]
+name = "contracts"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "canonical",
+ "decimalx",
+ "futures-core",
+ "kernel",
+ "tokio",
 ]
 
 [[package]]
@@ -193,6 +232,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4ae5f15dda3c708c0ade84bfee31ccab44a3da4f88015ed22f63732abe300c8"
 
 [[package]]
+name = "decimalx"
+version = "0.1.0"
+dependencies = [
+ "kernel",
+ "proptest",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -222,6 +271,10 @@ dependencies = [
  "libc",
  "windows-sys 0.61.2",
 ]
+
+[[package]]
+name = "evidence"
+version = "0.1.0"
 
 [[package]]
 name = "fastrand"
@@ -596,11 +649,22 @@ version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
+ "contracts",
  "futures-core",
  "futures-util",
+ "kernel",
  "tokio",
- "xhyper-contracts",
- "xhyper-kernel",
+]
+
+[[package]]
+name = "kernel"
+version = "0.3.0"
+dependencies = [
+ "loom",
+ "proptest",
+ "serde",
+ "static_assertions",
+ "thiserror",
 ]
 
 [[package]]
@@ -684,11 +748,11 @@ version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
+ "contracts",
  "futures-core",
  "futures-util",
+ "kernel",
  "tokio",
- "xhyper-contracts",
- "xhyper-kernel",
 ]
 
 [[package]]
@@ -710,19 +774,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "observex"
+version = "0.1.0"
+dependencies = [
+ "contracts",
+ "kernel",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "okxx"
 version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
+ "canonical",
+ "contracts",
+ "decimalx",
  "futures-core",
  "futures-util",
+ "kernel",
  "tokio",
- "xhyper-canonical",
- "xhyper-contracts",
- "xhyper-decimalx",
- "xhyper-kernel",
- "xhyper-transportx",
+ "transportx",
 ]
 
 [[package]]
@@ -743,9 +817,9 @@ version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
+ "contracts",
+ "kernel",
  "tokio",
- "xhyper-contracts",
- "xhyper-kernel",
 ]
 
 [[package]]
@@ -765,9 +839,9 @@ name = "postgresx"
 version = "0.3.0"
 dependencies = [
  "async-trait",
+ "contracts",
+ "kernel",
  "tokio",
- "xhyper-contracts",
- "xhyper-kernel",
 ]
 
 [[package]]
@@ -969,11 +1043,11 @@ version = "0.3.0"
 dependencies = [
  "async-trait",
  "bytes",
+ "contracts",
  "futures-core",
  "futures-util",
+ "kernel",
  "tokio",
- "xhyper-contracts",
- "xhyper-kernel",
 ]
 
 [[package]]
@@ -1029,6 +1103,14 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "webpki-roots",
+]
+
+[[package]]
+name = "resiliencx"
+version = "0.1.0"
+dependencies = [
+ "contracts",
+ "kernel",
 ]
 
 [[package]]
@@ -1143,6 +1225,10 @@ checksum = "91c1b7e4904c873ef0710c1f407dde2e6287de2bebc1bbbf7d430bb7cbffd939"
 dependencies = [
  "windows-sys 0.61.2",
 ]
+
+[[package]]
+name = "schedulex"
+version = "0.1.0"
 
 [[package]]
 name = "scoped-tls"
@@ -1341,11 +1427,11 @@ name = "taosx"
 version = "0.3.0"
 dependencies = [
  "async-trait",
+ "canonical",
+ "contracts",
+ "decimalx",
+ "kernel",
  "tokio",
- "xhyper-canonical",
- "xhyper-contracts",
- "xhyper-decimalx",
- "xhyper-kernel",
 ]
 
 [[package]]
@@ -1359,6 +1445,15 @@ dependencies = [
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "testkit"
+version = "0.1.1"
+dependencies = [
+ "kernel",
+ "proptest",
+ "static_assertions",
 ]
 
 [[package]]
@@ -1571,6 +1666,20 @@ dependencies = [
  "tracing",
  "tracing-core",
  "tracing-log",
+]
+
+[[package]]
+name = "transportx"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "kernel",
+ "reqwest",
+ "thiserror",
+ "tokio",
+ "tokio-tungstenite",
 ]
 
 [[package]]
@@ -1883,115 +1992,6 @@ name = "writeable"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ffae5123b2d3fc086436f8834ae3ab053a283cfac8fe0a0b8eaae044768a4c4"
-
-[[package]]
-name = "xhyper-bootstrap"
-version = "0.3.0"
-dependencies = [
- "xhyper-contracts",
- "xhyper-evidence",
- "xhyper-kernel",
- "xhyper-observex",
-]
-
-[[package]]
-name = "xhyper-canonical"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
- "xhyper-decimalx",
-]
-
-[[package]]
-name = "xhyper-configx"
-version = "0.1.0"
-dependencies = [
- "xhyper-kernel",
-]
-
-[[package]]
-name = "xhyper-contracts"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "futures-core",
- "tokio",
- "xhyper-canonical",
- "xhyper-decimalx",
- "xhyper-kernel",
-]
-
-[[package]]
-name = "xhyper-decimalx"
-version = "0.1.0"
-dependencies = [
- "proptest",
- "serde",
- "serde_json",
- "xhyper-kernel",
-]
-
-[[package]]
-name = "xhyper-evidence"
-version = "0.1.0"
-
-[[package]]
-name = "xhyper-kernel"
-version = "0.3.0"
-dependencies = [
- "loom",
- "proptest",
- "serde",
- "static_assertions",
- "thiserror",
-]
-
-[[package]]
-name = "xhyper-observex"
-version = "0.1.0"
-dependencies = [
- "tracing",
- "tracing-subscriber",
- "xhyper-contracts",
- "xhyper-kernel",
-]
-
-[[package]]
-name = "xhyper-resiliencx"
-version = "0.1.0"
-dependencies = [
- "xhyper-contracts",
- "xhyper-kernel",
-]
-
-[[package]]
-name = "xhyper-schedulex"
-version = "0.1.0"
-
-[[package]]
-name = "xhyper-testkit"
-version = "0.1.1"
-dependencies = [
- "proptest",
- "static_assertions",
- "xhyper-kernel",
-]
-
-[[package]]
-name = "xhyper-transportx"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "futures-util",
- "reqwest",
- "thiserror",
- "tokio",
- "tokio-tungstenite",
- "xhyper-kernel",
-]
 
 [[package]]
 name = "yoke"

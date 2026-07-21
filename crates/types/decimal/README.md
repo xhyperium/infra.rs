@@ -36,8 +36,8 @@ Package：`xhyper-decimalx` · lib：`decimalx` · path：`crates/types/decimal`
 
 ```bash
 cargo test -p xhyper-decimalx
-cargo check -p xhyper-decimalx --all-targets
-cargo clippy -p xhyper-decimalx --all-targets -- -D warnings
+cargo check -p decimalx --all-targets
+cargo clippy -p decimalx --all-targets -- -D warnings
 ```
 
 ## 版本

@@ -32,7 +32,7 @@ crates/transport/
 ## 质量门禁
 
 ```bash
-cargo test -p xhyper-transportx --all-targets
-cargo clippy -p xhyper-transportx --all-targets --all-features -- -D warnings
-cargo llvm-cov -p xhyper-transportx --fail-under-lines 100 --summary-only
+cargo test -p transportx --all-targets
+cargo clippy -p transportx --all-targets --all-features -- -D warnings
+cargo llvm-cov -p transportx --fail-under-lines 100 --summary-only
 ```

@@ -50,7 +50,7 @@
 ```bash
 # SSOT 双镜像同构（必须 exit 0）
 cmp .agent/SSOT/testkit/spec/spec.md \
-    .agent/SSOT/testkit/xhyper-testkit-complete-spec.md
+    .agent/SSOT/testkit/testkit-complete-spec.md
 
 # 包名与 Cargo.toml 一致
 grep -n '^name' crates/testkit/Cargo.toml   # 应为 xhyper-testkit

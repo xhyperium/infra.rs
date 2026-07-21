@@ -28,6 +28,6 @@
 
 ```bash
 bash .agent/SSOT/types/decimal/plan/scripts/check-prod-money-paths.sh
-cargo test -p xhyper-decimalx -p xhyper-ledger -p xhyper-binance -p xhyper-okx
+cargo test -p decimalx -p xhyper-ledger -p xhyper-binance -p xhyper-okx
 # taos: cargo test -p xhyper-taosx
 ```

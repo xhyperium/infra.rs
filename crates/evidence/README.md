@@ -22,7 +22,7 @@ L1 **审计证据追加面**：trait + 进程内实现，供 bootstrap 注入。
 ## 验证
 
 ```bash
-cargo test -p xhyper-evidence --all-targets
-cargo clippy -p xhyper-evidence --all-targets -- -D warnings
-node scripts/cov-gate-100.mjs -p xhyper-evidence --filter crates/evidence/src
+cargo test -p evidence --all-targets
+cargo clippy -p evidence --all-targets -- -D warnings
+node scripts/cov-gate-100.mjs -p evidence --filter crates/evidence/src
 ```

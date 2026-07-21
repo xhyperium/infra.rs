@@ -52,11 +52,11 @@ make check       # 宪章合规性验证
 
 ```toml
 [dependencies]
-xhyper-kernel = { git = "https://github.com/xhyperium/infra.rs.git", package = "xhyper-kernel" }
-xhyper-decimalx = { git = "https://github.com/xhyperium/infra.rs.git", package = "xhyper-decimalx" }
+xhyper-kernel = { git = "https://github.com/xhyperium/infra.rs.git", package = "kernel" }
+xhyper-decimalx = { git = "https://github.com/xhyperium/infra.rs.git", package = "decimalx" }
 
 [dev-dependencies]
-xhyper-testkit = { git = "https://github.com/xhyperium/infra.rs.git", package = "xhyper-testkit" }
+xhyper-testkit = { git = "https://github.com/xhyperium/infra.rs.git", package = "testkit" }
 ```
 
 > `xhyper-testkit` 仅允许作为 **dev-dependency**。
