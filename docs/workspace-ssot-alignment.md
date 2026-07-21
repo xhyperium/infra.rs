@@ -27,6 +27,7 @@
 | `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `redisx` | `crates/adapters/storage/redis/` | `redisx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `taosx` | `crates/adapters/storage/taos/` | `taosx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `xhyper-transportx` | `crates/transport/` | `transportx` | L1 HTTP/WS 传输 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) |
 
 > **已移除**：`infra-core`（不在 SSOT 三域 kernel/testkit/types 内；文档历史见根 `CHANGELOG` / DDR-003 撤销说明）。
 
@@ -39,9 +40,9 @@
                                 │
      ┌───────────┬──────────────┼──────────────┬───────────┐
      │           │              │              │           │
-┌────┴────┐ ┌────┴────┐  ┌──────┴─────┐ ┌──────┴─────┐ ┌───┴────┐
-│decimalx │ │configx  │  │bootstrap   │ │resiliencx  │ │testkit │
-└────▲────┘ └─────────┘  └────────────┘ └────────────┘ └───┬────┘
+┌────┴────┐ ┌────┴────┐  ┌──────┴─────┐ ┌──────┴─────┐ ┌───┴────┐ ┌───────────┐
+│decimalx │ │configx  │  │bootstrap   │ │resiliencx  │ │testkit │ │transportx │
+└────▲────┘ └─────────┘  └────────────┘ └────────────┘ └───┬────┘ └───────────┘
      │                                                      dev-only
 ┌────┴────┐
 │canonical│
@@ -65,6 +66,8 @@
 | infra 其余域 | `.agents/ssot/infra/*` | — | **仅镜像**，未宣称 crate 落地 |
 | adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **镜像已注册**；crate 为 **scaffold**，未宣称实现 |
 | （本仓）contracts | —（无独立上游 SSOT 域） | `crates/contracts` | **trait 出口已注册**（#43）；非业务实现 |
+| infra/bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/bootstrap` | **组合根已落地**（可移植 trait 替面）；contracts/observex/evidence 全量 **DEFER** |
+| infra/transport | `.agents/ssot/infra/transport/` | `crates/transport` | **active 合同已落地**（未达 M3）；见 transport 对齐文 |
 
 规则：
 
@@ -87,6 +90,7 @@ cargo test -p xhyper-configx --all-targets
 cargo test -p xhyper-decimalx --all-targets
 cargo test -p xhyper-canonical --all-targets
 cargo test -p xhyper-bootstrap --all-targets
+cargo test -p xhyper-transportx --all-targets
 node scripts/check-canonical-align.mjs
 
 # adapters / contracts scaffold
@@ -108,6 +112,7 @@ diff -rq /home/workspace/xhyper.rs/.agent/SSOT/contracts .agents/ssot/contracts
 | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) | bootstrap 组合根本仓矩阵 |
 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) | adapters 九域镜像 + scaffold 状态 |
 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) | contracts 镜像 + trait 落地 |
+| [transport-ssot-alignment.md](./transport-ssot-alignment.md) | transportx 本仓矩阵 |
 | [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md) | 镜像同步完整性（≠ 实现落地） |
 | [crates/AGENTS.md](../crates/AGENTS.md) | crate 子模块标准布局 + 概览 |
 | [.agents/ssot/SSOT.md](../.agents/ssot/SSOT.md) | R6/R7 规则 |

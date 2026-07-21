@@ -1,0 +1,36 @@
+[package]
+name = "xhyper-transportx"
+version = "0.1.0"
+publish = false
+edition.workspace = true
+rust-version.workspace = true
+description = "L1 unified network client abstraction (HTTP/WS; SSOT infra/transport)"
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "transportx"
+
+[dependencies]
+async-trait = { workspace = true }
+bytes = { workspace = true }
+futures-util = { workspace = true }
+reqwest = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["net", "rt-multi-thread", "macros"] }
+tokio-tungstenite = { workspace = true }
+xhyper-kernel = { path = "../kernel", version = "0.3.0" }
+
+[dev-dependencies]
+bytes = { workspace = true }
+futures-util = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "io-util", "time", "sync"] }
+tokio-tungstenite = { workspace = true }
+xhyper-kernel = { path = "../kernel", version = "0.3.0" }
+
+[features]
+default = []
+
+[lints]
+workspace = true
