@@ -1,0 +1,195 @@
+name: Beads Sync Test Suite
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "scripts/beads/**"
+      - ".github/workflows/beads-test.yml"
+      - "package.json"
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "指定测试套件（留空运行全部）"
+        required: false
+        type: choice
+        options:
+          - ""
+          - unit
+          - interactive
+          - complex
+          - stress
+          - i18n
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ----------------------------------------
+  # Guard: 检测 beads 脚本变更（PR 触发时）
+  # ----------------------------------------
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has-scripts: ${{ steps.filter.outputs.scripts }}
+      all-suites: ${{ steps.list.outputs.suites }}
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+      - name: 检测变更
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            scripts:
+              - "scripts/beads/**"
+              - ".github/workflows/beads-test.yml"
+      - name: 列出测试套件
+        id: list
+        run: |
+          SUITES=$(ls scripts/beads/*.test.mjs 2>/dev/null | sed 's|scripts/beads/||' | sed 's|\.test\.mjs||' | tr '\n' ' ')
+          echo "suites=$SUITES" >> $GITHUB_OUTPUT
+          echo "发现测试套件: $SUITES"
+
+  # ----------------------------------------
+  # Unit: gh-sync.test.mjs (61 tests)
+  # ----------------------------------------
+  test-unit:
+    needs: check-changes
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      needs.check-changes.outputs.has-scripts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 运行单元测试 (61 assertions)
+        run: node scripts/beads/gh-sync.test.mjs
+        timeout-minutes: 1
+
+  # ----------------------------------------
+  # Interactive UI: gh-sync-interactive-test.mjs (59 tests)
+  # ----------------------------------------
+  test-interactive:
+    needs: check-changes
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      needs.check-changes.outputs.has-scripts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 运行交互 UI 测试 (59 assertions)
+        run: node scripts/beads/gh-sync-interactive-test.mjs
+        timeout-minutes: 1
+
+  # ----------------------------------------
+  # Complex: gh-sync-complex-test.mjs (11 tests)
+  # ----------------------------------------
+  test-complex:
+    needs: check-changes
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      needs.check-changes.outputs.has-scripts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 运行复杂输入测试 (11 assertions)
+        run: node scripts/beads/gh-sync-complex-test.mjs
+        timeout-minutes: 1
+
+  # ----------------------------------------
+  # Stress: gh-sync-stress-test.mjs (29 tests)
+  # ----------------------------------------
+  test-stress:
+    needs: check-changes
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      needs.check-changes.outputs.has-scripts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 运行压力测试 (29 assertions)
+        run: node scripts/beads/gh-sync-stress-test.mjs
+        timeout-minutes: 2
+
+  # ----------------------------------------
+  # I18n: gh-sync-i18n-test.mjs (20 tests)
+  # ----------------------------------------
+  test-i18n:
+    needs: check-changes
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      needs.check-changes.outputs.has-scripts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 运行多语言测试 (20 assertions)
+        run: node scripts/beads/gh-sync-i18n-test.mjs
+        timeout-minutes: 1
+
+  # ----------------------------------------
+  # Summary: 汇总所有套件结果
+  # ----------------------------------------
+  summary:
+    needs:
+      - test-unit
+      - test-interactive
+      - test-complex
+      - test-stress
+      - test-i18n
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 汇总测试结果
+        run: |
+          echo "## Beads Test Suite Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Suite | Assertions | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          STATUS_EMOJI=✅
+          OVERALL=0
+
+          for job in test-unit test-interactive test-complex test-stress test-i18n; do
+            result="${{ needs.$job.result }}"
+            if [ "$result" = "success" ]; then
+              STATUS="✅ 通过"
+            elif [ "$result" = "failure" ]; then
+              STATUS="❌ 失败"
+              STATUS_EMOJI=❌
+              OVERALL=1
+            else
+              STATUS="⏭️ 跳过"
+            fi
+            echo "| $job | — | $STATUS |" >> $GITHUB_STEP_SUMMARY
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**总计:** 180 assertions across 5 suites" >> $GITHUB_STEP_SUMMARY
+          echo "**状态:** $STATUS_EMOJI" >> $GITHUB_STEP_SUMMARY
+
+          if [ $OVERALL -ne 0 ]; then
+            echo "::error::One or more test suites failed"
+            exit 1
+          fi
+        timeout-minutes: 1
