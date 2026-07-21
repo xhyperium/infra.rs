@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`xhyper-configx`（lib `configx`）**：落地 active SSOT 0.1.0 内存字符串 KV（`ConfigStore`）；生产依赖仅 `xhyper-kernel`；对齐文 `docs/configx-ssot-alignment.md`
 - **Crate 子模块标准布局**（`crates/AGENTS.md`）：强制 `src/`、`tests/`、`examples/`、`docs/`、`README.md`、`AGENTS.md`、`CHANGELOG.md`
 - **`kernel` 等 crate 骨架补齐**：README、CHANGELOG、AGENTS、空目录 `.gitkeep`
+- **adapters SSOT 镜像**（只读）：`exchange/{binance,okx}` + `storage/{clickhouse,kafka,nats,oss,postgres,redis,taos}`（144 文件，与上游 0 diff）
+- **对齐文档**：[docs/adapters-ssot-alignment.md](./docs/adapters-ssot-alignment.md)（镜像 vs scaffold 状态矩阵）
+- **adapters / contracts 标准布局补齐**：9 adapter crate + `infra-contracts` 补齐七项骨架；各 crate 显式 `publish = false`
 
 ### Removed
 
@@ -25,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 同步更新 `README` / `ARCHITECTURE` / `CONSTITUTION` / `crates/AGENTS.md` / `docs/VERSIONING.md` 中的 crate 地图
 - DDR-002 适用范围改为 workspace 库 crate；DDR-003 标记为已撤销（依赖已删除的 `infra_core::Error`）
 - 对齐文档：新增 `docs/workspace-ssot-alignment.md`、`docs/types-ssot-alignment.md`、`docs/configx-ssot-alignment.md`、`docs/bootstrap-ssot-alignment.md`；更新 `SSOT_SYNC_REPORT` / `docs/README` / 根 `AGENTS.md` / `CLAUDE.md` 入口
+- **adapters SSOT 本地化**：注册 `.agents/ssot/adapters/` 镜像；更新 R6/R7、`workspace`/`SSOT_SYNC` 总览与 `crates/AGENTS` 概览
 
 ---
 

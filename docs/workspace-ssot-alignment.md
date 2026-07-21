@@ -13,10 +13,20 @@
 | `xhyper-kernel` | `crates/kernel/` | `kernel` | L0 语义信任根 | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
 | `xhyper-testkit` | `crates/testkit/` | `testkit` | T0 test-support（仅 dev-dep） | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
 | `xhyper-configx` | `crates/configx/` | `configx` | L1 内存字符串 KV（非多源热更新） | [configx-ssot-alignment.md](./configx-ssot-alignment.md) |
-| `xhyper-decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money | [types-ssot-alignment.md](./types-ssot-alignment.md) |
-| `xhyper-canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `xhyper-bootstrap` | `crates/bootstrap/` | `bootstrap` | L1 唯一组合根（ADR-016） | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) |
 | `xhyper-resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
+| `xhyper-decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money | [types-ssot-alignment.md](./types-ssot-alignment.md) |
+| `xhyper-canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO | [types-ssot-alignment.md](./types-ssot-alignment.md) |
+| `infra-contracts` | `crates/contracts/` | `infra_contracts` | adapter trait 出口（#43） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `binancex` | `crates/adapters/exchange/binance/` | `binancex` | exchange adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `okxx` | `crates/adapters/exchange/okx/` | `okxx` | exchange adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `natsx` | `crates/adapters/storage/nats/` | `natsx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `ossx` | `crates/adapters/storage/oss/` | `ossx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `redisx` | `crates/adapters/storage/redis/` | `redisx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `taosx` | `crates/adapters/storage/taos/` | `taosx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 
 > **已移除**：`infra-core`（不在 SSOT 三域 kernel/testkit/types 内；文档历史见根 `CHANGELOG` / DDR-003 撤销说明）。
 
@@ -36,6 +46,10 @@
 ┌────┴────┐
 │canonical│
 └─────────┘
+
+  adapters/* (scaffold) ── thiserror（+ contracts/decimalx when implementing）
+  infra-contracts ── serde + thiserror + decimalx（trait 出口；#43）
+  （kernel/types MUST NOT depend on adapters）
 ```
 
 ## 镜像 vs 落地（R7）
@@ -46,13 +60,18 @@
 | testkit | `.agents/ssot/testkit/` | `crates/testkit` | **core 已落地**；contract-testkit DEFER |
 | types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；wire/package stable OPEN |
 | infra/configx | `.agents/ssot/infra/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
-| infra/bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/bootstrap` | **组合根已落地**（可移植 trait 替面）；contracts/observex/evidence 全量 **DEFER** |
+| infra/bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/bootstrap` | **组合根已落地**；contracts/observex/evidence 全量 **DEFER** |
+| infra/resiliencx | `.agents/ssot/infra/resiliencx/` | `crates/resiliencx` | **重试已落地**；熔断/限流 DEFER |
+| infra 其余域 | `.agents/ssot/infra/*` | — | **仅镜像**，未宣称 crate 落地 |
+| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **镜像已注册**；crate 为 **scaffold**，未宣称实现 |
+| （本仓）contracts | —（无独立上游 SSOT 域） | `crates/contracts` | **trait 出口已注册**（#43）；非业务实现 |
 
 规则：
 
 1. 镜像写 COMPLETE / Stable ≠ 本仓可宣称 ship
 2. 本仓完成声明必须以 **members + 源码 + 本仓测试输出** 为准
-3. 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游用 `cp -rf` 同步（见 [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md)）
+3. 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游用删除感知同步（见 [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md)）
+4. 保留上游层级：`infra/`、`adapters/` 勿展平到 `.agents/ssot/` 根
 
 ## 验证入口
 
@@ -69,6 +88,11 @@ cargo test -p xhyper-decimalx --all-targets
 cargo test -p xhyper-canonical --all-targets
 cargo test -p xhyper-bootstrap --all-targets
 node scripts/check-canonical-align.mjs
+
+# adapters / contracts scaffold
+cargo check -p infra-contracts -p binancex -p okxx -p redisx -p kafkax \
+  -p natsx -p postgresx -p taosx -p ossx -p clickhousex
+diff -rq /home/workspace/xhyper.rs/.agent/SSOT/adapters .agents/ssot/adapters
 ```
 
 ## 相关索引
@@ -80,6 +104,7 @@ node scripts/check-canonical-align.mjs
 | [configx-ssot-alignment.md](./configx-ssot-alignment.md) | configx 0.1.0 本仓矩阵 |
 | [types-ssot-alignment.md](./types-ssot-alignment.md) | decimal + canonical 本仓状态 |
 | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) | bootstrap 组合根本仓矩阵 |
+| [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) | adapters 九域镜像 + scaffold 状态 |
 | [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md) | 镜像同步完整性（≠ 实现落地） |
 | [crates/AGENTS.md](../crates/AGENTS.md) | crate 子模块标准布局 + 概览 |
 | [.agents/ssot/SSOT.md](../.agents/ssot/SSOT.md) | R6/R7 规则 |

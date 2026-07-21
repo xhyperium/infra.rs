@@ -77,8 +77,11 @@ crates/<crate-name>/
 | `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-bootstrap`（lib `bootstrap`） | `crates/bootstrap/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `infra-contracts` | `crates/contracts/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| adapters 九 package（见概览） | `crates/adapters/**` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-> `examples/` / `docs/` / 暂无集成测试时的 `tests/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。
+> `examples/` / `docs/` / 暂无集成测试时的 `tests/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。  
+> adapters / contracts 为 scaffold；标准七项已补齐，**≠** 业务实现完成。见 [docs/adapters-ssot-alignment.md](../docs/adapters-ssot-alignment.md)。
 
 ---
 
@@ -150,8 +153,19 @@ crates/<crate-name>/
 | `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
 | `xhyper-resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | L1 重试（active SSOT §2；熔断/限流未实现） |
 | `xhyper-bootstrap`（lib `bootstrap`） | `crates/bootstrap/` | L1 唯一组合根（ADR-016；typed composition） |
+| `infra-contracts` | `crates/contracts/` | adapter trait 出口（Exchange/Storage） |
+| `binancex` | `crates/adapters/exchange/binance/` | Binance exchange adapter（scaffold） |
+| `okxx` | `crates/adapters/exchange/okx/` | OKX exchange adapter（scaffold） |
+| `clickhousex` | `crates/adapters/storage/clickhouse/` | ClickHouse storage adapter（scaffold） |
+| `kafkax` | `crates/adapters/storage/kafka/` | Kafka storage adapter（scaffold） |
+| `natsx` | `crates/adapters/storage/nats/` | NATS storage adapter（scaffold） |
+| `ossx` | `crates/adapters/storage/oss/` | OSS storage adapter（scaffold） |
+| `postgresx` | `crates/adapters/storage/postgres/` | Postgres storage adapter（scaffold） |
+| `redisx` | `crates/adapters/storage/redis/` | Redis storage adapter（scaffold） |
+| `taosx` | `crates/adapters/storage/taos/` | TDengine storage adapter（scaffold） |
 
-> 领域分组路径（如 `crates/types/<name>/`）合法；标准布局作用于每个 workspace 成员 crate 根目录。
+> 领域分组路径（如 `crates/types/<name>/`、`crates/adapters/{exchange,storage}/<name>/`）合法；标准布局作用于每个 workspace 成员 crate 根目录。  
+> adapters SSOT 镜像：`.agents/ssot/adapters/**`；本仓状态见 [docs/adapters-ssot-alignment.md](../docs/adapters-ssot-alignment.md)。
 
 ---
 
@@ -159,6 +173,7 @@ crates/<crate-name>/
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v1.4.0 | 2026-07-21 | adapters/contracts 标准布局全绿；补 bootstrap/contracts 概览 |
 | v1.3.0 | 2026-07-21 | 新增 `xhyper-bootstrap`（L1 组合根） |
 | v1.2.0 | 2026-07-21 | 移除 `infra-core`；L0 改为 `xhyper-kernel` |
 | v1.1.3 | 2026-07-21 | 合规表全绿：补齐 `types/decimal` / `types/canonical` 标准布局缺口 |
