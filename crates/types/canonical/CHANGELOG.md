@@ -5,17 +5,25 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-07-21 — four-crate production tranche（L2 committed wire）
+
 ### Added
 
-- 真实 `benches/hot_path`（`cargo bench -- --quick` 可测）
-- 公开 API 集成覆盖扩展（`tests/public_api_surface.rs` 等）
-- `docs/API.md`：公开消费面与最小用法
+- 可运行 `examples/basic.rs`（Order/CancelOrderRequest serde + wire_commitment）
+- `tests/public_api_surface.rs` 覆盖 shape/time/wire 与全 DTO serde 往返
+- 真实 `benches/hot_path`
+- `docs/API.md` 完整面；README 声明 **L2 committed wire subset**（v1–v1.3）
+- package 选择器统一为 `canonical`
 
+### Notes
 
-### 新增
+- 证据：`docs/plans/releases/2026-07-21-four-crates-internal-release.md`
+- **≠** 全 crate Production Ready / crates.io
 
-- workspace：根 `Cargo.toml` 登记 `crates/types/canonical`（package `xhyper-canonical` / lib `canonical`）。
-- 依赖：`xhyper-decimalx` 使用 `path + version`，满足 cargo-deny `bans.wildcards=deny`。
+### Historical
+
+- workspace 登记 `crates/types/canonical`（package `canonical` / lib `canonical`）。
+- 依赖：`decimalx` 使用 `path + version`，满足 cargo-deny `bans.wildcards=deny`。
 - 标准布局：`AGENTS.md`、`examples/`、`docs/`、`tests/public_api.rs`（库外消费者契约）。
 - API：公开模块 `shape::*` 形状检查、`proposed_time::*`（unix ns↔ms）；DTO `ts` 语义 = Unix ns。
 - Golden：`fixtures/market/canonical/v1/`（cancel / OrderRef / legacy ack）。

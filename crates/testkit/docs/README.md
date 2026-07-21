@@ -1,6 +1,6 @@
 # testkit docs
 
-**Package**：`xhyper-testkit` · **lib**：`testkit` · **角色**：T0 test-support（仅 dev-dep）
+**Package**：`testkit` · **lib**：`testkit` · **角色**：T0 test-support（仅 dev-dep）· **层级**：L1 ManualClock
 
 本目录存放 **crate 级**设计 / 契约补充 / 迁移笔记。
 不替代 rustdoc；不重复仓库根治理文档（见分层边界 `crates/AGENTS.md`）。

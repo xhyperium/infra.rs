@@ -1,22 +1,25 @@
-# Changelog — xhyper-decimalx
+# Changelog — decimalx
 
 ## [Unreleased]
 
-### Added
-
-- 真实 `benches/hot_path`（`cargo bench -- --quick` 可测）
-- 公开 API 集成覆盖扩展（`tests/public_api_surface.rs` 等）
-- `docs/API.md`：公开消费面与最小用法
-
+## [0.1.0] - 2026-07-21 — four-crate production tranche（L1 Internal Ready）
 
 ### Added
 
-- 按 crates 子模块标准补齐 `examples/` 骨架（`.gitkeep`）
-- W1 证据硬化：`tests/oracle_diff.rs`（BigDecimal 差分）、`boundary_matrix.rs`、`adversarial_serde.rs`
-- 生产路径 panicking 运算符门禁：`scripts/quality-gates/check-decimal-no-panicking-ops.mjs`
+- 可运行 `examples/basic.rs`（checked 四则 + Money serde）
+- `tests/public_api_surface.rs` 覆盖构造/四则/舍入/错误变体/serde
+- 真实 `benches/hot_path`
+- `docs/API.md` 完整公开面；README 声明 **L1 Internal Ready** 与硬限制
+- package 选择器统一为 `decimalx`
+- W1 证据：`oracle_diff` / `boundary_matrix` / `adversarial_serde`；panicking 门禁脚本
 - scheduled CI：`decimal-mutants.yml` / `decimal-miri.yml`
 
-## 0.1.0 — 2026-07-21
+### Notes
+
+- 证据：`docs/plans/releases/2026-07-21-four-crates-internal-release.md`
+- **≠** package stable / 跨版本 wire / crates.io
+
+## 0.1.0 — historical initial
 
 ### Added
 

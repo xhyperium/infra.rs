@@ -148,7 +148,7 @@ fn cargo_toml_production_deps_only_kernel() {
     assert_eq!(
         prod_deps,
         vec!["kernel"],
-        "production deps must be only xhyper-kernel, got {prod_deps:?}"
+        "production deps must be only kernel, got {prod_deps:?}"
     );
     assert!(
         CARGO_TOML.contains("publish = false"),

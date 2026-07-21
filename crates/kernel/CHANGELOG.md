@@ -1,6 +1,6 @@
 # Changelog
 
-本文件记录 `xhyper-kernel`（lib 名 `kernel`）的变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)，版本遵循 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)。
+本文件记录 package `kernel`（lib 名 `kernel`）的变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)，版本遵循 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)。
 
 版本号与 workspace `package.version` 对齐。
 
@@ -8,14 +8,22 @@
 
 ## [Unreleased]
 
-### Added
-
-- 真实 `benches/hot_path`（`cargo bench -- --quick` 可测）
-- 公开 API 集成覆盖扩展（`tests/public_api_surface.rs` 等）
-- `docs/API.md`：公开消费面与最小用法
-
+## [0.3.0] - 2026-07-21 — four-crate production tranche
 
 ### Added
+
+- 可运行 `examples/basic.rs`（墙钟 + 关停 + 错误分类）
+- `tests/public_api_surface.rs` 全量根 re-export 断言（含 `wait`、ClockError→XError、全 ComponentState 链）
+- 真实 `benches/hot_path`（`cargo bench -p kernel --bench hot_path -- --quick`）
+- `docs/API.md`：完整公开消费面；README 声明 **L1+L4** 生产层级与硬限制
+- package 选择器统一为 Cargo 名 `kernel`（命令路径）
+
+### Notes
+
+- 内部生产发布证据见 `docs/plans/releases/2026-07-21-four-crates-internal-release.md`
+- `publish = false`；不批准 crates.io
+
+### Historical
 
 - 对齐 **SPEC-KERNEL-002** 可移植合同（§3–§8 / §11）：error / clock / lifecycle 生产面
 - `tests/lifecycle_concurrency_loom.rs`（`cfg(loom)` Shutdown 模型测试）
