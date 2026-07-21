@@ -95,3 +95,14 @@ jobs:
           fi
       - name: 运行 harness check
         run: node scripts/quality-gates/check.mjs
+
+  canonical-align:
+    name: Canonical 对齐检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - name: 运行 canonical-align check
+        run: node scripts/quality-gates/check-canonical-align.mjs
