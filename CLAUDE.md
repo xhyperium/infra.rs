@@ -125,7 +125,7 @@ bd ready
 
 `.claude/*.local.json` 含 API 配置（gitignored），由 Claude Code `--settings` 切换，会话内无需管理。
 
-<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->
+<!-- BEGIN BEADS INTEGRATION v:1.0 profile:minimal hash:6cd5cc61 -->
 ## Beads Issue Tracker
 
 This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
