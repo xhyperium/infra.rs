@@ -14,7 +14,7 @@
 |------|------|
 | 上游镜像 COMPLETE / Spec Approved 叙事 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
 | 镜像同步 | **完整**：与 `xhyper.rs/.agent/SSOT/adapters/` `diff -rq` = 0（144 文件 / 1.1M） |
-| 本仓 adapter crates | **scaffold 已注册**（#42）；`Error` + `Result` 骨架；**无**业务实现 |
+| 本仓 adapter crates | **scaffold 已注册**；exchange `binancex`/`okxx` 可选注入 `transportx::HttpDriver`；业务 HTTP 协议解析 **DEFER** |
 | `crates/AGENTS.md` 标准七项布局 | **已齐**（README / AGENTS / CHANGELOG / examples / docs / tests） |
 | `publish = false` | **已**在 adapter + contracts `Cargo.toml` 显式关闭 |
 | package stable / crates.io | **未**宣称 |
