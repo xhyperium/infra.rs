@@ -6,6 +6,12 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
+publish = false
 
 [dependencies]
-thiserror = { workspace = true }
+# path + version：满足 cargo-deny bans.wildcards=deny
+infra-contracts = { path = "../../../contracts", version = "0.3.0" }
+xhyper-decimalx = { path = "../../../types/decimal", version = "0.1.0" }
+
+[lints]
+workspace = true
