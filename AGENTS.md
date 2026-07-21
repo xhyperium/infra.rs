@@ -210,7 +210,7 @@ node scripts/quality-gates/check.mjs
 - **人工审批**：AI 不可 self-approve（§7.1），需 `@xhyperium/maintainers`
 - **失败处理**：3 次尝试后仍失败 → 记录原因 → 创建 follow-up → 移交给人类
 
-<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->
+<!-- BEGIN BEADS INTEGRATION v:1.0 profile:minimal hash:970c3bf2 -->
 ## Beads Issue Tracker
 
 This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
