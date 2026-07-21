@@ -37,29 +37,37 @@ jobs:
           fi
 
   build:
-    name: 构建
+    name: 检查
     needs: check-rust
     if: needs.check-rust.outputs.has-rust == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    env:
+      CARGO_INCREMENTAL: 0
     steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: 构建
-        run: cargo build --workspace --all-features
+        with:
+          shared-key: stable
+      - name: 检查
+        run: cargo check --workspace --all-features
 
   test:
     name: 测试
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      CARGO_INCREMENTAL: 0
     steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: stable
       - name: 安装 cargo-nextest
         uses: taiki-e/install-action@v2
         with:
@@ -73,6 +81,8 @@ jobs:
     if: needs.check-rust.outputs.has-rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      CARGO_INCREMENTAL: 0
     steps:
       - uses: actions/checkout@v4
       - name: 安装 MSRV Rust 工具链
@@ -87,6 +97,8 @@ jobs:
     if: needs.check-rust.outputs.has-rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      CARGO_INCREMENTAL: 0
     steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链

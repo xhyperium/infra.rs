@@ -61,6 +61,8 @@ jobs:
     if: needs.check-rust.outputs.has-rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      CARGO_INCREMENTAL: 0
     steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
@@ -78,6 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
+      CARGO_INCREMENTAL: 0
       RUSTDOCFLAGS: -D warnings
     steps:
       - uses: actions/checkout@v4
