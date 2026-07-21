@@ -1,7 +1,10 @@
-//! `kafkax` — kafka adapter scaffold。
+//! `kafkax` — kafka adapter。
 //!
-//! 实现 [`contracts::EventBus`]（进程内内存）。
+//! - scaffold：[`KafkaAdapter`]
+//! - mock 验证入口：[`MockKafkaBus`]（单调 `BusMessage.id`；**非**真实 Kafka）
 
 mod adapter;
+mod mock;
 
 pub use adapter::KafkaAdapter;
+pub use mock::MockKafkaBus;

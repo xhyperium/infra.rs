@@ -4,8 +4,9 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use async_trait::async_trait;
+use bytes::Bytes;
 use canonical::{
-    CancelOrderRequest, Money, Order, OrderAck, OrderBookSnapshot, OrderStatus, Position,
+    CancelOrderRequest, Money, Order, OrderAck, OrderBookSnapshot, OrderRef, OrderStatus, Position,
     SymbolMeta, Tick, Trade, VenueId,
 };
 use contracts::{
@@ -123,6 +124,19 @@ impl OkxAdapter {
         http.execute(request).await.map_err(map_transport_error)
     }
 
+    /// 经注入的 [`HttpDriver`] 发起 POST。
+    pub async fn http_post(&self, path: &str, body: Bytes) -> XResult<HttpResponse> {
+        let http =
+            self.http.as_ref().ok_or_else(|| XError::unavailable("http driver not configured"))?;
+        let request = HttpRequest {
+            method: "POST".into(),
+            url: self.join_url(path),
+            headers: vec![],
+            body: Some(body),
+        };
+        http.execute(request).await.map_err(map_transport_error)
+    }
+
     fn zero_qty() -> XResult<Qty> {
         Ok(Qty::new(
             Decimal::try_new(0, 0).map_err(|e| XError::internal(format!("zero qty: {e}")))?,
@@ -165,13 +179,55 @@ impl VenueAdapter for OkxAdapter {
         Ok(OrderStatus::Open)
     }
 
-    async fn cancel_order_request(&self, _request: &CancelOrderRequest) -> XResult<()> {
+    async fn cancel_order_request(&self, request: &CancelOrderRequest) -> XResult<()> {
         self.require_connected()?;
+        if self.http.is_some() {
+            // mock-first 结构化路径：经 HttpDriver POST 取消；非真实 OKX 协议
+            let id = match &request.id {
+                OrderRef::Exchange(s) | OrderRef::Client(s) => s.as_str(),
+            };
+            let path =
+                format!("/api/v5/trade/cancel-order?instId={}&ordId={}", request.instrument, id);
+            let resp = self.http_post(&path, Bytes::new()).await?;
+            if resp.status == 200 {
+                return Ok(());
+            }
+            return Err(XError::unavailable(format!(
+                "cancel_order_request http status {}",
+                resp.status
+            )));
+        }
         Ok(())
     }
 
-    async fn query_order_request(&self, _request: &CancelOrderRequest) -> XResult<OrderStatus> {
+    async fn query_order_request(&self, request: &CancelOrderRequest) -> XResult<OrderStatus> {
         self.require_connected()?;
+        if self.http.is_some() {
+            // mock-first 结构化路径：经 HttpDriver GET 查询
+            let id = match &request.id {
+                OrderRef::Exchange(s) | OrderRef::Client(s) => s.as_str(),
+            };
+            let path = format!("/api/v5/trade/order?instId={}&ordId={}", request.instrument, id);
+            let resp = self.http_get(&path).await?;
+            if resp.status != 200 {
+                return Err(XError::unavailable(format!(
+                    "query_order_request http status {}",
+                    resp.status
+                )));
+            }
+            let body = String::from_utf8_lossy(&resp.body);
+            if body.contains("Cancelled")
+                || body.contains("Canceled")
+                || body.contains("canceled")
+                || body.contains("CANCELED")
+            {
+                return Ok(OrderStatus::Cancelled);
+            }
+            if body.contains("Filled") || body.contains("filled") || body.contains("FILLED") {
+                return Ok(OrderStatus::Filled);
+            }
+            return Ok(OrderStatus::Open);
+        }
         Ok(OrderStatus::Open)
     }
 
@@ -374,5 +430,41 @@ mod tests {
         let a = OkxAdapter::demo();
         assert!(!a.has_http());
         assert_eq!(a.http_get("/x").await.expect_err("e").kind(), kernel::ErrorKind::Unavailable);
+    }
+
+    #[tokio::test]
+    async fn http_cancel_and_query_order_request_paths() {
+        use transportx::MockHttpTransport;
+
+        let mock = Arc::new(MockHttpTransport::new());
+        let cancel_url = "https://www.okx.com/api/v5/trade/cancel-order?instId=BTC-USDT&ordId=e1";
+        let query_url = "https://www.okx.com/api/v5/trade/order?instId=BTC-USDT&ordId=e1";
+        mock.set_post(cancel_url, Bytes::from_static(b"{\"code\":\"0\"}"));
+        mock.set_get(query_url, Bytes::from_static(b"{\"state\":\"canceled\"}"));
+
+        let a = OkxAdapter::mainnet().with_http(mock);
+        VenueAdapter::connect(&a).await.unwrap();
+        let req = CancelOrderRequest {
+            venue: "okx".into(),
+            instrument: "BTC-USDT".into(),
+            id: OrderRef::Exchange("e1".into()),
+        };
+        a.cancel_order_request(&req).await.unwrap();
+        assert_eq!(a.query_order_request(&req).await.unwrap(), OrderStatus::Cancelled);
+    }
+
+    #[tokio::test]
+    async fn http_query_order_request_missing_mock_errors() {
+        use transportx::MockHttpTransport;
+        let mock = Arc::new(MockHttpTransport::new());
+        let a = OkxAdapter::mainnet().with_http(mock);
+        VenueAdapter::connect(&a).await.unwrap();
+        let req = CancelOrderRequest {
+            venue: "okx".into(),
+            instrument: "BTC-USDT".into(),
+            id: OrderRef::Exchange("missing".into()),
+        };
+        let e = a.query_order_request(&req).await.expect_err("missing");
+        assert_eq!(e.kind(), kernel::ErrorKind::Invalid);
     }
 }

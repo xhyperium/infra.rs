@@ -6,7 +6,7 @@
 | 镜像 | `.agents/ssot/adapters/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 本仓路径 | `crates/adapters/{exchange,storage}/<name>` |
 | 审计日期 | 2026-07-21 |
-| 结论 | **SSOT 镜像已本地化注册**；**9 adapter + contracts 已 workspace 注册**；标准布局/`publish=false` 已补齐；**未**宣称业务实现 / package stable / ship |
+| 结论 | **SSOT 镜像已本地化注册**；**9 adapter + contracts 已 workspace 注册**；标准布局/`publish=false` 已补齐；first-batch **进程内 mock 验证入口**已补（infra-asa.5 / DEFER-1 mock-first）；**未**宣称业务实现 / package stable / ship / Production Ready |
 
 ## 结论摘要
 
@@ -58,15 +58,15 @@ version                         workspace 0.3.0
 
 | 镜像路径 | 本仓路径 | package | 本仓状态 |
 |----------|----------|---------|----------|
-| `.agents/ssot/adapters/exchange/binance` | `crates/adapters/exchange/binance` | `binancex` | scaffold |
-| `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | scaffold |
-| `.agents/ssot/adapters/storage/clickhouse` | `crates/adapters/storage/clickhouse` | `clickhousex` | scaffold |
-| `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | scaffold |
-| `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | scaffold |
-| `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | scaffold |
-| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | scaffold |
-| `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | scaffold |
-| `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | scaffold |
+| `.agents/ssot/adapters/exchange/binance` | `crates/adapters/exchange/binance` | `binancex` | scaffold + **mock HTTP 验证**（`HttpDriver` + `cancel/query_order_request`） |
+| `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | scaffold + **mock HTTP 验证**（`HttpDriver` + `cancel/query_order_request`） |
+| `.agents/ssot/adapters/storage/clickhouse` | `crates/adapters/storage/clickhouse` | `clickhousex` | pure scaffold |
+| `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | scaffold + **`MockKafkaBus`**（EventBus） |
+| `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | scaffold + **`MockNatsBus`**（EventBus） |
+| `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | pure scaffold |
+| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | scaffold + **`ObservingPostgresAdapter` / `MockPostgresBackend`**（Tx commit 边界） |
+| `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | scaffold + **`MockRedisAdapter`**（TTL 模拟 KV） |
+| `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | pure scaffold |
 
 验证（本仓权威命令）：
 
@@ -154,3 +154,32 @@ adapters/*  →  (future) contracts / types / kernel
 |----|------|
 | scaffold 签名适配 | **PASS**：EventBus/PubSub 流项为 `BusMessage`（kafka/nats/redis）；TxRunner `begin_tx`（postgres） |
 | 业务协议 / 真实后端 | **仍 DEFER**（内存 scaffold，非生产实现） |
+
+## 跟进（2026-07-21 / infra-asa.5 · DEFER-1 mock-first）
+
+目标：为 first-batch contracts traits 提供 **非 scaffold 命名** 的进程内 mock 验证入口；
+默认 `cargo test --workspace` **始终离线绿灯**（无 Docker / 无外部服务 / 无云凭证）。
+
+| trait | package | mock 验证入口 | 证明点 |
+|-------|---------|---------------|--------|
+| `Repository` + `TxRunner`/`TxContext` | `postgresx` | `ObservingPostgresAdapter` / `MockPostgresBackend` | staged 写入仅在 commit 后可见；rollback 丢弃；可观察 commit/rollback 计数 |
+| `KeyValueStore` + `PubSub` | `redisx` | `MockRedisAdapter` | TTL 过期返回 `None`；PubSub 单调 `BusMessage.id` |
+| `EventBus` | `kafkax` | `MockKafkaBus` | 跨 topic 单调消息 ID；`dyn EventBus` 可测 |
+| `EventBus` | `natsx` | `MockNatsBus` | 同上 |
+| `VenueAdapter`（结构化 cancel/query） | `binancex` / `okxx` | 注入 `transportx::MockHttpTransport` | `cancel_order_request` / `query_order_request` 经 `HttpDriver`；缺 mock 映射为 `Invalid` |
+
+| 项 | 状态 |
+|----|------|
+| 默认 CI 离线 | **PASS**：mock 始终编译；无 `live` feature 默认开启；无外部服务 |
+| 可选 workflow | `.github/workflows/contracts-live.yml`（**仅** `workflow_dispatch`） |
+| 真实 DB/MQ/交易所 | **仍 DEFER**（明确非 Production Ready） |
+| clickhouse / oss / taos | **仍 pure scaffold**（非 first-batch） |
+
+验证命令：
+
+```bash
+cargo test -p postgresx -p redisx -p kafkax -p natsx -p okxx -p binancex --all-targets
+cargo test -p contracts --all-targets
+cargo clippy -p postgresx -p redisx -p kafkax -p okxx --all-targets -- -D warnings
+```
+
