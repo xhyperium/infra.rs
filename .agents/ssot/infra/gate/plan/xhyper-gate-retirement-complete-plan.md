@@ -5,7 +5,7 @@ Plan ID:        PLAN-GATE-RETIRE-001
 Title:          Retire Runtime Gate and Replace with Typed Composition
 Repository:     xhyperium/xhyper.rs
 Target Package: gate
-Current Path:   crates/infra/gate
+Current Path:   crates/gate
 Decision:       Retire and delete
 Replacement:    bootstrap + typed AppContext / bounded contexts
 Status:         Implemented（2026-07-15 · A12 物理删除完成；防回流 no-new-gate）
@@ -42,7 +42,7 @@ Method:         Strangler Fig + small-batch migration
 只删除：
 
 ```text
-crates/infra/gate
+crates/gate
 package: gate
 runtime Gate / Capability / register / resolve
 ```
@@ -227,7 +227,7 @@ Bootstrap::build()
 当前：
 
 ```text
-path  = crates/infra/gate
+path  = crates/gate
 layer = L0
 ```
 
@@ -575,7 +575,7 @@ pub struct ExecutionContext {
 ## 5.1 删除对象
 
 ```text
-crates/infra/gate/
+crates/gate/
 ├── Cargo.toml
 ├── src/lib.rs
 ├── README.md
@@ -757,7 +757,7 @@ downstream external repositories
 bootstrap 生产依赖 gate
 bootstrap src 使用 Gate / Capability
 bootstrap e2e test 使用 Capability 和 ctx.gate()
-root Cargo workspace 包含 crates/infra/gate
+root Cargo workspace 包含 crates/gate
 architecture spec 把 gate 标为 L0
 ```
 
@@ -1076,7 +1076,7 @@ crates/compat/gate-compat
 删除整个：
 
 ```text
-crates/infra/gate/
+crates/gate/
 ```
 
 ## 11.2 Workspace
@@ -1084,7 +1084,7 @@ crates/infra/gate/
 根 `Cargo.toml` 删除：
 
 ```toml
-"crates/infra/gate",
+"crates/gate",
 ```
 
 运行：
@@ -1191,7 +1191,7 @@ Migration: use contracts traits and typed AppContext accessors.
 ## 11.8 Phase 4 Exit Gate
 
 ```text
-[ ] crates/infra/gate 不存在
+[ ] crates/gate 不存在
 [ ] workspace member 不存在
 [ ] cargo metadata 无 package gate
 [ ] Cargo.lock 无 workspace gate package
@@ -1490,7 +1490,7 @@ public API update
 ## PR-5：Physical Deletion and Governance Closure
 
 ```text
-delete crates/infra/gate
+delete crates/gate
 workspace cleanup
 registry/spec/docs cleanup
 STRUCTURE regenerate
@@ -1596,7 +1596,7 @@ active_specs_claiming_gate_is_L0            = 0
 ## 19.3 物理闭合
 
 ```text
-[ ] crates/infra/gate 已删除
+[ ] crates/gate 已删除
 [ ] root workspace member 已删除
 [ ] Cargo.lock 已更新
 [ ] architecture registry 已更新

@@ -2,7 +2,7 @@
 
 状态：当前 `0.1.0` active 实现合同（HTTP/WS 真实驱动 + Mock 已落地；**未达**生产 M3）
 权威来源：`CONSTITUTION.md`、`docs/architecture/spec.md`、ADR-007、当前 crate 源码
-crate 路径：`crates/infra/transport`
+crate 路径：`crates/transport`
 
 - Package / lib：`xhyper-transportx` / `transportx`
 - Implementation snapshot：`b0934baa`（2026-07-15）

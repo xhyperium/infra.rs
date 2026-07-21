@@ -283,7 +283,7 @@ crates/kernel/
 |------|--------|
 | `crates/kernel/src/clock.rs` | 定义 + `SystemClock::now` + 单测 |
 | `crates/testkit/src/lib.rs` | ManualClock::now |
-| `crates/infra/gate/src/lib.rs` | 测试 FixedClock |
+| `crates/gate/src/lib.rs` | 测试 FixedClock |
 | `crates/adapters/exchange/binance/src/rest.rs` | 测试 FixedClock |
 | `crates/adapters/exchange/okx/src/rest.rs` | 测试 FixedClock |
 

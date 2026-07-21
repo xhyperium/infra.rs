@@ -4,7 +4,7 @@
 |---|---|
 | Status | 当前 `0.1.0` 实现合同；非生产就绪 |
 | Package / lib | `xhyper-bootstrap` / `bootstrap` |
-| Path | `crates/infra/bootstrap` |
+| Path | `crates/bootstrap` |
 | Layer | L1 唯一组合根（R3.1） |
 | Authority | 本文件是 active current-state spec |
 | Candidate | [SPEC-INFRA-BOOTSTRAP-002](../../../../draft/xhyper-bootstrap-complete-spec.md)（Draft，非权威，不覆盖本文） |
@@ -88,4 +88,4 @@ cargo fmt -- --check
 
 - [ADR-016](../../../../../docs/architecture/adr/016-bootstrap-sole-composition-root.md)
 - [PLAN-GATE-RETIRE-001](../../gate/plan/xhyper-gate-retirement-complete-plan.md)
-- `crates/infra/bootstrap/{Cargo.toml,src/,tests/e2e.rs}`
+- `crates/bootstrap/{Cargo.toml,src/,tests/e2e.rs}`

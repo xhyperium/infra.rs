@@ -7,7 +7,7 @@
 | Source Spec | [`.agent/SSOT/infra/gate/gate-spec.md`](../gate-spec.md)（active；退役后 Superseded） |
 | Source Plan ID | `PLAN-GATE-RETIRE-001` · Status **Proposed** |
 | Goal | `GOAL-GATE-RETIRE-PLAN-PACKAGE`（本包：计划完备性 + 10x + todo + 对齐） |
-| Package | `xhyper-gate` / lib `gate` @ `crates/infra/gate` **0.1.0** |
+| Package | `xhyper-gate` / lib `gate` @ `crates/gate` **0.1.0** |
 | Decision | **Retire and delete** runtime gate；**保留** CI/arch/policy gates |
 | Replacement | `bootstrap` + typed `PlatformContext` / `AppContext` / `BootstrappedApp` / `BootstrapBuilder` |
 | Method | Strangler Fig + small-batch（PR-1…PR-5） |
@@ -33,7 +33,7 @@
 
 ```text
 只删除：
-  crates/infra/gate
+  crates/gate
   package: gate（xhyper-gate）
   runtime Gate / Capability / register / resolve
 
@@ -51,7 +51,7 @@
 
 | ID | 缺陷 | 证据 |
 |----|------|------|
-| D-1 | `Capability` 仅 `name()`，无业务方法 | `crates/infra/gate/src/lib.rs` |
+| D-1 | `Capability` 仅 `name()`，无业务方法 | `crates/gate/src/lib.rs` |
 | D-2 | 字符串 `resolve` 失去编译期完整性 | 同左 |
 | D-3 | register 非事务：先写 HashMap 再 evidence | 源 §1.3 |
 | D-4 | `Gate::new()` evidence=None；bootstrap 默认绕过 | 源 §1.4 |
@@ -92,7 +92,7 @@ Bounded contexts（`MarketDataContext` / `ExecutionContext`）按真实服务需
 
 | 项 | 状态 |
 |----|------|
-| package | `xhyper-gate` 0.1.0 @ `crates/infra/gate`（workspace member） |
+| package | `xhyper-gate` 0.1.0 @ `crates/gate`（workspace member） |
 | 生产依赖者 | **仅** `xhyper-bootstrap`（`cargo tree -i xhyper-gate`） |
 | 运行时调用 | bootstrap `src/lib.rs` + unit tests + `tests/e2e.rs` |
 | 真实 service 经 gate 取 Binance/Redis | **未发现**（e2e 已直接用 contracts trait） |
@@ -105,7 +105,7 @@ Bounded contexts（`MarketDataContext` / `ExecutionContext`）按真实服务需
 
 | 在范围内 | 不在范围内 |
 |----------|------------|
-| 完整执行计划包 + inventory + tasks | 物理删除 `crates/infra/gate` |
+| 完整执行计划包 + inventory + tasks | 物理删除 `crates/gate` |
 | 10 轮计划完备性（adversarial） | RFC/ADR 人审签字关闭 |
 | `.worktree/gate-todo.md` | PR-2…PR-5 代码 cutover |
 | 对齐文档（诚实状态） | CI job 改名 `policy-gates` |
@@ -217,7 +217,7 @@ GATE-RETIRE-00 … GATE-RETIRE-06
 
 | Exit checkbox | Task ID |
 |---------------|---------|
-| crates/infra/gate 不存在 | T-DEL-001 |
+| crates/gate 不存在 | T-DEL-001 |
 | workspace member 不存在 | T-DEL-002 |
 | cargo metadata 无 package gate / xhyper-gate | T-DEL-003 |
 | Cargo.lock 无 workspace gate | T-DEL-004 |
@@ -253,9 +253,9 @@ GATE-RETIRE-00 … GATE-RETIRE-06
 ### 4.1 删除（runtime only）
 
 ```text
-crates/infra/gate/          # 整树
+crates/gate/          # 整树
 package xhyper-gate / lib gate
-workspace member "crates/infra/gate"
+workspace member "crates/gate"
 bootstrap → xhyper-gate dependency
 gate::Capability, gate::Gate
 Gate::new / with_evidence / with_evidence_and_clock

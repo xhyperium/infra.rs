@@ -97,7 +97,7 @@
 - 镜像内 `review COMPLETE` / `Stable CLAIMED` 描述的是**上游 xhyper.rs 战役状态**
 - 本仓是否落地以 `Cargo.toml` workspace members + `crates/` 路径为准
 - **testkit**：本仓已落地 `crates/testkit`（`xhyper-testkit`）；`contract-testkit` 未落地
-- **infra 八域**：当前仅镜像文档，本仓对应 `crates/infra/*` **未**宣称落地
+- **infra 八域**：当前仅镜像文档，本仓对应 `crates/*` **未**宣称落地
 - 审计基线见 `docs/testkit-ssot-alignment.md` / `docs/kernel-ssot-alignment.md`
 
 ---

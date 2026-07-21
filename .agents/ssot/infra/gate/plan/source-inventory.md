@@ -16,7 +16,7 @@
 | 字段 | 源值 | Mapped |
 |------|------|--------|
 | Plan ID | PLAN-GATE-RETIRE-001 | plan.md 表头 |
-| Target | gate @ crates/infra/gate | T-DEL-001 |
+| Target | gate @ crates/gate | T-DEL-001 |
 | Decision | Retire and delete | residual DEF-GOV / approval A1 |
 | Replacement | bootstrap + typed AppContext | T-BOOT-* |
 | Status | Proposed | residual GOV-RFC/ADR OPEN |
@@ -28,7 +28,7 @@
 
 | Item | Mapped |
 |------|--------|
-| crates/infra/gate | T-DEL-001 |
+| crates/gate | T-DEL-001 |
 | package: gate / xhyper-gate | T-DEL-002 T-DEL-003 |
 | runtime Gate / Capability | T-RM-002 T-DEL-001 |
 | register / resolve | T-RM-003 T-MIG-003 |
