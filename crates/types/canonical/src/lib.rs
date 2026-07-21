@@ -5,12 +5,17 @@
 //! # 生产就绪（诚实边界）
 //!
 //! - **不是** 整体 Production Ready / package stable。
-//! - **已承诺 wire v1**：[`CancelOrderRequest`] / [`OrderRef`] / [`OrderAck`] /
-//!   [`OrderStatus`] / [`Side`]（见 [`wire`]）；其余 DTO 仍 Uncommitted。
+//! - **已承诺 wire**（见 [`wire`]）：
+//!   - **v1**：[`CancelOrderRequest`] / [`OrderRef`] / [`OrderAck`] /
+//!     [`OrderStatus`] / [`Side`]
+//!   - **v1.1**：[`Order`]
+//!   - **v1.2**：[`Tick`] / [`Trade`]
+//!   - **v1.3**：[`Position`] / [`OrderBookSnapshot`] / [`PriceLevel`] /
+//!     [`SymbolMeta`]
 //! - `ts: i64` = Unix epoch **纳秒**（CAN-TIME-001 Approved 2026-07-17；与 kernel 同刻度）。
 //! - 新执行接口优先 [`OrderRef`] / [`CancelOrderRequest`]（CAN-ID Approved）。
 //! - 订单 wire id 为普通 [`String`]（`OrderId` 类型别名已删除）。
-//! - Wire 等级见仓库
+//! - Wire 等级以本 crate [`wire`] 模块为实现权威；镜像矩阵见
 //!   `.agents/ssot/types/canonical/plan/wire-commitment-matrix.md`；
 //!   validation owner 见
 //!   `.agents/ssot/types/canonical/plan/validation-owners.md`。
@@ -35,7 +40,10 @@ pub use shape::{
     cancel_request_shape_ok, is_nonempty_token, is_plausible_instrument_id,
     is_plausible_venue_slug, order_ref_payload_nonempty,
 };
-pub use wire::{COMMITTED_WIRE_V1, WireCommitment, wire_commitment};
+pub use wire::{
+    COMMITTED_WIRE_V1, COMMITTED_WIRE_V1_1, COMMITTED_WIRE_V1_2, COMMITTED_WIRE_V1_3,
+    WireCommitment, wire_commitment,
+};
 
 /// Venue identifier string alias（CAN-ID：adapter 用 shape 校验）。
 pub type VenueId = String;
@@ -85,9 +93,10 @@ pub enum Side {
 
 /// 订单 DTO（spec §4.2，ADR-001）。
 ///
-/// Wire：**Uncommitted**（无跨版本承诺；见 [`wire`]）。
+/// Wire: **Committed v1.1** — 见 `fixtures/market/canonical/v1.1/` 与 [`wire`]。
 /// `id` 为 wire 字符串；结构化引用见 [`OrderRef`]。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Order {
     pub id: String,
     pub symbol: String,
@@ -110,16 +119,20 @@ pub struct OrderAck {
     pub ts: i64,
 }
 
-/// 持仓 DTO（spec §4.2）。Wire：**Uncommitted**。
+/// 持仓 DTO（spec §4.2）。Wire: **Committed v1.3**。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Position {
     pub symbol: String,
     pub qty: Qty,
     pub entry_price: Price,
 }
 
-/// 行情快照（spec §4.2）。Wire：**Uncommitted**。
+/// 行情快照（spec §4.2）。Wire: **Committed v1.2**。
+///
+/// `ts` = Unix epoch **纳秒**（CAN-TIME-001）。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Tick {
     pub symbol: String,
     pub bid: Price,
@@ -127,15 +140,19 @@ pub struct Tick {
     pub ts: i64,
 }
 
-/// 价格档位（spec §4.2，OrderBookSnapshot 内部结构）。Wire：**Uncommitted**。
+/// 价格档位（spec §4.2，OrderBookSnapshot 内部结构）。Wire: **Committed v1.3**。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct PriceLevel {
     pub price: Price,
     pub qty: Qty,
 }
 
-/// 订单簿快照（仅快照结构体，不含更新/diff 逻辑，ADR-001）。Wire：**Uncommitted**。
+/// 订单簿快照（仅快照结构体，不含更新/diff 逻辑，ADR-001）。Wire: **Committed v1.3**。
+///
+/// `ts` = Unix epoch **纳秒**（CAN-TIME-001）。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct OrderBookSnapshot {
     pub symbol: String,
     pub bids: Vec<PriceLevel>,
@@ -143,8 +160,11 @@ pub struct OrderBookSnapshot {
     pub ts: i64,
 }
 
-/// 成交 DTO（spec §4.2）。Wire：**Uncommitted**。
+/// 成交 DTO（spec §4.2）。Wire: **Committed v1.2**。
+///
+/// `ts` = Unix epoch **纳秒**（CAN-TIME-001）。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Trade {
     pub symbol: String,
     pub price: Price,
@@ -152,8 +172,9 @@ pub struct Trade {
     pub ts: i64,
 }
 
-/// 标的元数据（spec §4.2）。Wire：**Uncommitted**。
+/// 标的元数据（spec §4.2）。Wire: **Committed v1.3**。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SymbolMeta {
     pub symbol: String,
     pub base: String,
@@ -391,11 +412,14 @@ mod tests {
         for token in ["Committed-candidate", "Committed-legacy", "Uncommitted"] {
             assert!(matrix.contains(token), "wire matrix missing grade token {token}");
         }
-        // Production honesty: most DTOs remain Uncommitted
-        assert!(
-            matrix.contains("| `Order` | Uncommitted"),
-            "Order must remain Uncommitted until golden + human review"
-        );
+        // 实现承诺以 wire::COMMITTED_WIRE_* 为准；镜像矩阵可能滞后，不得反向阻塞晋升。
+        assert_eq!(wire_commitment("Order"), WireCommitment::CommittedV1);
+        assert_eq!(wire_commitment("Tick"), WireCommitment::CommittedV1);
+        assert_eq!(wire_commitment("Trade"), WireCommitment::CommittedV1);
+        assert_eq!(wire_commitment("Position"), WireCommitment::CommittedV1);
+        assert_eq!(wire_commitment("PriceLevel"), WireCommitment::CommittedV1);
+        assert_eq!(wire_commitment("OrderBookSnapshot"), WireCommitment::CommittedV1);
+        assert_eq!(wire_commitment("SymbolMeta"), WireCommitment::CommittedV1);
     }
 
     #[test]
