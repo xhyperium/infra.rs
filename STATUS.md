@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-21T16:34:30Z
+> **生成时间**：2026-07-21T16:40:24Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -11,21 +11,21 @@
 | 指标 | 值 |
 |------|-----|
 | workspace members | **22** |
-| 布局七项齐全 | **21** / 22（95%） |
+| 布局七项齐全 | **22** / 22（100%） |
 | 含测试（单元或集成） | **22** / 22（100%） |
 | scaffold 信号 | **9** |
-| **平均完成度** | **93%** █████████░ |
+| **平均完成度** | **95%** ██████████ |
 
 ### 成熟度分布
 
 | 标签 | 含义 | 数量 |
 |------|------|------|
-| `layout-incomplete` | 标准七项缺项 | 1 |
+| `layout-incomplete` | 标准七项缺项 | 0 |
 | `scaffold` | adapter/显式 scaffold 骨架 | 2 |
 | `scaffold+mock` | scaffold 且具备 mock/测试入口 | 7 |
 | `thin` | 布局齐但实质偏薄 | 0 |
 | `partial` | 有测试 + 一定源码量 | 0 |
-| `active` | 布局齐 + 测试 + 较厚实现 | 12 |
+| `active` | 布局齐 + 测试 + 较厚实现 | 13 |
 
 ## 完成度公式
 
@@ -49,7 +49,7 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `observex` | `crates/observex` | L1 | 7/7 | ✅ 2i+u | 539 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/observex-ssot-alignment.md) |
 | `resiliencx` | `crates/resiliencx` | L1 | 7/7 | ✅ 4i+u | 1011 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/resiliencx-ssot-alignment.md) |
 | `schedulex` | `crates/schedulex` | L1 | 7/7 | ✅ 2i+u | 533 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/schedulex-ssot-alignment.md) |
-| `contract-testkit` | `crates/test-support/contracts` | L1 | 3/7 | ✅ 1i | 1022 | · | `layout-incomplete` | **68%** █████░░░ | — |
+| `contract-testkit` | `crates/test-support/contracts` | L1 | 7/7 | ✅ 1i | 1022 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/testkit-ssot-alignment.md) |
 | `transportx` | `crates/transport` | L1 | 7/7 | ✅ 5i | 620 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/transport-ssot-alignment.md) |
 | `contracts` | `crates/contracts` | contracts | 7/7 | ✅ 4i+u | 616 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/contracts-ssot-alignment.md) |
 | `binancex` | `crates/adapters/exchange/binance` | adapter | 7/7 | ✅ 1i+u | 644 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
@@ -82,7 +82,7 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `observex` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `resiliencx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `schedulex` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `contract-testkit` | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `contract-testkit` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `transportx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `contracts` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `binancex` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -97,9 +97,7 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 
 ## 需关注（完成度 < 70%）
 
-| Package | 完成度 | 成熟度 | 主要缺口 |
-|---------|--------|--------|----------|
-| `contract-testkit` | 68% | `layout-incomplete` | 布局缺: docs/, benches/, review/, releases/；无 example |
+_当前无成员低于 70%。_
 
 ## 维护（不必每次手同步）
 

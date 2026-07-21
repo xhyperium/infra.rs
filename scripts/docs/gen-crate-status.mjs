@@ -90,6 +90,10 @@ const LAYOUT_ITEMS = [
 const SSOT_DOC_BY_PREFIX = [
   { prefix: "crates/kernel", doc: "docs/ssot/kernel-ssot-alignment.md" },
   { prefix: "crates/testkit", doc: "docs/ssot/testkit-ssot-alignment.md" },
+  {
+    prefix: "crates/test-support/contracts",
+    doc: "docs/ssot/testkit-ssot-alignment.md",
+  },
   { prefix: "crates/configx", doc: "docs/ssot/configx-ssot-alignment.md" },
   { prefix: "crates/schedulex", doc: "docs/ssot/schedulex-ssot-alignment.md" },
   { prefix: "crates/bootstrap", doc: "docs/ssot/bootstrap-ssot-alignment.md" },
