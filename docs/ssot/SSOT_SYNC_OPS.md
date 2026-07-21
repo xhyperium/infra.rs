@@ -22,7 +22,7 @@ test -f Cargo.toml || { echo "ERROR: 请在 infra.rs 仓库根目录执行"; exi
 | kernel | `.agents/ssot/kernel/` | — |
 | testkit | `.agents/ssot/testkit/` | — |
 | types | `.agents/ssot/types/` | decimal, canonical |
-| infra | `.agents/ssot/infra/` | bootstrap, configx, gate, observex, resiliencx, schedulex, testkitx, transport |
+| infra | `.agents/ssot/` | bootstrap, configx, gate, observex, resiliencx, schedulex, testkitx, transport（已展平） |
 | adapters | `.agents/ssot/adapters/` | binance, okx, redis, kafka, nats, postgres, taos, oss, clickhouse |
 | contracts | `.agents/ssot/contracts/` | — |
 | tools | `.agents/ssot/tools/` | evidence, goalctl, xtask, verifyctl（**本仓 SSOT**，不从外仓 rsync） |
@@ -63,10 +63,12 @@ rsync -a --delete "$SRC/testkit/" "$DST/testkit/"
 rsync -a --delete "$SRC/types/" "$DST/types/"
 ```
 
-### infra（8 子域）
+### infra（8 子域，已展平）
 
 ```bash
-rsync -a --delete "$SRC/infra/" "$DST/infra/"
+for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
+  rsync -a --delete "$SRC/infra/$sub/" "$DST/$sub/"
+done
 ```
 
 ### adapters（9 子域）

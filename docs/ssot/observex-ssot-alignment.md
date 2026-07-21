@@ -5,7 +5,7 @@
 | 策略 | **B — 本仓移植 observex 0.1.0 最小面** |
 | 日期 | 2026-07-21 |
 | 分支 | `feat/observex-ssot-align` |
-| 规范 | `.agents/ssot/infra/observex/spec/spec.md`（OBJECTIVE 中 `.agent/ssot/observex` = 上游习惯路径） |
+| 规范 | `.agents/ssot/observex/spec/spec.md`（OBJECTIVE 中 `.agent/ssot/observex` = 上游习惯路径） |
 | package | `xhyper-observex` 0.1.0 · lib `observex` |
 | 契约面 | `xhyper-contracts` · lib `contracts`（adapters + **Instrumentation**） |
 

@@ -14,7 +14,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, "..");
+const ROOT = join(__dirname, "..", "..");
 const WF_DIR = join(ROOT, ".github", "workflows");
 const OUT = join(ROOT, "docs", "status", "CI_WORKFLOW_MATRIX.generated.md");
 const CHECK = process.argv.includes("--check");
