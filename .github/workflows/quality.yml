@@ -63,16 +63,13 @@ jobs:
     timeout-minutes: 15
     env:
       CARGO_INCREMENTAL: 0
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.10
+      - uses: Swatinem/rust-cache@v2
       - name: 运行 clippy
         run: cargo clippy --workspace --all-features --all-targets -- -D warnings
 
@@ -85,13 +82,10 @@ jobs:
     env:
       CARGO_INCREMENTAL: 0
       RUSTDOCFLAGS: -D warnings
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具��
         uses: dtolnay/rust-toolchain@stable
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.10
+      - uses: Swatinem/rust-cache@v2
       - name: 生成文档并检查警告
         run: cargo doc --workspace --all-features --no-deps --document-private-items

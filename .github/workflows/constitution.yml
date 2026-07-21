@@ -23,9 +23,6 @@ jobs:
     name: Constitution Check
     runs-on: ubuntu-latest
     env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-
 
     steps:
       - uses: actions/checkout@v4
@@ -79,8 +76,7 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.10
+      - uses: Swatinem/rust-cache@v2
         if: steps.scope.outputs.run_full == 'true'
 
       - name: Install cargo-deny

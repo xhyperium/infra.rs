@@ -21,14 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.10
+      - uses: Swatinem/rust-cache@v2
       - name: 安装 cargo-mutants
         uses: taiki-e/install-action@v2
         with:
