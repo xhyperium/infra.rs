@@ -11,7 +11,7 @@ use contracts::{
     AccountSource, ExecutionVenue, InstrumentCatalog, MarketDataSource, VenueAdapter,
     VenueTimeSource,
 };
-use decimalx::{Currency, Decimal, Price, Qty};
+use decimalx::{Currency, Decimal, Qty};
 use futures_core::stream::BoxStream;
 use futures_util::stream;
 use kernel::{XError, XResult};
@@ -228,7 +228,7 @@ impl VenueTimeSource for OkxAdapter {
 mod tests {
     use super::*;
     use canonical::{OrderRef, Side};
-    use decimalx::Qty;
+    use decimalx::{Price, Qty};
 
     fn sample_order() -> Order {
         Order {
