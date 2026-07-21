@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Round 8 — §17–§20 文档要求 / 版本稳定性 / 迁移 Phase0–6 / PR-1…6
 
 | 字段 | 值 |

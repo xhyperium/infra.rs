@@ -10,7 +10,7 @@
 
 ## 已完成（勿重复）
 
-E1–E3 / C1–C2 / L1–L2 / G1 / G2（测试轨 + archgate KERNEL-* + CI loom）/
+E1–E3 / C1–C2 / L1–L2 / G1 / G2（测试轨 + 历史 monorepo archgate 证据链 + CI loom；**infra.rs 不要求 archgate**）/
 RES-CLK-009 / RES-TEST-004 / Phase D 文档对齐 / residual mid 卫生。
 
 ## 禁止回退

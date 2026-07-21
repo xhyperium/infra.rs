@@ -171,6 +171,7 @@ spec:
       - rust-toolchain.toml
       - .cargo/**
       - .agent/**
+      # .architecture/** — monorepo 历史路径；infra.rs 不维护、不移植 archgate（OOS）
       - .architecture/**
     semantic_triggers:
       - build-script

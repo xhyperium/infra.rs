@@ -20,7 +20,7 @@
 - [x] AC-3（§24.3 测试闭合）：unit/property/concurrency/compile assertions · line ≥95% · mutation missed=0 · Miri PASS（`branch ≥90%` 仍 OPTIONAL）
 - [x] AC-4（§24.4 Contract 闭合）：contract-testkit trait-level suites · 无具体 adapter dependency · broken impl negative tests
 - [x] AC-5（§24.5 图隔离闭合）：所有消费 dev-dependency · 无 build-dependency · `cargo xtl test-graph-check` 生效
-- [x] AC-6（§24.6 治理闭合）：ADR/公开面/archgate/test-graph-check/negative fixtures/CHANGELOG/Evidence
+- [x] AC-6（§24.6 治理闭合）：ADR/公开面/test-graph-check（或等价）/negative fixtures/CHANGELOG/Evidence（**archgate = OOS**，本仓不移植，非 AC 勾选）
 
 > ship 时点（2026-07-14）AC-1…6 主体已闭合。残留：AC-3 的 `branch cov ≥90%` 为 OPTIONAL（line≥95% 已强制），不影响 0.1.1 Stable。
 

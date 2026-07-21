@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # EVID-KERNEL-002-18-RELEASE — version 0.1.1 · §18 全勾 · registry stable
 
 | 字段 | 值 |

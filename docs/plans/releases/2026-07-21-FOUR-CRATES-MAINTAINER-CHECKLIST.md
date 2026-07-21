@@ -40,17 +40,17 @@
 1. 打开 `2026-07-21-four-crates-internal-release.md` §6
 2. **人工**填写（禁止 Agent 代写）：
 
-```text
-Signed-off-by: @<your-handle> <YYYY-MM-DD>
-Verdict: GO for declared tiers only
-```
+   ```text
+   Signed-off-by: @<your-handle> <YYYY-MM-DD>
+   Verdict: GO for declared tiers only
+   ```
 
 3. 将文首状态从 `DRAFT · GO for declared tiers` 改为 `SIGNED · GO for declared tiers`
 4. 单独 PR 合入；commit message 示例：
 
-```text
-docs(releases): maintainer sign four-crates internal GO
-```
+   ```text
+   docs(releases): maintainer sign four-crates internal GO
+   ```
 
 **不要**：改成「Production Ready」营销表述；不要顺带 `publish = true`。
 

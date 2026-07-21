@@ -12,7 +12,8 @@
 runtime gate crate 退役：DONE（物理删除 + 防回流）
 RFC / ADR-016：Accepted
 bootstrap typed composition：active
-CI/arch gates：保留
+CI / policy / release gates：保留
+archgate / .architecture：OOS（infra.rs 不引入）
 ```
 
 ## CLOSED defects（实现/治理）

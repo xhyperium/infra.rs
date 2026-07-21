@@ -22,7 +22,7 @@
 | line coverage ≥95% | **PASS** | CI `testkit-quality` |
 | branch coverage ≥90% | **OPTIONAL** | line≥95% 已强制；branch 进 nightly（非阻塞 Stable） |
 | `cargo xtl test-graph-check` | **PASS** | test-support 不进生产图 |
-| archgate TESTKIT-* | **N/A** | 无独立 archgate 目录；机控在 CI job `testkit-miri`/`testkit-quality` + `cargo xtl test-graph-check`（见 `.agent/gates/ci.toml`） |
+| archgate TESTKIT-* | **OOS / N/A** | **infra.rs 不移植** archgate / `.architecture`；历史 TESTKIT-* 规则 ID 仅参考。可选机控：结构扫描 / CI job / `test-graph-check`（若落地）— 非 archgate |
 
 ## Residual OPEN
 

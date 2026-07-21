@@ -27,7 +27,7 @@
 | T-INV-003 | source search 存证 | 排除 VenueSafetyGate 误报 | — | Inventory | **DONE**（plan-time） |
 | T-INV-004 | external downstream 检查 | 私有仓内无外部 package 依赖证据；文档登记 | T-INV-001 | Inventory | **DONE**（plan-time：仓内 only） |
 | T-FREEZE-001 | 登记 no-new-gate 规则 + 扫描命令 | residual + plan；**启用**脚本/门禁属实现 | — | Freeze | **DONE**（登记）；启用 **TODO**→T-FREEZE-002 |
-| T-FREEZE-002 | 落地 no-new-gate 临时门禁（rg/CI/archgate） | `cargo xtl no-new-gate` PASS；CI lint-deps 步；runner P1 | T-FREEZE-001 | Freeze | **DONE** |
+| T-FREEZE-002 | 落地 no-new-gate 临时门禁（rg/CI；**不**依赖 archgate） | `cargo xtl no-new-gate` PASS；CI lint-deps 步；runner P1；archgate **N/A（OOS）** | T-FREEZE-001 | Freeze | **DONE** |
 | T-GOV-001 | 起草 RFC Retire Runtime Gate | 答满源 §6.1 八问 | T-INV-001 | Gov | **DONE**（Proposed） |
 | T-GOV-002 | 起草 ADR Bootstrap Sole Composition Root | 源 §6.2 七点 | T-GOV-001 | Gov | **DONE**（Proposed） |
 | T-GOV-003 | RFC/ADR 人审 Approved | approval-packet 签字 | T-GOV-001 T-GOV-002 | Human | **DONE**（A12 除外 Keep-OPEN） |
@@ -37,7 +37,7 @@
 | T-BRANCH-001 | 非 main 分支/worktree | docs/gate-retirement-plan-package | — | Lead | **DONE** |
 | T-PROC-001 | PR 纪律写入 plan | worktree/非 main/Evidence/rollback | — | Lead | **DONE** |
 | T-KEEP-001 | 保留 `.agent/gates/` 写入 plan + residual | plan §4.2 + residual 明示 KEEP | — | Planner | **DONE** |
-| T-KEEP-002 | 保留 `tools/archgate/` | plan §4.2 + residual | — | Planner | **DONE** |
+| T-KEEP-002 | ~~保留 `tools/archgate/`~~ | **CANCELLED / OOS**：**infra.rs 不引入** `tools/archgate`（非本仓 KEEP） | — | Planner | **CANCELLED（OOS）** |
 | T-KEEP-003 | 保留 CI gate / policy gate jobs | plan §4.2 + residual | — | Planner | **DONE** |
 | T-KEEP-004 | 保留 release gates | plan §4.2 + residual | — | Planner | **DONE** |
 | T-KEEP-005 | 保留 xlibgate / policy gate 概念叙述 | plan §4.2 + T-DOC-002 | — | Planner | **DONE** |
@@ -113,7 +113,7 @@
 
 | Task ID | 内容 | AC | 依赖 | Owner | Status |
 |---------|------|-----|------|-------|--------|
-| T-GUARD-001 | ARCH-COMPOSITION-001…005 | archgate 规则 | T-DEL-003 | Guard | TODO |
+| T-GUARD-001 | ARCH-COMPOSITION-001…005 | composition 规则（rg/CI/结构扫描；**非** archgate — OOS） | T-DEL-003 | Guard | TODO |
 | T-GUARD-002 | source guard 模式 | 禁 use gate:: 等；**不**全局禁单词 gate | T-DEL-003 | Guard | TODO |
 | T-GUARD-003 | fixture1 新增 gate workspace → fail | negative log | T-GUARD-001 | Guard | TODO |
 | T-GUARD-004 | fixture2 Bootstrap HashMap String/Any → fail | | T-GUARD-001 | Guard | TODO |
@@ -121,10 +121,10 @@
 | T-GUARD-006 | fixture4 具体 adapter 类型外泄 → fail | | T-GUARD-001 | Guard | TODO |
 | T-GUARD-007 | fixture5 字符串选依赖 → fail | | T-GUARD-001 | Guard | TODO |
 | T-GUARD-008 | bootstrap public API 快照 | 无 Gate/Capability/register/resolve | T-RM-003 | Guard | **DONE** |
-| T-GUARD-009 | architecture drift check | archgate JSON PASS | T-GUARD-001 | Guard | TODO |
-| T-GUARD-010 | CI policy gates 无误伤 | .agent/gates / archgate 仍绿 | T-GUARD-002 | Guard | TODO |
-| T-MET-001 | §18 十项指标验收 | 全 0/100% | T-GUARD-010 | Verifier | TODO |
-| T-VER-001 | §13.1 静态验证命令集执行 | fmt/clippy/check/test/lint-deps/archgate 等 logs | T-DEL-003 | Verifier | TODO |
+| T-GUARD-009 | architecture drift check | **N/A（OOS）**：不要求 archgate JSON；本仓用结构扫描/CI | T-GUARD-001 | Guard | **CANCELLED（OOS）** |
+| T-GUARD-010 | CI policy gates 无误伤 | `.agent/gates` / CI·release policy gates 仍绿；archgate **N/A** | T-GUARD-002 | Guard | TODO |
+| T-MET-001 | §18 十项指标验收 | 全 0/100%（archgate 项 **N/A**） | T-GUARD-010 | Verifier | TODO |
+| T-VER-001 | §13.1 静态验证命令集执行 | fmt/clippy/check/test/lint-deps 等 logs；**无** `cargo run -p archgate` | T-DEL-003 | Verifier | TODO |
 | T-VER-002 | §13.2 聚焦 bootstrap 测试 | cargo test -p bootstrap (+ e2e) log | T-MIG-010 | Verifier | **DONE** |
 | T-VER-003 | §13.3 删除证明（xhyper-gate 名） | metadata/jq + rg 无 runtime 使用 | T-DEL-003 | Verifier | TODO |
 | T-VER-004 | §13.4 依赖证明 | cargo tree -p bootstrap；-i xhyper-gate 应不存在 | T-DEL-003 | Verifier | TODO |

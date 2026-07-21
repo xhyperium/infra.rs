@@ -8,7 +8,7 @@
 | Package | **`xhyper-kernel` 0.1.1** · lib `kernel` · registry **stable** |
 | Ship | #235 MERGED · tag `kernel-v0.1.1` · crates.io published |
 | Residual | **OPEN=0** |
-| archgate | KERNEL-* **15/15**（含 API-002 · TIME-004） |
+| 机控（infra.rs） | 结构扫描 / unit tests / CI（coverage, loom, miri, public-api）；**archgate OOS** |
 
 ## Residual classes
 

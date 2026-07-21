@@ -100,7 +100,7 @@ docs/goal/                         方法和规则 SSOT
 .agents/ssot/<layer>/<crate>/      模块交付制品 SSOT
 crates/** / tools/**               唯一实现根
 tools/xtask                        架构与仓库结构验证
-tools/archgate                     架构门禁
+tools/archgate                     架构门禁（monorepo-only；**非** infra.rs SSOT tools 面，本仓仅 evidence/goalctl/xtask/verifyctl）
 crates/evidence                    Evidence Core
 crates/adapters/evidence/file      Append-only Evidence Adapter
 tools/evidence-cli                 只读 Evidence 校验 CLI
@@ -337,7 +337,7 @@ Runtime / Registry Fact
 - protected asset 无批准时要求人工审批；
 - Legacy Narrative 不能独立生成 RELEASED；
 - 所有输出路径必须仓库相对；
-- xtask、archgate、crate-standard 通过。
+- xtask、crate-standard 通过（monorepo 历史另含 archgate；**infra.rs 不移植 archgate，不作验收**）。
 
 ## 9. 安全不变量
 
@@ -441,7 +441,7 @@ Hexagonal Architecture
 - 文件系统；
 - Cargo metadata；
 - Legacy Goal Validator；
-- xtask / archgate；
+- xtask（monorepo 历史另含 archgate；infra.rs 不移植）；
 - Evidence；
 - Codex / Grok；
 - GitHub Draft PR。
@@ -765,7 +765,7 @@ Writer 与 Verifier 独立。
 - clippy；
 - tests；
 - lint-deps；
-- archgate；
+- archgate（monorepo-only；infra.rs 不移植、不作验收）；
 - crate-standard；
 - rule-drift；
 - Evidence；
@@ -781,7 +781,8 @@ kernel fixture 通过
 Protected Asset 无批准被阻断
 无 .config/goal
 所有确定性输出一致
-xtask / archgate / crate-standard PASS
+xtask / crate-standard PASS
+# monorepo 历史：archgate PASS（infra.rs 不移植 archgate）
 Independent Review PASS
 Evidence 完整
 ```
@@ -1007,7 +1008,7 @@ Cargo.toml
 Cargo.lock
 tools/goalctl/**
 tools/xtask/**
-.architecture/**
+.architecture/**              # monorepo 历史路径；infra.rs 不维护
 docs/architecture/spec.md
 .github/workflows/**
 crates/**
@@ -1047,7 +1048,7 @@ goalctl index
 ### 关键修改
 
 - 根 Cargo 增加 `tools/goalctl`；
-- `.architecture/workspace.toml` 登记 tools；
+- monorepo 历史：`.architecture/workspace.toml` 登记 tools（**infra.rs 不维护 `.architecture`**）；
 - xtask classify 支持 goalctl；
 - 创建 crate-standard 骨架；
 - 实现 repository root、doctor 和 deterministic index。
@@ -1102,7 +1103,8 @@ cargo run -p xhyper-goalctl -- doctor --json
 cargo run -p xhyper-goalctl -- index --module kernel
 cargo run -p xhyper-goalctl -- index --module goalctl
 cargo run -p xtask -- lint-deps
-cargo run -p archgate -- --json
+# monorepo-only（infra.rs 不移植 archgate，不作为本仓 CI 硬门禁）:
+# cargo run -p archgate -- --json
 cargo run -p xtask -- crate-standard --check
 ```
 
@@ -1180,7 +1182,8 @@ cargo run -p xhyper-goalctl -- resolve --module goalctl
 cargo run -p xhyper-goalctl -- artifact index --module kernel --mode mixed
 cargo run -p xhyper-goalctl -- artifact index --module goalctl --mode mixed
 cargo run -p xtask -- lint-deps
-cargo run -p archgate -- --json
+# monorepo-only（infra.rs 不移植 archgate，不作为本仓 CI 硬门禁）:
+# cargo run -p archgate -- --json
 cargo run -p xtask -- crate-standard --check
 ```
 

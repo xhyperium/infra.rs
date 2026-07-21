@@ -31,7 +31,7 @@
 
 任何不满足「准入四问」的能力 **永久禁止** 进入 kernel（§1.2 非目标清单）。
 
-### 0.2 章节级现状矩阵（以源码 + archgate + residual 为准）
+### 0.2 章节级现状矩阵（以源码 + 本仓 CI/tests + residual 为准）
 
 | 章  | 主题          | 代码/机器        | 文档    | Residual / 备注                                                          |
 | --- | ------------- | ---------------- | ------- | ------------------------------------------------------------------------ |
@@ -47,7 +47,7 @@
 | §9  | Serde 政策    | **PASS**         | PASS    | 无 serde                                                                 |
 | §10 | Panic 策略    | **PASS**         | PASS    | poison→into_inner                                                        |
 | §11 | 测试合同      | **PARTIAL**      | PARTIAL | unit/proptest/loom/LC-005 PASS；trybuild DEFER；mutants/miri/branch OPEN |
-| §12 | CI/archgate   | **PASS**  | PASS  | **15** KERNEL-* ok；API-002 **implemented**（RES-GATE-009）         |
+| §12 | CI / 机控     | **PASS**  | PASS  | 本仓：结构扫描 / tests / CI；archgate **OOS**；API-002 语义 **implemented**（RES-GATE-009） |
 | §13 | 性能预算      | PARTIAL          | PASS    | `Cow::Owned`；RES-PERF-001 **CLOSED (DEFER accepted)**                   |
 | §14 | 文档          | **PASS**         | PASS    | README/AGENTS/CHANGELOG 对齐 002                                         |
 | §15 | 版本          | **PASS**         | PASS    | version **0.1.1**；registry **stable**                                   |
@@ -109,7 +109,7 @@
 | 18.3 | compile-fail（trybuild）          | **CLOSED (DEFER)** RES-TEST-005                             |
 | 18.3 | line ≥95%                         | PASS（98.82%）                                              |
 | 18.3 | branch ≥90% / mutants / miri      | **CLOSED (measured PASS)** RES-TEST-014/015/016             |
-| 18.4 | API diff / archgate / lint-deps   | PASS 机器轨                                                 |
+| 18.4 | API diff / 本仓 CI 机控 / lint-deps | PASS 机器轨（archgate **OOS**）                            |
 | 18.4 | KERNEL-API-002                    | **CLOSED (implemented)** RES-GATE-009                       |
 | 18.4 | cargo-deny / internal 棘轮 / 下游 | PASS / 棘轮=8                                               |
 | 18.4 | Evidence → 当前 commit            | **CLOSED (partial-accepted)** RES-EVID-001；不声称 §17 全树 |
@@ -146,7 +146,7 @@ W8  §18 闭合声明（仅人审后）
 | ------ | ------------------------ | -------------------- | ------------- | ------------------------------------------------------------------ |
 | **W0** | 文档/台账同步            | 是（只写 docs）      | Doc Agent     | gate/plan/tasks/matrix/review 与 residual 一致；RES-DOC-001 CLOSED |
 | **W1** | 公开 API 微缺口          | 否（动 kernel+下游） | Code Agent    | RES-ERR-010 决策落地；RES-CLK-010 可选                             |
-| **W2** | archgate KERNEL-API-002  | 是                   | Gate Agent    | RES-GATE-009 CLOSED 或正式 DEFER 记录                              |
+| **W2** | KERNEL-API-002 机控（历史 monorepo archgate） | 是 | Gate Agent | RES-GATE-009 CLOSED 或正式 DEFER；**infra.rs 不要求 archgate** |
 | **W3** | 测试补强                 | 是（与 W2）          | Test Agent    | RES-LC-005 CLOSED；RES-TEST-005 决策                               |
 | **W4** | branch/mutants/miri 证据 | 是（耗时长）         | Quality Agent | RES-TEST-014/015/016 有 PASS 或 DEFER+理由                         |
 | **W5** | 十轮全量检查             | 串行 10 轮           | Verify Team   | fail_rounds=0；见 §4                                               |
@@ -177,7 +177,7 @@ W8  §18 闭合声明（仅人审后）
 | **Planner**          | 本 plan + residual 登记         | `.agents/ssot/kernel/plan/*`、`residual-open.txt`    |
 | **Executor-API**     | ERR-010 / CLK-010               | `crates/kernel`、`crates/adapters/storage/redis`     |
 | **Executor-Test**    | LC-005 / 可选 trybuild          | `crates/kernel/tests/*`、`src/*` tests               |
-| **Executor-Gate**    | GATE-009 / 文档 defer           | `tools/archgate` 或 evidence                         |
+| **Executor-Gate**    | GATE-009 / 文档 defer           | 历史 `tools/archgate`（**OOS**）或 evidence           |
 | **Executor-Quality** | 014/015/016 命令+证据           | `evidence/2026-07-14/*`                              |
 | **Doc-Sync**         | gate/tasks/matrix/review/goal   | `.agents/ssot/kernel/**`、`.worktrees/kernel-todo.md` |
 | **Verifier**         | 十轮清单 + 汇总 verdict         | `EVID-KERNEL-002-R10b-*.md`                          |
@@ -218,7 +218,7 @@ W8  §18 闭合声明（仅人审后）
 | 2   | C-CLIPPY | `cargo clippy -p kernel --all-targets -- -D warnings`                           | exit 0            |
 | 3   | C-TEST   | `cargo test -p kernel`                                                          | 全绿              |
 | 4   | C-LOOM   | `RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom` | ≥1 passed         |
-| 5   | C-ARCH   | `cargo run -p archgate -- --json`                                               | 全部 KERNEL-\* ok |
+| 5   | C-ARCH   | ~~`cargo run -p archgate -- --json`~~ → **infra.rs 不适用（OOS）**；改用结构扫描 / unit tests / CI（coverage, loom, miri, public-api） | 本仓机控绿 |
 | 6   | C-DEPS   | `cargo xtl lint-deps`                                                           | exit 0            |
 | 7   | C-API    | 快照与 `cargo public-api -p kernel` 无意外 diff                                 | 一致或已提交      |
 | 8   | C-SSOT   | residual-open 无 Unknown；gate/plan/todo 无矛盾                                 | 一致              |
@@ -274,7 +274,7 @@ write R10b verdict (honest §18 still OPEN if Approved missing)
 | 误标 §18/stable                | Skeptic 轮次 + 禁止词检查            |
 | 分支脏文件（非 kernel）        | 不纳入本战役 commit                  |
 
-回滚：`git checkout -- crates/kernel tools/archgate .agents/ssot/kernel`（仅本战役路径）。
+回滚：`git checkout -- crates/kernel .agents/ssot/kernel`（仅本战役路径；历史 monorepo 含 `tools/archgate`，infra.rs 不维护）。
 
 ---
 

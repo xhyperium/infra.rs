@@ -40,11 +40,11 @@
 | Item | Mapped |
 |------|--------|
 | .agent/gates/ | T-KEEP-001 |
-| tools/archgate/ | T-KEEP-002 |
+| tools/archgate/ | **T-KEEP-002 CANCELLED / OOS** — **infra.rs 不引入**（非本仓 KEEP） |
 | CI gate jobs | T-KEEP-003 |
 | release gates | T-KEEP-004 |
 | xlibgate / policy gate 概念 | T-KEEP-005 T-DOC-002 |
-| 命名消歧叙述 | T-DOC-001 |
+| 命名消歧叙述 | T-DOC-001（可述 archgate ≠ runtime gate，且 archgate 本仓 OOS） |
 
 ---
 

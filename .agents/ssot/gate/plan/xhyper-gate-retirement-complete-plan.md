@@ -51,13 +51,20 @@ runtime Gate / Capability / register / resolve
 
 ```text
 .agent/gates/
-tools/archgate/
 CI gate jobs
 release gates
 xlibgate / policy gate 概念
 ```
 
-“运行时 gate crate”与“CI/架构门禁 gate”是两个不同概念。退役前者，不得误删后者。
+OOS（infra.rs 不引入，**非** KEEP）：
+
+```text
+tools/archgate/     # monorepo 架构门禁工具；本仓明确不移植
+.architecture/      # 随 archgate；本仓不引入
+```
+
+“运行时 gate crate”与“CI/policy 门禁”是两个不同概念。退役前者，不得误删后者。  
+`tools/archgate` 与 runtime `gate` 亦不同概念，但 **infra.rs 不引入 archgate**（OOS）。
 
 ---
 
@@ -601,13 +608,19 @@ gate mock feature
 
 ```text
 .agent/gates/
-tools/archgate/
 docs 中关于 CI gate 的内容
 workflow job: gate 或 policy gate
 release gate
-architecture gate
 quality gate
 evidence gate
+```
+
+### 5.2.1 OOS（infra.rs · 非 KEEP · 非本仓验收）
+
+```text
+tools/archgate/          # monorepo 架构门禁 — infra.rs 不引入
+.architecture/           # 随 archgate
+architecture gate 工具链  # 指 archgate 机控；≠ CI policy gate 叙述
 ```
 
 建议后续把 CI job `gate` 改名为：
@@ -1098,17 +1111,9 @@ cargo check --workspace
 
 ## 11.3 Architecture registry
 
-从：
+**monorepo 原文**（历史）：从 `.architecture/workspace.toml` 删除 gate unit；不得把 gate 改标为 archived 继续留在 active registry。
 
-```text
-.architecture/workspace.toml
-```
-
-删除 gate unit。
-
-不得把 gate 改标为 archived 继续留在 active registry。
-
-历史通过 Git 保留。
+**infra.rs**：`.architecture/` / archgate **OOS（不引入）**。本仓无该 registry 可改；历史 monorepo 路径不构成本仓验收。runtime gate 退役以 `Cargo.toml` workspace members + crates 删除为准。
 
 ## 11.4 Active specs
 
@@ -1204,9 +1209,9 @@ Migration: use contracts traits and typed AppContext accessors.
 
 # 12. Phase 5：防回流门禁
 
-## 12.1 Dependency guard
+## 12.1 Dependency / composition guard
 
-`archgate` 新增：
+规则面（**infra.rs 不经 archgate**；用 rg/CI/结构扫描或 xtask 等价物落地）：
 
 ```text
 ARCH-COMPOSITION-001:
@@ -1224,6 +1229,8 @@ ARCH-COMPOSITION-004:
 ARCH-COMPOSITION-005:
   AppContext 暴露 mutation/register/insert API → fail。
 ```
+
+> monorepo 原文曾写「`archgate` 新增」上述规则。**infra.rs：archgate OOS**；规则语义保留，机控载体改为本仓已有门禁，**不**要求 `cargo run -p archgate`。
 
 ## 12.2 Source guard
 
@@ -1245,7 +1252,7 @@ forbidden patterns:
 不能全局禁止单词 gate
 ```
 
-因为 `.agent/gates`、archgate、release gate 都是合法概念。
+因为 `.agent/gates`、release gate、policy gate 都是合法概念；`archgate` 是 monorepo 架构工具（≠ runtime gate），**infra.rs 不引入（OOS）**，亦不得被全局禁词误伤叙述。
 
 ## 12.3 Negative fixtures
 
@@ -1308,7 +1315,7 @@ cargo check --workspace
 cargo test --workspace
 cargo run -p xtask -- lint-deps
 cargo run -p xtask -- crate-standard --check
-cargo run -p archgate -- --json
+# N/A (infra.rs OOS): cargo run -p archgate -- --json  — 本仓不引入 archgate
 cargo run -p xtask -- gen-structure --check
 cargo machete
 cargo deny check
@@ -1376,7 +1383,7 @@ evidence/architecture/gate-retirement/<phase>/
 ├── architecture.diff
 ├── test.log
 ├── clippy.log
-├── archgate.json
+├── archgate.json              # N/A（infra.rs 不引入 archgate；不构成本仓验收）
 ├── negative-fixtures.log
 ├── downstream-impact.md
 └── verdict.md
@@ -1386,11 +1393,12 @@ evidence/architecture/gate-retirement/<phase>/
 
 ```text
 runtime gate removed
-CI/architecture gates retained
+CI / policy / release gates retained
+archgate N/A (infra.rs OOS — not introduced)
 typed composition active
 no consumer remains
 no compatibility debt remains
-anti-reintroduction guard active
+anti-reintroduction guard active (rg/CI/结构扫描；非 archgate)
 ```
 
 ---
@@ -1428,8 +1436,8 @@ revert deletion PR
 ```text
 临时重新实现另一个 registry
 复制旧 Gate 到 bootstrap
-关闭 archgate
 添加永久 exception
+以「关闭/缺少 archgate」替代本仓防回流（archgate 本仓 OOS；用 rg/CI 等价物）
 ```
 
 回滚必须恢复已知旧版本，不创建第三种中间架构。
@@ -1611,8 +1619,8 @@ active_specs_claiming_gate_is_L0            = 0
 [ ] ADR Approved
 [ ] CHANGELOG
 [ ] public API diff
-[ ] archgate
-[ ] dependency guard
+[ ] archgate                    # N/A — infra.rs 不引入（OOS）
+[ ] dependency guard            # rg/CI/结构扫描等价物
 [ ] source guard
 [ ] negative fixtures
 [ ] Evidence
@@ -1621,8 +1629,9 @@ active_specs_claiming_gate_is_L0            = 0
 ## 19.5 语义闭合
 
 ```text
-[ ] CI / architecture / release gates 未被误删
-[ ] gate 名称歧义已在文档解释
+[ ] CI / policy / release gates 未被误删
+[ ] archgate 非本仓 KEEP；不构成本仓验收（OOS）
+[ ] gate 名称歧义已在文档解释（runtime ≠ CI/policy ≠ archgate）
 [ ] no-new-service-locator policy 生效
 [ ] rollback 验证完成
 ```

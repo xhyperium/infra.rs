@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Round 7 — §14–§16 图隔离 / Archgate 全规则 ID / CI 命令
 
 | 字段 | 值 |

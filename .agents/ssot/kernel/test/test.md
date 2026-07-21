@@ -14,8 +14,8 @@
 |----|------|
 | `cargo test -p kernel` | lib + 集成全绿（含 LC-005：poison/1000/guard drop） |
 | loom + CI `kernel-loom` | 本地 2 passed；workflow 已挂 |
-| archgate KERNEL-* | 15/15 ok（含 API-002 + TIME-004） |
-| public-api 快照 | `.architecture/api/kernel-public-api.txt`（无 context_cow） |
+| archgate KERNEL-* | **infra.rs 不适用（OOS）**（历史 monorepo；本仓不移植） |
+| public-api | 本仓以 `cargo public-api` / CI 为准；**不**维护 `.architecture/api/**` |
 | line coverage | 98.95% ≥95% PASS |
 | branch coverage | 100% ≥90% PASS（ad-hoc nightly；CI 门禁待补 P1） |
 | mutants | missed=0 PASS（ad-hoc；CI 门禁待补 P1） |

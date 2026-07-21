@@ -188,7 +188,7 @@ Writer 与 Verifier 独立。
 - clippy；
 - tests；
 - lint-deps；
-- archgate；
+- archgate（monorepo-only；infra.rs 不移植、不作验收）；
 - crate-standard；
 - rule-drift；
 - Evidence；
@@ -204,7 +204,8 @@ kernel fixture 通过
 Protected Asset 无批准被阻断
 无 .config/goal
 所有确定性输出一致
-xtask / archgate / crate-standard PASS
+xtask / crate-standard PASS
+# monorepo 历史：archgate PASS（infra.rs 不移植 archgate）
 Independent Review PASS
 Evidence 完整
 ```

@@ -16,7 +16,7 @@
 | 上游镜像 COMPLETE / residual OPEN=0 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
 | 本仓 `crates/kernel` | **已落地**并与 SPEC §3–§11 可移植子集对齐 |
 | 内部生产 GO（声明层级） | **L1+L4**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
-| 本仓 archgate / `.architecture` 快照 | **未**移植 → 矩阵 **DEFER** |
+| 本仓 archgate / `.architecture` 快照 | **OOS：本仓明确不移植**；机控用结构扫描 / CI / public-api 等已有门禁 |
 | 本仓 crates.io 再发布 | **不做**；`publish = false` 显式关闭 |
 | public-api 棘轮 | **PASS**：`docs/api-baselines/kernel.txt` + `check-public-api.mjs` |
 | line/branch cov CI | **有** PR 门禁：`.github/workflows/kernel-coverage.yml`（100% line gate） |
@@ -100,7 +100,7 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 | 5.5 | 禁 From&lt;str\|String&gt; / not_found / other | `assert_not_impl_any!(XError: From<…>)`；doctest `compile_fail` not_found/other/into | PASS |
 | 5.6 | with_source 不改 kind；Display/Debug 不展开 source | `test_with_source_*` / `test_display_*` / `test_debug_*` | PASS |
 | 5.7 | `From<ClockError> → Unavailable` | `test_clock_error_maps_all_variants_to_unavailable` | PASS |
-| 5.8 | archgate internal 棘轮 | 本仓无 archgate | DEFER（monorepo 机控） |
+| 5.8 | archgate internal 棘轮 | 本仓不引入 archgate | **OOS**（本仓不移植 archgate / `.architecture`） |
 
 ### §6 clock
 
@@ -110,7 +110,7 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 | 6.2-ban | 禁 Display 人类时间 / From&lt;SystemTime&gt; / 饱和 | `assert_not_impl_any!(Timestamp: Display, From&lt;SystemTime&gt;)` | PASS |
 | 6.3 | MonotonicInstant 不透明；reverse → None | `checked_duration_since` + 单元/属性测 | PASS |
 | 6.3-domain | `ClockDomain`；跨 domain 间隔不可静默可靠 | `ClockDomain` + `partial_cmp`/`checked_duration_since` → None；`system_clocks_share_process_domain` | PASS |
-| 6.3-hidden | `from_clock_elapsed` / `from_clock_elapsed_in` `const` + `doc(hidden)` | `clock.rs`；调用点仅 `src/clock.rs` 与 `testkit/*` | PASS（结构扫描；archgate TIME-004 DEFER） |
+| 6.3-hidden | `from_clock_elapsed` / `from_clock_elapsed_in` `const` + `doc(hidden)` | `clock.rs`；调用点仅 `src/clock.rs` 与 `testkit/*` | **PASS（结构扫描）**；TIME-004 机控 **OOS**（不引入 archgate） |
 | 6.4 | Clock 无 monotonic 默认实现 | doctest `compile_fail` OnlyWall | PASS |
 | 6.5 | ClockError 三变体名 + 中文 Display | `clock.rs` thiserror | PASS |
 | 6.6 | SystemClock 进程共享原点；!Copy；Default→new | `OnceLock` origin + `assert_not_impl_any!(SystemClock: Copy)` | PASS |
@@ -171,21 +171,21 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 
 | ID | 要求 | 判定 | 原因 |
 |----|------|------|------|
-| 12.x | archgate KERNEL-* | DEFER | 本仓无 `.architecture` / archgate |
+| 12.x | archgate KERNEL-* | **OOS** | 本仓明确不移植 archgate / `.architecture`；机控改走结构扫描 / CI / public-api |
 | 12.3 | public-api 快照文件 | PASS | `docs/api-baselines/kernel.txt` + `scripts/quality-gates/check-public-api.mjs`（W5 / #127 / #159） |
 | 15.x | crates.io publish | DEFER 发布动作；**package `publish = false` PASS** | 本仓明确不向 crates.io 再发布 |
 | 15.x-tag | 内部 git tag | PASS（锚点） | `v0.3.0-four-crates` → 含 #159 的 main；**≠** crates.io |
-| TIME-004 机控 | from_clock_elapsed allowlist | DEFER 机控；**结构扫描 PASS** | 见上文 6.3-hidden |
+| TIME-004 机控 | from_clock_elapsed allowlist | **OOS** 机控（不引入 archgate）；**结构扫描 PASS** | 见上文 6.3-hidden |
 
 ---
 
 ## 残留 FAIL
 
-**无。** 所有实现相关 FAIL 已在 `crates/kernel` 内消除；未完成项均为显式 **DEFER**。
+**无。** 所有实现相关 FAIL 已在 `crates/kernel` 内消除；未完成项均为显式 **DEFER** 或 **OOS**（archgate 明确不移植）。
 
 ## 未做（follow-up，不阻塞本仓语义对齐）
 
-- archgate / `.architecture` 机控移植
+- archgate 明确不移植（**OOS**）；机控继续用结构扫描 / CI / public-api 等已有门禁
 - mutants / miri 本会话全量实测通过声明（CI 入口已有）
 - crates.io 再发布与 `publish = true`
 - 上游 SSOT 镜像内部措辞收口（应在 xhyper.rs 修，再删除感知同步）

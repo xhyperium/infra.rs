@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Round 10 — §24 完成定义 / §25 裁定 / Forbidden 交叉 / DEF / consumers 实测
 
 | 字段 | 值 |

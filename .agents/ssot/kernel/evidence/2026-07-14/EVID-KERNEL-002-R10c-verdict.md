@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # R10c Verdict — SPEC-KERNEL-002 plan §4 十轮验收
 
 | 字段 | 值 |

@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Residual ledger — SPEC-KERNEL-002 (campaign COMPLETE · 2026-07-14)
 # Mid-audit IDs from EVID-KERNEL-002-R-code-gap-mid.md are registered with their
 # ORIGINAL meanings. Status = OPEN or CLOSED only. Zero unregistered residual IDs.

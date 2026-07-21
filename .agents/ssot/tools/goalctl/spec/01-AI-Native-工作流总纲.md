@@ -100,7 +100,7 @@ docs/goal/                         方法和规则 SSOT
 .agents/ssot/<layer>/<crate>/      模块交付制品 SSOT
 crates/** / tools/**               唯一实现根
 tools/xtask                        架构与仓库结构验证
-tools/archgate                     架构门禁
+tools/archgate                     架构门禁（monorepo-only；**非** infra.rs SSOT tools 面，本仓仅 evidence/goalctl/xtask/verifyctl）
 crates/evidence                    Evidence Core
 crates/adapters/evidence/file      Append-only Evidence Adapter
 tools/evidence-cli                 只读 Evidence 校验 CLI

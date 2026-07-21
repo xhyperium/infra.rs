@@ -39,13 +39,17 @@
 
 必须保留：
   .agent/gates/
-  tools/archgate/
   CI gate jobs
   release gates
   xlibgate / policy gate 概念
+
+OOS（infra.rs 不引入，非 KEEP）：
+  tools/archgate/          # monorepo 架构门禁工具；本仓明确不移植
+  .architecture/           # 随 archgate；本仓不引入
 ```
 
-**运行时 gate crate** 与 **CI/架构门禁 gate** 是两个不同概念。退役前者，不得误删后者。
+**运行时 gate crate** 与 **CI/policy 门禁** 是两个不同概念。退役前者，不得误删后者。  
+`tools/archgate` 与 runtime `gate` 亦不同概念，但 **infra.rs 不引入 archgate**（OOS，非本仓验收 KEEP）。
 
 ### 0.2 为什么必须退役（源 §1）
 
@@ -96,7 +100,7 @@ Bounded contexts（`MarketDataContext` / `ExecutionContext`）按真实服务需
 | 生产依赖者 | **仅** `xhyper-bootstrap`（`cargo tree -i xhyper-gate`） |
 | 运行时调用 | bootstrap `src/lib.rs` + unit tests + `tests/e2e.rs` |
 | 真实 service 经 gate 取 Binance/Redis | **未发现**（e2e 已直接用 contracts trait） |
-| 同源词干扰 | `VenueSafetyGate`（domain）≠ runtime `gate`；`tools/archgate` ≠ crate |
+| 同源词干扰 | `VenueSafetyGate`（domain）≠ runtime `gate`；`tools/archgate` ≠ crate（且 **infra.rs OOS：不引入 archgate**） |
 | Source Plan Status | **Proposed** |
 | RFC / ADR 退役正文 | **未 Approved**（人审 OPEN） |
 | crate 物理删除 | **未执行**（本战役 out of scope） |
@@ -125,11 +129,11 @@ plan 10x PASS ≠ crate deleted ≠ RFC/ADR Approved ≠ production retirement D
 3. Strangler Fig：先加 typed 替代，再迁消费者，再删旧 API，最后删 crate
 4. 单 writer：plan/ 与 gate-todo 路径互斥；verifier 只写 round-N / verdict
 5. residual 纪律：OPEN / CLOSED / DEFER(accepted) only
-6. 禁止：TypeId/Any registry、Big Bang、误删 .agent/gates / archgate
+6. 禁止：TypeId/Any registry、Big Bang、误删 .agent/gates / CI·release policy gates
 7. 人审闸门：RFC/ADR/物理删除不得由 AI 独断 CLOSED
 8. 十轮验收：fail_rounds 必须为 0 才可宣称「十轮通过」
 9. 分支纪律：禁止 main 直接开发；实现波用 `.worktrees/workspaces/<branch>`
-10. 命名消歧：文档始终区分 runtime gate crate vs CI/arch gates
+10. 命名消歧：文档始终区分 runtime gate crate vs CI/policy gates；`tools/archgate` 为 monorepo 概念且 **infra.rs 不引入（OOS）**
 ```
 
 ### 1.1 路径互斥（agent team）
@@ -271,13 +275,19 @@ architecture registry active gate unit
 
 ```text
 .agent/gates/               # harness 门禁规格
-tools/archgate/             # 架构门禁工具
 CI gate / policy gate jobs
 release gates
 quality / evidence gates
 docs 中关于 CI gate 的叙述
 VenueSafetyGate（domain 风险门）
 xlibgate 历史叙述（只读）
+```
+
+### 4.2.1 OOS（infra.rs · 非 KEEP）
+
+```text
+tools/archgate/             # monorepo 架构门禁工具 — infra.rs 不引入（OOS）
+.architecture/              # 随 archgate；本仓不移植
 ```
 
 CI job `gate` → `policy-gates` **非阻塞**（源 §5.2）；单独 backlog，**不**阻塞 runtime 删除。
@@ -308,7 +318,7 @@ cargo clippy --all-targets -- -D warnings
 cargo check --workspace
 cargo test --workspace   # 或 cargo nextest run
 cargo xtl lint-deps
-cargo run -p archgate -- --json
+# N/A (infra.rs OOS): cargo run -p archgate -- --json  — 本仓不引入 archgate
 cargo machete
 cargo deny check
 ```
@@ -351,7 +361,8 @@ evidence/architecture/gate-retirement/<phase>/
 ├── source-search-before.txt / after.txt
 ├── public-api.diff
 ├── architecture.diff
-├── test.log · clippy.log · archgate.json
+├── test.log · clippy.log
+├── archgate.json          # N/A（infra.rs 不引入 archgate；不构成本仓验收）
 ├── negative-fixtures.log
 ├── downstream-impact.md
 └── verdict.md
@@ -376,7 +387,7 @@ evidence/gate-retirement/plan-package-2026-07-15/
 | Phase 1–2 | revert 当前 PR |
 | Phase 3 | revert bootstrap removal PR |
 | Phase 4 | revert deletion PR |
-| 禁止 | 临时再实现 registry / 复制 Gate 进 bootstrap / 关 archgate / 永久 exception |
+| 禁止 | 临时再实现 registry / 复制 Gate 进 bootstrap / 永久 exception；**不得**以「缺 archgate」为由跳过本仓已有结构扫描/CI 防回流（archgate 本身 OOS） |
 
 gate **无生产持久化状态** → 无数据迁移/回滚。若发现隐藏状态消费者：停止删除阶段并重新评估。
 
