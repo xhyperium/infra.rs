@@ -1,7 +1,7 @@
 # decimalx Wire / Storage 边界（生产政策）
 
 **Status**：Policy · **非**跨版本 stable  
-**Package**：`xhyper-decimalx` 0.1.x
+**Package**：`decimalx` 0.1.x
 
 | 边界 | 当前事实 | 稳定承诺 |
 |------|----------|----------|

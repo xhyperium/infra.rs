@@ -1,6 +1,6 @@
 # kernel docs
 
-**Package**：`xhyper-kernel` · **lib**：`kernel` · **角色**：L0 语义信任根
+**Package**：`kernel` · **lib**：`kernel` · **角色**：L0 语义信任根 · **层级**：L1+L4
 
 本目录存放 **crate 级**设计 / 契约补充 / 迁移笔记。
 不替代 rustdoc；不重复仓库根治理文档（见分层边界 `crates/AGENTS.md`）。

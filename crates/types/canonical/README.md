@@ -2,39 +2,76 @@
 
 `/types/` 跨层共享 DTO（ADR-001，spec §4.2）。只放纯数据形状，无业务逻辑。
 
+| 项 | 值 |
+|----|-----|
+| package | `canonical` |
+| lib | `canonical` |
+| path | `crates/types/canonical` |
+| version | `0.1.0` |
+| publish | `false`（internal only） |
+| **生产层级** | **L2 committed wire subset**（v1 / v1.1 / v1.2 / v1.3） |
+| 支持矩阵 | Linux x86_64 · MSRV 1.85 |
+
+> **已承诺 wire**：见 `COMMITTED_WIRE_V1*` 与 `wire_commitment`。  
+> **不是** 全 DTO package Production Ready / crates.io / schema registry。
+
 ## 主要内容
 
-- 复用 `decimalx::Money`（ADR-007）。
-- 标识：`VenueId`、`InstrumentId`、`OrderRef`。
-- 取消：`CancelOrderRequest`。
-- 枚举：`OrderStatus` / `Side`。
-- DTO：`Order` / `OrderAck` / `OrderBookSnapshot` / `Position` / `SymbolMeta` / `Tick` / `Trade` / `PriceLevel`。
-- 辅助模块：`shape`（adapter 形状检查）、`proposed_time`（ns↔ms 转换）。
-- **时间**：DTO `ts: i64` = Unix epoch **纳秒**（CAN-TIME-001 Approved）。
-- **标识**：新接口优先 `OrderRef`；`OrderId` 类型已删除，id 字段为 `String`。
+- 复用 `decimalx::Money`（ADR-007）
+- 标识：`VenueId`、`InstrumentId`、`OrderRef`
+- 取消：`CancelOrderRequest`
+- 枚举：`OrderStatus` / `Side`
+- DTO：`Order` / `OrderAck` / `OrderBookSnapshot` / `Position` / `SymbolMeta` / `Tick` / `Trade` / `PriceLevel`
+- 辅助：`shape`（形状检查）、`proposed_time`（ns↔ms）、`wire`（承诺等级）
+- **时间**：DTO `ts: i64` = Unix epoch **纳秒**（CAN-TIME-001）
 
-## 定位
+## Committed wire 清单
 
-`/types/` 层，跨 crate 共享的数据契约。`Money` / `Decimal` 族复用自 `decimalx`，不在本 crate 重定义。
+| 批次 | 类型 |
+|------|------|
+| v1 | `CancelOrderRequest` · `OrderRef` · `OrderAck` · `OrderStatus` · `Side` |
+| v1.1 | `Order` |
+| v1.2 | `Tick` · `Trade` |
+| v1.3 | `Position` · `OrderBookSnapshot` · `PriceLevel` · `SymbolMeta` |
 
-权威当前实现合同：`.agents/ssot/types/canonical/canonical-spec.md`。  
-完整规范（Approved，≠ package stable）：`.agents/ssot/types/canonical/20260717/`。
+Golden：`fixtures/market/canonical/v1{,.1,.2,.3}/`
 
-## 非职责
+## 硬限制
 
-- 无业务行为方法（行为在 domain 层 newtype 上）。
-- 不依赖 L1/适配器；不做 I/O。
-- 不替代 `contracts` trait 出口。
-- **不是**通用 Canonical Encoding Core / schema registry / hash-sign-evidence 框架（evidence 有独立 versioned encoding）。
+- 无业务行为方法；不做 I/O；不依赖 L1/适配器
+- 不替代 `contracts` trait 出口
+- `Money` re-export 不单独承诺 wire（SSOT 在 decimalx）
+- adapter 从交易所 ms 入口须经 `ns_from_unix_millis`
+- 金额字段必须来自 `decimalx`，禁止浮点别名
 
-## 限制与安全
+## 最小用法
 
-- DTO 变更影响面广。Committed wire 清单见 `src/wire.rs`（`COMMITTED_WIRE_V1` / `_V1_1` / `_V1_2` / `_V1_3`），对应 golden 在 `fixtures/market/canonical/v1{,.1,.2,.3}/`。
-- **≠** 整体 package Production Ready / crates.io；未列入清单的类型（如 alias / decimalx re-export）无跨版本 wire 承诺。
-- 金额字段类型必须来自 `decimalx`，禁止浮点别名。
-- `ts` **必须**按纳秒写；adapter 从交易所 ms 入口须经 `ns_from_unix_millis`。
-- **生产路径**见 `.agents/ssot/types/canonical/plan/production-upgrade.md`。
+```bash
+cargo run -p canonical --example basic
+```
 
-## 版本
+```rust
+use canonical::{Order, OrderStatus, Side, wire_commitment, WireCommitment};
+use decimalx::{Decimal, Price, Qty};
 
-0.1.0（见 `Cargo.toml`）。**≠** package stable · **≠** 全 crate Production Ready。
+let o = Order {
+    id: "1".into(),
+    symbol: "BTCUSDT".into(),
+    side: Side::Buy,
+    price: Price::new(Decimal::new(1, 0)),
+    qty: Qty::new(Decimal::new(1, 0)),
+    status: OrderStatus::Open,
+};
+assert_eq!(wire_commitment("Order"), WireCommitment::CommittedV1);
+let _ = serde_json::to_string(&o).unwrap();
+```
+
+## 验证
+
+```bash
+cargo test -p canonical --all-targets
+cargo clippy -p canonical --all-targets -- -D warnings
+cargo bench -p canonical --bench hot_path -- --quick
+```
+
+公开 API：[docs/API.md](./docs/API.md) · 变更日志：[CHANGELOG.md](./CHANGELOG.md)

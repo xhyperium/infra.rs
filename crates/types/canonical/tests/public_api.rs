@@ -1,6 +1,6 @@
 //! 库外消费者视角的公开 API 契约（integration）。
 //!
-//! 证明 `xhyper-canonical` 作为 workspace 成员可被独立 crate 引用，
+//! 证明 package `canonical` 作为 workspace 成员可被独立 crate 引用，
 //! 且关键 DTO/helper 行为与 SSOT §2–§3 一致。
 
 use canonical::{

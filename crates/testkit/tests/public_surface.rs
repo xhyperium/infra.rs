@@ -145,11 +145,7 @@ fn cargo_toml_production_deps_only_kernel() {
         .filter(|k| !k.is_empty())
         .collect();
     prod_deps.sort_unstable();
-    assert_eq!(
-        prod_deps,
-        vec!["kernel"],
-        "production deps must be only xhyper-kernel, got {prod_deps:?}"
-    );
+    assert_eq!(prod_deps, vec!["kernel"], "production deps must be only kernel, got {prod_deps:?}");
     assert!(
         CARGO_TOML.contains("publish = false"),
         "testkit must remain publish=false (test-support plane)"

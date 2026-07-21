@@ -6,18 +6,20 @@
 ## 身份
 
 - **T0 test-support**（非生产 runtime；`publish = false`）
-- package：`xhyper-testkit` · lib：`testkit` · path：`crates/testkit`
+- package：`testkit` · lib：`testkit` · path：`crates/testkit` · version：`0.1.1`
+- 生产层级：**L1 ManualClock test-support**（**不是**生产 runtime）
 - 稳定公开面仅 `ManualClock` 族（4 类型）
 
 ## 本 crate 约束
 
 - 业务 crate **只能**通过 `[dev-dependencies]` 引用
-- 生产依赖白名单：**仅** `xhyper-kernel`（lib `kernel`）
+- 生产依赖白名单：**仅** `kernel`（path `../kernel`）
 - `default = []`；禁止 feature 泄漏
 - 禁止真实时间 / sleep / 网络 / 文件 IO / 环境变量
 - **禁止** 重新引入 `xlib_test!` / `mock!` / `FixtureBuilder` / provider 大宏
-- 验证：`cargo test -p xhyper-testkit` · `cargo clippy -p testkit --all-targets -- -D warnings`
-- 质量：`cargo llvm-cov -p testkit --fail-under-lines 95` · `cargo mutants -p xhyper-testkit` · `cargo +nightly miri test -p xhyper-testkit`
+- 验证：`cargo test -p testkit` · `cargo clippy -p testkit --all-targets -- -D warnings`
+- 质量：`cargo llvm-cov -p testkit --fail-under-lines 95` · `cargo mutants -p testkit` · `cargo +nightly miri test -p testkit`
+- 示例：`cargo run -p testkit --example basic`
 - 对齐矩阵：[`../../docs/ssot/testkit-ssot-alignment.md`](../../docs/ssot/testkit-ssot-alignment.md)
 
 ## 与 SSOT 镜像的关系

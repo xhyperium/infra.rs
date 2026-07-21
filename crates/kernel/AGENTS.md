@@ -1,6 +1,7 @@
 # kernel — Agent 行为规则
 
-> 适用 crate：`crates/kernel/`（包名 `xhyper-kernel`，lib 名 `kernel`）  
+> 适用 crate：`crates/kernel/`（package `kernel`，lib 名 `kernel`，version workspace `0.3.0`）  
+> 生产层级：**L1 Internal Ready + L4 Platform Ready**  
 > 父级规则：[`crates/AGENTS.md`](../AGENTS.md)  
 > 实现契约 SSOT：`.agents/ssot/kernel/spec/spec.md`（**SPEC-KERNEL-002**）  
 > 本仓对齐矩阵：[`docs/ssot/kernel-ssot-alignment.md`](../../docs/ssot/kernel-ssot-alignment.md)
@@ -12,8 +13,8 @@
 `kernel` 是 xhyper L0 语义信任根，仅提供：
 
 - `error` — `ErrorKind` / `XError` / `XResult` / `BoxError`
-- `clock` — `Timestamp` / `MonotonicInstant` / `Clock` / `SystemClock`
-- `lifecycle` — `ComponentState` / `ShutdownSignal` / `ShutdownGuard`
+- `clock` — `Timestamp` / `MonotonicInstant` / `Clock` / `SystemClock` / `ClockDomain` / `ClockError`
+- `lifecycle` — `ComponentState` / `ShutdownSignal` / `ShutdownGuard` / `LifecycleError`
 
 ---
 
@@ -69,14 +70,20 @@ crates/kernel/
 │   ├── clock.rs
 │   ├── error.rs
 │   └── lifecycle.rs
-├── examples/           # 暂无示例时保留 .gitkeep
-├── docs/               # 设计/迁移文档；暂无时保留 .gitkeep
+├── examples/
+│   └── basic.rs
+├── docs/
+│   ├── API.md
+│   └── README.md
 ├── tests/
 │   ├── api_compile.rs
 │   ├── clock_contract.rs
 │   ├── lifecycle_concurrency.rs
 │   ├── lifecycle_concurrency_loom.rs
-│   └── public_api.rs
+│   ├── public_api.rs
+│   └── public_api_surface.rs
+├── benches/
+│   └── hot_path.rs
 ├── CHANGELOG.md
 ├── AGENTS.md
 └── README.md
@@ -91,6 +98,8 @@ cargo test -p kernel --all-targets
 cargo test -p kernel --doc   # rustdoc compile_fail 负向面（--all-targets 不含 doctest）
 cargo clippy -p kernel --all-targets -- -D warnings
 cargo fmt --all -- --check
+cargo run -p kernel --example basic
+cargo bench -p kernel --bench hot_path -- --quick
 RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release
 ```
 
@@ -107,5 +116,6 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v1.2.0 | 2026-07-21 | package 名对齐 `kernel`；examples/docs 落地 |
 | v1.1.0 | 2026-07-21 | 对齐 SPEC-KERNEL-002 可移植合同（loom / proptest / static_assertions） |
 | v1.0.0 | 2026-07-21 | 初始规则；对齐 crates 子模块标准布局 |
