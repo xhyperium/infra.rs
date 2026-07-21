@@ -131,3 +131,23 @@ jobs:
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  summary:
+    name: 缓存摘要
+    needs: [build, test, msrv, coverage]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: CI Cache Summary
+        run: |
+          echo "## CI Cache Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Job | Result | Cache |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 检查 | ${{ needs.build.result }} | rust-cache@v2 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 测试 | ${{ needs.test.result }} | rust-cache@v2 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| MSRV | ${{ needs.msrv.result }} | rust-cache@v2 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 覆盖率 | ${{ needs.coverage.result }} | rust-cache@v2 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Cache backend: Swatinem/rust-cache@v2 | CARGO_INCREMENTAL=0" >> "$GITHUB_STEP_SUMMARY"
