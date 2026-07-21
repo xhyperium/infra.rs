@@ -127,28 +127,31 @@ pub use clock::{
 
 ## I-GRAPH / I-ARCHGATE / I-CI
 
-| ID | 规则 ID |
-|----|---------|
-| I-GRAPH-1 | TESTKIT-GRAPH-001 |
-| I-GRAPH-2 | TESTKIT-GRAPH-002 |
-| I-GRAPH-3 | TESTKIT-GRAPH-003 |
-| I-GRAPH-4 | TESTKIT-GRAPH-004 |
-| I-GRAPH-5 | TESTKIT-GRAPH-005 |
-| I-AG-LAYER | TESTKIT-LAYER-001 |
-| I-AG-DEP | TESTKIT-DEP-001 |
-| I-AG-FEAT | TESTKIT-FEATURE-001 |
-| I-AG-API | TESTKIT-API-001 |
-| I-AG-MACRO | TESTKIT-MACRO-001 |
-| I-AG-PLACE | TESTKIT-PLACEHOLDER-001 |
-| I-AG-TIME | TESTKIT-TIME-001 |
-| I-AG-IO | TESTKIT-IO-001 |
-| I-AG-GRAPH | TESTKIT-GRAPH-001（archgate 侧） |
-| I-AG-HIDDEN | TESTKIT-HIDDEN-DEP-001 |
-| I-AG-NAME | TESTKIT-NAMING-001 |
-| I-CI-CORE | §16.1 命令全集 |
-| I-CI-CTC | §16.2 |
-| I-CI-PROD | §16.3 test-graph-check |
-| I-CI-NIGHTLY | §16.4 |
+> **I-AG-***（archgate 侧）：**infra.rs OOS** — 本仓不移植 archgate / `.architecture`。  
+> 规则 ID 仅作历史 monorepo 参考；本仓图隔离用 I-GRAPH + test-graph-check / 结构扫描（非 archgate）。
+
+| ID | 规则 ID | 本仓状态 |
+|----|---------|----------|
+| I-GRAPH-1 | TESTKIT-GRAPH-001 | 可选机控（xtask/rg） |
+| I-GRAPH-2 | TESTKIT-GRAPH-002 | 可选机控 |
+| I-GRAPH-3 | TESTKIT-GRAPH-003 | 可选机控 |
+| I-GRAPH-4 | TESTKIT-GRAPH-004 | 可选机控 |
+| I-GRAPH-5 | TESTKIT-GRAPH-005 | 可选机控 |
+| I-AG-LAYER | TESTKIT-LAYER-001 | **OOS**（文档 + cargo metadata 叙述 layer） |
+| I-AG-DEP | TESTKIT-DEP-001 | **OOS**（语义可用 Cargo.toml/lint-deps 表达） |
+| I-AG-FEAT | TESTKIT-FEATURE-001 | **OOS** |
+| I-AG-API | TESTKIT-API-001 | **OOS**（public-api 快照可独立存在） |
+| I-AG-MACRO | TESTKIT-MACRO-001 | **OOS** |
+| I-AG-PLACE | TESTKIT-PLACEHOLDER-001 | **OOS** |
+| I-AG-TIME | TESTKIT-TIME-001 | **OOS**（可用 rg 源码守卫） |
+| I-AG-IO | TESTKIT-IO-001 | **OOS** |
+| I-AG-GRAPH | TESTKIT-GRAPH-001（archgate 侧） | **OOS**（图隔离见 I-GRAPH，非 archgate） |
+| I-AG-HIDDEN | TESTKIT-HIDDEN-DEP-001 | **OOS** |
+| I-AG-NAME | TESTKIT-NAMING-001 | **OOS** |
+| I-CI-CORE | §16.1 命令全集（**无** archgate） | 生效 |
+| I-CI-CTC | §16.2 | 生效 |
+| I-CI-PROD | §16.3 test-graph-check | 可选/生效视落地 |
+| I-CI-NIGHTLY | §16.4 | 可选 |
 
 ---
 
@@ -188,7 +191,7 @@ PR-1…PR-6 见 plan §1.2。
 
 ## I-EVID Evidence 文件（§21）
 
-manifest / commit / cargo-metadata / consumers / production-graph / public-api.diff / fmt / clippy / tests / coverage / mutants / miri / contract-negative / archgate / verdict。
+manifest / commit / cargo-metadata / consumers / production-graph / public-api.diff / fmt / clippy / tests / coverage / mutants / miri / contract-negative / **archgate（N/A · OOS）** / verdict。
 
 ---
 
@@ -250,7 +253,8 @@ manifest / commit / cargo-metadata / consumers / production-graph / public-api.d
 
 ### I-DONE-24.6 治理
 
-- [ ] RFC·ADR / API snapshot / archgate / test-graph-check / negative fixtures / CHANGELOG / Evidence  
+- [ ] RFC·ADR / API snapshot / test-graph-check / negative fixtures / CHANGELOG / Evidence  
+- ~~archgate~~ → **OOS**（infra.rs 不移植；非勾选项）
 
 ---
 

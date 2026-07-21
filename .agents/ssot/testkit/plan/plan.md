@@ -81,7 +81,7 @@ integration harness
 | §9 | Contract Testkit | **ABSENT** |
 | §10 | Mock/Fake/Stub 术语 | **ABSENT**（下游 Mock* 命名未审计） |
 | §11–§13 | 确定性 / API 预算 / 测试合同 | **PARTIAL**（少量 unit；无 property/concurrency/compile_fail/mutation/Miri） |
-| §14–§16 | 图隔离 / Archgate / CI | **PARTIAL**（lint-deps 有 testkit dev-only 粗检；无 test-graph-check / archgate 规则全集） |
+| §14–§16 | 图隔离 / Archgate(OOS) / CI | **PARTIAL**（lint-deps 有 testkit dev-only 粗检；test-graph-check 可选；**archgate 规则全集 = OOS**，本仓不移植） |
 | §17–§18 | 文档 / 版本 | **WRONG**（README 仍 L0 + 宏清单；layer=kernel；status incubating 正确） |
 | §19–§20 | 迁移 / PR 切分 | **文档有；实现无** |
 | §21–§24 | Evidence / 时间表 / 指标 / 完成定义 | **文档有；实现无** |
@@ -95,7 +95,7 @@ integration harness
 4. **DEF-004** `xlib_test!` / `mock!` / `FixtureBuilder` 仍公开  
 5. **DEF-005** `provider_capability_contract_tests!` 隐藏依赖 + 硬编码 mock 行为仍在 core  
 6. **DEF-006** 无 `contract-testkit` 与 trait-level suite / broken fake 负测  
-7. **DEF-007** 无 TESTKIT-* archgate / test-graph-check 全量机控  
+7. **DEF-007** 图隔离机控不全（test-graph-check 等）；**archgate TESTKIT-* = OOS**（本仓不移植，不作为阻断）  
 8. **DEF-008** 双/三份 active-looking specs（testkit-spec / complete-spec / testkitx）未收敛  
 9. **DEF-009** Spec 仍 Proposed；人审未批  
 10. **DEF-010** 覆盖率/mutation/Miri/API snapshot 未达标
@@ -136,8 +136,8 @@ Clock::{now -> Result, monotonic -> MonotonicInstant}
 | `docs/architecture/spec.md` | L0 列表含 testkit；职责写宏 | W5 对齐修订 |
 | ADR-010 | 批准宏最小范围 | W5 修订备注：002 退役宏 |
 | ADR-012 | harness/testkitx 合并叙述 | 交叉引用 002 终态 |
-| `tools/xtask` classify | testkit → Layer::Kernel | 改为 test-support / 专用类 |
-| `.architecture/workspace.toml` | `layer = "kernel"` | → `test-support` |
+| `tools/xtask` classify | testkit → Layer::Kernel | 改为 test-support / 专用类（若本仓有 xtask） |
+| `.architecture/workspace.toml` | monorepo 曾 `layer = "kernel"` | **OOS**：infra.rs **不维护** `.architecture`；layer=test-support 以文档 + cargo metadata 叙述 |
 
 ---
 
@@ -176,7 +176,7 @@ base:        origin/main HEAD
 | **PR-3** | 消费者迁移（若有）+ 删 deprecated | 调用点 0 |
 | **PR-4** | 删 xlib_test!/mock!/FixtureBuilder + API snapshot | public macro count=0 |
 | **PR-5** | contract-testkit + Binance/OKX 迁移 + broken fakes | suite 可杀 broken |
-| **PR-6** | 架构 SSOT · test-graph-check · archgate · Evidence | §24 候选 |
+| **PR-6** | 架构 SSOT · test-graph-check · Evidence（**archgate OOS**） | §24 候选 |
 
 每个 PR：独立 worktree、可回滚、main green、不混入 kernel/evidence 大改。
 
@@ -250,7 +250,7 @@ W9  §24 全勾 + 可选 stable 决策
 | B Clock | `crates/testkit/src/clock.rs` · `crates/testkit/tests/**` | adapters |
 | C Delete/Migrate | `crates/testkit/src/lib.rs` · binance/okx 测试入口 | kernel |
 | D Contract | `crates/test-support/contracts/**`（新建） | testkit core 宏回流 |
-| E Gate | `tools/xtask/**` · `.architecture/**` · `.agent/gates/**` | domain 业务 |
+| E Gate | `tools/xtask/**` · `.agent/gates/**`（**`.architecture/**` OOS：本仓不维护**） | domain 业务 |
 | F Doc | `README` · `AGENTS` · `docs/architecture/**` · CHANGELOG | 改 API 语义 |
 
 单 writer：同一路径不同时并行写。
@@ -315,7 +315,12 @@ TESTKIT-GRAPH-001..005
 
 `cargo xtl test-graph-check`（新建）输出：package / consumer / kind / target / feature path / verdict。
 
-### 6.2 Archgate（§15）
+### 6.2 Archgate（§15）— **infra.rs OOS**
+
+> **本仓不移植** `tools/archgate` / `.architecture`。下列 TESTKIT-* 仅为历史 monorepo 规则 ID 参考，**不**强制机控、**不**构成本仓验收。  
+> 可选残留：结构扫描 / lint-deps / test-graph-check / CI / public-api（均非 archgate）。
+
+历史规则 ID 参考：
 
 ```text
 TESTKIT-LAYER-001, DEP-001, FEATURE-001, API-001, MACRO-001,
@@ -331,7 +336,7 @@ cargo test -p testkit
 cargo llvm-cov -p testkit --fail-under-lines 95
 cargo mutants -p testkit
 cargo miri test -p testkit
-cargo run -p archgate -- --json   # 若入口存在；否则登记 residual
+# N/A (infra.rs OOS): cargo run -p archgate -- --json  — 本仓不引入 archgate
 cargo run -p xtask -- lint-deps
 cargo run -p xtask -- crate-standard --check
 cargo run -p xtask -- test-graph-check
@@ -365,9 +370,10 @@ evidence/testkit/<date>-<change-id>/
   manifest.json, commit.txt, cargo-metadata.json, consumers.json,
   production-graph.json, public-api.diff, fmt.log, clippy.log, tests.log,
   coverage.json, mutants.json, miri.log, contract-negative-tests.log,
-  archgate.json, verdict.md
+  archgate.json  # N/A（infra.rs 不引入 archgate；不构成本仓验收）,
+  verdict.md
 ```
-（I-EVID-FILES 15 项齐全）
+（I-EVID-FILES：archgate.json 本仓 **N/A/OOS**；其余齐全）
 
 证明：commit；未进 production graph；broken fake 可杀；无真实时间；无宏回流；SKIP≠PASS。
 

@@ -340,7 +340,7 @@ Verified Accepted Changes / Human Review Minute
 - `docs/goal/schema/**`
 - goalctl 相关 CR / ADR / CI integration
 - 与 `xhyper-evidence`、`tools/evidence-cli` 的只读/写入接口合同
-- 必要的 `tools/xtask`、`archgate`、crate-standard 接线
+- 必要的 `tools/xtask`、crate-standard 接线（monorepo 历史另含 archgate；**infra.rs 不移植 archgate**）
 - Shadow/Mirror/Cutover 所需工作流
 
 ## 7.2 永久非职责

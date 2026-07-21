@@ -74,8 +74,8 @@ L1 infra
 
 本文件获批后：
 
-- `.architecture/workspace.toml` 中 `testkit` 的 layer 必须从 `kernel` 改为 `test-support`；
-- 架构图必须将 Test Support 画成正交测试平面；
+- **layer 身份**：`testkit` 为 **test-support**（非 L0/kernel runtime）。**infra.rs 不维护** `.architecture/workspace.toml` / archgate；layer 约束以文档叙述 + `cargo metadata` / 结构扫描为准（非 monorepo archgate 机控）。
+- 架构叙述必须将 Test Support 画成正交测试平面（文档/对齐文即可）；
 - `testkit` 只能以 `dev-dependency` 被业务 crate 消费；
 - `xlib_test!`、`mock!`、`FixtureBuilder` 必须退役；
 - provider contract suite 必须迁移到独立测试支持 crate；
@@ -1558,44 +1558,29 @@ contract-testkit 宏如果存在，必须：
 
 ---
 
-# 15. Archgate 规则
+# 15. Archgate 规则（infra.rs OOS）
+
+> **infra.rs OOS**：本仓**不移植** `tools/archgate` / `.architecture`。  
+> 下列 TESTKIT-* 规则 ID 仅为 **历史 monorepo 参考**；**不**构成本仓强制验收条件，也**不**要求 `cargo run -p archgate`。  
+> 可选残留机控（非 archgate）：结构扫描 / `lint-deps` / `test-graph-check`（若本仓落地）/ CI job / public-api 快照。
+
+历史规则 ID 参考（仅枚举，不强制实现）：
 
 ```text
-TESTKIT-LAYER-001:
-  testkit layer != test-support → fail。
-
-TESTKIT-DEP-001:
-  testkit normal dependency 除 kernel 外存在其他 crate → fail。
-
-TESTKIT-FEATURE-001:
-  testkit 存在非 default feature → fail。
-
-TESTKIT-API-001:
-  public API 超出冻结清单 → fail。
-
-TESTKIT-MACRO-001:
-  testkit 导出 macro_rules/proc macro → fail。
-
-TESTKIT-PLACEHOLDER-001:
-  public zero-sized placeholder builder/type → fail。
-
-TESTKIT-TIME-001:
-  testkit 出现 SystemTime::now / Instant::now / sleep → fail。
-
-TESTKIT-IO-001:
-  testkit 出现文件、网络、环境读取 → fail。
-
-TESTKIT-GRAPH-001:
-  production normal dependency 引入 testkit → fail。
-
-TESTKIT-HIDDEN-DEP-001:
-  exported macro 引用未声明依赖 → fail。
-
-TESTKIT-NAMING-001:
-  名为 Mock 的共享测试类型无 interaction verification → warning/fail by policy。
+TESTKIT-LAYER-001, TESTKIT-DEP-001, TESTKIT-FEATURE-001,
+TESTKIT-API-001, TESTKIT-MACRO-001, TESTKIT-PLACEHOLDER-001,
+TESTKIT-TIME-001, TESTKIT-IO-001, TESTKIT-GRAPH-001,
+TESTKIT-HIDDEN-DEP-001, TESTKIT-NAMING-001
 ```
 
-`TESTKIT-NAMING-001` 首期可为 warning，完成现有 mock 审计后提升为 fail。
+语义摘要（文档约束，非 archgate 机控）：
+
+- **LAYER**：testkit 为 test-support 平面（文档 + cargo metadata 叙述）
+- **DEP / FEATURE**：normal dep 仅 kernel；无非 default feature
+- **API / MACRO / PLACEHOLDER**：公开面预算；禁宏与 ZST placeholder
+- **TIME / IO**：禁真实时间 / sleep / 文件网络环境 IO
+- **GRAPH**：生产 normal graph 不得引入 testkit
+- **HIDDEN-DEP / NAMING**：禁隐藏宏依赖；Mock* 命名策略（warning→fail 由政策决定）
 
 ---
 
@@ -1610,8 +1595,8 @@ cargo test -p testkit
 cargo llvm-cov -p testkit --fail-under-lines 95
 cargo mutants -p testkit
 cargo miri test -p testkit
-cargo run -p archgate -- --json
-cargo run -p xtask -- lint-deps
+# N/A (infra.rs OOS): cargo run -p archgate -- --json  — 本仓不引入 archgate
+cargo run -p xtask -- lint-deps          # 若本仓有 xtask；否则结构扫描 / cargo metadata
 cargo run -p xtask -- crate-standard --check
 ```
 
@@ -1868,9 +1853,10 @@ real/testnet contract
 修改：
 
 ```text
-.architecture/workspace.toml
-docs/architecture/spec.md
-STRUCTURE.md
+# N/A (infra.rs OOS): .architecture/workspace.toml  — 本仓不维护 .architecture / archgate
+# layer=test-support 以文档 + cargo metadata 叙述为准
+docs/architecture/spec.md   # 或本仓 docs/ssot 对齐文
+STRUCTURE.md                # 若存在
 .agents/ssot/testkit/
 旧 infra/testkitx active spec
 README
@@ -1998,7 +1984,7 @@ evidence/testkit/<date>-<change-id>/
 ├── mutants.json
 ├── miri.log
 ├── contract-negative-tests.log
-├── archgate.json
+├── archgate.json              # N/A（infra.rs 不引入 archgate；不构成本仓验收）
 └── verdict.md
 ```
 
@@ -2174,8 +2160,8 @@ Status   = stable
 ```text
 [ ] RFC / ADR
 [ ] public API snapshot
-[ ] archgate
-[ ] xtask test-graph-check
+[ ] # N/A (infra.rs OOS): archgate — 本仓不移植；非验收勾选
+[ ] xtask test-graph-check（或等价结构扫描 / 图隔离证明）
 [ ] negative fixtures
 [ ] CHANGELOG
 [ ] Evidence

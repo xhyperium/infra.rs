@@ -27,9 +27,9 @@
 
 | 项 | 内容 |
 |----|------|
-| 请求 | `.architecture/workspace.toml`：`layer = "test-support"`；architecture/spec 测试平面叙述 |
-| 影响 | xtask classify / lint-deps / 文档 |
-| 状态 | **OPEN**（设计方向已由 complete-spec 裁定；执行待 PR） |
+| 请求 | layer = **test-support**；测试平面叙述（文档 + cargo metadata）。**不**维护 `.architecture/workspace.toml`（**infra.rs OOS**，不移植 archgate / `.architecture`） |
+| 影响 | 文档 / 对齐文 /（若有）xtask classify · lint-deps |
+| 状态 | **OPEN**（设计方向已由 complete-spec 裁定；执行待 PR；**无** `.architecture` 改动要求） |
 
 ---
 

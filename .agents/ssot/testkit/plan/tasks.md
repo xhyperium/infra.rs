@@ -53,7 +53,7 @@
 | T-CLK-015 | property tests §13.3 | proptest dev-dep | T-CLK-014 | Test | TODO |
 | T-CLK-016 | concurrency tests §13.4 | Arc 共享；无撕裂 | T-CLK-014 | Test | TODO |
 | T-CLK-017 | compile_fail / static_assertions §13.5 | !Default !Clone Send Sync；无旧宏导出（W3 后） | T-CLK-012 | Test | TODO |
-| T-CLK-018 | 无真实时间/sleep 源码守卫 | rg + 可选 archgate | T-CLK-001 | Gate | TODO |
+| T-CLK-018 | 无真实时间/sleep 源码守卫 | rg / 结构扫描（**非** archgate；archgate OOS） | T-CLK-001 | Gate | TODO |
 | T-CLK-019 | forbid(unsafe) deny missing_docs unreachable_pub | §6 | T-CLK-001 | Clock | TODO |
 | T-CLK-020 | CHANGELOG [Unreleased] ManualClock V2 | 中文 | T-CLK-011 | Doc | TODO |
 
@@ -111,10 +111,10 @@
 
 | Task ID | 内容 | AC | 依赖 | Owner | Status |
 |---------|------|-----|------|-------|--------|
-| T-ARCH-001 | `.architecture/workspace.toml` layer=test-support | TESTKIT-LAYER-001 | T-CLK-001 | Arch | TODO |
-| T-ARCH-002 | dependency.toml 路径策略更新 | testkit 不在 kernel paths 误导 | T-ARCH-001 | Arch | TODO |
-| T-ARCH-003 | xtask classify Layer::TestSupport | lint-deps 不破 | T-ARCH-001 | Gate | TODO |
-| T-ARCH-004 | docs/architecture/spec.md 测试平面叙述 | 非 L0 runtime | T-ARCH-001 | Doc | TODO |
+| T-ARCH-001 | ~~`.architecture/workspace.toml` layer=test-support~~ | **CANCELLED / OOS**：infra.rs **不维护** `.architecture`；layer=test-support 用文档 + cargo metadata 叙述 | — | Arch | **CANCELLED（OOS）** |
+| T-ARCH-002 | ~~dependency.toml 路径策略（随 `.architecture`）~~ | **CANCELLED / OOS**：随 archgate/`.architecture`；本仓不移植 | — | Arch | **CANCELLED（OOS）** |
+| T-ARCH-003 | xtask classify Layer::TestSupport（若本仓有 xtask） | lint-deps 不破；**不**依赖 archgate | T-CLK-001 | Gate | TODO |
+| T-ARCH-004 | docs/architecture/spec.md（或本仓 docs/ssot）测试平面叙述 | 非 L0 runtime；**不**依赖 `.architecture` | T-CLK-001 | Doc | TODO |
 | T-ARCH-005 | STRUCTURE/TECH 对齐或标滞后 | 不粉饰 | T-ARCH-004 | Doc | TODO |
 | T-ARCH-006 | ADR-010 修订备注：宏退役 | 链接 002 | T-DEL-005 | Doc | TODO |
 | T-ARCH-007 | active spec 唯一：I-SPEC-PATH `spec/spec.md` | active_testkit_spec_count=1 | T-DOC-002 T-DOC-003 T-DOC-005 | Doc | TODO |
@@ -131,12 +131,12 @@
 | Task ID | 内容 | AC | 依赖 | Owner | Status |
 |---------|------|-----|------|-------|--------|
 | T-GATE-001 | xtask test-graph-check 命令 | §14 输出列齐全 | T-ARCH-003 | Gate | TODO |
-| T-GATE-002 | TESTKIT-GRAPH-001..005 实现 | 五条均 fail-closed exit≠0 | T-GATE-001 | Gate | TODO |
-| T-GATE-003 | archgate TESTKIT-* 规则 | §15 列表 | T-ARCH-001 | Gate | TODO |
+| T-GATE-002 | TESTKIT-GRAPH-001..005 实现 | 五条均 fail-closed exit≠0（可用 xtask/rg；**非** archgate） | T-GATE-001 | Gate | TODO |
+| T-GATE-003 | ~~archgate TESTKIT-* 规则~~ | **CANCELLED / OOS**：**infra.rs 不移植** archgate；§15 历史规则 ID 仅参考 | — | Gate | **CANCELLED（OOS）** |
 | T-GATE-004 | public API snapshot | 超出预算 fail | T-DEL-005 | Gate | TODO |
 | T-GATE-005 | production_graph_guard 测试 | crates/testkit/tests | T-GATE-002 | Test | TODO |
 | T-GATE-006 | source guard：生产 src 禁 use testkit | 允许 cfg(test)/tests | T-GATE-002 | Gate | TODO |
-| T-GATE-007 | CI 接线 core 命令 §16.1 | 文档或 workflow | T-GATE-003 | CI | TODO |
+| T-GATE-007 | CI 接线 core 命令 §16.1 | 文档或 workflow（**无** `cargo run -p archgate`） | T-GATE-001 | CI | TODO |
 | T-GATE-008 | line≥95% 且 branch≥90% | llvm-cov 双阈值 | T-CLK-014 | Quality | TODO |
 | T-GATE-009 | mutants ≥90% 且 I-TEST-MUT 8 禁存活 | T-GATE-017 | T-CLK-014 | Quality | TODO |
 | T-GATE-010 | miri test -p testkit | 定期/CI | T-CLK-014 | Quality | TODO |
@@ -156,7 +156,7 @@
 | T-V10-005 | Round5 图隔离 | production_dependents=0 | W6 | Verify | TODO |
 | T-V10-006 | Round6 测试质量 coverage/mutation/miri | §13 | W1 W6 | Verify | TODO |
 | T-V10-007 | Round7 文档 README/AGENTS/CHANGELOG | §17 | W5 | Verify | TODO |
-| T-V10-008 | Round8 CI/archgate/xtask | §15–16 | W6 | Verify | TODO |
+| T-V10-008 | Round8 CI/xtask（§15 archgate = OOS） | §16 为主；§15 仅确认 OOS 叙述 | W6 | Verify | TODO |
 | T-V10-009 | Round9 指标 §23 全量 | I-METRICS | W6 | Verify | TODO |
 | T-V10-010 | Round10 §24 交叉一致 + Evidence | fail_rounds=0 | T-V10-001…009 | Verify | TODO |
 | T-EVID-001 | evidence/testkit/<date>-… | I-EVID-FILES 15 含 contract-negative-tests.log | T-V10-010 | Verify | TODO |
@@ -182,7 +182,7 @@
 | T-24-003 | 24.3 测试闭合全勾 | unit/property/concurrency/compile+cov/mut/miri | T-CLK-014 T-CLK-015 T-CLK-016 T-CLK-017 T-CLK-021 T-GATE-008 T-GATE-009 T-GATE-010 T-GATE-017 | Owner | TODO |
 | T-24-004 | 24.4 Contract 闭合全勾 | | T-CTC-012 | Owner | TODO |
 | T-24-005 | 24.5 图隔离闭合全勾 | | T-GATE-002 | Owner | TODO |
-| T-24-006 | 24.6 治理闭合全勾 | RFC/ADR/snapshot/archgate/graph/neg/CHANGELOG/Evidence | T-EVID-001 T-GATE-003 T-GATE-004 T-DOC-RFC-DEL T-ARCH-006 T-ARCH-010 T-GATE-001 | Owner | TODO |
+| T-24-006 | 24.6 治理闭合全勾 | RFC/ADR/snapshot/graph/neg/CHANGELOG/Evidence（**archgate = OOS 不勾**） | T-EVID-001 T-GATE-004 T-DOC-RFC-DEL T-ARCH-006 T-ARCH-010 T-GATE-001 | Owner | TODO |
 | T-24-007 | status=stable 单独决策 | 可 DEFER | T-24-001…006 | Owner | TODO |
 
 ---
@@ -226,7 +226,7 @@
 - T-GATE-009: ≥90% 且 I-TEST-MUT 8 条
 - T-ARCH-007: 强制 I-SPEC-PATH
 - T-24-003: 依赖 T-CLK-014…017,021 + T-GATE-008…010,017
-- T-24-006: 依赖 Evidence+archgate+snapshot+RFC+CHANGELOG+graph-check
+- T-24-006: 依赖 Evidence+snapshot+RFC+CHANGELOG+graph-check（**archgate OOS，不依赖 T-GATE-003**）
 - T-EVID-001: I-EVID-FILES 15 文件
 
 

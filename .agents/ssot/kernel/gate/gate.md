@@ -15,9 +15,9 @@
 | crates.io | **PASS** | https://crates.io/crates/kernel/0.1.1 |
 | cargo test -p kernel | **PASS** | lib 名仍 `kernel` |
 | loom CI 资产 | **PASS** | |
-| archgate KERNEL-* | **PASS 15/15** | 含 **TIME-004** + **API-002** |
-| API 快照 + baseline | **PASS** | snapshot ≡ baseline @ 0.1.1 |
-| KERNEL-API-002 | **PASS** | baseline + `kernel-api-rfc.toml` |
+| archgate KERNEL-* | **infra.rs 不适用（OOS）** | 历史 monorepo 机控；本仓不移植 archgate |
+| API 快照 / public-api | **PASS（本仓 CI 轨）** | 以 unit tests / public-api / 结构扫描为准；本仓不维护 `.architecture/**` |
+| KERNEL-API-002 语义 | **设计意图保留** | 公开 API 变更纪律仍有效；**机控不走 archgate** |
 | line cov ≥95% | **PASS ~98.95%** | |
 | branch ≥90% | **PASS 100%** | nightly llvm-cov --branch（ad-hoc 实测；CI 门禁待补 P1） |
 | miri | **PASS 21** | MIRIFLAGS disable-isolation（ad-hoc；CI 门禁待补 P1） |

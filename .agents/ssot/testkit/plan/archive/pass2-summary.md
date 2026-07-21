@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Pass2 Summary — SPEC-TESTKIT-002 计划完备性十轮重检
 
 | 字段 | 值 |

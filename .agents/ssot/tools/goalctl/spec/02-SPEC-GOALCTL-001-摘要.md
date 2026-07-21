@@ -178,7 +178,7 @@ Runtime / Registry Fact
 - protected asset 无批准时要求人工审批；
 - Legacy Narrative 不能独立生成 RELEASED；
 - 所有输出路径必须仓库相对；
-- xtask、archgate、crate-standard 通过。
+- xtask、crate-standard 通过（monorepo 历史另含 archgate；**infra.rs 不移植 archgate，不作验收**）。
 
 ## 9. 安全不变量
 

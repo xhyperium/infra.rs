@@ -5,8 +5,9 @@
 > [ADR-016](../../../../docs/architecture/adr/016-bootstrap-sole-composition-root.md)（**Accepted**）。  
 > 物理路径 `crates/gate` 与 package `xhyper-gate` **已删除**。  
 > 组合根：`bootstrap` + typed `PlatformContext` / `AppContext` / `BootstrappedApp`。  
-> **保留** `.agent/gates/`、`tools/archgate`、CI/release policy gates（非本 crate）。  
-> 防回流：`cargo xtl no-new-gate`。  
+> **保留** `.agent/gates/`、CI/release policy gates（非本 crate）。  
+> **OOS**：`tools/archgate` — **infra.rs 不引入**（本仓不移植 archgate / `.architecture`）。  
+> 防回流：`cargo xtl no-new-gate`（本仓可用 rg/CI/结构扫描；不依赖 archgate）。  
 > 执行计划包：[plan/](../plan)。
 
 本文件保留为历史实现契约索引，**不再**描述 active package 验收标准。

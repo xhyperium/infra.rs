@@ -19,7 +19,7 @@
 - [x] AC-3：registry **stable** + `[features] default=[]` + version **0.1.1** + crates.io **`xhyper-kernel`**（`publish=true`）
 - [x] AC-4：§18.2 代码主路径闭合
 - [x] AC-5：§18.3 测试闭合（unit/proptest/loom/line；branch/miri/mutants **实测**）
-- [x] AC-6：§18.4 治理闭合（archgate 15 含 API-002；version；evidence）
+- [x] AC-6：§18.4 治理闭合（本仓机控 = 结构扫描 / tests / CI；archgate **OOS**；version；evidence）
 
 ## Metrics
 

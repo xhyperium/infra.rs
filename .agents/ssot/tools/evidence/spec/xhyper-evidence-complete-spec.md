@@ -495,7 +495,8 @@ SHA256(
 
 禁止随机生成策略进入 core。
 
-链划分策略由 `.architecture/evidence-policy.toml` 声明。
+链划分策略由 evidence-policy 声明（monorepo 历史路径：`.architecture/evidence-policy.toml`）。
+**infra.rs**：本仓不维护 `.architecture`；本仓 evidence 以 `crates/evidence` 最小面为准，不以 archgate / 该 policy 路径为验收条件。
 
 ## 6.3 EventId
 
@@ -1249,7 +1250,7 @@ EvidenceError::IdempotencyConflict
 
 ## 13.7 Fail-closed
 
-所有被 `.architecture/evidence-policy.toml` 标记为 `required` 的操作：
+所有被 evidence-policy 标记为 `required` 的操作（monorepo 历史：`.architecture/evidence-policy.toml`；本仓不维护该路径）：
 
 ```text
 evidence append 未成功达到要求 durability
@@ -1724,7 +1725,7 @@ Volatile
 
 ## 19.3 生产阻断
 
-bootstrap、release gate 和 archgate 必须阻止：
+bootstrap 与 release gate 必须阻止（monorepo 历史另有 archgate 机控；**infra.rs 不移植 archgate**，不以 `cargo run -p archgate` 为验收）：
 
 ```text
 evidence_memory
@@ -2363,10 +2364,10 @@ evidence-cli repair-tail
 
 # 26. 架构政策清单
 
-必须新增：
+必须新增策略声明（monorepo 历史路径如下；**infra.rs 不维护 `.architecture`，本仓 evidence 以 `crates/evidence` 最小面为准**）：
 
 ```text
-.architecture/evidence-policy.toml
+.architecture/evidence-policy.toml   # monorepo-only；非本仓验收路径
 ```
 
 示例：
@@ -2514,7 +2515,8 @@ cargo test -p evidence
 cargo llvm-cov -p evidence --fail-under-lines 95
 cargo mutants -p evidence
 cargo miri test -p evidence
-cargo run -p archgate -- --json
+# monorepo-only（infra.rs 不移植 archgate，不作为本仓 CI 硬门禁）:
+# cargo run -p archgate -- --json
 cargo run -p xtask -- lint-deps
 cargo run -p xtask -- crate-standard --check
 ```

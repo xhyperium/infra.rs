@@ -20,7 +20,7 @@
 | A1 | 源方案在 RFC 批后可标 Accepted | Approve path | **Approve**（Source Plan → Accepted） |
 | A2 | RFC Retire Runtime Gate | Approve | **Approve** |
 | A3 | ADR-016 Bootstrap Sole Composition Root | Approve | **Approve** |
-| A4 | 仅删 runtime gate；保留 `.agent/gates`/archgate/CI | Must Approve | **Approve** |
+| A4 | 仅删 runtime gate；保留 `.agent/gates`/CI·release policy；**archgate 对本仓 OOS（不引入）** | Must Approve | **Approve**（边界：不误删 CI/policy；不要求/不移植 archgate） |
 | A5 | typed PlatformContext/AppContext/BootstrappedApp only | Approve | **Approve** |
 | A6 | Strangler PR-1…PR-5；禁 Big Bang | Approve | **Approve** |
 | A7 | 消费者仅 bootstrap | Acknowledge | **Approve**（acknowledge inventory） |
@@ -37,7 +37,7 @@
 
 ```text
 1. 假称 production retirement DONE / §19 全勾 / crate 已删（无 cargo metadata 证明）
-2. 删除或停用 .agent/gates/、tools/archgate/、CI release/quality/evidence gates
+2. 删除或停用 .agent/gates/、CI release/quality/evidence gates（**archgate 非本仓资产**：infra.rs 不引入；不得以「保留 archgate」为本仓验收条件，也不得误把 runtime gate 退役扩到 policy gates）
 3. 以 TypeId/Any/HashMap 替换字符串 registry
 4. Capability + downcast 作为「迁移捷径」
 5. sealed/frozen 后继续保留通用 registry
@@ -57,7 +57,7 @@
 | 落盘 RFC/ADR Status → Accepted（本包裁决） | ~~A12~~ 已授权；仍禁止假称 §19 全勾无终态 evidence |
 | 实现 PR-2…PR-4 typed 迁移 | 宣称 §19 DONE |
 | CI / no-new-gate 维持 | TypeId/Any registry |
-| 登记 DEFER(accepted) | 误删 CI/arch gates |
+| 登记 DEFER(accepted) | 误删 CI/policy gates；或把 archgate 当作本仓 KEEP/验收项 |
 
 ---
 

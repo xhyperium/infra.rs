@@ -15,7 +15,7 @@
 | W3 删宏/FixtureBuilder | **done** | PR #254 |
 | W4 contract-testkit | **done** | PR #254 · package `contract-testkit` |
 | W5 layer=test-support / SSOT 对齐 | **done** | PR #254 · `workspace.toml` |
-| W6 test-graph-check / archgate CI | **done** | PR #254 · `cargo xtl test-graph-check` |
+| W6 test-graph-check / 图隔离 CI | **done** | PR #254 · `cargo xtl test-graph-check`（**archgate OOS**：本仓不移植） |
 | W7 十轮实现验收 | **done** | fail_rounds=0 · mutants missed=0 · Miri PASS |
 | W8 人审（A1–A10） | **done** | [plan/approval-packet.md](../plan/approval-packet.md) |
 | W9 §24 闭合 / Stable 决策 | **done** | Stable CLAIMED 2026-07-14 |

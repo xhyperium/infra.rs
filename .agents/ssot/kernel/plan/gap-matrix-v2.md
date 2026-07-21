@@ -7,7 +7,7 @@
 | Spec | `xhyper-kernel-complete-spec.md` / `spec.md` |
 | Plan | [plan.md](./plan.md) |
 | Residual | [residual-open.txt](../evidence/2026-07-14/residual-open.txt) |
-| Live | `cargo test -p kernel` 绿；archgate 13/13 KERNEL-* ok；line cov 98.82% |
+| Live | `cargo test -p kernel` 绿；line cov 98.82%；archgate **infra.rs 不适用（OOS）** |
 | Doc-sync | Team-R10 · 与 residual-open 对齐 |
 | Campaign | **L1 PASS** · L3 §18 **OPEN** |
 
@@ -96,18 +96,18 @@
 
 ### §12 门禁
 
-| 规则 | archgate | 判定 |
-|------|----------|------|
-| KERNEL-DEP-001/002 | ok | PASS |
-| KERNEL-FEATURE-001 | ok | PASS |
-| KERNEL-API-001 | ok | PASS |
-| **KERNEL-API-002** | baseline + kernel-api-rfc.toml 机控 | **PASS / CLOSED (implemented) RES-GATE-009** |
-| KERNEL-TIME-001/002/003 | ok | PASS |
-| KERNEL-ERR-001/002 | ok baseline 8 | PASS |
-| KERNEL-SERDE/ASYNC/UNSAFE | ok | PASS |
-| KERNEL-LIFECYCLE-001 | ok（资产检查） | PASS |
+> **infra.rs 不适用（OOS）**：下表 KERNEL-* 为历史 monorepo 设计意图与战役闭合记录；**本仓不运行 archgate**，不维护 `.architecture/**`。本仓机控 = 结构扫描 / unit tests / CI（coverage, loom, miri, public-api）。
 
-> RES-GATE-009 **已 implemented**（API-002）；archgate KERNEL-* **15** 条。
+| 规则 | 设计意图（历史 monorepo） | 本仓判定 |
+|------|---------------------------|----------|
+| KERNEL-DEP-001/002 | 零 workspace dep；生产仅 thiserror | PASS（Cargo + 审查 / 结构扫描） |
+| KERNEL-FEATURE-001 | features 仅 default=[] | PASS |
+| KERNEL-API-001 | public-api 快照一致 | PASS（本仓 public-api / 审查，非 archgate） |
+| **KERNEL-API-002** | baseline + RFC allowlist | **CLOSED (implemented)** RES-GATE-009（历史机控；本仓纪律保留） |
+| KERNEL-TIME-001/002/003 | 系统时间调用边界 | 设计意图保留；archgate 机控 **OOS** |
+| KERNEL-ERR-001/002 | internal 棘轮 / 窄 residual | 设计意图保留；archgate 机控 **OOS** |
+| KERNEL-SERDE/ASYNC/UNSAFE | 源码禁令 | PASS（源码属性 + 测试） |
+| KERNEL-LIFECYCLE-001 | loom 资产 | PASS（CI loom / tests） |
 
 ### §15–§18
 

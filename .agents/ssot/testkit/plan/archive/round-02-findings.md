@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Round 2 — §4–§6 目录 / 依赖合同 / crate 规则
 
 > Verifier: 只读计划完备性检查（非实现验收）  

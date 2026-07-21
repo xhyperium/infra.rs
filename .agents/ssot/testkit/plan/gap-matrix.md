@@ -39,7 +39,7 @@
 | §13.6–13.8 | mutation/coverage/Miri | 无 | ABSENT | W6 | DEF-010 |
 | §13.9 | contract 自测 | 无 | ABSENT | W4 | DEF-006 |
 | §14 | 图隔离门禁 001–005 | lint-deps 子集 | PARTIAL | W6 | DEF-007 |
-| §15 | Archgate TESTKIT-* | 无 | ABSENT | W6 | DEF-007 |
+| §15 | Archgate TESTKIT-* | **OOS**（本仓不移植 archgate） | **OOS** | — | — |
 | §16 | CI 命令集 | 无专用 | ABSENT | W6 | DEF-007 |
 | §17 | README/AGENTS/CHANGELOG | 仍 L0+宏 | WRONG | W5 | DEF-001 |
 | §18 | incubating + layer test-support | status OK；layer WRONG | PARTIAL | W5 | DEF-001 |
@@ -63,7 +63,7 @@
 | DEF-004 | 无价值公开 API（宏/FixtureBuilder） | P0 | OPEN | T-DEL-001…003 |
 | DEF-005 | provider 大宏隐藏依赖+硬编码 | P0 | OPEN | T-DEL-004 T-CTC-* |
 | DEF-006 | 无 contract-testkit / 负测 | P0 | OPEN | T-CTC-* |
-| DEF-007 | 图隔离/archgate/CI 不全 | P1 | OPEN | T-GATE-* |
+| DEF-007 | 图隔离/CI 不全（**archgate = OOS**，不计入缺口） | P1 | OPEN | T-GATE-*（除 T-GATE-003 CANCELLED） |
 | DEF-008 | 多份 active-looking specs | P1 | OPEN | T-ARCH-007 T-DOC-002/003 |
 | DEF-009 | Spec 未 Approved；§24 未闭合 | P1 | OPEN | T-HUM-* T-24-* |
 | DEF-010 | 质量门槛 coverage/mutation/Miri | P1 | OPEN | T-GATE-008…010 T-CLK-014…017 |

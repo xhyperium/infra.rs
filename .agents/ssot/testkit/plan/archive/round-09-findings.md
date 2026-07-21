@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Round 9 — §21–§23 Evidence 目录清单 / 1·7·30 天 / 指标全表
 
 | 字段 | 值 |

@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Round 6 Findings — CLI §25 · Policy §26 · Gates §27 · CI §28
 
 | 字段 | 值 |

@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Round 09b Findings — §34 Production Audit Path E2E（v1.1 后）
 
 | 字段 | 值 |

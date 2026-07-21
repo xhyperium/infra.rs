@@ -7,7 +7,7 @@
 | Spec | `SPEC-KERNEL-002` · **Approved** · §18 **CLOSED** |
 | Path package / lib | `crates/kernel` · lib **`kernel`** |
 | crates.io package | **`xhyper-kernel` `0.1.1`** |
-| Registry | **`stable`**（`.architecture/workspace.toml` · crates/kernel） |
+| Registry | **`stable`**（历史 monorepo 曾记于 `.architecture/workspace.toml`；**infra.rs 不维护该路径**） |
 | Ship PR | [#235](https://github.com/xhyperium/infra.rs/pull/235) **MERGED** |
 | Tag | `kernel-v0.1.1` → `e7bda98e` |
 | GitHub Release | https://github.com/xhyperium/infra.rs/releases/tag/kernel-v0.1.1 |
@@ -32,7 +32,7 @@
 | miri | 21 passed |
 | mutants | missed=0 |
 | KERNEL-API-002 | **implemented**（baseline + RFC allowlist） |
-| archgate KERNEL-* | 15 rules |
+| archgate KERNEL-* | **infra.rs 不适用（OOS）** |
 
 ## 后续（非战役阻塞）
 

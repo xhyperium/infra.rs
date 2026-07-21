@@ -1,4 +1,5 @@
-> **Post-ship**：战役 COMPLETE · residual OPEN=0 · crates.io xhyper-kernel 0.1.1 · archgate 15/15（API-002）。
+> **Post-ship**：战役 COMPLETE · residual OPEN=0 · crates.io xhyper-kernel 0.1.1。
+> **infra.rs 不适用（OOS）**：archgate / `.architecture/**` 不构成本仓验收条件；本仓机控 = 结构扫描 / unit tests / CI（coverage, loom, miri, public-api）。
 
 # kernel — Goal 管线契约
 
@@ -46,7 +47,7 @@
 ```bash
 cmp .agents/ssot/kernel/spec/spec.md .agents/ssot/kernel/spec/xhyper-kernel-complete-spec.md
 cargo test -p kernel
-rg -n "status = \"stable\"" .architecture/workspace.toml | grep kernel
+# 本仓机控示例（非 archgate）：fmt / clippy / test / coverage / loom / miri / public-api（按 CI 实际接线）
 ```
 
-**Phase D–L + G2 机器轨：PASS · §18 全闭合（含 ad-hoc 实测）· Spec Approved · registry stable · 已 publish crates.io。注：mutants/miri/branch-cov CI 门禁化见 P1 follow-up。**
+**Phase D–L + G2 机器轨：PASS · §18 全闭合（含 ad-hoc 实测）· Spec Approved · 已 publish crates.io。注：mutants/miri/branch-cov CI 门禁化见 P1 follow-up。archgate / `.architecture` 为历史 monorepo 轨，infra.rs 不适用（OOS）。**

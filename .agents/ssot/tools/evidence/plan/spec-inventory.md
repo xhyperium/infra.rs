@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Spec Inventory — 防遗漏附录（SPEC-EVIDENCE-002）
 
 | 字段 | 值 |

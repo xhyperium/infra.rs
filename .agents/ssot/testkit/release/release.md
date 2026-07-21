@@ -31,7 +31,7 @@
 | mutants | **PASS**（missed=0） |
 | Miri | **PASS** |
 | test-graph-check | **PASS** |
-| archgate CI job | **PASS**（`testkit-miri` / `testkit-quality`） |
+| archgate | **OOS / N/A**（infra.rs 不移植 archgate；CI 质量 job 与 archgate 无关） |
 | branch coverage ≥90% | **OPTIONAL**（非阻塞） |
 
 ## 后续（非战役阻塞）

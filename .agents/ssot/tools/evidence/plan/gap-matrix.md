@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Gap Matrix — SPEC-EVIDENCE-002 vs 现状
 
 | 字段 | 值 |

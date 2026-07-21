@@ -121,7 +121,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 | 24.4 | Contract 闭合 | PARTIAL / DEFER | **contracts 平面已存在**；最小 Fake 入口在 contracts；全 trait conformance + 真实后端仍 DEFER |
 | 24.5 | 消费为 dev-dep / 无 build-dep / 无 normal graph 泄漏（core 侧） | PASS | crate 自身 `publish=false` + prod deps only kernel；全仓 machine gate/xtask **DEFER**（无 infra-xtask graph check） |
 | 24.5 | feature 不泄漏 | PASS | `default=[]` 无其它 feature |
-| 24.6 | 治理（RFC / archgate / xtask…） | DEFER | 战役级；CHANGELOG + Evidence 本仓已有 |
+| 24.6 | 治理（RFC / xtask…） | PARTIAL | CHANGELOG + Evidence 本仓已有；经 archgate 的治理机控 **OOS**（本仓明确不移植 archgate / `.architecture`） |
 
 ### 退役 API（§8 / §3.1）
 

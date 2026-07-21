@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # Round 6 — §10–§13 术语 / 确定性 / API 预算 / 测试合同
 
 | 字段 | 值 |

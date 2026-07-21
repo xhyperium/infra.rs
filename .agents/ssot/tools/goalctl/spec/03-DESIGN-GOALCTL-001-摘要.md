@@ -82,7 +82,7 @@ Hexagonal Architecture
 - 文件系统；
 - Cargo metadata；
 - Legacy Goal Validator；
-- xtask / archgate；
+- xtask（monorepo 历史另含 archgate；infra.rs 不移植）；
 - Evidence；
 - Codex / Grok；
 - GitHub Draft PR。

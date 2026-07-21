@@ -79,8 +79,8 @@
 - 均不匹配 → `Unknown`。
 
 当前可执行矩阵还包含 `Services` 与 `Apps` 的上层依赖方向；详细允许集合以
-`tools/xtask/src/allowed_matrix.rs` 为准，架构漂移诊断则以
-`.architecture/policies/dependency.toml` 为声明源。
+`tools/xtask/src/allowed_matrix.rs` 为准。架构漂移诊断在 monorepo 历史中以
+`.architecture/policies/dependency.toml` 为声明源（**infra.rs 不维护 `.architecture`；本仓不以 archgate / 该路径为验收**）。
 
 ## 3. 跨层允许矩阵（allowed_matrix.rs）
 
@@ -170,7 +170,7 @@ crate 不同层，判定为 R6 违规。`/types/` 层与 `Legacy`（`stdio`/`qua
 |---|---|---|
 | `crate-required-file` | ERROR | 缺 `README.md` / `CHANGELOG.md` / `AGENTS.md` / `docs/` 目录，或 lib/bin target 根文件不存在；`docs/` 仅 `.gitkeep` 仍满足存在性 |
 | `crate-independent-version` | ERROR | package 的 `Cargo.toml` **文件字面量**使用 `version.workspace = true`（或等价 workspace 继承），或没有三段式 `version = "X.Y.Z"`（semver 粗匹配 `\d+\.\d+\.\d+`）。不得以 cargo metadata 解析出的版本代替字面量 |
-| `crate-name-prefix` | ERROR（新 crate）/ WARN（现有 crate） | `[package] name` 不以 `xhyper-` 前缀。**现有 crate allowlist**：`EXISTING_NON_PREFIXED`（38 个：archgate / binance / bootstrap / canonical / clickhousex / configx / contracts / decimalx / domain_exchange / domain_macro / domain_market / domainx / evidence / evidence-cli / evidence_file / evidence_legacy / evidence_memory / evidence_postgres / evidence_signer / gate / kafkax / ledger / market_data / marketd / natsx / observex / okx / ossx / postgresx / redisx / resiliencx / risk_engine / schedulex / schema_codegen / taosx / testkit / transportx / xtask），命中 → WARN；未命中且无前缀 → ERROR。证据 = `[package] name` 行号。lib/bin name 通过 `[lib] name` 解耦，不检查 lib/bin name。首次发布 crates.io 前必须重命名（`publish = false` 仅作内部包的不阻断） |
+| `crate-name-prefix` | ERROR（新 crate）/ WARN（现有 crate） | `[package] name` 不以 `xhyper-` 前缀。**现有 crate allowlist**：`EXISTING_NON_PREFIXED`（38 个：archgate（monorepo historical name, not infra.rs member） / binance / bootstrap / canonical / clickhousex / configx / contracts / decimalx / domain_exchange / domain_macro / domain_market / domainx / evidence / evidence-cli / evidence_file / evidence_legacy / evidence_memory / evidence_postgres / evidence_signer / gate / kafkax / ledger / market_data / marketd / natsx / observex / okx / ossx / postgresx / redisx / resiliencx / risk_engine / schedulex / schema_codegen / taosx / testkit / transportx / xtask），命中 → WARN；未命中且无前缀 → ERROR。证据 = `[package] name` 行号。lib/bin name 通过 `[lib] name` 解耦，不检查 lib/bin name。首次发布 crates.io 前必须重命名（`publish = false` 仅作内部包的不阻断） |
 | `crate-changelog-unreleased` | WARN | `CHANGELOG.md` **存在**且内容（大小写不敏感）不含 `[Unreleased]`；文件缺失时不重复报（由 `crate-required-file` 覆盖） |
 | `crate-root-docs` | WARN | 每个存在的 lib/bin 入口 `src_path` 中缺少行首（可空白）`//!` crate 级文档；文件不存在时不报此规则 |
 | `crate-readme-fields` | WARN | `README.md` **存在**且启发式缺少「非职责」（`非职责` / `non-goals` / `out of scope`）或「限制」（`限制` / `limitations` / `constraints` / `安全说明`）字段；文件缺失时不重复报；**不得**升 ERROR |

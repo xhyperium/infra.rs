@@ -8,7 +8,7 @@
 | Package | **`xhyper-testkit` 0.1.1** · lib `testkit` · registry **Stable**（`publish=false`，internal only） |
 | Ship | #247 #254 #255 · tag `testkit-v0.1.1` |
 | Residual | DEF-001…010 **全 CLOSED** + 1 OPTIONAL（branch cov ≥90%） |
-| archgate | 无独立目录 · CI job `testkit-miri`/`testkit-quality` + `cargo xtl test-graph-check` |
+| archgate | **OOS**（infra.rs 不移植 archgate / `.architecture`）· 可选残留：结构扫描 / CI / test-graph-check（非 archgate） |
 
 ## Residual classes
 

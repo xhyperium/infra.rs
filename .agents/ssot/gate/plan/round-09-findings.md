@@ -1,5 +1,7 @@
 # Round 09 Findings — Gate Plan Completeness
 
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 | 字段 | 值 |
 |------|-----|
 | Round | 9 / 10 |

@@ -15,7 +15,7 @@
 | §24 验收主体 | **PASS**（§24.1–.6 ship 时点主体闭合 · branch cov OPTIONAL） |
 | 代码（ManualClock V2） | **PASS**（`crates/testkit` · 496 行 · 只依赖 kernel · 4 公开类型） |
 | 测试 | **PASS**（mutants missed=0 · Miri PASS · line cov ≥95%） |
-| 治理 | **PASS**（layer=test-support · test-graph-check · archgate CI job · CHANGELOG） |
+| 治理 | **PASS**（layer=test-support · test-graph-check · CHANGELOG；**archgate = OOS** 本仓不移植） |
 | version / registry | `0.1.1` / **Stable**（`publish=false`） |
 | crates.io | **N/A**（internal only，不发布） |
 

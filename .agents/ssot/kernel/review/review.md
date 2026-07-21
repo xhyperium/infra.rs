@@ -13,7 +13,7 @@
 | Spec / §18 | **PASS** |
 | 代码 18.2 | **PASS** |
 | 测试 18.3 | **PASS**（branch/miri/mutants 实测） |
-| 治理 18.4 | **PASS**（API-002 机控 · archgate 15） |
+| 治理 18.4 | **PASS**（API 纪律 + 本仓 CI/tests；archgate **OOS**） |
 | version / registry | **0.1.1** / **stable** |
 | crates.io | **published** as `xhyper-kernel` |
 

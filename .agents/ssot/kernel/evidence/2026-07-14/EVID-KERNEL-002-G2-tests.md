@@ -1,3 +1,5 @@
+> **历史 monorepo 记录**（infra.rs）：文中 archgate / `.architecture` 不构成本仓验收条件；本仓不移植 archgate。
+
 # EVID-KERNEL-002-G2 — 测试 / 快照轨（非 §18 全闭合）
 
 | 字段 | 值 |
