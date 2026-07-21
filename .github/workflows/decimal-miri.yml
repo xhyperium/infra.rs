@@ -1,0 +1,33 @@
+name: Decimal Miri
+
+# decimalx Miri UB 检测（W1 / DEFER-4 证据链）
+# scheduled
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # 每周一 06:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  miri:
+    name: Miri UB 检测
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 nightly 工具链 (miri)
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+      - uses: Swatinem/rust-cache@v2
+      - name: 运行 Miri
+        env:
+          MIRIFLAGS: -Zmiri-disable-isolation
+        run: cargo +nightly miri test -p decimalx --all-features
