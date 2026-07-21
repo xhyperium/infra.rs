@@ -2,9 +2,10 @@
 
 ## 职责
 
-记录本仓对上游 SSOT 镜像（`.agents/ssot/**`）的**同步状态**与**实现落地矩阵**。
+记录本仓对 `.agents/ssot/**`（本仓域规格 SSOT）的**对齐状态**与**实现落地矩阵**。
 
-> 镜像写 COMPLETE / Stable **≠** 本仓已宣称可 ship。以 `crates/` + `cargo metadata` 为准。
+> 规格写 COMPLETE / Stable **≠** 本仓已宣称可 ship。以 `crates/` + `cargo metadata` 为准。  
+> **archgate / `.architecture`：OOS**（PR #164）— 本仓明确不移植。
 
 ## 收录标准
 
@@ -18,7 +19,7 @@
 
 - 通用治理条文 → `docs/governance/`
 - CI/配置状态快照 → `docs/status/`
-- 上游镜像正文 → `.agents/ssot/`（只读镜像，禁止手改）
+- 域规格正文 → `.agents/ssot/`（本仓 SSOT；变更走 PR，勿与外仓 rsync 无脑覆盖）
 
 ## 阅读顺序
 

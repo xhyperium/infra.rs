@@ -147,8 +147,9 @@ impl MonotonicInstant {
 
     /// 从已流逝的时间构造 `MonotonicInstant`（默认进程 domain）。
     ///
-    /// 仅供 [`Clock`] 实现和 `testkit::ManualClock` 使用。`archgate` 限制
-    /// 其调用位置只能出现在 `crates/kernel/src/clock.rs` 和 `crates/testkit/*`。
+    /// 仅供 [`Clock`] 实现和 `testkit::ManualClock` 使用。
+    /// 调用位置约定：仅 `crates/kernel/src/clock.rs` 与 `crates/testkit/*`
+    ///（本仓 **不** 用 archgate 机控；见 SSOT TIME-004 OOS / #164）。
     #[doc(hidden)]
     pub const fn from_clock_elapsed(elapsed: Duration) -> Self {
         Self { elapsed, domain: ClockDomain::PROCESS }

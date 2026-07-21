@@ -34,7 +34,7 @@ PR #98 闭合了审计 **P0/P1 可机器验证子集**；PLAN-CORE-PROD-002 **W0
 | **P0 decimalx** 字段公开 / serde 绕过 / checked panic | **已闭合**：字段私有、`try_new`/serde 校验、`DecimalError` 中文、中间值溢出合同 | 独立 oracle、fuzz、mutants/Miri 证据；资金路径强制 `checked_*` 的调用侧门禁 |
 | **P0 canonical** wire/演进未闭合 | **部分闭合**：`wire::COMMITTED_WIRE_V1` 五类型 + deny_unknown + golden/N-1/拒绝样例 | `Order`/`Tick`/`Trade` 等 Uncommitted；无协议 envelope；ID/ts newtype 未上类型层 |
 | **P0 contracts** 仅接口形状 | **部分闭合**：`TxContext`/`begin_tx` 对象安全、`BusMessage`/`MessageAck`、Fake/Recording testkit、bootstrap `Bounded*` | 全 trait 深度语义、真实后端入口、VenueAdapter override 编译门禁、独立 contract-testkit crate |
-| **P1 kernel** Clock domain / loom CI / 关停 deadline | **已闭合**（源码 + `kernel-loom.yml`） | 非 Linux 矩阵；MSRV 已在 CI 过线但仍须持续证明；archgate 未移植 |
+| **P1 kernel** Clock domain / loom CI / 关停 deadline | **已闭合**（源码 + `kernel-loom.yml`） | 非 Linux 矩阵；MSRV 已在 CI 过线但仍须持续证明；archgate **OOS**（本仓明确不移植，见 #164） |
 | **P1 testkit** ManualClock 评级 | **有条件就绪**；domain/中文/lint 已跟随 | poison 三入口语义需对外合同硬化；contract-testkit 不在本 crate |
 | **P2 lint / API / fuzz / 平台** | lint workspace 已统一；覆盖率 100% 门禁在 | API snapshot / semver-diff、fuzz、非 Linux、人工签字 **均未做** |
 
@@ -103,7 +103,7 @@ PR #98 闭合了审计 **P0/P1 可机器验证子集**；PLAN-CORE-PROD-002 **W0
 
 - 把 adapters 做成完整交易所/数据库产品（只需 **验证入口** 证明 contract 语义）。
 - crates.io 公开发布（`publish = false` 可保持；内部 Production Ready 不依赖 crates.io）。
-- 移植 monorepo archgate / 全量 domain_exchange。
+- 移植 monorepo archgate（**OOS**，#164）/ 全量 domain_exchange。
 - 性能/长稳/集群故障注入基准（另开性能计划）。
 - 在未签字前把 README 改成「Production Ready」。
 

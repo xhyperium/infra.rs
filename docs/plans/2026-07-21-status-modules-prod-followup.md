@@ -201,7 +201,7 @@ bd close <id> --reason="..."
 
 - 把 9 个 adapter 做成完整产品（只需验证入口 + 红线）
 - crates.io 公开发布
-- 全量 monorepo archgate / domain_exchange 移植
+- 全量 monorepo archgate（**OOS**，#164）/ domain_exchange 移植
 - 性能 / 长稳 / 集群故障注入基准（另计划）
 - 在未签应用面 L5 前改 README 为「Production Ready」
 

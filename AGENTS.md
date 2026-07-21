@@ -25,14 +25,15 @@
 - **根 crate 示例**：`crates/kernel`（`xhyper-kernel`）
 - **非目标**：不是其他产品的元仓库镜像；本地即为源码与约定的 SSOT
 
-## 上游 SSOT 镜像与本仓落地
+## 域规格 SSOT 与本仓落地
 
-- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 `xhyper.rs/.agent/SSOT/` 的**只读镜像**（见 `.agents/ssot/SSOT.md` R6）
+- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 **infra.rs 本仓域规格 SSOT**（见 `.agents/ssot/SSOT.md` R6；历史可自 `xhyper.rs` 同步，但**不是**只读镜像）
   - `infra/` 下含 bootstrap / configx / gate / observex / resiliencx / schedulex / testkitx / transport
   - `adapters/` 下含 exchange（binance/okx）与 storage（clickhouse/kafka/nats/oss/postgres/redis/taos）
   - `tools/` 下含 evidence / goalctl / xtask（+ 本仓扩展 `verifyctl`）
   - **保留 `adapters/`、`tools/` 层级**（勿展平到 `.agents/ssot/` 根；`infra/` 已展平）
-- **镜像文档写 COMPLETE / Stable ≠ 本仓已有对应实现**；必须以 `crates/` + `cargo metadata` 为准
+- **规格写 COMPLETE / Stable ≠ 本仓已有对应实现**；必须以 `crates/` + `cargo metadata` 为准
+- **archgate / `.architecture`：OOS**（PR #164）— 本仓明确不移植
 - **当前 workspace members**（无 `infra-core`）：
   - `crates/kernel` → `xhyper-kernel`（L0）
   - `crates/testkit` → `xhyper-testkit`（core ManualClock；仅 dev-dep）
@@ -50,7 +51,7 @@
 - `contract-testkit` **未**移植；**infra 其余域**（gate 等）当前仅镜像，未宣称本仓实现
 - **adapters**：镜像已本地化；crate 为 scaffold，**未**宣称业务实现 / package stable
 - **tools**：镜像已本地化；仅 `crates/evidence` 最小面落地；goalctl / xtask / verifyctl **未**宣称落地
-- 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游变更用 **删除感知**同步（`rsync -a --delete`，见 SSOT.md R6）
+- `.agents/ssot/**` 变更走 **worktree + PR**；从外仓同步用删除感知 rsync（见 `docs/ssot/SSOT_SYNC_OPS.md`），**禁止**用上游覆盖冲掉本仓 OOS/落地裁定
 - 对齐审计总览：[docs/ssot/workspace-ssot-alignment.md](./docs/ssot/workspace-ssot-alignment.md)
   - kernel：[docs/ssot/kernel-ssot-alignment.md](./docs/ssot/kernel-ssot-alignment.md)
   - testkit：[docs/ssot/testkit-ssot-alignment.md](./docs/ssot/testkit-ssot-alignment.md)
