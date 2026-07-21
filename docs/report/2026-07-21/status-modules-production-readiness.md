@@ -49,7 +49,7 @@
 | `resiliencx` | active | 98% | L1 | **接近 Internal Ready** | 同步弹性；默认阻塞 sleep |
 | `schedulex` | partial | 88% | L1 registry | **登记合同就绪** | 任务 ID 集合；**不是**调度器 |
 | `transportx` | active | 95% | L1 + 部分 I/O | **有条件就绪** | HTTP/WS 客户端边界；平台矩阵未闭合 |
-| `contracts` | active | 98% | L3 | **未达 L3** | trait 出口 + Fake/conformance；无真实后端 |
+| `contracts` | active | 100% | L3 | **L3 子集**（KV+Instr） | trait + Fake/conformance；redis live + observex；非 first-batch 全绿 |
 | `binancex` | scaffold+mock | 89% | — | **不可用** | mock/trait 形状；无真实交易所 |
 | `okxx` | scaffold+mock | 89% | — | **不可用** | 同上 |
 | `postgresx` | scaffold+mock | 89% | — | **不可用** | 内存 + commit 边界 mock |
@@ -213,23 +213,23 @@ L1 平面 P0（节选）：
 
 ### 2.4 contracts
 
-**判定：未达 L3 Contract Ready。**
+**判定：L3 子集（KV+Instr）已闭合；first-batch 整体未达 L3 Contract Ready。**
 
 | L3 条件 | 状态 |
 |---------|------|
 | 语义合同 | **部分**（first-batch 11 篇；ObjectStore/TimeSeries/PubSub/Analytics 等无独立文档） |
 | conformance suite | **部分**（KV/Repository/Tx/EventBus/Instrumentation） |
-| 非 scaffold 验证入口 | **未满足**（adapters 全内存；postgres `TxRunner` → `FakeTxContext`） |
+| 非 scaffold 验证入口 | **部分 PASS**（`redisx::RedisLiveKv` + observex；Tx/Bus/Repo/Venue 业务仍 scaffold） |
 
 **公开面**：15 trait + `BusMessage`/`MessageAck` + `run_tx_commit_on_ok` + Fake/Recording。
 
-**已闭合（相对早期草稿）**：Tx 对象安全、消息带 ID、本 crate 最小 Fake、venue override 运行时门禁、bootstrap `Bounded*` 收敛。
+**已闭合**：Tx 对象安全、消息带 ID、Fake、venue override 门禁、bootstrap `Bounded*`、**redis live KV**、**L3 子集文档**（#168/#172）。
 
-**主阻断**：无真实后端入口；二期 storage trait 未闭合；无 compile-fail override / API snapshot 机控。
+**主阻断（相对 first-batch 全绿）**：Tx/Bus/Venue 业务无真入口；二期 storage trait；无 compile-fail override / API snapshot 机控。
 
-测试：`cargo test -p contracts --all-targets` → **36 passed**。
+测试：`cargo test -p contracts --all-targets`；live：`cargo test -p redisx --features live --test live_kv_conformance -- --ignored`。
 
-明细：[`_partials/contracts.md`](./_partials/contracts.md)
+明细：[`_partials/contracts.md`](./_partials/contracts.md) · [`L3_FIRST_BATCH_STATUS.md`](../../../crates/contracts/docs/L3_FIRST_BATCH_STATUS.md)
 
 ---
 
