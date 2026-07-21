@@ -6,6 +6,14 @@ on:
     paths:
       - "crates/adapters/storage/redis/**"
       - ".github/workflows/redisx-live.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   live:
     # 默认不阻断主 CI；有 service 时手动/路径触发
