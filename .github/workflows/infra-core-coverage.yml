@@ -1,26 +1,24 @@
-name: Testkit Coverage
+name: Infra-Core Coverage
 
-# testkit：LCOV 行覆盖率 100%
+# infra-core：LCOV 行覆盖率 100%
 
 on:
   push:
     branches: [main]
     paths:
-      - "crates/testkit/**"
-      - "crates/kernel/**"
+      - "crates/infra-core/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "scripts/cov-gate-100.mjs"
-      - ".github/workflows/testkit-coverage.yml"
+      - ".github/workflows/infra-core-coverage.yml"
   pull_request:
     branches: [main]
     paths:
-      - "crates/testkit/**"
-      - "crates/kernel/**"
+      - "crates/infra-core/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "scripts/cov-gate-100.mjs"
-      - ".github/workflows/testkit-coverage.yml"
+      - ".github/workflows/infra-core-coverage.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -48,4 +46,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p xhyper-testkit --filter crates/testkit/src
+        run: node scripts/cov-gate-100.mjs -p infra-core --filter crates/infra-core/src

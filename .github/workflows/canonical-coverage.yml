@@ -1,26 +1,24 @@
-name: Testkit Coverage
+name: Canonical Coverage
 
-# testkit：LCOV 行覆盖率 100%
+# xhyper-canonical：LCOV 行覆盖率 100%
 
 on:
   push:
     branches: [main]
     paths:
-      - "crates/testkit/**"
-      - "crates/kernel/**"
+      - "crates/types/canonical/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "scripts/cov-gate-100.mjs"
-      - ".github/workflows/testkit-coverage.yml"
+      - ".github/workflows/canonical-coverage.yml"
   pull_request:
     branches: [main]
     paths:
-      - "crates/testkit/**"
-      - "crates/kernel/**"
+      - "crates/types/canonical/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "scripts/cov-gate-100.mjs"
-      - ".github/workflows/testkit-coverage.yml"
+      - ".github/workflows/canonical-coverage.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -48,4 +46,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p xhyper-testkit --filter crates/testkit/src
+        run: node scripts/cov-gate-100.mjs -p xhyper-canonical --filter crates/types/canonical/src

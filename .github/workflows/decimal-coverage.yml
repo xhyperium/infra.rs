@@ -1,26 +1,24 @@
-name: Testkit Coverage
+name: Decimal Coverage
 
-# testkit：LCOV 行覆盖率 100%
+# xhyper-decimalx：LCOV 行覆盖率 100%
 
 on:
   push:
     branches: [main]
     paths:
-      - "crates/testkit/**"
-      - "crates/kernel/**"
+      - "crates/types/decimal/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "scripts/cov-gate-100.mjs"
-      - ".github/workflows/testkit-coverage.yml"
+      - ".github/workflows/decimal-coverage.yml"
   pull_request:
     branches: [main]
     paths:
-      - "crates/testkit/**"
-      - "crates/kernel/**"
+      - "crates/types/decimal/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "scripts/cov-gate-100.mjs"
-      - ".github/workflows/testkit-coverage.yml"
+      - ".github/workflows/decimal-coverage.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -48,4 +46,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p xhyper-testkit --filter crates/testkit/src
+        run: node scripts/cov-gate-100.mjs -p xhyper-decimalx --filter crates/types/decimal/src

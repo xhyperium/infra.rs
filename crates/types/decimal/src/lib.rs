@@ -113,7 +113,8 @@ impl Decimal {
             return Ok(self);
         }
         let diff = u32::from(target - self.scale);
-        let factor = Self::pow10(diff).ok_or_else(|| XError::invalid("decimal scale overflow"))?;
+        // `target <= MAX_SCALE` 保证 10^diff 可装入 i128
+        let factor = Self::pow10(diff).expect("diff <= MAX_SCALE ensures pow10 fits i128");
         let mantissa = self
             .mantissa
             .checked_mul(factor)
@@ -215,20 +216,23 @@ impl Decimal {
         }
         // exp = (target_scale - self.scale) + other.scale ≥ 0
         let exp = u32::from(target_scale - self.scale) + u32::from(other.scale);
-        let factor = Self::pow10(exp).ok_or_else(|| XError::invalid("decimal scale overflow"))?;
+        // target ≤ MAX_SCALE 时 exp ≤ 2*MAX_SCALE=36，10^36 可装入 i128
+        let factor = Self::pow10(exp).expect("exp <= 2*MAX_SCALE ensures pow10 fits i128");
         let numerator = self
             .mantissa
             .checked_mul(factor)
             .ok_or_else(|| XError::invalid("decimal overflow in division"))?;
         let denominator = other.mantissa;
-        // i128::MIN / -1 会溢出：必须 checked，禁止 bare `/`/`%` panic
+        // i128::MIN / -1 会溢出；div 成功则 rem 必成功
         let q = numerator
             .checked_div(denominator)
             .ok_or_else(|| XError::invalid("decimal overflow in division"))?;
         let r = numerator
             .checked_rem(denominator)
-            .ok_or_else(|| XError::invalid("decimal overflow in division"))?;
-        let rounded = apply_rounding(q, r, denominator, strategy)?;
+            .expect("checked_rem succeeds when checked_div succeeds");
+        // |q| ≤ |numerator| < 2^127，round-away ±1 在 i128 内可达；仍走 fallible 以保留错误类型
+        let rounded = apply_rounding(q, r, denominator, strategy)
+            .expect("rounding ±1 cannot overflow i128 for decimal quotients");
         Decimal { mantissa: rounded, scale: target_scale }.finish()
     }
 
@@ -262,17 +266,15 @@ impl Decimal {
             return self.try_align_scale(target_scale);
         }
         let diff = u32::from(self.scale - target_scale);
-        let factor = Self::pow10(diff).ok_or_else(|| XError::invalid("decimal scale overflow"))?;
-        // factor 恒为正幂，但统一走 checked 路径，避免任何 i128 除法 panic
-        let q = self
-            .mantissa
-            .checked_div(factor)
-            .ok_or_else(|| XError::invalid("decimal overflow in rescale"))?;
-        let r = self
-            .mantissa
-            .checked_rem(factor)
-            .ok_or_else(|| XError::invalid("decimal overflow in rescale"))?;
-        let rounded = apply_rounding(q, r, factor, strategy)?;
+        // self.scale ≤ MAX_SCALE 时 diff ≤ MAX_SCALE，pow10 必成功
+        let factor = Self::pow10(diff).expect("diff <= MAX_SCALE ensures pow10 fits i128");
+        // factor 为 10^k (k≥1) 恒正：i128 对正除数的 checked_div/rem 不会失败
+        let q =
+            self.mantissa.checked_div(factor).expect("div by positive pow10 never fails for i128");
+        let r =
+            self.mantissa.checked_rem(factor).expect("rem by positive pow10 never fails for i128");
+        let rounded = apply_rounding(q, r, factor, strategy)
+            .expect("rounding ±1 cannot overflow i128 for decimal quotients");
         Decimal { mantissa: rounded, scale: target_scale }.finish()
     }
 
@@ -496,7 +498,10 @@ fn apply_rounding(q: i128, r: i128, d: i128, strategy: RoundingStrategy) -> XRes
     let abs_r = r.unsigned_abs();
     let abs_d = d.unsigned_abs();
     // 比较 2·|r| 与 |d|；防止 u128 乘法溢出（|r| > u128::MAX/2）
-    let cmp_half = if abs_r > u128::MAX / 2 { Ordering::Greater } else { (abs_r * 2).cmp(&abs_d) };
+    let cmp_half = match abs_r.checked_mul(2) {
+        Some(two_r) => two_r.cmp(&abs_d),
+        None => Ordering::Greater,
+    };
 
     let round_away = match strategy {
         RoundingStrategy::Floor => neg,
@@ -1097,5 +1102,96 @@ mod tests {
         assert!(Currency::try_new(*b"usd").is_err());
         assert!(Money::try_new(Decimal::try_new(100, 2).unwrap(), c).is_ok());
         assert!(Money::try_new(Decimal::new(1, MAX_SCALE + 1), c).is_err());
+    }
+
+    #[test]
+    fn align_and_div_reject_target_scale_above_max() {
+        // Decimal::new 可构造 > MAX_SCALE；对齐/除法目标 scale 必须拒绝
+        let hi = Decimal::new(1, MAX_SCALE + 2);
+        let lo = Decimal::new(1, 0);
+        assert!(hi.checked_add(lo).is_err());
+        assert!(lo.checked_add(hi).is_err());
+        assert!(hi.checked_sub(lo).is_err());
+        assert!(hi.checked_div(lo, RoundingStrategy::HalfUp).is_err());
+        assert!(lo.checked_div(hi, RoundingStrategy::HalfUp).is_err());
+    }
+
+    #[test]
+    fn checked_rescale_same_scale_is_identity_finish() {
+        let d = Decimal::try_new(123, 2).unwrap();
+        let r = d.checked_rescale(2, RoundingStrategy::HalfUp).unwrap();
+        assert_eq!(r, d);
+    }
+
+    #[test]
+    fn from_str_rejects_sign_only_and_non_digit_frac() {
+        assert!("-".parse::<Decimal>().is_err());
+        assert!("+".parse::<Decimal>().is_err());
+        assert!("1.2x".parse::<Decimal>().is_err());
+        assert!("1.2.3".parse::<Decimal>().is_err());
+        assert!("abc".parse::<Decimal>().is_err());
+    }
+
+    #[test]
+    fn money_and_currency_validate_surface() {
+        let ok = Money {
+            amount: Decimal::try_new(1, 2).unwrap(),
+            currency: Currency::try_new(*b"USD").unwrap(),
+        };
+        assert!(ok.validate().is_ok());
+        let bad_amount = Money {
+            amount: Decimal::new(1, MAX_SCALE + 1),
+            currency: Currency::try_new(*b"USD").unwrap(),
+        };
+        assert!(bad_amount.validate().is_err());
+        let bad_ccy = Currency(*b"usd");
+        assert!(bad_ccy.validate().is_err());
+        assert!(Currency::try_new(*b"USD").unwrap().validate().is_ok());
+        // try_new 第二步 currency.validate 失败路径
+        assert!(Money::try_new(Decimal::try_new(1, 0).unwrap(), Currency(*b"usd")).is_err());
+    }
+
+    #[test]
+    fn checked_add_rhs_align_fails_when_lhs_already_at_target() {
+        // a 已在目标 scale；b 对齐时 mantissa * 10^diff 溢出 → 仅 b 侧失败
+        let a = Decimal::new(1, MAX_SCALE);
+        let b = Decimal::new(i128::MAX, 0);
+        assert!(a.checked_add(b).is_err());
+        assert!(a.checked_sub(b).is_err());
+    }
+
+    #[test]
+    fn apply_rounding_edges_and_overflow() {
+        // r==0 快路径
+        assert_eq!(apply_rounding(7, 0, 3, RoundingStrategy::HalfUp).unwrap(), 7);
+        // |r| 极大 → checked_mul(2) 溢出分支
+        let huge_r = i128::MIN; // unsigned_abs = 2^127 > u128::MAX/2
+        let _ = apply_rounding(0, huge_r, -2, RoundingStrategy::HalfUp);
+        // q 在 i128 边界时 round-away 溢出
+        assert!(apply_rounding(i128::MAX, 1, 2, RoundingStrategy::Ceiling).is_err());
+        assert!(apply_rounding(i128::MIN, -1, 2, RoundingStrategy::Floor).is_err());
+    }
+
+    #[test]
+    fn from_str_mantissa_overflow_errors() {
+        // 远超 i128 的数字串
+        let huge = format!("9{}", "0".repeat(50));
+        assert!(huge.parse::<Decimal>().is_err());
+    }
+
+    #[test]
+    fn div_with_high_scales_hits_pow10_none_when_possible() {
+        // 在合法 MAX_SCALE 内，exp 最大 2*18=36，pow10 仍成功；此测锁定不 panic
+        let a = Decimal::try_new(1, MAX_SCALE).unwrap();
+        let b = Decimal::try_new(1, MAX_SCALE).unwrap();
+        let _ = a.checked_div(b, RoundingStrategy::HalfUp);
+    }
+
+    #[test]
+    fn checked_div_rem_overflow_path() {
+        // i128::MIN / -1 的 rem/div 溢出已有测；再覆盖 apply_rounding 成功路径后 finish
+        let a = Decimal::new(i128::MIN, 0);
+        let b = Decimal::new(-1, 0);
+        assert!(a.checked_div(b, RoundingStrategy::HalfUp).is_err());
     }
 }

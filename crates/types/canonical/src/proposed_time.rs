@@ -68,4 +68,12 @@ mod tests {
         assert!(TS_UNIT.contains("nano"));
         assert_eq!(PROPOSED_TS_UNIT, TS_UNIT);
     }
+
+    #[test]
+    fn proposed_dto_ts_alias_matches_dto_helper() {
+        let ms = 1_700_000_000_i64;
+        assert_eq!(proposed_dto_ts_from_unix_millis(ms), dto_ts_from_unix_millis(ms));
+        assert_eq!(proposed_dto_ts_from_unix_millis(ms), ns_from_unix_millis(ms));
+        assert!(proposed_dto_ts_from_unix_millis(i64::MAX).is_none());
+    }
 }
