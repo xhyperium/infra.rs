@@ -253,6 +253,9 @@ fn truncate(s: &str, max: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
+
+    use kernel::ErrorKind;
 
     #[test]
     fn ident_validation() {
@@ -260,5 +263,38 @@ mod tests {
         assert!(validate_ident("1bad").is_err());
         assert!(validate_ident("a;drop").is_err());
         assert!(validate_ident("").is_err());
+    }
+
+    #[tokio::test]
+    async fn connect_refused_fails_on_ping_path() {
+        let cfg = ClickHouseConfig {
+            host: "127.0.0.1".into(),
+            http_port: 1,
+            timeout: Duration::from_millis(300),
+            ..ClickHouseConfig::default()
+        };
+        match ClickHousePool::connect(cfg).await {
+            Ok(p) => {
+                let err = p.ping().await.expect_err("ping must fail");
+                assert!(
+                    matches!(
+                        err.kind(),
+                        ErrorKind::Unavailable | ErrorKind::DeadlineExceeded | ErrorKind::Transient
+                    ),
+                    "kind={:?}",
+                    err.kind()
+                );
+            }
+            Err(e) => {
+                assert!(
+                    matches!(
+                        e.kind(),
+                        ErrorKind::Unavailable | ErrorKind::DeadlineExceeded | ErrorKind::Transient
+                    ),
+                    "kind={:?}",
+                    e.kind()
+                );
+            }
+        }
     }
 }

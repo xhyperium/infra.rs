@@ -56,3 +56,5 @@ cargo test -p clickhousex --test live_smoke -- --ignored --nocapture
 cargo run -p clickhousex --bench hot_path -- --quick
 FOUNDATIONX_CLICKHOUSEX_PASSWORD='***' cargo run -p clickhousex --bench hot_path -- --live --quick
 ```
+
+文档：[docs/usage.md](docs/usage.md) · [docs/config.md](docs/config.md) · [docs/operations.md](docs/operations.md)

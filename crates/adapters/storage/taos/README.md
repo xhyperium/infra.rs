@@ -58,3 +58,5 @@ cargo test -p taosx --test live_smoke -- --ignored --nocapture
 cargo run -p taosx --bench hot_path -- --quick
 FOUNDATIONX_TAOSX_PASSWORD='***' cargo run -p taosx --bench hot_path -- --live --quick
 ```
+
+文档：[docs/usage.md](docs/usage.md) · [docs/config.md](docs/config.md) · [docs/operations.md](docs/operations.md)
