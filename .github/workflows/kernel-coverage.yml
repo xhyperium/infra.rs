@@ -4,7 +4,7 @@ name: Kernel Coverage
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "crates/kernel/**"
       - "Cargo.toml"
@@ -12,7 +12,7 @@ on:
       - "scripts/cov-gate-100.mjs"
       - ".github/workflows/kernel-coverage.yml"
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "crates/kernel/**"
       - "Cargo.toml"
@@ -46,14 +46,14 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p xhyper-kernel --filter crates/kernel/src --all-features
+        run: node scripts/cov-gate-100.mjs -p kernel --filter crates/kernel/src --all-features
       - name: 分支覆盖率 ≥90%
         env:
           RUSTUP_TOOLCHAIN: nightly
         run: |
           set -euo pipefail
           cargo +nightly llvm-cov \
-            -p xhyper-kernel \
+            -p kernel \
             --all-features \
             --branch \
             --summary-only 2>&1 | tee /tmp/cov.txt
