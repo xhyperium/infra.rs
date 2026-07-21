@@ -483,4 +483,29 @@ mod tests {
         let err = LifecycleError { from: ComponentState::Running, to: ComponentState::Starting };
         assert!(err.to_string().contains("非法"));
     }
+
+    #[test]
+    fn wait_timeout_zero_deadline_branch() {
+        let (_g, s) = ShutdownSignal::new();
+        // 零超时：立即走 deadline 分支
+        assert!(!s.wait_timeout(Duration::from_millis(0)));
+    }
+
+    #[test]
+    fn wait_timeout_spuriously_not_triggered_until_timeout() {
+        let (_g, s) = ShutdownSignal::new();
+        assert!(!s.wait_timeout(Duration::from_millis(5)));
+    }
+
+    #[test]
+    fn wait_timeout_true_after_trigger_from_other_thread() {
+        let (guard, signal) = ShutdownSignal::new();
+        let s2 = signal.clone();
+        let h = thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(10));
+            guard.trigger();
+        });
+        assert!(s2.wait_timeout(Duration::from_secs(2)));
+        h.join().unwrap();
+    }
 }

@@ -210,7 +210,7 @@ impl Decimal {
             return Ok(self);
         }
         let diff = u32::from(target - self.scale);
-        let factor = Self::pow10(diff).ok_or(DecimalError::RepresentationOverflow)?;
+        let factor = Self::pow10(diff).expect("diff <= MAX_SCALE ensures pow10 fits i128");
         let mantissa =
             self.mantissa.checked_mul(factor).ok_or(DecimalError::RepresentationOverflow)?;
         Ok(Decimal { mantissa, scale: target })
@@ -296,18 +296,16 @@ impl Decimal {
         if other.mantissa == 0 {
             return Err(DecimalError::DivisionByZero);
         }
+        // 双方 scale ≤ MAX_SCALE ⇒ target_scale ≤ MAX_SCALE
         let target_scale = self.scale.max(other.scale);
-        if target_scale > MAX_SCALE {
-            return Err(DecimalError::ScaleOutOfRange { scale: target_scale, max: MAX_SCALE });
-        }
         // exp = (target_scale - self.scale) + other.scale ≥ 0
         let exp = u32::from(target_scale - self.scale) + u32::from(other.scale);
-        let factor = Self::pow10(exp).ok_or(DecimalError::RepresentationOverflow)?;
+        let factor = Self::pow10(exp).expect("exp <= 2*MAX_SCALE ensures pow10 fits i128");
         let numerator = self.mantissa.checked_mul(factor).ok_or(DecimalError::MantissaOverflow)?;
         let denominator = other.mantissa;
         // i128::MIN / -1 会溢出；div 成功则 rem 必成功
         let q = numerator.checked_div(denominator).ok_or(DecimalError::MantissaOverflow)?;
-        let r = numerator.checked_rem(denominator).ok_or(DecimalError::MantissaOverflow)?;
+        let r = numerator.checked_rem(denominator).expect("rem succeeds when div succeeds");
         let rounded = apply_rounding(q, r, denominator, strategy)?;
         Decimal { mantissa: rounded, scale: target_scale }.finish()
     }
@@ -344,7 +342,7 @@ impl Decimal {
             return self.try_align_scale(target_scale);
         }
         let diff = u32::from(self.scale - target_scale);
-        let factor = Self::pow10(diff).ok_or(DecimalError::RepresentationOverflow)?;
+        let factor = Self::pow10(diff).expect("diff <= MAX_SCALE ensures pow10 fits i128");
         let q = self.mantissa.checked_div(factor).ok_or(DecimalError::MantissaOverflow)?;
         let r = self.mantissa.checked_rem(factor).ok_or(DecimalError::MantissaOverflow)?;
         let rounded = apply_rounding(q, r, factor, strategy)?;
@@ -482,10 +480,10 @@ impl fmt::Display for Decimal {
 
         let neg = n.mantissa < 0;
         let abs = n.mantissa.unsigned_abs();
-        let divisor = match 10u128.checked_pow(u32::from(n.scale)) {
-            Some(d) => d,
-            None => return Err(fmt::Error),
-        };
+        // scale ≤ MAX_SCALE 时 10^scale 可装入 u128
+        let divisor = 10u128
+            .checked_pow(u32::from(n.scale))
+            .expect("scale <= MAX_SCALE ensures 10^scale fits u128");
         let int_part = abs / divisor;
         let frac_part = abs % divisor;
         if neg {
@@ -930,15 +928,7 @@ mod tests {
             RoundingStrategy::HalfEven,
         ] {
             let err = a.checked_div(b, strategy).expect_err("must not panic");
-            assert!(
-                matches!(
-                    err.kind(),
-                    DecimalErrorKind::Mantissa
-                        | DecimalErrorKind::Representation
-                        | DecimalErrorKind::Rounding
-                ),
-                "strategy={strategy:?}: {err}"
-            );
+            assert_eq!(err.kind(), DecimalErrorKind::Mantissa, "strategy={strategy:?}: {err}");
             // div 别名同一路径
             assert!(a.div(b, strategy).is_err());
         }
@@ -1046,16 +1036,7 @@ mod tests {
     fn align_scale_overflow_errors() {
         let d = Decimal::new(i128::MAX, 0);
         let err = d.try_align_scale(1).unwrap_err();
-        assert!(
-            matches!(
-                err.kind(),
-                DecimalErrorKind::Mantissa
-                    | DecimalErrorKind::Representation
-                    | DecimalErrorKind::Rounding
-                    | DecimalErrorKind::Scale
-            ),
-            "{err}"
-        );
+        assert_eq!(err.kind(), DecimalErrorKind::Representation, "{err}");
     }
 
     #[test]
@@ -1427,5 +1408,49 @@ mod tests {
         let a = Decimal::new(i128::MIN, 0);
         let b = Decimal::new(-1, 0);
         assert!(a.checked_div(b, RoundingStrategy::HalfUp).is_err());
+    }
+
+    #[test]
+    fn try_align_scale_rejects_target_above_max() {
+        let err = Decimal::new(1, 0).try_align_scale(MAX_SCALE + 1).unwrap_err();
+        assert_eq!(err.kind(), DecimalErrorKind::Scale);
+    }
+
+    #[test]
+    fn newtype_accessors_and_currency_bytes() {
+        let d = Decimal::try_new(125, 2).unwrap();
+        let price = Price::new(d);
+        assert_eq!(price.as_decimal(), d);
+        assert_eq!(price.into_inner(), d);
+        let qty = Qty::new(d);
+        assert_eq!(qty.as_decimal(), d);
+        assert_eq!(qty.into_inner(), d);
+        let ratio = Ratio::new(d);
+        assert_eq!(ratio.as_decimal(), d);
+        assert_eq!(ratio.into_inner(), d);
+        let c = Currency::try_new(*b"USD").unwrap();
+        assert_eq!(c.as_bytes(), *b"USD");
+        assert_eq!(c.as_str(), "USD");
+        // Display 负小数 + 正小数路径
+        assert_eq!(Decimal::try_new(-105, 2).unwrap().to_string(), "-1.05");
+        assert_eq!(Decimal::try_new(105, 2).unwrap().to_string(), "1.05");
+    }
+
+    #[test]
+    fn decimal_error_kinds_and_xerror_from() {
+        use kernel::XError;
+        for e in [
+            DecimalError::MantissaOverflow,
+            DecimalError::RoundingOverflow,
+            DecimalError::RepresentationOverflow,
+            DecimalError::Parse("x".into()),
+            DecimalError::InvalidCurrency,
+        ] {
+            let _ = e.kind();
+            let s = e.to_string();
+            assert!(!s.is_empty());
+            let xe: XError = e.into();
+            assert!(!xe.context().is_empty());
+        }
     }
 }

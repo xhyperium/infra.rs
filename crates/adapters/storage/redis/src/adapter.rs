@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use contracts::{KeyValueStore, PubSub};
+use contracts::{BusMessage, KeyValueStore, PubSub};
 use futures_core::stream::BoxStream;
 use futures_util::stream;
 use kernel::{XError, XResult};
@@ -16,7 +16,7 @@ pub struct RedisAdapter {
     name: String,
     endpoint: String,
     kv: Mutex<HashMap<String, Vec<u8>>>,
-    channels: Mutex<HashMap<String, Vec<Bytes>>>,
+    channels: Mutex<HashMap<String, Vec<BusMessage>>>,
 }
 
 impl RedisAdapter {
@@ -45,7 +45,7 @@ impl RedisAdapter {
         self.kv.lock().map_err(|e| XError::internal(format!("kv lock poisoned: {e}")))
     }
 
-    fn lock_ch(&self) -> XResult<std::sync::MutexGuard<'_, HashMap<String, Vec<Bytes>>>> {
+    fn lock_ch(&self) -> XResult<std::sync::MutexGuard<'_, HashMap<String, Vec<BusMessage>>>> {
         self.channels.lock().map_err(|e| XError::internal(format!("pubsub lock poisoned: {e}")))
     }
 }
@@ -66,11 +66,13 @@ impl KeyValueStore for RedisAdapter {
 #[async_trait]
 impl PubSub for RedisAdapter {
     async fn pub_message(&self, channel: &str, msg: Bytes) -> XResult<()> {
-        self.lock_ch()?.entry(channel.to_string()).or_default().push(msg);
+        let n = self.lock_ch()?.get(channel).map(|v| v.len()).unwrap_or(0);
+        let bus_msg = BusMessage { id: n.to_string(), payload: msg };
+        self.lock_ch()?.entry(channel.to_string()).or_default().push(bus_msg);
         Ok(())
     }
 
-    async fn sub_channel(&self, channel: &str) -> XResult<BoxStream<'static, Bytes>> {
+    async fn sub_channel(&self, channel: &str) -> XResult<BoxStream<'static, BusMessage>> {
         let msgs = self.lock_ch()?.get(channel).cloned().unwrap_or_default();
         Ok(Box::pin(stream::iter(msgs)))
     }
@@ -93,7 +95,9 @@ mod tests {
         let a = RedisAdapter::local();
         a.pub_message("ch", Bytes::from_static(b"m1")).await.expect("pub");
         let mut s = a.sub_channel("ch").await.expect("sub");
-        assert_eq!(s.next().await, Some(Bytes::from_static(b"m1")));
+        let msg = s.next().await.expect("msg");
+        assert_eq!(msg.payload, Bytes::from_static(b"m1"));
+        assert!(!msg.id.is_empty());
     }
 
     #[test]

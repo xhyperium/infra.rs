@@ -558,4 +558,24 @@ mod tests {
         assert!(ClockError::Overflow.to_string().contains("纳秒"));
         assert!(ClockError::Unavailable.to_string().contains("不可用"));
     }
+
+    #[test]
+    fn clock_domain_raw_and_partial_ord() {
+        let d = ClockDomain::from_raw(42);
+        assert_eq!(d.as_raw(), 42);
+        let a =
+            MonotonicInstant::from_clock_elapsed_in(Duration::from_millis(1), ClockDomain::PROCESS);
+        let b =
+            MonotonicInstant::from_clock_elapsed_in(Duration::from_millis(2), ClockDomain::PROCESS);
+        assert!(a < b);
+        let c = MonotonicInstant::from_clock_elapsed_in(
+            Duration::from_millis(1),
+            ClockDomain::from_raw(7),
+        );
+        assert!(a.partial_cmp(&c).is_none());
+        let _ = SystemClock::new();
+        // 覆盖 Default 实现（非 unit-struct default lint 的 ::default() 调用）
+        let _clk: SystemClock = Default::default();
+        let _ = _clk.monotonic().domain();
+    }
 }

@@ -67,7 +67,7 @@ jobs:
             '^rust-toolchain\.toml$'
             '^rustfmt\.toml$'
             '^clippy\.toml$'
-            '^scripts/check-constitution\.mjs$'
+            '^scripts/quality-gates/check-constitution\.mjs$'
             '^\.github/workflows/constitution\.yml$'
             '^CONSTITUTION\.md$'
           )

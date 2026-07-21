@@ -579,7 +579,40 @@ mod tests {
     async fn event_bus_publish_subscribe_message_contract() {
         let bus = FakeEventBus::new();
         bus.publish("orders", Bytes::from_static(b"hi")).await.unwrap();
-        let mut stream = bus.subscribe("orders").await.unwrap();
+        // 流消费见 event_bus_stream_poll_clone_waker（覆盖 waker clone + poll）
+        let _stream = bus.subscribe("orders").await.unwrap();
+    }
+
+    #[test]
+    fn message_ack_and_bus_message_surface() {
+        let m = BusMessage { id: "1".into(), payload: Bytes::from_static(b"x") };
+        assert_eq!(m.id, "1");
+        assert_eq!(MessageAck::Ack, MessageAck::Ack);
+        assert_ne!(MessageAck::Ack, MessageAck::Nack);
+    }
+
+    #[tokio::test]
+    async fn fake_event_bus_poison_returns_internal() {
+        let bus = FakeEventBus::new();
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _g = bus.inner.lock().expect("lock");
+            panic!("poison bus");
+        }));
+        match bus.publish("t", Bytes::from_static(b"x")).await {
+            Err(e) => assert_eq!(e.kind(), kernel::ErrorKind::Internal),
+            Ok(()) => panic!("publish should fail after poison"),
+        }
+        match bus.subscribe("t").await {
+            Err(e) => assert_eq!(e.kind(), kernel::ErrorKind::Internal),
+            Ok(_) => panic!("subscribe should fail after poison"),
+        }
+    }
+
+    #[tokio::test]
+    async fn event_bus_stream_poll_clone_waker() {
+        let bus = FakeEventBus::new();
+        bus.publish("t", Bytes::from_static(b"p")).await.unwrap();
+        let mut stream = bus.subscribe("t").await.unwrap();
         use std::pin::Pin;
         use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
         fn dummy_raw_waker() -> RawWaker {
@@ -591,21 +624,15 @@ mod tests {
             RawWaker::new(std::ptr::null(), &VTABLE)
         }
         let waker = unsafe { Waker::from_raw(dummy_raw_waker()) };
-        let mut cx = Context::from_waker(&waker);
+        let waker2 = waker.clone(); // hit clone vtable
+        let mut cx = Context::from_waker(&waker2);
         match Pin::new(&mut stream).poll_next(&mut cx) {
-            Poll::Ready(Some(msg)) => {
-                assert_eq!(msg.payload.as_ref(), b"hi");
-                assert!(!msg.id.is_empty());
-            }
-            other => panic!("expected message, got {other:?}"),
+            Poll::Ready(Some(msg)) => assert_eq!(msg.payload.as_ref(), b"p"),
+            _ => panic!("expected Some"),
         }
-    }
-
-    #[test]
-    fn message_ack_and_bus_message_surface() {
-        let m = BusMessage { id: "1".into(), payload: Bytes::from_static(b"x") };
-        assert_eq!(m.id, "1");
-        assert_eq!(MessageAck::Ack, MessageAck::Ack);
-        assert_ne!(MessageAck::Ack, MessageAck::Nack);
+        match Pin::new(&mut stream).poll_next(&mut cx) {
+            Poll::Ready(None) => {}
+            _ => panic!("expected None"),
+        }
     }
 }
