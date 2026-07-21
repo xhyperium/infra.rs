@@ -6,8 +6,9 @@
 | 镜像 | `.agents/ssot/kernel/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 本仓实现 | `crates/kernel` · package **`kernel`** · lib `kernel` · workspace version `0.3.0` |
 | 审计日期 | 2026-07-21 |
-| 内部生产层级 | **L1 Internal Ready + L4 Platform Ready**（PR #159 · tag `v0.3.0-four-crates`） |
-| 结论 | **可移植语义面 + §11 可在本仓执行的合同：无残留 FAIL**；分层内部 GO，**≠** crates.io / 整体 Production Ready |
+| 内部生产层级 | **L1 Internal Ready + L4 Platform Ready** |
+| 内部发布状态 | **已执行**（PR #159 实现 · #163 发布记录 · tag/GitHub Release `v0.3.0-four-crates`） |
+| 结论 | **可移植语义面 + §11 可在本仓执行的合同：无残留 FAIL**；**内部生产已发布**；**≠** crates.io / 整体 Production Ready |
 
 ## 结论摘要
 
@@ -15,7 +16,8 @@
 |------|------|
 | 上游镜像 COMPLETE / residual OPEN=0 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
 | 本仓 `crates/kernel` | **已落地**并与 SPEC §3–§11 可移植子集对齐 |
-| 内部生产 GO（声明层级） | **L1+L4**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
+| 内部生产 GO（声明层级） | **L1+L4**；四包证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
+| **内部发布是否已执行** | **是**：crate 记录 [`../../crates/kernel/releases/0.3.0-internal.md`](../../crates/kernel/releases/0.3.0-internal.md) · GH Release [v0.3.0-four-crates](https://github.com/xhyperium/infra.rs/releases/tag/v0.3.0-four-crates) · PR #163 |
 | 本仓 archgate / `.architecture` 快照 | **OOS：本仓明确不移植**；机控用结构扫描 / CI / public-api 等已有门禁 |
 | 本仓 crates.io 再发布 | **不做**；`publish = false` 显式关闭 |
 | public-api 棘轮 | **PASS**：`docs/api-baselines/kernel.txt` + `check-public-api.mjs` |
@@ -34,6 +36,7 @@ crates/kernel/                  EXISTS
 Cargo.toml members              含 crates/kernel
 package name                    kernel（Cargo 选择器 -p kernel；历史文档 xhyper-kernel 已废弃）
 lib name                        kernel
+version                         workspace 0.3.0
 publish                         false（显式，非默认可发布）
 生产依赖                        仅 thiserror
 features                        default = []
@@ -41,6 +44,8 @@ features                        default = []
 examples                        examples/basic.rs
 public API surface              tests/public_api_surface.rs
 API baseline                    docs/api-baselines/kernel.txt
+crate 发布记录                  releases/0.3.0-internal.md
+内部 tag / GH Release           v0.3.0-four-crates
 ```
 
 验证（本仓权威命令）：
@@ -174,7 +179,8 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 | 12.x | archgate KERNEL-* | **OOS** | 本仓明确不移植 archgate / `.architecture`；机控改走结构扫描 / CI / public-api |
 | 12.3 | public-api 快照文件 | PASS | `docs/api-baselines/kernel.txt` + `scripts/quality-gates/check-public-api.mjs`（W5 / #127 / #159） |
 | 15.x | crates.io publish | DEFER 发布动作；**package `publish = false` PASS** | 本仓明确不向 crates.io 再发布 |
-| 15.x-tag | 内部 git tag | PASS（锚点） | `v0.3.0-four-crates` → 含 #159 的 main；**≠** crates.io |
+| 15.x-tag | 内部 git tag | PASS（锚点） | `v0.3.0-four-crates` → `5acac34`；**≠** crates.io |
+| 15.x-release | 内部生产发布执行 | **PASS** | `releases/0.3.0-internal.md` · GH Release · PR #163；workspace path 消费 |
 | TIME-004 机控 | from_clock_elapsed allowlist | **OOS** 机控（不引入 archgate）；**结构扫描 PASS** | 见上文 6.3-hidden |
 
 ---
@@ -197,6 +203,8 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 - testkit（ManualClock）：[testkit-ssot-alignment.md](./testkit-ssot-alignment.md)
 - types：[types-ssot-alignment.md](./types-ssot-alignment.md)
 - 四包内部发布证据：[../plans/releases/2026-07-21-four-crates-internal-release.md](../plans/releases/2026-07-21-four-crates-internal-release.md)
+- **kernel 0.3.0 内部发布记录**：[../../crates/kernel/releases/0.3.0-internal.md](../../crates/kernel/releases/0.3.0-internal.md)
+- GitHub Release：[v0.3.0-four-crates](https://github.com/xhyperium/infra.rs/releases/tag/v0.3.0-four-crates)
 
 ## 变更记录
 
@@ -208,3 +216,4 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 | 2026-07-21 | Codex P2 修复：`[lints] workspace = true`、`publish = false`、如实引用 coverage/mutants/miri workflows |
 | 2026-07-21 | Codex P1：修复 coverage workflow branch 解析；补 BeforeUnixEpoch/Overflow 测；mutants mkdir；branch cover 100% |
 | 2026-07-21 | 交叉引用 workspace 总览；确认无 `infra-core` 依赖 |
+| 2026-07-21 | **内部发布已执行**：crate `releases/0.3.0-internal.md` · GH Release · PR #163；对齐文标记「已发布」 |

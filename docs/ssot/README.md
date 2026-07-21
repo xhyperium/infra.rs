@@ -29,7 +29,7 @@
 4. 各域 `*-ssot-alignment.md` — 本仓落地差距
 5. 生产就绪审计（五核心 crate）：[../report/2026-07-21/core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md)
 
-> **2026-07-21 跟进**：PR #98 P0/P1；PLAN-CORE-PROD-002 L5 [`0.3.0-signoff`](../plans/releases/0.3.0-signoff.md)；四包内部 GO [#159](https://github.com/xhyperium/infra.rs/pull/159) · tag `v0.3.0-four-crates`（kernel L1+L4 · testkit L1 · decimalx L1 · canonical L2）。镜像 COMPLETE **仍不等于** 整体 Production Ready。详见各 `*-ssot-alignment.md` 与 [四包证据](../plans/releases/2026-07-21-four-crates-internal-release.md)。
+> **2026-07-21 跟进**：PR #98 P0/P1；L5 [`0.3.0-signoff`](../plans/releases/0.3.0-signoff.md)；四包内部 GO [#159](https://github.com/xhyperium/infra.rs/pull/159) · tag/GH Release [`v0.3.0-four-crates`](https://github.com/xhyperium/infra.rs/releases/tag/v0.3.0-four-crates)；**kernel 内部发布已执行**（[#163](https://github.com/xhyperium/infra.rs/pull/163) · [`0.3.0-internal.md`](../../crates/kernel/releases/0.3.0-internal.md)）。规格 COMPLETE **仍不等于** 整体 Production Ready / crates.io。详见各 `*-ssot-alignment.md` 与 [四包证据](../plans/releases/2026-07-21-four-crates-internal-release.md)。
 
 ## 文档
 
