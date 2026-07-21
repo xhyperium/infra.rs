@@ -33,7 +33,7 @@
 | 3.drv | `ReqwestHttpDriver` / `TungsteniteWsConnector` | **PASS** | `src/lib.rs` + loopback 测试 |
 | 3.mock | `MockHttpTransport` + `HttpDriver` | **PASS** | `tests/mock_http.rs` |
 | 3.legacy | `HttpTransport` deprecated | **PASS** | `#[deprecated(note = "use HttpDriver")]` |
-| 3.binance/okx | 适配器消费真实驱动 | **DEFER** | 本仓已有 stub `binancex` / `okxx`，尚未依赖 `HttpDriver`/`WsConnector`；完整 adapter 集成属 follow-up |
+| 3.binance/okx | 适配器消费真实驱动 | **PASS（接线）** / 业务解析 **DEFER** | `binancex`/`okxx` 可选 `with_http(Arc<dyn HttpDriver>)`；`MockHttpTransport` 测通；JSON 业务解析未做 |
 
 ## §4 公开 API 行为
 
