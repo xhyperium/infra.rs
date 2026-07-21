@@ -15,16 +15,22 @@
 - `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts}` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓可宣称 ship」
   - infra 平面在 `.agents/ssot/infra/{bootstrap,configx,gate,…}`（保留 `infra/` 层级）
   - adapters 平面在 `.agents/ssot/adapters/{exchange,storage}/…`（保留 `adapters/` 层级）
-- 本仓 members：`kernel` / `testkit` / `configx` / `schedulex` / `bootstrap` / `resiliencx` / `types/*` / `contracts` / `adapters/**`（adapters 为 scaffold；**无** `infra-core`；infra 其余域未落地）
+- 本仓 members：`kernel` / `testkit` / `configx` / `schedulex` / `bootstrap` / `evidence` / `observex` / `resiliencx` / `transport` / `types/*` / `contracts` / `adapters/**`（adapters 为 scaffold；**无** `infra-core`；gate 等未落地）
 - 验证：`cargo test --workspace`；专项见对齐文档
 - 总览：[docs/ssot/workspace-ssot-alignment.md](./docs/ssot/workspace-ssot-alignment.md)
 - 域文档：
   - [docs/ssot/kernel-ssot-alignment.md](./docs/ssot/kernel-ssot-alignment.md)
   - [docs/ssot/testkit-ssot-alignment.md](./docs/ssot/testkit-ssot-alignment.md)
   - [docs/ssot/types-ssot-alignment.md](./docs/ssot/types-ssot-alignment.md)
+  - [docs/ssot/configx-ssot-alignment.md](./docs/ssot/configx-ssot-alignment.md)
+  - [docs/ssot/schedulex-ssot-alignment.md](./docs/ssot/schedulex-ssot-alignment.md)
   - [docs/ssot/bootstrap-ssot-alignment.md](./docs/ssot/bootstrap-ssot-alignment.md)
-  - [docs/ssot/adapters-ssot-alignment.md](./docs/ssot/adapters-ssot-alignment.md)
+  - [docs/ssot/evidence-ssot-alignment.md](./docs/ssot/evidence-ssot-alignment.md)
+  - [docs/ssot/observex-ssot-alignment.md](./docs/ssot/observex-ssot-alignment.md)
+  - [docs/ssot/resiliencx-ssot-alignment.md](./docs/ssot/resiliencx-ssot-alignment.md)
+  - [docs/ssot/transport-ssot-alignment.md](./docs/ssot/transport-ssot-alignment.md)
   - [docs/ssot/contracts-ssot-alignment.md](./docs/ssot/contracts-ssot-alignment.md)
+  - [docs/ssot/adapters-ssot-alignment.md](./docs/ssot/adapters-ssot-alignment.md)
 
 ## Hook 感知
 
