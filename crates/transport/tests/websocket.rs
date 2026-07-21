@@ -100,7 +100,7 @@ async fn ws_abrupt_tcp_drop_maps_unclean_or_io() {
 
 #[tokio::test]
 async fn ws_connect_invalid_url_protocol_violation() {
-    let connector = TungsteniteWsConnector;
+    let connector = TungsteniteWsConnector::new();
     let err = match connector.connect("not-a-url").await {
         Ok(_) => panic!("expected error"),
         Err(e) => e,
@@ -192,7 +192,7 @@ async fn ws_stream_end_without_close_frame() {
 
 #[test]
 fn connector_debug_default() {
-    let c = TungsteniteWsConnector;
+    let c = TungsteniteWsConnector::new();
     let _ = format!("{c:?}");
     let _ = TungsteniteWsConnector::new();
 }

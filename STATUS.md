@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-21T14:20:05Z
+> **生成时间**：2026-07-21T14:30:35Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -14,7 +14,7 @@
 | 布局八项齐全 | **21** / 21（100%） |
 | 含测试（单元或集成） | **21** / 21（100%） |
 | scaffold 信号 | **9** |
-| **平均完成度** | **92%** █████████░ |
+| **平均完成度** | **93%** █████████░ |
 
 ### 成熟度分布
 
@@ -49,7 +49,7 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `observex` | `crates/observex` | L1 | 8/8 | ✅ 2i+u | 190 | 1 | `partial` | **90%** ███████░ | [✓](docs/ssot/observex-ssot-alignment.md) |
 | `resiliencx` | `crates/resiliencx` | L1 | 8/8 | ✅ 3i+u | 919 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/resiliencx-ssot-alignment.md) |
 | `schedulex` | `crates/schedulex` | L1 | 8/8 | ✅ 2i+u | 110 | 1 | `partial` | **90%** ███████░ | [✓](docs/ssot/schedulex-ssot-alignment.md) |
-| `transportx` | `crates/transport` | L1 | 8/8 | ✅ 4i | 417 | 1 | `active` | **95%** ████████ | [✓](docs/ssot/transport-ssot-alignment.md) |
+| `transportx` | `crates/transport` | L1 | 8/8 | ✅ 5i | 620 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/transport-ssot-alignment.md) |
 | `contracts` | `crates/contracts` | contracts | 8/8 | ✅ 4i+u | 1119 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/contracts-ssot-alignment.md) |
 | `binancex` | `crates/adapters/exchange/binance` | adapter | 8/8 | ✅ u | 613 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx` | adapter | 8/8 | ✅ u | 479 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |

@@ -50,6 +50,11 @@ async fn mock_http_get_post_and_miss() {
     assert!(!TransportError::ConnectionClosed { clean: true }.to_string().is_empty());
     assert!(!TransportError::RateLimited { retry_after: None }.to_string().is_empty());
     assert!(!TransportError::ProtocolViolation("x".into()).to_string().is_empty());
+    assert!(
+        !TransportError::PayloadTooLarge { kind: "response_body", limit: 1, got: 2 }
+            .to_string()
+            .is_empty()
+    );
 }
 
 #[test]
