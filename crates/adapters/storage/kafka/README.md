@@ -1,38 +1,22 @@
 # kafkax
 
-kafka storage adapter
+kafka storage adapter。
 
 Package：`kafkax` · path：`crates/adapters/storage/kafka`
 
-SSOT 镜像：[`.agents/ssot/adapters/storage/kafka`](../../../../.agents/ssot/adapters/storage/kafka/README.md)  
-本仓对齐：[docs/adapters-ssot-alignment.md](../../../../docs/adapters-ssot-alignment.md)
+合约：`infra-contracts::StorageAdapter`
 
 ## 状态
 
-**scaffold** — 仅错误类型骨架，**未**宣称业务实现 / package stable / 真实 I/O。
-
-## 职责
-
-- storage 适配器实现位
-- 错误类型：`Error` / `Result`
-
-## 非目标（当前）
-
-- 真实网络 / SDK 集成
-- 生产交易或生产 I/O
-- package stable 宣称
+**scaffold** — 进程内 HashMap 模拟 KV；**非**真实 kafka 客户端；不宣称 package stable。
 
 ## 最小用法
 
 ```rust
-use kafkax::{Error, Result};
+use crate::StorageAdapter;
+use kafkax::KafkaAdapter;
 
-fn demo() -> Result<()> {
-    Err(Error::Internal("scaffold only".into()))
-}
+let mut a = KafkaAdapter::local();
+a.connect().expect("connect");
+a.write("k", b"v").expect("write");
 ```
-
-## 相关
-
-- 父级规则：[`crates/AGENTS.md`](../../../AGENTS.md)
-- 合约 trait：`xhyper-contracts`（`crates/contracts`）
