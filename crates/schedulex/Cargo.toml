@@ -1,0 +1,23 @@
+[package]
+name = "xhyper-schedulex"
+version = "0.1.0"
+publish = false
+edition.workspace = true
+rust-version.workspace = true
+description = "L1 task-id registry (active schedulex SSOT: no real timers)"
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "schedulex"
+
+# active SSOT: std-only，无生产依赖
+[dependencies]
+
+[dev-dependencies]
+
+[features]
+default = []
+
+[lints]
+workspace = true

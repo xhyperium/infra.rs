@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`xhyper-schedulex` 0.1.0**（`crates/schedulex`）：active SSOT 最小任务 ID 登记表；std-only；line cov 100%
+- **`docs/schedulex-ssot-alignment.md`**：schedulex 本仓对齐矩阵
 - **storage adapters 收敛到 `xhyper-contracts`**：redisx→KeyValueStore/PubSub；kafkax/natsx→EventBus；postgresx→Repository/TxRunner；ossx→ObjectStore；clickhousex→AnalyticsSink；taosx→TimeSeriesStore（均内存 scaffold）
 - **`natsx` / `postgresx` / `clickhousex` / `ossx` / `taosx`**：StorageAdapter 内存 scaffold（与 redisx/kafkax 同模式）
 - **`redisx` / `kafkax`**：实现 `StorageAdapter`（进程内 KV scaffold + 单元测试）
@@ -30,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- workspace members 增加 `xhyper-schedulex`；总览/对齐文档同步
 - 同步更新 `README` / `ARCHITECTURE` / `CONSTITUTION` / `crates/AGENTS.md` / `docs/VERSIONING.md` 中的 crate 地图
 - DDR-002 适用范围改为 workspace 库 crate；DDR-003 标记为已撤销（依赖已删除的 `infra_core::Error`）
 - 对齐文档：新增 `docs/workspace-ssot-alignment.md`、`docs/types-ssot-alignment.md`、`docs/configx-ssot-alignment.md`、`docs/bootstrap-ssot-alignment.md`；更新 `SSOT_SYNC_REPORT` / `docs/README` / 根 `AGENTS.md` / `CLAUDE.md` 入口

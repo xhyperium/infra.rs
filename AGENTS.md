@@ -29,18 +29,20 @@
   - `crates/kernel` → `xhyper-kernel`（L0）
   - `crates/testkit` → `xhyper-testkit`（core ManualClock；仅 dev-dep）
   - `crates/configx` → `xhyper-configx`（L1 内存字符串 KV；非多源热更新）
+  - `crates/schedulex` → `xhyper-schedulex`（L1 任务 ID 登记表；active SSOT registry only）
   - `crates/bootstrap` → `xhyper-bootstrap`（L1 组合根；contracts/observex/evidence 全量 DEFER）
   - `crates/resiliencx` → `xhyper-resiliencx`（L1 重试；熔断/限流未实现）
   - `crates/types/decimal` → `xhyper-decimalx`
   - `crates/types/canonical` → `xhyper-canonical`
   - `crates/contracts` → `xhyper-contracts`（adapter trait 出口；#43）
   - `crates/adapters/**` → 9 个 adapter package（**scaffold**；见 adapters 对齐文）
-- `contract-testkit` **未**移植；**infra 其余域**（gate/observex/…）当前仅镜像，未宣称本仓实现
+- `contract-testkit` **未**移植；**infra 其余域**（gate/observex/…）当前仅镜像，未宣称本仓实现（schedulex 见上）
 - **adapters**：镜像已本地化；crate 为 scaffold，**未**宣称业务实现 / package stable
 - 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游变更用 **删除感知**同步（`rsync -a --delete`，见 SSOT.md R6）
 - 对齐审计总览：[docs/workspace-ssot-alignment.md](./docs/workspace-ssot-alignment.md)
   - kernel：[docs/kernel-ssot-alignment.md](./docs/kernel-ssot-alignment.md)
   - testkit：[docs/testkit-ssot-alignment.md](./docs/testkit-ssot-alignment.md)
+  - schedulex：[docs/schedulex-ssot-alignment.md](./docs/schedulex-ssot-alignment.md)
   - types：[docs/types-ssot-alignment.md](./docs/types-ssot-alignment.md)
   - bootstrap：[docs/bootstrap-ssot-alignment.md](./docs/bootstrap-ssot-alignment.md)
   - configx：[docs/configx-ssot-alignment.md](./docs/configx-ssot-alignment.md)

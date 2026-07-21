@@ -73,6 +73,7 @@ crates/<crate-name>/
 | `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-configx`（lib `configx`） | `crates/configx/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `xhyper-schedulex`（lib `schedulex`） | `crates/schedulex/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-decimalx`（lib `decimalx`） | `crates/types/decimal/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -150,6 +151,7 @@ crates/<crate-name>/
 | `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | xhyper L0 语义信任根（clock / lifecycle） |
 | `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
 | `xhyper-configx`（lib `configx`） | `crates/configx/` | L1 配置存储（MemoryConfigStore） |
+| `xhyper-schedulex`（lib `schedulex`） | `crates/schedulex/` | L1 任务 ID 登记表（active SSOT：无真实定时器） |
 | `xhyper-decimalx`（lib `decimalx`） | `crates/types/decimal/` | 十进制数值 / Money（ADR-006/007） |
 | `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
 | `xhyper-resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | L1 重试（active SSOT §2；熔断/限流未实现） |

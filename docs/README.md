@@ -12,6 +12,7 @@
 | [kernel-ssot-alignment.md](kernel-ssot-alignment.md) | kernel SSOT 对齐矩阵与本仓 xhyper-kernel 落地状态 |
 | [testkit-ssot-alignment.md](testkit-ssot-alignment.md) | testkit SSOT 对齐与本仓 ManualClock 落地状态 |
 | [configx-ssot-alignment.md](configx-ssot-alignment.md) | configx 0.1.0 对齐矩阵与本仓 xhyper-configx 落地状态 |
+| [schedulex-ssot-alignment.md](schedulex-ssot-alignment.md) | schedulex active registry 对齐与本仓落地状态 |
 | [types-ssot-alignment.md](types-ssot-alignment.md) | types（decimal + canonical）SSOT 对齐与本仓落地状态 |
 | [bootstrap-ssot-alignment.md](bootstrap-ssot-alignment.md) | bootstrap 组合根 SSOT 对齐与本仓落地状态 |
 | [adapters-ssot-alignment.md](adapters-ssot-alignment.md) | adapters 九域 SSOT 镜像与 scaffold 落地状态 |
