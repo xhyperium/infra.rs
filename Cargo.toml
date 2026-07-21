@@ -5,6 +5,15 @@ members = [
   "crates/testkit",
   "crates/types/decimal",
   "crates/types/canonical",
+  "crates/adapters/exchange/binance",
+  "crates/adapters/exchange/okx",
+  "crates/adapters/storage/redis",
+  "crates/adapters/storage/kafka",
+  "crates/adapters/storage/nats",
+  "crates/adapters/storage/postgres",
+  "crates/adapters/storage/taos",
+  "crates/adapters/storage/oss",
+  "crates/adapters/storage/clickhouse",
 ]
 
 [workspace.package]
