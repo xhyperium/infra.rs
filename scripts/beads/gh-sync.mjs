@@ -496,10 +496,14 @@ function pullToBeads(ghIssue, mapping, state, opts, results) {
  * 收集冲突的已知映射并逐个交互式审查。
  * 返回对象 { beadId: "push"|"pull"|"skip" }，供 syncAll 在 STEP 4 中查询。
  * 仅在 --interactive 模式且非 --json / --dry-run 时生效。
+ *
+ * @param {Array} conflicts - [{beadId, beadIssue, ghIssue}]
+ * @param {Object} opts     - 命令行选项
+ * @param {Function} [_input] - 可选输入函数（测试用）：(prompt) => choice
  */
-function interactiveReview(conflicts, opts) {
+function interactiveReview(conflicts, opts, _input) {
   // 交互式模式需要终端输入，JSON 或 dry-run 模式下跳过
-  if (opts.json || opts.dryRun || !process.stdin.isTTY) {
+  if (opts.json || opts.dryRun || (!process.stdin.isTTY && !_input)) {
     if (conflicts.length > 0) {
       info(`${conflicts.length} 个冲突将按默认策略自动裁决`);
     }
@@ -555,20 +559,27 @@ function interactiveReview(conflicts, opts) {
       continue;
     }
 
-    process.stdout.write("  选择 [b]eads 获胜 / [g]itHub 获胜 / [s]跳过 / [a]全部 beads / [A]全部 GitHub / [q]退出: ");
-
+    // Read user input: use _input callback if provided (test mode), otherwise readSync
+    // _input callback returns exact keys ("b", "g", "s", "a", "A", "q")
+    // readSync returns raw terminal bytes that need case normalization
     let choice;
-    try {
-      const buf = Buffer.alloc(8);
-      const n = readSync(0, buf, 0, 8, null);
-      choice = buf.toString("utf-8", 0, n).trim().toLowerCase();
-    } catch {
-      // stdin 不可用时跳过当前冲突，剩余按默认策略
-      break;
+    if (_input) {
+      choice = _input(`  选择 [b]eads 获胜 / [g]itHub 获胜 / [s]跳过 / [a]全部 beads / [A]全部 GitHub / [q]退出: `).trim();
+    } else {
+      process.stdout.write("  选择 [b]eads 获胜 / [g]itHub 获胜 / [s]跳过 / [a]全部 beads / [A]全部 GitHub / [q]退出: ");
+      try {
+        const buf = Buffer.alloc(8);
+        const n = readSync(process.stdin.fd, buf, 0, 8, null);
+        choice = buf.toString("utf-8", 0, n).trim().toLowerCase();
+      } catch {
+        console.log("");
+        warn("stdin 不可用，退回自动裁决");
+        break;
+      }
+      console.log(""); // newline after raw input
     }
-    console.log(""); // newline after input
 
-    if (choice === "q") {
+    if (choice === "q" || choice === "Q") {
       console.log("退出交互审查，剩余冲突按默认策略处理。");
       break;
     }
@@ -576,11 +587,11 @@ function interactiveReview(conflicts, opts) {
       applyToAll = "push";
       decisions[b.id] = "push";
       console.log("  → beads 获胜（应用于后续全部）");
-    } else if (choice === "A" || choice === "A".toLowerCase()) {
+    } else if (choice === "A") {
       applyToAll = "pull";
       decisions[b.id] = "pull";
       console.log("  → GitHub 获胜（应用于后续全部）");
-    } else if (choice === "b") {
+    } else if (choice === "b" || choice === "B") {
       decisions[b.id] = "push";
       console.log("  → beads 获胜");
     } else if (choice === "g") {
