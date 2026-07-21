@@ -16,7 +16,7 @@ import { execSync } from "child_process";
 import {
   describePrePushHookFailure,
   inspectPrePushHook,
-} from "./git-hook-policy.mjs";
+} from "../docs/git-hook-policy.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");

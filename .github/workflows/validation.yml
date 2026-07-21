@@ -94,4 +94,4 @@ jobs:
             git checkout -b harness-ci
           fi
       - name: 运行 harness check
-        run: node scripts/check.mjs
+        run: node scripts/quality-gates/check.mjs
