@@ -1,17 +1,15 @@
-//! postgresx 错误类型。
+//! 本 crate 本地错误类型（scaffold；非 contracts 公共面）。
 
-use thiserror::Error as ThisError;
-
-#[derive(Debug, ThisError)]
-pub enum Error {
-    #[error("connection error: {0}")]
-    Connection(String),
-
-    #[error("configure error: {0}")]
-    Config(String),
-
-    #[error("internal error: {0}")]
-    Internal(String),
-}
+use thiserror::Error;
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+#[derive(Debug, Error, PartialEq, Eq)]
+pub enum Error {
+    #[error("not connected")]
+    NotConnected,
+    #[error("already connected")]
+    AlreadyConnected,
+    #[error("internal: {0}")]
+    Internal(String),
+}

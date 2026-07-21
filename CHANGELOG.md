@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`natsx` / `postgresx` / `clickhousex` / `ossx` / `taosx`**：StorageAdapter 内存 scaffold（与 redisx/kafkax 同模式）
 - **`redisx` / `kafkax`**：实现 `StorageAdapter`（进程内 KV scaffold + 单元测试）
 - **`okxx`**：实现 `ExchangeAdapter` trait（占位 ticker；5 单元测试）
 - **contracts SSOT 镜像**：`.agents/ssot/contracts/`（16 文件，与上游 0 diff）；对齐文 `docs/contracts-ssot-alignment.md`
