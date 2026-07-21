@@ -1,6 +1,7 @@
+# contracts（xhyper-contracts）生产就绪 partial
+
 > **post-#178 勘误（2026-07-22）**：独立 `contract-testkit` 已落地；Fake 不在 `contracts`；postgres scaffold 用本地 `ScaffoldTxContext`。下文若残留 in-crate Fake / 独立 crate DEFER，以本勘误与 `docs/ssot/*` 为准。
 
-# contracts（xhyper-contracts）生产就绪 partial
 
 | 字段 | 值 |
 |------|-----|
