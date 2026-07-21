@@ -149,6 +149,39 @@ if (existsSync(statePath)) {
   } catch {}
 }
 
+// === crates 进度本地副本（SessionStart 自动刷新；不阻断、不入库）===
+// 主仓/任意分支可写 gitignore 的 CRATES_STATUS.local.md，避免手敲 make status。
+// 入库 STATUS.md 仍由 feature PR 顺带更新；此处永不 --tracked。
+{
+  const genScript = join(projectRoot, "scripts/docs/gen-crate-status.mjs");
+  if (existsSync(genScript)) {
+    lines.push("---");
+    try {
+      const out = execSync(`node "${genScript}" --local-only`, {
+        cwd: projectRoot,
+        encoding: "utf-8",
+        timeout: 12000,
+        env: NO_OPTIONAL_LOCKS_GIT_ENV,
+        stdio: ["pipe", "pipe", "pipe"],
+      }).trim();
+      const avgM = out.match(/avg\s+(\d+)%/);
+      const nM = out.match(/\((\d+)\s+crates/);
+      const avg = avgM ? avgM[1] : "?";
+      const n = nM ? nM[1] : "?";
+      lines.push(
+        "📊 crates 进度: " + n + " members · 平均 " + avg + "%（已刷新本地副本）",
+      );
+      lines.push(
+        "   本地: docs/status/CRATES_STATUS.local.md  |  入库 STATUS.md 随 feature PR 顺带更新",
+      );
+    } catch {
+      lines.push(
+        "📊 crates 进度: 自动刷新跳过（可手动 make status / node scripts/docs/gen-crate-status.mjs --local-only）",
+      );
+    }
+  }
+}
+
 // Loop 状态 (hot state — 从 STATE.md 提取)
 const loopStatePath = join(loopsDir, "STATE.md");
 if (existsSync(loopStatePath)) {

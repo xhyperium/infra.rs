@@ -52,6 +52,8 @@ node scripts/docs/gen-crate-status.mjs --watch 30   # 自动监控
 **不必**「同步一次就单独开 PR」。日常在主仓 `make status` 只刷本地副本；  
 改了 `Cargo.toml` members / 标准布局时，在 **同一 feature worktree PR** 里顺带 `make status` 更新 `STATUS.md` 即可。
 
+**SessionStart**：`.claude/hooks/session-context.mjs` 会自动 `gen-crate-status --local-only` 刷新本地副本，并打印一行平均完成度；**不**写入库 `STATUS.md`、**不**阻断会话。
+
 `STATUS.md` 完成度是**结构进度**（布局七项 · 测试 · 源码实质），**不是** Production Ready 签字。
 
 上级索引：[docs/README.md](../README.md)。
