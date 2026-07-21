@@ -85,6 +85,8 @@ infra.rs/
 ├────────────────────────────────────────────┤
 │  crates/configx/                           │  L1 内存 KV（非多源热更新）
 │  └── ConfigStore                           │
+│  crates/bootstrap/                         │  L1 唯一组合根（ADR-016）
+│  └── typed composition / shutdown owner    │
 ├────────────────────────────────────────────┤
 │  crates/types/canonical/                   │  跨层共享纯 DTO
 │  crates/types/decimal/                     │  Decimal / Money
@@ -97,9 +99,11 @@ infra.rs/
 ### 依赖规则
 
 ```
-canonical  →  decimalx  →  kernel
-configx    →  kernel          # L1；禁止其他 L1 / observex
-testkit    →  kernel          # 仅 [dev-dependencies]
+canonical   →  decimalx  →  kernel
+configx     →  kernel          # L1；禁止其他 L1 / observex
+resiliencx  →  kernel          # L1 重试
+bootstrap   →  kernel          # L1 composition root；无 gate / Service Locator
+testkit     →  kernel          # 仅 [dev-dependencies]
 ```
 
 - 所有 crate 通过 `[workspace.dependencies]` 统一管理版本

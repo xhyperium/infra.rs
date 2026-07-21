@@ -28,14 +28,19 @@
   - `crates/kernel` → `xhyper-kernel`（L0）
   - `crates/testkit` → `xhyper-testkit`（core ManualClock；仅 dev-dep）
   - `crates/configx` → `xhyper-configx`（L1 内存字符串 KV；非多源热更新）
+  - `crates/bootstrap` → `xhyper-bootstrap`（L1 组合根；contracts/observex/evidence 全量 DEFER）
+  - `crates/resiliencx` → `xhyper-resiliencx`（L1 重试）
   - `crates/types/decimal` → `xhyper-decimalx`
   - `crates/types/canonical` → `xhyper-canonical`
-- `contract-testkit` **未**移植；**infra 其余域**（bootstrap/gate/observex/…）当前仅镜像，未宣称本仓实现
+- `contract-testkit` **未**移植；**infra 其余域**（gate/observex/…）当前仅镜像，未宣称本仓实现
 - 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游变更用 **删除感知**同步（`rsync -a --delete`，见 SSOT.md R6）
 - 对齐审计总览：[docs/workspace-ssot-alignment.md](./docs/workspace-ssot-alignment.md)
   - kernel：[docs/kernel-ssot-alignment.md](./docs/kernel-ssot-alignment.md)
   - testkit：[docs/testkit-ssot-alignment.md](./docs/testkit-ssot-alignment.md)
   - types：[docs/types-ssot-alignment.md](./docs/types-ssot-alignment.md)
+  - bootstrap：[docs/bootstrap-ssot-alignment.md](./docs/bootstrap-ssot-alignment.md)
+  - configx：[docs/configx-ssot-alignment.md](./docs/configx-ssot-alignment.md)
+  - resiliencx：[docs/resiliencx-ssot-alignment.md](./docs/resiliencx-ssot-alignment.md)
 
 ## 仓库结构
 
