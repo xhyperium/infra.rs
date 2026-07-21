@@ -379,7 +379,7 @@ function renderMarkdown(crates, generatedAt) {
         ? `✅ ${c.testFiles}i${c.unitTests ? "+u" : ""}`
         : "✅ u"
       : "❌";
-    const exCell =
+    const exampleCell =
       c.exampleFiles > 0
         ? String(c.exampleFiles)
         : c.examplesPlaceholder
@@ -391,7 +391,7 @@ function renderMarkdown(crates, generatedAt) {
         : "缺失"
       : "—";
     lines.push(
-      `| \`${c.package}\` | \`${c.path}\` | ${c.layer} | ${layoutCell} | ${testCell} | ${c.loc} | ${exCell} | \`${c.maturity}\` | **${c.completion}%** ${progressBar(c.completion, 8)} | ${ssotCell} |`,
+      `| \`${c.package}\` | \`${c.path}\` | ${c.layer} | ${layoutCell} | ${testCell} | ${c.loc} | ${exampleCell} | \`${c.maturity}\` | **${c.completion}%** ${progressBar(c.completion, 8)} | ${ssotCell} |`,
     );
   }
 
