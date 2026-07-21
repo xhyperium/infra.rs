@@ -22,7 +22,6 @@ jobs:
   constitution:
     name: Constitution Check
     runs-on: ubuntu-latest
-    env:
 
     steps:
       - uses: actions/checkout@v4
