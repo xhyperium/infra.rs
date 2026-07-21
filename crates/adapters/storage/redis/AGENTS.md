@@ -1,11 +1,5 @@
-# redisx — Agent 行为规则
+# redisx
 
-> 适用 crate：`crates/adapters/storage/redis/`（包名 `redisx`）  
-> 父级：[`crates/AGENTS.md`](../../../AGENTS.md)  
-> 合约：`infra-contracts::StorageAdapter`
-
-## 规则
-
-- scaffold 阶段禁止宣称真实 I/O / package stable
-- 生产依赖仅 `infra-contracts`（path+version）
-- 新增真实 SDK 依赖须 RFC / 显式 PR 说明
+- 实现 `contracts::{KeyValueStore, PubSub}`
+- 依赖 `xhyper-contracts`（path+version）
+- 禁止宣称真实 Redis I/O / package stable

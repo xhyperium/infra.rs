@@ -20,3 +20,7 @@ futures-core = { workspace = true }
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true }
+xhyper-decimalx = { path = "../types/decimal", version = "0.1.0" }
