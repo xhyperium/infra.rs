@@ -9,24 +9,23 @@
 
 | 文件 | name | 触发（启发式） | Jobs |
 |------|------|----------------|------|
-| `canonical-coverage.yml` | Canonical Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
+| `canonical-coverage.yml` | Canonical Coverage | push, pull_request | `line-coverage` |
 | `ci-rust.yml` | CI（Rust） | push, pull_request | `check-rust`, `build`, `test`, `msrv`, `coverage` |
-| `configx-coverage.yml` | ConfigX Coverage | push, pull_request, workflow_dispatch | `coverage` |
 | `constitution.yml` | Constitution | push, pull_request, workflow_dispatch | `constitution` |
-| `contracts-coverage.yml` | Contracts Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
-| `decimal-coverage.yml` | Decimal Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
-| `evidence-coverage.yml` | Evidence Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
-| `kernel-coverage.yml` | Kernel Coverage | push, pull_request, workflow_dispatch | `coverage` |
+| `contracts-coverage.yml` | Contracts Coverage | push, pull_request | `line-coverage` |
+| `decimal-coverage.yml` | Decimal Coverage | push, pull_request | `line-coverage` |
+| `evidence-coverage.yml` | Evidence Coverage | push, pull_request | `line-coverage` |
+| `kernel-coverage.yml` | Kernel Coverage | push, pull_request | `coverage` |
 | `kernel-miri.yml` | Kernel Miri | schedule, workflow_dispatch | `miri` |
 | `kernel-mutants.yml` | Kernel Mutants | schedule, workflow_dispatch | `mutants` |
-| `observex-coverage.yml` | Observex Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
+| `observex-coverage.yml` | Observex Coverage | push, pull_request | `line-coverage` |
 | `pr-template-check.yml` | PR Template Check | pull_request | `template-check` |
 | `quality.yml` | 质量 | push, pull_request | `check-rust`, `fmt`, `clippy`, `doc` |
-| `resiliencx-coverage.yml` | Resiliencx Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
-| `schedulex-coverage.yml` | Schedulex Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
+| `resiliencx-coverage.yml` | Resiliencx Coverage | push, pull_request | `line-coverage` |
+| `schedulex-coverage.yml` | Schedulex Coverage | push, pull_request | `line-coverage` |
 | `security.yml` | 安全 | push, pull_request, schedule, workflow_dispatch | `check-rust`, `deny`, `audit` |
 | `self-test.yml` | 模块自验证 | push, pull_request | `scripts-lint`, `hooks-lint`, `scripts-test` |
-| `testkit-coverage.yml` | Testkit Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
+| `testkit-coverage.yml` | Testkit Coverage | push, pull_request | `line-coverage` |
 | `testkit-miri.yml` | Testkit Miri | schedule, workflow_dispatch | `miri` |
 | `testkit-mutants.yml` | Testkit Mutants | schedule, workflow_dispatch | `mutants` |
 | `validation.yml` | 校验 | push, pull_request | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness` |
@@ -35,8 +34,8 @@
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 21 |
-| Job 总数（解析） | 37 |
+| 工作流文件数 | 20 |
+| Job 总数（解析） | 36 |
 
 ## 维护
 
