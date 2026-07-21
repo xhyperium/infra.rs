@@ -49,6 +49,12 @@ jobs:
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - name: 验证 rust-cache
+        run: |
+          # Check that cache restored dependency artifacts
+          DEPS_COUNT=$(find target/debug/deps -name '*.d' 2>/dev/null | wc -l)
+          echo "rust-cache restored $DEPS_COUNT dependency files"
+        continue-on-error: true
       - name: 检查
         run: cargo check --workspace --all-features
 
@@ -64,6 +70,10 @@ jobs:
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - name: 验证 rust-cache
+        run: |
+          echo "rust-cache restored $(find target/debug/deps -name '*.d' 2>/dev/null | wc -l) deps"
+        continue-on-error: true
       - name: 安装 cargo-nextest
         uses: taiki-e/install-action@v2
         with:
@@ -84,6 +94,10 @@ jobs:
       - name: 安装 MSRV Rust 工具链
         uses: dtolnay/rust-toolchain@1.85
       - uses: Swatinem/rust-cache@v2
+      - name: 验证 rust-cache
+        run: |
+          echo "rust-cache restored $(find target/debug/deps -name '*.d' 2>/dev/null | wc -l) deps"
+        continue-on-error: true
       - name: 在 MSRV 上构建
         run: cargo build --workspace --all-features
 
@@ -102,6 +116,10 @@ jobs:
         with:
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@v2
+      - name: 验证 rust-cache
+        run: |
+          echo "rust-cache restored $(find target/debug/deps -name '*.d' 2>/dev/null | wc -l) deps"
+        continue-on-error: true
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
         with:
