@@ -1,0 +1,28 @@
+# Optional: redisx live 验证入口（infra-s9t.2）
+name: Redisx Live
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "crates/adapters/storage/redis/**"
+      - ".github/workflows/redisx-live.yml"
+jobs:
+  live:
+    # 默认不阻断主 CI；有 service 时手动/路径触发
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: live ignored tests
+        env:
+          REDIS_URL: redis://127.0.0.1:6379
+        run: cargo test -p redisx --features live -- --ignored --nocapture

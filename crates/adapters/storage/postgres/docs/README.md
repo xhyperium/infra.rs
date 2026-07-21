@@ -25,3 +25,11 @@
 
 本 crate 当前为 **scaffold**：标准布局与 trait 接线可能已齐，**不等于**业务实现或 package stable。
 以对齐矩阵与 `cargo metadata` 为准。
+
+## 生产误用警示（infra-s9t.14）
+
+**默认实现是进程内 scaffold/mock，不是生产客户端。**
+
+- 禁止把 `*Adapter` 类型名当成已对接真实 Binance/Postgres/Redis/…
+- 真实入口须有显式 feature（如 redisx `live`）与文档/CI 证据
+- 详见 `docs/plans/artifacts/prod-consume-surface.md`

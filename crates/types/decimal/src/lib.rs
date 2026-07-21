@@ -765,6 +765,7 @@ impl Serialize for Money {
 impl<'de> Deserialize<'de> for Money {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
         struct MoneyWire {
             amount: Decimal,
             currency: Currency,
@@ -791,6 +792,7 @@ impl Serialize for Decimal {
 impl<'de> Deserialize<'de> for Decimal {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
         struct DecimalWire {
             mantissa: i128,
             scale: u8,
@@ -1086,6 +1088,14 @@ mod tests {
     }
 
     // ── serde round-trip ───────────────────────────────────────────
+
+    #[test]
+    fn serde_unknown_fields_rejected_on_decimal() {
+        let j = r#"{"mantissa":1,"scale":0,"extra":true}"#;
+        let err = serde_json::from_str::<Decimal>(j).unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("unknown") || msg.contains("extra"), "{msg}");
+    }
 
     #[test]
     fn serde_roundtrip_struct_fields() {

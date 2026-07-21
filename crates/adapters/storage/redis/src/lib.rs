@@ -1,10 +1,14 @@
-//! `redisx` — Redis adapter。
+//! redisx — Redis 存储适配。
 //!
-//! - scaffold：[`RedisAdapter`]（忽略 TTL 的内存 KV）
-//! - mock 验证入口：[`MockRedisAdapter`]（TTL 模拟 + 单调 PubSub id；**非**真实 Redis）
+//! - 默认：[`RedisAdapter`] 进程内 scaffold（**非**生产客户端）。
+//! - feature `live`：[`RedisLiveKv`] 真实 redis 客户端（infra-s9t.2 验证入口）。
+
+#![forbid(unsafe_code)]
 
 mod adapter;
-mod mock;
-
 pub use adapter::RedisAdapter;
-pub use mock::MockRedisAdapter;
+
+#[cfg(feature = "live")]
+mod live;
+#[cfg(feature = "live")]
+pub use live::RedisLiveKv;

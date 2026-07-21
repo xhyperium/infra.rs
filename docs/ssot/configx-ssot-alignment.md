@@ -140,3 +140,8 @@ cargo llvm-cov -p configx --summary-only
 | branch | 100% | 同上 TOTAL branches |
 
 毒锁两分支与空/有值路径均由真实测试驱动，禁止 mock `ConfigStore`。
+
+## 本轮增量
+
+| `require_keys` | **PASS**（必填 key 存在性；非完整 schema） |
+

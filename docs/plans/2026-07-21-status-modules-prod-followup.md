@@ -7,7 +7,7 @@
 | 输入审计 | [docs/report/2026-07-21/status-modules-production-readiness.md](../report/2026-07-21/status-modules-production-readiness.md) |
 | 上游计划 | [PLAN-CORE-PROD-002](./2026-07-21-core-crates-production-readiness.md)（**W0–W5 DONE** · 五核心分层签核） |
 | Beads epic | **`infra-s9t`** |
-| 状态 | **OPEN** · 可执行 follow-up（非发布批准） |
+| 状态 | **IN PROGRESS** · 本 PR 批量收敛多项；非 L5 发布批准 |
 | 性质 | 对照 W0–W5 语义，扩展 L1 / adapters 阻断收敛 |
 
 ---

@@ -36,3 +36,8 @@ node scripts/cov-gate-100.mjs -p evidence --filter crates/evidence/src
 
 示例：`cargo run -p evidence --example append_memory`
 
+
+## 持久化（infra-s9t.7）
+
+- `FileEvidenceAppender::open(path)`：本地文件行追加（`seq\\tname`）+ flush。
+- `InMemoryEvidenceAppender`：**仅**开发/测试；禁止单独作为合规审计后端。
