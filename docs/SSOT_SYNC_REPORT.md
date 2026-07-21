@@ -71,6 +71,7 @@ du -sh <src> <dst>  # 字节级一致
 cp -rf /home/workspace/xhyper.rs/.agent/SSOT/kernel  .agents/ssot/
 cp -rf /home/workspace/xhyper.rs/.agent/SSOT/testkit .agents/ssot/
 cp -rf /home/workspace/xhyper.rs/.agent/SSOT/types   .agents/ssot/
+cp -rf /home/workspace/xhyper.rs/.agent/SSOT/infra/* .agents/ssot/
 ```
 
 ## 结论
@@ -87,3 +88,25 @@ cp -rf /home/workspace/xhyper.rs/.agent/SSOT/types   .agents/ssot/
 >
 > **总览**：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)  
 > **非 SSOT 域**：`infra-core` 已从 workspace **移除**（见根 `CHANGELOG`）；它从未属于 kernel/testkit/types 镜像三域。
+
+---
+
+## 补充：infra 平面镜像（2026-07-21）
+
+**源**: `/home/workspace/xhyper.rs/.agent/SSOT/infra/*`  
+**目标**: `/home/workspace/infra.rs/.agents/ssot/{bootstrap,configx,gate,…}`  
+**命令**: `cp -rf …/infra/* .agents/ssot/`
+
+| 域 | 文件数 | 目录数 | 大小 | 与源 diff |
+|----|--------|--------|------|-----------|
+| bootstrap | 16 | 14 | 128K | 0 |
+| configx | 16 | 14 | 128K | 0 |
+| gate | 34 | 14 | 268K | 0 |
+| observex | 16 | 14 | 128K | 0 |
+| resiliencx | 16 | 14 | 120K | 0 |
+| schedulex | 16 | 14 | 120K | 0 |
+| testkitx | 16 | 14 | 120K | 0 |
+| transport | 16 | 14 | 128K | 0 |
+| **合计** | **146** | — | — | **0** |
+
+> 镜像 COMPLETE ≠ 本仓 crate 已落地。上述域当前仅为只读 SSOT；本仓 `crates/` 是否实现以 `Cargo.toml` members 为准。
