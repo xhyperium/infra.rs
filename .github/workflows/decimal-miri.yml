@@ -20,13 +20,17 @@ jobs:
     name: Miri UB 检测
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v4
       - name: 安装 nightly 工具链 (miri)
         uses: dtolnay/rust-toolchain@nightly
         with:
           components: miri
-      - uses: Swatinem/rust-cache@v2
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.10
       - name: 运行 Miri
         env:
           MIRIFLAGS: -Zmiri-disable-isolation

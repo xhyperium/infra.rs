@@ -25,13 +25,17 @@ jobs:
     name: 行覆盖率 (100%)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v4
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@nightly
         with:
           components: llvm-tools-preview
-      - uses: Swatinem/rust-cache@v2
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.10
       - name: 安装 cargo-llvm-cov
         uses: taiki-e/install-action@v2
         with:
