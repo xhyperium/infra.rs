@@ -26,3 +26,20 @@ fn public_default_empty_and_schedule_owned_string() {
     s.schedule(String::from("owned-id"));
     assert_eq!(s.list(), vec!["owned-id".to_string()]);
 }
+
+#[test]
+fn public_registry_helpers_stats_bulk() {
+    use schedulex::{
+        NO_HARD_CAPACITY, Scheduler, is_busy, schedule_checked_many, schedule_filtering, stats,
+    };
+    let mut s = Scheduler::new();
+    assert_eq!(schedule_checked_many(&mut s, &["a", "b"]).unwrap(), 2);
+    let (ok, bad) = schedule_filtering(&mut s, &["c", ""]);
+    assert_eq!(ok, 1);
+    assert_eq!(bad.len(), 1);
+    assert!(is_busy(&s, 3));
+    assert_eq!(stats(&s).len, 3);
+    assert!(NO_HARD_CAPACITY.is_none());
+    s.schedule_normalized("  d  ").unwrap();
+    assert!(s.contains("d"));
+}

@@ -15,3 +15,6 @@ use observex::TracingInstrumentation;
 let i = TracingInstrumentation::new();
 i.record_retry("op", 1);
 ```
+
+## 2026-07-22 dual-bar surface
+Public helpers added for STATUS 100% structure + declared-surface hardening; see crate root docs and ssot alignment. **Not** Production Ready / L5.

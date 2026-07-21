@@ -11,6 +11,7 @@
 use evidence::{EvidenceAppender, InMemoryEvidenceAppender};
 
 fn main() {
+    println!("policy={}", evidence::policy_summary());
     let app = InMemoryEvidenceAppender::new();
     let r1 = app.append_named("boot.start").expect("append");
     let r2 = app.append_named("boot.ready").expect("append");

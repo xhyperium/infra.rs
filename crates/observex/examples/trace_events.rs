@@ -12,10 +12,10 @@ use contracts::Instrumentation;
 use observex::TracingInstrumentation;
 
 fn main() {
+    println!("policy={}", observex::policy_summary());
     let instr = TracingInstrumentation::new();
-    // 无 subscriber 时 tracing 为 no-op，调用仍安全
-    instr.record_retry("http.fetch", 1);
-    instr.record_circuit_open("http.fetch");
-    instr.record_circuit_close("http.fetch");
-    println!("observex_trace_ok methods=3 (tracing only, not OTEL)");
+    instr.record_retry("demo.op", 1);
+    instr.record_circuit_open("demo.op");
+    instr.record_circuit_close("demo.op");
+    println!("observex_ok");
 }

@@ -24,3 +24,24 @@ fn consumer_arc_dyn_works() {
     let instr: Arc<dyn Instrumentation> = Arc::new(TracingInstrumentation::new());
     instr.record_retry("arc", 1);
 }
+
+#[test]
+fn public_counting_prefix_normalize() {
+    use contracts::Instrumentation;
+    use observex::{
+        CountingInstrumentation, PrefixedInstrumentation, join_op_segments, normalize_op, op_depth,
+        op_leaf, record_retry_normalized, sanitize_op, truncate_op,
+    };
+    let c = CountingInstrumentation::new();
+    let p = PrefixedInstrumentation::new("mod", &c);
+    p.record_retry("op", 2);
+    assert_eq!(c.retry_count(), 1);
+    assert_eq!(c.last_attempt(), 2);
+    record_retry_normalized(&c, "", 1);
+    assert_eq!(normalize_op(""), "_");
+    assert_eq!(join_op_segments(&["a", "b"]), "a.b");
+    assert!(truncate_op("abcdef", 3).len() <= 3);
+    assert_eq!(op_depth("a.b"), 2);
+    assert_eq!(sanitize_op("x\ny"), "xy");
+    assert_eq!(op_leaf("a.b.c"), "c");
+}

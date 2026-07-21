@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-21T16:05:22Z
+> **生成时间**：2026-07-21T16:34:30Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -14,7 +14,7 @@
 | 布局七项齐全 | **21** / 22（95%） |
 | 含测试（单元或集成） | **22** / 22（100%） |
 | scaffold 信号 | **9** |
-| **平均完成度** | **92%** █████████░ |
+| **平均完成度** | **93%** █████████░ |
 
 ### 成熟度分布
 
@@ -24,8 +24,8 @@
 | `scaffold` | adapter/显式 scaffold 骨架 | 2 |
 | `scaffold+mock` | scaffold 且具备 mock/测试入口 | 7 |
 | `thin` | 布局齐但实质偏薄 | 0 |
-| `partial` | 有测试 + 一定源码量 | 2 |
-| `active` | 布局齐 + 测试 + 较厚实现 | 10 |
+| `partial` | 有测试 + 一定源码量 | 0 |
+| `active` | 布局齐 + 测试 + 较厚实现 | 12 |
 
 ## 完成度公式
 
@@ -44,11 +44,11 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `canonical` | `crates/types/canonical` | types | 7/7 | ✅ 2i+u | 1181 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/types-ssot-alignment.md) |
 | `decimalx` | `crates/types/decimal` | types | 7/7 | ✅ 6i+u | 1476 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/types-ssot-alignment.md) |
 | `bootstrap` | `crates/bootstrap` | L1 | 7/7 | ✅ 2i+u | 1027 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/bootstrap-ssot-alignment.md) |
-| `configx` | `crates/configx` | L1 | 7/7 | ✅ 2i+u | 216 | 1 | `active` | **95%** ████████ | [✓](docs/ssot/configx-ssot-alignment.md) |
-| `evidence` | `crates/evidence` | L1 | 7/7 | ✅ 2i+u | 313 | 1 | `active` | **95%** ████████ | [✓](docs/ssot/evidence-ssot-alignment.md) |
-| `observex` | `crates/observex` | L1 | 7/7 | ✅ 2i+u | 190 | 1 | `partial` | **90%** ███████░ | [✓](docs/ssot/observex-ssot-alignment.md) |
+| `configx` | `crates/configx` | L1 | 7/7 | ✅ 2i+u | 546 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/configx-ssot-alignment.md) |
+| `evidence` | `crates/evidence` | L1 | 7/7 | ✅ 2i+u | 536 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/evidence-ssot-alignment.md) |
+| `observex` | `crates/observex` | L1 | 7/7 | ✅ 2i+u | 539 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/observex-ssot-alignment.md) |
 | `resiliencx` | `crates/resiliencx` | L1 | 7/7 | ✅ 4i+u | 1011 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/resiliencx-ssot-alignment.md) |
-| `schedulex` | `crates/schedulex` | L1 | 7/7 | ✅ 2i+u | 110 | 1 | `partial` | **90%** ███████░ | [✓](docs/ssot/schedulex-ssot-alignment.md) |
+| `schedulex` | `crates/schedulex` | L1 | 7/7 | ✅ 2i+u | 533 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/schedulex-ssot-alignment.md) |
 | `contract-testkit` | `crates/test-support/contracts` | L1 | 3/7 | ✅ 1i | 1022 | · | `layout-incomplete` | **68%** █████░░░ | — |
 | `transportx` | `crates/transport` | L1 | 7/7 | ✅ 5i | 620 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/transport-ssot-alignment.md) |
 | `contracts` | `crates/contracts` | contracts | 7/7 | ✅ 4i+u | 616 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/contracts-ssot-alignment.md) |
