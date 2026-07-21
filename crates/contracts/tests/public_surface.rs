@@ -2,14 +2,16 @@
 
 use bytes::Bytes;
 use contracts::{
-    AccountSource, AnalyticsSink, BusMessage, EventBus, ExecutionVenue, FakeEventBus, FakeTxRunner,
-    InstrumentCatalog, Instrumentation, KeyValueStore, MarketDataSource, MessageAck, ObjectStore,
-    PubSub, Repository, TimeSeriesStore, TxRunner, VenueAdapter, VenueTimeSource,
+    AccountSource, AnalyticsSink, BusMessage, EventBus, ExecutionVenue, FakeEventBus,
+    FakeKeyValueStore, FakeRepository, FakeTxRunner, InstrEvent, InstrumentCatalog,
+    Instrumentation, KeyValueStore, MarketDataSource, MessageAck, ObjectStore, PubSub,
+    RecordingInstrumentation, Repository, TimeSeriesStore, TxRunner, VenueAdapter, VenueTimeSource,
     run_tx_commit_on_ok,
 };
 use futures_core::Stream;
 use std::pin::Pin;
 use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+use std::time::Duration;
 
 fn _a(_: &dyn KeyValueStore) {}
 fn _b(_: &dyn Instrumentation) {}
@@ -67,4 +69,51 @@ async fn contract_testkit_tx_and_bus_are_runnable() {
 fn trait_surface_object_safe_bounds() {
     fn assert_tx(_: &dyn TxRunner) {}
     assert_tx(&FakeTxRunner);
+}
+
+#[tokio::test]
+async fn fake_key_value_store_public_surface() {
+    let store = FakeKeyValueStore::new();
+    let kv: &dyn KeyValueStore = &store;
+    assert!(kv.get("missing").await.expect("get").is_none());
+    kv.set("k", b"v".to_vec(), Some(Duration::from_secs(1))).await.expect("set");
+    assert_eq!(kv.get("k").await.expect("get2").as_deref(), Some(b"v".as_ref()));
+    assert_eq!(store.len().expect("len"), 1);
+    assert!(!store.is_empty().expect("empty"));
+}
+
+#[tokio::test]
+async fn fake_repository_public_surface() {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    struct Entity {
+        id: u64,
+        name: String,
+    }
+    let repo = FakeRepository::new(|e: &Entity| e.id);
+    let r: &dyn Repository<Entity, u64> = &repo;
+    assert!(r.find(1).await.expect("find").is_none());
+    r.save(&Entity { id: 1, name: "a".into() }).await.expect("save");
+    let got = r.find(1).await.expect("find2").expect("entity");
+    assert_eq!(got.name, "a");
+    assert_eq!(repo.len().expect("len"), 1);
+}
+
+#[test]
+fn recording_instrumentation_public_surface() {
+    let rec = RecordingInstrumentation::new();
+    let instr: &dyn Instrumentation = &rec;
+    instr.record_retry("op", 1);
+    instr.record_circuit_open("op");
+    instr.record_circuit_close("op");
+    let snap = rec.snapshot().expect("snap");
+    assert_eq!(
+        snap,
+        vec![
+            InstrEvent::Retry { op: "op".into(), attempt: 1 },
+            InstrEvent::CircuitOpen { op: "op".into() },
+            InstrEvent::CircuitClose { op: "op".into() },
+        ]
+    );
+    rec.clear().expect("clear");
+    assert!(rec.snapshot().expect("snap2").is_empty());
 }
