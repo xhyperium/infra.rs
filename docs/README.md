@@ -55,6 +55,7 @@
 | [resiliencx-ssot-alignment.md](ssot/resiliencx-ssot-alignment.md) | resiliencx |
 | [transport-ssot-alignment.md](ssot/transport-ssot-alignment.md) | transport |
 | [evidence-ssot-alignment.md](ssot/evidence-ssot-alignment.md) | evidence |
+| [tools-ssot-alignment.md](ssot/tools-ssot-alignment.md) | tools（evidence / goalctl / xtask / verifyctl） |
 
 ---
 

@@ -156,3 +156,18 @@ rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/adapters/ .agents/ssot/a
 | 与源 diff | 0 |
 
 > 见 [contracts-ssot-alignment.md](./contracts-ssot-alignment.md)。
+
+---
+
+## 补充：tools 本仓 SSOT（2026-07-21）
+
+**路径**: `.agents/ssot/tools/`（保留 `tools/` 层级）
+
+| 子域 | 本仓状态 |
+|------|----------|
+| evidence | SSOT 已就位；crate 最小面已落地（`xhyper-evidence`） |
+| goalctl | SSOT 已就位；**无** crate |
+| xtask | SSOT 已就位；**无** crate |
+| verifyctl | SSOT 已就位（本仓扩展）；**无** crate |
+
+> 文档 COMPLETE ≠ 本仓业务实现。对齐见 [tools-ssot-alignment.md](./tools-ssot-alignment.md)。

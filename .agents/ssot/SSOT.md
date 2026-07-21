@@ -28,7 +28,7 @@
 ├── .agent/SSOT/types/      ← xhyper 类型系统 SSOT
 ├── .agent/SSOT/infra/      ← xhyper infra 平面（bootstrap/configx/gate/…）
 ├── .agent/SSOT/adapters/   ← xhyper adapters（exchange + storage）
-└── .agent/SSOT/contracts/  ← xhyper contracts（adapter trait 出口）
+├── .agent/SSOT/contracts/  ← xhyper contracts（adapter trait 出口）
 
 投影层（只读，自动生成）
 ├── .agents/skills/         ← 从 .claude/skills/ 投影
@@ -45,12 +45,17 @@
 │   ├── testkitx/
 │   └── transport/
 ├── .agents/ssot/adapters/  ← 从 xhyper.rs/.agent/SSOT/adapters/ 镜像
-└── .agents/ssot/contracts/ ← 从 xhyper.rs/.agent/SSOT/contracts/ 镜像
-    ├── exchange/           # binance, okx
-    └── storage/            # clickhouse, kafka, nats, oss, postgres, redis, taos
+├── .agents/ssot/contracts/ ← 从 xhyper.rs/.agent/SSOT/contracts/ 镜像
+│   ├── exchange/           # binance, okx
+│   └── storage/            # clickhouse, kafka, nats, oss, postgres, redis, taos
+└── .agents/ssot/tools/     ← 本仓 tools SSOT（evidence / goalctl / xtask / verifyctl）
+    ├── evidence/           # → crates/evidence
+    ├── goalctl/            # → tools/goalctl（本仓未落地）
+    ├── xtask/              # → tools/xtask（本仓未落地）
+    └── verifyctl/          # 本仓扩展（上游 tools/ 无此域）
 ```
 
-> **路径约定**：保留上游 `infra/`、`adapters/` 层级，使镜像内相对链接（如 `../../kernel/`、`../../../../AGENTS.md`）与源树一致。
+> **路径约定**：保留 `infra/`、`adapters/`、`tools/` 层级，使相对链接（如 `../../kernel/`）不因展平而断裂。
 
 ---
 
@@ -81,8 +86,9 @@
 ### R6: 上游 hyperware 镜像
 - `.agents/ssot/kernel/`、`.agents/ssot/testkit/`、`.agents/ssot/types/`、
   `.agents/ssot/infra/`、`.agents/ssot/adapters/`、`.agents/ssot/contracts/`
-  是 `xhyper.rs/.agent/SSOT/` 的只读镜像
-- **禁止**在上述镜像目录内直接编辑
+  是上游 hyperware SSOT 的只读镜像；`.agents/ssot/tools/` 为本仓 tools SSOT（见清单）
+- **禁止**在上述镜像目录内直接编辑战役正文以冒充本仓完成；**允许**路径本地化
+  （`.agent/SSOT` → `.agents/ssot`）与 README 本地化横幅（adapters/contracts 同模式）
 - 镜像更新必须使用**删除感知**同步（避免上游删改后残留陈旧文件）：
   ```bash
   # kernel / testkit / types：整目录覆盖（先删目标再拷，或 rsync --delete）
@@ -94,7 +100,8 @@
   rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/    .agents/ssot/infra/
   rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/adapters/ .agents/ssot/adapters/
   ```
-- 同步后校验：`diff -rq <src> <dst>` 应无输出
+- 同步后校验：纯上游子树 `diff -rq <src> <dst>` 在路径本地化前应无输出；
+  本地化后允许 README/路径与 production 增补非零 diff
 - 上游变更后需手动执行镜像同步
 
 ---
@@ -107,6 +114,7 @@
 - **testkit**：本仓已落地 `crates/testkit`（`xhyper-testkit`）；`contract-testkit` 未落地
 - **infra 八域**：当前仅镜像文档，本仓对应 `crates/*` **未**宣称落地
 - **adapters 九域**：镜像已注册；本仓 9 个 crate 为 **scaffold**（#42），**未**宣称业务实现 / package stable
+- **tools 四域**：本仓 SSOT 已就位；仅 `crates/evidence` 最小面落地；goalctl / xtask / verifyctl **未**落地
 - 审计基线见 `docs/ssot/*-ssot-alignment.md` 与 `docs/ssot/workspace-ssot-alignment.md`
 
 ---
@@ -130,6 +138,7 @@
 | xhyper Infra | `xhyper.rs/.agent/SSOT/infra/` | `.agents/ssot/infra/` | `rsync --delete` |
 | xhyper Adapters | `xhyper.rs/.agent/SSOT/adapters/` | `.agents/ssot/adapters/` | `rsync --delete` |
 | xhyper Contracts | `xhyper.rs/.agent/SSOT/contracts/` | `.agents/ssot/contracts/` | `rsync --delete` |
+| tools（本仓） | `.agents/ssot/tools/` | `.agents/ssot/tools/` | 本仓 SSOT（非外仓路径） |
 | SSOT 规则 | `.agents/ssot/SSOT.md` | — | 自引 |
 
 ---
@@ -138,6 +147,7 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v1.6.0 | 2026-07-21 | 本仓化 tools SSOT（evidence/goalctl/xtask/verifyctl）；R6/R7/清单补 tools |
 | v1.5.0 | 2026-07-21 | 注册 contracts 镜像；okxx ExchangeAdapter scaffold |
 | v1.4.0 | 2026-07-21 | 注册 adapters 镜像；R6/R7/清单/层级补 adapters；对齐文入口 |
 | v1.3.0 | 2026-07-21 | infra 保留 `infra/` 层级；R6 改用 rsync --delete；清单补 infra |
