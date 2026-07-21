@@ -52,6 +52,20 @@ deny: ## 运行 cargo-deny 安全审计
 audit: ## 运行 cargo-audit 漏洞扫描
 	@cargo audit
 
+# ── 状态看板 ─────────────────────────────
+
+.PHONY: status status-check status-watch
+status: ## 重新生成 crates 进度看板 STATUS.md
+	@node scripts/docs/gen-crate-status.mjs
+	@node scripts/docs/gen-docs-status.mjs
+
+status-check: ## 校验 STATUS.md / CI 矩阵是否过期
+	@node scripts/docs/gen-crate-status.mjs --check
+	@node scripts/docs/gen-docs-status.mjs --check
+
+status-watch: ## 自动监控：每 30s 重扫 crates 并写 STATUS.md
+	@node scripts/docs/gen-crate-status.mjs --watch 30
+
 # ── 常用组合 ─────────────────────────────
 
 .PHONY: ci update
