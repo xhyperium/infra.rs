@@ -7,6 +7,7 @@
 | 性质 | **内部生产发布证据**（分层 GO）；**不是** crates.io 发布；**不是** workspace 整体 Production Ready |
 | 关联 | PLAN-CORE-PROD-002 · 既有 L5 [`0.3.0-signoff.md`](./0.3.0-signoff.md) |
 | 本文件状态 | **DRAFT · GO for declared tiers** · 新 L5 人工 `Signed-off-by` **未**代签（沿用 0.3.0 Maintainer 签核 + 本证据包） |
+| Maintainer 收尾清单 | [`2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md`](./2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md)（可选手签 / 可选内部 tag） |
 
 ---
 
