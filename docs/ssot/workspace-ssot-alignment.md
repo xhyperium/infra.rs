@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
-| 跟进 | 2026-07-21 核心 crate 生产就绪闭合（PR #98）；**不**宣称五 crate 整体 Production Ready |
+| 跟进 | 2026-07-21 核心 crate 生产就绪 P0/P1 **已合入 main**（PR #98 / `76c56d7`）；**不**宣称五 crate 整体 Production Ready |
 | 用途 | 一眼看清：**镜像有什么** vs **本仓落地了什么** |
 | 权威 members | 根 `Cargo.toml` `[workspace.members]` + `cargo metadata --no-deps` |
 
@@ -148,3 +148,9 @@ cargo test -p xhyper-evidence --all-targets
 | [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md) | 镜像同步完整性（≠ 实现落地） |
 | [crates/AGENTS.md](../../crates/AGENTS.md) | crate 子模块标准布局 + 概览 |
 | [.agents/ssot/SSOT.md](../../.agents/ssot/SSOT.md) | R6/R7 规则 |
+
+## 变更记录
+
+| 日期 | 说明 |
+|------|------|
+| 2026-07-21 | PR #98 合入：五 crate 生产就绪快照与验证入口（loom/align 路径）写入总览 |

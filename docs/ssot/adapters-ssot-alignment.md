@@ -147,3 +147,11 @@ adapters/*  →  (future) contracts / types / kernel
 - 同步报告：[SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md)
 - 规则：[.agents/ssot/SSOT.md](../../.agents/ssot/SSOT.md)
 - 初始化 commit：`b586260` feat: initialize adapter crates (#42)
+
+## 跟进（2026-07-21 / PR #98）
+
+| 项 | 状态 |
+|----|------|
+| scaffold 签名适配 | **PASS**：EventBus/PubSub 流项为 `BusMessage`（kafka/nats/redis）；TxRunner `begin_tx`（postgres） |
+| 业务协议 / 真实后端 | **仍 DEFER**（内存 scaffold，非生产实现） |
+
