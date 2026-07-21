@@ -1,7 +1,8 @@
-//! `okxx` — okx exchange adapter.
+//! `okxx` — OKX exchange adapter。
 //!
-//! Implements contracts trait for okx.
+//! 实现 [`infra_contracts::exchange::ExchangeAdapter`]。
 
-pub use self::error::{Error, Result};
+pub use adapter::OkxAdapter;
+pub use infra_contracts::{AdapterState, Error, Result};
 
-mod error;
+mod adapter;

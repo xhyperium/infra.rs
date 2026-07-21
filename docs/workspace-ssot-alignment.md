@@ -93,6 +93,8 @@ node scripts/check-canonical-align.mjs
 cargo check -p infra-contracts -p binancex -p okxx -p redisx -p kafkax \
   -p natsx -p postgresx -p taosx -p ossx -p clickhousex
 diff -rq /home/workspace/xhyper.rs/.agent/SSOT/adapters .agents/ssot/adapters
+cargo test -p okxx --all-targets
+diff -rq /home/workspace/xhyper.rs/.agent/SSOT/contracts .agents/ssot/contracts
 ```
 
 ## 相关索引
@@ -105,6 +107,7 @@ diff -rq /home/workspace/xhyper.rs/.agent/SSOT/adapters .agents/ssot/adapters
 | [types-ssot-alignment.md](./types-ssot-alignment.md) | decimal + canonical 本仓状态 |
 | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) | bootstrap 组合根本仓矩阵 |
 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) | adapters 九域镜像 + scaffold 状态 |
+| [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) | contracts 镜像 + trait 落地 |
 | [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md) | 镜像同步完整性（≠ 实现落地） |
 | [crates/AGENTS.md](../crates/AGENTS.md) | crate 子模块标准布局 + 概览 |
 | [.agents/ssot/SSOT.md](../.agents/ssot/SSOT.md) | R6/R7 规则 |

@@ -20,7 +20,7 @@
 
 ## 上游 SSOT 镜像与本仓落地
 
-- `.agents/ssot/{kernel,testkit,types,infra,adapters}/` 是 `xhyper.rs/.agent/SSOT/` 的**只读镜像**（见 `.agents/ssot/SSOT.md` R6）
+- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts}/` 是 `xhyper.rs/.agent/SSOT/` 的**只读镜像**（见 `.agents/ssot/SSOT.md` R6）
   - `infra/` 下含 bootstrap / configx / gate / observex / resiliencx / schedulex / testkitx / transport
   - `adapters/` 下含 exchange（binance/okx）与 storage（clickhouse/kafka/nats/oss/postgres/redis/taos）
   - **保留 `infra/`、`adapters/` 层级**（勿展平到 `.agents/ssot/` 根，否则镜像内相对链接断裂）
@@ -46,6 +46,7 @@
   - configx：[docs/configx-ssot-alignment.md](./docs/configx-ssot-alignment.md)
   - resiliencx：[docs/resiliencx-ssot-alignment.md](./docs/resiliencx-ssot-alignment.md)
   - adapters：[docs/adapters-ssot-alignment.md](./docs/adapters-ssot-alignment.md)
+  - contracts：[docs/contracts-ssot-alignment.md](./docs/contracts-ssot-alignment.md)
 
 ## 仓库结构
 

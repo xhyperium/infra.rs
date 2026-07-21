@@ -141,3 +141,18 @@ rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/adapters/ .agents/ssot/a
 
 > 镜像 COMPLETE ≠ 本仓业务实现。本仓 9 个 adapter crate 为 scaffold（#42）；状态见
 > [adapters-ssot-alignment.md](./adapters-ssot-alignment.md)。
+
+---
+
+## 补充：contracts 平面镜像（2026-07-21）
+
+**源**: `/home/workspace/xhyper.rs/.agent/SSOT/contracts/`  
+**目标**: `/home/workspace/infra.rs/.agents/ssot/contracts/`  
+**命令**: `rsync -a --delete …/SSOT/contracts/ .agents/ssot/contracts/`
+
+| 指标 | 值 |
+|------|-----|
+| 文件数 | 16 |
+| 与源 diff | 0 |
+
+> 见 [contracts-ssot-alignment.md](./contracts-ssot-alignment.md)。

@@ -27,7 +27,8 @@
 ├── .agent/SSOT/testkit/    ← xhyper testkit 规格 SSOT
 ├── .agent/SSOT/types/      ← xhyper 类型系统 SSOT
 ├── .agent/SSOT/infra/      ← xhyper infra 平面（bootstrap/configx/gate/…）
-└── .agent/SSOT/adapters/   ← xhyper adapters（exchange + storage）
+├── .agent/SSOT/adapters/   ← xhyper adapters（exchange + storage）
+└── .agent/SSOT/contracts/  ← xhyper contracts（adapter trait 出口）
 
 投影层（只读，自动生成）
 ├── .agents/skills/         ← 从 .claude/skills/ 投影
@@ -43,7 +44,8 @@
 │   ├── schedulex/
 │   ├── testkitx/
 │   └── transport/
-└── .agents/ssot/adapters/  ← 从 xhyper.rs/.agent/SSOT/adapters/ 镜像
+├── .agents/ssot/adapters/  ← 从 xhyper.rs/.agent/SSOT/adapters/ 镜像
+└── .agents/ssot/contracts/ ← 从 xhyper.rs/.agent/SSOT/contracts/ 镜像
     ├── exchange/           # binance, okx
     └── storage/            # clickhouse, kafka, nats, oss, postgres, redis, taos
 ```
@@ -78,7 +80,7 @@
 
 ### R6: 上游 hyperware 镜像
 - `.agents/ssot/kernel/`、`.agents/ssot/testkit/`、`.agents/ssot/types/`、
-  `.agents/ssot/infra/`、`.agents/ssot/adapters/`
+  `.agents/ssot/infra/`、`.agents/ssot/adapters/`、`.agents/ssot/contracts/`
   是 `xhyper.rs/.agent/SSOT/` 的只读镜像
 - **禁止**在上述镜像目录内直接编辑
 - 镜像更新必须使用**删除感知**同步（避免上游删改后残留陈旧文件）：
@@ -127,6 +129,7 @@
 | xhyper Types | `xhyper.rs/.agent/SSOT/types/` | `.agents/ssot/types/` | `rsync --delete` |
 | xhyper Infra | `xhyper.rs/.agent/SSOT/infra/` | `.agents/ssot/infra/` | `rsync --delete` |
 | xhyper Adapters | `xhyper.rs/.agent/SSOT/adapters/` | `.agents/ssot/adapters/` | `rsync --delete` |
+| xhyper Contracts | `xhyper.rs/.agent/SSOT/contracts/` | `.agents/ssot/contracts/` | `rsync --delete` |
 | SSOT 规则 | `.agents/ssot/SSOT.md` | — | 自引 |
 
 ---
@@ -135,6 +138,7 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v1.5.0 | 2026-07-21 | 注册 contracts 镜像；okxx ExchangeAdapter scaffold |
 | v1.4.0 | 2026-07-21 | 注册 adapters 镜像；R6/R7/清单/层级补 adapters；对齐文入口 |
 | v1.3.0 | 2026-07-21 | infra 保留 `infra/` 层级；R6 改用 rsync --delete；清单补 infra |
 | v1.2.0 | 2026-07-21 | R7：镜像≠实现；记录 testkit 本仓落地 |
