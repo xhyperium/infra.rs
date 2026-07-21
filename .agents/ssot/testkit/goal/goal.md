@@ -8,7 +8,7 @@
 | Design | [design.md](../design/design.md)（索引式 · 权威在 spec §1–§7、§25） |
 | Package | path `crates/testkit` · package **`xhyper-testkit` `0.1.1`** · lib **`testkit`** |
 | Registry | **Stable**（`publish = false`；internal only，不发布 crates.io） |
-| Ship | [#247](https://github.com/xhyperium/xhyper.rs/pull/247) · [#254](https://github.com/xhyperium/xhyper.rs/pull/254) · [#255](https://github.com/xhyperium/xhyper.rs/pull/255) · tag `testkit-v0.1.1` |
+| Ship | [#247](https://github.com/xhyperium/infra.rs/pull/247) · [#254](https://github.com/xhyperium/infra.rs/pull/254) · [#255](https://github.com/xhyperium/infra.rs/pull/255) · tag `testkit-v0.1.1` |
 | Residual | [plan/residual-open.md](../plan/residual-open.md) · DEF-001…010 **全 CLOSED** + 1 OPTIONAL（branch cov ≥90%） |
 | Plan | [plan/plan.md](../plan/plan.md) · 十轮验收 DONE |
 | Campaign evidence | 仓库根 [`evidence/testkit/2026-07-14-stable-gates/`](../../../../evidence/testkit/2026-07-14-stable-gates) |

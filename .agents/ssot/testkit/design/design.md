@@ -9,7 +9,7 @@
 | Version | `0.1.1` · Stable（`publish = false`） |
 | Plane | T0 / test-support（无 production layer） |
 | Spec Status | **Stable** 2026-07-14 |
-| Ship | PR [#247](https://github.com/xhyperium/xhyper.rs/pull/247) · [#254](https://github.com/xhyperium/xhyper.rs/pull/254) · [#255](https://github.com/xhyperium/xhyper.rs/pull/255) · tag `testkit-v0.1.1` |
+| Ship | PR [#247](https://github.com/xhyperium/infra.rs/pull/247) · [#254](https://github.com/xhyperium/infra.rs/pull/254) · [#255](https://github.com/xhyperium/infra.rs/pull/255) · tag `testkit-v0.1.1` |
 | Residual SSOT | [plan/residual-open.md](../plan/residual-open.md) · DEF-001…010 全 CLOSED + 1 OPTIONAL |
 | Status | **Active**（反映 ManualClock V2 已 ship 事实） |
 

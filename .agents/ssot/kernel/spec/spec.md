@@ -2,7 +2,7 @@
 
 ```text
 Spec ID:        SPEC-KERNEL-002
-Title:          xhyper.rs L0 Kernel Runtime Semantics
+Title:          infra.rs L0 Kernel Runtime Semantics
 Status:         Approved
 Target Status:  Stable
 Owner:          platform

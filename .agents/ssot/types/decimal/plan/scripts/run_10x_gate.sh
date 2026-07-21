@@ -19,29 +19,29 @@ check_round() {
   {
     echo "=== round $r ==="
     echo "HEAD=$(git rev-parse HEAD)"
-    test -f .agent/SSOT/types/decimal/decimalx-spec.md
-    test -f .agent/SSOT/types/decimal/20260717/xhyper-decimalx-complete-goal.md
-    test -f .agent/SSOT/types/decimal/20260717/xhyper-decimalx-complete-spec.md
-    grep -q 'Draft' .agent/SSOT/types/decimal/20260717/xhyper-decimalx-complete-spec.md
-    grep -q 'SPEC-TYPES-DECIMALX-002' .agent/SSOT/types/decimal/plan/plan.md
-    grep -q 'GOAL-TYPES-DECIMALX-002' .agent/SSOT/types/decimal/plan/plan.md
-    grep -q 'decimalx-spec.md' .agent/SSOT/types/decimal/plan/plan.md
-    grep -q 'REJECTED' .agent/SSOT/types/decimal/plan/plan.md
-    grep -q 'crates/types/numeric' .agent/SSOT/types/decimal/plan/residual-open.md
-    test -f .agent/SSOT/types/decimal/todo.md
-    grep -q 'DONE' .agent/SSOT/types/decimal/todo.md
+    test -f .agents/ssot/types/decimal/decimalx-spec.md
+    test -f .agents/ssot/types/decimal/20260717/xhyper-decimalx-complete-goal.md
+    test -f .agents/ssot/types/decimal/20260717/xhyper-decimalx-complete-spec.md
+    grep -q 'Draft' .agents/ssot/types/decimal/20260717/xhyper-decimalx-complete-spec.md
+    grep -q 'SPEC-TYPES-DECIMALX-002' .agents/ssot/types/decimal/plan/plan.md
+    grep -q 'GOAL-TYPES-DECIMALX-002' .agents/ssot/types/decimal/plan/plan.md
+    grep -q 'decimalx-spec.md' .agents/ssot/types/decimal/plan/plan.md
+    grep -q 'REJECTED' .agents/ssot/types/decimal/plan/plan.md
+    grep -q 'crates/types/numeric' .agents/ssot/types/decimal/plan/residual-open.md
+    test -f .agents/ssot/types/decimal/todo.md
+    grep -q 'DONE' .agents/ssot/types/decimal/todo.md
     # no bare agent-safe OPEN lines claiming completion wrongly — HUMAN_ONLY ok
-    ! grep -E '^\| T-.*\| AGENT_SAFE \| OPEN' .agent/SSOT/types/decimal/todo.md
-    test -f .agent/SSOT/types/decimal/plan/evidence/m0-consumer-inventory-2026-07-17.txt
-    grep -q 'decimalx' .agent/SSOT/types/decimal/plan/evidence/m0-consumer-inventory-2026-07-17.txt
+    ! grep -E '^\| T-.*\| AGENT_SAFE \| OPEN' .agents/ssot/types/decimal/todo.md
+    test -f .agents/ssot/types/decimal/plan/evidence/m0-consumer-inventory-2026-07-17.txt
+    grep -q 'decimalx' .agents/ssot/types/decimal/plan/evidence/m0-consumer-inventory-2026-07-17.txt
     grep -q '# Panics' crates/types/decimal/src/lib.rs
     cargo test -p xhyper-decimalx --quiet
     cargo check -p xhyper-decimalx --all-targets --quiet
     cargo clippy -p xhyper-decimalx --all-targets -- -D warnings
     cargo fmt -- --check
-    test -f .agent/SSOT/types/decimal/plan/alignment-decimalx-2026-07-17.md
+    test -f .agents/ssot/types/decimal/plan/alignment-decimalx-2026-07-17.md
     ! grep -Eiq 'package stable|wire stable|Goal Achieved|Status:.*Approved' \
-      .agent/SSOT/types/decimal/plan/alignment-decimalx-2026-07-17.md
+      .agents/ssot/types/decimal/plan/alignment-decimalx-2026-07-17.md
     test "$(git rev-parse HEAD)" = "$TIP0"
     echo "ROUND $r PASS"
   } >"$log" 2>&1

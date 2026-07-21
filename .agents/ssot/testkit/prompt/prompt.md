@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | Source Spec | `SPEC-TESTKIT-002`（[spec/spec.md](../spec/spec.md)） |
-| Ship PR | [#247](https://github.com/xhyperium/xhyper.rs/pull/247) · [#254](https://github.com/xhyperium/xhyper.rs/pull/254) · [#255](https://github.com/xhyperium/xhyper.rs/pull/255) |
+| Ship PR | [#247](https://github.com/xhyperium/infra.rs/pull/247) · [#254](https://github.com/xhyperium/infra.rs/pull/254) · [#255](https://github.com/xhyperium/infra.rs/pull/255) |
 | Next | 保持 Stable · 收 OPTIONAL（branch cov ≥90%）· 破坏性改动须新 spec 版本 |
 | Residual | [plan/residual-open.md](../plan/residual-open.md) · DEF-001…010 全 CLOSED + 1 OPTIONAL |
 | Plan | [plan/plan.md](../plan/plan.md) · Tasks [plan/tasks.md](../plan/tasks.md) |

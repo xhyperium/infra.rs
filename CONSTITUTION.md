@@ -240,6 +240,7 @@ crates/
 | UTF-8 / 无 `U+FFFD`（§4.5） | **强制** | 编码完整性 | `constitution.yml`（已包含） |
 | Git Main First（§6.0） | **强制** | 主干唯一、PR 收敛 | 分支保护 + 宪章脚本条款检查 |
 | ASD-STE100（§4.6） | **强制** | 英文技术文档受控语言 | 审查清单 + `docs/governance/ASD-STE100.md` |
+| 模块自验证（§5.2） | **强制** | 脚本 + 钩子语法与逻辑完整 | `self-test.yml` / `node scripts/self-test.mjs` |
 | 覆盖率 >= 80% | **推荐** | 代码覆盖 | `ci-rust.yml` |
 | `cargo-llvm-cov` | **推荐** | 覆盖率统计 | `ci-rust.yml` |
 
@@ -251,6 +252,21 @@ crates/
 make ci    # 等价于: make fmt-check lint test deny
 make check # 等效: ./scripts/check-constitution.mjs
 ```
+
+### 5.2 模块自验证
+
+每个模块须通过 `scripts/self-test.mjs` 验证后才可提交 PR：
+
+```bash
+node scripts/self-test.mjs              # 全���模块 (scripts + hooks + crates)
+node scripts/self-test.mjs --scripts    # 仅 scripts/
+node scripts/self-test.mjs --hooks      # 仅 hooks/
+node scripts/self-test.mjs --lint-only  # 仅 L0 语法检查
+```
+
+- **L0（强制）**：语法检查（`node --check`）+ shebang + import 完整性
+- **L1（推荐）**：逻辑测试（配套 `*.test.mjs` 文件）
+- CI 通过 `self-test.yml` 并行运行脚本和钩子自检
 
 ---
 

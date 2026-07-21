@@ -9,7 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **crate `docs/README.md` 补齐**：全部 workspace members 的 crate 级文档入口（对齐矩阵 / SSOT 镜像 / 分层边界）
+- **`scripts/gen-docs-status.mjs`**：从 `.github/workflows` 生成 `docs/status/CI_WORKFLOW_MATRIX.generated.md`（支持 `--check`）
+- **`crates/evidence`**：补齐标准 `docs/` + `examples/` 骨架
+
 ### Changed
+
+- `scripts/check.mjs` 增加 docs status matrix 新鲜度检查
+- `docs/status/README.md` / `docs/README.md` 收录自动生成矩阵
+- **Agent 入口索引同步**：`AGENTS.md` / `CLAUDE.md` 补齐 workspace members（evidence / observex / transport 等）与完整 `docs/ssot/*` 域链接，与分类后的文档树一致
+
 
 - **`docs/` 严格分类**：根目录不再平铺内容文件；按职责拆为
   - `docs/governance/` — 版本、worktree、语言约定、ASD-STE100、量化规范

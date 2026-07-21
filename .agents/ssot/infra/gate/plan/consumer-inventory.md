@@ -40,8 +40,8 @@ cargo tree -i gate   # → did not match any packages
 ## 2. Reverse dependency（live）
 
 ```text
-xhyper-gate v0.1.0 (/home/workspace/xhyper.rs/crates/gate)
-└── bootstrap v0.1.0 (/home/workspace/xhyper.rs/crates/bootstrap)
+xhyper-gate v0.1.0 (/home/workspace/infra.rs/crates/gate)
+└── xhyper-bootstrap v0.1.0 (/home/workspace/infra.rs/crates/bootstrap)
 ```
 
 | Dependent | Kind | Notes |
@@ -93,7 +93,7 @@ e2e 中 MockBinance / MockKv **已经**直接面向 contracts trait——目标�
 | architecture SSOT | `docs/architecture/spec.md` L0 列 gate | T-DEL-008 |
 | ADR | ADR-010 / ADR-012 提及 gate | 保留历史；退役 ADR 更新 |
 | agent 入口 | CLAUDE.md / AGENTS.md | 对齐诚实状态 |
-| active spec | `.agent/SSOT/infra/gate/gate-spec.md` | T-DEL-006 Superseded |
+| active spec | `.agents/ssot/infra/gate/gate-spec.md` | T-DEL-006 Superseded |
 | source plan | `xhyper-gate-retirement-complete-plan.md` | 本包 SSOT 内容 |
 | structural reports | docs/crates-structural-analysis… | 历史可保留 |
 

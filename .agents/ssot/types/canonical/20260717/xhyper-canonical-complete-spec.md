@@ -3,7 +3,7 @@
 ```text
 Spec ID:       SPEC-TYPES-CANONICAL-002
 Status:        **Approved** (2026-07-17 liukongqiang5; ≠ package stable)
-Active SSOT:   .agent/SSOT/types/canonical/canonical-spec.md
+Active SSOT:   .agents/ssot/types/canonical/canonical-spec.md
 Source Goal:   GOAL-TYPES-CANONICAL-002
 Package:       canonical 0.1.0
 Lib / Path:    canonical / crates/types/canonical

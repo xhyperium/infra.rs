@@ -1,29 +1,31 @@
 # resiliencx
 
-L1 **弹性**（重试 + 熔断 + 限流；ADR-005）。
+L1 **弹性**（重试 + 退避 + 熔断 + 限流 + 舱壁；ADR-005）。
 
 | 能力 | 类型 | 墙钟 |
 |------|------|------|
-| 重试 | `RetryConfig` / `retry_fn` | `base_delay_ms>0` 用 `thread::sleep`（已知差距） |
-| 熔断 | `CircuitBreaker` 三态 | **无**；Open→HalfOpen 靠拒绝计数 |
-| 限流 | `RateLimiter` 令牌桶 | **无**；调用方 `refill` |
+| 重试 | `RetryConfig` / `retry_fn` / `retry_fn_with_wait` | 默认可 `ThreadSleepWait`；可注入 |
+| 退避 | `Backoff::{Constant, Exponential}` + 确定性 `jitter_bps` | 纯计算 |
+| 熔断 | `CircuitBreaker` 三态 | **无** |
+| 限流 | `RateLimiter` 令牌桶 | **无**；显式 `refill` |
+| 舱壁 | `Bulkhead` / `BulkheadPermit` | **无**；满载立即拒绝 |
 
-**仍未交付**：bulkhead / async wait / backoff·jitter / retry budget / package stable。
+**仍未交付**：async runtime wait / retry budget / package stable。
 
-## 公开面
+## 重试示例
 
-| 项 | 说明 |
-|----|------|
-| `RetryConfig` / `retry_fn` / `retry_ok` / `retry_downcast` | 同步重试；仅 Transient 触发 |
-| `CircuitConfig` / `CircuitBreaker` / `CircuitState` | 熔断；Open 拒绝 `Unavailable` |
-| `RateLimitConfig` / `RateLimiter` | 令牌桶；不足 → `Unavailable` |
-| `Instrumentation` | re-export `contracts::Instrumentation` |
-| `NoopInstrumentation` | 空实现 |
+```rust
+use resiliencx::{Backoff, RecordingWait, RetryConfig, retry_fn_with_wait, retry_ok, NoopInstrumentation};
 
-## 依赖
-
-- 生产：`xhyper-kernel` + `xhyper-contracts`
-- **禁止**直接依赖 `observex`
+let cfg = RetryConfig {
+    max_attempts: 4,
+    base_delay_ms: 10,
+    backoff: Backoff::Exponential { factor: 2, max_delay_ms: 100 },
+    jitter_bps: 0,
+};
+let wait = RecordingWait::new(); // 测试：不睡眠，只记延迟
+// let wait = resiliencx::ThreadSleepWait; // 生产默认路径
+```
 
 ## 验证
 
@@ -35,9 +37,5 @@ node scripts/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
 
 ## SSOT
 
-`.agents/ssot/infra/resiliencx/spec/spec.md`（用户路径别名 `.agent/ssot/resiliencx`）。  
-本仓对齐：[docs/ssot/resiliencx-ssot-alignment.md](../../docs/ssot/resiliencx-ssot-alignment.md)。
-
-## 版本
-
-0.1.0 · **≠** package stable / crates.io。
+`.agents/ssot/infra/resiliencx/spec/spec.md`  
+对齐：[docs/ssot/resiliencx-ssot-alignment.md](../../docs/ssot/resiliencx-ssot-alignment.md)

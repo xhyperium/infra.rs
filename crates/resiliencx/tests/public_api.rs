@@ -2,8 +2,9 @@
 
 use kernel::{ErrorKind, XError, XResult};
 use resiliencx::{
-    CircuitBreaker, CircuitConfig, CircuitState, Instrumentation, NoopInstrumentation,
-    RateLimitConfig, RateLimiter, RetryConfig, retry_downcast, retry_fn, retry_ok,
+    Backoff, Bulkhead, BulkheadConfig, CircuitBreaker, CircuitConfig, CircuitState,
+    Instrumentation, NoopInstrumentation, RateLimitConfig, RateLimiter, RecordingWait, RetryConfig,
+    retry_downcast, retry_fn, retry_fn_with_wait, retry_ok,
 };
 use std::sync::{Arc, Mutex};
 
@@ -28,7 +29,7 @@ impl Instrumentation for CountingInstr {
 #[test]
 fn consumer_retry_fn_drives_shipped_surface() {
     let instr = CountingInstr { n: Mutex::new(0), open: Mutex::new(0), close: Mutex::new(0) };
-    let cfg = RetryConfig { max_attempts: 3, base_delay_ms: 0 };
+    let cfg = RetryConfig::fixed(3, 0);
     let hits = Arc::new(Mutex::new(0u32));
     let h = hits.clone();
     let mut op = move || {
@@ -83,4 +84,35 @@ fn consumer_circuit_and_rate_limit_surface() {
     assert_eq!(lim.try_acquire(1).expect_err("rl").kind(), ErrorKind::Unavailable);
     lim.refill(1);
     lim.try_acquire(1).expect("after refill");
+}
+
+#[test]
+fn consumer_bulkhead_surface() {
+    let b = Arc::new(Bulkhead::new(BulkheadConfig { max_concurrent: 1 }).expect("bh"));
+    let p = b.try_enter().expect("enter");
+    assert_eq!(b.call(|| Ok(())).expect_err("full").kind(), ErrorKind::Unavailable);
+    drop(p);
+    assert_eq!(b.call(|| Ok(7)).expect("ok"), 7);
+}
+
+#[test]
+fn consumer_backoff_with_recording_wait() {
+    let instr = CountingInstr { n: Mutex::new(0), open: Mutex::new(0), close: Mutex::new(0) };
+    let cfg = RetryConfig {
+        max_attempts: 3,
+        base_delay_ms: 4,
+        backoff: Backoff::Exponential { factor: 2, max_delay_ms: 100 },
+        jitter_bps: 0,
+    };
+    let wait = RecordingWait::new();
+    let hits = Arc::new(Mutex::new(0u32));
+    let h = hits.clone();
+    let mut op = move || {
+        let mut g = h.lock().expect("h");
+        *g += 1;
+        if *g < 3 { Err(XError::transient("t")) } else { Ok(retry_ok(9u8)) }
+    };
+    let out = retry_fn_with_wait(&cfg, &instr, "pub", &wait, &mut op).expect("ok");
+    assert_eq!(retry_downcast::<u8>(out).expect("ty"), 9);
+    assert_eq!(wait.delays(), vec![4, 8]);
 }

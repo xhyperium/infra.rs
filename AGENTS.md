@@ -20,35 +20,44 @@
 
 ## 上游 SSOT 镜像与本仓落地
 
-- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts}/` 是 `xhyper.rs/.agent/SSOT/` 的**只读镜像**（见 `.agents/ssot/SSOT.md` R6）
+- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 `xhyper.rs/.agent/SSOT/` 的**只读镜像**（见 `.agents/ssot/SSOT.md` R6）
   - `infra/` 下含 bootstrap / configx / gate / observex / resiliencx / schedulex / testkitx / transport
   - `adapters/` 下含 exchange（binance/okx）与 storage（clickhouse/kafka/nats/oss/postgres/redis/taos）
-  - **保留 `infra/`、`adapters/` 层级**（勿展平到 `.agents/ssot/` 根，否则镜像内相对链接断裂）
+  - `tools/` 下含 evidence / goalctl / xtask（+ 本仓扩展 `verifyctl`）
+  - **保留 `infra/`、`adapters/`、`tools/` 层级**（勿展平到 `.agents/ssot/` 根，否则镜像内相对链接断裂）
 - **镜像文档写 COMPLETE / Stable ≠ 本仓已有对应实现**；必须以 `crates/` + `cargo metadata` 为准
 - **当前 workspace members**（无 `infra-core`）：
   - `crates/kernel` → `xhyper-kernel`（L0）
   - `crates/testkit` → `xhyper-testkit`（core ManualClock；仅 dev-dep）
   - `crates/configx` → `xhyper-configx`（L1 内存字符串 KV；非多源热更新）
   - `crates/schedulex` → `xhyper-schedulex`（L1 任务 ID 登记表；active SSOT registry only）
-  - `crates/bootstrap` → `xhyper-bootstrap`（L1 组合根；contracts/observex/evidence 全量 DEFER）
-  - `crates/resiliencx` → `xhyper-resiliencx`（L1 重试；熔断/限流未实现）
+  - `crates/bootstrap` → `xhyper-bootstrap`（L1 组合根；已注入 contracts/observex/evidence）
+  - `crates/evidence` → `xhyper-evidence`（L1 审计证据追加面）
+  - `crates/observex` → `xhyper-observex`（L1 TracingInstrumentation 最小面）
+  - `crates/resiliencx` → `xhyper-resiliencx`（L1 重试 + 熔断 + 限流）
+  - `crates/transport` → `xhyper-transportx`（L1 HTTP/WS）
   - `crates/types/decimal` → `xhyper-decimalx`
   - `crates/types/canonical` → `xhyper-canonical`
   - `crates/contracts` → `xhyper-contracts`（adapter trait 出口；#43）
   - `crates/adapters/**` → 9 个 adapter package（**scaffold**；见 adapters 对齐文）
-- `contract-testkit` **未**移植；**infra 其余域**（gate/observex/…）当前仅镜像，未宣称本仓实现（schedulex 见上）
+- `contract-testkit` **未**移植；**infra 其余域**（gate 等）当前仅镜像，未宣称本仓实现
 - **adapters**：镜像已本地化；crate 为 scaffold，**未**宣称业务实现 / package stable
+- **tools**：镜像已本地化；仅 `crates/evidence` 最小面落地；goalctl / xtask / verifyctl **未**宣称落地
 - 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游变更用 **删除感知**同步（`rsync -a --delete`，见 SSOT.md R6）
 - 对齐审计总览：[docs/ssot/workspace-ssot-alignment.md](./docs/ssot/workspace-ssot-alignment.md)
   - kernel：[docs/ssot/kernel-ssot-alignment.md](./docs/ssot/kernel-ssot-alignment.md)
   - testkit：[docs/ssot/testkit-ssot-alignment.md](./docs/ssot/testkit-ssot-alignment.md)
-  - schedulex：[docs/ssot/schedulex-ssot-alignment.md](./docs/ssot/schedulex-ssot-alignment.md)
   - types：[docs/ssot/types-ssot-alignment.md](./docs/ssot/types-ssot-alignment.md)
-  - bootstrap：[docs/ssot/bootstrap-ssot-alignment.md](./docs/ssot/bootstrap-ssot-alignment.md)
   - configx：[docs/ssot/configx-ssot-alignment.md](./docs/ssot/configx-ssot-alignment.md)
+  - schedulex：[docs/ssot/schedulex-ssot-alignment.md](./docs/ssot/schedulex-ssot-alignment.md)
+  - bootstrap：[docs/ssot/bootstrap-ssot-alignment.md](./docs/ssot/bootstrap-ssot-alignment.md)
+  - evidence：[docs/ssot/evidence-ssot-alignment.md](./docs/ssot/evidence-ssot-alignment.md)
+  - tools：[docs/ssot/tools-ssot-alignment.md](./docs/ssot/tools-ssot-alignment.md)
+  - observex：[docs/ssot/observex-ssot-alignment.md](./docs/ssot/observex-ssot-alignment.md)
   - resiliencx：[docs/ssot/resiliencx-ssot-alignment.md](./docs/ssot/resiliencx-ssot-alignment.md)
-  - adapters：[docs/ssot/adapters-ssot-alignment.md](./docs/ssot/adapters-ssot-alignment.md)
+  - transport：[docs/ssot/transport-ssot-alignment.md](./docs/ssot/transport-ssot-alignment.md)
   - contracts：[docs/ssot/contracts-ssot-alignment.md](./docs/ssot/contracts-ssot-alignment.md)
+  - adapters：[docs/ssot/adapters-ssot-alignment.md](./docs/ssot/adapters-ssot-alignment.md)
 
 ## 仓库结构
 

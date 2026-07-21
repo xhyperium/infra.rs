@@ -25,6 +25,7 @@ test -f Cargo.toml || { echo "ERROR: 请在 infra.rs 仓库根目录执行"; exi
 | infra | `.agents/ssot/infra/` | bootstrap, configx, gate, observex, resiliencx, schedulex, testkitx, transport |
 | adapters | `.agents/ssot/adapters/` | binance, okx, redis, kafka, nats, postgres, taos, oss, clickhouse |
 | contracts | `.agents/ssot/contracts/` | — |
+| tools | `.agents/ssot/tools/` | evidence, goalctl, xtask, verifyctl（**本仓 SSOT**，不从外仓 rsync） |
 
 ## 全量同步
 
@@ -36,7 +37,10 @@ for domain in kernel testkit types infra adapters contracts; do
   echo "→ syncing $domain..."
   rsync -a --delete "$SRC/$domain/" "$DST/$domain/"
 done
-echo "✓ 全量同步完成"
+# tools：路径本地化（.agent/SSOT → .agents/ssot）；verifyctl 等本仓扩展见 tools 节
+find "$DST/tools" -type f \( -name '*.md' -o -name '*.sh' -o -name '*.json' -o -name '*.yaml' \) \
+  -print0 | xargs -0 sed -i 's|\.agent/SSOT|.agents/ssot|g'
+echo "✓ 全量同步完成（tools 需检查本仓扩展是否需从 git 恢复）"
 ```
 
 ## 按域同步
@@ -77,6 +81,12 @@ rsync -a --delete "$SRC/adapters/" "$DST/adapters/"
 rsync -a --delete "$SRC/contracts/" "$DST/contracts/"
 ```
 
+### tools（本仓 SSOT）
+
+`tools/` 为本仓维护的 SSOT（`evidence` / `goalctl` / `xtask` / `verifyctl`），**不要**从外仓路径 rsync 覆盖。
+
+维护与验收见 [tools-ssot-alignment.md](./tools-ssot-alignment.md)。
+
 ## 安全措施
 
 ```bash
@@ -97,7 +107,8 @@ for domain in kernel testkit types infra adapters contracts; do
   if [ "$src_n" -eq "$dst_n" ]; then
     printf "  ✓ %-12s %4d files\n" "$domain" "$dst_n"
   else
-    printf "  ✗ %-12s src=%d dst=%d\n" "$domain" "$src_n" "$dst_n"
+    # tools 允许本仓扩展导致 dst > src
+    printf "  ~ %-12s src=%d dst=%d\n" "$domain" "$src_n" "$dst_n"
   fi
 done
 

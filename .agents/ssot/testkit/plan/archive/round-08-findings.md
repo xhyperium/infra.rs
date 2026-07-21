@@ -51,14 +51,14 @@
 
 ### F8-1 — §19.6 终态权威路径未强制为 `spec/spec.md`
 
-- **规范引用**：§19.6「删除双重 spec…**保留一个活动权威：`.agent/SSOT/testkit/spec/spec.md`**」；历史 Superseded 或 archive。
+- **规范引用**：§19.6「删除双重 spec…**保留一个活动权威：`.agents/ssot/testkit/spec/spec.md`**」；历史 Superseded 或 archive。
 - **缺失**：
   - `T-ARCH-007` AC 写成「**complete-spec 或** `spec/spec.md`」——**放宽了规范强制路径**；
   - 无 Task：创建/迁移 `spec/spec.md`、将 complete-spec 降为 historical 或 move；
   - `T-DOC-002/003` 仅 Superseded 页眉，**未要求删除或 archive 双重 active-looking 文件**（规范用词「删除双重 spec」）；
   - inventory **无 I-DOC-ACTIVE-PATH** 固定终态路径字符串。
 - **建议补丁**：
-  1. 修正 `T-ARCH-007`：终态 active = `.agent/SSOT/testkit/spec/spec.md`（或显式 RFC 修改规范路径后再改 Task）。
+  1. 修正 `T-ARCH-007`：终态 active = `.agents/ssot/testkit/spec/spec.md`（或显式 RFC 修改规范路径后再改 Task）。
   2. 增加 `T-DOC-004`：complete-spec → 迁入 `spec/spec.md` 或声明 redirect；旧 testkit-spec/testkitx → archive。
   3. I-METRICS `active_testkit_spec_count=1` 的判定脚本路径写死到终态文件。
 

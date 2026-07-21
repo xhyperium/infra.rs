@@ -14,9 +14,10 @@
 | 重试 §2 | **PASS** | `retry.rs` + `tests/retry_contract.rs` |
 | 熔断 | **PASS**（本仓扩展；无墙钟） | `circuit.rs` + unit/public_api |
 | 限流（令牌桶） | **PASS**（本仓扩展；显式 refill） | `rate_limit.rs` + unit/public_api |
+| 舱壁（bulkhead） | **PASS**（并发上限；RAII） | `bulkhead.rs` + unit/public_api |
 | Instrumentation | **PASS** | re-export `contracts::Instrumentation`；禁止 observex |
 | LCOV 行 100% | **PASS** | `cov-gate-100.mjs -p xhyper-resiliencx` |
-| bulkhead / async wait / backoff / budget / stable | **DEFER** | residual OPEN |
+| async wait / backoff / budget / stable | **DEFER** | residual OPEN |
 
 ## 熔断合同（本仓）
 
@@ -30,6 +31,13 @@
 
 - 满桶起步；`try_acquire(n)` 不足 → `Unavailable`（不部分扣减）
 - `refill(n)` 不超过 capacity；**不**按时间自动补充
+
+## 舱壁合同（本仓）
+
+- `max_concurrent >= 1`；否则 `Invalid`
+- `try_enter` / `call`：在途达上限 → `Unavailable("bulkhead full")`
+- `BulkheadPermit` drop 归还槽位（含错误路径）
+- **无**排队、**无**超时等待
 
 ## 验证
 

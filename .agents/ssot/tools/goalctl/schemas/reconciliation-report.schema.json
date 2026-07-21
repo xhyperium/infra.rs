@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "xhyper://goalctl/schemas/reconciliation-report.schema.json",
+  "title": "ReconciliationReport",
+  "description": "goalctl reconcile 骨架（PR-3）。五维 ModuleStatus + 冲突列表。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_commit",
+    "module",
+    "dimensions",
+    "verdict"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "module": {
+      "type": "string"
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "specification",
+        "implementation",
+        "verification",
+        "release",
+        "operations"
+      ],
+      "properties": {
+        "specification": { "$ref": "#/$defs/dimension" },
+        "implementation": { "$ref": "#/$defs/dimension" },
+        "verification": { "$ref": "#/$defs/dimension" },
+        "release": { "$ref": "#/$defs/dimension" },
+        "operations": { "$ref": "#/$defs/dimension" }
+      }
+    },
+    "contradictions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "claim_ids": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "CONSISTENT",
+        "CONTRADICTION",
+        "NOT_PROVEN",
+        "BLOCKED",
+        "UNKNOWN"
+      ]
+    }
+  },
+  "$defs": {
+    "dimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "strength"],
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "如 APPROVED / IMPLEMENTED / VERIFIED / RELEASED / UNKNOWN / NOT_PROVEN"
+        },
+        "strength": {
+          "type": "string"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

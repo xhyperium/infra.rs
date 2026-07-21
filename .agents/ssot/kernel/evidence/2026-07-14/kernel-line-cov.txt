@@ -1,7 +1,7 @@
 info: cargo-llvm-cov currently setting cfg(coverage); you can opt-out it by passing --no-cfg-coverage
-   Compiling kernel v0.1.1 (/home/workspace/xhyper.rs/crates/kernel)
+   Compiling kernel v0.1.1 (/home/workspace/infra.rs/crates/kernel)
     Finished `test` profile [unoptimized + debuginfo] target(s) in 1.54s
-     Running unittests src/lib.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/kernel-86125739efc06028)
+     Running unittests src/lib.rs (../.cargo/target/llvm-cov-target/debug/deps/kernel-86125739efc06028)
 
 running 21 tests
 test clock::tests::from_clock_elapsed_single_arg_spec_shape ... ok
@@ -28,14 +28,14 @@ test lifecycle::tests::poison_recovery_into_inner ... ok
 
 test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running tests/api_compile.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/api_compile-e678b0102718aed0)
+     Running tests/api_compile.rs (../.cargo/target/llvm-cov-target/debug/deps/api_compile-e678b0102718aed0)
 
 running 1 test
 test public_constructors_and_queries_compile ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/clock_contract.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/clock_contract-218c15782d5396ff)
+     Running tests/clock_contract.rs (../.cargo/target/llvm-cov-target/debug/deps/clock_contract-218c15782d5396ff)
 
 running 9 tests
 test component_state_transition_matrix ... ok
@@ -50,7 +50,7 @@ test timestamp_near_i64_bounds ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/lifecycle_concurrency-5017a966481e69be)
+     Running tests/lifecycle_concurrency.rs (../.cargo/target/llvm-cov-target/debug/deps/lifecycle_concurrency-5017a966481e69be)
 
 running 3 tests
 test wait_after_trigger_returns ... ok
@@ -59,13 +59,13 @@ test concurrent_regression_1000_cycles ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
 
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/lifecycle_concurrency_loom-063b712f6ddf108d)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/llvm-cov-target/debug/deps/lifecycle_concurrency_loom-063b712f6ddf108d)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/llvm-cov-target/debug/deps/public_api-a2c61487cdfe32e7)
+     Running tests/public_api.rs (../.cargo/target/llvm-cov-target/debug/deps/public_api-a2c61487cdfe32e7)
 
 running 3 tests
 test shutdown_trigger_wakes ... ok
