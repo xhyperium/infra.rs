@@ -172,3 +172,22 @@ async fn ws_connect_timeout_maps_to_connect_timeout() {
     };
     assert!(matches!(err, TransportError::ConnectTimeout | TransportError::Io(_)), "got {err:?}");
 }
+
+#[test]
+fn http_request_debug_none_body_branch() {
+    let req = HttpRequest {
+        method: "GET".into(),
+        url: "https://api.example/".into(),
+        headers: vec![],
+        body: None,
+    };
+    let dbg = format!("{req:?}");
+    assert!(dbg.contains("body: None"), "expected None body branch: {dbg}");
+}
+
+#[test]
+fn tungstenite_default_matches_new() {
+    let a = TungsteniteWsConnector::default();
+    let b = TungsteniteWsConnector::new();
+    assert_eq!(format!("{a:?}"), format!("{b:?}"));
+}
