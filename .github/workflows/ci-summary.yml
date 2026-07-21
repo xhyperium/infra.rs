@@ -1,0 +1,31 @@
+name: CI Summary
+
+# 汇总所有 coverage workflow 结果，生成一致性报告
+
+on:
+  workflow_run:
+    workflows:
+      - "Kernel Coverage"
+      - "TestKit Coverage"
+      - "ConfigX Coverage"
+      - "ObserveX Coverage"
+      - "ResiliencX Coverage"
+      - "Schedulex Coverage"
+      - "Contracts Coverage"
+      - "Canonical Coverage"
+      - "Decimal Coverage"
+      - "Evidence Coverage"
+    types: [completed]
+    branches: [develop]
+
+jobs:
+  summary:
+    name: Generate Coverage Summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect and report
+        run: node scripts/ci-monitor.mjs --ref develop
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
