@@ -121,3 +121,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: 扫描生产路径 panicking Decimal 用法
         run: node scripts/quality-gates/check-decimal-no-panicking-ops.mjs
+
+  crate-status:
+    name: crates 进度看板
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 校验 STATUS.md 新鲜度
+        run: node scripts/docs/gen-crate-status.mjs --check
+      - name: 写入 Job Summary
+        if: always()
+        run: node scripts/docs/gen-crate-status.mjs --summary >> "$GITHUB_STEP_SUMMARY"

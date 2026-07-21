@@ -17,6 +17,7 @@
  *   node scripts/docs/gen-crate-status.mjs --tracked    # 强制写入库 STATUS.md
  *   node scripts/docs/gen-crate-status.mjs --local-only # 只写本地副本
  *   node scripts/docs/gen-crate-status.mjs --check      # 校验已提交 STATUS.md 是否过期
+ *   node scripts/docs/gen-crate-status.mjs --summary    # 打印 GitHub Job Summary 友好摘要（stdout）
  *   node scripts/docs/gen-crate-status.mjs --json       # 额外打印 JSON 摘要到 stdout
  *   node scripts/docs/gen-crate-status.mjs --watch 30   # 每 30s 重扫（默认行为同上）
  *
@@ -44,6 +45,7 @@ const OUT_LOCAL = join(ROOT, "docs", "status", "CRATES_STATUS.local.md");
 const CARGO_TOML = join(ROOT, "Cargo.toml");
 
 const CHECK = process.argv.includes("--check");
+const SUMMARY = process.argv.includes("--summary");
 const JSON_OUT = process.argv.includes("--json");
 const FORCE_TRACKED = process.argv.includes("--tracked");
 const LOCAL_ONLY = process.argv.includes("--local-only");
@@ -531,15 +533,69 @@ function writeLocalCopy(body) {
   writeFileSync(OUT_LOCAL, banner + body, "utf8");
 }
 
+/** GitHub Actions Job Summary / 人读短摘要（stdout only） */
+function renderSummary(crates) {
+  const s = summarize(crates);
+  const low = crates
+    .filter((c) => c.completion < 70)
+    .sort((a, b) => a.completion - b.completion)
+    .slice(0, 10);
+  const lines = [
+    "## crates 子模块进度",
+    "",
+    "| 指标 | 值 |",
+    "|------|-----|",
+    `| members | ${s.n} |`,
+    `| 布局七项齐全 | ${s.layoutFull}/${s.n} |`,
+    `| 含测试 | ${s.withTests}/${s.n} |`,
+    `| scaffold | ${s.scaffold} |`,
+    `| **平均完成度** | **${s.avg}%** |`,
+    "",
+    "### 成熟度",
+    "",
+    "| 标签 | 数量 |",
+    "|------|------|",
+  ];
+  for (const [k, v] of Object.entries(s.byMaturity).sort()) {
+    lines.push(`| \`${k}\` | ${v} |`);
+  }
+  if (low.length) {
+    lines.push("", "### 完成度 < 70%", "", "| Package | % | 成熟度 |", "|---------|---:|--------|");
+    for (const c of low) {
+      lines.push(`| \`${c.package}\` | ${c.completion} | \`${c.maturity}\` |`);
+    }
+  } else {
+    lines.push("", "_无成员完成度 < 70%。_");
+  }
+  lines.push(
+    "",
+    "> 结构进度 ≠ Production Ready。详情见根目录 `STATUS.md`；本地副本 `docs/status/CRATES_STATUS.local.md`。",
+    "",
+  );
+  return lines.join("\n");
+}
+
 function runOnce() {
-  if (CHECK && (FORCE_TRACKED || LOCAL_ONLY || WATCH > 0)) {
-    console.error("--check 不可与 --tracked / --local-only / --watch 混用");
+  if (CHECK && (FORCE_TRACKED || LOCAL_ONLY || WATCH > 0 || SUMMARY)) {
+    console.error("--check 不可与 --tracked / --local-only / --watch / --summary 混用");
     process.exit(2);
   }
 
   const crates = scanAll();
   const generatedAt = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
   const body = renderMarkdown(crates, generatedAt);
+
+  if (SUMMARY) {
+    // 摘要模式：只 stdout，可选刷新本地副本便于本地联调
+    writeLocalCopy(body);
+    process.stdout.write(renderSummary(crates));
+    if (JSON_OUT) {
+      process.stdout.write(
+        "\n" + JSON.stringify({ summary: summarize(crates) }, null, 2) + "\n",
+      );
+    }
+    return { crates, summary: summarize(crates) };
+  }
 
   if (CHECK) {
     if (!existsSync(OUT)) {
