@@ -107,7 +107,7 @@
 - **testkit**：本仓已落地 `crates/testkit`（`xhyper-testkit`）；`contract-testkit` 未落地
 - **infra 八域**：当前仅镜像文档，本仓对应 `crates/*` **未**宣称落地
 - **adapters 九域**：镜像已注册；本仓 9 个 crate 为 **scaffold**（#42），**未**宣称业务实现 / package stable
-- 审计基线见 `docs/*-ssot-alignment.md` 与 `docs/workspace-ssot-alignment.md`
+- 审计基线见 `docs/ssot/*-ssot-alignment.md` 与 `docs/ssot/workspace-ssot-alignment.md`
 
 ---
 

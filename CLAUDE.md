@@ -17,14 +17,14 @@
   - adapters 平面在 `.agents/ssot/adapters/{exchange,storage}/…`（保留 `adapters/` 层级）
 - 本仓 members：`kernel` / `testkit` / `configx` / `schedulex` / `bootstrap` / `resiliencx` / `types/*` / `contracts` / `adapters/**`（adapters 为 scaffold；**无** `infra-core`；infra 其余域未落地）
 - 验证：`cargo test --workspace`；专项见对齐文档
-- 总览：[docs/workspace-ssot-alignment.md](./docs/workspace-ssot-alignment.md)
+- 总览：[docs/ssot/workspace-ssot-alignment.md](./docs/ssot/workspace-ssot-alignment.md)
 - 域文档：
-  - [docs/kernel-ssot-alignment.md](./docs/kernel-ssot-alignment.md)
-  - [docs/testkit-ssot-alignment.md](./docs/testkit-ssot-alignment.md)
-  - [docs/types-ssot-alignment.md](./docs/types-ssot-alignment.md)
-  - [docs/bootstrap-ssot-alignment.md](./docs/bootstrap-ssot-alignment.md)
-  - [docs/adapters-ssot-alignment.md](./docs/adapters-ssot-alignment.md)
-  - [docs/contracts-ssot-alignment.md](./docs/contracts-ssot-alignment.md)
+  - [docs/ssot/kernel-ssot-alignment.md](./docs/ssot/kernel-ssot-alignment.md)
+  - [docs/ssot/testkit-ssot-alignment.md](./docs/ssot/testkit-ssot-alignment.md)
+  - [docs/ssot/types-ssot-alignment.md](./docs/ssot/types-ssot-alignment.md)
+  - [docs/ssot/bootstrap-ssot-alignment.md](./docs/ssot/bootstrap-ssot-alignment.md)
+  - [docs/ssot/adapters-ssot-alignment.md](./docs/ssot/adapters-ssot-alignment.md)
+  - [docs/ssot/contracts-ssot-alignment.md](./docs/ssot/contracts-ssot-alignment.md)
 
 ## Hook 感知
 
@@ -39,7 +39,7 @@
 
 ## Git Worktree（强制开工）
 
-**禁止在主仓 `main` 工作区直接改代码。** 细则：[docs/worktree-policy.md](./docs/worktree-policy.md)
+**禁止在主仓 `main` 工作区直接改代码。** 细则：[docs/governance/worktree-policy.md](./docs/governance/worktree-policy.md)
 
 ```bash
 node scripts/worktree.mjs create feat/<id>-<slug>
@@ -63,8 +63,8 @@ cd .worktrees/feat/<id>-<slug>
 ## 代码行为准则
 
 - **中文优先**：代码注释、中文治理文档、用户可见错误信息使用中文；标识符保持英文
-- **ASD-STE100**：英文技术文档使用简化技术英语（宪章 §4.6；见 `docs/ASD-STE100.md`）
-- **UTF-8**：所有文本文件 UTF-8 无 BOM，换行 LF（宪章 §4.5；见 `docs/编码与语言约定.md` 与 `.editorconfig`）
+- **ASD-STE100**：英文技术文档使用简化技术英语（宪章 §4.6；见 `docs/governance/ASD-STE100.md`）
+- **UTF-8**：所有文本文件 UTF-8 无 BOM，换行 LF（宪章 §4.5；见 `docs/governance/编码与语言约定.md` 与 `.editorconfig`）
 - **宪章约束**：语言/编码/文档标准见 `CONSTITUTION.md` §4.5、§4.6，不可削弱
 
 - **最小变更**：只做明确要求的事

@@ -11,7 +11,7 @@ L1 **tracing/metrics 封装**（SPEC-INFRA-OBSERVEX 0.1.0 / ADR-005）。
 | publish | `false` |
 
 规范镜像：[`../../.agents/ssot/infra/observex/spec/spec.md`](../../.agents/ssot/infra/observex/spec/spec.md)  
-对齐说明：[`../../docs/observex-ssot-alignment.md`](../../docs/observex-ssot-alignment.md)
+对齐说明：[`../../docs/ssot/observex-ssot-alignment.md`](../../docs/ssot/observex-ssot-alignment.md)
 
 ## 公开面
 

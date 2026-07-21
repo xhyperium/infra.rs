@@ -7,7 +7,7 @@
  * 用法:
  *   eval "$(node scripts/worktree-activate.mjs)"    # 加载到当前 shell
  *
- * SSOT: CONSTITUTION.md §6.0.5 / docs/worktree-policy.md
+ * SSOT: CONSTITUTION.md §6.0.5 / docs/governance/worktree-policy.md
  * 替代: scripts/worktree-activate.mjs (已迁移)
  */
 

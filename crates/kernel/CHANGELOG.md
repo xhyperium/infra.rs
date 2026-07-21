@@ -17,7 +17,7 @@
 - `api_compile`：`XError: !From<&str|String>`、`Timestamp: !Display/!From<SystemTime>`、serde 负向扩至 Signal/Guard
 - proptest 属性测试：Timestamp checked 运算 / ComponentState 二元组合 / ErrorKind 构造矩阵
 - ControlledClock 双通道测试替身；真实 mutex poison 恢复测试
-- 本仓对齐文档：`docs/kernel-ssot-alignment.md`
+- 本仓对齐文档：`docs/ssot/kernel-ssot-alignment.md`
 - `publish = false`；`[lints] workspace = true`（继承根 `workspace.lints`）
 - 按 crates 子模块标准补齐 `README.md`、`AGENTS.md`、`examples/`、`docs/` 骨架
 

@@ -119,5 +119,5 @@ diff -rq /home/workspace/xhyper.rs/.agent/SSOT/contracts .agents/ssot/contracts
 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) | contracts 镜像 + trait 落地 |
 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) | transportx 本仓矩阵 |
 | [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md) | 镜像同步完整性（≠ 实现落地） |
-| [crates/AGENTS.md](../crates/AGENTS.md) | crate 子模块标准布局 + 概览 |
-| [.agents/ssot/SSOT.md](../.agents/ssot/SSOT.md) | R6/R7 规则 |
+| [crates/AGENTS.md](../../crates/AGENTS.md) | crate 子模块标准布局 + 概览 |
+| [.agents/ssot/SSOT.md](../../.agents/ssot/SSOT.md) | R6/R7 规则 |

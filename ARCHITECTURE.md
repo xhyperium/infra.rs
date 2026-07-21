@@ -62,10 +62,11 @@ infra.rs/
 ├── .codex/                    # Codex CLI 配置
 │   └── agents/                # 28 个代理定义
 │
-├── docs/                      # 项目文档
-│   ├── CI_STATUS_REPORT.md    # CI 工作流矩阵与运行统计
-│   ├── 编码与语言约定.md       # 编码与文档语言约定
-│   └── ...
+├── docs/                      # 项目文档（严格分类，见 docs/README.md）
+│   ├── governance/            # 治理与约定（版本/语言/worktree/STE）
+│   ├── ssot/                  # SSOT 对齐矩阵与同步手册
+│   ├── status/                # CI/配置状态记录
+│   └── decisions/             # 架构决策记录（DDR）
 │
 ├── examples/                  # 示例代码
 └── tests/                     # 集成测试
@@ -148,7 +149,7 @@ testkit     →  kernel          # 仅 [dev-dependencies]
 | 安全 | Cargo / deny.toml 变更 | 每周一 02:00 |
 | Constitution | Rust / config / CONSTITUTION.md 变更 | — |
 
-详见 [CI_STATUS_REPORT.md](CI_STATUS_REPORT.md)。
+详见 [CI_STATUS_REPORT.md](docs/status/CI_STATUS_REPORT.md)。
 
 ### 构建缓存
 
