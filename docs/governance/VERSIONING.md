@@ -9,16 +9,16 @@
 
 ```text
 项目版本 (Project)          CONSTITUTION 版本 (Governance)
-├── Cargo.toml              ├── CONSTITUTION.md
-├── CHANGELOG.md            └── .agents/ssot/SSOT.md
-└── crates/*/               └── docs/*
+├── Cargo.toml              ├── docs/constitution/（正文 SSOT）
+├── CHANGELOG.md            ├── CONSTITUTION.md（根索引）
+└── crates/*/               └── .agents/ssot/SSOT.md
                              crates/AGENTS.md (独立)
 ```
 
 | 版本类型   | 载体                  | 格式                        | 示例     | 更新时机       |
 | ---------- | --------------------- | --------------------------- | -------- | -------------- |
 | 项目版本   | `Cargo.toml`          | SemVer                      | `0.2.0`  | 每次 release   |
-| 宪章版本   | `CONSTITUTION.md`     | vX.Y.Z                      | `v1.5.0` | 每次修订       |
+| 宪章版本   | `docs/constitution/08-amendments.md` | vX.Y.Z            | `v1.5.0` | 每次修订       |
 | Crate 版本 | `crates/*/Cargo.toml` | SemVer (`workspace = true`) | `0.2.0`  | 跟随 workspace |
 | 工具版本   | `Cargo.lock`          | 锁定版本                    | —        | `cargo update` |
 | 文档附版   | `docs/**/*.md`           | 参考宪章版本                | —        | 宪章修订时同步 |
@@ -45,13 +45,13 @@
 CI 中验证：
 
 1. `Cargo.toml` 版本 ≤ `CHANGELOG.md` 最新版本
-2. `CONSTITUTION.md` 最新版本号在项目 CHANGELOG 中可追溯
+2. `docs/constitution/08-amendments.md`（§8.3）最新版本号在项目 CHANGELOG 中可追溯
 3. 所有 `workspace = true` 的 crate 版本与 workspace 一致
 
 ### R-V4: 版本记录
 
 - `CHANGELOG.md`：项目发布版本（SemVer）
-- `CONSTITUTION.md §8.3`：宪章版本历史表
+- `docs/constitution/08-amendments.md` §8.3：宪章版本历史表
 - 其他文档：文件底部版本表（格式：`| vX.Y.Z | YYYY-MM-DD | 修订 |`）
 
 ---
@@ -62,7 +62,7 @@ CI 中验证：
 |----|----|
 | `Cargo.toml` (项目) | `0.3.0` |
 | `CHANGELOG.md` (最新) | `0.3.0` |
-| `CONSTITUTION.md` (宪章) | `v1.4.0` |
+| 宪章（`docs/constitution/`） | `v1.5.0` |
 | `.agents/ssot/SSOT.md` | `v1.4.0` |
 | `xhyper-kernel` | workspace |
 | `xhyper-testkit` | `0.1.x` |

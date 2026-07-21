@@ -21,6 +21,7 @@ on:
       - "scripts/quality-gates/check-constitution.mjs"
       - ".github/workflows/constitution.yml"
       - "CONSTITUTION.md"
+      - "docs/constitution/**"
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
@@ -70,6 +71,7 @@ jobs:
             '^scripts/quality-gates/check-constitution\.mjs$'
             '^\.github/workflows/constitution\.yml$'
             '^CONSTITUTION\.md$'
+            '^docs/constitution/'
           )
           for f in "${files[@]+"${files[@]}"}"; do
             for p in "${patterns[@]}"; do

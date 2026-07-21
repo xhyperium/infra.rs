@@ -1,6 +1,6 @@
 # ASD-STE100 文档规范（项目落地指南）
 
-> **宪章效力**：英文技术文档以 [CONSTITUTION.md §4.6](../../CONSTITUTION.md) 为准。  
+> **宪章效力**：英文技术文档以 [docs/constitution/04-code-standards.md §4.6](../constitution/04-code-standards.md#46-文档标准asd-ste100强制) 为准。  
 > 本文件是**落地指南**，不是 ASD-STE100 官方全文（官方规范受版权保护，请通过正规渠道获取）。
 
 ## 1. 是什么
@@ -84,5 +84,5 @@
 ## 6. 参考
 
 - 官方站点与规范获取：通过 ASD-STE100 官方渠道（版权与词典以官方版本为准）
-- 项目宪章：`CONSTITUTION.md` §4.6
+- 项目宪章：`docs/constitution/04-code-standards.md` §4.6
 - 语言与编码：`docs/governance/编码与语言约定.md`

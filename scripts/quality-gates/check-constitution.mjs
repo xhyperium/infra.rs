@@ -19,6 +19,7 @@ import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+// scripts/quality-gates → 仓库根
 const ROOT = resolve(__dirname, "../..");
 
 const args = process.argv.slice(2);

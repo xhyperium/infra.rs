@@ -133,5 +133,5 @@ core 0.1.0 GAP = 0
 
 ## 与镜像文档的关系
 
-- `.agents/ssot/infra/observex/**`：只读镜像；禁止改 COMPLETE 叙事冒充同步
+- `.agents/ssot/observex/**`：只读镜像；禁止改 COMPLETE 叙事冒充同步
 - 实现 SSOT 以 **源码 + 本仓测试/LCOV** 为准（SSOT.md R6/R7）

@@ -129,7 +129,7 @@ Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTU
 
 | 文档 | 说明 |
 |------|------|
-| [CONSTITUTION.md](CONSTITUTION.md) | 工程宪章 — 核心价值观、架构原则、代码标准 |
+| [CONSTITUTION.md](CONSTITUTION.md) | 工程宪章根索引 → [docs/constitution/](docs/constitution/) 分章正文 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 架构文档 — 结构、Crate、CI/CD、治理 |
 | [docs/governance/](docs/governance/) | 治理与约定：版本、worktree、语言、STE、量化规范 |
 | [docs/ssot/](docs/ssot/) | SSOT 对齐矩阵与同步手册 |

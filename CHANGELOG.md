@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **工程宪章 v1.5.0 拆分**：正文 SSOT 迁至 `docs/constitution/` 分章（`01`–`08`）；根 `CONSTITUTION.md` 改为兼容索引；更新 AGENTS/CLAUDE/governance 引用与 `constitution.yml` 路径触发
+
 ### Added
 
 - **crate `docs/README.md` 补齐**：全部 workspace members 的 crate 级文档入口（对齐矩阵 / SSOT 镜像 / 分层边界）
