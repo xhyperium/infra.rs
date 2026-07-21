@@ -260,7 +260,7 @@ result: FAIL
 
 ### 证据指针
 
-- Spec §34：`/home/workspace/infra.rs/.agents/ssot/tools/evidence/xhyper-evidence-complete-spec.md` L2869+  
+- Spec §34：`/home/workspace/.agents/ssot/tools/evidence/xhyper-evidence-complete-spec.md` L2869+  
 - Spec §15 / §22 / §29.3：同文件  
 - tasks §33.6：`.../plan/tasks.md` L267–277（幽灵 T-ATOM、external 备注）  
 - plan §0.1 路径图：`.../plan/plan.md` L32–43  

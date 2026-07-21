@@ -244,7 +244,7 @@ fail_rounds (plan 10x): not yet 0 (this round FAIL contributes)
 
 ### 证据指针
 
-- 映射表：`/home/workspace/infra.rs/.agents/ssot/tools/evidence/plan/tasks.md`（§33 勾选 → Task）
+- 映射表：`/home/workspace/.agents/ssot/tools/evidence/plan/tasks.md`（§33 勾选 → Task）
 - 规范勾选：`.../xhyper-evidence-complete-spec.md` §33.1–33.6
 - §32 模板：spec #32；plan §8
 - Forbidden：plan 页眉 + §1；approval §2

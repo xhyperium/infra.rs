@@ -4,11 +4,11 @@
 |------|-----|
 | Matrix ID | `ALIGN-TYPES-CANONICAL-INFRA-20260721` |
 | Scope | `.agents/ssot/types/canonical/**` ↔ `crates/types/canonical` (+ `crates/types/decimal`) |
-| Upstream ref (read-only) | `/home/workspace/xhyper.rs/crates/types/canonical` |
+| Upstream ref (read-only) | `/home/workspace/infra.rs/crates/types/canonical` |
 | Authority | Approved production path（20260717 Spec S1 + residual + production-upgrade）；active spec 已按本矩阵重写 |
 | 更新 | 2026-07-21 |
 | 规则 | 每行必须有状态 + 指针；禁止未映射 claim |
-| R6 说明 | 本矩阵与 active/pipeline 改写为 **intentional local SSOT maintenance**；同时写回 xhyper `.agent/SSOT` 源，避免 mirror sync 覆盖 |
+| R6 说明 | 本矩阵与 active/pipeline 改写为 **intentional local SSOT maintenance**；同时写回 xhyper `.agents/ssot` 源，避免 mirror sync 覆盖 |
 
 ## 图例
 

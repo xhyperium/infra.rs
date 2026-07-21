@@ -4,7 +4,7 @@ C-FMT PASS
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.34s
 C-CLIPPY PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-8b973f9247f47d6e)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-8b973f9247f47d6e)
 
 running 20 tests
 test clock::tests::clock_error_names_match_spec ... ok
@@ -30,14 +30,14 @@ test lifecycle::tests::poison_recovery_into_inner ... ok
 
 test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running tests/api_compile.rs (../.target-xhyper.rs/debug/deps/api_compile-d8c8b0df8870addd)
+     Running tests/api_compile.rs (../.cargo/target/debug/deps/api_compile-d8c8b0df8870addd)
 
 running 1 test
 test public_constructors_and_queries_compile ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/clock_contract.rs (../.target-xhyper.rs/debug/deps/clock_contract-b86c9520221e0fe2)
+     Running tests/clock_contract.rs (../.cargo/target/debug/deps/clock_contract-b86c9520221e0fe2)
 
 running 9 tests
 test component_state_transition_matrix ... ok
@@ -52,7 +52,7 @@ test timestamp_near_i64_bounds ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
+     Running tests/lifecycle_concurrency.rs (../.cargo/target/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
 
 running 3 tests
 test wait_after_trigger_returns ... ok
@@ -61,13 +61,13 @@ test concurrent_regression_1000_cycles ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.39s
 
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-ee9e95763c947401)
+     Running tests/public_api.rs (../.cargo/target/debug/deps/public_api-ee9e95763c947401)
 
 running 3 tests
 test shutdown_trigger_wakes ... ok
@@ -84,7 +84,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 C-TEST PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.31s
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
 
 running 2 tests
 test loom_trigger_wakes_waiter ... ok
@@ -95,7 +95,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 C-LOOM PASS
 C-ARCH PASS n= 13
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.19s
-     Running `../.target-xhyper.rs/debug/xtask lint-deps`
+     Running `../.cargo/target/debug/xtask lint-deps`
 依赖图校验通过，符合 spec §2 R1–R6
 C-DEPS PASS
 C-API PASS
@@ -108,7 +108,7 @@ C-FMT PASS
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.32s
 C-CLIPPY PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.32s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-8b973f9247f47d6e)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-8b973f9247f47d6e)
 
 running 20 tests
 test clock::tests::clock_error_names_match_spec ... ok
@@ -134,14 +134,14 @@ test lifecycle::tests::poison_recovery_into_inner ... ok
 
 test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
 
-     Running tests/api_compile.rs (../.target-xhyper.rs/debug/deps/api_compile-d8c8b0df8870addd)
+     Running tests/api_compile.rs (../.cargo/target/debug/deps/api_compile-d8c8b0df8870addd)
 
 running 1 test
 test public_constructors_and_queries_compile ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/clock_contract.rs (../.target-xhyper.rs/debug/deps/clock_contract-b86c9520221e0fe2)
+     Running tests/clock_contract.rs (../.cargo/target/debug/deps/clock_contract-b86c9520221e0fe2)
 
 running 9 tests
 test system_clock_now_and_mono_contract ... ok
@@ -156,7 +156,7 @@ test timestamp_near_i64_bounds ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
+     Running tests/lifecycle_concurrency.rs (../.cargo/target/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
 
 running 3 tests
 test multi_waiter_all_observe_trigger ... ok
@@ -165,13 +165,13 @@ test concurrent_regression_1000_cycles ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
 
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-ee9e95763c947401)
+     Running tests/public_api.rs (../.cargo/target/debug/deps/public_api-ee9e95763c947401)
 
 running 3 tests
 test error_kind_query_surface ... ok
@@ -188,7 +188,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 C-TEST PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.25s
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
 
 running 2 tests
 test loom_trigger_wakes_waiter ... ok
@@ -199,7 +199,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 C-LOOM PASS
 C-ARCH PASS n= 13
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.18s
-     Running `../.target-xhyper.rs/debug/xtask lint-deps`
+     Running `../.cargo/target/debug/xtask lint-deps`
 依赖图校验通过，符合 spec §2 R1–R6
 C-DEPS PASS
 C-API PASS
@@ -212,7 +212,7 @@ C-FMT PASS
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.27s
 C-CLIPPY PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.30s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-8b973f9247f47d6e)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-8b973f9247f47d6e)
 
 running 20 tests
 test clock::tests::clock_error_names_match_spec ... ok
@@ -238,14 +238,14 @@ test lifecycle::tests::poison_recovery_into_inner ... ok
 
 test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running tests/api_compile.rs (../.target-xhyper.rs/debug/deps/api_compile-d8c8b0df8870addd)
+     Running tests/api_compile.rs (../.cargo/target/debug/deps/api_compile-d8c8b0df8870addd)
 
 running 1 test
 test public_constructors_and_queries_compile ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/clock_contract.rs (../.target-xhyper.rs/debug/deps/clock_contract-b86c9520221e0fe2)
+     Running tests/clock_contract.rs (../.cargo/target/debug/deps/clock_contract-b86c9520221e0fe2)
 
 running 9 tests
 test component_state_transition_matrix ... ok
@@ -260,7 +260,7 @@ test timestamp_near_i64_bounds ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
+     Running tests/lifecycle_concurrency.rs (../.cargo/target/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
 
 running 3 tests
 test wait_after_trigger_returns ... ok
@@ -269,13 +269,13 @@ test concurrent_regression_1000_cycles ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s
 
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-ee9e95763c947401)
+     Running tests/public_api.rs (../.cargo/target/debug/deps/public_api-ee9e95763c947401)
 
 running 3 tests
 test error_kind_query_surface ... ok
@@ -292,7 +292,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 C-TEST PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.24s
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
 
 running 2 tests
 test loom_trigger_wakes_waiter ... ok
@@ -303,7 +303,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 C-LOOM PASS
 C-ARCH PASS n= 13
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.18s
-     Running `../.target-xhyper.rs/debug/xtask lint-deps`
+     Running `../.cargo/target/debug/xtask lint-deps`
 依赖图校验通过，符合 spec §2 R1–R6
 C-DEPS PASS
 C-API PASS
@@ -316,7 +316,7 @@ C-FMT PASS
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.27s
 C-CLIPPY PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-8b973f9247f47d6e)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-8b973f9247f47d6e)
 
 running 20 tests
 test clock::tests::clock_error_names_match_spec ... ok
@@ -342,14 +342,14 @@ test lifecycle::tests::poison_recovery_into_inner ... ok
 
 test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running tests/api_compile.rs (../.target-xhyper.rs/debug/deps/api_compile-d8c8b0df8870addd)
+     Running tests/api_compile.rs (../.cargo/target/debug/deps/api_compile-d8c8b0df8870addd)
 
 running 1 test
 test public_constructors_and_queries_compile ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/clock_contract.rs (../.target-xhyper.rs/debug/deps/clock_contract-b86c9520221e0fe2)
+     Running tests/clock_contract.rs (../.cargo/target/debug/deps/clock_contract-b86c9520221e0fe2)
 
 running 9 tests
 test component_state_transition_matrix ... ok
@@ -364,7 +364,7 @@ test timestamp_near_i64_bounds ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
+     Running tests/lifecycle_concurrency.rs (../.cargo/target/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
 
 running 3 tests
 test wait_after_trigger_returns ... ok
@@ -373,13 +373,13 @@ test concurrent_regression_1000_cycles ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
 
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-ee9e95763c947401)
+     Running tests/public_api.rs (../.cargo/target/debug/deps/public_api-ee9e95763c947401)
 
 running 3 tests
 test shutdown_trigger_wakes ... ok
@@ -396,7 +396,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 C-TEST PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.22s
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
 
 running 2 tests
 test loom_trigger_wakes_waiter ... ok
@@ -407,7 +407,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 C-LOOM PASS
 C-ARCH PASS n= 13
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.20s
-     Running `../.target-xhyper.rs/debug/xtask lint-deps`
+     Running `../.cargo/target/debug/xtask lint-deps`
 依赖图校验通过，符合 spec §2 R1–R6
 C-DEPS PASS
 C-API PASS
@@ -420,7 +420,7 @@ C-FMT PASS
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.29s
 C-CLIPPY PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-8b973f9247f47d6e)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-8b973f9247f47d6e)
 
 running 20 tests
 test clock::tests::clock_error_names_match_spec ... ok
@@ -446,14 +446,14 @@ test lifecycle::tests::poison_recovery_into_inner ... ok
 
 test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running tests/api_compile.rs (../.target-xhyper.rs/debug/deps/api_compile-d8c8b0df8870addd)
+     Running tests/api_compile.rs (../.cargo/target/debug/deps/api_compile-d8c8b0df8870addd)
 
 running 1 test
 test public_constructors_and_queries_compile ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/clock_contract.rs (../.target-xhyper.rs/debug/deps/clock_contract-b86c9520221e0fe2)
+     Running tests/clock_contract.rs (../.cargo/target/debug/deps/clock_contract-b86c9520221e0fe2)
 
 running 9 tests
 test component_state_transition_matrix ... ok
@@ -468,7 +468,7 @@ test timestamp_near_i64_bounds ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
+     Running tests/lifecycle_concurrency.rs (../.cargo/target/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
 
 running 3 tests
 test wait_after_trigger_returns ... ok
@@ -477,13 +477,13 @@ test concurrent_regression_1000_cycles ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
 
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-ee9e95763c947401)
+     Running tests/public_api.rs (../.cargo/target/debug/deps/public_api-ee9e95763c947401)
 
 running 3 tests
 test shutdown_trigger_wakes ... ok
@@ -500,7 +500,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 C-TEST PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.22s
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
 
 running 2 tests
 test loom_trigger_wakes_waiter ... ok
@@ -511,7 +511,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 C-LOOM PASS
 C-ARCH PASS n= 13
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.17s
-     Running `../.target-xhyper.rs/debug/xtask lint-deps`
+     Running `../.cargo/target/debug/xtask lint-deps`
 依赖图校验通过，符合 spec §2 R1–R6
 C-DEPS PASS
 C-API PASS
@@ -524,7 +524,7 @@ C-FMT PASS
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.32s
 C-CLIPPY PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.37s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-8b973f9247f47d6e)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-8b973f9247f47d6e)
 
 running 20 tests
 test clock::tests::clock_error_names_match_spec ... ok
@@ -550,14 +550,14 @@ test lifecycle::tests::poison_recovery_into_inner ... ok
 
 test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running tests/api_compile.rs (../.target-xhyper.rs/debug/deps/api_compile-d8c8b0df8870addd)
+     Running tests/api_compile.rs (../.cargo/target/debug/deps/api_compile-d8c8b0df8870addd)
 
 running 1 test
 test public_constructors_and_queries_compile ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/clock_contract.rs (../.target-xhyper.rs/debug/deps/clock_contract-b86c9520221e0fe2)
+     Running tests/clock_contract.rs (../.cargo/target/debug/deps/clock_contract-b86c9520221e0fe2)
 
 running 9 tests
 test component_state_transition_matrix ... ok
@@ -572,7 +572,7 @@ test timestamp_near_i64_bounds ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
+     Running tests/lifecycle_concurrency.rs (../.cargo/target/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
 
 running 3 tests
 test wait_after_trigger_returns ... ok
@@ -581,13 +581,13 @@ test concurrent_regression_1000_cycles ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
 
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-ee9e95763c947401)
+     Running tests/public_api.rs (../.cargo/target/debug/deps/public_api-ee9e95763c947401)
 
 running 3 tests
 test error_kind_query_surface ... ok
@@ -604,7 +604,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 C-TEST PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
 
 running 2 tests
 test loom_trigger_wakes_waiter ... ok
@@ -615,7 +615,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 C-LOOM PASS
 C-ARCH PASS n= 13
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.18s
-     Running `../.target-xhyper.rs/debug/xtask lint-deps`
+     Running `../.cargo/target/debug/xtask lint-deps`
 依赖图校验通过，符合 spec §2 R1–R6
 C-DEPS PASS
 C-API PASS
@@ -628,7 +628,7 @@ C-FMT PASS
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.25s
 C-CLIPPY PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-8b973f9247f47d6e)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-8b973f9247f47d6e)
 
 running 20 tests
 test clock::tests::clock_error_names_match_spec ... ok
@@ -654,14 +654,14 @@ test lifecycle::tests::poison_recovery_into_inner ... ok
 
 test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running tests/api_compile.rs (../.target-xhyper.rs/debug/deps/api_compile-d8c8b0df8870addd)
+     Running tests/api_compile.rs (../.cargo/target/debug/deps/api_compile-d8c8b0df8870addd)
 
 running 1 test
 test public_constructors_and_queries_compile ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/clock_contract.rs (../.target-xhyper.rs/debug/deps/clock_contract-b86c9520221e0fe2)
+     Running tests/clock_contract.rs (../.cargo/target/debug/deps/clock_contract-b86c9520221e0fe2)
 
 running 9 tests
 test component_state_transition_matrix ... ok
@@ -676,7 +676,7 @@ test timestamp_near_i64_bounds ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
+     Running tests/lifecycle_concurrency.rs (../.cargo/target/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
 
 running 3 tests
 test wait_after_trigger_returns ... ok
@@ -685,13 +685,13 @@ test concurrent_regression_1000_cycles ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
 
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-ee9e95763c947401)
+     Running tests/public_api.rs (../.cargo/target/debug/deps/public_api-ee9e95763c947401)
 
 running 3 tests
 test error_kind_query_surface ... ok
@@ -708,7 +708,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 C-TEST PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
 
 running 2 tests
 test loom_trigger_wakes_waiter ... ok
@@ -719,7 +719,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 C-LOOM PASS
 C-ARCH PASS n= 13
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.20s
-     Running `../.target-xhyper.rs/debug/xtask lint-deps`
+     Running `../.cargo/target/debug/xtask lint-deps`
 依赖图校验通过，符合 spec §2 R1–R6
 C-DEPS PASS
 C-API PASS
@@ -732,7 +732,7 @@ C-FMT PASS
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.29s
 C-CLIPPY PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.26s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-8b973f9247f47d6e)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-8b973f9247f47d6e)
 
 running 20 tests
 test clock::tests::from_clock_elapsed_single_arg_spec_shape ... ok
@@ -758,14 +758,14 @@ test lifecycle::tests::poison_recovery_into_inner ... ok
 
 test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running tests/api_compile.rs (../.target-xhyper.rs/debug/deps/api_compile-d8c8b0df8870addd)
+     Running tests/api_compile.rs (../.cargo/target/debug/deps/api_compile-d8c8b0df8870addd)
 
 running 1 test
 test public_constructors_and_queries_compile ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/clock_contract.rs (../.target-xhyper.rs/debug/deps/clock_contract-b86c9520221e0fe2)
+     Running tests/clock_contract.rs (../.cargo/target/debug/deps/clock_contract-b86c9520221e0fe2)
 
 running 9 tests
 test component_state_transition_matrix ... ok
@@ -780,7 +780,7 @@ test timestamp_near_i64_bounds ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
+     Running tests/lifecycle_concurrency.rs (../.cargo/target/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
 
 running 3 tests
 test wait_after_trigger_returns ... ok
@@ -789,13 +789,13 @@ test concurrent_regression_1000_cycles ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
 
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-ee9e95763c947401)
+     Running tests/public_api.rs (../.cargo/target/debug/deps/public_api-ee9e95763c947401)
 
 running 3 tests
 test error_kind_query_surface ... ok
@@ -812,7 +812,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 C-TEST PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
 
 running 2 tests
 test loom_trigger_wakes_waiter ... ok
@@ -823,7 +823,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 C-LOOM PASS
 C-ARCH PASS n= 13
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.22s
-     Running `../.target-xhyper.rs/debug/xtask lint-deps`
+     Running `../.cargo/target/debug/xtask lint-deps`
 依赖图校验通过，符合 spec §2 R1–R6
 C-DEPS PASS
 C-API PASS
@@ -836,7 +836,7 @@ C-FMT PASS
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.29s
 C-CLIPPY PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.26s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-8b973f9247f47d6e)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-8b973f9247f47d6e)
 
 running 20 tests
 test clock::tests::monotonic_checked_duration_since_none_on_reverse ... ok
@@ -862,14 +862,14 @@ test lifecycle::tests::poison_recovery_into_inner ... ok
 
 test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running tests/api_compile.rs (../.target-xhyper.rs/debug/deps/api_compile-d8c8b0df8870addd)
+     Running tests/api_compile.rs (../.cargo/target/debug/deps/api_compile-d8c8b0df8870addd)
 
 running 1 test
 test public_constructors_and_queries_compile ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/clock_contract.rs (../.target-xhyper.rs/debug/deps/clock_contract-b86c9520221e0fe2)
+     Running tests/clock_contract.rs (../.cargo/target/debug/deps/clock_contract-b86c9520221e0fe2)
 
 running 9 tests
 test component_state_transition_matrix ... ok
@@ -884,7 +884,7 @@ test timestamp_near_i64_bounds ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
+     Running tests/lifecycle_concurrency.rs (../.cargo/target/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
 
 running 3 tests
 test wait_after_trigger_returns ... ok
@@ -893,13 +893,13 @@ test concurrent_regression_1000_cycles ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
 
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-ee9e95763c947401)
+     Running tests/public_api.rs (../.cargo/target/debug/deps/public_api-ee9e95763c947401)
 
 running 3 tests
 test error_kind_query_surface ... ok
@@ -916,7 +916,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 C-TEST PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
 
 running 2 tests
 test loom_trigger_wakes_waiter ... ok
@@ -927,7 +927,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 C-LOOM PASS
 C-ARCH PASS n= 13
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.23s
-     Running `../.target-xhyper.rs/debug/xtask lint-deps`
+     Running `../.cargo/target/debug/xtask lint-deps`
 依赖图校验通过，符合 spec §2 R1–R6
 C-DEPS PASS
 C-API PASS
@@ -940,7 +940,7 @@ C-FMT PASS
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.29s
 C-CLIPPY PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-8b973f9247f47d6e)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-8b973f9247f47d6e)
 
 running 20 tests
 test clock::tests::from_clock_elapsed_single_arg_spec_shape ... ok
@@ -966,14 +966,14 @@ test lifecycle::tests::poison_recovery_into_inner ... ok
 
 test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running tests/api_compile.rs (../.target-xhyper.rs/debug/deps/api_compile-d8c8b0df8870addd)
+     Running tests/api_compile.rs (../.cargo/target/debug/deps/api_compile-d8c8b0df8870addd)
 
 running 1 test
 test public_constructors_and_queries_compile ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/clock_contract.rs (../.target-xhyper.rs/debug/deps/clock_contract-b86c9520221e0fe2)
+     Running tests/clock_contract.rs (../.cargo/target/debug/deps/clock_contract-b86c9520221e0fe2)
 
 running 9 tests
 test component_state_transition_matrix ... ok
@@ -988,7 +988,7 @@ test timestamp_near_i64_bounds ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running tests/lifecycle_concurrency.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
+     Running tests/lifecycle_concurrency.rs (../.cargo/target/debug/deps/lifecycle_concurrency-cbef119ec1b909a1)
 
 running 3 tests
 test wait_after_trigger_returns ... ok
@@ -997,13 +997,13 @@ test concurrent_regression_1000_cycles ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
 
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-4c77a720a53ba7d3)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running tests/public_api.rs (../.target-xhyper.rs/debug/deps/public_api-ee9e95763c947401)
+     Running tests/public_api.rs (../.cargo/target/debug/deps/public_api-ee9e95763c947401)
 
 running 3 tests
 test error_kind_query_surface ... ok
@@ -1020,7 +1020,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 C-TEST PASS
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.24s
-     Running tests/lifecycle_concurrency_loom.rs (../.target-xhyper.rs/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
+     Running tests/lifecycle_concurrency_loom.rs (../.cargo/target/debug/deps/lifecycle_concurrency_loom-ac7326e9cff6be41)
 
 running 2 tests
 test loom_trigger_wakes_waiter ... ok
@@ -1031,7 +1031,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 C-LOOM PASS
 C-ARCH PASS n= 13
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.17s
-     Running `../.target-xhyper.rs/debug/xtask lint-deps`
+     Running `../.cargo/target/debug/xtask lint-deps`
 依赖图校验通过，符合 spec §2 R1–R6
 C-DEPS PASS
 C-API PASS

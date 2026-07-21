@@ -1,6 +1,6 @@
 WARNING: Ignoring `RUSTC_WRAPPER` environment variable, Miri does not support wrapping.
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
-     Running unittests src/lib.rs (../.target-xhyper.rs/miri/x86_64-unknown-linux-gnu/debug/deps/kernel-f80df136903b7956)
+     Running unittests src/lib.rs (../.cargo/target/miri/x86_64-unknown-linux-gnu/debug/deps/kernel-f80df136903b7956)
 
 running 21 tests
 test clock::tests::clock_error_names_match_spec ... ok

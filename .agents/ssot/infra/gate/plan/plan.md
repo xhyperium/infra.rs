@@ -3,8 +3,8 @@
 | 字段 | 值 |
 |------|-----|
 | Plan ID | `PLAN-GATE-RETIRE-001-v1-complete` |
-| Source Plan | [`.agent/SSOT/infra/gate/xhyper-gate-retirement-complete-plan.md`](../plan/xhyper-gate-retirement-complete-plan.md) |
-| Source Spec | [`.agent/SSOT/infra/gate/gate-spec.md`](../gate-spec.md)（active；退役后 Superseded） |
+| Source Plan | [`.agents/ssot/infra/gate/xhyper-gate-retirement-complete-plan.md`](../plan/xhyper-gate-retirement-complete-plan.md) |
+| Source Spec | [`.agents/ssot/infra/gate/gate-spec.md`](../gate-spec.md)（active；退役后 Superseded） |
 | Source Plan ID | `PLAN-GATE-RETIRE-001` · Status **Proposed** |
 | Goal | `GOAL-GATE-RETIRE-PLAN-PACKAGE`（本包：计划完备性 + 10x + todo + 对齐） |
 | Package | `xhyper-gate` / lib `gate` @ `crates/gate` **0.1.0** |
@@ -263,7 +263,7 @@ Gate::register / resolve
 Bootstrap::register_capability
 AppContext::gate
 gate mock feature
-active .agent/SSOT/infra/gate/  # 移出 active；非物理 shred 历史
+active .agents/ssot/infra/gate/  # 移出 active；非物理 shred 历史
 architecture registry active gate unit
 ```
 

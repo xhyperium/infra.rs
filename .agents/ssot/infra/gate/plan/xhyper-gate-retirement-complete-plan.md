@@ -3,7 +3,7 @@
 ```text
 Plan ID:        PLAN-GATE-RETIRE-001
 Title:          Retire Runtime Gate and Replace with Typed Composition
-Repository:     xhyperium/xhyper.rs
+Repository:     xhyperium/infra.rs
 Target Package: gate
 Current Path:   crates/gate
 Decision:       Retire and delete
@@ -13,7 +13,7 @@ Risk Level:     Architecture / Breaking API
 Method:         Strangler Fig + small-batch migration
 ```
 
-> **执行计划包**（agent-team 可执行台账）：[`.agent/SSOT/infra/gate/plan/`](.)  
+> **执行计划包**（agent-team 可执行台账）：[`.agents/ssot/infra/gate/plan/`](.)  
 > 10x 完备性：[`plan/gate-plan-10x-verdict.md`](./gate-plan-10x-verdict.md) · `fail_rounds=0`（**≠** 退役 DONE）  
 > 工作台账：[`.worktree/gate-todo.md`](../../../.worktree/gate-todo.md)  
 > 对齐：[docs/audits/gate-plan-alignment-2026-07-15.md](../../../../../docs/audits/gate-plan-alignment-2026-07-15.md)  
@@ -582,7 +582,7 @@ crates/gate/
 ├── AGENTS.md
 └── CHANGELOG.md
 
-.agent/SSOT/infra/gate/       # 从 active specs 移出
+.agents/ssot/infra/gate/       # 从 active specs 移出
 gate package workspace member
 bootstrap → gate dependency
 gate::Capability
@@ -1115,7 +1115,7 @@ cargo check --workspace
 将：
 
 ```text
-.agent/SSOT/infra/gate/
+.agents/ssot/infra/gate/
 ```
 
 从 active spec 树移出。

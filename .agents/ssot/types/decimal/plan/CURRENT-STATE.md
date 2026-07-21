@@ -5,11 +5,11 @@
 | Plan | `PLAN-TYPES-DECIMALX-002-agent-safe-v1` |
 | Branch | `fix/types-decimalx-agent-safe-20260717` |
 | Package | `xhyper-decimalx` **0.1.0** |
-| Active SSOT | `.agent/SSOT/types/decimal/decimalx-spec.md` |
+| Active SSOT | `.agents/ssot/types/decimal/decimalx-spec.md` |
 | Candidate | `20260717/` Draft · **Non-normative** · 相对链接 `../decimalx-spec.md` |
 | Campaign | **DONE (agent-safe)** · 10x PASS · **≠** Goal ACHIEVED · **≠** Spec Approved |
 | content_tip (10x first) | `1c53304a08db534fcff1ce8fe03aeacb127aa2ae` |
-| PR | [#507](https://github.com/xhyperium/xhyper.rs/pull/507) |
+| PR | [#507](https://github.com/xhyperium/infra.rs/pull/507) |
 | Approval tip SSOT | 本地 SCRATCH 指针，未入库，reviewer/未来 agent 不可见：`/tmp/grok-goal-99a109d2452b/implementer/approval/approval-readback.json`（对应当前 HEAD 的 tip-bound 读回；**非 durable 证据**，不得当作仓库内 APPROVED） |
 | plan/evidence 审批文件 | `evidence/approval-readback-pr507.json` 为 **POINTER_NOT_TIP_BOUND**（禁止当作 tip-bound APPROVED） |
 | Goal/Spec | **仍为 Draft** · 非 Achieved · 非 Approved |

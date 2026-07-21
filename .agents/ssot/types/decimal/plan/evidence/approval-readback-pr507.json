@@ -16,7 +16,7 @@
   "how_to_verify": [
     "export LIUKONGQIANG5_APPROVE_TOKEN",
     "git rev-parse HEAD",
-    "gh api repos/xhyperium/xhyper.rs/pulls/507/reviews --jq '.[] | select(.user.login==\"liukongqiang5\" and .state==\"APPROVED\" and .commit_id==\"'$(git rev-parse HEAD)'\")'",
+    "gh api repos/xhyperium/infra.rs/pulls/507/reviews --jq '.[] | select(.user.login==\"liukongqiang5\" and .state==\"APPROVED\" and .commit_id==\"'$(git rev-parse HEAD)'\")'",
     "cat /tmp/grok-goal-99a109d2452b/implementer/approval/approval-readback.json"
   ],
   "historical_note": "Prior in-repo copies that claimed tip=eb1c2c9d / review 4717186643 were stale after HEAD advanced; that review is DISMISSED on GitHub and must not be cited as tip-bound APPROVED."

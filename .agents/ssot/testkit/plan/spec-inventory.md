@@ -349,7 +349,7 @@ Mock* 无 interaction verification 登记表；T-GATE-018
 
 ### I-SPEC-PATH
 
-`.agent/SSOT/testkit/spec/spec.md`
+`.agents/ssot/testkit/spec/spec.md`
 
 ### I-RFC-DEL
 
