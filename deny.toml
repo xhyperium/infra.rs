@@ -23,9 +23,38 @@ confidence-threshold = 0.8
 [bans]
 multiple-versions = "deny"
 wildcards = "deny"
-# tracing-attributes / transportx rustls 栈常见双版本
+# 第三方驱动栈（async-nats / tokio-postgres / rdkafka-sys / oss 签名）不可避免的双版本
 skip = [
   { name = "getrandom", version = "0.2" },
+  { name = "getrandom", version = "0.3" },
   { name = "syn", version = "2" },
   { name = "windows-sys", version = "0.52" },
+  { name = "windows-sys", version = "0.60" },
+  { name = "windows-targets", version = "0.52" },
+  { name = "windows_aarch64_gnullvm", version = "0.52" },
+  { name = "windows_aarch64_msvc", version = "0.52" },
+  { name = "windows_i686_gnu", version = "0.52" },
+  { name = "windows_i686_gnullvm", version = "0.52" },
+  { name = "windows_i686_msvc", version = "0.52" },
+  { name = "windows_x86_64_gnu", version = "0.52" },
+  { name = "windows_x86_64_gnullvm", version = "0.52" },
+  { name = "windows_x86_64_msvc", version = "0.52" },
+  # crypto dual stack: sha2/digest 0.10 (goalctl/ossx/nkeys) vs 0.11 (postgres-protocol)
+  { name = "block-buffer", version = "0.10" },
+  { name = "const-oid", version = "0.9" },
+  { name = "cpufeatures", version = "0.2" },
+  { name = "crypto-common", version = "0.1" },
+  { name = "digest", version = "0.10" },
+  { name = "hmac", version = "0.12" },
+  { name = "sha2", version = "0.10" },
+  # rand dual stack: 0.8/0.9 vs 0.10
+  { name = "rand", version = "0.8" },
+  { name = "rand", version = "0.9" },
+  { name = "rand_chacha", version = "0.3" },
+  { name = "rand_chacha", version = "0.9" },
+  { name = "rand_core", version = "0.6" },
+  { name = "rand_core", version = "0.9" },
+  { name = "r-efi", version = "5" },
+  { name = "wasi", version = "0.11" },
+  { name = "webpki-roots", version = "0.26" },
 ]

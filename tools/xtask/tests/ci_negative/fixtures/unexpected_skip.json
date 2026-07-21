@@ -1,0 +1,4 @@
+{
+  "fast": "SKIP",
+  "build_test": "RUN_PASS"
+}

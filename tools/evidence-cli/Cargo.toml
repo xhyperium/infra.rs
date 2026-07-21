@@ -1,0 +1,23 @@
+[package]
+name = "xhyper-evidence-cli"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+description = "Read-only evidence chain CLI (SPEC-EVIDENCE-002 §25)"
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "evidence-cli"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+xhyper-kernel = { path = "../../crates/kernel"}
+xhyper-evidence = { path = "../../crates/evidence"}
+xhyper-evidence-file = { path = "../../crates/adapters/evidence/file"}
+serde = { workspace = true }
+serde_json = { workspace = true }
+[lints]
+workspace = true

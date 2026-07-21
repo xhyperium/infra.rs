@@ -1,5 +1,7 @@
 # Review Round 10 — Adversarial final
+
 Probes:
+
 - Scaffold cannot be default production path: confirmed features
 - Mock cannot pass as live: live tests hit real services
 - Close/timeout: redis/pg close APIs present

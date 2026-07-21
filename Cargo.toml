@@ -74,7 +74,7 @@ rdkafka = { version = "0.37", default-features = false, features = [
   "ssl",
   "sasl",
 ] }
-async-nats = "0.39"
+async-nats = "0.50"
 clickhouse = { version = "0.13", default-features = false, features = [
   "time",
   "uuid",

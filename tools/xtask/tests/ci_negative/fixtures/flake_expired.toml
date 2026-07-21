@@ -1,0 +1,11 @@
+# Spec §26 / PHASE-3-03：登记 flake 过期应阻断（expires < today）
+# Driver: check_flake_registry_text / `ci flake` with TODAY=2026-07-16 after inject
+# 本文件为负向 fixture 文本；仓库默认 .github/ci/flakes.toml 保持空注册表。
+
+[[flake]]
+test = "xhyper_xtask::ci::expired_open_fixture"
+owner = "@ci-owner"
+tracking_issue = 123
+first_seen = "2025-01-01"
+expires = "2026-07-15"
+allowed_retries = 1
