@@ -52,7 +52,7 @@
 
 ### Constitution
 
-**触发**: Rust 源文件 / 配置文件 / CONSTITUTION.md 变更
+**触发**: Rust 源文件 / 配置文件 / CONSTITUTION.md / docs/constitution/** 变更
 
 | Job | 说明 | 超时 |
 |----|----|----|

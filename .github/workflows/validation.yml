@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -93,5 +94,20 @@ jobs:
           if [ "$(git rev-parse --abbrev-ref HEAD)" = "HEAD" ]; then
             git checkout -b harness-ci
           fi
+      - name: 安装 bd CLI
+        run: curl -sSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
+      - name: 初始化 beads
+        run: bd init --quiet
       - name: 运行 harness check
         run: node scripts/quality-gates/check.mjs
+
+  canonical-align:
+    name: Canonical 对齐检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - name: 运行 canonical-align check
+        run: node scripts/quality-gates/check-canonical-align.mjs

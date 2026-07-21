@@ -10,7 +10,7 @@
 - **用户可见错误信息**：中文
 - **标识符**：英文（Rust 惯例）
 - **LICENSE**：保留英文许可证原文
-- 细则见 [CONSTITUTION.md §4.5 / §4.6](./CONSTITUTION.md)、[docs/governance/编码与语言约定.md](./docs/governance/编码与语言约定.md)、[docs/governance/ASD-STE100.md](./docs/governance/ASD-STE100.md)
+- 细则见 [docs/constitution/04-code-standards.md §4.5 / §4.6](./docs/constitution/04-code-standards.md)、[docs/governance/编码与语言约定.md](./docs/governance/编码与语言约定.md)、[docs/governance/ASD-STE100.md](./docs/governance/ASD-STE100.md)；索引 [docs/constitution/](./docs/constitution/)
 
 ## 项目身份
 
@@ -127,7 +127,7 @@ node scripts/quality-gates/check.mjs
 
 ## Git Worktree（强制）
 
-完整细则见 [docs/governance/worktree-policy.md](./docs/governance/worktree-policy.md) 与 [CONSTITUTION.md §6.0.5](./CONSTITUTION.md)。
+完整细则见 [docs/governance/worktree-policy.md](./docs/governance/worktree-policy.md) 与 [docs/constitution/06-governance.md §6.0.5](./docs/constitution/06-governance.md#605-git-worktree-强制)。
 
 - **所有活跃开发**在 `.worktrees/<branch-name>` 内进行
 - 开工：`node scripts/worktree/worktree.mjs create <type>/<id>-<slug>` → `cd` 进入 worktree
@@ -136,7 +136,7 @@ node scripts/quality-gates/check.mjs
 
 ## Git 规范（Main First）
 
-完整条款见 [CONSTITUTION.md §6.0](./CONSTITUTION.md)。摘要：
+完整条款见 [docs/constitution/06-governance.md §6.0](./docs/constitution/06-governance.md#60-git-main-first强制)。摘要：
 
 - **`main` 唯一主干**：工作必须收敛到 `main`，禁止长期并行主线
 - **禁止在 `main` 上直接开发 / 推送**；路径：`分支 → PR → 审查 → CI → 合并 main`

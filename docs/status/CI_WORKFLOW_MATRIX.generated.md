@@ -9,6 +9,7 @@
 
 | 文件 | name | 触发（启发式） | Jobs |
 |------|------|----------------|------|
+| `beads-e2e.yml` | Beads E2E | push, pull_request, workflow_dispatch | `beads-smoke` |
 | `canonical-coverage.yml` | Canonical Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
 | `ci-rust.yml` | CI（Rust） | push, pull_request | `check-rust`, `build`, `test`, `msrv`, `coverage` |
 | `ci-summary.yml` | CI Summary | (see workflow) | `summary` |
@@ -30,14 +31,14 @@
 | `testkit-coverage.yml` | Testkit Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
 | `testkit-miri.yml` | Testkit Miri | schedule, workflow_dispatch | `miri` |
 | `testkit-mutants.yml` | Testkit Mutants | schedule, workflow_dispatch | `mutants` |
-| `validation.yml` | 校验 | push, pull_request | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness` |
+| `validation.yml` | 校验 | push, pull_request, workflow_dispatch | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness`, `canonical-align` |
 
 ## 统计
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 22 |
-| Job 总数（解析） | 38 |
+| 工作流文件数 | 23 |
+| Job 总数（解析） | 40 |
 
 ## 维护
 

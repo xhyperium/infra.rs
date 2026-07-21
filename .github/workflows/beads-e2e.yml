@@ -1,0 +1,46 @@
+name: Beads E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  beads-smoke:
+    name: Beads 冒烟测试
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: 安装 bd CLI
+        run: curl -sSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
+      - name: 验证 bd 可用
+        run: bd version
+      - name: 初始化 beads 数据库
+        run: bd init
+      - name: 创建测试 issue
+        run: bd create "CI smoke test" -t task -p 0
+      - name: 列出 issues
+        run: bd list
+      - name: 获取 ready work
+        run: bd ready
+      - name: Claim 测试 issue
+        run: |
+          ID=$(bd ready --json | node -e "process.stdin.on('data',d=>{const j=JSON.parse(d);process.exit(j.length?0:1)})" && bd ready --json | node -e "process.stdin.on('data',d=>{console.log(JSON.parse(d)[0].id)})") || ID=$(bd list --json | node -e "process.stdin.on('data',d=>{console.log(JSON.parse(d)[0].id)})")
+          echo "Claiming $ID"
+          bd update "$ID" --claim
+      - name: 关闭测试 issue
+        run: |
+          ID=$(bd list --json | node -e "process.stdin.on('data',d=>{console.log(JSON.parse(d)[0].id)})")
+          bd close "$ID" --reason "CI smoke test complete"
+      - name: 验证 beads 状态
+        run: bd where

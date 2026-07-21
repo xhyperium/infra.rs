@@ -1,6 +1,6 @@
 # Git Worktree 强制开发策略
 
-> 本文档为 `CONSTITUTION.md §6.0.5` 的实施细则。
+> 本文档为 [`docs/constitution/06-governance.md` §6.0.5](../constitution/06-governance.md#605-git-worktree-强制) 的实施细则。
 > 工具脚本：`scripts/worktree/worktree.mjs`、`scripts/worktree/worktree-policy.mjs`
 > 硬门禁：`.claude/hooks/pre-tool-check.mjs`（BLOCK）+ `session-context.mjs`（指引）
 
@@ -150,4 +150,4 @@ export INFRA_WORKTREE_BYPASS=1
 | `scripts/worktree/worktree-policy.mjs` | 路径规范、门禁判定、审计 |
 | `.claude/hooks/pre-tool-check.mjs` | PreToolUse 硬拦截 |
 | `.claude/hooks/session-context.mjs` | SessionStart 指引与审计 |
-| `CONSTITUTION.md §6.0.5` | 宪章条款 |
+| `docs/constitution/06-governance.md` §6.0.5 | 宪章条款 |
