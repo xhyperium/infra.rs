@@ -557,13 +557,13 @@ function interactiveReview(conflicts, opts) {
 
     process.stdout.write("  选择 [b]eads 获胜 / [g]itHub 获胜 / [s]跳过 / [a]全部 beads / [A]全部 GitHub / [q]退出: ");
 
-      let choice;
-      try {
-        const buf = Buffer.alloc(8);
-        const n = readSync(0, buf, 0, 8, null);
-        choice = buf.toString("utf-8", 0, n).trim().toLowerCase();
-      } catch {
-      // stdin 不可读时跳过交互
+    let choice;
+    try {
+      const buf = Buffer.alloc(8);
+      const n = readSync(0, buf, 0, 8, null);
+      choice = buf.toString("utf-8", 0, n).trim().toLowerCase();
+    } catch {
+      // stdin 不可用时跳过当前冲突，剩余按默认策略
       break;
     }
     console.log(""); // newline after input
