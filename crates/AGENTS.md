@@ -154,6 +154,8 @@ crates/<crate-name>/
 | 版本 | 日期 | 修订 |
 |------|------|------|
 | v1.2.0 | 2026-07-21 | 移除 `infra-core`；L0 改为 `xhyper-kernel` |
+| v1.1.3 | 2026-07-21 | 合规表全绿：补齐 `types/decimal` / `types/canonical` 标准布局缺口 |
+| v1.1.2 | 2026-07-21 | 合规表与概览补齐 `testkit` / `types/decimal` / `types/canonical`；标注布局缺口 |
 | v1.1.1 | 2026-07-21 | 锁定标准条目顺序：src → examples → docs → tests → CHANGELOG → AGENTS → README |
 | v1.1.0 | 2026-07-21 | 增加 crate 子模块标准布局（七项 + Cargo.toml） |
 | v1.0.0 | 2026-07-21 | 初始代理规则 |

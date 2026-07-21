@@ -1,5 +1,11 @@
 # Changelog — xhyper-decimalx
 
+## [Unreleased]
+
+### Added
+
+- 按 crates 子模块标准补齐 `examples/` 骨架（`.gitkeep`）
+
 ## 0.1.0 — 2026-07-21
 
 ### Added

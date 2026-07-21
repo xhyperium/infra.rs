@@ -17,6 +17,7 @@
 
 ### 变更
 
+- 按 crates 子模块标准补齐 `examples/`、`docs/`、`tests/` 骨架与 `AGENTS.md`。
 - **BREAKING（0.1 monorepo）**：删除 `OrderId` 类型别名；`Order.id` / `OrderAck.id` 改为 `String`。
 - CAN-TIME-001：DTO `ts` 语义冻结为 Unix ns；`ns_from_unix_millis` 正式入口。
 - 文档：active spec / alignment / residual 与 live crate 1:1；SAFE-15 DEFERRED、SAFE-16 HUMAN_ONLY。
