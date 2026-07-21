@@ -159,4 +159,4 @@ core 必选 GAP = 0
 
 | 日期 | 说明 |
 |------|------|
-| 2026-07-21 | 生产就绪文档同步：contracts 存在性、domain、中文错误、PARTIAL contract-testkit；PR #98 |
+| 2026-07-21 | 生产就绪文档同步：contracts 存在性、domain、中文错误、PARTIAL contract-testkit；PR #98 **合入 main** |

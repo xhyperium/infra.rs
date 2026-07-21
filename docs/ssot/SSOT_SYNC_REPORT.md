@@ -84,7 +84,7 @@ rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/adapters/ .agents/ssot/a
 镜像完整性只证明 `.agents/ssot/**` 与上游一致或已本地化。  
 **实现落地**以各域 `*-ssot-alignment.md` + `crates/` 为准。
 
-2026-07-21（PR #98）核心五 crate 生产就绪闭合后，已同步更新：
+2026-07-21（PR #98 **已合入 main**）核心五 crate 生产就绪闭合后，本仓实现对齐文已同步更新：
 
 - [workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
 - [types-ssot-alignment.md](./types-ssot-alignment.md)

@@ -81,7 +81,7 @@ RUSTFLAGS='--cfg loom' \
   --test lifecycle_concurrency_loom --release
 
 cargo deny check
-node scripts/check-canonical-align.mjs
+node scripts/quality-gates/check-canonical-align.mjs
 ```
 
 结果摘要：
@@ -314,7 +314,7 @@ crate 根文档已经明确声明：当前不是 Production Ready、package stab
 - 本报告审计五个 crate 及其直接消费证据，不评估 scaffold adapter 是否能连接真实交易所、数据库或消息系统。
 - 本次没有重跑 cargo-mutants 和 Miri；只验证了相关 workflow/既有证据存在。不得把它写成“本次实测通过”。
 - 本次没有运行 kernel branch coverage，只运行了五个 crate 的 LCOV 行覆盖率门禁。
-- 本次没有运行 MSRV 1.85 或非 Linux 目标。
+- 审计当时本地未跑 MSRV 1.85 / 非 Linux；**PR #98 CI 已通过 MSRV 1.85**；非 Linux 目标仍未验证。
 - 没有做性能、内存、长稳、故障注入集群或真实后端基准。
 - 报告基于最新 `origin/main` 的专用 docs worktree 交付。对比被审计快照后，五个 crate 的 `Cargo.toml`、`src/` 和 `tests/` 均未变化；根 `Cargo.toml` 仅包含范围外 workspace 演进，kernel/testkit 说明文档路径已重组。因此本报告仍以源码、测试和命令结果为主要证据。
 - 代码中的“明确限制”不自动等于 bug；例如中间值溢出返回 `Err`、guard drop 不触发均需先按正式产品合同裁定。
@@ -329,9 +329,10 @@ crate 根文档已经明确声明：当前不是 Production Ready、package stab
 
 | 字段 | 值 |
 |---|---|
-| 跟进分支 | `feat/infra-prod-readiness-core-crates` |
+| 跟进分支 | `feat/infra-prod-readiness-core-crates` → **已合入 `main`（PR #98）** |
+| 合入提交 | `76c56d7`（squash merge） |
 | 跟进性质 | 针对 §4–§5 P0/P1 的可机器验证闭合；**不**等同整体 Production Ready 或 §8 签字 |
-| 验证命令 | 五 crate `test` / `clippy -D warnings` / `fmt` / `doc`；`RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release` |
+| 验证命令 | 五 crate `test` / `clippy -D warnings` / `fmt` / `doc` / cov-gate 100%；`RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release`；`node scripts/quality-gates/check-canonical-align.mjs` |
 
 ### 11.1 已闭合（有测试/源码证据）
 
@@ -352,7 +353,7 @@ crate 根文档已经明确声明：当前不是 Production Ready、package stab
 | DEFER-3 | canonical 非 committed DTO | `Order`/`Tick`/`Trade` 等仍 Uncommitted |
 | DEFER-4 | decimal fuzz / 独立 oracle / mutants / Miri | 未在本批次宣称实测通过 |
 | DEFER-5 | 公开 API snapshot / semver diff 门禁 | 未新增 |
-| DEFER-6 | MSRV 1.85 / 非 Linux 矩阵实测 | 未在本环境重跑 |
+| DEFER-6 | 非 Linux 矩阵实测 | MSRV 1.85 已在 PR #98 CI 通过；非 Linux 目标仍未宣称 |
 | DEFER-7 | §8 发布/回滚人工签字 | 明确保留给 maintainer；本批次不伪造 |
 | DEFER-8 | VenueAdapter additive default 编译门禁 | 仍依赖文档 + 运行时 Invalid；未做强制 override lint |
 
@@ -377,3 +378,12 @@ crate 根文档已经明确声明：当前不是 Production Ready、package stab
 | audit | 验收项源码审计 + 诚实性补丁 | SUCCESS；补 README/CHANGELOG、Uncommitted 标注、`RecordingTxRunner` 可观察 commit/rollback |
 
 **整体 Production Ready：否**（§11.2 DEFER 仍有效）。
+
+### 11.5 合入主干（2026-07-21）
+
+| 项 | 状态 |
+|---|---|
+| PR | https://github.com/xhyperium/infra.rs/pull/98 **MERGED** |
+| CI | 合入前全绿（含 coverage 100%、loom、Constitution、Harness、MSRV 1.85） |
+| SSOT 对齐文 | `docs/ssot/{workspace,types,contracts,kernel,testkit,bootstrap}-ssot-alignment.md` 等已与本批次同步；见各文变更记录 |
+| 整体 Production Ready | **否**（§11.2 DEFER 仍有效） |

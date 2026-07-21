@@ -5,7 +5,7 @@
 | 域 | `/types/`（decimal + canonical） |
 | 镜像 | `.agents/ssot/types/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 审计日期 | 2026-07-21 |
-| 跟进 | 2026-07-21 生产就绪闭合（PR #98）；**非**整体 Production Ready / package stable |
+| 跟进 | 2026-07-21 生产就绪 P0/P1 **已合入 main**（PR #98）；**非**整体 Production Ready / package stable |
 | 结论 | **两 crate 均已注册 workspace 并有可运行测试**；decimal 不变量已硬化；canonical **仅** committed wire v1 五类型有冻结策略 |
 
 ## 结论摘要
@@ -121,3 +121,4 @@ canonical  →  decimalx  →  kernel
 |------|------|
 | 2026-07-21 | 初版：decimal + canonical 本仓落地状态；配合移除 `infra-core` 后的 workspace 地图 |
 | 2026-07-21 | 生产就绪闭合：字段私有 / DecimalError / committed wire v1 / Uncommitted 标注；同步 PR #98 |
+| 2026-07-21 | PR #98 合入 main：本对齐文随主干生效 |

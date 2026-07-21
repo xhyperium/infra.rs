@@ -28,7 +28,7 @@
 4. 各域 `*-ssot-alignment.md` — 本仓落地差距
 5. 生产就绪审计（五核心 crate）：[../report/2026-07-21/core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md)
 
-> **2026-07-21 跟进（PR #98）**：decimal/canonical/contracts/kernel/testkit 已做 P0/P1 闭合并回写对齐文；镜像 COMPLETE **仍不等于** 本仓 Production Ready。
+> **2026-07-21 跟进（PR #98 已合入 main）**：decimal/canonical/contracts/kernel/testkit 的 P0/P1 闭合与对齐文已在主干；镜像 COMPLETE **仍不等于** 本仓 Production Ready。详见各 `*-ssot-alignment.md` 与 [生产就绪审计 §11](../report/2026-07-21/core-crates-production-readiness.md)。
 
 ## 文档
 

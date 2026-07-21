@@ -184,7 +184,7 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 
 | 日期 | 说明 |
 |------|------|
-| 2026-07-21 | 生产就绪：ClockDomain、wait_timeout、loom CI、中文错误；PR #98 |
+| 2026-07-21 | 生产就绪：ClockDomain、wait_timeout、loom CI、中文错误；PR #98 **合入 main** |
 
 ## Workspace 交叉引用
 

@@ -104,7 +104,7 @@ rg -n 'fn register|fn resolve|pub struct Gate|pub enum Gate' crates/bootstrap/sr
 
 | 日期 | 说明 |
 |------|------|
-| 2026-07-21 | 生产就绪：`Bounded*` 有界面命名收敛；与 contracts 权威 trait 区分；PR #98 |
+| 2026-07-21 | 生产就绪：`Bounded*` 有界面命名收敛；与 contracts 权威 trait 区分；PR #98 **合入 main** |
 
 ## 追溯
 
