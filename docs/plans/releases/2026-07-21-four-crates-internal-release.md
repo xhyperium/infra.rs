@@ -10,6 +10,7 @@
 | Maintainer 收尾清单 | [`2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md`](./2026-07-21-FOUR-CRATES-MAINTAINER-CHECKLIST.md) |
 | 内部 tag | **`v0.3.0-four-crates`** → `5acac34`（`main` · #159+#160 · 已推送 origin） |
 | 实现 PR | [#159](https://github.com/xhyperium/infra.rs/pull/159) · 清单 PR [#160](https://github.com/xhyperium/infra.rs/pull/160) |
+| kernel crate 发布记录 | [`crates/kernel/releases/0.3.0-internal.md`](../../../crates/kernel/releases/0.3.0-internal.md) |
 
 ---
 

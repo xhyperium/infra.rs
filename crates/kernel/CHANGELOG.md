@@ -8,7 +8,7 @@
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-07-21 — four-crate production tranche
+## [0.3.0] - 2026-07-21 — 内部生产发布（L1+L4）
 
 ### Added
 
@@ -17,11 +17,12 @@
 - 真实 `benches/hot_path`（`cargo bench -p kernel --bench hot_path -- --quick`）
 - `docs/API.md`：完整公开消费面；README 声明 **L1+L4** 生产层级与硬限制
 - package 选择器统一为 Cargo 名 `kernel`（命令路径）
+- crate 发布记录：[`releases/0.3.0-internal.md`](./releases/0.3.0-internal.md)
 
 ### Notes
 
-- 内部生产发布证据见 `docs/plans/releases/2026-07-21-four-crates-internal-release.md`
-- `publish = false`；不批准 crates.io
+- **已执行内部发布**：tag `v0.3.0-four-crates`；证据 `docs/plans/releases/2026-07-21-four-crates-internal-release.md`
+- `publish = false`；**不** crates.io
 
 ### Historical
 

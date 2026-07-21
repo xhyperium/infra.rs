@@ -15,6 +15,12 @@ xhyper.rs / infra.rs 的 **L0 语义信任根**：错误分类、时间与生命
 > **分层就绪**：可在声明的 L1+L4 范围内作为 L0 依赖使用。  
 > **不是** 整体 workspace Production Ready；**不是** crates.io 发布。
 
+| 发布 | 链接 |
+|------|------|
+| 内部发布记录 | [releases/0.3.0-internal.md](./releases/0.3.0-internal.md) |
+| 内部 tag | `v0.3.0-four-crates` |
+| 四包证据 | [docs/plans/releases/2026-07-21-four-crates-internal-release.md](../../docs/plans/releases/2026-07-21-four-crates-internal-release.md) |
+
 契约 SSOT：`.agents/ssot/kernel/spec/spec.md`（**SPEC-KERNEL-002**）。  
 本仓对齐：[docs/ssot/kernel-ssot-alignment.md](../../docs/ssot/kernel-ssot-alignment.md)。
 
