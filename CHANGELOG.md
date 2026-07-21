@@ -14,12 +14,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **crate `docs/README.md` 补齐**：全部 workspace members 的 crate 级文档入口（对齐矩阵 / SSOT 镜像 / 分层边界）
 - **`scripts/gen-docs-status.mjs`**：从 `.github/workflows` 生成 `docs/status/CI_WORKFLOW_MATRIX.generated.md`（支持 `--check`）
 - **`crates/evidence`**：补齐标准 `docs/` + `examples/` 骨架
+- **`scripts/self-test.mjs`**：模块自验证统一入口，自动发现 + L0 语法检查 + L1 逻辑测试，覆盖 26 生产模块，~1,500 断言，100% 覆盖率
+- **`scripts/pr-flow.mjs`**：PR 全流程自动化（Gate → Review → Push+Create → CI+Merge → Cleanup）
+- **`.claude/skills/pr-auto-approve/scripts/approve.mjs`**：从 `.sh` 重写为 `.mjs`（`fetch` API），移除 curl/python3 依赖
+- **`.github/workflows/self-test.yml`**：CI 并行 scripts + hooks 自检 workflow
 
 ### Changed
 
 - `scripts/check.mjs` 增加 docs status matrix 新鲜度检查
 - `docs/status/README.md` / `docs/README.md` 收录自动生成矩阵
 - **Agent 入口索引同步**：`AGENTS.md` / `CLAUDE.md` 补齐 workspace members（evidence / observex / transport 等）与完整 `docs/ssot/*` 域链接，与分类后的文档树一致
+- **`CONSTITUTION.md` §4.8 强化**：全项目 `.mjs`-only，禁止 `.sh` 脚本；确认无合法 shell 场景
+- **`CONSTITUTION.md` §5.2 新增**：模块自验证为强制质量门禁
+- **`scripts/worktree-policy.mjs`**：`formatAuditWarning` 增加 null/undefined 防御
+- **`scripts/check.mjs` / `scripts/gc-scan.mjs`**：补充 shebang，支持直接执行
+- **Hook/script L1 测试补齐**：24 个 `*.test.mjs` 文件，覆盖所有 25 生产模块（100% L1 覆盖率）
+
+### Removed
+
+- **`.claude/skills/pr-auto-approve/scripts/approve.sh`**：已迁移至 `approve.mjs`（宪法 §4.8）
 
 
 - **`docs/` 严格分类**：根目录不再平铺内容文件；按职责拆为
