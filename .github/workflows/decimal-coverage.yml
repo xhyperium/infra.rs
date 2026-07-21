@@ -3,6 +3,7 @@ name: Decimal Coverage
 # decimalx：LCOV 行覆盖率 100%
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, develop]
     paths:
@@ -46,4 +47,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p decimalx --filter crates/types/decimal/src
+        run: node scripts/cov-gate-100.mjs -p decimalxx --filter crates/types/decimal/src

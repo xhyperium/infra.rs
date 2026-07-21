@@ -3,6 +3,7 @@ name: Contracts Coverage
 # contracts：LCOV 行覆盖率 100%
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, develop]
     paths:
