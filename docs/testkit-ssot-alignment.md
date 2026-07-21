@@ -125,6 +125,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 - `.agents/ssot/testkit/**`：只读镜像；禁止本地改 CLOSED/COMPLETE 叙事冒充同步
 - 实现 SSOT 以 **源码 + 本仓测试/覆盖率/mutants/miri 输出** 为准
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
+- Workspace 总览（members 地图、依赖方向）：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
 
 ## 未做（follow-up / DEFER）
 

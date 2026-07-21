@@ -77,5 +77,13 @@ cp -rf /home/workspace/xhyper.rs/.agent/SSOT/types   .agents/ssot/
 
 **全部通过** — 源和目标在文件数量、大小和内容上完全一致。无遗漏、无差异。
 
-> **补充（2026-07-21）**：镜像同步成功 ≠ 本仓实现。testkit **core 已落地** `crates/testkit`；详见 [testkit-ssot-alignment.md](./testkit-ssot-alignment.md)。  
-> **补充（2026-07-21）**：kernel **已落地** `crates/kernel`（package `xhyper-kernel`），并完成 SPEC-KERNEL-002 本仓逐条对齐矩阵；详见 [kernel-ssot-alignment.md](./kernel-ssot-alignment.md)。
+> **补充（2026-07-21）**：镜像同步成功 ≠ 本仓实现（R7）。本仓落地以 `Cargo.toml` members + 对齐文档为准。
+>
+> | 域 | 本仓路径 | 状态 | 对齐文档 |
+> |----|----------|------|----------|
+> | kernel | `crates/kernel` | **已落地** | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
+> | testkit | `crates/testkit` | **core 已落地**；contract-testkit DEFER | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
+> | types | `crates/types/{decimal,canonical}` | **已落地**；wire/package stable OPEN | [types-ssot-alignment.md](./types-ssot-alignment.md) |
+>
+> **总览**：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)  
+> **非 SSOT 域**：`infra-core` 已从 workspace **移除**（见根 `CHANGELOG`）；它从未属于 kernel/testkit/types 镜像三域。

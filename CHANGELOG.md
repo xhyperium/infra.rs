@@ -9,10 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **`infra-core` crate**：从 workspace 移除；L0 基础层以 `xhyper-kernel` 为准，类型层以 `types/*` 为准
+
+### Changed
+
+- 同步更新 `README` / `ARCHITECTURE` / `CONSTITUTION` / `crates/AGENTS.md` / `docs/VERSIONING.md` 中的 crate 地图
+- DDR-002 适用范围改为 workspace 库 crate；DDR-003 标记为已撤销（依赖已删除的 `infra_core::Error`）
+- 对齐文档：新增 `docs/workspace-ssot-alignment.md`、`docs/types-ssot-alignment.md`；更新 `SSOT_SYNC_REPORT` / `docs/README` / 根 `AGENTS.md` / `CLAUDE.md` 入口
+
 ### Added
 
-- **Crate 子模块标准布局**（`crates/AGENTS.md` v1.1.0）：强制 `src/`、`tests/`、`examples/`、`docs/`、`README.md`、`AGENTS.md`、`CHANGELOG.md`
-- **`infra-core` / `kernel` 骨架补齐**：README、CHANGELOG、AGENTS（kernel）、空目录 `.gitkeep`
+- **Crate 子模块标准布局**（`crates/AGENTS.md`）：强制 `src/`、`tests/`、`examples/`、`docs/`、`README.md`、`AGENTS.md`、`CHANGELOG.md`
+- **`kernel` 等 crate 骨架补齐**：README、CHANGELOG、AGENTS、空目录 `.gitkeep`
 
 ---
 

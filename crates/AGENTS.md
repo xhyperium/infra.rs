@@ -68,13 +68,12 @@ crates/<crate-name>/
 
 ### 合规现状（2026-07-21）
 
-| Crate | src | examples | docs | tests | CHANGELOG | AGENTS | README |
-|-------|:---:|:--------:|:----:|:-----:|:---------:|:------:|:------:|
-| `infra-core` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `kernel`（`xhyper-kernel`） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `testkit`（`xhyper-testkit`） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `decimal`（`xhyper-decimalx`） | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `canonical`（`xhyper-canonical`） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Crate | 路径 | src | examples | docs | tests | CHANGELOG | AGENTS | README |
+|-------|------|:---:|:--------:|:----:|:-----:|:---------:|:------:|:------:|
+| `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `xhyper-decimalx`（lib `decimalx`） | `crates/types/decimal/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 > `examples/` / `docs/` / 暂无集成测试时的 `tests/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。
 
@@ -91,7 +90,8 @@ crates/<crate-name>/
 
 - 新增 crate 前先评估：是否可以用现有 crate 的模块替代
 - crate 间依赖方向单向，禁止循环引用
-- `infra-core` 是基础层，不得依赖其他 workspace crate
+- L0 信任根为 `xhyper-kernel`；`testkit` 仅允许 dev-dependency 消费
+- 依赖方向：`canonical` → `decimalx` → `kernel`；`testkit` → `kernel`
 - 每个 crate 目录必须符合上文「子模块标准布局」
 
 ### C3: 错误处理
@@ -116,7 +116,7 @@ crates/<crate-name>/
 
 ### C6: unsafe
 
-- 禁止在 infra-core 中使用 `unsafe`
+- 库 crate 默认禁止 `unsafe`
 - 如未来需要，必须封装在安全抽象中并附 SAFETY 注释
 
 ### C7: 变更日志
@@ -140,11 +140,12 @@ crates/<crate-name>/
 
 | Crate | 路径 | 职责 |
 |-------|------|------|
-| `infra-core` | `crates/infra-core/` | 核心错误类型、Result 别名、基础工具 |
-| `xhyper-kernel`（lib 名 `kernel`） | `crates/kernel/` | xhyper L0 语义信任根（clock / lifecycle） |
-| `xhyper-testkit`（lib 名 `testkit`） | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
-| `xhyper-decimalx`（lib 名 `decimalx`） | `crates/types/decimal/` | 十进制数值 / Money（ADR-006/007） |
-| `xhyper-canonical`（lib 名 `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
+| `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | xhyper L0 语义信任根（clock / lifecycle） |
+| `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
+| `xhyper-decimalx`（lib `decimalx`） | `crates/types/decimal/` | 十进制数值 / Money（ADR-006/007） |
+| `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
+
+> 领域分组路径（如 `crates/types/<name>/`）合法；标准布局作用于每个 workspace 成员 crate 根目录。
 
 ---
 
@@ -152,6 +153,7 @@ crates/<crate-name>/
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v1.2.0 | 2026-07-21 | 移除 `infra-core`；L0 改为 `xhyper-kernel` |
 | v1.1.1 | 2026-07-21 | 锁定标准条目顺序：src → examples → docs → tests → CHANGELOG → AGENTS → README |
 | v1.1.0 | 2026-07-21 | 增加 crate 子模块标准布局（七项 + Cargo.toml） |
 | v1.0.0 | 2026-07-21 | 初始代理规则 |

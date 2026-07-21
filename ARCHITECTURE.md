@@ -37,7 +37,11 @@ infra.rs/
 ├── LICENSE                    # MIT
 │
 ├── crates/                    # Rust workspace 成员
-│   └── infra-core/            # 核心基础设施库
+│   ├── kernel/                # L0 语义信任根
+│   ├── testkit/               # 测试支持（dev-only）
+│   └── types/
+│       ├── decimal/           # 十进制数值 / Money
+│       └── canonical/         # 跨层共享 DTO
 │
 ├── scripts/                   # Harness 脚本
 │   ├── check.mjs              # 健康检查
@@ -72,48 +76,31 @@ infra.rs/
 ### 层次模型
 
 ```
-┌─────────────────────────────────┐
-│  tests/                         │  集成测试（跨 crate 验证）
-├─────────────────────────────────┤
-│  crates/infra-core/             │  核心基础设施层
-│  ├── lib.rs                     │  模块导出 + lint 属性
-│  └── error.rs                   │  Error 枚举 + serde + Result
-├─────────────────────────────────┤
-│  examples/                      │  使用示例（按需添加）
-└─────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│  tests/ / examples/                        │  跨 crate 集成与示例
+├────────────────────────────────────────────┤
+│  crates/testkit/                           │  T0 test-support（仅 dev-dep）
+│  └── ManualClock 族                        │
+├────────────────────────────────────────────┤
+│  crates/types/canonical/                   │  跨层共享纯 DTO
+│  crates/types/decimal/                     │  Decimal / Money
+├────────────────────────────────────────────┤
+│  crates/kernel/                            │  L0 语义信任根
+│  └── clock / lifecycle                     │
+└────────────────────────────────────────────┘
 ```
 
 ### 依赖规则
 
 ```
-infra-core
-  ├── serde (workspace)           # 序列化框架
-  ├── thiserror (workspace)       # 错误派生
-  └── serde_json (dev)            # JSON 测试
+canonical  →  decimalx  →  kernel
+testkit    →  kernel          # 仅 [dev-dependencies]
 ```
 
 - 所有 crate 通过 `[workspace.dependencies]` 统一管理版本
 - 禁止循环依赖
-- `core` 层不依赖外部运行时或平台特定代码
-- 新增 crate 须在 `crates/` 下注册，遵循单一职责
-
-### infra-core API 表面
-
-```rust
-// lib.rs — 公共接口
-pub mod error;
-pub use error::{Error, Result};
-pub fn hello() -> &'static str;
-
-// error.rs — 错误类型
-pub enum Error {
-    Io(io::Error),          // I/O 操作错误
-    Config(String),         // 配置错误
-    InvalidArgument(String), // 参数校验错误
-    Internal(String),       // 内部未预期错误
-}
-pub type Result<T> = std::result::Result<T, Error>;
-```
+- L0 / types 层不依赖外部运行时或平台特定代码
+- 新增 crate 须在 `crates/` 下注册，遵循单一职责与标准布局
 
 ---
 
