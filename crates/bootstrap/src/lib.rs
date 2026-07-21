@@ -16,7 +16,8 @@
 //! - 静默替面：[`NoopInstrumentation`]（`with_instrumentation` 可选）
 //! - 消费方（如 resiliencx）只依赖 `contracts`，**禁止**依赖 observex
 //!
-//! evidence 全量协议与完整 venue async API 仍 DEFER；本 crate 保留最小对象安全替面。
+//! evidence：权威在 `xhyper-evidence`（re-export trait + `InMemoryEvidenceAppender`）。
+//! 完整 venue async API 仍 DEFER；本 crate 保留最小对象安全替面。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -29,8 +30,9 @@ pub use bounded::{ExecutionContext, MarketDataContext};
 pub use error::{BootstrapError, into_xresult};
 pub use observex::TracingInstrumentation;
 pub use traits::{
-    AccountSource, EvidenceAppender, EvidenceError, ExecutionVenue, InstrumentCatalog,
-    Instrumentation, KeyValueStore, MarketDataSource, NoopInstrumentation, VenueTimeSource,
+    AccountSource, AppendReceipt, EvidenceAppender, EvidenceError, ExecutionVenue,
+    InMemoryEvidenceAppender, InstrumentCatalog, Instrumentation, KeyValueStore, MarketDataSource,
+    NoopInstrumentation, VenueTimeSource,
 };
 
 use kernel::{ShutdownGuard, ShutdownSignal};
@@ -340,7 +342,7 @@ mod tests {
     }
 
     impl EvidenceAppenderTrait for CountingAppender {
-        fn append_named(&self, _name: &str) -> Result<(), EvidenceError> {
+        fn append_named(&self, _name: &str) -> Result<AppendReceipt, EvidenceError> {
             *self.count.lock().expect("counter lock") += 1;
             Err(EvidenceError::DurabilityFailure)
         }

@@ -1,8 +1,9 @@
 //! 公开 API 集成测试：从 crate 外部驱动 shipped 路径。
 
 use bootstrap::{
-    Bootstrap, BootstrapError, EvidenceAppender, EvidenceError, ExecutionContext, Instrumentation,
-    MarketDataContext, NoopInstrumentation, TracingInstrumentation, into_xresult,
+    Bootstrap, BootstrapError, EvidenceAppender, EvidenceError, ExecutionContext,
+    InMemoryEvidenceAppender, Instrumentation, MarketDataContext, NoopInstrumentation,
+    TracingInstrumentation, into_xresult,
 };
 use kernel::ErrorKind;
 use std::sync::{Arc, Mutex};
@@ -22,8 +23,8 @@ impl Instrumentation for CountingInstr {
 struct ProbeAppender;
 
 impl EvidenceAppender for ProbeAppender {
-    fn append_named(&self, _name: &str) -> Result<(), EvidenceError> {
-        Ok(())
+    fn append_named(&self, name: &str) -> Result<bootstrap::AppendReceipt, EvidenceError> {
+        Ok(bootstrap::AppendReceipt { name: name.to_string(), seq: 1 })
     }
 }
 
@@ -94,7 +95,13 @@ fn custom_instrumentation_and_evidence_modes() {
     let appender: Arc<dyn EvidenceAppender> = Arc::new(ProbeAppender);
     let ctx = Bootstrap::new().with_evidence(appender).require_evidence().try_build().expect("ok");
     assert!(ctx.platform().evidence().is_some());
-    ctx.platform().evidence().expect("e").append_named("t").expect("append");
+    let receipt = ctx.platform().evidence().expect("e").append_named("t").expect("append");
+    assert_eq!(receipt.seq, 1);
+
+    let mem = Arc::new(InMemoryEvidenceAppender::new());
+    let ctx = Bootstrap::new().with_evidence(mem.clone() as Arc<dyn EvidenceAppender>).build();
+    ctx.platform().evidence().expect("m").append_named("boot").expect("ok");
+    assert_eq!(mem.names(), vec!["boot".to_string()]);
 }
 
 #[test]

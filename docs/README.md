@@ -15,6 +15,7 @@
 | [schedulex-ssot-alignment.md](schedulex-ssot-alignment.md) | schedulex active registry 对齐与本仓落地状态 |
 | [types-ssot-alignment.md](types-ssot-alignment.md) | types（decimal + canonical）SSOT 对齐与本仓落地状态 |
 | [bootstrap-ssot-alignment.md](bootstrap-ssot-alignment.md) | bootstrap 组合根 SSOT 对齐与本仓落地状态 |
+| [evidence-ssot-alignment.md](evidence-ssot-alignment.md) | evidence 证据追加面与 bootstrap 注入落地 |
 | [adapters-ssot-alignment.md](adapters-ssot-alignment.md) | adapters 九域 SSOT 镜像与 scaffold 落地状态 |
 | [contracts-ssot-alignment.md](contracts-ssot-alignment.md) | contracts SSOT 镜像与 trait 落地状态 |
 | [observex-ssot-alignment.md](observex-ssot-alignment.md) | observex 0.1.0 SSOT 对齐与 TracingInstrumentation 落地 |
