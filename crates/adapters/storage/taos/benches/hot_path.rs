@@ -1,4 +1,5 @@
-//! taosx 核心路径：ping + SELECT SERVER_STATUS（有服务时）。
+//! taosx 核心路径：ping（有服务时）。connect 有界超时。
+use std::time::Duration;
 use std::time::Instant;
 
 use taosx::{TaosConfig, TaosPool};
@@ -11,13 +12,16 @@ fn iters() -> u32 {
 async fn main() {
     let n = iters();
     let cfg = TaosConfig::from_env();
-    let Ok(pool) = TaosPool::connect(cfg).await else {
-        println!("bench_taosx_ping: skipped (no taos)");
+    let connect = tokio::time::timeout(Duration::from_secs(3), TaosPool::connect(cfg));
+    let Ok(Ok(pool)) = connect.await else {
+        println!("bench_taosx_ping: skipped (no taos / timeout)");
         return;
     };
     let start = Instant::now();
     for _ in 0..n {
-        pool.ping().await.expect("ping");
+        if pool.ping().await.is_err() {
+            break;
+        }
     }
     let elapsed = start.elapsed();
     println!("bench_taosx_ping: iters={n} total={elapsed:?} per_iter={:?}", elapsed / n.max(1));

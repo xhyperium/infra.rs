@@ -26,3 +26,40 @@ pub fn append_evidence(path: &std::path::Path, name: &str) -> Result<(), String>
     append_checked(&app, name).map_err(|e| format!("evidence append: {e}"))?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{CheckKind, CheckResult, RunResult, RunStatus};
+
+    #[test]
+    fn version_is_nonempty() {
+        assert!(!VERSION.is_empty());
+    }
+
+    #[test]
+    fn aggregate_and_write_report_roundtrip() {
+        let run = RunResult {
+            schema: RunResult::SCHEMA.into(),
+            status: RunStatus::Pass,
+            plan_digest: "abc".into(),
+            commit: "deadbeef".into(),
+            checks: vec![CheckResult {
+                id: "fmt".into(),
+                kind: CheckKind::Fmt,
+                exit_code: 0,
+                output_digest: "00".into(),
+                duration_ms: 1,
+            }],
+        };
+        let aggregated = aggregate_report(run.clone());
+        assert_eq!(aggregated.status, RunStatus::Pass);
+        assert_eq!(aggregated.plan_digest, "abc");
+        let dir = tempfile::tempdir().expect("tmp");
+        let path = dir.path().join("report.json");
+        write_report(&path, &aggregated).expect("write");
+        let raw = std::fs::read_to_string(&path).expect("read");
+        assert!(raw.contains("verification-run/v1"));
+        assert!(raw.contains("exit_code"));
+    }
+}

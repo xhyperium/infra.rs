@@ -17,7 +17,7 @@
 //!
 //! ## 安全
 //!
-//! 所有查询 API 仅接受参数化 `$N` + [`ToSql`](tokio_postgres::types::ToSql)；
+//! 所有查询 API 仅接受参数化 `$N` + [`ToSql`]；
 //! 禁止把用户输入拼进 SQL 字符串。
 
 #![forbid(unsafe_code)]

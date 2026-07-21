@@ -157,3 +157,5 @@ jobs:
               print(f"\n✅ All {files_scanned} workflows pass security baseline")
               sys.exit(0)
           PYEOF
+
+# trigger-required-check: evidence-gates PR (no-op)

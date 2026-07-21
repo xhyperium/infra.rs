@@ -27,3 +27,26 @@ pub fn map_kafka_err(context: &str, err: impl std::fmt::Display) -> XError {
         _ => XError::unavailable(format!("{context}: {err}")),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn maps_timeout_to_deadline() {
+        let e = map_kafka_err("prod", "request timed out");
+        assert_eq!(e.kind(), ErrorKind::DeadlineExceeded);
+    }
+
+    #[test]
+    fn maps_auth_to_unavailable() {
+        let e = map_kafka_err("conn", "SASL authentication failed");
+        assert_eq!(e.kind(), ErrorKind::Unavailable);
+    }
+
+    #[test]
+    fn maps_unknown_topic_to_invalid() {
+        let e = map_kafka_err("pub", "Unknown topic or partition");
+        assert_eq!(e.kind(), ErrorKind::Invalid);
+    }
+}
