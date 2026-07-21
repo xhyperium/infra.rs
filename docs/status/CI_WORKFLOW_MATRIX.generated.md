@@ -39,14 +39,14 @@
 | `testkit-coverage.yml` | Testkit Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `testkit-miri.yml` | Testkit Miri | schedule, workflow_dispatch | `miri` |
 | `testkit-mutants.yml` | Testkit Mutants | schedule, workflow_dispatch | `mutants` |
-| `validation.yml` | 校验 | pull_request, workflow_dispatch | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness`, `canonical-align`, `decimal-panicking-ops`, `crate-status` |
+| `validation.yml` | 校验 | pull_request, workflow_dispatch | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness`, `canonical-align`, `decimal-panicking-ops`, `settings-hooks`, `crate-status` |
 
 ## 统计
 
 | 指标 | 值 |
 |------|-----|
 | 工作流文件数 | 31 |
-| Job 总数（解析） | 54 |
+| Job 总数（解析） | 55 |
 
 ## 维护
 

@@ -81,9 +81,18 @@
 | 文档 | 说明 |
 |------|------|
 | [README.md](plans/README.md) | 计划目录约定与索引 |
-| [2026-07-21-core-crates-production-readiness.md](plans/2026-07-21-core-crates-production-readiness.md) | 五核心 crate 生产级修复方案（W0–W5） |
+| [2026-07-21-core-crates-production-readiness.md](plans/2026-07-21-core-crates-production-readiness.md) | 五核心 crate 生产级修复方案（W0–W5 · DONE） |
+| [2026-07-21-status-modules-prod-followup.md](plans/2026-07-21-status-modules-prod-followup.md) | STATUS 全模块生产就绪 follow-up（Beads `infra-s9t`） |
 
 > 计划是**可执行**的；审计结论见 [`report/`](report/)。
+
+## 审计报告 — [`report/`](report/)
+
+| 文档 | 说明 |
+|------|------|
+| [2026-07-21/status-modules-production-readiness.md](report/2026-07-21/status-modules-production-readiness.md) | STATUS 全 21 模块生产级就绪度（Agent Team） |
+| [2026-07-21/core-crates-production-readiness.md](report/2026-07-21/core-crates-production-readiness.md) | 五核心 crate 生产就绪审计 |
+| [2026-07-21/README.md](report/2026-07-21/README.md) | 当日报告索引 |
 
 ## 状态与验证记录 — [`status/`](status/)
 
