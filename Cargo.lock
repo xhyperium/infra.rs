@@ -44,8 +44,14 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 name = "binancex"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "async-trait",
+ "futures-core",
+ "futures-util",
+ "tokio",
+ "xhyper-canonical",
+ "xhyper-contracts",
  "xhyper-decimalx",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -705,8 +711,14 @@ dependencies = [
 name = "okxx"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "async-trait",
+ "futures-core",
+ "futures-util",
+ "tokio",
+ "xhyper-canonical",
+ "xhyper-contracts",
  "xhyper-decimalx",
+ "xhyper-kernel",
 ]
 
 [[package]]
