@@ -51,9 +51,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: 验证 rust-cache
         run: |
-          # Check that cache restored dependency artifacts
-          DEPS_COUNT=$(find target/debug/deps -name '*.d' 2>/dev/null | wc -l)
-          echo "rust-cache restored $DEPS_COUNT dependency files"
+          echo "rust-cache target size: $(du -sh target 2>/dev/null | cut -f1)"
         continue-on-error: true
       - name: 检查
         run: cargo check --workspace --all-features
@@ -72,7 +70,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: 验证 rust-cache
         run: |
-          echo "rust-cache restored $(find target/debug/deps -name '*.d' 2>/dev/null | wc -l) deps"
+          echo "rust-cache target size: $(du -sh target 2>/dev/null | cut -f1)"
         continue-on-error: true
       - name: 安装 cargo-nextest
         uses: taiki-e/install-action@v2
@@ -96,7 +94,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: 验证 rust-cache
         run: |
-          echo "rust-cache restored $(find target/debug/deps -name '*.d' 2>/dev/null | wc -l) deps"
+          echo "rust-cache target size: $(du -sh target 2>/dev/null | cut -f1)"
         continue-on-error: true
       - name: 在 MSRV 上构建
         run: cargo build --workspace --all-features
@@ -118,7 +116,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: 验证 rust-cache
         run: |
-          echo "rust-cache restored $(find target/debug/deps -name '*.d' 2>/dev/null | wc -l) deps"
+          echo "rust-cache target size: $(du -sh target 2>/dev/null | cut -f1)"
         continue-on-error: true
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
