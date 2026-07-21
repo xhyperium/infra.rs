@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`okxx`**：实现 `ExchangeAdapter` trait（占位 ticker；5 单元测试）
+- **contracts SSOT 镜像**：`.agents/ssot/contracts/`（16 文件，与上游 0 diff）；对齐文 `docs/contracts-ssot-alignment.md`
 - **`xhyper-bootstrap`**（lib `bootstrap`）：L1 唯一组合根（ADR-016）；typed `PlatformContext` / `AppContext` / `BootstrappedApp`；可移植 trait 替面；对齐文档 `docs/bootstrap-ssot-alignment.md`
 - **`xhyper-configx`（lib `configx`）**：落地 active SSOT 0.1.0 内存字符串 KV（`ConfigStore`）；生产依赖仅 `xhyper-kernel`；对齐文 `docs/configx-ssot-alignment.md`
 - **Crate 子模块标准布局**（`crates/AGENTS.md`）：强制 `src/`、`tests/`、`examples/`、`docs/`、`README.md`、`AGENTS.md`、`CHANGELOG.md`

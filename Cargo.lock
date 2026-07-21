@@ -238,7 +238,8 @@ dependencies = [
 name = "okxx"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "infra-contracts",
+ "xhyper-decimalx",
 ]
 
 [[package]]

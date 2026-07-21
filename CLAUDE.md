@@ -12,7 +12,7 @@
 
 ## 上游 SSOT 与本仓落地
 
-- `.agents/ssot/{kernel,testkit,types,infra,adapters}` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓可宣称 ship」
+- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts}` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓可宣称 ship」
   - infra 平面在 `.agents/ssot/infra/{bootstrap,configx,gate,…}`（保留 `infra/` 层级）
   - adapters 平面在 `.agents/ssot/adapters/{exchange,storage}/…`（保留 `adapters/` 层级）
 - 本仓 members：`kernel` / `testkit` / `configx` / `bootstrap` / `resiliencx` / `types/*` / `contracts` / `adapters/**`（adapters 为 scaffold；**无** `infra-core`；infra 其余域未落地）
@@ -24,6 +24,7 @@
   - [docs/types-ssot-alignment.md](./docs/types-ssot-alignment.md)
   - [docs/bootstrap-ssot-alignment.md](./docs/bootstrap-ssot-alignment.md)
   - [docs/adapters-ssot-alignment.md](./docs/adapters-ssot-alignment.md)
+  - [docs/contracts-ssot-alignment.md](./docs/contracts-ssot-alignment.md)
 
 ## Hook 感知
 
