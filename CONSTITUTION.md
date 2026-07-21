@@ -66,7 +66,7 @@ crates/
 - **让非法状态不可表示**：用类型系统在编译期阻止错误
 - 关键领域值（价格、数量、时间戳）必须创建 newtype 并在构造时校验
 - 优先使用枚举替代字符串或哨兵值
-- 量化领域专项见 [docs/quant-dev-spec.md](./docs/quant-dev-spec.md)
+- 量化领域专项见 [docs/governance/quant-dev-spec.md](./docs/governance/quant-dev-spec.md)
 
 ### 3.4 错误处理
 - 使用 `thiserror` 定义明确错误类型
@@ -101,7 +101,7 @@ crates/
 
 ### 4.5 语言与编码（强制）
 
-本仓库对**文本语言与字符编码**作出强制约定。细则见 [docs/编码与语言约定.md](./docs/编码与语言约定.md)；冲突时以本宪章为准。
+本仓库对**文本语言与字符编码**作出强制约定。细则见 [docs/governance/编码与语言约定.md](./docs/governance/编码与语言约定.md)；冲突时以本宪章为准。
 
 #### 4.5.1 字符编码
 - 全部文本源文件必须为 **UTF-8（无 BOM）**
@@ -136,7 +136,7 @@ crates/
 **ASD-STE100**（*Simplified Technical English*，简化技术英语，简称 **STE**）是用于编写技术文档的**受控自然语言**与国际通行规范。  
 本仓库将 **ASD-STE100 作为全局英文技术文档标准**。
 
-> 落地指南见 [docs/ASD-STE100.md](./docs/ASD-STE100.md)。  
+> 落地指南见 [docs/governance/ASD-STE100.md](./docs/governance/ASD-STE100.md)。  
 > 官方规范受版权保护；本宪章只规定**适用边界与强制原则**，不复制官方词表全文。
 
 #### 4.6.1 适用范围
@@ -171,12 +171,12 @@ crates/
 - 中文文档借鉴 STE 精神：短句、一步一事、少歧义（不强制 STE 英文词表）
 
 #### 4.6.4 AI 与审查
-- AI 撰写英文技术文档时必须按 §4.6 自检（见 `docs/ASD-STE100.md` 清单）  
+- AI 撰写英文技术文档时必须按 §4.6 自检（见 `docs/governance/ASD-STE100.md` 清单）  
 - 审查英文技术 PR 时，审查者应抽查 STE 合规（词汇一致、句长、步骤结构）  
 - 完整词典与规则集以官方 ASD-STE100 版本为准；项目指南不得与官方冲突
 
 #### 4.6.5 合规检查
-- 宪章校验脚本检查：`CONSTITUTION.md` 含 §4.6、`docs/ASD-STE100.md` 存在  
+- 宪章校验脚本检查：`CONSTITUTION.md` 含 §4.6、`docs/governance/ASD-STE100.md` 存在  
 - 深度 STE 词表校验不强制自动化（依赖官方工具/人工）；结构与原则抽查为强制审查义务
 
 ### 4.8 脚本语言：ECMAScript Module（强制）
@@ -205,7 +205,7 @@ crates/
 | 宪章合规性（全部） | **强制** | `scripts/check-constitution.mjs` | `constitution.yml` / `make check` |
 | UTF-8 / 无 `U+FFFD`（§4.5） | **强制** | 编码完整性 | `constitution.yml`（已包含） |
 | Git Main First（§6.0） | **强制** | 主干唯一、PR 收敛 | 分支保护 + 宪章脚本条款检查 |
-| ASD-STE100（§4.6） | **强制** | 英文技术文档受控语言 | 审查清单 + `docs/ASD-STE100.md` |
+| ASD-STE100（§4.6） | **强制** | 英文技术文档受控语言 | 审查清单 + `docs/governance/ASD-STE100.md` |
 | 覆盖率 >= 80% | **推荐** | 代码覆盖 | `ci-rust.yml` |
 | `cargo-llvm-cov` | **推荐** | 覆盖率统计 | `ci-rust.yml` |
 
@@ -251,7 +251,7 @@ make check # 等效: ./scripts/check-constitution.mjs
 
 #### 6.0.5 Git Worktree 强制
 
-**所有活跃开发必须在独立的 Git Worktree 中进行。** 细则见 [docs/worktree-policy.md](./docs/worktree-policy.md)。
+**所有活跃开发必须在独立的 Git Worktree 中进行。** 细则见 [docs/governance/worktree-policy.md](./docs/governance/worktree-policy.md)。
 
 ```bash
 node scripts/worktree.mjs create feat/my-feature
@@ -264,7 +264,7 @@ cd .worktrees/feat/my-feature
 - **已废弃**：`.worktrees/workspaces/`、单数 `.worktree/`、全局 `~/.worktrees/`
 - 实质性任务必须使用独立分支 + worktree 隔离
 - 禁止多任务混用同一 worktree / 分支
-- **机器强制（BLOCK）**：`pre-tool-check.mjs` 拦截主仓**已跟踪**文件 Write/Edit、主仓 `checkout -b`/`switch` 功能分支、`main` 上 commit；`.gitignore` 匹配路径为例外（见 `docs/worktree-policy.md`）；`session-context.mjs` 在主仓给出开工指引
+- **机器强制（BLOCK）**：`pre-tool-check.mjs` 拦截主仓**已跟踪**文件 Write/Edit、主仓 `checkout -b`/`switch` 功能分支、`main` 上 commit；`.gitignore` 匹配路径为例外（见 `docs/governance/worktree-policy.md`）；`session-context.mjs` 在主仓给出开工指引
 
 #### 6.0.6 与 AI 协作
 - AI **不得**在 `main` 检出上直接改代码并提交
@@ -302,7 +302,7 @@ cd .worktrees/feat/my-feature
 - 遵循语义化版本 [SemVer](https://semver.org/)
 - `0.x.y` 期间不保证向后兼容
 - `1.0.0` 后严格 SemVer
-- 统一版本管理细则见 [docs/VERSIONING.md](./docs/VERSIONING.md)
+- 统一版本管理细则见 [docs/governance/VERSIONING.md](./docs/governance/VERSIONING.md)
 
 ### 6.3 所有权
 - 代码所有权由 `.github/CODEOWNERS` 定义
@@ -347,7 +347,7 @@ cd .worktrees/feat/my-feature
 
 | 版本 | 日期 | 修订内容 |
 |------|------|----------|
-| v1.4.0 | 2026-07-21 | 合并量化开发通用规范：类型驱动设计（§3.3）、量化领域专项（docs/quant-dev-spec.md） |
+| v1.4.0 | 2026-07-21 | 合并量化开发通用规范：类型驱动设计（§3.3）、量化领域专项（docs/governance/quant-dev-spec.md） |
 | v1.3.0 | 2026-07-21 | 新增 §4.6 ASD-STE100 作为全局英文技术文档标准 |
 | v1.2.0 | 2026-07-21 | 新增 §6.0 Git Main First（主干唯一、禁 main 直推、PR 收敛） |
 | v1.1.0 | 2026-07-21 | 新增 §4.5 语言与编码（中文注释/文档 + UTF-8 强制） |

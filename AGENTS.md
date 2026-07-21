@@ -10,7 +10,7 @@
 - **用户可见错误信息**：中文
 - **标识符**：英文（Rust 惯例）
 - **LICENSE**：保留英文许可证原文
-- 细则见 [CONSTITUTION.md §4.5 / §4.6](./CONSTITUTION.md)、[docs/编码与语言约定.md](./docs/编码与语言约定.md)、[docs/ASD-STE100.md](./docs/ASD-STE100.md)
+- 细则见 [CONSTITUTION.md §4.5 / §4.6](./CONSTITUTION.md)、[docs/governance/编码与语言约定.md](./docs/governance/编码与语言约定.md)、[docs/governance/ASD-STE100.md](./docs/governance/ASD-STE100.md)
 
 ## 项目身份
 
@@ -39,16 +39,16 @@
 - `contract-testkit` **未**移植；**infra 其余域**（gate/observex/…）当前仅镜像，未宣称本仓实现（schedulex 见上）
 - **adapters**：镜像已本地化；crate 为 scaffold，**未**宣称业务实现 / package stable
 - 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游变更用 **删除感知**同步（`rsync -a --delete`，见 SSOT.md R6）
-- 对齐审计总览：[docs/workspace-ssot-alignment.md](./docs/workspace-ssot-alignment.md)
-  - kernel：[docs/kernel-ssot-alignment.md](./docs/kernel-ssot-alignment.md)
-  - testkit：[docs/testkit-ssot-alignment.md](./docs/testkit-ssot-alignment.md)
-  - schedulex：[docs/schedulex-ssot-alignment.md](./docs/schedulex-ssot-alignment.md)
-  - types：[docs/types-ssot-alignment.md](./docs/types-ssot-alignment.md)
-  - bootstrap：[docs/bootstrap-ssot-alignment.md](./docs/bootstrap-ssot-alignment.md)
-  - configx：[docs/configx-ssot-alignment.md](./docs/configx-ssot-alignment.md)
-  - resiliencx：[docs/resiliencx-ssot-alignment.md](./docs/resiliencx-ssot-alignment.md)
-  - adapters：[docs/adapters-ssot-alignment.md](./docs/adapters-ssot-alignment.md)
-  - contracts：[docs/contracts-ssot-alignment.md](./docs/contracts-ssot-alignment.md)
+- 对齐审计总览：[docs/ssot/workspace-ssot-alignment.md](./docs/ssot/workspace-ssot-alignment.md)
+  - kernel：[docs/ssot/kernel-ssot-alignment.md](./docs/ssot/kernel-ssot-alignment.md)
+  - testkit：[docs/ssot/testkit-ssot-alignment.md](./docs/ssot/testkit-ssot-alignment.md)
+  - schedulex：[docs/ssot/schedulex-ssot-alignment.md](./docs/ssot/schedulex-ssot-alignment.md)
+  - types：[docs/ssot/types-ssot-alignment.md](./docs/ssot/types-ssot-alignment.md)
+  - bootstrap：[docs/ssot/bootstrap-ssot-alignment.md](./docs/ssot/bootstrap-ssot-alignment.md)
+  - configx：[docs/ssot/configx-ssot-alignment.md](./docs/ssot/configx-ssot-alignment.md)
+  - resiliencx：[docs/ssot/resiliencx-ssot-alignment.md](./docs/ssot/resiliencx-ssot-alignment.md)
+  - adapters：[docs/ssot/adapters-ssot-alignment.md](./docs/ssot/adapters-ssot-alignment.md)
+  - contracts：[docs/ssot/contracts-ssot-alignment.md](./docs/ssot/contracts-ssot-alignment.md)
 
 ## 仓库结构
 
@@ -57,7 +57,7 @@ infra.rs/
 ├── crates/           # Rust workspace members
 ├── examples/         # 示例
 ├── tests/            # 集成测试
-├── docs/             # 文档
+├── docs/             # 文档（governance/ssot/status/decisions）
 ├── scripts/          # Harness 健康检查 / GC / worktree 策略
 ├── .cargo/           # Cargo 配置、target-dir、工具缓存约定
 ├── .claude/          # Claude Code：skills / hooks / settings
@@ -118,7 +118,7 @@ node scripts/check.mjs
 
 ## Git Worktree（强制）
 
-完整细则见 [docs/worktree-policy.md](./docs/worktree-policy.md) 与 [CONSTITUTION.md §6.0.5](./CONSTITUTION.md)。
+完整细则见 [docs/governance/worktree-policy.md](./docs/governance/worktree-policy.md) 与 [CONSTITUTION.md §6.0.5](./CONSTITUTION.md)。
 
 - **所有活跃开发**在 `.worktrees/<branch-name>` 内进行
 - 开工：`node scripts/worktree.mjs create <type>/<id>-<slug>` → `cd` 进入 worktree

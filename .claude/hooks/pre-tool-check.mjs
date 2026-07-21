@@ -180,7 +180,7 @@ if (tool === "Write" || tool === "Edit") {
   });
   if (!editGate.allowed) {
     block(
-      `🧱 worktree 硬门禁：禁止在主工作区编辑仓库文件（CONSTITUTION §6.0.5 / docs/worktree-policy.md）。\n` +
+      `🧱 worktree 硬门禁：禁止在主工作区编辑仓库文件（CONSTITUTION §6.0.5 / docs/governance/worktree-policy.md）。\n` +
         `   目标: ${editGate.fullPath || filePath}\n` +
         `   规则: 所有活跃开发必须在 \`${WORKTREE_PATH_RULE}\` 内进行\n` +
         `   → 正确开工：\n` +

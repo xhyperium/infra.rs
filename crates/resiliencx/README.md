@@ -36,7 +36,7 @@ node scripts/cov-gate-100.mjs -p xhyper-resiliencx --filter crates/resiliencx/sr
 ## SSOT
 
 `.agents/ssot/infra/resiliencx/spec/spec.md`（用户路径别名 `.agent/ssot/resiliencx`）。  
-本仓对齐：[docs/resiliencx-ssot-alignment.md](../../docs/resiliencx-ssot-alignment.md)。
+本仓对齐：[docs/ssot/resiliencx-ssot-alignment.md](../../docs/ssot/resiliencx-ssot-alignment.md)。
 
 ## 版本
 

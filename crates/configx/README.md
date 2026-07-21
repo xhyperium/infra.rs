@@ -14,7 +14,7 @@ L1 **内存字符串键值配置存储**（active SSOT 0.1.0 合同）。
 > 上位目标（多源优先级 / 热更新 / secret）在 SSOT 中为 Unknown，未批准前不实现。
 
 规范镜像：[`../../.agents/ssot/infra/configx/spec/spec.md`](../../.agents/ssot/infra/configx/spec/spec.md)  
-对齐说明：[`../../docs/configx-ssot-alignment.md`](../../docs/configx-ssot-alignment.md)
+对齐说明：[`../../docs/ssot/configx-ssot-alignment.md`](../../docs/ssot/configx-ssot-alignment.md)
 
 ## 公开面
 

@@ -145,5 +145,5 @@ adapters/*  →  (future) contracts / types / kernel
 
 - 总览：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
 - 同步报告：[SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md)
-- 规则：[.agents/ssot/SSOT.md](../.agents/ssot/SSOT.md)
+- 规则：[.agents/ssot/SSOT.md](../../.agents/ssot/SSOT.md)
 - 初始化 commit：`b586260` feat: initialize adapter crates (#42)

@@ -26,7 +26,7 @@
   - `require_evidence` fail-closed（仅 `try_*` 强制）
 - 可移植 `traits` 替面：`EvidenceAppender`、六个有界上下文能力 trait、`NoopInstrumentation`
 - 示例 `examples/minimal.rs`；集成测试 `tests/public_api.rs`
-- 本仓对齐文档：`docs/bootstrap-ssot-alignment.md`
+- 本仓对齐文档：`docs/ssot/bootstrap-ssot-alignment.md`
 
 ---
 

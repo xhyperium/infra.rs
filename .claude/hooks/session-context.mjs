@@ -67,7 +67,7 @@ if (branch === "main" || onMainWorkspace) {
   lines.push("   正确开工：");
   lines.push("   node scripts/worktree.mjs create feat/<id>-<slug>");
   lines.push("   cd .worktrees/feat/<id>-<slug>");
-  lines.push("   细则: docs/worktree-policy.md / CONSTITUTION §6.0.5");
+  lines.push("   细则: docs/governance/worktree-policy.md / CONSTITUTION §6.0.5");
 }
 
 if (branch !== "main" && branch !== "HEAD" && branch !== "（非 git 目录）") {

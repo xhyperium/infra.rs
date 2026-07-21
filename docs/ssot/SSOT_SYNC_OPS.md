@@ -128,4 +128,4 @@ cp -r "$DST.bak."*/* "$DST/"
 
 - [SSOT_SYNC_REPORT.md](SSOT_SYNC_REPORT.md) — 最新同步完整性报告
 - [workspace-ssot-alignment.md](workspace-ssot-alignment.md) — 各域落地状态总览
-- `docs/*-ssot-alignment.md` — 各域详细对齐矩阵
+- `docs/ssot/*-ssot-alignment.md` — 各域详细对齐矩阵

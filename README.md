@@ -125,17 +125,16 @@ Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTU
 
 ## 文档
 
-完整索引见 [docs/README.md](docs/README.md)。
+完整索引与分类规则见 [docs/README.md](docs/README.md)。
 
 | 文档 | 说明 |
 |------|------|
 | [CONSTITUTION.md](CONSTITUTION.md) | 工程宪章 — 核心价值观、架构原则、代码标准 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 架构文档 — 结构、Crate、CI/CD、治理 |
-| [ASD-STE100.md](docs/ASD-STE100.md) | 英文技术文档规范（ASD-STE100 / STE） |
-| [编码与语言约定.md](docs/编码与语言约定.md) | 中文编码与文档语言约定 |
-| [CI_STATUS_REPORT.md](docs/CI_STATUS_REPORT.md) | CI 工作流矩阵、触发条件与运行统计 |
-| [CONFIG_SUMMARY.md](docs/CONFIG_SUMMARY.md) | CI 配置、分支保护规则、测试验证记录 |
-| [DDR 索引](docs/decisions/) | 架构决策记录（DDR-001 ~ DDR-009） |
+| [docs/governance/](docs/governance/) | 治理与约定：版本、worktree、语言、STE、量化规范 |
+| [docs/ssot/](docs/ssot/) | SSOT 对齐矩阵与同步手册 |
+| [docs/status/](docs/status/) | CI/配置状态与验证记录 |
+| [docs/decisions/](docs/decisions/) | 架构决策记录（DDR-001 ~ DDR-009） |
 
 ## AI 协作
 
