@@ -38,7 +38,7 @@
 | Markdown 检查 | `markdownlint` (README/AGENTS/CLAUDE/docs) | 5m |
 | 拼写检查 | `codespell` (排除 `ser`) | 5m |
 | 链接检查 | `lychee` (fail: false) | 10m |
-| Harness 健康检查 | `node scripts/check.mjs` | 5m |
+| Harness 健康检查 | `node scripts/quality-gates/check.mjs` | 5m |
 
 ### 安全
 
@@ -56,7 +56,7 @@
 
 | Job | 说明 | 超时 |
 |----|----|----|
-| Constitution Check | `./scripts/check-constitution.mjs` (rustfmt + clippy + test + doc + cargo-deny + unsafe/unwrap/naming 审计) | 15m |
+| Constitution Check | `./scripts/quality-gates/check-constitution.mjs` (rustfmt + clippy + test + doc + cargo-deny + unsafe/unwrap/naming 审计) | 15m |
 
 ### CodeQL
 
@@ -115,20 +115,20 @@
 
 | 旧脚本 (.sh) | 新脚本 (.mjs) | 状态 |
 |----|----|----|
-| `scripts/check-constitution.sh` | `scripts/check-constitution.mjs` | ✓ |
-| `scripts/check-pr-template.sh` | `scripts/check-pr-template.mjs` | ✓ |
-| `scripts/worktree.sh` | `scripts/worktree.mjs` | ✓ |
-| `scripts/worktree-activate.sh` | `scripts/worktree-activate.mjs` | ✓ |
-| `scripts/starship-wt.sh` | `scripts/starship-wt.mjs` | ✓ |
+| `scripts/check-constitution.sh` | `scripts/quality-gates/check-constitution.mjs` | ✓ |
+| `scripts/check-pr-template.sh` | `scripts/quality-gates/check-pr-template.mjs` | ✓ |
+| `scripts/worktree.sh` | `scripts/worktree/worktree.mjs` | ✓ |
+| `scripts/worktree-activate.sh` | `scripts/worktree/worktree-activate.mjs` | ✓ |
+| `scripts/starship-wt.sh` | `scripts/shell/starship-wt.mjs` | ✓ |
 | `scripts/migrate-worktrees.sh` | `scripts/migrate-worktrees.mjs` | ✓ |
 
 ### CI 工作流验证
 
 | 工作流 | 脚本引用 | 解释器 | 路径过滤 | 状态 |
 |----|----|----|----|----|
-| `constitution.yml` | `./scripts/check-constitution.mjs` | shebang (`#!/usr/bin/env node`) | `scripts/check-constitution.mjs` | ✓ |
-| `pr-template-check.yml` | `node scripts/check-pr-template.mjs` | `node` (显式) | (全部 PR) | ✓ |
-| `validation.yml` | `node scripts/check.mjs` | `node` (显式) | — | ✓ |
+| `constitution.yml` | `./scripts/quality-gates/check-constitution.mjs` | shebang (`#!/usr/bin/env node`) | `scripts/quality-gates/check-constitution.mjs` | ✓ |
+| `pr-template-check.yml` | `node scripts/quality-gates/check-pr-template.mjs` | `node` (显式) | (全部 PR) | ✓ |
+| `validation.yml` | `node scripts/quality-gates/check.mjs` | `node` (显式) | — | ✓ |
 | `ci-rust.yml` | Cargo only | Cargo | Rust 源码 | ✓ |
 | `quality.yml` | Cargo only | Cargo | Rust 源码 | ✓ |
 | `security.yml` | Cargo only | Cargo | Rust 源码 | ✓ |

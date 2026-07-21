@@ -40,8 +40,8 @@ features.default                []
 cargo test -p contracts -p xhyper-observex
 cargo clippy -p contracts -p observex --all-targets -- -D warnings
 cargo fmt --all --check
-node scripts/cov-gate-100.mjs -p observex --filter crates/observex/src
-node scripts/cov-gate-100.mjs -p contracts --filter crates/contracts/src
+node scripts/quality-gates/cov-gate-100.mjs -p observex --filter crates/observex/src
+node scripts/quality-gates/cov-gate-100.mjs -p contracts --filter crates/contracts/src
 ```
 
 CI：`.github/workflows/observex-coverage.yml` · `contracts-coverage.yml`

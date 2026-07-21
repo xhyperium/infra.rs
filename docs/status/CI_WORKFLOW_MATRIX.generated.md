@@ -1,6 +1,6 @@
 # CI 工作流矩阵（自动生成）
 
-> **生成方式**：`node scripts/gen-docs-status.mjs`
+> **生成方式**：`node scripts/docs/gen-docs-status.mjs`
 > **生成日期**：2026-07-21
 > **源目录**：`.github/workflows/`
 > **勿手改**：本文件由脚本覆盖；叙事性说明见 [CI_STATUS_REPORT.md](CI_STATUS_REPORT.md) / [CONFIG_SUMMARY.md](CONFIG_SUMMARY.md)。
@@ -42,6 +42,6 @@
 ## 维护
 
 ```bash
-node scripts/gen-docs-status.mjs          # 重新生成
-node scripts/gen-docs-status.mjs --check  # CI/本地一致性检查
+node scripts/docs/gen-docs-status.mjs          # 重新生成
+node scripts/docs/gen-docs-status.mjs --check  # CI/本地一致性检查
 ```
