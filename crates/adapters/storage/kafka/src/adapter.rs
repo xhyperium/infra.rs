@@ -72,29 +72,23 @@ impl StorageAdapter for KafkaAdapter {
 
     fn write(&self, key: &str, value: &[u8]) -> Result<()> {
         self.require_connected()?;
-        let mut guard = self
-            .store
-            .lock()
-            .map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
+        let mut guard =
+            self.store.lock().map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
         guard.insert(key.to_string(), value.to_vec());
         Ok(())
     }
 
     fn read(&self, key: &str) -> Result<Option<Vec<u8>>> {
         self.require_connected()?;
-        let guard = self
-            .store
-            .lock()
-            .map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
+        let guard =
+            self.store.lock().map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
         Ok(guard.get(key).cloned())
     }
 
     fn delete(&self, key: &str) -> Result<()> {
         self.require_connected()?;
-        let mut guard = self
-            .store
-            .lock()
-            .map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
+        let mut guard =
+            self.store.lock().map_err(|e| Error::Internal(format!("store lock poisoned: {e}")))?;
         guard.remove(key);
         Ok(())
     }
