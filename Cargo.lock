@@ -1946,6 +1946,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "xhyper-schedulex"
+version = "0.1.0"
+
+[[package]]
 name = "xhyper-testkit"
 version = "0.1.1"
 dependencies = [

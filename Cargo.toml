@@ -4,6 +4,7 @@ members = [
   "crates/kernel",
   "crates/testkit",
   "crates/configx",
+  "crates/schedulex",
   "crates/types/decimal",
   "crates/types/canonical",
   "crates/resiliencx",

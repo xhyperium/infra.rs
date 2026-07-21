@@ -13,6 +13,7 @@
 | `xhyper-kernel` | `crates/kernel/` | `kernel` | L0 语义信任根 | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
 | `xhyper-testkit` | `crates/testkit/` | `testkit` | T0 test-support（仅 dev-dep） | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
 | `xhyper-configx` | `crates/configx/` | `configx` | L1 内存字符串 KV（非多源热更新） | [configx-ssot-alignment.md](./configx-ssot-alignment.md) |
+| `xhyper-schedulex` | `crates/schedulex/` | `schedulex` | L1 任务 ID 登记表（registry only） | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) |
 | `xhyper-bootstrap` | `crates/bootstrap/` | `bootstrap` | L1 唯一组合根（ADR-016） | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) |
 | `xhyper-resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
 | `xhyper-decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money | [types-ssot-alignment.md](./types-ssot-alignment.md) |
@@ -59,6 +60,7 @@
 |------------|----------|------------|------|
 | kernel | `.agents/ssot/kernel/` | `crates/kernel` | **已落地**；见 kernel 对齐文 |
 | testkit | `.agents/ssot/testkit/` | `crates/testkit` | **core 已落地**；contract-testkit DEFER |
+| schedulex | `.agents/ssot/infra/schedulex/` | `crates/schedulex` | **registry 已落地**（active SSOT 最小合同） |
 | types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；wire/package stable OPEN |
 | infra/configx | `.agents/ssot/infra/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
 | infra/bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/bootstrap` | **组合根已落地**；contracts/observex/evidence 全量 **DEFER** |
@@ -87,6 +89,7 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test -p xhyper-kernel --all-targets
 cargo test -p xhyper-testkit --all-targets
 cargo test -p xhyper-configx --all-targets
+cargo test -p xhyper-schedulex --all-targets
 cargo test -p xhyper-decimalx --all-targets
 cargo test -p xhyper-canonical --all-targets
 cargo test -p xhyper-bootstrap --all-targets
@@ -108,6 +111,7 @@ diff -rq /home/workspace/xhyper.rs/.agent/SSOT/contracts .agents/ssot/contracts
 | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) | SPEC-KERNEL-002 本仓矩阵 |
 | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) | SPEC-TESTKIT-002 core 本仓矩阵 |
 | [configx-ssot-alignment.md](./configx-ssot-alignment.md) | configx 0.1.0 本仓矩阵 |
+| [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) | schedulex active registry 本仓矩阵 |
 | [types-ssot-alignment.md](./types-ssot-alignment.md) | decimal + canonical 本仓状态 |
 | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) | bootstrap 组合根本仓矩阵 |
 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) | adapters 九域镜像 + scaffold 状态 |
