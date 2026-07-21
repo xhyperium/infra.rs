@@ -9,9 +9,10 @@
 
 | 计划 | 状态 | 说明 |
 |------|------|------|
-| [2026-07-21-core-crates-production-readiness.md](./2026-07-21-core-crates-production-readiness.md) | W0–W5 已合入 · 验收勾选已回写 · **待 L5 签核** | 五核心 crate 生产级修复；PR #120–#128；输入审计 `docs/report/2026-07-21/`（含 §12 post-W5） |
-| [releases/2026-07-21-signoff-DRAFT.md](./releases/2026-07-21-signoff-DRAFT.md) | **DRAFT 未签核 · 证据已填** | Maintainer 签核草稿（DEFER-7；Agent 不可代签） |
-| [releases/2026-07-21-MAINTAINER-HANDOFF.md](./releases/2026-07-21-MAINTAINER-HANDOFF.md) | 交接一页纸 | 签核步骤与建议口径（非批准） |
+| [2026-07-21-core-crates-production-readiness.md](./2026-07-21-core-crates-production-readiness.md) | W0–W5 已合入 · **L5 GO-with-Accepts** · 计划 DONE | 五核心 crate 生产级修复；PR #120–#128；输入审计 `docs/report/2026-07-21/`（含 §12 post-W5） |
+| [releases/0.3.0-signoff.md](./releases/0.3.0-signoff.md) | **SIGNED · GO-with-Accepts** | 正式签核包（DEFER-7 已闭；`@ZoneCNH` · 2026-07-21） |
+| [releases/2026-07-21-signoff-DRAFT.md](./releases/2026-07-21-signoff-DRAFT.md) | **SUPERSEDED** | 草稿归档；权威见 `0.3.0-signoff.md` |
+| [releases/2026-07-21-MAINTAINER-HANDOFF.md](./releases/2026-07-21-MAINTAINER-HANDOFF.md) | 交接一页纸（历史） | 签核前步骤说明；签核后以正式包为准 |
 
 ## 冻结产物（W0）
 
@@ -29,7 +30,7 @@
 | [`releases/`](releases/) | 按版本填写的生产签核包（从模板复制） |
 | 治理模板 | [`../governance/prod-signoff-TEMPLATE.md`](../governance/prod-signoff-TEMPLATE.md) |
 
-**规则**：签核文件中的 `Signed-off-by` **仅 Maintainer**；Agent 不得代签。
+**规则**：签核文件中的 `Signed-off-by` **仅 Maintainer**；Agent 不得代签。正式权威：`releases/<version>-signoff.md`（非 `*DRAFT*`）。
 
 ## 约定
 
