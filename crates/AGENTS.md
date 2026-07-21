@@ -75,6 +75,7 @@ crates/<crate-name>/
 | `xhyper-configx`（lib `configx`） | `crates/configx/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-decimalx`（lib `decimalx`） | `crates/types/decimal/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `xhyper-resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 > `examples/` / `docs/` / 暂无集成测试时的 `tests/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。
 
@@ -92,7 +93,7 @@ crates/<crate-name>/
 - 新增 crate 前先评估：是否可以用现有 crate 的模块替代
 - crate 间依赖方向单向，禁止循环引用
 - L0 信任根为 `xhyper-kernel`；`testkit` 仅允许 dev-dependency 消费
-- 依赖方向：`canonical` → `decimalx` → `kernel`；`testkit` → `kernel`；`configx` → `kernel`（L1，禁止其他 L1）
+- 依赖方向：`canonical` → `decimalx` → `kernel`；`testkit` → `kernel`；`configx` → `kernel`（L1，禁止其他 L1）；`resiliencx` → `kernel`
 - 每个 crate 目录必须符合上文「子模块标准布局」
 
 ### C3: 错误处理
@@ -143,8 +144,10 @@ crates/<crate-name>/
 |-------|------|------|
 | `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | xhyper L0 语义信任根（clock / lifecycle） |
 | `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
+| `xhyper-configx`（lib `configx`） | `crates/configx/` | L1 配置存储（MemoryConfigStore） |
 | `xhyper-decimalx`（lib `decimalx`） | `crates/types/decimal/` | 十进制数值 / Money（ADR-006/007） |
 | `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
+| `xhyper-resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | L1 重试（active SSOT §2；熔断/限流未实现） |
 
 > 领域分组路径（如 `crates/types/<name>/`）合法；标准布局作用于每个 workspace 成员 crate 根目录。
 

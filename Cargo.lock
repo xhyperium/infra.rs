@@ -18,6 +18,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 
 [[package]]
+name = "binancex"
+version = "0.3.0"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -53,6 +60,13 @@ name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
+
+[[package]]
+name = "clickhousex"
+version = "0.3.0"
+dependencies = [
+ "thiserror",
+]
 
 [[package]]
 name = "errno"
@@ -121,10 +135,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "infra-contracts"
+version = "0.3.0"
+dependencies = [
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
+
+[[package]]
+name = "kafkax"
+version = "0.3.0"
+dependencies = [
+ "thiserror",
+]
 
 [[package]]
 name = "lazy_static"
@@ -179,6 +208,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
+name = "natsx"
+version = "0.3.0"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
 name = "nu-ansi-term"
 version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -197,16 +233,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "okxx"
+version = "0.3.0"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
+name = "ossx"
+version = "0.3.0"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
 name = "pin-project-lite"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
+
+[[package]]
+name = "postgresx"
+version = "0.3.0"
+dependencies = [
+ "thiserror",
+]
 
 [[package]]
 name = "ppv-lite86"
@@ -308,6 +365,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "513962919efc330f829edb2535844d1b912b0fbe2ca165d613e4e8788bb05a5a"
 dependencies = [
  "rand_core",
+]
+
+[[package]]
+name = "redisx"
+version = "0.3.0"
+dependencies = [
+ "thiserror",
 ]
 
 [[package]]
@@ -454,6 +518,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "taosx"
+version = "0.3.0"
+dependencies = [
+ "thiserror",
 ]
 
 [[package]]
@@ -648,6 +719,13 @@ dependencies = [
  "serde",
  "static_assertions",
  "thiserror",
+]
+
+[[package]]
+name = "xhyper-resiliencx"
+version = "0.1.0"
+dependencies = [
+ "xhyper-kernel",
 ]
 
 [[package]]
