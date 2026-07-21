@@ -25,7 +25,14 @@ xhyper-kernel = { path = "../kernel", version = "0.3.0" }
 bytes = { workspace = true }
 futures-util = { workspace = true }
 reqwest = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "io-util", "time", "sync"] }
+tokio = { workspace = true, features = [
+  "rt-multi-thread",
+  "macros",
+  "net",
+  "io-util",
+  "time",
+  "sync",
+] }
 tokio-tungstenite = { workspace = true }
 xhyper-kernel = { path = "../kernel", version = "0.3.0" }
 
