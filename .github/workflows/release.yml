@@ -1,0 +1,91 @@
+name: Release
+
+# Release 构建验证：优化构建 + 全量测试 + clippy + doc。
+# 手动触发，用于发布前的最终检查。
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  release-build:
+    name: Release 构建
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CARGO_INCREMENTAL: 0
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.10
+      - name: Release 构建
+        run: cargo build --workspace --all-features --release
+
+  release-test:
+    name: Release 测试
+    needs: release-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CARGO_INCREMENTAL: 0
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.10
+      - name: 安装 cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+      - name: Release 测试
+        run: cargo nextest run --workspace --all-features --release
+
+  release-clippy:
+    name: Release Clippy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CARGO_INCREMENTAL: 0
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.10
+      - name: Release Clippy
+        run: cargo clippy --workspace --all-features --all-targets --release -- -D warnings
+
+  release-doc:
+    name: Release 文档
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CARGO_INCREMENTAL: 0
+      RUSTDOCFLAGS: -D warnings
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.10
+      - name: 生成文档
+        run: cargo doc --workspace --all-features --no-deps --document-private-items --release
