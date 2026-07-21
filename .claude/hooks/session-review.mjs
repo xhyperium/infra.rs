@@ -132,6 +132,23 @@ if (existsSync(gcScanScript)) {
   } catch { /* gc-scan 失败不阻塞审查 */ }
 }
 
+// Beads ↔ GitHub 同步（轻量增量检查）
+const ghSyncScript = join(projectRoot, "scripts/beads/gh-sync.mjs");
+if (existsSync(ghSyncScript)) {
+  try {
+    const syncOutput = execSync(`node ${ghSyncScript} --incremental-only --json`, {
+      cwd: projectRoot, encoding: "utf-8", timeout: 15000,
+      stdio: ["pipe", "pipe", "pipe"]
+    }).trim();
+    const syncResult = JSON.parse(syncOutput);
+    const s = syncResult.summary || {};
+    const total = (s.created || 0) + (s.updated || 0) + (s.closed || 0);
+    if (total > 0) {
+      flags.push(`↻ Beads↔GitHub: ${s.created || 0} created, ${s.updated || 0} updated, ${s.closed || 0} closed`);
+    }
+  } catch { /* beads sync 失败不阻塞审查 */ }
+}
+
 const report = [
   "## Stop Hook 审查报告",
   `时间: ${new Date().toLocaleString("zh-CN")}`,
