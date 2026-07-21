@@ -16,7 +16,7 @@ Disposition 规则：每行必须为 `DONE` / `DEFERRED` / `HUMAN_ONLY` / `POLIC
 | T-VER-001 | 聚焦门禁 test/check/clippy/fmt | DONE | 本地 SCRATCH 指针，未入库，reviewer/未来 agent 不可见；证据未提交，见 `/tmp/grok-goal-99a109d2452b/implementer/tests/`（**SCRATCH，非 durable**） |
 | T-VER-002 | 10x fail_rounds=0 | DONE | 仓库内 durable 证据：`plan/decimalx-plan-10x-verdict.md`；附本地 SCRATCH 指针（未入库，reviewer/未来 agent 不可见）：`/tmp/grok-goal-99a109d2452b/implementer/10x/decimal-10x-summary.log`（**SCRATCH，非 durable**） |
 | T-VER-003 | liukongqiang5 APPROVE / HAR | DONE | tip 读回为本地 SCRATCH 指针（未入库，reviewer/未来 agent 不可见）：`/tmp/grok-goal-99a109d2452b/implementer/approval/approval-readback.json`（**SCRATCH，非 durable**）；仓库内 durable 指针 `plan/evidence/approval-readback-pr507.json` 为 POINTER_NOT_TIP_BOUND（≠ Goal Achieved，见 T-HUM-005） |
-| T-FIX-001 | 修复 Draft Active 断链 `../decimalx-spec.md` | DONE | `20260717/xhyper-decimalx-complete-{goal,spec}.md` |
+| T-FIX-001 | 修复 Draft Active 断链 `../decimalx-spec.md` | DONE | `20260717/decimalx-complete-{goal,spec}.md` |
 | T-FIX-002 | 审批证据诚实化（禁 DISMISSED tip 冒充 tip-bound） | DONE | CURRENT-STATE · alignment · evidence POINTER |
 | T-HUM-001 | MAX_SCALE / DecimalLimits 批准 | HUMAN_ONLY | `plan/residual-open.md` |
 | T-HUM-002 | 字段私有化 | HUMAN_ONLY | residual |

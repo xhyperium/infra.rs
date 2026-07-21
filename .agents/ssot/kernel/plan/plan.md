@@ -5,7 +5,7 @@
 | 字段            | 值                                                                                |
 | --------------- | --------------------------------------------------------------------------------- |
 | Plan ID         | `PLAN-KERNEL-002-v2-complete`                                                     |
-| Source Spec     | `.agent/SSOT/kernel/spec/xhyper-kernel-complete-spec.md`（≡ `spec/spec.md`）     |
+| Source Spec     | `.agent/SSOT/kernel/spec/kernel-complete-spec.md`（≡ `spec/spec.md`）     |
 | Spec ID         | `SPEC-KERNEL-002` · Status **Approved**                                           |
 | Goal            | `GOAL-KERNEL-RUNTIME-SEMANTICS`                                                   |
 | Package         | `kernel` @ `crates/kernel` · version **0.1.1**                                    |
@@ -65,7 +65,7 @@
 | RES-ERR-001…007,009,**010**                        | opaque XError / 9 kinds / 禁 not_found·other / From\<ClockError\> / **context_cow 已删** |
 | RES-CLK-001…009,**010**                            | no default mono / unix nanos / reverse None / origin / from_std 删除 / **const fn**      |
 | RES-LC-001…004,**005**                             | Mutex 协议 / must_use / loom+CI / **poison+1000+guard drop+!Clone**                      |
-| RES-API-001…009                            | 无 Component / features / docs attrs / publish=true as xhyper-kernel                                     |
+| RES-API-001…009                            | 无 Component / features / docs attrs / publish=true as kernel                                     |
 | RES-TEST-001…004,006…013；**005 (DEFER accepted)** | 测试文件 + proptest + loom CI + 边界；trybuild 正式 defer                                |
 | RES-GATE-001…008；**009 (DEFER accepted)**         | API 快照 + 13 KERNEL-\* + CI loom；API-002 正式 defer                                    |
 | RES-DOWN-001…**006**                               | 下游 + sleep 审计（DOWN-006 CLOSED）                                                     |

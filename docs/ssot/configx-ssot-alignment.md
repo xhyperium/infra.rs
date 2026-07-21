@@ -35,11 +35,11 @@ features                        default = []
 验证（本仓权威命令）：
 
 ```bash
-cargo test -p xhyper-configx --all-targets
-cargo clippy -p xhyper-configx --all-targets -- -D warnings
+cargo test -p configx --all-targets
+cargo clippy -p configx --all-targets -- -D warnings
 cargo fmt --all --check
-cargo run -p xhyper-configx --example basic
-cargo llvm-cov -p xhyper-configx --summary-only
+cargo run -p configx --example basic
+cargo llvm-cov -p configx --summary-only
 ```
 
 ## 与镜像文档的关系
@@ -136,7 +136,7 @@ cargo llvm-cov -p xhyper-configx --summary-only
 
 | 度量 | 目标 | 命令 |
 |------|------|------|
-| line | 100% | `cargo llvm-cov -p xhyper-configx --summary-only` |
+| line | 100% | `cargo llvm-cov -p configx --summary-only` |
 | branch | 100% | 同上 TOTAL branches |
 
 毒锁两分支与空/有值路径均由真实测试驱动，禁止 mock `ConfigStore`。

@@ -72,4 +72,4 @@
 - [wire-commitment-matrix.md](./wire-commitment-matrix.md)
 - [validation-owners.md](./validation-owners.md)
 - [m3-migration-checklist.md](./m3-migration-checklist.md)
-- Spec：`../20260717/xhyper-canonical-complete-spec.md`
+- Spec：`../20260717/canonical-complete-spec.md`

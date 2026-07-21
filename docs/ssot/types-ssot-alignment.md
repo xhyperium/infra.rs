@@ -26,7 +26,7 @@ crates/types/decimal/           EXISTS · members 已注册
   lib                           decimalx
   version                       0.1.0
   publish                       false
-  生产依赖                      xhyper-kernel + serde
+  生产依赖                      kernel + serde
   Active SSOT                   .agents/ssot/types/decimal/spec/spec.md
 
 crates/types/canonical/         EXISTS · members 已注册
@@ -34,18 +34,18 @@ crates/types/canonical/         EXISTS · members 已注册
   lib                           canonical
   version                       0.1.0
   publish                       false
-  生产依赖                      xhyper-decimalx + serde
+  生产依赖                      decimalx + serde
   Active SSOT                   .agents/ssot/types/canonical/spec/spec.md
 ```
 
 验证（本仓权威命令）：
 
 ```bash
-cargo test -p xhyper-decimalx --all-targets
-cargo clippy -p xhyper-decimalx --all-targets -- -D warnings
+cargo test -p decimalx --all-targets
+cargo clippy -p decimalx --all-targets -- -D warnings
 
-cargo test -p xhyper-canonical --all-targets
-cargo clippy -p xhyper-canonical --all-targets -- -D warnings
+cargo test -p canonical --all-targets
+cargo clippy -p canonical --all-targets -- -D warnings
 node scripts/check-canonical-align.mjs
 ```
 

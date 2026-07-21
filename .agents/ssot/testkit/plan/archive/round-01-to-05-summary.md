@@ -2,7 +2,7 @@
 
 | 字段 | 值 |
 |------|-----|
-| Spec | `SPEC-TESTKIT-002` · `.agent/SSOT/testkit/xhyper-testkit-complete-spec.md` |
+| Spec | `SPEC-TESTKIT-002` · `.agent/SSOT/testkit/testkit-complete-spec.md` |
 | Plan | `PLAN-TESTKIT-002-v1-complete` |
 | Scope | §0–§9 对照 plan 包映射完整性 |
 | Mode | **只读 verifier** · **≠ 实现完成** · **SKIP ≠ PASS** |

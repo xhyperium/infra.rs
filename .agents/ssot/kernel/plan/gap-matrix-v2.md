@@ -114,7 +114,7 @@
 | 项 | 判定 |
 |----|------|
 | publish=true as **xhyper-kernel**；lib name=kernel | PASS |
-| version 0.1.1 + crates.io xhyper-kernel | **PASS** |
+| version 0.1.1 + crates.io kernel | **PASS** |
 | registry stable | **PASS**（crates/kernel） |
 | Spec Approved | **PASS** RES-18-APPROVED CLOSED |
 | §18 全勾 | **PASS**（014/015/016 human waiver DEFER） |

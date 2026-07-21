@@ -11,7 +11,7 @@
 | Ship PR | [#235](https://github.com/xhyperium/xhyper.rs/pull/235) **MERGED** |
 | Tag | `kernel-v0.1.1` → `e7bda98e` |
 | GitHub Release | https://github.com/xhyperium/xhyper.rs/releases/tag/kernel-v0.1.1 |
-| crates.io | https://crates.io/crates/xhyper-kernel/0.1.1 |
+| crates.io | https://crates.io/crates/kernel/0.1.1 |
 | Evidence | [EVID-KERNEL-002-18-RELEASE.md](../evidence/2026-07-14/EVID-KERNEL-002-18-RELEASE.md) · [EVID-KERNEL-002-CRATES-IO.md](../evidence/2026-07-14/EVID-KERNEL-002-CRATES-IO.md) · [EVID-KERNEL-002-CAMPAIGN-COMPLETE.md](../evidence/2026-07-14/EVID-KERNEL-002-CAMPAIGN-COMPLETE.md) |
 
 ## 已交付

@@ -125,7 +125,7 @@
 
 ## 附件
 
-- complete-spec：`../xhyper-testkit-complete-spec.md`
+- complete-spec：`../testkit-complete-spec.md`
 - plan：`./plan.md`
 - gap：`./gap-matrix.md`
 - inventory：`./spec-inventory.md`

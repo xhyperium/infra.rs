@@ -41,7 +41,7 @@ cargo tree -i gate   # → did not match any packages
 
 ```text
 xhyper-gate v0.1.0 (/home/workspace/xhyper.rs/crates/gate)
-└── xhyper-bootstrap v0.1.0 (/home/workspace/xhyper.rs/crates/bootstrap)
+└── bootstrap v0.1.0 (/home/workspace/xhyper.rs/crates/bootstrap)
 ```
 
 | Dependent | Kind | Notes |

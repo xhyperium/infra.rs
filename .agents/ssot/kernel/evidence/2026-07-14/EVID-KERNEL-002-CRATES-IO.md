@@ -12,15 +12,15 @@
 ## 为何不叫 `kernel`
 
 `cargo publish --dry-run` 报告 **`kernel@0.1.1 already exists on crates.io index`**。  
-改用 **`xhyper-kernel`**，workspace path dep 使用 `package = "xhyper-kernel"`。
+改用 **`xhyper-kernel`**，workspace path dep 使用 `package = "kernel"`。
 
 
 ## 真发布结果（2026-07-14）
 
 ```text
-Uploaded xhyper-kernel v0.1.1 to registry crates-io
-Published xhyper-kernel v0.1.1 at registry crates-io
+Uploaded kernel v0.1.1 to registry crates-io
+Published kernel v0.1.1 at registry crates-io
 ```
 
-- URL: https://crates.io/crates/xhyper-kernel/0.1.1
-- docs: https://docs.rs/xhyper-kernel/0.1.1 （索引同步后）
+- URL: https://crates.io/crates/kernel/0.1.1
+- docs: https://docs.rs/kernel/0.1.1 （索引同步后）

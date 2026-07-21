@@ -1,7 +1,7 @@
 //! 最小消费者路径：set → get，打印真实值。
 //!
 //! ```bash
-//! cargo run -p xhyper-configx --example basic
+//! cargo run -p configx --example basic
 //! ```
 
 use configx::ConfigStore;

@@ -1,5 +1,5 @@
 [package]
-name = "xhyper-resiliencx"
+name = "resiliencx"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -13,8 +13,8 @@ name = "resiliencx"
 
 [dependencies]
 # path + version：满足 cargo-deny bans.wildcards=deny
-xhyper-kernel = { path = "../kernel", version = "0.3.0" }
-xhyper-contracts = { path = "../contracts", version = "0.1.0" }
+kernel = { path = "../kernel", version = "0.3.0" }
+contracts = { path = "../contracts", version = "0.1.0" }
 
 [lints]
 workspace = true

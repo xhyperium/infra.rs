@@ -27,7 +27,7 @@
 crates/contracts/               EXISTS（xhyper-contracts + Instrumentation）
 crates/observex/                EXISTS
 Cargo.toml members              含 contracts + observex + adapters
-package names                   xhyper-contracts / xhyper-observex
+package names                   contracts / xhyper-observex
 lib names                       contracts / observex
 publish                         false
 observex prod deps              xhyper-kernel, xhyper-contracts, tracing
@@ -37,11 +37,11 @@ features.default                []
 ## 验证命令
 
 ```bash
-cargo test -p xhyper-contracts -p xhyper-observex
-cargo clippy -p xhyper-contracts -p xhyper-observex --all-targets -- -D warnings
+cargo test -p contracts -p xhyper-observex
+cargo clippy -p contracts -p observex --all-targets -- -D warnings
 cargo fmt --all --check
-node scripts/cov-gate-100.mjs -p xhyper-observex --filter crates/observex/src
-node scripts/cov-gate-100.mjs -p xhyper-contracts --filter crates/contracts/src
+node scripts/cov-gate-100.mjs -p observex --filter crates/observex/src
+node scripts/cov-gate-100.mjs -p contracts --filter crates/contracts/src
 ```
 
 CI：`.github/workflows/observex-coverage.yml` · `contracts-coverage.yml`

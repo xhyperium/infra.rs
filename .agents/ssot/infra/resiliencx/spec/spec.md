@@ -68,23 +68,23 @@ crate 名称与 description 不构成这些能力已交付的证据。
 - `retry_ok` / `retry_downcast`（含类型不匹配）；
 - 库外 `tests/public_api.rs`。
 
-覆盖率目标：`cargo llvm-cov -p xhyper-resiliencx --all-targets --summary-only` → **Lines Cover 100%**。
+覆盖率目标：`cargo llvm-cov -p resiliencx --all-targets --summary-only` → **Lines Cover 100%**。
 
 ## 5. 验收
 
 ```bash
 cargo test -p xhyper-resiliencx
-cargo check -p xhyper-resiliencx --all-targets
-cargo clippy -p xhyper-resiliencx --all-targets -- -D warnings
-cargo fmt -p xhyper-resiliencx -- --check
-cargo llvm-cov -p xhyper-resiliencx --all-targets --summary-only
+cargo check -p resiliencx --all-targets
+cargo clippy -p resiliencx --all-targets -- -D warnings
+cargo fmt -p resiliencx -- --check
+cargo llvm-cov -p resiliencx --all-targets --summary-only
 ```
 
 通过条件：当前 retry 行为与源码一致；无 observex 横向依赖；文档不把未实现策略写成已交付；Lines 100%。
 
 ## 6. 追溯
 
-- Active：本文件 ≡ `spec/xhyper-resiliencx-complete-spec.md`（须 `cmp`）
+- Active：本文件 ≡ `spec/resiliencx-complete-spec.md`（须 `cmp`）
 - Residual：`plan/residual-open.md`
 - Alignment：`plan/alignment-matrix-infra-2026-07-21.md`
 - 实现：`crates/resiliencx/{Cargo.toml,src/**,tests/**}`

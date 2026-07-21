@@ -35,11 +35,11 @@ features                        default = []
 验证（本仓权威命令）：
 
 ```bash
-cargo test -p xhyper-kernel --all-targets
-cargo test -p xhyper-kernel --doc
-cargo clippy -p xhyper-kernel --all-targets -- -D warnings
-cargo fmt -p xhyper-kernel -- --check
-RUSTFLAGS='--cfg loom' cargo test -p xhyper-kernel --test lifecycle_concurrency_loom --release
+cargo test -p kernel --all-targets
+cargo test -p kernel --doc
+cargo clippy -p kernel --all-targets -- -D warnings
+cargo fmt -p kernel -- --check
+RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release
 ```
 
 ## 与镜像文档的关系

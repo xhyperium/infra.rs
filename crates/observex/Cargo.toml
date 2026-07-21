@@ -1,5 +1,5 @@
 [package]
-name = "xhyper-observex"
+name = "observex"
 version = "0.1.0"
 publish = false
 edition.workspace = true
@@ -13,9 +13,9 @@ name = "observex"
 
 [dependencies]
 # SPEC §2：kernel 依赖信封（预留，当前热路径不引用）
-xhyper-kernel = { path = "../kernel", version = "0.3.0" }
-# package xhyper-contracts · lib name contracts
-xhyper-contracts = { path = "../contracts", version = "0.1.0" }
+kernel = { path = "../kernel", version = "0.3.0" }
+# package contracts · lib name contracts
+contracts = { path = "../contracts", version = "0.1.0" }
 tracing = { workspace = true }
 
 [dev-dependencies]
