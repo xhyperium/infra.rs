@@ -4,7 +4,7 @@
 
 | 字段 | 值 |
 |------|-----|
-| Ship PR | [#247](https://github.com/xhyperium/xhyper.rs/pull/247) · [#254](https://github.com/xhyperium/xhyper.rs/pull/254) · [#255](https://github.com/xhyperium/xhyper.rs/pull/255) |
+| Ship PR | [#247](https://github.com/xhyperium/infra.rs/pull/247) · [#254](https://github.com/xhyperium/infra.rs/pull/254) · [#255](https://github.com/xhyperium/infra.rs/pull/255) |
 | Spec Stable | 2026-07-14 |
 | Date | 2026-07-17（post-ship 复盘） |
 

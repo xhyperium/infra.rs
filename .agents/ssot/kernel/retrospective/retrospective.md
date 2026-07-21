@@ -4,7 +4,7 @@
 
 | 字段 | 值 |
 |------|-----|
-| Ship PR | [#235](https://github.com/xhyperium/xhyper.rs/pull/235) |
+| Ship PR | [#235](https://github.com/xhyperium/infra.rs/pull/235) |
 | Date | 2026-07-14 |
 
 ## 学到的

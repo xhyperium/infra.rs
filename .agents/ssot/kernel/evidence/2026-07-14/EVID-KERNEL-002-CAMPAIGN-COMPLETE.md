@@ -15,7 +15,7 @@
 | Spec Approved · version 0.1.1 · registry stable | main |
 | Land | PR #235 MERGED `e7bda98e` |
 | Tag | `kernel-v0.1.1` |
-| GitHub Release | https://github.com/xhyperium/xhyper.rs/releases/tag/kernel-v0.1.1 |
+| GitHub Release | https://github.com/xhyperium/infra.rs/releases/tag/kernel-v0.1.1 |
 | Quality: branch / miri / mutants | measured PASS（mutants missed=0） |
 | KERNEL-API-002 | PR #241 |
 | crates.io | **`xhyper-kernel` 0.1.1** published |

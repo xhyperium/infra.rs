@@ -4,7 +4,7 @@
 |------|-----|
 | Plan ID | `PLAN-TESTKIT-002-v1-complete` |
 | Plan version | **v1.2.0** |
-| Source Spec | [`.agent/SSOT/testkit/xhyper-testkit-complete-spec.md`](../xhyper-testkit-complete-spec.md) |
+| Source Spec | [`.agents/ssot/testkit/xhyper-testkit-complete-spec.md`](../xhyper-testkit-complete-spec.md) |
 | Spec ID | `SPEC-TESTKIT-002` · Status **Approved** → Target **Stable** |
 | Goal | `GOAL-DETERMINISTIC-TEST-SUPPORT` |
 | Package | `testkit` @ `crates/testkit` **0.1.1**（`publish = false`） |
@@ -131,8 +131,8 @@ Clock::{now -> Result, monotonic -> MonotonicInstant}
 
 | 旧文档 | 问题 | 处理 |
 |--------|------|------|
-| `.agent/SSOT/testkit/spec/TESTKIT-SPEC-001.superseded.md` | 仍要求 `xlib_test!`/`mock!` 为职责 | Superseded → 指向 002（原 `testkit-spec.md`） |
-| `.agent/SSOT/infra/testkitx/testkitx-spec.md` | 历史 L1 路径幽灵 | Superseded / archive |
+| `.agents/ssot/testkit/spec/TESTKIT-SPEC-001.superseded.md` | 仍要求 `xlib_test!`/`mock!` 为职责 | Superseded → 指向 002（原 `testkit-spec.md`） |
+| `.agents/ssot/infra/testkitx/testkitx-spec.md` | 历史 L1 路径幽灵 | Superseded / archive |
 | `docs/architecture/spec.md` | L0 列表含 testkit；职责写宏 | W5 对齐修订 |
 | ADR-010 | 批准宏最小范围 | W5 修订备注：002 退役宏 |
 | ADR-012 | harness/testkitx 合并叙述 | 交叉引用 002 终态 |
@@ -246,7 +246,7 @@ W9  §24 全勾 + 可选 stable 决策
 
 | 分片 | 可写路径 | 禁写 |
 |------|----------|------|
-| A Planner | `.agent/SSOT/testkit/plan/**` · `.worktree/testkit-todo.md` | `crates/**` 实现 |
+| A Planner | `.agents/ssot/testkit/plan/**` · `.worktree/testkit-todo.md` | `crates/**` 实现 |
 | B Clock | `crates/testkit/src/clock.rs` · `crates/testkit/tests/**` | adapters |
 | C Delete/Migrate | `crates/testkit/src/lib.rs` · binance/okx 测试入口 | kernel |
 | D Contract | `crates/test-support/contracts/**`（新建） | testkit core 宏回流 |
@@ -441,7 +441,7 @@ Task T-CLK-021 · 共享 `Arc<ManualClock>`
 | Package | testkit **0.1.1** |
 | Tag | `testkit-v0.1.1` |
 | Main merges | #247 docs · #254 impl stack · #255 release |
-| Active SSOT | `.agent/SSOT/testkit/spec/spec.md` |
+| Active SSOT | `.agents/ssot/testkit/spec/spec.md` |
 | Stable | **NOT** claimed — residual §24 |
 
 ## 15. 变更日志

@@ -10,7 +10,7 @@
 
 | 状态 | **CLOSED** |
 |------|------------|
-| 证据 | **I-SPEC-PATH** = `.agent/SSOT/testkit/spec/spec.md` |
+| 证据 | **I-SPEC-PATH** = `.agents/ssot/testkit/spec/spec.md` |
 | 证据 | **T-DOC-005**「终态 path I-SPEC-PATH」AC=`active=1` |
 | 证据 | **T-ARCH-007** AC 强制 `I-SPEC-PATH`（不再「complete-spec 或 …」） |
 | 说明 | 路径字符串已钉死；迁移/archive 由 T-DOC-002/003/005 + ARCH-007 链负责 |

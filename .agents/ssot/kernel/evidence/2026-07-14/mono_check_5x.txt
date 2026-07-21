@@ -1,6 +1,6 @@
 === mono run 1 ===
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.18s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-ea8c3d0d109fbe81)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-ea8c3d0d109fbe81)
 
 running 1 test
 test clock::tests::system_clock_monotonic_advances_and_interval_usable ... ok
@@ -9,7 +9,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; fin
 
 === mono run 2 ===
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-ea8c3d0d109fbe81)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-ea8c3d0d109fbe81)
 
 running 1 test
 test clock::tests::system_clock_monotonic_advances_and_interval_usable ... ok
@@ -18,7 +18,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; fin
 
 === mono run 3 ===
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-ea8c3d0d109fbe81)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-ea8c3d0d109fbe81)
 
 running 1 test
 test clock::tests::system_clock_monotonic_advances_and_interval_usable ... ok
@@ -27,7 +27,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; fin
 
 === mono run 4 ===
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-ea8c3d0d109fbe81)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-ea8c3d0d109fbe81)
 
 running 1 test
 test clock::tests::system_clock_monotonic_advances_and_interval_usable ... ok
@@ -36,7 +36,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; fin
 
 === mono run 5 ===
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.18s
-     Running unittests src/lib.rs (../.target-xhyper.rs/debug/deps/kernel-ea8c3d0d109fbe81)
+     Running unittests src/lib.rs (../.cargo/target/debug/deps/kernel-ea8c3d0d109fbe81)
 
 running 1 test
 test clock::tests::system_clock_monotonic_advances_and_interval_usable ... ok

@@ -6,7 +6,7 @@
 | Date | 2026-07-14 |
 | Status | **CLOSED (partial-accepted)** |
 | Spec | SPEC-KERNEL-002 §17 |
-| Tree root | `.agent/SSOT/kernel/evidence/2026-07-14/` |
+| Tree root | `.agents/ssot/kernel/evidence/2026-07-14/` |
 
 ## §17 要求的规范树
 
@@ -26,7 +26,7 @@ evidence/kernel/<date>-<change-id>/
 ```
 
 本仓库实际布局为 **spec 附属 evidence 包**（非 `evidence/kernel/...` 字面路径），以  
-`.agent/SSOT/kernel/evidence/2026-07-14/` 为等价变更包根。下列对照 **语义等价物**，不伪装路径合规。
+`.agents/ssot/kernel/evidence/2026-07-14/` 为等价变更包根。下列对照 **语义等价物**，不伪装路径合规。
 
 ## 规范项 vs 现状
 
@@ -84,7 +84,7 @@ EVID-KERNEL-002-EVID-001-inventory.md # 本文件
 4. `archgate.json`（in-tree 拷贝）  
 5. `public-api.diff`（相对 baseline 的本变更 diff）  
 6. `downstream-impact.md`（独立文档）  
-7. 路径字面 `evidence/kernel/<date>-<change-id>/`（本仓用 `.agent/SSOT/kernel/evidence/<date>/`）
+7. 路径字面 `evidence/kernel/<date>-<change-id>/`（本仓用 `.agents/ssot/kernel/evidence/<date>/`）
 
 ## partial-accepted 范围（本 residual 关闭语义）
 
@@ -103,7 +103,7 @@ EVID-KERNEL-002-EVID-001-inventory.md # 本文件
 ## 再开启 / 补齐条件
 
 1. 按 §17 命名补齐缺失文件（可从 CI artifact 复制）；  
-2. 或修订 spec 承认 `.agent/SSOT/kernel/evidence/<date>/` + 本 inventory 为合法投影；  
+2. 或修订 spec 承认 `.agents/ssot/kernel/evidence/<date>/` + 本 inventory 为合法投影；  
 3. `mutants.json` / branch coverage 仅在对应 residual 实跑后写入。
 
 ## Verdict

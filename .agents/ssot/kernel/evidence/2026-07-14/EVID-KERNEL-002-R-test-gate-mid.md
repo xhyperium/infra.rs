@@ -5,9 +5,9 @@
 | 字段 | 值 |
 |------|-----|
 | 审计类型 | 只读（read-only） |
-| SSOT | `/home/workspace/xhyper.rs/.agent/SSOT/kernel/spec/spec.md`（SPEC-KERNEL-002） |
+| SSOT | `/home/workspace/.agents/ssot/kernel/spec/spec.md`（SPEC-KERNEL-002） |
 | 聚焦 | §11 测试合同 · §12 CI/机器门禁 · §16 迁移残余 · 下游 XError/Clock/Component |
-| 代码根 | `/home/workspace/xhyper.rs/crates/kernel` |
+| 代码根 | `/home/workspace/infra.rs/crates/kernel` |
 | 日期 | 2026-07-14 |
 | 结论 | **未闭合**。单元测试与 line coverage CI 部分达标；loom / proptest / trybuild / branch·mutation·Miri / 具名 KERNEL-* 规则 / public-api 快照 / E3 与 lifecycle 终态均未达标 |
 
@@ -200,7 +200,7 @@ crates/kernel/
 
 | 项 | 事实 |
 |----|------|
-| 位置 | `/home/workspace/xhyper.rs/crates/testkit/src/lib.rs`（R5 迁出 ✅） |
+| 位置 | `/home/workspace/infra.rs/crates/testkit/src/lib.rs`（R5 迁出 ✅） |
 | 状态 | 单一 `AtomicI64` 墙钟纳秒 |
 | `Clock::now` | `Timestamp::from_nanos(load)` |
 | `Clock::monotonic` | **未实现** → 落入 trait **默认** `Instant::now` |
@@ -380,14 +380,14 @@ crates/kernel/
 
 | 证据 | 路径 |
 |------|------|
-| SSOT §11–§12、§16–§18 | `.agent/SSOT/kernel/spec/spec.md` |
+| SSOT §11–§12、§16–§18 | `.agents/ssot/kernel/spec/spec.md` |
 | kernel 实现 | `crates/kernel/src/{lib,error,clock,lifecycle}.rs` |
 | kernel 清单 | `crates/kernel/Cargo.toml` |
 | ManualClock | `crates/testkit/src/lib.rs` |
 | archgate R7 | `tools/archgate/src/main.rs`、`tools/archgate/CHANGELOG.md` |
 | CI coverage / archgate | `.github/workflows/ci.yml` |
-| 历史 residual | `.agent/SSOT/kernel/review/review.md` |
-| 过期 test evidence（仍写 manual 在 kernel） | `.agent/SSOT/kernel/test/test.md`（**滞后**，不可作当前 SSOT） |
+| 历史 residual | `.agents/ssot/kernel/review/review.md` |
+| 过期 test evidence（仍写 manual 在 kernel） | `.agents/ssot/kernel/test/test.md`（**滞后**，不可作当前 SSOT） |
 | E2 清零声明 | `crates/kernel/CHANGELOG.md` |
 
 ---

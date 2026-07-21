@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |----|-----|
-| SSOT | `.agent/SSOT/kernel/spec/spec.md`（SPEC-KERNEL-002） |
+| SSOT | `.agents/ssot/kernel/spec/spec.md`（SPEC-KERNEL-002） |
 | 对照代码 | `crates/kernel/src/{error,clock,lifecycle,lib}.rs` + `Cargo.toml` |
 | 审计模式 | 只读源码对照（未跑测试/clippy） |
 | 日期 | 2026-07-14 |

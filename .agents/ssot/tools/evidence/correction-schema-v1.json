@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://xhyperium/evidence/corrections/schema-v1.json",
+  "title": "Evidence Correction Manifest v1",
+  "description": "Schema for evidence correction manifests that allow controlled modifications/deletions/renames of historical evidence files",
+  "type": "object",
+  "required": [
+    "correction_id",
+    "created_at",
+    "rfc_reference",
+    "approved_by",
+    "moves"
+  ],
+  "properties": {
+    "correction_id": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9-]+$",
+      "description": "Unique identifier for this correction (format: YYYY-MM-DD-slug)"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when correction was created"
+    },
+    "rfc_reference": {
+      "type": "string",
+      "description": "Path to RFC or policy document that authorizes this correction"
+    },
+    "approved_by": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string",
+        "description": "GitHub username of maintainer who approved"
+      },
+      "description": "List of maintainers who approved (minimum 2 required)"
+    },
+    "risk_owner_approval": {
+      "type": "object",
+      "required": ["name", "approved_at", "digest"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of risk owner who approved"
+        },
+        "approved_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When risk owner approved"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "SHA-256 digest of approval document"
+        }
+      },
+      "description": "Risk owner approval (required for compliance exceptions)"
+    },
+    "moves": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "content_preserved"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "Original evidence path (relative to repo root)"
+          },
+          "to": {
+            "type": "string",
+            "description": "New evidence path (for renames)"
+          },
+          "content_preserved": {
+            "type": "boolean",
+            "description": "Whether content digest remains identical"
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["path_migration", "gdpr_deletion", "compliance_request", "error_correction"],
+            "description": "Reason for this correction"
+          }
+        }
+      },
+      "description": "List of evidence file movements/deletions authorized by this correction"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "audit_trail": {
+          "type": "string",
+          "description": "Path to detailed audit evidence for this correction"
+        },
+        "compliance_reference": {
+          "type": "string",
+          "description": "External compliance case number or legal reference"
+        },
+        "emergency": {
+          "type": "boolean",
+          "description": "Whether this is an emergency correction (post-approval required)"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

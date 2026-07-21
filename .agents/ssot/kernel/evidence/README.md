@@ -17,7 +17,7 @@
 | `EVID-KERNEL-002-TEST-014-016-archgate-note.md` | KERNEL-* / API-002 旁注 |
 | `*-mid.md` | 迁移中途审计快照（**非**当前真相） |
 
-Ship：**PR [#235](https://github.com/xhyperium/xhyper.rs/pull/235)**
+Ship：**PR [#235](https://github.com/xhyperium/infra.rs/pull/235)**
 
 ## 历史
 

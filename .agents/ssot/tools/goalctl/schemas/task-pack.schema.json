@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "xhyper://goalctl/schemas/task-pack.schema.json",
+  "title": "TaskPack",
+  "description": "goalctl compile 输出骨架（PR-4）。Writer 不得修改 Task Pack 或扩大权限。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_pack_id",
+    "source_commit",
+    "trace",
+    "objective",
+    "scope",
+    "acceptance_criteria",
+    "validation",
+    "stop_conditions"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "task_pack_id": { "type": "string" },
+    "run_id": { "type": ["string", "null"] },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "repository_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "tree_id": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "submodule_state_digest": { "type": ["string", "null"] },
+        "lfs_manifest_digest": { "type": ["string", "null"] }
+      }
+    },
+    "authority_snapshot_digest": { "type": ["string", "null"] },
+    "approval_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["goal_id", "spec_id", "plan_id", "task_id"],
+      "properties": {
+        "goal_id": { "type": ["string", "null"] },
+        "spec_id": { "type": ["string", "null"] },
+        "plan_id": { "type": ["string", "null"] },
+        "task_id": { "type": "string" }
+      }
+    },
+    "objective": { "type": "string" },
+    "non_goals": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "statement"],
+        "properties": {
+          "id": { "type": "string" },
+          "statement": { "type": "string" },
+          "priority": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"]
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command"],
+        "properties": {
+          "command": { "type": "string" },
+          "cwd": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_paths", "prohibited_paths"],
+      "properties": {
+        "allowed_paths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "prohibited_paths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "path_semantics_version": {
+          "type": "string",
+          "const": "1.0.0"
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "PR-4+ 必填；Phase 1 编译器应填默认 deny 生产"
+    },
+    "resource_budget": {
+      "type": "object"
+    },
+    "side_effect_class": {
+      "type": "string",
+      "enum": ["PURE", "IDEMPOTENT", "AT_MOST_ONCE", "IRREVERSIBLE"]
+    },
+    "stop_conditions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "human_approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": { "type": "boolean" },
+        "approval_policy_id": { "type": ["string", "null"] },
+        "approval_refs": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

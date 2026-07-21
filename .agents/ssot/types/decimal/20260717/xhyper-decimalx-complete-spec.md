@@ -3,7 +3,7 @@
 ```text
 Spec ID:       SPEC-TYPES-DECIMALX-002
 Status:        Draft / Non-normative candidate
-Active SSOT:   .agent/SSOT/types/decimal/decimalx-spec.md
+Active SSOT:   .agents/ssot/types/decimal/decimalx-spec.md
 Source Goal:   GOAL-TYPES-DECIMALX-002
 Package:       xhyper-decimalx 0.1.0
 Lib / Path:    decimalx / crates/types/decimal

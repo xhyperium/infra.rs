@@ -5,7 +5,7 @@
 > 实现代码唯一位置：[`crates/testkit`](../../../crates/testkit)（core）· [`crates/test-support/contracts`](../../../crates/test-support/contracts)（contract-testkit）
 > **当前 SSOT Spec**：`SPEC-TESTKIT-002`（[spec/spec.md](spec/spec.md) ≡ [xhyper-testkit-complete-spec.md](xhyper-testkit-complete-spec.md)）
 > **Source Goal**：`GOAL-DETERMINISTIC-TEST-SUPPORT` — **Done**（ship 2026-07-14）
-> **Ship PR**：[#247](https://github.com/xhyperium/xhyper.rs/pull/247) · [#254](https://github.com/xhyperium/xhyper.rs/pull/254) · [#255](https://github.com/xhyperium/xhyper.rs/pull/255) · tag `testkit-v0.1.1`
+> **Ship PR**：[#247](https://github.com/xhyperium/infra.rs/pull/247) · [#254](https://github.com/xhyperium/infra.rs/pull/254) · [#255](https://github.com/xhyperium/infra.rs/pull/255) · tag `testkit-v0.1.1`
 > **历史**：[testkit-spec.md](spec/spec.md)（SUPERSEDED，`xlib_harness` 草案）→ SPEC-TESTKIT-002
 
 ## 11 层映射
@@ -49,8 +49,8 @@
 
 ```bash
 # SSOT 双镜像同构（必须 exit 0）
-cmp .agent/SSOT/testkit/spec/spec.md \
-    .agent/SSOT/testkit/xhyper-testkit-complete-spec.md
+cmp .agents/ssot/testkit/spec/spec.md \
+    .agents/ssot/testkit/xhyper-testkit-complete-spec.md
 
 # 包名与 Cargo.toml 一致
 grep -n '^name' crates/testkit/Cargo.toml   # 应为 xhyper-testkit

@@ -5,12 +5,12 @@
 | 字段            | 值                                                                                |
 | --------------- | --------------------------------------------------------------------------------- |
 | Plan ID         | `PLAN-KERNEL-002-v2-complete`                                                     |
-| Source Spec     | `.agent/SSOT/kernel/spec/xhyper-kernel-complete-spec.md`（≡ `spec/spec.md`）     |
+| Source Spec     | `.agents/ssot/kernel/spec/xhyper-kernel-complete-spec.md`（≡ `spec/spec.md`）     |
 | Spec ID         | `SPEC-KERNEL-002` · Status **Approved**                                           |
 | Goal            | `GOAL-KERNEL-RUNTIME-SEMANTICS`                                                   |
 | Package         | `kernel` @ `crates/kernel` · version **0.1.1**                                    |
 | Branch          | `feat/kernel-002-e2-migrate-banned-apis`                                          |
-| Ship PR         | [#235](https://github.com/xhyperium/xhyper.rs/pull/235)                           |
+| Ship PR         | [#235](https://github.com/xhyperium/infra.rs/pull/235)                           |
 | Residual SSOT   | [evidence/2026-07-14/residual-open.txt](../evidence/2026-07-14/residual-open.txt) |
 | Work Todo       | [`.worktree/kernel-todo.md`](../../../../.worktree/kernel-todo.md)                |
 | Strategy        | **诚实台账 → 差距闭合 → 强化测试/门禁 → 十轮验收 → 人审 Approved → release**      |
@@ -174,12 +174,12 @@ W8  §18 闭合声明（仅人审后）
 
 | Role                 | 职责                            | 写入路径                                             |
 | -------------------- | ------------------------------- | ---------------------------------------------------- |
-| **Planner**          | 本 plan + residual 登记         | `.agent/SSOT/kernel/plan/*`、`residual-open.txt`    |
+| **Planner**          | 本 plan + residual 登记         | `.agents/ssot/kernel/plan/*`、`residual-open.txt`    |
 | **Executor-API**     | ERR-010 / CLK-010               | `crates/kernel`、`crates/adapters/storage/redis`     |
 | **Executor-Test**    | LC-005 / 可选 trybuild          | `crates/kernel/tests/*`、`src/*` tests               |
 | **Executor-Gate**    | GATE-009 / 文档 defer           | `tools/archgate` 或 evidence                         |
 | **Executor-Quality** | 014/015/016 命令+证据           | `evidence/2026-07-14/*`                              |
-| **Doc-Sync**         | gate/tasks/matrix/review/goal   | `.agent/SSOT/kernel/**`、`.worktree/kernel-todo.md` |
+| **Doc-Sync**         | gate/tasks/matrix/review/goal   | `.agents/ssot/kernel/**`、`.worktree/kernel-todo.md` |
 | **Verifier**         | 十轮清单 + 汇总 verdict         | `EVID-KERNEL-002-R10b-*.md`                          |
 | **Skeptic**          | 反证：找假 PASS / 遗漏 residual | 只读 + 写 review 批注                                |
 
@@ -244,13 +244,13 @@ write R10b verdict (honest §18 still OPEN if Approved missing)
 
 | 产物          | 路径                                                     |
 | ------------- | -------------------------------------------------------- |
-| 完整计划 v2   | `.agent/SSOT/kernel/plan/plan.md`（本文件）             |
-| 章节差距附录  | `.agent/SSOT/kernel/plan/gap-matrix-v2.md`              |
+| 完整计划 v2   | `.agents/ssot/kernel/plan/plan.md`（本文件）             |
+| 章节差距附录  | `.agents/ssot/kernel/plan/gap-matrix-v2.md`              |
 | 工作台账      | `.worktree/kernel-todo.md`                               |
 | residual 更新 | `evidence/2026-07-14/residual-open.txt`                  |
 | 十轮日志      | `evidence/2026-07-14/EVID-KERNEL-002-R10b-round-log.txt` |
 | 十轮裁定      | `evidence/2026-07-14/EVID-KERNEL-002-R10b-verdict.md`    |
-| 人审包        | `.agent/SSOT/kernel/plan/approval-packet.md`            |
+| 人审包        | `.agents/ssot/kernel/plan/approval-packet.md`            |
 
 ### 5.2 成功定义（分层）
 
@@ -274,7 +274,7 @@ write R10b verdict (honest §18 still OPEN if Approved missing)
 | 误标 §18/stable                | Skeptic 轮次 + 禁止词检查            |
 | 分支脏文件（非 kernel）        | 不纳入本战役 commit                  |
 
-回滚：`git checkout -- crates/kernel tools/archgate .agent/SSOT/kernel`（仅本战役路径）。
+回滚：`git checkout -- crates/kernel tools/archgate .agents/ssot/kernel`（仅本战役路径）。
 
 ---
 

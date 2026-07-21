@@ -10,7 +10,7 @@ layer:    kernel / L0
 status:   stable（公开语义演进需 RFC）
 owner:    platform
 publish:  false
-管线制品: .agent/SSOT/kernel/<phase>/<phase>.md（Code → crates/kernel）
+管线制品: .agents/ssot/kernel/<phase>/<phase>.md（Code → crates/kernel）
 ```
 
 ---

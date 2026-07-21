@@ -71,13 +71,14 @@
 | （本仓）contracts | —（无独立上游 SSOT 域） | `crates/contracts` | **trait 出口已注册**（#43）；非业务实现 |
 | infra/bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/bootstrap` | **组合根已落地**（可移植 trait 替面）；contracts/observex/evidence 全量 **DEFER** |
 | infra/transport | `.agents/ssot/infra/transport/` | `crates/transport` | **active 合同已落地**（未达 M3）；见 transport 对齐文 |
+| tools | `.agents/ssot/tools/` | `crates/evidence`（仅 evidence） | **镜像已本地化**；evidence 最小面落地；goalctl/xtask/verifyctl **未**落地 |
 
 规则：
 
 1. 镜像写 COMPLETE / Stable ≠ 本仓可宣称 ship
 2. 本仓完成声明必须以 **members + 源码 + 本仓测试输出** 为准
 3. 禁止在 `.agents/ssot/**` 镜像内直接编辑；上游用删除感知同步（见 [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md)）
-4. 保留上游层级：`infra/`、`adapters/` 勿展平到 `.agents/ssot/` 根
+4. 保留上游层级：`infra/`、`adapters/`、`tools/` 勿展平到 `.agents/ssot/` 根
 
 ## 验证入口
 
@@ -103,6 +104,13 @@ cargo check -p xhyper-contracts -p binancex -p okxx -p redisx -p kafkax \
 diff -rq /home/workspace/xhyper.rs/.agent/SSOT/adapters .agents/ssot/adapters
 cargo test -p okxx --all-targets
 diff -rq /home/workspace/xhyper.rs/.agent/SSOT/contracts .agents/ssot/contracts
+
+# tools（本地化后与上游非零 diff 为预期；校验目录存在）
+test -d .agents/ssot/tools/evidence
+test -d .agents/ssot/tools/goalctl
+test -d .agents/ssot/tools/xtask
+test -d .agents/ssot/tools/verifyctl
+cargo test -p xhyper-evidence --all-targets
 ```
 
 ## 相关索引
@@ -118,6 +126,8 @@ diff -rq /home/workspace/xhyper.rs/.agent/SSOT/contracts .agents/ssot/contracts
 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) | adapters 九域镜像 + scaffold 状态 |
 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) | contracts 镜像 + trait 落地 |
 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) | transportx 本仓矩阵 |
+| [tools-ssot-alignment.md](./tools-ssot-alignment.md) | tools 四域镜像 + 本地化状态 |
+| [evidence-ssot-alignment.md](./evidence-ssot-alignment.md) | evidence crate 落地矩阵 |
 | [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md) | 镜像同步完整性（≠ 实现落地） |
 | [crates/AGENTS.md](../../crates/AGENTS.md) | crate 子模块标准布局 + 概览 |
 | [.agents/ssot/SSOT.md](../../.agents/ssot/SSOT.md) | R6/R7 规则 |

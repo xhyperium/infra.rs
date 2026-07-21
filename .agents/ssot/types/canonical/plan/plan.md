@@ -121,7 +121,7 @@ M0/M1 语义闭合     ≠  M3 全量迁移 / DEFER-WIRE-FULL
 
 | Lane | 允许路径 | 禁止 |
 |------|----------|------|
-| L-DOC | `.agent/SSOT/types/canonical/**`、`evidence/types-canonical-002/**` | 改 runtime 语义裁定 |
+| L-DOC | `.agents/ssot/types/canonical/**`、`evidence/types-canonical-002/**` | 改 runtime 语义裁定 |
 | L-DTO | `crates/types/canonical/**`、`fixtures/market/**`（仅既有 wire） | 删 legacy Order/OrderAck DTO 形状（无 consumer=0）；加 codec；上层依赖 |
 | L-DOWN | 仅当编译失败时最小修 adapters/contracts/domain/testkit | 无 consumer 证据的 breaking |
 | L-GATE | 门禁命令、10x 脚本、SCRATCH 日志 | 伪造 APPROVED / 手写 digest |
