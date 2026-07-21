@@ -2,6 +2,13 @@
 
 本仓库是**独立的 Rust 基础设施工作区**。所有 AI 编码助手（Claude Code、Codex、Copilot 等）共享本文件中的治理约定。
 
+## Rust 编码规范（强制）
+
+- **上位全局标准**：《[Rust 编码规范（完整版）v2.0](https://github.com/bytechainx/.github/blob/main/rulesets/rust/RULES.md)》——组织 SSOT：`bytechainx/.github` → `rulesets/rust/`
+- **Agent 加载**：`~/.claude/rules/rust.md`（symlink）；专项见同目录 `security` / `async-runtime` / `api-design` 等
+- **本仓关系**：宪章 [§4.0](./docs/constitution/04-code-standards.md#40-rust-全局编码规范强制上位) 采纳上位标准；项目细则可**加严**、**不可削弱** P0
+- 提交前：`cargo fmt` + `clippy -D warnings` + `test`（与完整版 / §5 门禁一致）
+
 ## 语言与编码（强制）
 
 - **字符编码**：全部文本文件使用 **UTF-8（无 BOM）**，换行 **LF**
@@ -10,7 +17,7 @@
 - **用户可见错误信息**：中文
 - **标识符**：英文（Rust 惯例）
 - **LICENSE**：保留英文许可证原文
-- 细则见 [docs/constitution/04-code-standards.md §4.5 / §4.6](./docs/constitution/04-code-standards.md)、[docs/governance/编码与语言约定.md](./docs/governance/编码与语言约定.md)、[docs/governance/ASD-STE100.md](./docs/governance/ASD-STE100.md)；索引 [docs/constitution/](./docs/constitution/)
+- 细则见 [docs/constitution/04-code-standards.md §4.0 / §4.5 / §4.6](./docs/constitution/04-code-standards.md)、[docs/governance/编码与语言约定.md](./docs/governance/编码与语言约定.md)、[docs/governance/ASD-STE100.md](./docs/governance/ASD-STE100.md)；索引 [docs/constitution/](./docs/constitution/)
 
 ## 项目身份
 
