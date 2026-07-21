@@ -39,6 +39,7 @@ infra.rs/
 ├── crates/                    # Rust workspace 成员
 │   ├── kernel/                # L0 语义信任根
 │   ├── testkit/               # 测试支持（dev-only）
+│   ├── configx/               # L1 内存字符串 KV 配置存储
 │   └── types/
 │       ├── decimal/           # 十进制数值 / Money
 │       └── canonical/         # 跨层共享 DTO
@@ -82,6 +83,9 @@ infra.rs/
 │  crates/testkit/                           │  T0 test-support（仅 dev-dep）
 │  └── ManualClock 族                        │
 ├────────────────────────────────────────────┤
+│  crates/configx/                           │  L1 内存 KV（非多源热更新）
+│  └── ConfigStore                           │
+├────────────────────────────────────────────┤
 │  crates/types/canonical/                   │  跨层共享纯 DTO
 │  crates/types/decimal/                     │  Decimal / Money
 ├────────────────────────────────────────────┤
@@ -94,6 +98,7 @@ infra.rs/
 
 ```
 canonical  →  decimalx  →  kernel
+configx    →  kernel          # L1；禁止其他 L1 / observex
 testkit    →  kernel          # 仅 [dev-dependencies]
 ```
 
