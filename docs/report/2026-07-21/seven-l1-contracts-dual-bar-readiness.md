@@ -450,8 +450,19 @@ node scripts/docs/gen-crate-status.mjs --summary
 ### 10.2 生产标尺 B
 
 - README 七包均补 **生产误用红线** 表。
-- **仍未** contracts L3、async Wait、真实后端、L5 Maintainer 签。
+- **仍未** first-batch 全 L3、L5 Maintainer 签、Tx/Bus 业务 live。
 - 绿测试 / 可运行 example **≠** Production Ready。
+
+### 10.4 Epic 闭合后（#166–#168 · #172 · 文档同步）
+
+| 项 | 状态 |
+|----|------|
+| async Wait / `retry_async` | **DONE**（#167） |
+| transport P0 硬化 | **DONE**（#166） |
+| redis live + consume surface + L1 P0s | **DONE**（#168） |
+| contracts L3 子集（KV+Instr）+ exchange 只读 time | **DONE**（#172） |
+| SSOT 对齐文刷新 | 见 `docs/ssot/*` · `SSOT_SYNC_REPORT` 增量节 |
+| workspace Production Ready / L5 | **仍否** |
 
 ### 10.3 验证
 

@@ -33,7 +33,7 @@
 | 3.drv | `ReqwestHttpDriver` / `TungsteniteWsConnector` | **PASS** | `src/lib.rs` + loopback 测试 |
 | 3.mock | `MockHttpTransport` + `HttpDriver` | **PASS** | `tests/mock_http.rs` |
 | 3.legacy | `HttpTransport` deprecated | **PASS** | `#[deprecated(note = "use HttpDriver")]` |
-| 3.binance/okx | 适配器消费真实驱动 | **PASS（接线）** / 业务解析 **DEFER** | `binancex`/`okxx` 可选 `with_http(Arc<dyn HttpDriver>)`；`MockHttpTransport` 测通；JSON 业务解析未做 |
+| 3.binance/okx | 适配器消费真实驱动 | **PASS（接线）** / 公共 time 解析 **PASS** / 业务协议 **DEFER** | `with_http` + mock；`server_time` JSON 已解析（#172）；下单/签名未做 |
 
 ## §4 公开 API 行为
 
@@ -49,7 +49,7 @@
 | 4.4.4xx5xx | 其他 4xx/5xx → Ok(HttpResponse) | **PASS** | `reqwest_driver_4xx/5xx_*` |
 | 4.4.headers | 不保留 response headers | **PASS** | `HttpResponse` 仅 status/body |
 | 4.4.ws-frames | text/binary→Bytes；Ping/Pong 跳过；Close→None | **PASS** | `ws_text_binary_ping_pong_close_lifecycle` |
-| 4.4.limits | 无 size limit / absolute deadline | **PASS** | 未实现（符合当前合同） |
+| 4.4.limits | payload 上限 / 敏感 Debug 等 | **PASS（P0 硬化）** | `PayloadTooLarge` + Debug 脱敏等（#166 / s9t.16）；完整 M3 矩阵仍 DEFER |
 
 ## §5 不变量
 
@@ -59,7 +59,7 @@
 | 5.2 | 适配器→transport；不反向 | **PASS** | 无 adapter 依赖 |
 | 5.3 | 同层隔离 R3 | **PASS** | metadata 无其他 L1 |
 | 5.4 | 可恢复失败不 panic | **PASS** | 错误映射 + 测试 |
-| 5.5 | 资源边界 M3 | **DEFER** | 生产故障矩阵 |
+| 5.5 | 资源边界 M3 | **部分** / 其余 **DEFER** | P0 上限已入；TLS/池/代理矩阵仍 DEFER |
 | 5.6 | 实现可用 ≠ M2/M3 | **PASS** | README / AGENTS 明示 |
 
 ## §6 测试与验收
@@ -69,7 +69,7 @@
 | 6.unit | mock + 驱动映射测试 | **PASS** | `tests/*`；多于上游 11 测 |
 | 6.not-mock-only | 不得描述为 mock-only | **PASS** | 真实驱动 + loopback |
 | 6.not-prod | 不得宣称生产 TLS 就绪 | **PASS** | 文档声明 |
-| 6.cmd.binance/okx | monorepo 验收命令 | **DEFER** | stub adapter 未接线 transport；待 adapter 战役 |
+| 6.cmd.binance/okx | adapter 验收命令 | **部分 PASS** | `cargo test -p binancex -p okxx`（mock）；live `server_time` ignore；业务战役 DEFER |
 | 6.cmd.local | test/clippy/fmt | **PASS** | 本仓质量门禁 |
 
 ## 覆盖率

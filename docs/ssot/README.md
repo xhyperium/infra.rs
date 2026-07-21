@@ -29,7 +29,9 @@
 4. 各域 `*-ssot-alignment.md` — 本仓落地差距
 5. 生产就绪审计（五核心 crate）：[../report/2026-07-21/core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md)
 
-> **2026-07-21 跟进**：PR #98 P0/P1；L5 [`0.3.0-signoff`](../plans/releases/0.3.0-signoff.md)；四包内部 GO [#159](https://github.com/xhyperium/infra.rs/pull/159) · tag/GH Release [`v0.3.0-four-crates`](https://github.com/xhyperium/infra.rs/releases/tag/v0.3.0-four-crates)；**kernel 内部发布已执行**（[#163](https://github.com/xhyperium/infra.rs/pull/163) · [`0.3.0-internal.md`](../../crates/kernel/releases/0.3.0-internal.md)）。规格 COMPLETE **仍不等于** 整体 Production Ready / crates.io。详见各 `*-ssot-alignment.md` 与 [四包证据](../plans/releases/2026-07-21-four-crates-internal-release.md)。
+> **2026-07-21 跟进**：PR #98 P0/P1；L5 [`0.3.0-signoff`](../plans/releases/0.3.0-signoff.md)；四包 GO [#159](https://github.com/xhyperium/infra.rs/pull/159) · tag [`v0.3.0-four-crates`](https://github.com/xhyperium/infra.rs/releases/tag/v0.3.0-four-crates)；kernel 内部发布 [#163](https://github.com/xhyperium/infra.rs/pull/163)。  
+> **STATUS-PROD epic `infra-s9t` 已闭合**（[#166](https://github.com/xhyperium/infra.rs/pull/166)–[#168](https://github.com/xhyperium/infra.rs/pull/168) · [#172](https://github.com/xhyperium/infra.rs/pull/172)）：L1 P0、redis live KV、contracts L3 子集、exchange `server_time` 入口。  
+> 规格 COMPLETE / STATUS 100% / epic closed **仍不等于** workspace 整体 Production Ready / L5 / crates.io。详见各 `*-ssot-alignment.md`、[双栏报告](../report/2026-07-21/seven-l1-contracts-dual-bar-readiness.md)、[行动树](../plans/2026-07-21-status-modules-prod-followup.md)。
 
 ## 文档
 

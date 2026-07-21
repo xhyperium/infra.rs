@@ -60,7 +60,7 @@
 | `build_app` → `BootstrappedApp` | **PASS** | 单元 + 集成 + example |
 | `try_build_app` | **PASS** | fail + ok 双路径 |
 | 可选 evidence 未注入为 `None` | **PASS** | tests |
-| `require_evidence` 仅 `try_*` fail-closed（infallible 路径已知差距） | **PASS** | 与 SSOT 当前兼容事实一致；非长期安全合同 |
+| `require_evidence` **release/debug 均 fail-closed**（`build` panic + `try_*` Err） | **PASS** | infra-s9t.4 / #168：禁止 release 静默成功 |
 | Missing→`Missing` / Invalid→`Invalid` / Unavailable→`Unavailable` | **PASS** | `error.rs` + tests；`Into<XError>` / `kind()` / `into_xresult` |
 | 关停单次触发、controller/guard 共享 signal | **PASS** | lifecycle 经 kernel；trigger 后 `is_triggered` |
 
@@ -105,6 +105,7 @@ rg -n 'fn register|fn resolve|pub struct Gate|pub enum Gate' crates/bootstrap/sr
 | 日期 | 说明 |
 |------|------|
 | 2026-07-21 | 生产就绪：`Bounded*` 有界面命名收敛；与 contracts 权威 trait 区分；PR #98 **合入 main** |
+| 2026-07-21 | infra-s9t.4：`require_evidence` 在 `build`/`build_app` 路径 release panic fail-closed；#168 |
 
 ## 追溯
 

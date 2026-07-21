@@ -36,7 +36,7 @@
 
 | 子域 | SSOT 路径 | 本仓路径 | package | 本仓状态 |
 |------|----------|----------|---------|----------|
-| evidence | `.agents/ssot/tools/evidence` | `crates/evidence` | `xhyper-evidence` | 最小面已落地（Appender + bootstrap 注入）；远程/签名 DEFER |
+| evidence | `.agents/ssot/tools/evidence` | `crates/evidence` | `xhyper-evidence` | 最小面 + `FileEvidenceAppender`；远程/签名 DEFER |
 | goalctl | `.agents/ssot/tools/goalctl` | `tools/goalctl` | — | **未** member |
 | xtask | `.agents/ssot/tools/xtask` | `tools/xtask` | — | **未** member |
 | verifyctl | `.agents/ssot/tools/verifyctl` | `tools/verifyctl` | — | **未** member |

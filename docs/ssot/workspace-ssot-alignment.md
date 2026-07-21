@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
-| 跟进 | P0/P1 **#98**；L5 **0.3.0-signoff**；四包 GO **#159** · tag/GH Release **`v0.3.0-four-crates`**；**kernel 内部发布已执行**（#163 · `crates/kernel/releases/0.3.0-internal.md`）；**不**宣称 workspace 整体 Production Ready |
+| 跟进 | P0/P1 **#98**；L5 **0.3.0-signoff**；四包 GO **#159** · tag **`v0.3.0-four-crates`**；kernel 内部发布 **#163**；**STATUS-PROD epic `infra-s9t` 18/18 闭合**（#166–#168 · #172）；**不**宣称 workspace 整体 Production Ready / L5 |
 | 用途 | 一眼看清：**镜像有什么** vs **本仓落地了什么** |
 | 权威 members | 根 `Cargo.toml` `[workspace.members]` + `cargo metadata --no-deps`（**package 名以 metadata 为准**） |
 
@@ -17,18 +17,18 @@
 | `schedulex` | `crates/schedulex/` | `schedulex` | L1 任务 ID 登记表（registry only） | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) |
 | `bootstrap` | `crates/bootstrap/` | `bootstrap` | L1 唯一组合根（ADR-016） | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) |
 | `evidence` | `crates/evidence/` | `evidence` | L1 审计证据追加面 | [evidence-ssot-alignment.md](./evidence-ssot-alignment.md) |
-| `resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试 + 熔断 + 限流 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
+| `resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试（含 async）+ 熔断 + 限流 + 舱壁 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
 | `decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money · **L1** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO · **L2 wire 子集** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
-| `contracts` | `crates/contracts/` | `contracts` | adapter trait 出口（#43）；Tx/消息可测 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
-| `binancex` | `crates/adapters/exchange/binance/` | `binancex` | exchange adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `okxx` | `crates/adapters/exchange/okx/` | `okxx` | exchange adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `contracts` | `crates/contracts/` | `contracts` | adapter trait 出口；L3 子集（KV+Instr） | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
+| `binancex` | `crates/adapters/exchange/binance/` | `binancex` | exchange scaffold + mock HTTP + `server_time` 解析 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `okxx` | `crates/adapters/exchange/okx/` | `okxx` | exchange scaffold + mock HTTP + `server_time` 解析 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `natsx` | `crates/adapters/storage/nats/` | `natsx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `ossx` | `crates/adapters/storage/oss/` | `ossx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `redisx` | `crates/adapters/storage/redis/` | `redisx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `redisx` | `crates/adapters/storage/redis/` | `redisx` | storage scaffold + `live` `RedisLiveKv`（CT-9） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `taosx` | `crates/adapters/storage/taos/` | `taosx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `transportx` | `crates/transport/` | `transportx` | L1 HTTP/WS 传输 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) |
 
@@ -66,13 +66,14 @@
 | schedulex | `.agents/ssot/schedulex/` | `crates/schedulex` | **registry 已落地**（active SSOT 最小合同） |
 | types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；decimal **L1**；canonical **L2** committed v1–v1.3；package stable **OPEN** |
 | configx | `.agents/ssot/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
-| bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根已落地**；`Bounded*` 有界面 + Instrumentation/Evidence 注入；全量 async contracts **DEFER** |
-| resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试已落地**；熔断/限流 DEFER |
-| infra 其余域 | `.agents/ssot/{gate,observex,testkitx,transport}` | — | **仅镜像** 或见分域对齐文；勿把镜像 COMPLETE 当本仓 ship |
-| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **镜像已注册**；crate 为 **scaffold**，未宣称业务实现 |
-| （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口已注册**；Tx/消息可测 + 最小 Fake testkit；真实后端 **DEFER** |
-| transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（未达 M3）；见 transport 对齐文 |
-| tools | `.agents/ssot/tools/` | `crates/evidence`（仅 evidence） | **镜像已本地化**；evidence 最小面落地；goalctl/xtask/verifyctl **未**落地 |
+| bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根已落地**；`Bounded*` + Instrumentation/Evidence；`require_evidence` **release fail-closed**（#168）；全量 async contracts **DEFER** |
+| resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
+| observex | `.agents/ssot/observex/` | `crates/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
+| infra 其余域 | `.agents/ssot/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
+| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **镜像已注册**；多数 scaffold；**redisx live KV** + exchange **只读 server_time** 入口（#168/#172）；**非**业务 Production Ready |
+| （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/conformance；**L3 子集** KV+Instr（#172）；Tx/Bus/Repo/Venue 业务 live **DEFER** |
+| transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
+| tools | `.agents/ssot/tools/` | `crates/evidence`（仅 evidence） | evidence 含 `FileEvidenceAppender`；goalctl/xtask/verifyctl **未**落地 |
 
 规则：
 
@@ -105,12 +106,13 @@ node scripts/quality-gates/check-public-api.mjs
 RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release
 # 或: node scripts/quality-gates/run-kernel-loom.mjs
 
-# adapters / contracts scaffold
+# adapters / contracts
 cargo check -p contracts -p binancex -p okxx -p redisx -p kafkax \
   -p natsx -p postgresx -p taosx -p ossx -p clickhousex
-diff -rq /home/workspace/xhyper.rs/.agent/SSOT/adapters .agents/ssot/adapters
-cargo test -p okxx --all-targets
-diff -rq /home/workspace/xhyper.rs/.agent/SSOT/contracts .agents/ssot/contracts
+cargo test -p contracts -p binancex -p okxx -p redisx --all-targets
+# optional live（需服务 / 外网；默认 ignore）
+# REDIS_URL=redis://127.0.0.1:6379 cargo test -p redisx --features live -- --ignored
+# cargo test -p binancex -p okxx --test live_server_time -- --ignored
 
 # tools（本地化后与上游非零 diff 为预期；校验目录存在）
 test -d .agents/ssot/tools/evidence
@@ -128,13 +130,16 @@ cargo test -p evidence --all-targets
 | `testkit` | **L1 ManualClock test-support**（非 runtime；四包 GO 内） | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
 | `decimalx` | **L1 Internal Ready**（四包 GO 内） | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `canonical` | **L2 committed wire subset**（v1–v1.3；四包 GO 内） | 同上 |
-| `contracts` | **部分就绪**（不在四包 GO 范围） | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
+| `contracts` | **部分就绪**：L3 子集（KV+Instr）；非 first-batch 全绿 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) · [L3_FIRST_BATCH_STATUS](../../crates/contracts/docs/L3_FIRST_BATCH_STATUS.md) |
+| `redisx`（live） | **非 scaffold KV 入口**（feature `live`；optional CI） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| L1 平台（bootstrap/resiliencx/transport/…） | **P0 阻断已收敛**（`infra-s9t`）；≠ 各包 Production Ready | [七包双栏](../report/2026-07-21/seven-l1-contracts-dual-bar-readiness.md) · [prod-consume-surface](../plans/artifacts/prod-consume-surface.md) |
 
 - 四包证据：[`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md)
 - kernel crate 发布记录：[`../../crates/kernel/releases/0.3.0-internal.md`](../../crates/kernel/releases/0.3.0-internal.md)
 - L5 权威：[`../plans/releases/0.3.0-signoff.md`](../plans/releases/0.3.0-signoff.md) · GO-with-Accepts
 - 内部 tag / GH Release：[`v0.3.0-four-crates`](https://github.com/xhyperium/infra.rs/releases/tag/v0.3.0-four-crates)
 - 审计与 DEFER：[`../report/2026-07-21/core-crates-production-readiness.md`](../report/2026-07-21/core-crates-production-readiness.md) §11  
+- STATUS-PROD 行动树：[`../plans/2026-07-21-status-modules-prod-followup.md`](../plans/2026-07-21-status-modules-prod-followup.md)（epic **`infra-s9t` closed**）
 
 **禁止**将上表误读为「五 crate / workspace 整体 Production Ready」或 crates.io 已发布。
 
@@ -164,3 +169,4 @@ cargo test -p evidence --all-targets
 | 2026-07-21 | PR #98 合入：五 crate 生产就绪快照与验证入口（loom/align 路径）写入总览 |
 | 2026-07-21 | 四包内部 GO：members 表 package 名对齐 Cargo metadata；分层 L1/L2/L4；#159 · tag `v0.3.0-four-crates` |
 | 2026-07-21 | kernel **内部发布已执行**：#163 · `crates/kernel/releases/0.3.0-internal.md` · GH Release；对齐快照更新 |
+| 2026-07-21 | **infra-s9t** 闭合（#166–#168 · #172）：L1 P0、redis live KV、contracts L3 子集、exchange `server_time`；总览与分域对齐同步 |

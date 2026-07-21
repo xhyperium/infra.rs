@@ -30,9 +30,10 @@
 
 | 入口 | Feature / 条件 | 说明 |
 |------|----------------|------|
-| `redisx` live KV | feature `live` + 可达 Redis | 非 scaffold 验证入口（`infra-s9t.2`） |
-| `postgresx` live | 未交付 | 仍 scaffold |
-| exchange live | 未交付 | 仅 mock/HttpDriver |
+| `redisx` live KV | feature `live` + 可达 Redis | 非 scaffold 验证入口（`infra-s9t.2` closed · #168） |
+| `postgresx` live | 未交付 | 仍 scaffold / mock Tx |
+| exchange **只读** `server_time` | `HttpDriver` + 公共 REST；`#[ignore]` live | **s9t.13 closed · #172**；非下单/签名 |
+| exchange 业务 live | 未交付 | 签名、私有 API、下单 **Deny** |
 
 ## 3. Deny（禁止当生产后端/平台）
 
@@ -58,3 +59,4 @@
 | 日期 | 说明 |
 |------|------|
 | 2026-07-21 | 初冻（infra-s9t.1）；对齐 STATUS 全模块审计与 follow-up epic |
+| 2026-07-21 | s9t.2/.13 闭合后刷新 Conditional：redis live + exchange 只读 time；epic closed ≠ Production Ready |

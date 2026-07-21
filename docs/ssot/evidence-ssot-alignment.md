@@ -14,6 +14,7 @@
 | `EvidenceAppender` / `EvidenceError` / `AppendReceipt` | **PASS** |
 | `InMemoryEvidenceAppender` | **PASS** |
 | bootstrap re-export + `with_evidence` | **PASS** |
+| `FileEvidenceAppender` | **PASS**（infra-s9t.7 最小文件持久化；#168） |
 | 远程/签名 wire | **DEFER** |
 | LCOV 100% | **PASS**（cov-gate） |
 
@@ -23,7 +24,3 @@
 cargo test -p evidence -p bootstrap --all-targets
 node scripts/quality-gates/cov-gate-100.mjs -p evidence --filter crates/evidence/src
 ```
-
-## 本轮增量
-
-| `FileEvidenceAppender` | **PASS**（infra-s9t.7 最小文件持久化） |
