@@ -50,7 +50,7 @@
 ## 4. 非目标
 
 - 不在本轮要求每个 trait 的完整产品级 adapter（只需验证入口，见 W4）。
-- 不在本轮强制独立 `crates/test-support/contracts` crate（可先 in-crate Fake，W3 再裁定）。
+- 不在本轮强制独立 `crates/test-support/contracts` crate（已独立为 contract-testkit（#178）；禁止回退 in-crate Fake）。
 
 ## 5. 变更记录
 

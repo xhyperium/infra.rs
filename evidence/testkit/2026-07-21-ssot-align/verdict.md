@@ -1,3 +1,5 @@
+> **Superseded（2026-07-22 / #178）**：独立 `contract-testkit` 已落地于 `crates/test-support/contracts`；本文「contract-testkit DEFER」仅作历史证据，以 `docs/ssot/testkit-ssot-alignment.md` 为准。
+
 # testkit SSOT 对齐证据（infra.rs）
 
 | 字段 | 值 |

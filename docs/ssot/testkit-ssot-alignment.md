@@ -168,6 +168,7 @@ core 必选 GAP = 0
 
 | 日期 | 说明 |
 |------|------|
+| 2026-07-22 | SSOT 同步文档纠偏：与 #178 落地叙事全仓对齐 |
 | 2026-07-21 | 独立 `contract-testkit` crate 落地（`crates/test-support/contracts`） |
 | 2026-07-21 | 生产就绪文档同步：contracts 存在性、domain、中文错误、PARTIAL contract-testkit；PR #98 **合入 main** |
 | 2026-07-21 | 四包内部 GO：package 名对齐 `testkit`；全部 `cargo -p testkit`；examples/surface/baseline；PR #159 · tag `v0.3.0-four-crates` |

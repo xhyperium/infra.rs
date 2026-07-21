@@ -1,12 +1,14 @@
 # contracts（xhyper-contracts）生产就绪 partial
 
+> **post-#178 勘误（2026-07-22）**：独立 `contract-testkit` 已落地；Fake 不在 `contracts`；postgres scaffold 用本地 `ScaffoldTxContext`。下文若残留 in-crate Fake / 独立 crate DEFER，以本勘误与 `docs/ssot/*` 为准。
+
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21 |
 | package / lib | Cargo `name = "contracts"` · lib `contracts`（文档/SSOT 常称 `xhyper-contracts`；**`-p xhyper-contracts` 会失败**） |
 | 路径 | `crates/contracts` |
 | 版本 | `0.1.0` · `publish = false` |
-| 源码结构 | `src/lib.rs` + `src/fakes.rs`（无子模块拆分） |
+| 源码结构 | `src/lib.rs` + `src/venue_gate.rs`；Fake 在 `contract-testkit`（#178） |
 | 目标层级 | **L3 Contract Ready**（生产用 trait 子集） |
 | 本审计结论 | **L3 子集**（KV+Instr）已闭合（#172）；first-batch **整体未** L3；**非** Production Ready / **非** first-batch 签字 |
 | 证据基线 | SSOT：`docs/ssot/contracts-ssot-alignment.md`；计划：`docs/plans/2026-07-21-core-crates-production-readiness.md` §2；core 报告：`docs/report/2026-07-21/core-crates-production-readiness.md` §4.3（**部分陈述相对 post-W3 源码已陈旧**） |
@@ -16,7 +18,7 @@
 
 ## 1. 结论
 
-**`contracts` 是可用的 R4 trait 出口 + 最小 contract-testkit 入口；`KeyValueStore` 与 `Instrumentation` 满足 L3 三条件子集；first-batch 整体仍未 L3。**
+**`contracts` 是可用的 R4 trait 出口**；Fake/suite 在独立 **`contract-testkit`**（#178）；`KeyValueStore` 与 `Instrumentation` 满足 L3 三条件子集；first-batch 整体仍未 L3。
 
 依据 L3 定义（语义合同 **+** conformance suite **+** 至少一**非 scaffold** 验证入口）：
 
@@ -30,7 +32,7 @@
 
 - `TxRunner::begin_tx` → `Box<dyn TxContext>`，**对象安全**；`run_tx_commit_on_ok` 编排 Ok→commit / Err→rollback
 - `BusMessage { id, payload }` + `MessageAck`；EventBus 流项带 ID（at-most-once 能力边界显式）
-- 最小 Fake/Recording 在 crate 内公开（`src/fakes.rs`）
+- Fake/Recording 在 **`contract-testkit`**（`crates/test-support/contracts`；contracts 仅 dev-dep）
 - bootstrap 同名能力面收敛为 `Bounded*`；`Instrumentation` re-export `contracts::Instrumentation`
 - Venue structured cancel/query：**中文** default Invalid + `is_default_*` + `venue_override_gate`
 - **L3 子集文档**：`crates/contracts/docs/L3_FIRST_BATCH_STATUS.md`
@@ -39,7 +41,7 @@
 
 1. Tx / EventBus / Repository / Venue **业务** 无真实后端入口
 2. **二期 storage trait** 语义与 conformance 未闭合（CT-8 DEFER）
-3. **独立 contract-testkit crate** 仍 DEFER
+3. 独立 **`contract-testkit` crate 已落地**（#178）；仍 DEFER 的是全 trait 深度 / 真实后端 profile
 4. VenueAdapter additive default **无 compile-fail**（仅运行时门禁）
 5. Additive Only **无 API snapshot / semver diff 机控**
 
@@ -56,15 +58,15 @@ crates/contracts/
   Cargo.toml              # package name = contracts
   README.md / CHANGELOG.md / AGENTS.md
   src/
-    lib.rs                # 全部 trait + 类型 + run_tx_commit_on_ok + 单元测
-    fakes.rs              # 最小 contract-testkit + venue default helpers
-  tests/
-    public_surface.rs     # 15 trait 可达 + Fake 真路径
-    conformance_first_batch.rs
-    venue_override_gate.rs
+    lib.rs                # trait + 类型 + run_tx_commit_on_ok + 单元测（本地 stub）
+    venue_gate.rs         # VENUE_* / is_default_*
+  tests/                  # 经 dev-dep contract-testkit 驱动 Fake 路径
   docs/contracts/         # first-batch 11 篇语义
   docs/L3_FIRST_BATCH_STATUS.md
-  benches/ examples/      # example 有 fake_surface
+  benches/ examples/      # fake_surface 用 contract_testkit::
+
+crates/test-support/contracts/  # package contract-testkit（#178）
+  src/fakes/ + src/suite/ + tests/suite_self_tests.rs
 ```
 
 依赖白名单：`kernel` + `canonical` + `async-trait` / `bytes` / `futures-core`。  
@@ -77,8 +79,8 @@ Lint：`forbid(unsafe_code)` · `deny(unreachable_pub)` · `[lints] workspace = 
 | 1 | `KeyValueStore` | `get` / `set(+ttl)` | ✅ | Fake + conformance + **live** | redisx mock + **`RedisLiveKv`** | **L3 子集满足** |
 | 2 | `EventBus` | `publish` / `subscribe→BusMessage` | ✅ | Fake + conformance | kafkax/natsx scaffold | **部分**（at-most-once；无 ack API） |
 | 3 | `Repository<T,Id>` | `find` / `save` | ✅ | Fake + conformance | postgresx scaffold | **部分**（无分页/删除/并发） |
-| 4 | `TxContext` | `commit` / `rollback` | ✅ | Fake + Recording | 经 FakeTxContext | **部分**（无隔离级别；假上下文） |
-| 5 | `TxRunner` | `begin_tx→Box<dyn TxContext>` | ✅ | Fake/Recording + 对象安全 | postgresx → FakeTxContext | **形状就绪；语义未真实验证** |
+| 4 | `TxContext` | `commit` / `rollback` | ✅ | Fake + Recording（`contract-testkit`） | 合同测经 `contract_testkit::FakeTx*`；adapter 见 postgres `ScaffoldTxContext` | **部分**（无隔离级别） |
+| 5 | `TxRunner` | `begin_tx→Box<dyn TxContext>` | ✅ | Fake/Recording + 对象安全 | postgresx → 本地 `ScaffoldTxContext` | **形状就绪；语义未真实验证** |
 | 6 | `TimeSeriesStore` | `write_series` / `query_series` | ❌ | 无 Fake | taosx scaffold | **experimental / 未就绪** |
 | 7 | `ObjectStore` | `put_object` / `get_object` | ❌ | 无 Fake | ossx scaffold | **experimental / 未就绪** |
 | 8 | `AnalyticsSink` | `sink` | ❌ | 无 Fake | clickhousex scaffold | **experimental / 未就绪** |
@@ -129,7 +131,7 @@ Lint：`forbid(unsafe_code)` · `deny(unreachable_pub)` · `[lints] workspace = 
 | 编排 | ✅ `run_tx_commit_on_ok`；rollback 失败被吞、保留业务 Err |
 | 隔离级别 / 只读 / savepoint | ❌ 未表达 |
 | 与 Repository 原子组合 | ❌ 无 `Repository` 在同一 `TxContext` 上的标准绑定 |
-| 真实后端 | ❌ postgres scaffold `begin_tx` → **`FakeTxContext`**，**不**绑定 rows 事务 |
+| 真实后端 | ❌ postgres scaffold `begin_tx` → 本地 **`ScaffoldTxContext`**，**不**绑定 rows 事务 |
 
 **结论：可测形状已闭合；生产事务语义未闭合。**
 
@@ -183,8 +185,8 @@ Lint：`forbid(unsafe_code)` · `deny(unreachable_pub)` · `[lints] workspace = 
 
 | 能力 | 状态 | 证据 |
 |------|------|------|
-| 最小 contract-testkit（本 crate） | **已落地** | `src/fakes.rs` 公开 Fake/Recording |
-| 独立 `test-support/contracts` crate | **DEFER** | SSOT CT / DEFER 列表 |
+| 独立 contract-testkit crate | **已落地 #178** | `crates/test-support/contracts` Fake/Recording + suite |
+| 全 trait 深度 / live 后端 profile | **DEFER** | ObjectStore 等 + 真实 Tx/Bus/Venue 业务 |
 | first-batch conformance | **部分** | `conformance_first_batch.rs`（5 测） |
 | public_surface | **通过** | 15 trait 可达 + 真路径（已非空 `assert_eq!(15,15)` 占位） |
 | venue override 运行时门禁 | **部分（CT-10）** | `venue_override_gate.rs` + binancex/okxx |
@@ -204,7 +206,7 @@ contracts (trait 出口)
     ├── binancex/okxx → VenueAdapter + ExecutionVenue（内存 scaffold）
     ├── redisx       → KeyValueStore + PubSub
     ├── kafkax/natsx → EventBus
-    ├── postgresx    → Repository + TxRunner(FakeTxContext)
+    ├── postgresx    → Repository + TxRunner(本地 ScaffoldTxContext)
     ├── ossx         → ObjectStore
     ├── taosx        → TimeSeriesStore
     └── clickhousex  → AnalyticsSink
@@ -252,12 +254,12 @@ venue_override_gate: 4 passed
 | `TxRunner::run_tx` 收 Future，无句柄 | `begin_tx` + `TxContext` + `run_tx_commit_on_ok` |
 | TxRunner 非 dyn-compatible | **对象安全**，有测 |
 | EventBus stream 仅 `Bytes` | `BusMessage { id, payload }` |
-| contract-testkit 未落地 | 本 crate 最小 Fake/Recording **已落地** |
+| contract-testkit 曾未落地（#178 前） | Fake/Recording 在 **contract-testkit** **已落地**（#178） |
 | bootstrap 同名冲突 | `Bounded*` + Instrumentation re-export **已收敛** |
 | default 错误英文 | **中文** `VENUE_*_DEFAULT_MSG` |
 | public_surface `assert_eq!(15,15)` | 已改为 Fake 真路径断言 |
 
-**未过时且仍成立（相对 first-batch 全 L3）**：无完整幂等/取消/分页合同套件；Tx/Bus/Repo/Venue **业务**无真入口；Venue 与拆分 trait 重复；ObjectStore 等语义空洞；独立 testkit crate DEFER；Additive Only 无机控。  
+**未过时且仍成立（相对 first-batch 全 L3）**：无完整幂等/取消/分页合同套件；Tx/Bus/Repo/Venue **业务**无真入口；Venue 与拆分 trait 重复；ObjectStore 等语义空洞；独立 contract-testkit **已落地 #178**（全 trait 深度仍 DEFER）；Additive Only 无机控。  
 **已过时（#168/#172）**：「无任何非 scaffold 入口」— 现有 redis live KV + observex Instrumentation。
 
 ---
@@ -271,14 +273,14 @@ venue_override_gate: 4 passed
 2. **生产子集裁定 + 标签**  
    明确 L3 子集 vs `experimental`（ObjectStore / TimeSeries / PubSub / Analytics 至少标 experimental 或补齐文档+套件）。
 3. **事务语义与存储绑定**  
-   `TxRunner` 不得在「生产路径」上仅返回 `FakeTxContext`；需可观察 commit 影响 Repository/后端状态的合同测。
+   `TxRunner` 不得在「生产路径」上仅返回本地 scaffold/`ScaffoldTxContext`；需可观察 commit 影响 Repository/后端状态的合同测。
 
 ### P1
 
 1. 扩展 conformance：ObjectStore / PubSub / TimeSeries / Analytics / venue 能力拆分  
 2. EventBus/PubSub：ack 边界裁定（扩展 trait 或文档冻结「无 ack」）  
 3. VenueAdapter override：**compile-fail 或 CI lint** 强制树内实现  
-4. 独立 contract-testkit crate（从 `fakes` 迁出或冻结本 crate 为 SSOT 入口）
+4. ~~独立 contract-testkit crate~~ **Done #178**；余量=全 trait 深度 suite / live profile
 
 ### P2
 
@@ -322,7 +324,7 @@ venue_override_gate: 4 passed
 | 资源 | 路径 |
 |------|------|
 | 源码 | `/home/workspace/infra.rs/crates/contracts/src/lib.rs` |
-| Fake | `/home/workspace/infra.rs/crates/contracts/src/fakes.rs` |
+| Fake | `crates/test-support/contracts/src/fakes/`（package `contract-testkit`） |
 | SSOT 对齐 | `/home/workspace/infra.rs/docs/ssot/contracts-ssot-alignment.md` |
 | 计划 L3 定义 | `/home/workspace/infra.rs/docs/plans/2026-07-21-core-crates-production-readiness.md` |
 | core 报告 | `/home/workspace/infra.rs/.worktrees/docs/infra-status-modules-prod-audit/docs/report/2026-07-21/core-crates-production-readiness.md`（§4.3 部分陈旧） |

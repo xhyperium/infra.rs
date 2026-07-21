@@ -98,7 +98,7 @@
 
 | 包 | scaffold 类型 | mock 验证入口 | 证明点 | 真实 I/O |
 |----|---------------|----------------|--------|----------|
-| `postgresx` | `PostgresAdapter`：HashMap + `FakeTxContext`（begin_tx 无真实 staged） | `ObservingPostgresAdapter` / `MockPostgresBackend` + `MockTxContext` | staged 仅 commit 后可见；rollback 丢弃；可观察 commit/rollback 计数；`dyn TxRunner` | **无** |
+| `postgresx` | `PostgresAdapter`：HashMap + 本地 `ScaffoldTxContext`（begin_tx 无真实 staged） | `ObservingPostgresAdapter` / `MockPostgresBackend` + `MockTxContext` | staged 仅 commit 后可见；rollback 丢弃；可观察 commit/rollback 计数；`dyn TxRunner` | **无** |
 | `redisx` | `RedisAdapter`：KV **忽略 TTL** + 简易 PubSub | `MockRedisAdapter` + **`RedisLiveKv`（feature `live`）** | mock TTL/PubSub；**live** 真 Redis KV（`live_kv_conformance`） | **有（KV live）** |
 | `kafkax` | `KafkaAdapter`：per-topic 下标 id | `MockKafkaBus` | 跨 topic 全局单调 id；`dyn EventBus` | **无** |
 | `natsx` | `NatsAdapter`：与 kafka 同构内存 bus | `MockNatsBus` | 同上 | **无** |
@@ -203,7 +203,7 @@ cargo test -p binancex -p okxx -p redisx -p postgresx -p kafkax --all-targets
 3. **无完整生产 I/O 路径**：Exchange 默认内存；HTTP 可注入驱动；业务协议未做。
 4. **live 证据有限**：默认离线绿；`redisx-live` optional CI；exchange `live_server_time` ignore + **workflow_dispatch only**；业务集成仍空。
 5. **语义与生产不符**（默认 scaffold）：
-   - Postgres `begin_tx` → `FakeTxContext`（mock 才有 staged）。
+   - Postgres `begin_tx` → 本地 `ScaffoldTxContext`（mock 才有 staged）。
    - Redis **scaffold** 忽略 TTL（live KV 另路径）。
    - EventBus subscribe 为一次性快照，非实时流。
 6. **命名陷阱**：`*Adapter` / `mainnet()` 像生产客户端——README 红线（s9t.14）。

@@ -26,16 +26,21 @@
 ## 本仓可观察事实
 
 ```text
-crates/contracts/               EXISTS
+crates/contracts/               EXISTS（trait 出口；**无** fakes.rs）
   TxContext / TxRunner          begin_tx → Box<dyn TxContext>（对象安全）
   run_tx_commit_on_ok           Ok→commit / Err→rollback 编排 helper
+  venue_gate.rs                 VENUE_* 常量 + is_default_* 助手
   BusMessage / MessageAck       消息 ID + ack 模型
   VenueAdapter                  additive default 中文 Invalid + override 辅助检测
   ExecutionVenue                推荐生产入口（无 default）
   docs/contracts/*.md           first-batch 11 trait 语义
-  tests/conformance_first_batch 委托 contract-testkit suite
+  tests/conformance_first_batch 委托 contract_testkit::assert_* suite
   tests/venue_override_gate     binancex/okxx 非 default 门禁
-  crates/test-support/contracts contract-testkit（Fake + assert_* suite）
+
+crates/test-support/contracts/  package contract-testkit（Fake + assert_*；仅 dev-dep）
+  FakeTx* / FakeEventBus / FakeKeyValueStore / FakeRepository / Recording*
+  FakeMarketDataSource / FakeInstrumentCatalog / FakeExecutionVenue / …
+  suite::assert_*               per-trait conformance（禁止 provider 大宏）
 ```
 
 验证：
@@ -54,12 +59,12 @@ cargo test -p redisx --features live --test live_kv_conformance -- --ignored
 
 | ID | 条款 | 状态 | 证据 |
 |----|------|------|------|
-| CT-1 | KeyValueStore / Instrumentation 可调用 | PASS | FakeKeyValueStore + RecordingInstrumentation + public_surface |
-| CT-2 | Tx 可测 commit/rollback | PASS | `run_tx_commit_on_ok_*` + RecordingTxRunner |
+| CT-1 | KeyValueStore / Instrumentation 可调用 | PASS | `contract_testkit::{FakeKeyValueStore, RecordingInstrumentation}` + public_surface |
+| CT-2 | Tx 可测 commit/rollback | PASS | `run_tx_commit_on_ok_*` + `contract_testkit::RecordingTxRunner` |
 | CT-3 | TxRunner 对象安全 | PASS | `&dyn TxRunner` 测 |
-| CT-4 | 消息带 ID；subscribe 流为 BusMessage | PASS | FakeEventBus + EventBus trait |
-| CT-5 | 失败注入至少一类 | PASS | `FakeTxContext::with_commit_failure` |
-| CT-6 | public_surface 非空断言 | PASS | 驱动 FakeTx/FakeBus/KV/Instr 真路径（无 `assert_eq!(15,15)`） |
+| CT-4 | 消息带 ID；subscribe 流为 BusMessage | PASS | `contract_testkit::FakeEventBus` + EventBus trait |
+| CT-5 | 失败注入至少一类 | PASS | `contract_testkit::FakeTxContext::with_commit_failure` |
+| CT-6 | public_surface 非空断言 | PASS | 经 contract-testkit 驱动 FakeTx/FakeBus/KV/Instr 真路径 |
 | CT-7 | bootstrap 无静默同名冲突 | PASS | bootstrap `Bounded*` 前缀；见 bootstrap 对齐文 |
 | CT-8 | 全 trait 幂等/取消/分页/一致性文档+套件 | **部分** | first-batch 11 篇语义文档 + `conformance_first_batch`；ObjectStore/TimeSeries/PubSub/Analytics 仍 DEFER |
 | CT-9 | 非 scaffold 真实后端验证入口 | **部分 PASS** | KV：`redisx` live + `tests/live_kv_conformance.rs`；Instrumentation：observex；Tx/Bus/Venue 业务 live 仍 DEFER |
@@ -90,9 +95,10 @@ cargo test -p redisx --features live --test live_kv_conformance -- --ignored
 
 | 日期 | 说明 |
 |------|------|
-| 2026-07-21 | 独立 `contract-testkit` crate 落地；Fake 迁出 contracts |
-| 2026-07-21 | 初版占位：15-trait 落地；contract-testkit DEFER |
-| 2026-07-21 | 生产就绪：Tx/消息语义、Fake/Recording testkit、与 bootstrap Bounded* 收敛；PR #98 |
+| 2026-07-22 | SSOT 同步报告 / 对齐文纠偏：Fake 命名空间统一为 `contract_testkit::`；可观察事实补 venue_gate |
+| 2026-07-21 | 独立 `contract-testkit` crate 落地；Fake 迁出 contracts（#178） |
+| 2026-07-21 | 初版占位：15-trait 落地；contract-testkit 当时 DEFER（历史） |
+| 2026-07-21 | 生产就绪：Tx/消息语义、contracts 内最小 Fake（后迁出）、与 bootstrap Bounded* 收敛；PR #98 |
 | 2026-07-21 | PR #98 合入 main |
 | 2026-07-21 | W3（infra-asa.4）：first-batch 语义文档、`fakes` 模块、venue override 运行时门禁；CT-8/CT-10 部分闭合；**非** Production Ready |
 | 2026-07-21 | **infra-s9t.3 / #172**：CT-9 部分 PASS（redis live KV + observex Instr）；`L3_FIRST_BATCH_STATUS.md`；禁止 first-batch 全绿宣称 |

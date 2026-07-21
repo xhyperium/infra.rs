@@ -1,5 +1,7 @@
 # Workspace 模块生产就绪度二次深审补充报告
 
+> **post-#178 勘误（2026-07-22）**：独立 `contract-testkit` **已交付**；Fake 不在 contracts 生产 API；postgres scaffold 为 `ScaffoldTxContext`（非 FakeTxContext）。正文历史句若写「未交付 / FakeTx」以本勘误为准。
+
 | 字段 | 值 |
 |---|---|
 | 审计日期 | 2026-07-21 |
@@ -49,7 +51,7 @@
 | `kafkax` | scaffold+mock / 89% | scaffold + mock | 未就绪 | 内存快照流；并发 ID 可重复；无 broker/ack/offset/group/rebalance/security |
 | `natsx` | scaffold+mock / 88% | scaffold + mock | 未就绪 | 内存快照流；并发 ID 可重复；未裁定 Core NATS/JetStream 与 durable 语义 |
 | `ossx` | scaffold / 83% | 接口烟测 | 未就绪 | 内存 HashMap；无 OSS/S3 SDK、校验和、multipart、鉴权与大对象边界 |
-| `postgresx` | scaffold+mock / 89% | scaffold + mock | 未就绪 | 内存 HashMap；FakeTx 与 Repository 写入无关联；无 SQL/pool/migration/isolation |
+| `postgresx` | scaffold+mock / 89% | scaffold + mock | 未就绪 | 内存 HashMap；ScaffoldTx 与 Repository 写入无关联；无 SQL/pool/migration/isolation |
 | `redisx` | scaffold+mock / 89% | scaffold + mock | 未就绪 | 主 adapter 静默忽略 TTL；PubSub 语义错误；无 Redis client/cluster/auth/failover |
 | `taosx` | 被误标 scaffold+mock / 88% | pure scaffold | 未就绪 | 实际无 mock；内存 Vec；无 TDengine client、schema、retention、恢复 |
 
@@ -192,7 +194,7 @@ content    = LOC 桶 + 可运行 example + docs/README 实质
 限制：
 
 - README 已明确“不是生产 runtime”；本报告只评价其作为测试基础设施的可靠性。
-- 当前只落地 ManualClock core；独立 `contract-testkit`、完整 fixture/harness 平面并未交付。
+- 当前只落地 ManualClock core；独立 `contract-testkit`、完整 fixture/harness 平面已交付（#178；本报告审计日曾写未交付）。
 - 继承 kernel 的公开 domain 构造边界；Miri/mutation 只有 workflow 定义，当前 commit 未在本报告中复跑。
 - 审计基线无实际 benchmark；PR #157 后已增加 hot-path bench，但无生产阈值；除 kernel 外 workspace doctest 基本为空。
 
@@ -391,7 +393,7 @@ OKX 私有接口要求认证头、HMAC-SHA256/Base64 签名与结构化请求体
 
 ### 9.6 postgresx
 
-核心是 HashMap；Repository 直接写入，FakeTxContext 与 rows 无关联。没有 SQL、参数绑定、row mapping、migration、pool、隔离级别、statement/transaction timeout、deadlock/serialization retry、TLS/HA。mock 的 staged write 不能证明通用 Repository 合同具有事务性。
+核心是 HashMap；Repository 直接写入，ScaffoldTxContext 与 rows 无关联。没有 SQL、参数绑定、row mapping、migration、pool、隔离级别、statement/transaction timeout、deadlock/serialization retry、TLS/HA。mock 的 staged write 不能证明通用 Repository 合同具有事务性。
 
 ### 9.7 redisx
 
