@@ -354,11 +354,17 @@ async function phasePushCreate(opts) {
 }
 
 // ── Phase 4: CI + 合并 ────────────────────────────────────
+// 返回 { merged: boolean } — 仅在真正 MERGED 后为 true
 async function phaseCiMerge(opts) {
   header("Phase 4: CI 等待 + 合并");
   if (opts.dryRun) {
     info("[DRY-RUN] 将轮询 gh pr checks 并自动合并");
-    return true;
+    if (opts.autoMerge) {
+      info("[DRY-RUN] 将调用: node scripts/worktree/worktree.mjs land <branch>");
+      info("[DRY-RUN] land = 自动修复 + 自动合并 + 清理 worktree/本地分支");
+      return { merged: true, cleaned: true, dryRun: true };
+    }
+    return { merged: false, dryRun: true };
   }
 
   const branch = currentBranch();
@@ -397,41 +403,53 @@ async function phaseCiMerge(opts) {
       run(`node '${approvePath}'`, { silent: true });
       ok("自动审批已调用");
     } catch {
-      warn("自��审批失败（非致命）");
+      warn("自动审批失败（非致命）");
     }
   } else {
     warn("approve.mjs 不存在，跳过自动审批");
   }
 
   // 合并
-  if (opts.autoMerge) {
-    info("自动合并 ...");
-    try {
-      run(`gh pr merge --squash --auto`, { silent: true });
-      ok("PR 已合并");
-    } catch (e) {
-      const stderr = String(e.stderr || e.message || "").slice(0, 300);
-      die(`合并失败: ${stderr}`);
-    }
-  } else {
-    warn("未启用 --auto-merge，跳过自动合并");
+  if (!opts.autoMerge) {
+    warn("未启用 --auto-merge，跳过自动合并与清理");
+    return { merged: false };
   }
 
-  return true;
+  info("自动合并（委托 worktree land）...");
+  // land：自动修复落后 main + squash/auto 合并 + 等待 MERGED + 清理 worktree/本地分支
+  // 使用 --timeout 与本 phase 对齐；不在此再做 cleanup 以免重复
+  try {
+    run(
+      `node scripts/worktree/worktree.mjs land '${branch}' --timeout ${maxPollSeconds}`,
+      { silent: false },
+    );
+    ok("land 完成（已合并并清理）");
+    return { merged: true, cleaned: true };
+  } catch (e) {
+    const stderr = String(e.stderr || e.message || "").slice(0, 400);
+    die(`自动合并/清理失败: ${stderr}`);
+  }
 }
 
 // ── Phase 5: 清理 ─────────────────────────────────────────
-async function phaseCleanup(opts) {
+// 若 phaseCiMerge 已通过 land 清理，则跳过；否则仅在已合并时 cleanup
+async function phaseCleanup(opts, mergeResult = {}) {
   header("Phase 5: 清理");
   const branch = currentBranch();
 
+  if (mergeResult.cleaned) {
+    ok("已在 land 阶段完成 worktree / 本地分支清理");
+    return true;
+  }
+
+  if (!opts.autoMerge && !mergeResult.merged) {
+    warn("未合并，跳过清理（保留 worktree 与本地分支）");
+    return true;
+  }
+
   if (opts.dryRun) {
     info(`[DRY-RUN] 将执行:`);
-    info(`  git checkout main`);
-    info(`  git pull`);
-    info(`  git branch -d ${branch}`);
-    info(`  node scripts/worktree/worktree.mjs remove ${branch}`);
-    info(`  git fetch --prune`);
+    info(`  node scripts/worktree/worktree.mjs cleanup ${branch}`);
     return true;
   }
 
@@ -440,44 +458,13 @@ async function phaseCleanup(opts) {
     die("禁止在 main 分支上执行清理操作");
   }
 
-  info("切换回 main ...");
+  info("委托 worktree cleanup（确认已合并后删 worktree + 本地分支）...");
   try {
-    git("checkout main");
-    ok("已切换到 main");
+    run(`node scripts/worktree/worktree.mjs cleanup '${branch}'`, { silent: false });
+    ok("Worktree 与本地分支已清理");
   } catch (e) {
-    die(`无法切换到 main: ${String(e.stderr || "").slice(0, 200)}`);
-  }
-
-  info("同步 main ...");
-  try {
-    git("pull");
-    ok("main 已同步");
-  } catch (e) {
-    warn("git pull 失败，继续执行");
-  }
-
-  info(`删除分支 ${branch} ...`);
-  try {
-    git(`branch -d ${branch}`, { silent: true, allowFail: true });
-    ok(`分支 ${branch} 已删除`);
-  } catch (e) {
-    warn(`删除分支失败: ${String(e.stderr || "").slice(0, 200)}`);
-  }
-
-  info("清理 worktree ...");
-  try {
-    run(`node scripts/worktree/worktree.mjs remove ${branch}`, { silent: true, allowFail: true });
-    ok("Worktree 已清理");
-  } catch (e) {
-    warn("Worktree 清理失败（可能不存在）");
-  }
-
-  info("清理远程引用 ...");
-  try {
-    git("fetch --prune");
-    ok("远程引用已清理");
-  } catch (e) {
-    warn("git fetch --prune 失败");
+    const msg = String(e.stderr || e.message || e).slice(0, 300);
+    die(`清理失败: ${msg}`);
   }
 
   return true;
@@ -502,13 +489,19 @@ function showHelp() {
   1. 门禁 — cargo fmt / clippy / test / doc / harness check
   2. 审查 — diff 检查 + 调试残留检测 + 审查报告
   3. 推送 + 创建 PR — git push + gh pr create
-  4. CI + 合并 — 轮询 CI + 自动审批 + 合并
-  5. 清理 — 切换 main + 删除分支 + worktree 清理 + prune
+  4. CI + 合并 — 轮询 CI + 自动审批 + worktree land（修复/合并/清理）
+  5. 清理 — 若 land 未清理则调用 worktree cleanup
+
+合并后清理（worktree.mjs land / cleanup）:
+  - 自动修复：落后 origin/main 时 rebase + push
+  - 自动合并：gh pr merge --squash / --auto，等待 MERGED
+  - 清理：remove worktree + 删除本地分支 + prune
 
 示例:
   node scripts/workflow/pr-flow.mjs --dry-run
   node scripts/workflow/pr-flow.mjs --auto-merge --reviewer alice --label enhancement
   node scripts/workflow/pr-flow.mjs --skip-review --dry-run
+  node scripts/worktree/worktree.mjs land feat/my-branch
 `);
 }
 
@@ -544,13 +537,14 @@ async function main() {
       die("推送 / PR 创建失败");
     }
 
-    // Phase 4: CI + Merge
-    if (!(await phaseCiMerge(opts))) {
+    // Phase 4: CI + Merge（--auto-merge 时委托 worktree land）
+    const mergeResult = await phaseCiMerge(opts);
+    if (!mergeResult) {
       die("CI / 合并失败");
     }
 
-    // Phase 5: Cleanup
-    if (!(await phaseCleanup(opts))) {
+    // Phase 5: Cleanup（land 已清理则跳过）
+    if (!(await phaseCleanup(opts, mergeResult))) {
       die("清理失败");
     }
 

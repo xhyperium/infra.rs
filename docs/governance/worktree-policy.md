@@ -98,12 +98,47 @@ infra.rs/                      # 主工作区 (main) — 只读：review / build
 
 ### 5. 清理
 
-合并后删除 Worktree：
+#### 推荐：合并后一键落地（自动修复 + 自动合并 + 清理）
+
+```bash
+# 在 worktree 内或主仓执行均可
+node scripts/worktree/worktree.mjs land feat/<id>-<slug>
+
+# 仅预览
+node scripts/worktree/worktree.mjs land feat/<id>-<slug> --dry-run
+```
+
+`land` 流程：
+
+1. **自动修复** — `git fetch`；若分支落后 `origin/main`，在 worktree 内 `rebase origin/main` 并 `push --force-with-lease`（冲突则停止，需人工处理）
+2. **自动合并** — `gh pr merge --squash`（就绪立即合；否则 `--auto` 排队），轮询至 PR `MERGED`
+3. **自动清理** — `git worktree remove` + 删除本地分支 + `worktree prune` / `fetch --prune`
+
+选项：
+
+| 选项 | 含义 |
+|------|------|
+| `--dry-run` | 只打印计划 |
+| `--no-fix` | 跳过落后 main 时的 rebase |
+| `--no-merge` | 不发起合并（PR 已 MERGED 时配合 `cleanup`） |
+| `--timeout <sec>` | 等待合并完成超时（默认 1800） |
+| `--delete-remote` | 合并后若远程分支仍在则删除 |
+
+仅清理（要求已确认合并）：
+
+```bash
+node scripts/worktree/worktree.mjs cleanup feat/<id>-<slug>
+```
+
+#### 手动清理
 
 ```bash
 node scripts/worktree/worktree.mjs remove feat/<id>-<slug>
 node scripts/worktree/worktree.mjs prune    # 清理残留
+git branch -d feat/<id>-<slug>             # 删除本地分支
 ```
+
+`pr-flow.mjs --auto-merge` 在 CI 通过后会委托 `worktree.mjs land` 完成合并与清理。
 
 ---
 
@@ -138,7 +173,8 @@ export INFRA_WORKTREE_BYPASS=1
 3. `cd .worktrees/<type>/<id>-<slug>`
 4. 在 worktree 内编码 / 测试 / 提交
 5. `gh pr create --base main`
-6. 合并后 `node scripts/worktree/worktree.mjs remove <branch>`
+6. 合并 + 清理：`node scripts/worktree/worktree.mjs land <branch>`  
+   （或 `pr-flow.mjs --auto-merge`；勿只 remove 而留下未合并分支）
 
 ---
 
@@ -146,8 +182,9 @@ export INFRA_WORKTREE_BYPASS=1
 
 | 文件 | 职责 |
 |------|------|
-| `scripts/worktree/worktree.mjs` | create / list / remove / prune |
+| `scripts/worktree/worktree.mjs` | create / list / remove / prune / **land** / **cleanup** |
 | `scripts/worktree/worktree-policy.mjs` | 路径规范、门禁判定、审计 |
+| `scripts/workflow/pr-flow.mjs` | PR 全流程；`--auto-merge` 委托 land |
 | `.claude/hooks/pre-tool-check.mjs` | PreToolUse 硬拦截 |
 | `.claude/hooks/session-context.mjs` | SessionStart 指引与审计 |
 | `docs/constitution/06-governance.md` §6.0.5 | 宪章条款 |
