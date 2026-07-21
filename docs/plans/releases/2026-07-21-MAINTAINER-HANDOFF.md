@@ -5,18 +5,12 @@
 ## 你现在要做什么
 
 1. 阅读 [2026-07-21-signoff-DRAFT.md](./2026-07-21-signoff-DRAFT.md) 中的 **证据** 与 **Accept 风险**
-2. **复制** DRAFT → 正式文件（**必须改名，禁止在 DRAFT 上终签**）：
+2. **复制** DRAFT → 正式文件（**必须改名，禁止在 DRAFT 上终签**）。示例：
 
-```bash
-cp docs/plans/releases/2026-07-21-signoff-DRAFT.md \
-   docs/plans/releases/0.3.0-signoff.md
-# 编辑 0.3.0-signoff.md：去掉 DRAFT 标题/状态，填写结论与签名
-```
+   `cp docs/plans/releases/2026-07-21-signoff-DRAFT.md docs/plans/releases/0.3.0-signoff.md`
 
-3. 在正式文件中：
-   - 勾选 L1–L5（你认可的项）
-   - **自行**选择结论：`GO` / `NO-GO` / `GO-with-Accepts`（Agent **不**预选）
-   - 按模板签名：`Signed-off-by: @handle  YYYY-MM-DD`
+   然后编辑 `0.3.0-signoff.md`：去掉 DRAFT 标题/状态，填写结论与签名。
+3. 在正式文件中：勾选 L1–L5（你认可的项）；**自行**选择结论：`GO` / `NO-GO` / `GO-with-Accepts`（Agent **不**预选）；按模板签名：`Signed-off-by: @handle  YYYY-MM-DD`
 4. 为 **MSRV 1.85 @ 当前基线** 补一条证据（CI URL 或本地 `rust-version` 复跑）— DRAFT 已标明 Agent 未复跑 1.85
 5. 开 PR 合入正式 signoff；可选：勾选计划 §10.6 DEFER-7、更新 §15 DONE
 
