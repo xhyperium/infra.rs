@@ -4,9 +4,10 @@
 |------|-----|
 | Spec | SPEC-KERNEL-002（`.agents/ssot/kernel/spec/spec.md` ≡ `xhyper-kernel-complete-spec.md`） |
 | 镜像 | `.agents/ssot/kernel/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
-| 本仓实现 | `crates/kernel` · package `xhyper-kernel` · lib `kernel` · workspace version `0.3.0` |
+| 本仓实现 | `crates/kernel` · package **`kernel`** · lib `kernel` · workspace version `0.3.0` |
 | 审计日期 | 2026-07-21 |
-| 结论 | **可移植语义面 + §11 可在本仓执行的合同：无残留 FAIL** |
+| 内部生产层级 | **L1 Internal Ready + L4 Platform Ready**（PR #159 · tag `v0.3.0-four-crates`） |
+| 结论 | **可移植语义面 + §11 可在本仓执行的合同：无残留 FAIL**；分层内部 GO，**≠** crates.io / 整体 Production Ready |
 
 ## 结论摘要
 
@@ -14,26 +15,32 @@
 |------|------|
 | 上游镜像 COMPLETE / residual OPEN=0 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
 | 本仓 `crates/kernel` | **已落地**并与 SPEC §3–§11 可移植子集对齐 |
+| 内部生产 GO（声明层级） | **L1+L4**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
 | 本仓 archgate / `.architecture` 快照 | **未**移植 → 矩阵 **DEFER** |
 | 本仓 crates.io 再发布 | **不做**；`publish = false` 显式关闭 |
-| line/branch cov CI | **有** PR 门禁：`.github/workflows/kernel-coverage.yml` |
+| public-api 棘轮 | **PASS**：`docs/api-baselines/kernel.txt` + `check-public-api.mjs` |
+| line/branch cov CI | **有** PR 门禁：`.github/workflows/kernel-coverage.yml`（100% line gate） |
 | mutants / miri CI | **有** 周调度：`kernel-mutants.yml` / `kernel-miri.yml` |
 | loom CI | **有** PR/push 门禁：`kernel-loom.yml` + `scripts/quality-gates/run-kernel-loom.mjs` |
 | ClockDomain | **PASS**：SystemClock 共享进程 domain；跨 domain 间隔 → `None` |
 | 关停 deadline | **PASS**：`ShutdownSignal::wait_timeout` + 组合根测 |
 | 用户可见错误中文 | **PASS**：`ClockError` / `LifecycleError` Display 中文 |
+| 公开面集成测 / 示例 / bench | **PASS**：`tests/public_api_surface.rs` · `examples/basic.rs` · `benches/hot_path` |
 
 ## 本仓可观察事实
 
 ```text
 crates/kernel/                  EXISTS
 Cargo.toml members              含 crates/kernel
-package name                    xhyper-kernel
+package name                    kernel（Cargo 选择器 -p kernel；历史文档 xhyper-kernel 已废弃）
 lib name                        kernel
 publish                         false（显式，非默认可发布）
 生产依赖                        仅 thiserror
 features                        default = []
 [lints]                         workspace = true + loom unexpected_cfgs
+examples                        examples/basic.rs
+public API surface              tests/public_api_surface.rs
+API baseline                    docs/api-baselines/kernel.txt
 ```
 
 验证（本仓权威命令）：
@@ -42,7 +49,10 @@ features                        default = []
 cargo test -p kernel --all-targets
 cargo test -p kernel --doc
 cargo clippy -p kernel --all-targets -- -D warnings
-cargo fmt -p kernel -- --check
+cargo fmt --all -- --check
+cargo run -p kernel --example basic
+cargo bench -p kernel --bench hot_path -- --quick
+node scripts/quality-gates/check-public-api.mjs
 RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release
 ```
 
@@ -148,22 +158,23 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 | 11.1-error | 构造器/source/is_*/Display | `src/error.rs` tests | PASS |
 | 11.1-ts | i64 边界 / 溢出 / reverse / ZERO | `clock.rs` + `clock_contract` | PASS |
 | 11.1-clock | SystemClock now/mono；错误映射；双通道 | `ControlledClock` 墙钟回退不牵连 mono；SystemClock 测 | PASS |
-| 11.1-ManualClock | ManualClock 独立 wall/mono | 属 `xhyper-testkit`；kernel 内 ControlledClock 覆盖 trait 合同 | PASS（跨 crate；见 testkit 对齐文） |
+| 11.1-ManualClock | ManualClock 独立 wall/mono | 属 package `testkit`；kernel 内 ControlledClock 覆盖 trait 合同 | PASS（跨 crate；见 testkit 对齐文） |
 | 11.1-lc | 合法/非法矩阵；trigger/wait；多 observer；1000 并发；poison；guard drop | unit + `lifecycle_concurrency`（1000 循环） | PASS |
 | 11.2 | loom 模型 + 持续门禁 | `lifecycle_concurrency_loom.rs`；默认 0 tests；`RUSTFLAGS='--cfg loom'`；CI `.github/workflows/kernel-loom.yml`；本地 `node scripts/quality-gates/run-kernel-loom.mjs` | PASS |
 | 11.3 | proptest：Timestamp×Duration；ComponentState 对；ErrorKind 一致 | `clock_contract.rs` proptest! | PASS |
 | 11.4 | compile-fail / static 负向面 | rustdoc compile_fail + `api_compile.rs` | PASS |
 | 11.5 | line ≥95% / branch ≥90% CI | `.github/workflows/kernel-coverage.yml` 解析 TOTAL 末列 branch% 并强制 ≥90；`--fail-under-lines 95` / functions 90。本会话实测 TOTAL branch **100%** / lines **99.69%** | PASS |
 | 11.6 | mutants ≥90% | `.github/workflows/kernel-mutants.yml`：schedule + `mkdir -p .cargo/cache/mutants` 后 `cargo mutants` | PASS（job 可执行；本会话未全量跑 mutants） |
-| 11.7 | miri | `.github/workflows/kernel-miri.yml`（schedule 周一 + workflow_dispatch；`cargo miri test -p xhyper-kernel`） | PASS（scheduled CI 存在；本会话未跑 miri） |
+| 11.7 | miri | `.github/workflows/kernel-miri.yml`（schedule 周一 + workflow_dispatch；`cargo miri test -p kernel`） | PASS（scheduled CI 存在；本会话未跑 miri） |
 
 ### §12+ monorepo 专属（非本仓可移植目标）
 
 | ID | 要求 | 判定 | 原因 |
 |----|------|------|------|
 | 12.x | archgate KERNEL-* | DEFER | 本仓无 `.architecture` / archgate |
-| 12.3 | public-api 快照文件 | DEFER | 本仓无 snapshot 机控；以 §8 + 测试代替 |
-| 15.x | crates.io publish / tag | DEFER 发布动作；**package `publish = false` PASS** | 本仓明确不向 crates.io 再发布 |
+| 12.3 | public-api 快照文件 | PASS | `docs/api-baselines/kernel.txt` + `scripts/quality-gates/check-public-api.mjs`（W5 / #127 / #159） |
+| 15.x | crates.io publish | DEFER 发布动作；**package `publish = false` PASS** | 本仓明确不向 crates.io 再发布 |
+| 15.x-tag | 内部 git tag | PASS（锚点） | `v0.3.0-four-crates` → 含 #159 的 main；**≠** crates.io |
 | TIME-004 机控 | from_clock_elapsed allowlist | DEFER 机控；**结构扫描 PASS** | 见上文 6.3-hidden |
 
 ---
@@ -180,23 +191,20 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 - 上游 SSOT 镜像内部措辞收口（应在 xhyper.rs 修，再删除感知同步）
 - 整体 Production Ready 签字（见 [core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) §8/§11）
 
-## 变更记录
-
-| 日期 | 说明 |
-|------|------|
-| 2026-07-21 | 生产就绪：ClockDomain、wait_timeout、loom CI、中文错误；PR #98 **合入 main** |
-
 ## Workspace 交叉引用
 
 - 总览：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
 - testkit（ManualClock）：[testkit-ssot-alignment.md](./testkit-ssot-alignment.md)
 - types：[types-ssot-alignment.md](./types-ssot-alignment.md)
+- 四包内部发布证据：[../plans/releases/2026-07-21-four-crates-internal-release.md](../plans/releases/2026-07-21-four-crates-internal-release.md)
 
 ## 变更记录
 
 | 日期 | 说明 |
 |------|------|
 | 2026-07-21 | 初版：逐条矩阵 + 禁止 From/not_found/other/Clock 默认 monotonic 负向面加强 |
+| 2026-07-21 | 生产就绪：ClockDomain、wait_timeout、loom CI、中文错误；PR #98 **合入 main** |
+| 2026-07-21 | 四包内部 GO：package 名对齐 `kernel`；L1+L4；public-api baseline；examples/bench/surface；PR #159 · tag `v0.3.0-four-crates` |
 | 2026-07-21 | Codex P2 修复：`[lints] workspace = true`、`publish = false`、如实引用 coverage/mutants/miri workflows |
 | 2026-07-21 | Codex P1：修复 coverage workflow branch 解析；补 BeforeUnixEpoch/Overflow 测；mutants mkdir；branch cover 100% |
 | 2026-07-21 | 交叉引用 workspace 总览；确认无 `infra-core` 依赖 |

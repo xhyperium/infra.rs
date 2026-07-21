@@ -5,39 +5,44 @@
 | 域 | `/types/`（decimal + canonical） |
 | 镜像 | `.agents/ssot/types/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 审计日期 | 2026-07-21 |
-| 跟进 | 2026-07-21 生产就绪 P0/P1 **已合入 main**（PR #98）；**非**整体 Production Ready / package stable |
-| 结论 | **两 crate 均已注册 workspace 并有可运行测试**；decimal 不变量已硬化；canonical committed wire 覆盖 v1–v1.3 公开 DTO 子集（**≠** package Production Ready） |
+| 跟进 | 2026-07-21 P0/P1 **#98**；W1–W2 证据 **#121/#124**；四包内部 GO **#159** · tag `v0.3.0-four-crates` |
+| 内部生产层级 | **decimalx = L1 Internal Ready**；**canonical = L2 committed wire subset（v1–v1.3）** |
+| 结论 | **两 crate 均已注册 workspace 并有可运行测试**；decimal 不变量已硬化；canonical committed wire 覆盖 v1–v1.3；分层内部 GO（**≠** package Production Ready / crates.io） |
 
 ## 结论摘要
 
 | 问题 | 状态 |
 |------|------|
 | 上游镜像 COMPLETE / Spec Approved 叙事 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
-| 本仓 `crates/types/decimal` | **已落地**（package `xhyper-decimalx` / lib `decimalx`）；字段私有 + 校验 serde + `DecimalError` |
-| 本仓 `crates/types/canonical` | **已落地**（package `xhyper-canonical` / lib `canonical`）；committed wire v1 / v1.1 / v1.2 / v1.3 子集冻结 |
+| 本仓 `crates/types/decimal` | **已落地**（package **`decimalx`** / lib `decimalx`）；字段私有 + 校验 serde + `DecimalError` |
+| 本仓 `crates/types/canonical` | **已落地**（package **`canonical`** / lib `canonical`）；committed wire v1 / v1.1 / v1.2 / v1.3 子集冻结 |
+| 内部生产 GO（声明层级） | decimalx **L1**；canonical **L2 wire 子集**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
 | `infra-core` | **已移除**；types 不依赖它 |
 | package stable / crates.io | **未**宣称；`publish = false` |
 | 全量 wire stable / package stable | **未**宣称；见 `wire::COMMITTED_WIRE_V1{,_1,_2,_3}` 与 residual |
+| public-api / examples / benches | **PASS**：baselines + `public_api_surface` + `examples/basic` + `hot_path` |
 
 ## 本仓可观察事实
 
 ```text
 crates/types/decimal/           EXISTS · members 已注册
-  package                       xhyper-decimalx
+  package                       decimalx（-p decimalx）
   lib                           decimalx
   version                       0.1.0
   publish                       false
   生产依赖                      kernel + serde
   Active SSOT                   .agents/ssot/types/decimal/spec/spec.md
+  examples / baseline           examples/basic.rs · docs/api-baselines/decimalx.txt
 
 crates/types/canonical/         EXISTS · members 已注册
-  package                       xhyper-canonical
+  package                       canonical（-p canonical）
   lib                           canonical
   version                       0.1.0
   publish                       false
   生产依赖                      decimalx + serde
   Active SSOT                   .agents/ssot/types/canonical/spec/spec.md
   wire 模块                     src/wire.rs（Committed v1 / v1.1 / v1.2 / v1.3 清单与策略）
+  examples / baseline           examples/basic.rs · docs/api-baselines/canonical.txt
 ```
 
 验证（本仓权威命令）：
@@ -45,10 +50,16 @@ crates/types/canonical/         EXISTS · members 已注册
 ```bash
 cargo test -p decimalx --all-targets
 cargo clippy -p decimalx --all-targets -- -D warnings
+cargo run -p decimalx --example basic
+cargo bench -p decimalx --bench hot_path -- --quick
 
 cargo test -p canonical --all-targets
 cargo clippy -p canonical --all-targets -- -D warnings
+cargo run -p canonical --example basic
+cargo bench -p canonical --bench hot_path -- --quick
 node scripts/quality-gates/check-canonical-align.mjs
+node scripts/quality-gates/check-public-api.mjs
+node scripts/quality-gates/check-decimal-no-panicking-ops.mjs
 ```
 
 ## 依赖方向（本仓）
@@ -87,7 +98,7 @@ canonical  →  decimalx  →  kernel
 |----|------|------|----------|
 | C-1 | 路径 `/types/canonical`；package/lib 命名 | PASS | `Cargo.toml` + workspace members |
 | C-2 | 纯 DTO；无业务方法 / 无 I/O | PASS | `src/lib.rs` + AGENTS |
-| C-3 | Money 复用 decimalx | PASS | 依赖 `xhyper-decimalx`；类型别名/字段 |
+| C-3 | Money 复用 decimalx | PASS | 依赖 package `decimalx`；类型别名/字段 |
 | C-4 | `OrderId` 类型已删；id 为 `String`；优先 `OrderRef` | PASS | lib + tests |
 | C-5 | DTO `ts: i64` = Unix ns（CAN-TIME-001） | PASS | lib + `proposed_time` |
 | C-6 | `shape::*` / `proposed_time::*` 公开 | PASS | 模块 + `tests/public_api.rs` |
@@ -110,9 +121,9 @@ canonical  →  decimalx  →  kernel
 
 ## 未做（follow-up / OPEN / DEFER）
 
-- decimal：fuzz / 独立高精度 oracle / mutants / Miri 实测通过声明；wire 跨版本稳定协议
-- canonical：package stable / 跨语言 wire 协议；镜像 `wire-commitment-matrix.md` 与实现清单同步（上游 R6）
-- types 专用 coverage / mutants / miri CI（若需要与 kernel/testkit 同级）
+- decimal：full productized fuzz；wire 跨版本 stable 协议；package stable
+- decimal：oracle / boundary / panicking 门禁 **已有**（#121）；scheduled mutants/miri **有 CI**，非每次 PR 阻断
+- canonical：package stable / 跨语言 wire 协议 / envelope；镜像 `wire-commitment-matrix.md` 与实现清单同步（上游 R6）
 - 上游 SSOT 镜像措辞收口（应在 xhyper.rs 修，再删除感知同步）
 
 ## 变更记录
@@ -123,3 +134,4 @@ canonical  →  decimalx  →  kernel
 | 2026-07-21 | 生产就绪闭合：字段私有 / DecimalError / committed wire v1 / Uncommitted 标注；同步 PR #98 |
 | 2026-07-21 | PR #98 合入 main：本对齐文随主干生效 |
 | 2026-07-21 | infra-asa.3：晋升 Order/Tick/Trade/Position/OrderBookSnapshot/PriceLevel/SymbolMeta 为 committed v1.1–v1.3；**≠** package Production Ready |
+| 2026-07-21 | 四包内部 GO：package 名 `decimalx`/`canonical`；L1 / L2 分层；examples/surface/baseline；PR #159 · tag `v0.3.0-four-crates` |
