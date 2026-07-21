@@ -15,27 +15,27 @@
 | `xhyper-configx` | `crates/configx/` | `configx` | L1 内存字符串 KV（非多源热更新） | [configx-ssot-alignment.md](./configx-ssot-alignment.md) |
 | `xhyper-decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `xhyper-canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO | [types-ssot-alignment.md](./types-ssot-alignment.md) |
+| `xhyper-bootstrap` | `crates/bootstrap/` | `bootstrap` | L1 唯一组合根（ADR-016） | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) |
+| `xhyper-resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
 
 > **已移除**：`infra-core`（不在 SSOT 三域 kernel/testkit/types 内；文档历史见根 `CHANGELOG` / DDR-003 撤销说明）。
 
 ## 依赖图
 
 ```text
-                    ┌──────────────┐
-                    │ xhyper-kernel│  L0
-                    └──────▲───────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
-┌───────┴────┐    ┌────────┴───┐     ┌───────┴────┐
-│xhyper-     │    │xhyper-     │     │xhyper-     │
-│decimalx    │    │configx     │     │testkit     │ dev-only
-└───────▲────┘    └────────────┘     └────────────┘
-        │
-┌───────┴────┐
-│xhyper-     │
-│canonical   │
-└────────────┘
+                         ┌──────────────┐
+                         │ xhyper-kernel│  L0
+                         └──────▲───────┘
+                                │
+     ┌───────────┬──────────────┼──────────────┬───────────┐
+     │           │              │              │           │
+┌────┴────┐ ┌────┴────┐  ┌──────┴─────┐ ┌──────┴─────┐ ┌───┴────┐
+│decimalx │ │configx  │  │bootstrap   │ │resiliencx  │ │testkit │
+└────▲────┘ └─────────┘  └────────────┘ └────────────┘ └───┬────┘
+     │                                                      dev-only
+┌────┴────┐
+│canonical│
+└─────────┘
 ```
 
 ## 镜像 vs 落地（R7）
@@ -46,6 +46,7 @@
 | testkit | `.agents/ssot/testkit/` | `crates/testkit` | **core 已落地**；contract-testkit DEFER |
 | types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；wire/package stable OPEN |
 | infra/configx | `.agents/ssot/infra/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
+| infra/bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/bootstrap` | **组合根已落地**（可移植 trait 替面）；contracts/observex/evidence 全量 **DEFER** |
 
 规则：
 
@@ -66,6 +67,7 @@ cargo test -p xhyper-testkit --all-targets
 cargo test -p xhyper-configx --all-targets
 cargo test -p xhyper-decimalx --all-targets
 cargo test -p xhyper-canonical --all-targets
+cargo test -p xhyper-bootstrap --all-targets
 node scripts/check-canonical-align.mjs
 ```
 
@@ -77,6 +79,7 @@ node scripts/check-canonical-align.mjs
 | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) | SPEC-TESTKIT-002 core 本仓矩阵 |
 | [configx-ssot-alignment.md](./configx-ssot-alignment.md) | configx 0.1.0 本仓矩阵 |
 | [types-ssot-alignment.md](./types-ssot-alignment.md) | decimal + canonical 本仓状态 |
+| [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) | bootstrap 组合根本仓矩阵 |
 | [SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md) | 镜像同步完整性（≠ 实现落地） |
 | [crates/AGENTS.md](../crates/AGENTS.md) | crate 子模块标准布局 + 概览 |
 | [.agents/ssot/SSOT.md](../.agents/ssot/SSOT.md) | R6/R7 规则 |

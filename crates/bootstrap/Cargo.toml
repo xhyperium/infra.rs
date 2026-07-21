@@ -1,0 +1,18 @@
+[package]
+name = "xhyper-bootstrap"
+description = "L1 启动期依赖组装（R3.1 豁免 / ADR-016）；typed composition root"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+name = "bootstrap"
+
+[dependencies]
+xhyper-kernel = { path = "../kernel" }
+
+[lints]
+workspace = true

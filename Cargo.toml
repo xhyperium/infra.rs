@@ -8,6 +8,7 @@ members = [
   "crates/types/canonical",
   "crates/resiliencx",
   "crates/contracts",
+  "crates/bootstrap",
   "crates/adapters/exchange/binance",
   "crates/adapters/exchange/okx",
   "crates/adapters/storage/redis",

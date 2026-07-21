@@ -13,6 +13,7 @@
 | [testkit-ssot-alignment.md](testkit-ssot-alignment.md) | testkit SSOT 对齐与本仓 ManualClock 落地状态 |
 | [configx-ssot-alignment.md](configx-ssot-alignment.md) | configx 0.1.0 对齐矩阵与本仓 xhyper-configx 落地状态 |
 | [types-ssot-alignment.md](types-ssot-alignment.md) | types（decimal + canonical）SSOT 对齐与本仓落地状态 |
+| [bootstrap-ssot-alignment.md](bootstrap-ssot-alignment.md) | bootstrap 组合根 SSOT 对齐与本仓落地状态 |
 | [SSOT_SYNC_REPORT.md](SSOT_SYNC_REPORT.md) | 上游 SSOT 镜像同步完整性（≠ 实现落地） |
 | [ASD-STE100.md](ASD-STE100.md) | 英文技术文档规范（ASD-STE100 受控语言） |
 | [编码与语言约定.md](编码与语言约定.md) | 中文编码与文档语言约定 |
