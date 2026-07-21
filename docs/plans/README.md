@@ -10,7 +10,8 @@
 | 计划 | 状态 | 说明 |
 |------|------|------|
 | [2026-07-21-core-crates-production-readiness.md](./2026-07-21-core-crates-production-readiness.md) | W0–W5 已合入 · 验收勾选已回写 · **待 L5 签核** | 五核心 crate 生产级修复；PR #120–#128；输入审计 `docs/report/2026-07-21/`（含 §12 post-W5） |
-| [releases/2026-07-21-signoff-DRAFT.md](./releases/2026-07-21-signoff-DRAFT.md) | **DRAFT 未签核** | Maintainer 签核草稿（DEFER-7；Agent 不可代签） |
+| [releases/2026-07-21-signoff-DRAFT.md](./releases/2026-07-21-signoff-DRAFT.md) | **DRAFT 未签核 · 证据已填** | Maintainer 签核草稿（DEFER-7；Agent 不可代签） |
+| [releases/2026-07-21-MAINTAINER-HANDOFF.md](./releases/2026-07-21-MAINTAINER-HANDOFF.md) | 交接一页纸 | 签核步骤与建议口径（非批准） |
 
 ## 冻结产物（W0）
 
