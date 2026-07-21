@@ -15,8 +15,8 @@
 
 每个 workspace 成员 crate **必须**具备下列标准骨架。新增 crate 时先建齐，再写业务代码。
 
-> **规范七项（顺序固定）**  
-> `src/` · `examples/` · `docs/` · `tests/` · `CHANGELOG.md` · `AGENTS.md` · `README.md`  
+> **规范八项（顺序固定）**  
+> `src/` · `examples/` · `docs/` · `tests/` · `benches/` · `CHANGELOG.md` · `AGENTS.md` · `README.md`  
 > 另加包清单 `Cargo.toml`（Cargo 硬性要求）。
 
 ```text
@@ -27,6 +27,7 @@ crates/<crate-name>/
 ├── examples/           # 可运行示例（必选目录；暂无内容时 .gitkeep）
 ├── docs/               # crate 级设计/契约/迁移（必选目录；暂无内容时 .gitkeep）
 ├── tests/              # 集成/契约/公开 API 测试（必选目录；暂无内容时 .gitkeep）
+├── benches/            # 基准测试（必选目录；暂无内容时 .gitkeep）
 ├── CHANGELOG.md        # 本 crate 变更日志（Keep a Changelog + SemVer）（必选）
 ├── AGENTS.md           # 本 crate Agent 行为规则（必选）
 └── README.md           # 职责、用法、feature（必选）
@@ -41,6 +42,7 @@ crates/<crate-name>/
 | `examples/` | 必选目录 | 可 `cargo run --example` 的示例；无内容时保留 `.gitkeep` |
 | `docs/` | 必选目录 | 至少 `README.md`（入口索引 + 对齐链接）；设计笔记/API 契约/迁移；不替代 rustdoc |
 | `tests/` | 必选目录 | 集成测试、跨模块契约、公开 API 稳定性 |
+| `benches/` | 必选目录 | `cargo bench` 基准（criterion 等）；无内容时保留 `.gitkeep` |
 | `CHANGELOG.md` | 必选 | 本 crate 版本变更；仓库根 `CHANGELOG.md` 记整体发布 |
 | `AGENTS.md` | 必选 | 本 crate 专属 Agent 规则；父级为 `crates/AGENTS.md` |
 | `README.md` | 必选 | 给人类与外部消费者的入口文档 |
@@ -54,6 +56,7 @@ crates/<crate-name>/
 | `crates/<name>/docs/` | 该 crate 设计、边界、迁移 | 全仓治理规则 |
 | `crates/<name>/examples/` | 只依赖本 crate（及声明的依赖）的示例 | workspace 级演示 |
 | `crates/<name>/tests/` | 本 crate 公开面契约 | 跨多个 crate 的 E2E |
+| `crates/<name>/benches/` | 本 crate 性能基准 | 跨多个 crate 的端到端压测 |
 
 ### 新增 crate 检查清单
 
@@ -80,7 +83,7 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 
 下表为规范说明快照；**权威入库完成度以 `STATUS.md` 为准**；日常查看用本地副本即可（改布局时在 feature PR 里顺带刷新入库文件）。
 
-| Crate | 路径 | 标准七项 |
+| Crate | 路径 | 标准八项 |
 |-------|------|----------|
 | `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | 见 STATUS.md |
 | `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | 见 STATUS.md |
@@ -89,8 +92,8 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 | `xhyper-contracts` | `crates/contracts/` | 见 STATUS.md |
 | adapters 九 package | `crates/adapters/**` | 见 STATUS.md |
 
-> `examples/` / `docs/` / 暂无集成测试时的 `tests/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。  
-> adapters 多为 scaffold；标准七项齐全 **≠** 业务实现 / Production Ready。见 [docs/ssot/adapters-ssot-alignment.md](../docs/ssot/adapters-ssot-alignment.md) 与 STATUS.md 成熟度列。
+> `examples/` / `docs/` / 暂无集成测试时的 `tests/` / 暂无基准时的 `benches/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。  
+> adapters 多为 scaffold；标准八项齐全 **≠** 业务实现 / Production Ready。见 [docs/ssot/adapters-ssot-alignment.md](../docs/ssot/adapters-ssot-alignment.md) 与 STATUS.md 成熟度列。
 
 ---
 
@@ -120,6 +123,7 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 - 每个公开函数至少一个单元测试
 - 单元测试置于 `#[cfg(test)] mod tests` 模块
 - 集成/契约测试置于 crate 内 `tests/`
+- 性能基准置于 crate 内 `benches/`（`cargo bench`）
 - doc-test 必须可编译运行
 
 ### C5: 文档
@@ -183,6 +187,7 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v1.5.0 | 2026-07-21 | 标准布局新增 `benches/`（规范七项 → 八项） |
 | v1.4.0 | 2026-07-21 | adapters/contracts 标准布局全绿；补 bootstrap/contracts 概览 |
 | v1.3.0 | 2026-07-21 | 新增 `xhyper-bootstrap`（L1 组合根） |
 | v1.2.0 | 2026-07-21 | 移除 `infra-core`；L0 改为 `xhyper-kernel` |

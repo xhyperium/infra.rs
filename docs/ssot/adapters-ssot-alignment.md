@@ -15,7 +15,7 @@
 | 上游镜像 COMPLETE / Spec Approved 叙事 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
 | 镜像同步 | **完整**：与 `xhyper.rs/.agent/SSOT/adapters/` `diff -rq` = 0（144 文件 / 1.1M） |
 | 本仓 adapter crates | **scaffold 已注册**；exchange `binancex`/`okxx` 可选注入 `transportx::HttpDriver`；业务 HTTP 协议解析 **DEFER** |
-| `crates/AGENTS.md` 标准七项布局 | **已齐**（README / AGENTS / CHANGELOG / examples / docs / tests） |
+| `crates/AGENTS.md` 标准八项布局 | **已齐**（README / AGENTS / CHANGELOG / examples / docs / tests / benches） |
 | `publish = false` | **已**在 adapter + contracts `Cargo.toml` 显式关闭 |
 | package stable / crates.io | **未**宣称 |
 | contracts trait crate | **已** workspace member（#43 `xhyper-contracts`）；trait scaffold，非业务实现 |
@@ -51,7 +51,7 @@ package 命名                    xhyper-contracts；binancex / okxx / redisx / 
 lib 入口                        adapters: Error/Result；contracts: ExchangeAdapter/StorageAdapter
 生产依赖                        adapters: thiserror；contracts: serde + thiserror
 实现深度                        scaffold（adapters 无 client；contracts 仅 trait）
-标准布局七项                    已齐
+标准布局八项                    已齐
 publish                         false（显式）
 version                         workspace 0.3.0
 ```
@@ -98,7 +98,7 @@ cargo test --workspace --all-targets
 | A-4 | 本仓 crate 路径与 SSOT Code 列一致 | PASS | `crates/adapters/...` 与镜像 README Code 列同构 |
 | A-5 | workspace members 已注册 9 package | PASS | 根 `Cargo.toml` |
 | A-6 | scaffold 可 `cargo check` / `cargo test` | PASS | 0 业务测试；编译通过 |
-| A-7 | 标准七项布局 | PASS | 9 adapters + contracts 均已补齐 |
+| A-7 | 标准八项布局 | PASS | 9 adapters + contracts 均已补齐（含 benches/） |
 | A-8 | `publish = false` | PASS | 各 `Cargo.toml` 显式关闭 |
 | A-9 | 实现真实 I/O / adapter 业务 | OPEN | 无 client；contracts 仅 trait |
 | A-10 | package stable / Spec Approved 本仓宣称 | OPEN | **禁止**用镜像 COMPLETE 代替 |
