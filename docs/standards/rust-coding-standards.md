@@ -24,7 +24,7 @@
 
 ---
 
-# 第一部分:基础编码规范
+## 第一部分:基础编码规范
 
 ## 1. 命名规范
 
@@ -74,6 +74,7 @@ cargo fmt -- --check   # 检查格式(CI 中使用)
 ```
 
 基本约定(rustfmt 默认):
+
 - 缩进使用 **4 个空格**
 - 每行最大宽度 **100 字符**
 - 使用 Unix 换行符(LF)
@@ -221,7 +222,7 @@ pub struct UserId(u64);
 
 ### 6.1 模块结构
 
-```
+```text
 src/
 ├── main.rs          # 入口,保持精简
 ├── lib.rs           # 库入口,声明模块
@@ -325,7 +326,7 @@ pub fn build(self) -> Config { /* ... */ }
 
 ---
 
-# 第二部分:异步编程规范
+## 第二部分:异步编程规范
 
 ## 1. 运行时选择与约定
 
@@ -489,7 +490,7 @@ loop {
 
 ---
 
-# 第三部分:Unsafe 使用准则
+## 第三部分:Unsafe 使用准则
 
 ## 1. 最小必要原则
 
@@ -623,6 +624,7 @@ unsafe impl Sync for MyPtr {}
 ```
 
 论证要点:
+
 - `Send`:值移动到另一个线程后使用是否安全?
 - `Sync`:多个线程同时持有 `&T` 是否安全?
 - 检查所有字段和方法,而不只是"看起来没问题"
@@ -646,6 +648,7 @@ pub fn process(data: &[u8]) -> Result<(), LibError> {
 ```
 
 FFI 检查清单:
+
 - [ ] 结构体加 `#[repr(C)]`
 - [ ] 字符串用 `CString`/`CStr`,注意 NUL 终止符和内部 NUL
 - [ ] 明确内存所有权:谁分配谁释放
@@ -690,7 +693,7 @@ cargo fuzz run parse_target                           # 模糊测试
 
 ---
 
-# 附录:CI 检查清单
+## 附录:CI 检查清单
 
 ```bash
 cargo fmt -- --check          # 格式检查
@@ -701,7 +704,7 @@ cargo audit                   # 依赖安全审计
 cargo +nightly miri test      # 含 unsafe 的 crate 必须
 ```
 
-# 附录:推荐阅读
+## 附录:推荐阅读
 
 - 基础:《The Rust Programming Language》、Rust API Guidelines
 - 异步:《Tokio Tutorial》、Alice Ryhl 博客(actor 模式、shared state)
