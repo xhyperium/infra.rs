@@ -8,7 +8,7 @@
  * 用法:
  *   PR_BODY="..." node scripts/quality-gates/check-pr-template.mjs
  *
- * SSOT: .github/PULL_REQUEST_TEMPLATE.md / CONSTITUTION.md §6.1
+ * SSOT: .github/PULL_REQUEST_TEMPLATE.md / docs/constitution/06-governance.md §6.1
  * 替代: scripts/quality-gates/check-pr-template.mjs (已迁移)
  */
 

@@ -1,6 +1,6 @@
 name: Constitution
 
-# 宪章合规性验证 — 对应 CONSTITUTION.md 全部可自动化检查项
+# 宪章合规性验证 — 对应 docs/constitution/ 全部可自动化检查项
 #
 # Ruleset required check 名必须始终上报: "Constitution Check"
 # - 有 Rust/配置变更: 跑完整 check-constitution.mjs

@@ -8,7 +8,7 @@
  *   node scripts/worktree/migrate-worktrees.mjs             # dry-run
  *   node scripts/worktree/migrate-worktrees.mjs --apply     # 执行迁移
  *
- * SSOT: CONSTITUTION.md §6.0.5 / scripts/worktree/worktree-policy.mjs
+ * SSOT: docs/constitution/06-governance.md §6.0.5 / scripts/worktree/worktree-policy.mjs
  * 替代: scripts/worktree/migrate-worktrees.mjs (已迁移)
  */
 
