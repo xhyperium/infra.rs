@@ -1,7 +1,7 @@
 # AGENTS.md — observex
 
 > 仓库级规则见 [`../../AGENTS.md`](../../AGENTS.md)。  
-> 权威规范镜像：SPEC observex · [`.agents/ssot/infra/observex/spec/spec.md`](../../.agents/ssot/infra/observex/spec/spec.md)
+> 权威规范镜像：SPEC observex · [`.agents/ssot/observex/spec/spec.md`](../../.agents/ssot/observex/spec/spec.md)
 
 ## 身份
 
@@ -20,5 +20,5 @@
 
 ## 与 SSOT 镜像的关系
 
-- `.agents/ssot/infra/observex` 是上游只读镜像；COMPLETE 叙事 ≠ 本仓已交付
+- `.agents/ssot/observex` 是上游只读镜像；COMPLETE 叙事 ≠ 本仓已交付
 - 以本仓源码 + `cargo test` + LCOV 证据为准

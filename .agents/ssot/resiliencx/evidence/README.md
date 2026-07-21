@@ -1,4 +1,4 @@
-# infra/resiliencx — Evidence（横切）
+# resiliencx — Evidence（横切）
 
 > 模块战役证据落盘处（≠ `crates/evidence` 生产库）。  
 > 当前：**无战役 evidence 归档**（布局迁移创建）。  

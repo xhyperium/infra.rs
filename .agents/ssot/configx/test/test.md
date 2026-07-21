@@ -1,4 +1,4 @@
-# infra/configx — Test
+# configx — Test
 
 > **状态**：布局占位 · **not started / not claimed Done**  
 > 测试策略入口；测试代码在实现 crate，不在本树。

@@ -13,7 +13,7 @@
 ## 上游 SSOT 与本仓落地
 
 - `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}` 是上游只读镜像；**不要**把镜像 COMPLETE 当成「本仓可宣称 ship」
-  - infra 平面在 `.agents/ssot/infra/{bootstrap,configx,gate,…}`（保留 `infra/` 层级）
+  - infra 平面在 `.agents/ssot/{bootstrap,configx,gate,…}`（infra/ 已展平）
   - adapters 平面在 `.agents/ssot/adapters/{exchange,storage}/…`（保留 `adapters/` 层级）
   - tools 平面在 `.agents/ssot/tools/{evidence,goalctl,xtask,verifyctl}/…`（保留 `tools/` 层级；verifyctl 为本仓扩展）
 - 本仓 members：`kernel` / `testkit` / `configx` / `schedulex` / `bootstrap` / `evidence` / `observex` / `resiliencx` / `transport` / `types/*` / `contracts` / `adapters/**`（adapters 为 scaffold；**无** `infra-core`；gate/goalctl/xtask/verifyctl 等未落地）
@@ -125,7 +125,7 @@ bd ready
 
 `.claude/*.local.json` 含 API 配置（gitignored），由 Claude Code `--settings` 切换，会话内无需管理。
 
-<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->
+<!-- BEGIN BEADS INTEGRATION v:1.0 profile:minimal hash:6cd5cc61 -->
 ## Beads Issue Tracker
 
 This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.

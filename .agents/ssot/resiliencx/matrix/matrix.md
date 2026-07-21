@@ -1,4 +1,4 @@
-# infra/resiliencx — Matrix
+# resiliencx — Matrix
 
 > **状态**：布局占位 · **not started / not claimed Done**  
 > 追溯边横切；非 pipeline_state。

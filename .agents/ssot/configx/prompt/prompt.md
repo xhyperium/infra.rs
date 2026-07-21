@@ -1,4 +1,4 @@
-# infra/configx — Prompt
+# configx — Prompt
 
 > **状态**：布局占位 · **not started / not claimed Done**  
 > 下一刀 Context Package 待填充。

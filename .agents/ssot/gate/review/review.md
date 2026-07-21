@@ -1,4 +1,4 @@
-# infra/gate — Review
+# gate — Review
 
 > **状态**：布局占位 · **not started / not claimed Done**  
 > 审查结论待战役填充 · 默认 NOT PASS。

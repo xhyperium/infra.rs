@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | Round | **6** |
-| Scope | `xhyper-evidence-complete-spec.md` §25–§28 vs `plan/*` · `tasks.md` · `.worktree/evidence-todo.md` |
+| Scope | `xhyper-evidence-complete-spec.md` §25–§28 vs `plan/*` · `tasks.md` · `.worktrees/evidence-todo.md` |
 | Code skim | `tools/evidence`（现状无 CLI/policy/gates）；`tools/archgate` 存在为 member；gap 主张对照 |
 | Result | **FAIL** |
 | Date | 2026-07-14 |

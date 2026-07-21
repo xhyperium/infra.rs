@@ -1,4 +1,4 @@
-# infra/configx — Plan
+# configx — Plan
 
 > **状态**：布局占位 · **not started / not claimed Done**  
 > 执行计划入口；既有 plan 战役文件若已存在则保留并列。

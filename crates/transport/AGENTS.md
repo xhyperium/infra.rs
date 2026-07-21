@@ -12,7 +12,7 @@
 - **已有真实驱动**：`ReqwestHttpDriver`（`reqwest`）、`TungsteniteWsConnector`（`tokio-tungstenite`），以及 `MockHttpTransport`。
 - 不实现重试/熔断/调度；不成为 bootstrap 组合根。
 - 依赖：`kernel` + `async-trait` + `bytes` + `thiserror` + `reqwest` + `tokio` + `tokio-tungstenite` + `futures-util`。
-- 实现合同：`.agents/ssot/infra/transport/spec/spec.md`。
+- 实现合同：`.agents/ssot/transport/spec/spec.md`。
 - **未达 M3**：无真实 TLS/认证/连接池生产闭环证据；不得宣称为生产就绪。
 
 ## 目录

@@ -5,7 +5,7 @@
 | round | `3` |
 | focus | Security model T1–T18 · threat coverage · fail-closed · privacy §22 · what NOT claimed |
 | result | **FAIL** |
-| sources | `xhyper-evidence-complete-spec.md` · `plan/plan.md` · `plan/gap-matrix.md` · `plan/tasks.md` · `plan/approval-packet.md` · `.worktree/evidence-todo.md` |
+| sources | `xhyper-evidence-complete-spec.md` · `plan/plan.md` · `plan/gap-matrix.md` · `plan/tasks.md` · `plan/approval-packet.md` · `.worktrees/evidence-todo.md` |
 | checklist | `plan.md` §4 全部 40 Check ID |
 | baseline | `main@007ca7b5` · SPEC-EVIDENCE-002 **Proposed** |
 | verifier | Verifier · 2026-07-14 |
@@ -35,7 +35,7 @@
 |----------|------|------|
 | R-SPEC-001 | PASS | `SPEC-EVIDENCE-002` 页眉存在 |
 | R-SPEC-002 | PASS | gap-matrix §1 含 §0–§34 |
-| R-GAP-001 | PASS | DEF-001…018 均在 gap-matrix §4 **与** `.worktree/evidence-todo.md` §1（18/18） |
+| R-GAP-001 | PASS | DEF-001…018 均在 gap-matrix §4 **与** `.worktrees/evidence-todo.md` §1（18/18） |
 | R-PATH-001…003 | PASS | plan §5 / W6 cutover 写明 |
 | R-DEP-001/002 | PASS | core 白名单与禁 anyhow/serde/tokio 有任务 |
 | R-API-* / R-CANON-* / R-TIME / R-CHAIN | PASS | W1 任务覆盖（非本轮深检对象） |
@@ -144,7 +144,7 @@ checkpoint signer / external anchor / bootstrap 禁止 volatile 在任务中部�
 
 | DEF | todo | Wave 标注 |
 |-----|------|-----------|
-| DEF-001…018 | **全部 18 项出现**于 `.worktree/evidence-todo.md` §1 | 与 gap-matrix 一致 |
+| DEF-001…018 | **全部 18 项出现**于 `.worktrees/evidence-todo.md` §1 | 与 gap-matrix 一致 |
 
 **R-GAP-001 = PASS**（本轮不因 DEF 缺失而 FAIL）。
 

@@ -1,9 +1,9 @@
-# infra/transport — Goal 管线契约
+# transport — Goal 管线契约
 
 > 实现 / 代码唯一位置：`crates/transport`  
 > **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-transportx-complete-spec.md](spec/xhyper-transportx-complete-spec.md)  
 > **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
-> **布局**：对齐 [`.agents/ssot/kernel/`](../../kernel/)（[AGENTS.md](../../../../AGENTS.md) §2）  
+> **布局**：对齐 [`.agents/ssot/kernel/`](../kernel/)（[AGENTS.md](../../../AGENTS.md) §2）  
 > **状态**：布局已对齐 kernel · 战役内容未宣称闭合
 
 ## 11 层映射
@@ -40,11 +40,11 @@
 ## 验证
 
 ```bash
-cmp .agents/ssot/infra/transport/spec/spec.md \
-    .agents/ssot/infra/transport/spec/xhyper-transportx-complete-spec.md
+cmp .agents/ssot/transport/spec/spec.md \
+    .agents/ssot/transport/spec/xhyper-transportx-complete-spec.md
 # 结构：README + 11 层目录 + evidence/ 横切
-test -f .agents/ssot/infra/transport/README.md
-test -f .agents/ssot/infra/transport/spec/spec.md
+test -f .agents/ssot/transport/README.md
+test -f .agents/ssot/transport/spec/spec.md
 ```
 
 **布局对齐：是 · 战役全闭合：未宣称 · 禁止假 Done。**

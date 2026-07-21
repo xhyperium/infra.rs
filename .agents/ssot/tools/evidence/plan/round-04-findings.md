@@ -5,7 +5,7 @@
 | round | `4` |
 | focus | Adapters §19–§21（memory/file/postgres）· crash recovery · concurrency · durability |
 | result | **FAIL** |
-| sources | `xhyper-evidence-complete-spec.md` · `plan/plan.md` · `plan/gap-matrix.md` · `plan/tasks.md` · `plan/approval-packet.md` · `.worktree/evidence-todo.md` |
+| sources | `xhyper-evidence-complete-spec.md` · `plan/plan.md` · `plan/gap-matrix.md` · `plan/tasks.md` · `plan/approval-packet.md` · `.worktrees/evidence-todo.md` |
 | checklist | `plan.md` §4 全部 40 Check ID |
 | baseline | `main@007ca7b5` · SPEC-EVIDENCE-002 **Proposed** |
 | verifier | Verifier · 2026-07-14 |
@@ -182,7 +182,7 @@ R-SPEC-003
 
 ### DEF-001…018
 
-- `.worktree/evidence-todo.md` §1：**18/18 全登记**（与 gap-matrix §4 一致）。
+- `.worktrees/evidence-todo.md` §1：**18/18 全登记**（与 gap-matrix §4 一致）。
 - 与 adapter 强相关未闭合：DEF-007/008/012（+ 生产向 DEF-013 在 W5）。
 
 ### 与 Round 3 交叉

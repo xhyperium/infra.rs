@@ -6,7 +6,7 @@
 | Spec | `SPEC-EVIDENCE-002` · Status **Proposed**（≠ Approved） |
 | Scope | 计划完备性十轮（plan §4 R-SPEC-001…R-HONEST-001 ×40）· **非** 实现 W7 |
 | Baseline | `main@007ca7b5` |
-| Sources | `plan.md` · `tasks.md` · `gap-matrix.md` · `spec-inventory.md` · `residual-open.md` · `approval-packet.md` · `.worktree/evidence-todo.md` · `xhyper-evidence-complete-spec.md` · prior `round-0Nb-findings.md` |
+| Sources | `plan.md` · `tasks.md` · `gap-matrix.md` · `spec-inventory.md` · `residual-open.md` · `approval-packet.md` · `.worktrees/evidence-todo.md` · `xhyper-evidence-complete-spec.md` · prior `round-0Nb-findings.md` |
 | Pass3 date | 2026-07-14 |
 | Pass3 posture | **strict** · 仅真实 Task ID · 不把 Proposed 当 Approved · 不把计划 PASS 当实现 PASS |
 
@@ -108,7 +108,7 @@ pass3_checklist_fail_count = 0
 | 35 | R-DOWN-001 | **PASS** | T-DOM-001…006 + T-GATE-001/002。 |
 | 36 | R-GOV-001 | **PASS** | approval-packet A1–A13；Spec Approved / stable 人审-only。 |
 | 37 | R-FORBID-001 | **PASS** | plan 页眉 → I-26；approval §2 ≡ inventory I-26；无矛盾执行步骤。 |
-| 38 | R-TODO-001 | **PASS** | `.worktree/evidence-todo.md` 覆盖 Wave 摘要 + DEF 入口；residual SSOT 仓内。 |
+| 38 | R-TODO-001 | **PASS** | `.worktrees/evidence-todo.md` 覆盖 Wave 摘要 + DEF 入口；residual SSOT 仓内。 |
 | 39 | R-CROSS-001 | **PASS** | plan §1.2 + gap §5 与 INFRA-003 边界声明。 |
 | 40 | R-HONEST-001 | **PASS** | Spec/plan/gap/todo 均为 **Proposed** / PLANNING；未写 Approved/stable/§33 闭合；未宣称实现完成。 |
 
@@ -258,7 +258,7 @@ TOP_fixes = []   # no remaining strict omissions for plan completeness
 2. `tools/evidence/AGENTS.md` 去掉「不可篡改」措辞（DEF-010 仍 OPEN 直至全树一致）。  
 3. `tasks.md` 统计表 W0 DONE 计数与 approval 表头 A1–A13 对齐。  
 4. 人审将 DEFER-\* 标 `accepted` 或排进实现波次。  
-5. `.worktree/evidence-todo.md` §4.2 填入 pass2/pass3 结果（本 verdict 为 SSOT）。
+5. `.worktrees/evidence-todo.md` §4.2 填入 pass2/pass3 结果（本 verdict 为 SSOT）。
 
 ---
 

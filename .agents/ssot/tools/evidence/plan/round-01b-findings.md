@@ -13,7 +13,7 @@ sources_checked:
   - .agents/ssot/tools/evidence/plan/spec-inventory.md (I-1…I-26)
   - .agents/ssot/tools/evidence/plan/residual-open.md
   - .agents/ssot/tools/evidence/plan/approval-packet.md
-  - .worktree/evidence-todo.md
+  - .worktrees/evidence-todo.md
 failed_checks: []
 omissions:
   - §33.4 maps "full replacement" → "T-CP-005 + verify" while dedicated T-CP-007 exists (mapping stale, work tasked)

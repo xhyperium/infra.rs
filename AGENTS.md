@@ -24,7 +24,7 @@
   - `infra/` 下含 bootstrap / configx / gate / observex / resiliencx / schedulex / testkitx / transport
   - `adapters/` 下含 exchange（binance/okx）与 storage（clickhouse/kafka/nats/oss/postgres/redis/taos）
   - `tools/` 下含 evidence / goalctl / xtask（+ 本仓扩展 `verifyctl`）
-  - **保留 `infra/`、`adapters/`、`tools/` 层级**（勿展平到 `.agents/ssot/` 根，否则镜像内相对链接断裂）
+  - **保留 `adapters/`、`tools/` 层级**（勿展平到 `.agents/ssot/` 根；`infra/` 已展平）
 - **镜像文档写 COMPLETE / Stable ≠ 本仓已有对应实现**；必须以 `crates/` + `cargo metadata` 为准
 - **当前 workspace members**（无 `infra-core`）：
   - `crates/kernel` → `xhyper-kernel`（L0）
@@ -210,7 +210,7 @@ node scripts/quality-gates/check.mjs
 - **人工审批**：AI 不可 self-approve（§7.1），需 `@xhyperium/maintainers`
 - **失败处理**：3 次尝试后仍失败 → 记录原因 → 创建 follow-up → 移交给人类
 
-<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->
+<!-- BEGIN BEADS INTEGRATION v:1.0 profile:minimal hash:970c3bf2 -->
 ## Beads Issue Tracker
 
 This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.

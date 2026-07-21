@@ -21,7 +21,7 @@
 | T-PLAN-004 | 落盘 approval-packet.md | 人审闸门清晰 | — | Planner | **DONE** |
 | T-PLAN-005 | 落盘 residual-open.md | DEF 全登记 OPEN/CLOSED | T-PLAN-002 | Planner | **DONE** |
 | T-PLAN-006 | 落盘 spec-inventory.md | I-* 枚举齐全防遗漏 | T-PLAN-001 | Planner | **DONE** |
-| T-TODO-001 | 更新 `.worktree/testkit-todo.md` | 全 Wave/DEF 可追踪 | T-PLAN-* | Planner | **DONE** |
+| T-TODO-001 | 更新 `.worktrees/testkit-todo.md` | 全 Wave/DEF 可追踪 | T-PLAN-* | Planner | **DONE** |
 | T-INV-001 | 消费者扫描（宏/ManualClock/Cargo） | consumers 表写入 plan §0.6 + residual | — | Planner | **DONE** |
 | T-FREEZE-001 | 冻结：禁新增 xlib_test/mock/FixtureBuilder/provider 宏/normal dep | residual + README 冻结节 | T-INV-001 | Doc | **DONE** |
 | T-DOC-001 | complete-spec 页眉 Status 保持 Proposed；标注 plan 路径 | 链接 plan/ | — | Doc | **DONE** |

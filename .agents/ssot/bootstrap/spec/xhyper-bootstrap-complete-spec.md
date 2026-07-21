@@ -7,7 +7,7 @@
 | Path | `crates/bootstrap` |
 | Layer | L1 唯一组合根（R3.1） |
 | Authority | 本文件是 active current-state spec |
-| Candidate | [SPEC-INFRA-BOOTSTRAP-002](../../../../draft/bootstrap-complete-spec.md)（Draft，非权威，不覆盖本文） |
+| Candidate | [SPEC-INFRA-BOOTSTRAP-002](../../../draft/bootstrap-complete-spec.md)（Draft，非权威，不覆盖本文） |
 | Implementation snapshot | `b0934baa`（2026-07-15） |
 | Document commit | `e0b98df4` |
 | Verified at | `e0b98df4`（相关实现路径未变化） |
@@ -86,6 +86,6 @@ cargo fmt -- --check
 
 ## 7. 追溯
 
-- [ADR-016](../../../../../docs/architecture/adr/016-bootstrap-sole-composition-root.md)
-- [PLAN-GATE-RETIRE-001](../../gate/plan/xhyper-gate-retirement-complete-plan.md)
+- [ADR-016](../../../../docs/architecture/adr/016-bootstrap-sole-composition-root.md)
+- [PLAN-GATE-RETIRE-001](../gate/plan/xhyper-gate-retirement-complete-plan.md)
 - `crates/bootstrap/{Cargo.toml,src/,tests/e2e.rs}`

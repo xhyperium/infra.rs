@@ -64,7 +64,7 @@ pass_rounds = 10
 | PLAN-GAP-001 | `cargo tree -i gate` 无效 | 全文改 `xhyper-gate` |
 | PLAN-GAP-002 | VenueSafetyGate 噪声 | consumer 消歧 |
 | PLAN-GAP-003…007 | Exit/§19/Forbidden/residual/inventory | plan 包首版闭合 |
-| PLAN-GAP-008 | gate-todo 缺失 | `.worktree/gate-todo.md` |
+| PLAN-GAP-008 | gate-todo 缺失 | `.worktrees/gate-todo.md` |
 | PLAN-GAP-009 | 幽灵 BOUND/EVID-001 Mapped | → DEFER-BOUND-CTX / T-EVID-000+010…015 |
 | PLAN-GAP-010 | Phase0 启用误绑 T-FREEZE-001 | → **T-FREEZE-002** |
 | PLAN-GAP-011 | KEEP/VER/RB/EVID 范围一行 | 展开独立 Task 行 + T-IDSCAN-001 |
