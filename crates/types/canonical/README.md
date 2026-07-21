@@ -29,11 +29,12 @@
 
 ## 限制与安全
 
-- DTO 变更影响面广；仅 `CancelOrderRequest` / `OrderRef` 与 legacy `OrderAck` 有固定 JSON fixture/回归证据，其余 serde shape 默认视为实现细节，不自动等于跨版本 wire 承诺。
+- DTO 变更影响面广。Committed wire 清单见 `src/wire.rs`（`COMMITTED_WIRE_V1` / `_V1_1` / `_V1_2` / `_V1_3`），对应 golden 在 `fixtures/market/canonical/v1{,.1,.2,.3}/`。
+- **≠** 整体 package Production Ready / crates.io；未列入清单的类型（如 alias / decimalx re-export）无跨版本 wire 承诺。
 - 金额字段类型必须来自 `decimalx`，禁止浮点别名。
 - `ts` **必须**按纳秒写；adapter 从交易所 ms 入口须经 `ns_from_unix_millis`。
-- **生产路径**见 `.agents/ssot/types/canonical/plan/production-upgrade.md`。**≠** package stable / crates.io。
+- **生产路径**见 `.agents/ssot/types/canonical/plan/production-upgrade.md`。
 
 ## 版本
 
-0.1.0（见 `Cargo.toml`）。**≠** package stable · **≠** 全 wire Production Ready。
+0.1.0（见 `Cargo.toml`）。**≠** package stable · **≠** 全 crate Production Ready。
