@@ -4,16 +4,6 @@ name: Resiliencx Coverage
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main, develop]
-    paths:
-      - "crates/resiliencx/**"
-      - "crates/contracts/**"
-      - "crates/kernel/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "scripts/quality-gates/cov-gate-100.mjs"
-      - ".github/workflows/resiliencx-coverage.yml"
   pull_request:
     branches: [main, develop]
     paths:

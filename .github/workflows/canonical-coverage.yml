@@ -4,14 +4,6 @@ name: Canonical Coverage
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main, develop]
-    paths:
-      - "crates/types/canonical/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "scripts/quality-gates/cov-gate-100.mjs"
-      - ".github/workflows/canonical-coverage.yml"
   pull_request:
     branches: [main, develop]
     paths:

@@ -1,15 +1,6 @@
 name: CI（Rust）
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "**/Cargo.toml"
-      - "crates/**"
-      - "rust-toolchain.toml"
-      - ".github/workflows/ci-rust.yml"
   pull_request:
     branches: [main]
     paths:
@@ -20,6 +11,7 @@ on:
       - "rust-toolchain.toml"
       - ".github/workflows/ci-rust.yml"
 
+  workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
