@@ -12,7 +12,7 @@ publish = false
 name = "bootstrap"
 
 [dependencies]
-xhyper-kernel = { path = "../kernel" }
+xhyper-kernel = { path = "../kernel", version = "0.3.0" }
 
 [lints]
 workspace = true
