@@ -31,7 +31,8 @@
 | SSOT 依赖 | 本仓 | 判定 |
 |-----------|------|------|
 | `xhyper-kernel`（Shutdown / ErrorKind） | path `crates/kernel` | **PASS** |
-| `xhyper-contracts`（Instrumentation） | path `crates/contracts`；re-export `Instrumentation` | **PASS**（ADR-005 trait 权威）/ 全量 venue async 仍 **DEFER**（`traits` 最小替面） |
+| `xhyper-contracts`（Instrumentation） | path `crates/contracts`；re-export `Instrumentation` | **PASS**（ADR-005 trait 权威） |
+| 有界 venue/storage 替面 | `BoundedMarketDataSource` / `BoundedKeyValueStore` / …（**非** contracts 同名 trait） | **PASS**（命名收敛，消除静默双平面）/ 完整 async contracts 能力仍 **DEFER** |
 | `xhyper-observex`（`TracingInstrumentation`） | path `crates/observex`；`Bootstrap::new` 默认 | **PASS**（ADR-005 默认实现） |
 | `xhyper-evidence`（`EvidenceAppender`） | path `crates/evidence`；re-export + `InMemoryEvidenceAppender` | **PASS**（注入/可选/require；内存实现）/ 远程持久化 wire **DEFER** |
 | dev：binance / redisx / canonical / tokio e2e | 无 monorepo adapters | **DEFER**（见非目标）；以 stub trait double + 单元/集成测试替代组合证明 |
@@ -72,6 +73,7 @@
 | composition manifest（BOOT-MAN-001） | **DEFER** | 非目标 |
 | 异步组件启动/逆序补偿 | **DEFER** | 非目标 |
 | 生产就绪 / package stable | **未宣称** | SSOT Status：非生产就绪 |
+| contracts 全量 async trait 注入 | **DEFER** | 组合根仅持 `Bounded*` 最小对象安全面 + Instrumentation/Evidence |
 
 ## §6 验收命令（本仓）
 
@@ -98,8 +100,15 @@ rg -n 'fn register|fn resolve|pub struct Gate|pub enum Gate' crates/bootstrap/sr
 本地会话证据目录（非 git）：实现者 scratch 下的 `bootstrap-*.log` / `bootstrap-cov.txt`。  
 可复现命令见上文 §6。
 
+## 变更记录
+
+| 日期 | 说明 |
+|------|------|
+| 2026-07-21 | 生产就绪：`Bounded*` 有界面命名收敛；与 contracts 权威 trait 区分；PR #98 |
+
 ## 追溯
 
 - SSOT：`.agents/ssot/bootstrap/spec/spec.md`
 - 上游：`xhyper.rs/crates/infra/bootstrap`
 - 本仓实现：`crates/bootstrap/**`
+- contracts 对齐：[contracts-ssot-alignment.md](./contracts-ssot-alignment.md)

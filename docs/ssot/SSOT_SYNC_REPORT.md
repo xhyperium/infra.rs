@@ -76,6 +76,22 @@ rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/    .agents/ssot/i
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/adapters/ .agents/ssot/adapters/
 ```
 
+## 本仓实现落地（≠ 镜像同步）
+
+镜像完整性只证明 `.agents/ssot/**` 与上游一致或已本地化。  
+**实现落地**以各域 `*-ssot-alignment.md` + `crates/` 为准。
+
+2026-07-21（PR #98）核心五 crate 生产就绪闭合后，已同步更新：
+
+- [workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
+- [types-ssot-alignment.md](./types-ssot-alignment.md)
+- [contracts-ssot-alignment.md](./contracts-ssot-alignment.md)
+- [kernel-ssot-alignment.md](./kernel-ssot-alignment.md)
+- [testkit-ssot-alignment.md](./testkit-ssot-alignment.md)
+- [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md)
+
+审计报告：[docs/report/2026-07-21/core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md)。
+
 ## 结论
 
 **全部通过** — 源和目标在文件数量、大小和内容上完全一致。无遗漏、无差异。
