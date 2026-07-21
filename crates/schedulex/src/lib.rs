@@ -22,14 +22,23 @@ pub use stats::{
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ScheduleError {
-    /// 空或不合法 ID。
+    /// 空 ID。
     EmptyId,
+    /// ID 超过最大允许字节长度。
+    IdTooLong {
+        /// 允许的最大字节数。
+        max: usize,
+    },
+    /// ID 含控制字符。
+    IdControlChar,
 }
 
 impl std::fmt::Display for ScheduleError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::EmptyId => write!(f, "task id must not be empty"),
+            Self::EmptyId => write!(f, "任务 ID 不能为空"),
+            Self::IdTooLong { max } => write!(f, "任务 ID 超过最大长度 {max}"),
+            Self::IdControlChar => write!(f, "任务 ID 不能包含控制字符"),
         }
     }
 }
@@ -219,8 +228,9 @@ mod tests {
         assert_eq!(s.cancel_many(["a", "x"]), 1);
         assert!(s.try_schedule("new"));
         assert!(!s.try_schedule("new"));
-        let msg = format!("{}", ScheduleError::EmptyId);
-        assert!(msg.contains("empty"));
+        assert!(format!("{}", ScheduleError::EmptyId).contains("不能为空"));
+        assert!(format!("{}", ScheduleError::IdTooLong { max: MAX_ID_LEN }).contains("最大长度"));
+        assert!(format!("{}", ScheduleError::IdControlChar).contains("控制字符"));
     }
 
     #[test]

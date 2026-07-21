@@ -5,16 +5,16 @@ use crate::ScheduleError;
 /// 最大允许 ID 长度（字节）。
 pub const MAX_ID_LEN: usize = 256;
 
-/// 校验任务 ID：非空、不过长、无空白控制字符。
+/// 校验任务 ID：非空、不过长、无控制字符。
 pub fn validate_task_id(id: &str) -> Result<(), ScheduleError> {
     if id.is_empty() {
         return Err(ScheduleError::EmptyId);
     }
     if id.len() > MAX_ID_LEN {
-        return Err(ScheduleError::EmptyId);
+        return Err(ScheduleError::IdTooLong { max: MAX_ID_LEN });
     }
     if id.chars().any(|c| c.is_control()) {
-        return Err(ScheduleError::EmptyId);
+        return Err(ScheduleError::IdControlChar);
     }
     Ok(())
 }
@@ -38,9 +38,12 @@ mod tests {
 
     #[test]
     fn validate_rejects_bad() {
-        assert!(validate_task_id("").is_err());
-        assert!(validate_task_id(&"x".repeat(MAX_ID_LEN + 1)).is_err());
-        assert!(validate_task_id("a\nb").is_err());
+        assert_eq!(validate_task_id("").unwrap_err(), ScheduleError::EmptyId);
+        assert_eq!(
+            validate_task_id(&"x".repeat(MAX_ID_LEN + 1)).unwrap_err(),
+            ScheduleError::IdTooLong { max: MAX_ID_LEN }
+        );
+        assert_eq!(validate_task_id("a\nb").unwrap_err(), ScheduleError::IdControlChar);
         assert!(normalize_task_id("   ").is_err());
     }
 
@@ -49,8 +52,12 @@ mod tests {
         let ok = "a".repeat(MAX_ID_LEN);
         validate_task_id(&ok).unwrap();
         let bad = "a".repeat(MAX_ID_LEN + 1);
-        assert!(validate_task_id(&bad).is_err());
-        assert!(validate_task_id("x\u{0001}y").is_err());
+        let err = validate_task_id(&bad).unwrap_err();
+        assert_eq!(err, ScheduleError::IdTooLong { max: MAX_ID_LEN });
+        assert!(format!("{err}").contains(&MAX_ID_LEN.to_string()));
+        assert!(!format!("{err}").contains("不能为空"));
+        assert_eq!(validate_task_id("x\u{0001}y").unwrap_err(), ScheduleError::IdControlChar);
+        assert!(format!("{}", ScheduleError::IdControlChar).contains("控制字符"));
         for id in ["job", "job-1", "ns.task", "A_B"] {
             assert!(validate_task_id(id).is_ok(), "{id}");
             assert_eq!(normalize_task_id(&format!("  {id}  ")).unwrap(), id);
