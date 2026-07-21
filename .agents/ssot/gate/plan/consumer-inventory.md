@@ -15,7 +15,7 @@
 |----|-----|
 | package name | `xhyper-gate` |
 | lib name | `gate`（`use gate::`） |
-| path | `crates/infra/gate` |
+| path | `crates/gate` |
 | version | 0.1.0 |
 
 ```text
@@ -40,13 +40,13 @@ cargo tree -i gate   # → did not match any packages
 ## 2. Reverse dependency（live）
 
 ```text
-xhyper-gate v0.1.0 (/home/workspace/xhyper.rs/crates/infra/gate)
-└── xhyper-bootstrap v0.1.0 (/home/workspace/xhyper.rs/crates/infra/bootstrap)
+xhyper-gate v0.1.0 (/home/workspace/xhyper.rs/crates/gate)
+└── xhyper-bootstrap v0.1.0 (/home/workspace/xhyper.rs/crates/bootstrap)
 ```
 
 | Dependent | Kind | Notes |
 |-----------|------|-------|
-| `xhyper-bootstrap` | production path dep | `crates/infra/bootstrap/Cargo.toml` → `xhyper-gate = { path = "../gate" }` |
+| `xhyper-bootstrap` | production path dep | `crates/bootstrap/Cargo.toml` → `xhyper-gate = { path = "../gate" }` |
 
 **无**其他 workspace 生产 package 依赖 `xhyper-gate`。
 
@@ -64,15 +64,15 @@ use gate::|gate::(Gate|Capability)|register_capability|Gate::(new|register|resol
 
 | File | Usage |
 |------|-------|
-| `crates/infra/bootstrap/src/lib.rs` | `use gate::{Capability, Gate}`；`Gate::new()`；`register_capability`；`AppContext` 持有 `gate`；`gate()` accessor |
+| `crates/bootstrap/src/lib.rs` | `use gate::{Capability, Gate}`；`Gate::new()`；`register_capability`；`AppContext` 持有 `gate`；`gate()` accessor |
 
 ### 3.2 Tests
 
 | File | Usage |
 |------|-------|
-| `crates/infra/bootstrap/src/lib.rs` `#[cfg(test)]` | DummyCap、register、resolve、len、is_empty |
-| `crates/infra/bootstrap/tests/e2e.rs` | E2ECap、register、ctx.gate().resolve |
-| `crates/infra/gate/src/lib.rs` tests | Gate 自测（随 crate 删除） |
+| `crates/bootstrap/src/lib.rs` `#[cfg(test)]` | DummyCap、register、resolve、len、is_empty |
+| `crates/bootstrap/tests/e2e.rs` | E2ECap、register、ctx.gate().resolve |
+| `crates/gate/src/lib.rs` tests | Gate 自测（随 crate 删除） |
 
 ### 3.3 未发现
 
@@ -128,7 +128,7 @@ Must migrate:
   bootstrap src + unit tests + e2e gate paths
 
 Delete with crate:
-  crates/infra/gate entire tree
+  crates/gate entire tree
 
 Do not touch as "consumers":
   VenueSafetyGate, archgate, .agent/gates, risk gate wording
@@ -141,5 +141,5 @@ Do not touch as "consumers":
 ```bash
 cargo tree -i xhyper-gate --workspace
 cargo metadata --format-version 1 --no-deps | jq '.packages[] | select(.name|test("gate")) | {name, manifest_path}'
-rg -n 'use gate::|gate::(Gate|Capability)|register_capability' --glob '*.rs' crates/infra/bootstrap crates/infra/gate
+rg -n 'use gate::|gate::(Gate|Capability)|register_capability' --glob '*.rs' crates/bootstrap crates/gate
 ```

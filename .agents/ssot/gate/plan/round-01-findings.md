@@ -18,7 +18,7 @@
 
 | ID | Check | Expected map | Result | Evidence |
 |----|-------|--------------|--------|----------|
-| CK-1.1 | 删除列表含 crates/infra/gate 与 runtime Gate/Capability/register/resolve | plan.md §4.1 / I-2 | **PASS** | plan.md §4.1 明示 |
+| CK-1.1 | 删除列表含 crates/gate 与 runtime Gate/Capability/register/resolve | plan.md §4.1 / I-2 | **PASS** | plan.md §4.1 明示 |
 | CK-1.2 | 保留列表含 .agent/gates/、tools/archgate/、CI/release gates | plan.md §4.2 / I-3 / T-KEEP-* | **PASS** | §4.2 + residual T-KEEP |
 | CK-1.3 | 文档禁止全局禁单词 gate | T-GUARD-002 / approval 不可豁免项9 | **PASS** | tasks T-GUARD-002 AC；approval §2.9 |
 | CK-1.4 | cargo tree 使用 xhyper-gate 非 gate | consumer-inventory §1 / PLAN-GAP-001 CLOSED | **PASS** | consumer-inventory 陷阱表 |

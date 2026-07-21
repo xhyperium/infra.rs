@@ -1,6 +1,6 @@
 # infra/transport — Goal 管线契约
 
-> 实现 / 代码唯一位置：`crates/infra/transport`  
+> 实现 / 代码唯一位置：`crates/transport`  
 > **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-transportx-complete-spec.md](spec/xhyper-transportx-complete-spec.md)  
 > **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
 > **布局**：对齐 [`.agent/SSOT/kernel/`](../../kernel/)（[AGENTS.md](../../../../AGENTS.md) §2）  
@@ -16,7 +16,7 @@
 | Plan | [plan/plan.md](plan/plan.md) | 入口；战役文件可并列于 plan/ |
 | Tasks | [tasks/tasks.md](tasks/tasks.md) | 入口 / 占位 |
 | Prompt | [prompt/prompt.md](prompt/prompt.md) | 入口 / 占位 |
-| **Code** | **`crates/infra/transport`** | 实现不在 `.agent/SSOT/` |
+| **Code** | **`crates/transport`** | 实现不在 `.agent/SSOT/` |
 | Test | [test/test.md](test/test.md) | 入口 / 占位 |
 | Review | [review/review.md](review/review.md) | 默认 NOT PASS |
 | Release | [release/release.md](release/release.md) | 默认 BLOCKED |

@@ -21,7 +21,7 @@
 
 ## 1. 定位、职责与非目标
 
-- **证据**：`configx` 位于 `crates/infra/configx`，属于 L1，目标职责是多源配置加载与热更新
+- **证据**：`configx` 位于 `crates/configx`，属于 L1，目标职责是多源配置加载与热更新
   （XLib spec §§3、4.4）。
 - **证据**：当前普通依赖仅为 `xhyper-kernel`，且明确不依赖 `observex`。
 - **证据**：当前只实现线程安全的内存字符串 key-value 存储，尚未实现多源加载、解析或热更新。
@@ -34,7 +34,7 @@
 
 | 项目 | 当前事实 | 合同 |
 | --- | --- | --- |
-| 路径 | `crates/infra/configx` | L1 Infra |
+| 路径 | `crates/configx` | L1 Infra |
 | 版本 | `0.1.0` | 独立维护；每次只允许 `x.y.z → x.y.(z+1)` |
 | 普通依赖 | `xhyper-kernel` | 与 spec §4.4 一致；不得增加其他 L1 依赖 |
 | feature | 无 | 新增前须由真实配置源需求评审 |
@@ -108,6 +108,6 @@ secret 来源；未知键策略；schema 与迁移。
 | --- | --- |
 | L1 职责、依赖、不依赖 observex | XLib spec §4.4 |
 | L1 互依禁止 | XLib spec R3 |
-| 当前 API/锁语义/测试 | `crates/infra/configx/src/lib.rs` |
-| 当前依赖与版本 | `crates/infra/configx/Cargo.toml` |
+| 当前 API/锁语义/测试 | `crates/configx/src/lib.rs` |
+| 当前依赖与版本 | `crates/configx/Cargo.toml` |
 | 版本更新规则 | Constitution §7.3；XLib spec §5 |

@@ -80,7 +80,7 @@
 | plan 10x | fail_rounds=0 |
 | RFC / ADR-016 | **Accepted**（本包裁决后生效） |
 | no-new-gate | PASS |
-| crates/infra/gate | **仍存在** |
+| crates/gate | **仍存在** |
 | §19 全闭合 | **否** |
 | A12 物理删除 | **Approve**（授权执行） |
 

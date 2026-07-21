@@ -51,7 +51,7 @@
 | ID | 主题 | 现状 | 目标 | Gap | Close path |
 |----|------|------|------|-----|------------|
 | G-DEP-001 | cargo tree 依赖者 | bootstrap only | 0 dependents + 无 package | PARTIAL 面小 | T-RM-001 T-DEL-* |
-| G-DEP-002 | workspace member | 有 crates/infra/gate | 无 | WRONG | T-DEL-002 |
+| G-DEP-002 | workspace member | 有 crates/gate | 无 | WRONG | T-DEL-002 |
 | G-DEP-003 | 生产 service 经 gate | 0 发现 | 0 | PRESENT（好） | 维持 T-FREEZE |
 | G-DEP-004 | 测试 DummyCap/E2ECap | 有 | 0 | WRONG | T-MIG-* |
 | G-DEP-005 | external downstream | 仓内未发现 | 确认 | PLAN-OK inventory | T-INV-004 实现前复核 |

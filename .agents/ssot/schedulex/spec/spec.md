@@ -4,7 +4,7 @@
 |---|---|
 | Status | 当前 `0.1.0` 最小登记合同；无真实定时器 |
 | Package / lib | `xhyper-schedulex` / `schedulex` |
-| Path | `crates/infra/schedulex` |
+| Path | `crates/schedulex` |
 | Layer | L1 Infra |
 | Authority | 本文件是 active current-state spec |
 | Candidate | [SPEC-INFRA-SCHEDULEX-002](../../../../draft/xhyper-schedulex-complete-spec.md)（Draft，非权威，不覆盖本文） |
@@ -59,4 +59,4 @@ cargo fmt -- --check
 ## 6. 追溯
 
 - `docs/architecture/spec.md` §4.4
-- `crates/infra/schedulex/{Cargo.toml,src/lib.rs}`
+- `crates/schedulex/{Cargo.toml,src/lib.rs}`

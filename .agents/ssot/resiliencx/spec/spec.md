@@ -4,7 +4,7 @@
 |---|---|
 | Status | 当前 `0.1.0` 部分实现合同；仅 retry，非生产完整弹性系统 |
 | Package / lib | `xhyper-resiliencx` / `resiliencx` |
-| Path | `crates/infra/resiliencx` |
+| Path | `crates/resiliencx` |
 | Layer | L1 Infra |
 | Authority | 本文件是 active current-state spec |
 | Candidate | [SPEC-INFRA-RESILIENCX-002](../../../../draft/xhyper-resiliencx-complete-spec.md)（Draft，非权威，不覆盖本文） |
@@ -66,4 +66,4 @@ cargo fmt -- --check
 
 - [ADR-005](../../../../../docs/architecture/adr/005-resiliencx-observability-boundary.md)
 - `docs/architecture/spec.md` §4.4
-- `crates/infra/resiliencx/{Cargo.toml,src/lib.rs}`
+- `crates/resiliencx/{Cargo.toml,src/lib.rs}`

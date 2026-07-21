@@ -16,7 +16,7 @@
 
 ## 1. 定位、职责与非目标
 
-- **证据**：`observex` 位于 `crates/infra/observex`，是 L1 tracing/metrics 统一封装，依赖
+- **证据**：`observex` 位于 `crates/observex`，是 L1 tracing/metrics 统一封装，依赖
   `kernel`、`contracts`，目标包括 OpenTelemetry 导出并实现
   `contracts::Instrumentation`（XLib spec §4.4）。
 - **证据**：当前实现只把三类事件写入 `tracing::info!`；没有 OpenTelemetry exporter、缓冲、flush
@@ -30,7 +30,7 @@
 
 | 项目 | 当前事实 | 合同 |
 | --- | --- | --- |
-| 路径 | `crates/infra/observex` | L1 Infra |
+| 路径 | `crates/observex` | L1 Infra |
 | 版本 | `0.1.0` | 独立维护；每次只允许 `x.y.z → x.y.(z+1)` |
 | 普通依赖 | `xhyper-kernel`, `xhyper-contracts`, `tracing` | 前两者符合 spec；`tracing` 是当前后端 |
 | feature | 无 | exporter/runtime feature 尚未裁定 |
@@ -105,6 +105,6 @@ cargo xtl lint-deps
 | 职责、依赖、OpenTelemetry 目标 | XLib spec §4.4 |
 | Instrumentation 签名 | XLib spec §4.3；`crates/contracts/src/lib.rs` |
 | 具体实现命名与注入 | ADR-005 |
-| 当前 tracing 实现与测试 | `crates/infra/observex/src/lib.rs` |
-| 当前依赖与版本 | `crates/infra/observex/Cargo.toml` |
+| 当前 tracing 实现与测试 | `crates/observex/src/lib.rs` |
+| 当前依赖与版本 | `crates/observex/Cargo.toml` |
 | 版本更新规则 | Constitution §7.3；XLib spec §5 |

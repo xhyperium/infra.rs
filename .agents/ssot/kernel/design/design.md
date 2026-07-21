@@ -189,7 +189,7 @@ flowchart TB
 
 - registry `layer = "kernel"` 表示 **语义归属 L0 信任带**，不是「与 `kernel` 同 crate」。
 - `evidence` 物理在 `tools/evidence`；`testkit` 在 `crates/testkit`。上图边均为 **依赖 kernel**，无反向箭头。
-- 注：历史 `crates/infra/gate` 已退役（见 `AGENTS.md`「架构摘要」），不再作为 registry unit；机器门禁由独立 `tools/archgate` 承载。
+- 注：历史 `crates/gate` 已退役（见 `AGENTS.md`「架构摘要」），不再作为 registry unit；机器门禁由独立 `tools/archgate` 承载。
 
 | 规则 | 对 kernel 的含义 |
 |------|------------------|

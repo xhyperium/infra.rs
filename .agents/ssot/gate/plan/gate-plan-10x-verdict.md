@@ -80,7 +80,7 @@ pass_rounds = 10
 本 verdict 仅证明：执行计划包相对源 PLAN-GATE-RETIRE-001 完备，且 10 轮 adversarial 检查 fail_rounds=0。
 
 不证明：
-- crates/infra/gate 已删除
+- crates/gate 已删除
 - bootstrap 已去依赖
 - RFC/ADR 已 Approved
 - §19 production retirement DONE

@@ -97,7 +97,7 @@
 
 | Task ID | 内容 | AC | 依赖 | Owner | Status |
 |---------|------|-----|------|-------|--------|
-| T-DEL-001 | 删除 crates/infra/gate/ | 路径不存在 | T-RM-004 T-GOV-003 | Del | TODO |
+| T-DEL-001 | 删除 crates/gate/ | 路径不存在 | T-RM-004 T-GOV-003 | Del | TODO |
 | T-DEL-002 | 根 Cargo.toml 去 member | metadata 无 | T-DEL-001 | Del | TODO |
 | T-DEL-003 | cargo metadata 无 xhyper-gate/gate pkg | jq 证明 | T-DEL-002 | Del | TODO |
 | T-DEL-004 | Cargo.lock 更新 | lock 无 workspace gate | T-DEL-002 | Del | TODO |
