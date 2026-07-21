@@ -4,7 +4,7 @@
 
 ## Rust 编码规范（强制）
 
-- **上位全局标准**：《[Rust 编码规范（完整版）v2.0](https://github.com/bytechainx/.github/blob/main/rulesets/rust/RULES.md)》——组织 SSOT：`bytechainx/.github` → `rulesets/rust/`
+- **上位全局标准**：《[Rust 编码规范（完整版）v2.0](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md)》——组织 SSOT：[`xhyperium/.github`](https://github.com/xhyperium/.github) → `rulesets/rust/`（上游镜像：`bytechainx/.github`）
 - **Agent 加载**：`~/.claude/rules/rust.md`（symlink）；专项见同目录 `security` / `async-runtime` / `api-design` 等
 - **本仓关系**：宪章 [§4.0](./docs/constitution/04-code-standards.md#40-rust-全局编码规范强制上位) 采纳上位标准；项目细则可**加严**、**不可削弱** P0
 - 提交前：`cargo fmt` + `clippy -D warnings` + `test`（与完整版 / §5 门禁一致）

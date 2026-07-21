@@ -57,6 +57,6 @@
 | [编码与语言约定.md](../governance/编码与语言约定.md) | §4.5 |
 | [ASD-STE100.md](../governance/ASD-STE100.md) | §4.6 |
 | [quant-dev-spec.md](../governance/quant-dev-spec.md) | 领域扩展（§3.3） |
-| 组织 [Rust 编码规范完整版 v2.0](https://github.com/bytechainx/.github/blob/main/rulesets/rust/RULES.md) | §4.0 上位全局标准（`rulesets/rust/`） |
+| 组织 [Rust 编码规范完整版 v2.0](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md) | §4.0 上位全局标准（`xhyperium/.github` → `rulesets/rust/`） |
 
 上级索引：[docs/README.md](../README.md)。
