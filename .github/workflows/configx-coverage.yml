@@ -1,0 +1,50 @@
+name: ConfigX Coverage
+
+# configx：LCOV 行覆盖率 100%
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    paths:
+      - "crates/configx/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "scripts/cov-gate-100.mjs"
+      - ".github/workflows/configx-coverage.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "crates/configx/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "scripts/cov-gate-100.mjs"
+      - ".github/workflows/configx-coverage.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    name: 行覆盖率 (100%)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - name: LCOV 100%
+        env:
+          RUSTUP_TOOLCHAIN: nightly
+        run: node scripts/cov-gate-100.mjs -p configx --filter crates/configx/src
