@@ -7,8 +7,8 @@ infra.rs 项目的关键架构决策，按 DDR（Design Decision Record）编号
 | DDR | 决策 | 领域 | 影响范围 | 核心权衡 |
 |-----|------|------|---------|---------|
 | [001](DDR-001.md) | Rust 2024 + MSRV 1.85 | 工具链 | 全部 crate / CI / 开发环境 | 先进性 vs 兼容性 |
-| [002](DDR-002.md) | thiserror v2 错误派生 | 依赖 | `infra-core` / 未来 crate | 便利性 vs 编译开销 |
-| [003](DDR-003.md) | serde 手动序列化 Error | 序列化 | `infra-core::Error` / 网络边界 | 完整性 vs 代码量 |
+| [002](DDR-002.md) | thiserror v2 错误派生 | 依赖 | workspace 库 crate | 便利性 vs 编译开销 |
+| [003](DDR-003.md) | serde 手动序列化 Error | 序列化 | ~~`infra_core::Error`~~（已撤销） | 完整性 vs 代码量 |
 | [004](DDR-004.md) | 中文优先注释文档 | 语言 | 全部文档 / 代码审查 | 团队效率 vs 国际化 |
 | [005](DDR-005.md) | 统一 target-dir | 构建 | CI 缓存 / 本地开发 | 一致性 vs 学习成本 |
 | [006](DDR-006.md) | Beads (bd) 任务跟踪 | 工具 | 全团队 / AI 代理工作流 | 可编程性 vs 学习成本 |

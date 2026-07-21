@@ -8,7 +8,7 @@
 
 **infra.rs** 是 [xhyper.rs](https://github.com/xhyperium/xhyper.rs) 项目的基础设施与治理仓库，承载以下职责：
 
-- 可复用的 Rust 核心库（`infra-core`）
+- 可复用的 Rust 基础设施 crate（`kernel` / `types` / `testkit`）
 - 统一的工程约定、工具链配置与 CI/CD 流水线
 - 多 AI 编码助手（Claude Code / Codex / Copilot）的共享治理配置
 
@@ -48,19 +48,18 @@ make check       # 宪章合规性验证
 
 ### 作为依赖引入
 
-在 `Cargo.toml` 中引用本仓库的 crate：
+在 `Cargo.toml` 中引用本仓库的 crate（示例）：
 
 ```toml
 [dependencies]
-infra-core = { git = "https://github.com/xhyperium/infra.rs.git" }
+xhyper-kernel = { git = "https://github.com/xhyperium/infra.rs.git", package = "xhyper-kernel" }
+xhyper-decimalx = { git = "https://github.com/xhyperium/infra.rs.git", package = "xhyper-decimalx" }
+
+[dev-dependencies]
+xhyper-testkit = { git = "https://github.com/xhyperium/infra.rs.git", package = "xhyper-testkit" }
 ```
 
-或通过 crates.io（待发布）：
-
-```toml
-[dependencies]
-infra-core = "0.1"
-```
+> `xhyper-testkit` 仅允许作为 **dev-dependency**。
 
 ### 初始化 Harness
 
@@ -99,13 +98,12 @@ wt
 
 ## Workspace
 
-| Crate | 说明 |
-|-------|------|
-| `infra-core` | 核心基础设施库 — 错误类型、Result 别名、serde 序列化 |
-| `xhyper-kernel` | L0 语义信任根（clock / lifecycle） |
-| `xhyper-testkit` | ManualClock 等测试支持（仅 dev-dep） |
-| `xhyper-decimalx` | 十进制数值 / Money（`crates/types/decimal`） |
-| `xhyper-canonical` | 跨层共享纯 DTO（`crates/types/canonical`；Money 复用 decimalx） |
+| Crate | 路径 | 说明 |
+|-------|------|------|
+| `xhyper-kernel` | `crates/kernel/` | L0 语义信任根（clock / lifecycle） |
+| `xhyper-testkit` | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
+| `xhyper-decimalx` | `crates/types/decimal/` | 十进制数值 / Money |
+| `xhyper-canonical` | `crates/types/canonical/` | 跨层共享纯 DTO（Money 复用 decimalx） |
 
 Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTURE.md)。
 

@@ -46,13 +46,16 @@
 ### 3.1 模块边界
 ```
 crates/
-├── infra-core/     # 核心基础库（错误类型、Result 别名、工具函数）
-├── ...             # 后续按需添加
+├── kernel/              # L0 语义信任根（clock / lifecycle）
+├── testkit/             # 测试支持（仅 dev-dependency）
+└── types/
+    ├── decimal/         # 十进制数值 / Money
+    └── canonical/       # 跨层共享纯 DTO
 ```
 
 - 每个 crate 有单一明确的职责
-- 依赖方向：上层依赖下层，禁止循环引用
-- `core` 层不得依赖外部框架或平台特定代码
+- 依赖方向：上层依赖下层，禁止循环引用（`canonical` → `decimalx` → `kernel`）
+- L0 / types 层不得依赖外部运行时或平台特定代码
 
 ### 3.2 接口设计
 - 公共 API 必须有文档注释（`///`）

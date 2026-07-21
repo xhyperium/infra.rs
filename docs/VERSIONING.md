@@ -11,7 +11,7 @@
 项目版本 (Project)          CONSTITUTION 版本 (Governance)
 ├── Cargo.toml              ├── CONSTITUTION.md
 ├── CHANGELOG.md            └── .agents/ssot/SSOT.md
-└── crates/infra-core/      └── docs/*
+└── crates/*/               └── docs/*
                              crates/AGENTS.md (独立)
 ```
 
@@ -64,9 +64,11 @@ CI 中验证：
 | `CHANGELOG.md` (最新) | `0.3.0` |
 | `CONSTITUTION.md` (宪章) | `v1.4.0` |
 | `.agents/ssot/SSOT.md` | `v1.1.0` |
-| `infra-core` (crate) | `0.1.0` |
-| `crates/AGENTS.md` | `v1.0.0` |
-| `crates/infra-core/AGENTS.md` | `v1.0.0` |
+| `xhyper-kernel` | workspace |
+| `xhyper-testkit` | `0.1.x` |
+| `xhyper-decimalx` | `0.1.x` |
+| `xhyper-canonical` | `0.1.x` |
+| `crates/AGENTS.md` | `v1.2.0` |
 
 版本号已统一，下次发布按 R-V2 规则递增。
 

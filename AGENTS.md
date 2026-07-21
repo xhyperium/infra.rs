@@ -15,7 +15,7 @@
 ## 项目身份
 
 - **类型**：Rust Cargo workspace
-- **根 crate 示例**：`crates/infra-core`
+- **根 crate 示例**：`crates/kernel`（`xhyper-kernel`）
 - **非目标**：不是其他产品的元仓库镜像；本地即为源码与约定的 SSOT
 
 ## 上游 SSOT 镜像与 testkit 落地
