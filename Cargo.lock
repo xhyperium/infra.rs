@@ -582,7 +582,7 @@ dependencies = [
 name = "kafkax"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "infra-contracts",
 ]
 
 [[package]]
@@ -928,7 +928,7 @@ dependencies = [
 name = "redisx"
 version = "0.3.0"
 dependencies = [
- "thiserror",
+ "infra-contracts",
 ]
 
 [[package]]

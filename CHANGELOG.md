@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`redisx` / `kafkax`**：实现 `StorageAdapter`（进程内 KV scaffold + 单元测试）
 - **`okxx`**：实现 `ExchangeAdapter` trait（占位 ticker；5 单元测试）
 - **contracts SSOT 镜像**：`.agents/ssot/contracts/`（16 文件，与上游 0 diff）；对齐文 `docs/contracts-ssot-alignment.md`
 - **`xhyper-bootstrap`**（lib `bootstrap`）：L1 唯一组合根（ADR-016）；typed `PlatformContext` / `AppContext` / `BootstrappedApp`；可移植 trait 替面；对齐文档 `docs/bootstrap-ssot-alignment.md`

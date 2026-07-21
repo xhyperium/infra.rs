@@ -1,7 +1,8 @@
 //! `kafkax` — kafka storage adapter。
 //!
-//! 实现 contracts trait，连接 kafka。
+//! 实现 [`infra_contracts::storage::StorageAdapter`]。
 
-pub use self::error::{Error, Result};
+pub use adapter::KafkaAdapter;
+pub use infra_contracts::{AdapterState, Error, Result};
 
-mod error;
+mod adapter;
