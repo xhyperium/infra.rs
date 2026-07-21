@@ -1,10 +1,10 @@
 name: Schedulex Coverage
 
-# xhyper-schedulex：LCOV 行覆盖率 100%
+# schedulex：LCOV 行覆盖率 100%
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "crates/schedulex/**"
       - "Cargo.toml"
@@ -12,7 +12,7 @@ on:
       - "scripts/cov-gate-100.mjs"
       - ".github/workflows/schedulex-coverage.yml"
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "crates/schedulex/**"
       - "Cargo.toml"
@@ -46,4 +46,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/cov-gate-100.mjs -p xhyper-schedulex --filter crates/schedulex/src
+        run: node scripts/cov-gate-100.mjs -p schedulex --filter crates/schedulex/src
