@@ -74,7 +74,7 @@ cd .worktrees/feat/<id>-<slug>
 - **ASD-STE100**：英文技术文档使用简化技术英语（宪章 §4.6；见 `docs/governance/ASD-STE100.md`）
 - **UTF-8**：所有文本文件 UTF-8 无 BOM，换行 LF（宪章 §4.5；见 `docs/governance/编码与语言约定.md` 与 `.editorconfig`）
 - **宪章约束**：语言/编码/文档标准见 `docs/constitution/04-code-standards.md` §4.0、§4.5、§4.6，不可削弱
-- **Rust 全局标准**：组织《Rust 编码规范（完整版）v2.0》——`bytechainx/.github` `rulesets/rust/RULES.md`；本机 `~/.claude/rules/rust.md`；本仓仅可加严（§4.0）
+- **Rust 全局标准**：组织《Rust 编码规范（完整版）v2.0》——[`xhyperium/.github` `rulesets/rust/RULES.md`](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md)；本机 `~/.claude/rules/rust.md`（`setup-global-rules.sh`）；本仓仅可加严（§4.0）
 
 - **最小变更**：只做明确要求的事
 - **保守编辑**：优先小步修改现有文件

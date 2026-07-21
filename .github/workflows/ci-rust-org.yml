@@ -1,0 +1,42 @@
+# 复用 xhyperium 组织级 Rust Foundation CI（与本仓既有细粒度 workflow 并存）
+#
+# 组织 SSOT / 可复用定义：
+#   https://github.com/xhyperium/.github/blob/main/workflows/ci-rust-foundation.yml
+#
+# status checks（可供 org ruleset 引用）：
+#   rust-fmt · rust-clippy · rust-test · rust-deny
+
+name: CI Rust（组织复用）
+
+on:
+  pull_request:
+    paths:
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rustfmt.toml"
+      - "clippy.toml"
+      - "deny.toml"
+      - ".github/workflows/ci-rust-org.yml"
+  push:
+    branches: [main]
+    paths:
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/ci-rust-org.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-rust-org-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  org-rust:
+    uses: xhyperium/.github/.github/workflows/ci-rust-foundation.yml@main
+    with:
+      rust_toolchain: "1.85"
+      run_deny: true

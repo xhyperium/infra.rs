@@ -7,9 +7,11 @@
 | 项 | 说明 |
 |----|------|
 | **标准名** | 《Rust 编码规范（完整版）》**v2.0** |
-| **组织 SSOT** | [`bytechainx/.github`](https://github.com/bytechainx/.github) → `rulesets/rust/RULES.md` |
+| **组织 SSOT（xhyperium）** | [`xhyperium/.github`](https://github.com/xhyperium/.github) → [`rulesets/rust/RULES.md`](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md) |
+| **上游镜像** | [`bytechainx/.github`](https://github.com/bytechainx/.github) → `rulesets/rust/`（历史/跨 org 副本；本 org 以 xhyperium 为准） |
 | **专项文档** | 同目录：`security` / `async-runtime` / `api-design` / `testing` / `observability` / `release` / `clippy` / `ci` / `cheatsheet` |
-| **Agent 本机加载** | `~/.claude/rules/rust.md`（symlink 至上述 `RULES.md`；由 `org-config` / `setup-global-rules.sh` 分发） |
+| **可复用 CI** | `xhyperium/.github` → `workflows/ci-rust-standard.yml` / `ci-rust-foundation.yml`（checks：`rust-fmt` / `rust-clippy` / `rust-test`） |
+| **Agent 本机加载** | `~/.claude/rules/rust.md`；分发：`curl -sSL https://raw.githubusercontent.com/xhyperium/.github/main/scripts/setup-global-rules.sh \| bash` |
 | **本仓关系** | 本章 §4.1–§4.8 与 [质量门禁](./05-quality-gates.md) 为**项目加严与落地**；冲突时：**不可削弱完整版 P0，可以加严** |
 
 ### 4.0.1 必须遵守的完整版 P0 摘要
