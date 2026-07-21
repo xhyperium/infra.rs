@@ -2,7 +2,6 @@
 
 > **post-#178 勘误（2026-07-22）**：独立 `contract-testkit` **已交付**；Fake 不在 contracts 生产 API；postgres scaffold 为 `ScaffoldTxContext`（非 FakeTxContext）。正文历史句若写「未交付 / FakeTx」以本勘误为准。
 
-
 | 字段 | 值 |
 |---|---|
 | 审计日期 | 2026-07-21 |
