@@ -173,11 +173,13 @@ name = "contracts"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "binancex",
  "bytes",
  "canonical",
  "decimalx",
  "futures-core",
  "kernel",
+ "okxx",
  "tokio",
 ]
 

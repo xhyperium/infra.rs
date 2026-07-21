@@ -12,6 +12,7 @@
 | 人类入口 | [../README.md](../README.md) |
 | Agent 规则 | [../AGENTS.md](../AGENTS.md) |
 | 变更日志 | [../CHANGELOG.md](../CHANGELOG.md) |
+| **First-batch 语义合同** | [contracts/](./contracts/)（CT-8 部分） |
 | 本仓 SSOT 对齐 | [`docs/ssot/contracts-ssot-alignment.md`](../../../docs/ssot/contracts-ssot-alignment.md) |
 | 上游 SSOT 镜像 | `.agents/ssot/contracts/` |
 | Workspace 总览 | [`docs/ssot/workspace-ssot-alignment.md`](../../../docs/ssot/workspace-ssot-alignment.md) |

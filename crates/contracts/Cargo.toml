@@ -22,5 +22,9 @@ futures-core = { workspace = true }
 workspace = true
 
 [dev-dependencies]
-tokio = { workspace = true }
+async-trait = { workspace = true }
+binancex = { path = "../adapters/exchange/binance", version = "0.3.0" }
 decimalx = { path = "../types/decimal", version = "0.1.0" }
+futures-core = { workspace = true }
+okxx = { path = "../adapters/exchange/okx", version = "0.3.0" }
+tokio = { workspace = true }

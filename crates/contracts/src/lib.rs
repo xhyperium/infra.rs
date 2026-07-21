@@ -1,12 +1,23 @@
 //! contracts —— 契约层 trait 出口（spec §4.3，R4，Additive Only）。
 //!
-//! 只放 trait/type，不放实现。一旦发布不可修改签名，只能新增（Additive Only）。
+//! 只放 trait/type 与最小 contract-testkit（Fake/Recording）。
+//! 一旦发布不可修改签名，只能新增（Additive Only）。
 //! 依赖白名单（R4）：kernel + canonical + async-trait/bytes/futures-core。
 //!
 //! ## Lint
 //!
 //! - `forbid(unsafe_code)` / `deny(unreachable_pub)` 已启用。
 //! - `missing_docs`：**follow-up**（trait 方法文档债较大；对齐 kernel 后再升 `deny`）。
+//!
+//! # 生产入口建议
+//!
+//! - **执行路径**：优先 [`ExecutionVenue`]（结构化 cancel/query，**无** additive default）。
+//! - [`VenueAdapter`] 是迁移 facade：`cancel_order_request` / `query_order_request`
+//!   带 additive default（中文 `Invalid`）；树内 adapter **必须**覆盖（见 DEFER-8 门禁）。
+//!
+//! # 语义文档
+//!
+//! First-batch trait 语义见 `docs/contracts/`。
 
 #![forbid(unsafe_code)]
 #![deny(unreachable_pub)]
@@ -21,9 +32,19 @@ use futures_core::stream::BoxStream;
 use kernel::{XError, XResult};
 use std::time::Duration;
 
+mod fakes;
+pub use fakes::{
+    FakeEventBus, FakeKeyValueStore, FakeRepository, FakeTxContext, FakeTxRunner, InstrEvent,
+    RecordingInstrumentation, RecordingTxRunner, VENUE_CANCEL_REQUEST_DEFAULT_MSG,
+    VENUE_QUERY_REQUEST_DEFAULT_MSG, is_default_cancel_order_request_error,
+    is_default_query_order_request_error,
+};
+
 // ── storage 契约 ──────────────────────────
 
 /// 键值存储（spec §4.3，redisx 实现）。
+///
+/// 语义文档：`docs/contracts/key_value_store.md`。
 #[async_trait]
 pub trait KeyValueStore: Send + Sync {
     async fn get(&self, key: &str) -> XResult<Option<Vec<u8>>>;
@@ -57,6 +78,8 @@ pub enum MessageAck {
 /// - `publish` 失败必须返回可分类 [`XError`]（不得 panic）；
 /// - `subscribe` 流项为 [`BusMessage`]，调用方可按 `id` 做幂等；
 /// - 本 trait **不**内建 ack API（无 handle）；需要确认语义时实现后端扩展或使用包装。
+///
+/// 语义文档：`docs/contracts/event_bus.md`。
 #[async_trait]
 pub trait EventBus: Send + Sync {
     async fn publish(&self, topic: &str, payload: Bytes) -> XResult<()>;
@@ -64,6 +87,8 @@ pub trait EventBus: Send + Sync {
 }
 
 /// 仓储（spec §4.3，postgresx 实现）。
+///
+/// 语义文档：`docs/contracts/repository.md`。
 #[async_trait]
 pub trait Repository<T, Id>: Send + Sync {
     async fn find(&self, id: Id) -> XResult<Option<T>>;
@@ -77,6 +102,8 @@ pub trait Repository<T, Id>: Send + Sync {
 /// - 业务失败路径应调用 [`TxContext::rollback`]；
 /// - 幂等：对同一上下文重复 `commit`/`rollback` 的行为由实现定义，但不得在
 ///   已终结后静默再次变更外部状态。
+///
+/// 语义文档：`docs/contracts/tx_context.md`。
 #[async_trait]
 pub trait TxContext: Send {
     /// 提交事务。
@@ -89,6 +116,8 @@ pub trait TxContext: Send {
 ///
 /// 生产合同：[`TxRunner::begin_tx`] 返回可测的 [`TxContext`]；
 /// trait **对象安全**（`dyn TxRunner` 可用）。编排示例见 `run_tx_commit_on_ok`。
+///
+/// 语义文档：`docs/contracts/tx_runner.md`。
 #[async_trait]
 pub trait TxRunner: Send + Sync {
     /// 开启事务，返回上下文句柄。
@@ -147,6 +176,8 @@ pub trait PubSub: Send + Sync {
 // ── observability 契约（ADR-005）──────────
 
 /// 可观测性注入点（ADR-005，observex 实现，resiliencx 消费）。
+///
+/// 语义文档：`docs/contracts/instrumentation.md`。
 pub trait Instrumentation: Send + Sync {
     fn record_retry(&self, op: &str, attempt: u32);
     fn record_circuit_open(&self, op: &str);
@@ -156,7 +187,12 @@ pub trait Instrumentation: Send + Sync {
 // ── venue 契约（ADR-001）──────────────────
 
 /// 交易所适配器（ADR-001，/exchange/* 实现，domain_exchange 消费）。
+///
 /// 签名只引用 canonical / decimalx 的类型。
+///
+/// **迁移 facade**：新代码优先 [`ExecutionVenue`] + 能力拆分 trait。
+/// `cancel_order_request` / `query_order_request` 的 additive default 返回中文
+/// [`XError::invalid`]；树内 adapter 必须覆盖（DEFER-8 / CT-10）。
 #[async_trait]
 pub trait VenueAdapter: Send + Sync {
     async fn connect(&self) -> XResult<()>;
@@ -178,9 +214,7 @@ pub trait VenueAdapter: Send + Sync {
     /// until they override. In-tree adapters must override.
     async fn cancel_order_request(&self, request: &CancelOrderRequest) -> XResult<()> {
         let _ = request;
-        Err(XError::invalid(
-            "cancel_order_request 未实现；请覆盖 VenueAdapter::cancel_order_request（CAN-ID）",
-        ))
+        Err(XError::invalid(VENUE_CANCEL_REQUEST_DEFAULT_MSG))
     }
     /// Structured query (preferred; CAN-ID Approved 2026-07-17).
     ///
@@ -188,9 +222,7 @@ pub trait VenueAdapter: Send + Sync {
     /// until they override. In-tree adapters must override.
     async fn query_order_request(&self, request: &CancelOrderRequest) -> XResult<OrderStatus> {
         let _ = request;
-        Err(XError::invalid(
-            "query_order_request 未实现；请覆盖 VenueAdapter::query_order_request（CAN-ID）",
-        ))
+        Err(XError::invalid(VENUE_QUERY_REQUEST_DEFAULT_MSG))
     }
     async fn query_position(&self) -> XResult<Vec<Position>>;
     async fn query_balance(&self) -> XResult<Vec<Money>>;
@@ -207,6 +239,8 @@ pub trait VenueAdapter: Send + Sync {
 }
 
 /// Market-data capability extracted from [`VenueAdapter`].
+///
+/// 语义文档：`docs/contracts/market_data_source.md`。
 #[async_trait]
 pub trait MarketDataSource: Send + Sync {
     async fn subscribe_ticks(&self, symbol: &str) -> XResult<BoxStream<'static, Tick>>;
@@ -217,12 +251,19 @@ pub trait MarketDataSource: Send + Sync {
     async fn subscribe_trades(&self, symbol: &str) -> XResult<BoxStream<'static, Trade>>;
 }
 
+/// 交易对元数据目录。
+///
+/// 语义文档：`docs/contracts/instrument_catalog.md`。
 #[async_trait]
 pub trait InstrumentCatalog: Send + Sync {
     async fn symbol_info(&self, symbol: &str) -> XResult<SymbolMeta>;
 }
 
-/// Execution capability with structured cancellation.
+/// 执行能力（结构化 cancel/query；**推荐生产入口**）。
+///
+/// 与 [`VenueAdapter`] 不同：本 trait **无** additive default，实现方必须提供完整方法。
+///
+/// 语义文档：`docs/contracts/execution_venue.md`。
 #[async_trait]
 pub trait ExecutionVenue: Send + Sync {
     async fn place_order(&self, order: &Order) -> XResult<OrderAck>;
@@ -231,115 +272,21 @@ pub trait ExecutionVenue: Send + Sync {
     fn venue_id(&self) -> VenueId;
 }
 
+/// 账户/持仓查询能力。
+///
+/// 语义文档：`docs/contracts/account_source.md`。
 #[async_trait]
 pub trait AccountSource: Send + Sync {
     async fn query_position(&self) -> XResult<Vec<Position>>;
     async fn query_balance(&self) -> XResult<Vec<Money>>;
 }
 
+/// 交易所服务器时间源。
+///
+/// 语义文档：`docs/contracts/venue_time_source.md`。
 #[async_trait]
 pub trait VenueTimeSource: Send + Sync {
     async fn server_time(&self) -> XResult<i64>;
-}
-
-// ── contract-testkit（最小可运行入口）──────────────────
-
-/// 内存参考事务：记录 commit/rollback，供合同测试驱动真实 trait 路径。
-#[derive(Debug, Default)]
-pub struct FakeTxContext {
-    /// 是否已 commit。
-    pub committed: bool,
-    /// 是否已 rollback。
-    pub rolled_back: bool,
-    fail_commit: bool,
-}
-
-impl FakeTxContext {
-    /// 新建干净上下文。
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// 注入 commit 失败。
-    pub fn with_commit_failure(mut self) -> Self {
-        self.fail_commit = true;
-        self
-    }
-}
-
-#[async_trait]
-impl TxContext for FakeTxContext {
-    async fn commit(&mut self) -> XResult<()> {
-        if self.fail_commit {
-            return Err(XError::transient("事务提交失败（注入）"));
-        }
-        self.committed = true;
-        self.rolled_back = false;
-        Ok(())
-    }
-    async fn rollback(&mut self) -> XResult<()> {
-        self.rolled_back = true;
-        self.committed = false;
-        Ok(())
-    }
-}
-
-/// 内存 TxRunner 参考实现。
-#[derive(Debug, Default)]
-pub struct FakeTxRunner;
-
-#[async_trait]
-impl TxRunner for FakeTxRunner {
-    async fn begin_tx(&self) -> XResult<Box<dyn TxContext>> {
-        Ok(Box::new(FakeTxContext::new()))
-    }
-}
-
-/// 内存 EventBus 参考实现（at-most-once 进程内）。
-#[derive(Debug, Default)]
-pub struct FakeEventBus {
-    inner: std::sync::Mutex<std::collections::HashMap<String, Vec<BusMessage>>>,
-    seq: std::sync::atomic::AtomicU64,
-}
-
-impl FakeEventBus {
-    /// 新建空总线。
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-#[async_trait]
-impl EventBus for FakeEventBus {
-    async fn publish(&self, topic: &str, payload: Bytes) -> XResult<()> {
-        let id = self.seq.fetch_add(1, std::sync::atomic::Ordering::Relaxed).to_string();
-        let mut g = self.inner.lock().map_err(|_| XError::internal("event bus lock poisoned"))?;
-        g.entry(topic.to_string()).or_default().push(BusMessage { id, payload });
-        Ok(())
-    }
-
-    async fn subscribe(&self, topic: &str) -> XResult<BoxStream<'static, BusMessage>> {
-        let msgs = {
-            let g = self.inner.lock().map_err(|_| XError::internal("event bus lock poisoned"))?;
-            g.get(topic).cloned().unwrap_or_default()
-        };
-        Ok(Box::pin(VecBusStream { inner: msgs.into_iter() }))
-    }
-}
-
-/// 简单的一次性消息流（contract-testkit 内部）。
-struct VecBusStream {
-    inner: std::vec::IntoIter<BusMessage>,
-}
-
-impl futures_core::Stream for VecBusStream {
-    type Item = BusMessage;
-    fn poll_next(
-        mut self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
-    ) -> std::task::Poll<Option<Self::Item>> {
-        std::task::Poll::Ready(self.inner.next())
-    }
 }
 
 #[cfg(test)]
@@ -394,7 +341,7 @@ mod tests {
             Ok(())
         }
         async fn place_order(&self, _order: &Order) -> XResult<OrderAck> {
-            Err(XError::invalid("not implemented"))
+            Err(XError::invalid("未实现"))
         }
         async fn cancel_order(&self, _id: &str) -> XResult<()> {
             Ok(())
@@ -409,22 +356,22 @@ mod tests {
             Ok(vec![])
         }
         async fn subscribe_ticks(&self, _symbol: &str) -> XResult<BoxStream<'static, Tick>> {
-            Err(XError::invalid("not implemented"))
+            Err(XError::invalid("未实现"))
         }
         async fn subscribe_orderbook(
             &self,
             _symbol: &str,
         ) -> XResult<BoxStream<'static, OrderBookSnapshot>> {
-            Err(XError::invalid("not implemented"))
+            Err(XError::invalid("未实现"))
         }
         async fn subscribe_trades(&self, _symbol: &str) -> XResult<BoxStream<'static, Trade>> {
-            Err(XError::invalid("not implemented"))
+            Err(XError::invalid("未实现"))
         }
         async fn server_time(&self) -> XResult<i64> {
             Ok(0)
         }
         async fn symbol_info(&self, _symbol: &str) -> XResult<SymbolMeta> {
-            Err(XError::invalid("not implemented"))
+            Err(XError::invalid("未实现"))
         }
         fn venue_id(&self) -> &'static str {
             "mock"
@@ -441,8 +388,10 @@ mod tests {
             id: OrderRef::Exchange("x".into()),
         };
         let e1 = v.cancel_order_request(&req).await.unwrap_err();
+        assert!(is_default_cancel_order_request_error(&e1));
         assert_eq!(e1.kind(), kernel::ErrorKind::Invalid);
         let e2 = v.query_order_request(&req).await.unwrap_err();
+        assert!(is_default_query_order_request_error(&e2));
         assert_eq!(e2.kind(), kernel::ErrorKind::Invalid);
         assert_eq!(v.venue_id(), "mock");
         v.connect().await.unwrap();
@@ -466,6 +415,7 @@ mod tests {
         };
         assert!(v.place_order(&order).await.is_err());
     }
+
     #[tokio::test]
     async fn tx_runner_commit_path() {
         let runner = FakeTxRunner;
@@ -494,101 +444,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn fake_tx_context_commit_success_sets_flags() {
-        let mut ctx = FakeTxContext::new();
-        ctx.commit().await.unwrap();
-        assert!(ctx.committed);
-        assert!(!ctx.rolled_back);
-    }
-
-    #[tokio::test]
-    async fn fake_tx_context_commit_failure_injection() {
-        let mut ctx = FakeTxContext::new().with_commit_failure();
-        let err = ctx.commit().await.unwrap_err();
-        assert_eq!(err.kind(), kernel::ErrorKind::Transient);
-        assert!(!ctx.committed);
-        ctx.rollback().await.unwrap();
-        assert!(ctx.rolled_back);
-        assert!(!ctx.committed);
-    }
-
-    /// 可观察 commit/rollback 的 runner：证明 `run_tx_commit_on_ok` 真正驱动 [`TxContext`]。
-    struct RecordingTxRunner {
-        committed: std::sync::Arc<std::sync::Mutex<bool>>,
-        rolled_back: std::sync::Arc<std::sync::Mutex<bool>>,
-    }
-
-    impl RecordingTxRunner {
-        fn new() -> Self {
-            Self {
-                committed: std::sync::Arc::new(std::sync::Mutex::new(false)),
-                rolled_back: std::sync::Arc::new(std::sync::Mutex::new(false)),
-            }
-        }
-    }
-
-    struct RecordingTxContext {
-        inner: FakeTxContext,
-        committed: std::sync::Arc<std::sync::Mutex<bool>>,
-        rolled_back: std::sync::Arc<std::sync::Mutex<bool>>,
-    }
-
-    #[async_trait]
-    impl TxContext for RecordingTxContext {
-        async fn commit(&mut self) -> XResult<()> {
-            self.inner.commit().await?;
-            *self.committed.lock().expect("lock") = self.inner.committed;
-            *self.rolled_back.lock().expect("lock") = self.inner.rolled_back;
-            Ok(())
-        }
-        async fn rollback(&mut self) -> XResult<()> {
-            self.inner.rollback().await?;
-            *self.committed.lock().expect("lock") = self.inner.committed;
-            *self.rolled_back.lock().expect("lock") = self.inner.rolled_back;
-            Ok(())
-        }
-    }
-
-    #[async_trait]
-    impl TxRunner for RecordingTxRunner {
-        async fn begin_tx(&self) -> XResult<Box<dyn TxContext>> {
-            Ok(Box::new(RecordingTxContext {
-                inner: FakeTxContext::new(),
-                committed: std::sync::Arc::clone(&self.committed),
-                rolled_back: std::sync::Arc::clone(&self.rolled_back),
-            }))
-        }
-    }
-
-    #[tokio::test]
-    async fn run_tx_commit_on_ok_drives_real_commit() {
-        let runner = RecordingTxRunner::new();
-        let out = run_tx_commit_on_ok(&runner, |_ctx| async move { Ok::<_, XError>(7u8) })
-            .await
-            .expect("ok path");
-        assert_eq!(out, 7);
-        assert!(*runner.committed.lock().expect("lock"), "编排必须调用 commit");
-        assert!(!*runner.rolled_back.lock().expect("lock"));
-    }
-
-    #[tokio::test]
-    async fn run_tx_err_path_calls_rollback_on_context() {
-        let runner = RecordingTxRunner::new();
-        let err = run_tx_commit_on_ok(&runner, |_ctx| async move {
-            Err::<(), _>(XError::invalid("回滚路径"))
-        })
-        .await
-        .unwrap_err();
-        assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
-        assert!(*runner.rolled_back.lock().expect("lock"), "失败路径必须 rollback");
-        assert!(!*runner.committed.lock().expect("lock"));
-    }
-
-    #[tokio::test]
     async fn event_bus_publish_subscribe_message_contract() {
         let bus = FakeEventBus::new();
         bus.publish("orders", Bytes::from_static(b"hi")).await.unwrap();
-        // 流消费见 event_bus_stream_poll_clone_waker（覆盖 waker clone + poll）
         let _stream = bus.subscribe("orders").await.unwrap();
     }
 
@@ -598,23 +456,6 @@ mod tests {
         assert_eq!(m.id, "1");
         assert_eq!(MessageAck::Ack, MessageAck::Ack);
         assert_ne!(MessageAck::Ack, MessageAck::Nack);
-    }
-
-    #[tokio::test]
-    async fn fake_event_bus_poison_returns_internal() {
-        let bus = FakeEventBus::new();
-        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let _g = bus.inner.lock().expect("lock");
-            panic!("poison bus");
-        }));
-        match bus.publish("t", Bytes::from_static(b"x")).await {
-            Err(e) => assert_eq!(e.kind(), kernel::ErrorKind::Internal),
-            Ok(()) => panic!("publish should fail after poison"),
-        }
-        match bus.subscribe("t").await {
-            Err(e) => assert_eq!(e.kind(), kernel::ErrorKind::Internal),
-            Ok(_) => panic!("subscribe should fail after poison"),
-        }
     }
 
     #[tokio::test]
