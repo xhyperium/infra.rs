@@ -173,16 +173,21 @@ jobs:
           echo "| Suite | Assertions | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
 
-          STATUS_EMOJI=✅
           OVERALL=0
 
-          for job in test-unit test-interactive test-complex test-stress test-i18n; do
-            result="${{ needs.$job.result }}"
+          UNIT_RESULT="${{ needs.test-unit.result }}"
+          UI_RESULT="${{ needs.test-interactive.result }}"
+          COMPLEX_RESULT="${{ needs.test-complex.result }}"
+          STRESS_RESULT="${{ needs.test-stress.result }}"
+          I18N_RESULT="${{ needs.test-i18n.result }}"
+
+          for entry in "test-unit $UNIT_RESULT" "test-interactive $UI_RESULT" "test-complex $COMPLEX_RESULT" "test-stress $STRESS_RESULT" "test-i18n $I18N_RESULT"; do
+            job=$(echo "$entry" | cut -d' ' -f1)
+            result=$(echo "$entry" | cut -d' ' -f2-)
             if [ "$result" = "success" ]; then
               STATUS="✅ 通过"
             elif [ "$result" = "failure" ]; then
               STATUS="❌ 失败"
-              STATUS_EMOJI=❌
               OVERALL=1
             else
               STATUS="⏭️ 跳过"
@@ -192,10 +197,12 @@ jobs:
 
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**总计:** 180 assertions across 5 suites" >> $GITHUB_STEP_SUMMARY
-          echo "**状态:** $STATUS_EMOJI" >> $GITHUB_STEP_SUMMARY
 
           if [ $OVERALL -ne 0 ]; then
+            echo "**状态:** ❌" >> $GITHUB_STEP_SUMMARY
             echo "::error::One or more test suites failed"
             exit 1
+          else
+            echo "**状态:** ✅" >> $GITHUB_STEP_SUMMARY
           fi
         timeout-minutes: 1
