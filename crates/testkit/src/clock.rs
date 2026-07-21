@@ -408,11 +408,14 @@ mod unit_tests {
     fn concurrent_readers_and_controller() {
         let c = Arc::new(ManualClock::new(ts(0)));
         let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let ready = Arc::new(std::sync::Barrier::new(5)); // 4 readers + controller
         let mut handles = vec![];
         for _ in 0..4 {
             let c = Arc::clone(&c);
             let stop = Arc::clone(&stop);
+            let ready = Arc::clone(&ready);
             handles.push(thread::spawn(move || {
+                ready.wait();
                 while !stop.load(std::sync::atomic::Ordering::Relaxed) {
                     let _ = c.now();
                     let _ = c.monotonic();
@@ -420,6 +423,7 @@ mod unit_tests {
                 }
             }));
         }
+        ready.wait();
         for i in 0..200u64 {
             c.advance_wall(Duration::from_nanos(1)).unwrap();
             c.advance_monotonic(Duration::from_nanos(1)).unwrap();
