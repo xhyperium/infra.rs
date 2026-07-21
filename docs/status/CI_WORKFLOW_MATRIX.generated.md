@@ -11,6 +11,7 @@
 |------|------|----------------|------|
 | `canonical-coverage.yml` | Canonical Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
 | `ci-rust.yml` | CI（Rust） | push, pull_request | `check-rust`, `build`, `test`, `msrv`, `coverage` |
+| `ci-summary.yml` | CI Summary | (see workflow) | `summary` |
 | `configx-coverage.yml` | ConfigX Coverage | push, pull_request, workflow_dispatch | `coverage` |
 | `constitution.yml` | Constitution | push, pull_request, workflow_dispatch | `constitution` |
 | `contracts-coverage.yml` | Contracts Coverage | push, pull_request, workflow_dispatch | `line-coverage` |
@@ -35,8 +36,8 @@
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 21 |
-| Job 总数（解析） | 37 |
+| 工作流文件数 | 22 |
+| Job 总数（解析） | 38 |
 
 ## 维护
 
