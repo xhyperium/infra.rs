@@ -27,4 +27,3 @@ node scripts/quality-gates/cov-gate-100.mjs -p evidence --filter crates/evidence
 ## 本轮增量
 
 | `FileEvidenceAppender` | **PASS**（infra-s9t.7 最小文件持久化） |
-

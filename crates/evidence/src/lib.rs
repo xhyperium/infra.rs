@@ -283,10 +283,7 @@ mod tests {
         let a = FileEvidenceAppender::open(&path).expect("open");
         let r = a.append_named("next").expect("append");
         assert_eq!(r.seq, 3);
-        assert!(
-            a.path().ends_with("evidence-parse-".to_string() + &std::process::id().to_string())
-                || a.path().exists()
-        );
+        assert!(a.path().exists());
         let _ = std::fs::remove_file(&path);
     }
 
