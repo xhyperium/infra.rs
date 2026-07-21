@@ -9,8 +9,7 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
-# path + version：满足 cargo-deny bans.wildcards=deny
-infra-contracts = { path = "../../../contracts", version = "0.3.0" }
+thiserror = { workspace = true }
 xhyper-decimalx = { path = "../../../types/decimal", version = "0.1.0" }
 
 [lints]

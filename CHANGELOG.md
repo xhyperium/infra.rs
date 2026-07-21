@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`kernel` 等 crate 骨架补齐**：README、CHANGELOG、AGENTS、空目录 `.gitkeep`
 - **adapters SSOT 镜像**（只读）：`exchange/{binance,okx}` + `storage/{clickhouse,kafka,nats,oss,postgres,redis,taos}`（144 文件，与上游 0 diff）
 - **对齐文档**：[docs/adapters-ssot-alignment.md](./docs/adapters-ssot-alignment.md)（镜像 vs scaffold 状态矩阵）
-- **adapters / contracts 标准布局补齐**：9 adapter crate + `infra-contracts` 补齐七项骨架；各 crate 显式 `publish = false`
+- **adapters / contracts 标准布局补齐**：9 adapter crate + `xhyper-contracts` 补齐七项骨架；各 crate 显式 `publish = false`
 
 ### Removed
 

@@ -44,7 +44,7 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 name = "binancex"
 version = "0.3.0"
 dependencies = [
- "infra-contracts",
+ "thiserror",
  "xhyper-decimalx",
 ]
 
@@ -556,15 +556,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "infra-contracts"
-version = "0.3.0"
-dependencies = [
- "serde",
- "thiserror",
- "xhyper-decimalx",
-]
-
-[[package]]
 name = "ipnet"
 version = "2.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -698,7 +689,7 @@ dependencies = [
 name = "okxx"
 version = "0.3.0"
 dependencies = [
- "infra-contracts",
+ "thiserror",
  "xhyper-decimalx",
 ]
 
@@ -1867,6 +1858,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "xhyper-contracts"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-core",
+ "xhyper-canonical",
+ "xhyper-kernel",
+]
+
+[[package]]
 name = "xhyper-decimalx"
 version = "0.1.0"
 dependencies = [
@@ -1891,9 +1893,9 @@ dependencies = [
 name = "xhyper-observex"
 version = "0.1.0"
 dependencies = [
- "infra-contracts",
  "tracing",
  "tracing-subscriber",
+ "xhyper-contracts",
  "xhyper-kernel",
 ]
 
@@ -1901,6 +1903,7 @@ dependencies = [
 name = "xhyper-resiliencx"
 version = "0.1.0"
 dependencies = [
+ "xhyper-contracts",
  "xhyper-kernel",
 ]
 

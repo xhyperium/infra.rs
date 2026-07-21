@@ -1,6 +1,6 @@
 //! observex —— L1 tracing/metrics 封装（SPEC-INFRA-OBSERVEX 0.1.0 / ADR-005）。
 //!
-//! 提供 [`TracingInstrumentation`]，实现 [`infra_contracts::Instrumentation`]，
+//! 提供 [`TracingInstrumentation`]，实现 [`contracts::Instrumentation`]，
 //! 将重试与熔断事件通过 `tracing::info!` 输出。
 //!
 //! **非目标（本版本）**：OpenTelemetry exporter / flush / shutdown / 采样 / 有界缓冲。
@@ -8,7 +8,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
-use infra_contracts::Instrumentation;
+use contracts::Instrumentation;
 
 // kernel 为 SPEC §2 / §4.4 依赖信封预留；0.1.0 热路径不直接引用。
 #[allow(unused_imports)]
@@ -52,7 +52,7 @@ impl Instrumentation for TracingInstrumentation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use infra_contracts::Instrumentation;
+    use contracts::Instrumentation;
     use std::io::{self, Write};
     use std::sync::{Arc, Mutex};
     use tracing_subscriber::fmt::MakeWriter;

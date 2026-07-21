@@ -16,7 +16,7 @@ L1 **tracing/metrics 封装**（SPEC-INFRA-OBSERVEX 0.1.0 / ADR-005）。
 ## 公开面
 
 ```rust
-use infra_contracts::Instrumentation;
+use contracts::Instrumentation;
 use observex::TracingInstrumentation;
 
 let instr = TracingInstrumentation::new();
@@ -26,12 +26,12 @@ instr.record_circuit_close("fetch");
 ```
 
 - 零字段 `Copy` 类型；无 subscriber 时不 panic
-- 实现 `infra_contracts::Instrumentation`
+- 实现 `contracts::Instrumentation`
 - ADR 兼容别名：`ObservexInstrumentation`
 
 ## 依赖
 
-- 生产：`xhyper-kernel`（信封）、`infra-contracts`（lib `contracts` · Instrumentation）、`tracing`
+- 生产：`xhyper-kernel`（信封）、`xhyper-contracts`（lib `contracts` · Instrumentation）、`tracing`
 - 测试：`tracing-subscriber`（字段捕获）
 
 ## 验证

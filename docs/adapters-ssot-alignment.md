@@ -18,7 +18,7 @@
 | `crates/AGENTS.md` 标准七项布局 | **已齐**（README / AGENTS / CHANGELOG / examples / docs / tests） |
 | `publish = false` | **已**在 adapter + contracts `Cargo.toml` 显式关闭 |
 | package stable / crates.io | **未**宣称 |
-| contracts trait crate | **已** workspace member（#43 `infra-contracts`）；trait scaffold，非业务实现 |
+| contracts trait crate | **已** workspace member（#43 `xhyper-contracts`）；trait scaffold，非业务实现 |
 
 ## 镜像目录（只读）
 
@@ -47,7 +47,7 @@
 
 ```text
 Cargo.toml members              含 crates/contracts + 9 个 crates/adapters/**
-package 命名                    infra-contracts；binancex / okxx / redisx / …（adapter 无 xhyper- 前缀）
+package 命名                    xhyper-contracts；binancex / okxx / redisx / …（adapter 无 xhyper- 前缀）
 lib 入口                        adapters: Error/Result；contracts: ExchangeAdapter/StorageAdapter
 生产依赖                        adapters: thiserror；contracts: serde + thiserror
 实现深度                        scaffold（adapters 无 client；contracts 仅 trait）
@@ -102,7 +102,7 @@ cargo test --workspace --all-targets
 | A-8 | `publish = false` | PASS | 各 `Cargo.toml` 显式关闭 |
 | A-9 | 实现真实 I/O / adapter 业务 | OPEN | 无 client；contracts 仅 trait |
 | A-10 | package stable / Spec Approved 本仓宣称 | OPEN | **禁止**用镜像 COMPLETE 代替 |
-| A-11 | contracts workspace 注册 | PASS | #43 `crates/contracts` → `infra-contracts` |
+| A-11 | contracts workspace 注册 | PASS | #43 `crates/contracts` → `xhyper-contracts` |
 
 ## 与镜像文档的关系
 
@@ -128,7 +128,7 @@ adapters/*  →  (future) contracts / types / kernel
 | 问题 | 结论 |
 |------|------|
 | 是否应并入 workspace？ | **已并入**（#43），无需再次注册 |
-| package | `infra-contracts` · path `crates/contracts` |
+| package | `xhyper-contracts` · path `crates/contracts` |
 | 角色 | adapter trait 出口；**不是**上游 `.agents/ssot` 独立域 |
 | 实现深度 | trait + 共享类型 scaffold |
 | 标准布局 / publish | 本 PR 补齐 |
@@ -137,7 +137,7 @@ adapters/*  →  (future) contracts / types / kernel
 ## 未做（follow-up / OPEN）
 
 1. 按域实现 adapter（mock → 集成测 `#[ignore]` → M3）— 一域一战役，禁止混做
-2. adapters 依赖 `infra-contracts` 并实现 trait
+2. adapters 依赖 `xhyper-contracts` 并实现 trait
 3. contracts：`Ticker` 等金额字段迁离 `f64`（改 decimalx / canonical）
 4. package 命名是否统一 `xhyper-*` 前缀 — 需 Lead 裁决；当前保留 #42 / #43 命名
 

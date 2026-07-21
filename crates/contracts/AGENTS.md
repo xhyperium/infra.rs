@@ -1,9 +1,4 @@
-# infra-contracts — Agent 行为规则
-
-> 适用 crate：`crates/contracts/`  
-> SSOT：`.agents/ssot/contracts/`
-
-## 规则
-
-- 禁止放入具体 adapter 客户端
-- 金额字段禁止 `f32`/`f64`
+# AGENTS — contracts
+- Package: xhyper-contracts · lib: contracts
+- 只放 trait/type；Additive Only
+- 依赖: kernel + canonical + async-trait/bytes/futures-core

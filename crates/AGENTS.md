@@ -77,7 +77,7 @@ crates/<crate-name>/
 | `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-bootstrap`（lib `bootstrap`） | `crates/bootstrap/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `infra-contracts` | `crates/contracts/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `xhyper-contracts` | `crates/contracts/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | adapters 九 package（见概览） | `crates/adapters/**` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `xhyper-transportx`（lib `transportx`） | `crates/transport/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
@@ -154,7 +154,7 @@ crates/<crate-name>/
 | `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
 | `xhyper-resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | L1 重试（active SSOT §2；熔断/限流未实现） |
 | `xhyper-bootstrap`（lib `bootstrap`） | `crates/bootstrap/` | L1 唯一组合根（ADR-016；typed composition） |
-| `infra-contracts` | `crates/contracts/` | adapter trait 出口（Exchange/Storage） |
+| `xhyper-contracts` | `crates/contracts/` | adapter trait 出口（Exchange/Storage） |
 | `binancex` | `crates/adapters/exchange/binance/` | Binance exchange adapter（scaffold） |
 | `okxx` | `crates/adapters/exchange/okx/` | OKX exchange adapter（scaffold） |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | ClickHouse storage adapter（scaffold） |

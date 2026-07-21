@@ -1,23 +1,38 @@
 # okxx
 
-OKX exchange adapter。
+okx exchange adapter
 
 Package：`okxx` · path：`crates/adapters/exchange/okx`
 
-SSOT 镜像：`.agents/ssot/adapters/exchange/okx/`（若已注册）  
-合约：`infra-contracts`（`ExchangeAdapter`）
+SSOT 镜像：[`.agents/ssot/adapters/exchange/okx`](../../../../.agents/ssot/adapters/exchange/okx/README.md)  
+本仓对齐：[docs/adapters-ssot-alignment.md](../../../../docs/adapters-ssot-alignment.md)
 
 ## 状态
 
-**scaffold** — 实现 `ExchangeAdapter` 状态机与占位 `fetch_ticker`；**无**真实 HTTP / package stable。
+**scaffold** — 仅错误类型骨架，**未**宣称业务实现 / package stable / 真实 I/O。
+
+## 职责
+
+- exchange 适配器实现位
+- 错误类型：`Error` / `Result`
+
+## 非目标（当前）
+
+- 真实网络 / SDK 集成
+- 生产交易或生产 I/O
+- package stable 宣称
 
 ## 最小用法
 
 ```rust
-use infra_contracts::exchange::ExchangeAdapter;
-use okxx::OkxAdapter;
+use okxx::{Error, Result};
 
-let mut adapter = OkxAdapter::demo();
-adapter.connect().expect("connect");
-let _ = adapter.fetch_ticker("BTC-USDT");
+fn demo() -> Result<()> {
+    Err(Error::Internal("scaffold only".into()))
+}
 ```
+
+## 相关
+
+- 父级规则：[`crates/AGENTS.md`](../../../AGENTS.md)
+- 合约 trait：`xhyper-contracts`（`crates/contracts`）

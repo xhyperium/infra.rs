@@ -1,18 +1,22 @@
 [package]
-name = "infra-contracts"
-description = "Adapter + observability contracts (exchange/storage/Instrumentation)"
-version.workspace = true
+name = "xhyper-contracts"
+version = "0.1.0"
 edition.workspace = true
+rust-version.workspace = true
+description = "契约层 trait 出口，Additive Only（spec §4.3，R4）"
 license.workspace = true
 repository.workspace = true
-rust-version.workspace = true
 publish = false
 
+[lib]
+name = "contracts"
+
 [dependencies]
-# path + version：满足 cargo-deny bans.wildcards=deny
-serde = { workspace = true }
-thiserror = { workspace = true }
-xhyper-decimalx = { path = "../types/decimal", version = "0.1.0" }
+xhyper-kernel = { path = "../kernel", version = "0.3.0" }
+xhyper-canonical = { path = "../types/canonical", version = "0.1.0" }
+async-trait = { workspace = true }
+bytes = { workspace = true }
+futures-core = { workspace = true }
 
 [lints]
 workspace = true

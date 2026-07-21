@@ -1,9 +1,6 @@
-# Changelog
-
-## [Unreleased]
-
-### Added
-
-- Adapter contracts: `ExchangeAdapter` / storage traits / `AdapterState` / `Error`
-- `Ticker` 价格字段使用 `decimalx::Price`（禁止 f32/f64 金额）
-- `Instrumentation` trait (ADR-005) for observex injection
+# Changelog — contracts
+## [0.1.0] — 2026-07-21
+### 新增
+- R4 15 trait（SSOT）
+### 破坏性
+- 替换 xhyper-contracts

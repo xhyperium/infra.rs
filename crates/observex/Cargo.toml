@@ -14,8 +14,8 @@ name = "observex"
 [dependencies]
 # SPEC §2：kernel 依赖信封（预留，当前热路径不引用）
 xhyper-kernel = { path = "../kernel", version = "0.3.0" }
-# package infra-contracts · lib name infra_contracts
-infra-contracts = { path = "../contracts", version = "0.3.0" }
+# package xhyper-contracts · lib name contracts
+xhyper-contracts = { path = "../contracts", version = "0.1.0" }
 tracing = { workspace = true }
 
 [dev-dependencies]
