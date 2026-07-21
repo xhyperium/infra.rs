@@ -3,6 +3,7 @@ name: Kernel Coverage
 # kernel：LCOV 行覆盖率 100% + branch ≥90%
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, develop]
     paths:
