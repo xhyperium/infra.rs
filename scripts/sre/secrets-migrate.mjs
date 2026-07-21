@@ -278,6 +278,9 @@ function main() {
   if (results.errors > 0) die(`${results.errors} errors during migration`, 2);
 }
 
-main();
+// Only run main if executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}
 
 export { parseDoc, toSecretName, mask, SECRETS_DIR };

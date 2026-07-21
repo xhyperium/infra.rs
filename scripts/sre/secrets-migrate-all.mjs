@@ -250,6 +250,9 @@ function main() {
   if (totals.fail > 0) die(`${totals.fail} secrets failed to migrate`, 2);
 }
 
-main();
+// Only run main if executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}
 
 export { parseMdTables, parseDotenv, parseStackEnv, entriesToSecrets, mask, PATHS, setSecret };
