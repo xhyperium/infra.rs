@@ -44,12 +44,19 @@ scripts/sre/extract_all_secrets.sh all
 
 ### 输出示例
 
-```
+```text
+$ bash scripts/sre/extract_all_secrets.sh dev
+
 === dev.md Scope Check ===
   PASSWORD/TOKEN entries: 57
   ✅ No DATABASE/USER in scope
+  ✅ Count matches expected (57)
 
 === dev.md Complexity Check ===
+  ❌ password: 5OJ***Vk8 -- len=23
+  ❌ password: Kt6***MkC -- len=21
+  ❌ password: keC***D2r -- len=22
+  ... (21 total failures, all length violations)
 
   -------------------------------------------------
   Strength Report
@@ -57,12 +64,20 @@ scripts/sre/extract_all_secrets.sh all
   Total checked:     57
   Pass:              36 (63.2%)
   Fail:              21 (36.8%)
+  Pass ratio:        36/57 = 63.2%
+  +--------------------------------
   | By Category
-  |-- Length < 24:    21 (36.8%)
-  |-- Token/API Key:  0 (0.0%) [exempt]
+  +-- Length < 24:    21 (36.8%)
+  +-- Token/API Key:  0 (0.0%) [exempt]
+  +-- Compliant:      36/57
 
   Overall rating: WARNING (63.2% pass rate)
+
+$ echo $?
+1
 ```
+
+> 实际终端输出来自 2026-07-21 对 dev.md 的审计。退出码 1 表示存在不合规的密码。
 
 ### 评级阈值
 
