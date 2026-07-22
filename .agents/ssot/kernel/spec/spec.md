@@ -327,7 +327,7 @@ pub use lifecycle::{
 
 标准库测试必须覆盖 trigger-before-wait、wait-before-trigger、多 observer、guard drop、锁中毒和并发回归。
 
-`wait_timeout` 必须覆盖未触发的常规超时 `Ok(false)`、超时前触发 `Ok(true)`、已触发立即返回、零时长，以及 `Duration::MAX` 返回 `Err(WaitTimeoutError::DeadlineOverflow)`。
+`wait_timeout` 必须覆盖未触发的常规超时 `Ok(false)`、超时前触发 `Ok(true)`、已触发立即返回、零时长，以及未触发时 `Duration::MAX` 返回 `Err(WaitTimeoutError::DeadlineOverflow)`。若信号在调用前已经触发，完成状态优先，必须在构造 deadline 前返回 `Ok(true)`；不可表示的 timeout 不得覆盖已经发生的完成事实。
 
 Duration 不可表示测试不得只断言“不 panic”；它必须断言 typed error，防止 deadline overflow 被误报为普通 timeout。
 

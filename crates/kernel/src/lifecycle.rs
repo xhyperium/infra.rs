@@ -173,6 +173,9 @@ impl ShutdownSignal {
     #[cfg(not(loom))]
     pub fn wait_timeout(&self, timeout: Duration) -> Result<bool, WaitTimeoutError> {
         let mut triggered = self.inner.triggered.lock().unwrap_or_else(|e| e.into_inner());
+        if *triggered {
+            return Ok(true);
+        }
         let now0 = std::time::Instant::now();
         let deadline = now0.checked_add(timeout).ok_or(WaitTimeoutError::DeadlineOverflow)?;
         while !*triggered {
@@ -477,6 +480,13 @@ mod tests {
         let (guard, signal) = ShutdownSignal::new();
         guard.trigger();
         assert!(signal.wait_timeout(Duration::from_secs(1)).unwrap());
+    }
+
+    #[test]
+    fn wait_timeout_completed_state_precedes_deadline_validation() {
+        let (guard, signal) = ShutdownSignal::new();
+        guard.trigger();
+        assert_eq!(signal.wait_timeout(Duration::MAX), Ok(true));
     }
 
     #[test]

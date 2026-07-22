@@ -83,3 +83,32 @@ fn arc_shared_timeline() {
     c2.advance_wall(Duration::from_nanos(9)).unwrap();
     assert_eq!(clock.now().unwrap().as_unix_nanos(), 10);
 }
+
+#[test]
+fn multiple_controllers_advance_wall_without_lost_updates() {
+    const CONTROLLERS: usize = 8;
+    const STEPS: usize = 500;
+
+    let clock = Arc::new(ManualClock::new(Timestamp::from_unix_nanos(0)));
+    let start = Arc::new(Barrier::new(CONTROLLERS + 1));
+    let mut handles = Vec::with_capacity(CONTROLLERS);
+
+    for _ in 0..CONTROLLERS {
+        let clock = Arc::clone(&clock);
+        let start = Arc::clone(&start);
+        handles.push(thread::spawn(move || {
+            start.wait();
+            for _ in 0..STEPS {
+                clock.advance_wall(Duration::from_nanos(1)).expect("并发推进不得丢失更新");
+            }
+        }));
+    }
+
+    start.wait();
+    for handle in handles {
+        handle.join().expect("控制线程不得 panic");
+    }
+
+    let expected = i64::try_from(CONTROLLERS * STEPS).expect("测试规模可表示为 i64");
+    assert_eq!(clock.snapshot().expect("最终快照").wall().as_unix_nanos(), expected);
+}

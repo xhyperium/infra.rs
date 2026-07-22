@@ -34,6 +34,15 @@ fn display_parse_roundtrip_covers_i128_minimum() {
     }
 }
 
+#[test]
+fn oversized_fraction_length_never_wraps_in_diagnostic() {
+    let text = format!("0.{}", "1".repeat(256));
+    let error = text.parse::<Decimal>().expect_err("超长小数位必须拒绝");
+    assert_eq!(error.kind(), DecimalErrorKind::Parse);
+    assert!(error.to_string().contains("256"), "诊断必须保留真实小数位数: {error}");
+    assert!(!error.to_string().contains("scale 0"), "诊断不得把 256 窄化为 0: {error}");
+}
+
 proptest! {
     /// 任意可表示 `i128 × scale` 都必须通过公开文本面精确往返。
     #[test]

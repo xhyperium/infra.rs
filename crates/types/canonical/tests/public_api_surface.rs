@@ -9,7 +9,7 @@ use canonical::{
     dto_ts_from_unix_millis, is_nonempty_token, is_plausible_instrument_id,
     is_plausible_venue_slug, ns_from_unix_millis, order_ref_payload_nonempty,
     proposed_dto_ts_from_unix_millis, proposed_ns_from_unix_millis, proposed_unix_millis_from_ns,
-    unix_millis_from_ns, wire_commitment,
+    unix_millis_from_ns, unix_millis_from_ns_exact, wire_commitment,
 };
 use decimalx::{Currency, Decimal, Price, Qty};
 
@@ -178,4 +178,55 @@ fn modules_reachable() {
     assert_eq!(canonical::wire::wire_commitment("Order"), WireCommitment::CommittedV1);
     assert!(canonical::shape::is_nonempty_token("x"));
     assert_eq!(canonical::proposed_time::unix_millis_from_ns(1_000_000), 1);
+}
+
+#[test]
+fn exact_wire_inventory_and_time_boundaries_are_exhaustive() {
+    for (names, version) in [
+        (COMMITTED_WIRE_V1, WireVersion::V1),
+        (COMMITTED_WIRE_V1_1, WireVersion::V1_1),
+        (COMMITTED_WIRE_V1_2, WireVersion::V1_2),
+        (COMMITTED_WIRE_V1_3, WireVersion::V1_3),
+    ] {
+        for name in names {
+            assert_eq!(committed_wire_version(name), Some(version), "类型 {name} 版本错误");
+        }
+    }
+    assert_eq!(committed_wire_version("Money"), None);
+    assert_eq!(committed_wire_version("Unknown"), None);
+
+    assert_eq!(unix_millis_from_ns_exact(1_000_000), Some(1));
+    assert_eq!(unix_millis_from_ns_exact(-1_000_000), Some(-1));
+    assert_eq!(unix_millis_from_ns_exact(1), None);
+    assert_eq!(unix_millis_from_ns_exact(-1), None);
+    assert_eq!(unix_millis_from_ns(-1), 0);
+}
+
+#[test]
+fn envelope_negative_paths_remain_explicit_and_fail_closed() {
+    type AckEnvelope = Envelope<OrderAck>;
+
+    assert!(serde_json::from_str::<AckEnvelope>(r#"{"schema_version":1}"#).is_err());
+    assert!(serde_json::from_str::<AckEnvelope>(
+        r#"{"schema_version":1,"schema_version":1,"payload":{"id":"x","status":"Open","ts":1}}"#,
+    )
+    .is_err());
+    assert!(
+        serde_json::from_str::<AckEnvelope>(
+            r#"{"schema_version":1,"payload":{"id":"x","status":"Open","ts":1},"extra":true}"#,
+        )
+        .is_err()
+    );
+    assert!(
+        serde_json::from_str::<AckEnvelope>(
+            r#"{"schema_version":-1,"payload":{"id":"x","status":"Open","ts":1}}"#,
+        )
+        .is_err()
+    );
+
+    let envelope = Envelope::wrap(2, OrderAck { id: "x".into(), status: OrderStatus::Open, ts: 1 });
+    let borrowed = envelope.validate_version(1).expect_err("版本不匹配必须拒绝");
+    assert_eq!((borrowed.expected, borrowed.actual), (1, 2));
+    let consumed = envelope.into_payload_if_version(1).expect_err("消费路径也必须拒绝");
+    assert_eq!((consumed.expected, consumed.actual), (1, 2));
 }

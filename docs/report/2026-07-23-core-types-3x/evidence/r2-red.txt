@@ -1,0 +1,19 @@
+R2 RED EVIDENCE
+date: 2026-07-23 Asia/Shanghai
+input-head: e0cc99d716638663cd605da749cc1988026528d9
+
+[kernel completion precedence]
+command: cargo test -p kernel --lib wait_timeout_completed_state_precedes_deadline_validation
+exit: 101
+observed: left Err(DeadlineOverflow), right Ok(true)
+
+[decimal oversized fraction]
+command: cargo test -p decimalx --test boundary_matrix oversized_fraction_length_never_wraps_in_diagnostic
+exit: 101
+observed: left DecimalErrorKind::Scale, right DecimalErrorKind::Parse; 256 位长度经旧 `as u8` 路径窄化。
+
+[regression-only controls]
+testkit multi-controller baseline: exit 0, 1 passed
+canonical public surface baseline: exit 0, 5 passed
+
+说明：仅 kernel/decimalx 是本轮真实 RED；testkit/canonical 不冒充 RED。

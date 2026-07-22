@@ -14,6 +14,7 @@
 
 - `ShutdownSignal::wait_timeout` 返回 `Result<bool, WaitTimeoutError>`。
 - `Duration::MAX` 等不可表示 deadline 返回 `DeadlineOverflow`，不再伪装为普通超时。
+- 已触发状态优先于 deadline 构造；即使 timeout 不可表示，已完成等待仍立即返回 `Ok(true)`。
 
 ### Documentation
 

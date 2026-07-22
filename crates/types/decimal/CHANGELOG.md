@@ -8,6 +8,7 @@
 
 - `Display` 生成的合法 `i128::MIN` 十进制文本现在可由 `FromStr` 精确读回。
 - `DecimalError → XError` 转换保留 `Error::source` 链。
+- 超过 `u8` 可表示范围的小数位数不再窄化回绕；解析诊断保留真实长度。
 
 ## [0.1.1] - 2026-07-22 — DEFER close: wire schema v1 + panicking-ops feature
 

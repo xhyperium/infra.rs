@@ -457,13 +457,13 @@ impl FromStr for Decimal {
             return Err(DecimalError::Parse(format!("非法十进制: {s}")));
         }
 
-        if frac_part.len() > MAX_SCALE as usize {
-            return Err(DecimalError::ScaleOutOfRange {
-                scale: frac_part.len() as u8,
-                max: MAX_SCALE,
-            });
+        let fraction_len = frac_part.len();
+        let scale = u8::try_from(fraction_len).map_err(|_| {
+            DecimalError::Parse(format!("小数位数 {fraction_len} 超过可表示范围 {}", u8::MAX))
+        })?;
+        if scale > MAX_SCALE {
+            return Err(DecimalError::ScaleOutOfRange { scale, max: MAX_SCALE });
         }
-        let scale = frac_part.len() as u8;
 
         let digits = if int_part.is_empty() {
             frac_part.to_string()

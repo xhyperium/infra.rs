@@ -40,10 +40,11 @@ fn wait_timeout(
 | 未触发，零时长 | `Ok(false)` |
 | 未触发，常规时长到期 | `Ok(false)` |
 | deadline 前由其他线程触发 | `Ok(true)` |
-| `Duration::MAX` 导致 deadline 不可表示 | `Err(WaitTimeoutError::DeadlineOverflow)` |
+| 未触发且 `Duration::MAX` 导致 deadline 不可表示 | `Err(WaitTimeoutError::DeadlineOverflow)` |
+| 已触发且 timeout 不可表示 | 完成状态优先，立即 `Ok(true)` |
 | 伪唤醒或重复检查 | 不重置原 deadline，不误报触发 |
 
-`Duration::MAX` 测试必须匹配 typed error。仅验证“不 panic”或 `false` 不合格，因为那会允许 overflow 继续伪装普通 timeout。
+未触发时，`Duration::MAX` 测试必须匹配 typed error。仅验证“不 panic”或 `false` 不合格，因为那会允许 overflow 继续伪装普通 timeout。已触发时不得构造 deadline，完成事实优先。
 
 ### 1.3 核心关停并发
 

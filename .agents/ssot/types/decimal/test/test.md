@@ -11,6 +11,7 @@
 | 构造边界 | mantissa `0` / `i128::MAX` / `i128::MIN`；scale `0` / `1` / `18` / `19` | 合法值被拒绝，或 scale 19 被接受 |
 | 私有字段入口 | `try_new`、访问器、自定义 serde 反序列化 | serde 绕过 `MAX_SCALE` / Currency 校验 |
 | 文本往返 | 任意可表示 Decimal；显式覆盖 `i128::MIN` × scale `0/1/18` | `Display` 后无法 parse，或数值不相等 |
+| 超长文本诊断 | 256 位小数输入拒绝；诊断保留真实长度且不出现 scale 0 窄化 | 长度经窄化回绕或诊断伪报 |
 | checked 算术 | add/sub/mul/div/rescale 的成功、对齐溢出、mantissa 溢出、scale 溢出、除零 | panic、静默回绕或错误成功 |
 | 舍入 | 五种策略；正负；小于/等于/大于 half；奇偶商 | 策略方向或中点规则错误 |
 | 数值语义 | 尾随零不同的 Eq/Ord/Hash | 相等值 hash 不同或排序不等 |

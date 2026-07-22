@@ -19,7 +19,7 @@
 | CLK-04 | fault set/clear | 三种 fault 精确映射；wall/mono 保存值不变；clear 后恢复 |
 | CLK-05 | snapshot | wall/mono/fault 来自同一锁临界区；getter 值完整 |
 | CLK-06 | poison | 控制路径 `Synchronization`；`now()` 为 `Unavailable`；`monotonic()` 恢复原状态且不 panic/不伪造零 |
-| CLK-07 | concurrency | 并发读取与控制保持合法组合；无 data race/部分快照 |
+| CLK-07 | concurrency | 并发读取与控制保持合法组合；多控制者推进无丢失更新；无 data race/部分快照 |
 | CLK-08 | domain | 活跃实例 domain 独立；同 domain 可比较；跨 domain 返回 `None` |
 | CLK-09 | epoch 0 | 显式 epoch 0 可往返；任何错误路径不得产生 epoch 0 fallback |
 | CLK-10 | allocator 边界 | 防回绕或 typed exhaustion；未实现时 residual 保持 OPEN，不得写 PASS |
