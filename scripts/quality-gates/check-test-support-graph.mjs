@@ -36,6 +36,37 @@ function productionKind(depKind) {
 
 function inventoryFindings(metadataInputs) {
   const findings = [];
+  for (const [label, metadata] of metadataInputs) {
+    if (!metadata.resolve || !Array.isArray(metadata.resolve.nodes)) {
+      findings.push({
+        codes: ["TESTKIT-GRAPH-CONFIG"],
+        consumer: "<workspace>",
+        testSupportPackage: "<metadata>",
+        dependencyKind: "config",
+        target: null,
+        activation: label,
+        dependencyPath: [],
+        verdict: "FAIL",
+        message: `${label} metadata 缺少完整 resolve.nodes`,
+      });
+      continue;
+    }
+    const nodeIds = new Set(metadata.resolve.nodes.map((node) => node.id));
+    const missingNodes = (metadata.workspace_members || []).filter((id) => !nodeIds.has(id));
+    if (missingNodes.length > 0) {
+      findings.push({
+        codes: ["TESTKIT-GRAPH-CONFIG"],
+        consumer: "<workspace>",
+        testSupportPackage: "<metadata>",
+        dependencyKind: "config",
+        target: null,
+        activation: label,
+        dependencyPath: [],
+        verdict: "FAIL",
+        message: `${label} metadata 的 workspace member 缺少 resolve node: ${missingNodes.join(", ")}`,
+      });
+    }
+  }
   for (const name of TEST_SUPPORT_NAMES) {
     const problems = new Set();
     for (const [label, metadata] of metadataInputs) {
@@ -175,6 +206,7 @@ function loadMetadata(allFeatures) {
 }
 
 function main() {
+  const jsonOutput = process.argv.includes("--json");
   if (process.argv.includes("--help") || process.argv.includes("-h")) {
     console.log(
       "用法: node scripts/quality-gates/check-test-support-graph.mjs [--json]\n" +
@@ -184,7 +216,7 @@ function main() {
   }
   try {
     const result = inspectTestSupportGraph(loadMetadata(false), loadMetadata(true));
-    if (process.argv.includes("--json")) {
+    if (jsonOutput) {
       console.log(JSON.stringify(result, null, 2));
     } else {
       console.log("check-test-support-graph — test-support 生产依赖图门禁");
@@ -198,7 +230,34 @@ function main() {
     }
     return result.ok ? 0 : 1;
   } catch (error) {
-    console.error(`FAIL: ${error instanceof Error ? error.message : String(error)}`);
+    const message = error instanceof Error ? error.message : String(error);
+    if (jsonOutput) {
+      console.log(
+        JSON.stringify(
+          {
+            ok: false,
+            testSupportPackages: [],
+            findings: [
+              {
+                codes: ["TESTKIT-GRAPH-EXEC"],
+                consumer: "<workspace>",
+                testSupportPackage: "<metadata>",
+                dependencyKind: "config",
+                target: null,
+                activation: "metadata",
+                dependencyPath: [],
+                verdict: "FAIL",
+                message,
+              },
+            ],
+          },
+          null,
+          2,
+        ),
+      );
+    } else {
+      console.error(`FAIL: ${message}`);
+    }
     return 1;
   }
 }

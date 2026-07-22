@@ -120,7 +120,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 | 24.3 | branch ≥90% | DEFER | OPTIONAL（上游 residual；本仓不升强制） |
 | 24.3 | mutation ≥90% | PASS | missed=0 |
 | 24.3 | Miri | PASS | 本仓 miri 日志 |
-| 24.4 | Contract 闭合 | PARTIAL→加厚 | **contract-testkit 0.1.2 候选**覆盖 14 trait；ObjectStore 精确 payload、TimeSeries 点包含、Analytics/Instrumentation observer-aware；EventBus/PubSub 仅 smoke，真实后端深度仍 OPEN |
+| 24.4 | Contract 闭合 | PARTIAL→加厚 | **contract-testkit 0.1.2 候选**覆盖 14 trait；ObjectStore 精确 payload、TimeSeries 点包含、Analytics/Instrumentation observer-aware；EventBus/PubSub 可移植 surface 仅 smoke，旧 EventBus profile 保持兼容，真实后端深度仍 OPEN |
 | 24.0-h | Integration harness | **PASS** | `src/harness.rs` · `IntegrationHarness::{new,step,run,clock}` + unit；导出见 `src/lib.rs` |
 | 24.5 | 消费为 dev-dep / 无 build-dep / 无 normal graph 泄漏 | PASS（候选分支） | `check-test-support-graph.mjs` 基于 cargo metadata 检查 default/all-features normal/build 闭包、完整路径与 inventory fail-closed |
 | 24.5 | feature 不泄漏 | PASS | `default=[]` 无其它 feature |
@@ -152,7 +152,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 ## 未做（follow-up / 诚实边界）
 
 - Sandbox / Real/Testnet 后端合同与 live evidence；Fake/self-test 不升级为 readiness
-- EventBus/PubSub delivery、replay、order、ack、backpressure、投递次数；当前只做 subscribe/publish smoke
+- EventBus/PubSub 的可移植 delivery、replay、order、ack、backpressure、投递次数；当前 portable surface 只做 subscribe/publish smoke，旧 EventBus profile 不外推
 - ObjectStore 覆盖/删除/列表/跨进程持久化与 TimeSeries 排序/重复/端点闭合语义
 - branch coverage ≥90% 强制（OPTIONAL residual）
 - 上游 SSOT 文档内部 STALE 收口（应在 xhyper.rs 修，再镜像同步）

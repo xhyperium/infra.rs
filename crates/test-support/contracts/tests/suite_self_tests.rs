@@ -6,9 +6,10 @@ use contract_testkit::{
     FakeTimeSeriesStore, FakeTxRunner, FakeVenueTimeSource, FixtureNamespace,
     RecordingInstrumentation, RecordingTxRunner, assert_account_source,
     assert_analytics_sink_callable, assert_analytics_sink_observed, assert_event_bus,
-    assert_execution_venue, assert_instrument_catalog, assert_instrumentation,
-    assert_instrumentation_observed, assert_key_value_store, assert_market_data_source,
-    assert_object_store, assert_pub_sub_smoke, assert_repository, assert_time_series_store,
+    assert_event_bus_with_fixture, assert_execution_venue, assert_instrument_catalog,
+    assert_instrumentation, assert_instrumentation_observed, assert_key_value_store,
+    assert_key_value_store_isolated, assert_market_data_source, assert_object_store_with_fixture,
+    assert_pub_sub_smoke, assert_repository, assert_time_series_store_with_fixture,
     assert_tx_runner, assert_venue_time_source, default_symbol_meta, sample_order,
 };
 use contracts::{VenueTimeSource, run_tx_commit_on_ok};
@@ -18,27 +19,31 @@ use kernel::XError;
 async fn suite_key_value_store_on_fake() {
     let store = FakeKeyValueStore::new();
     let fixture = FixtureNamespace::new("ctk_key_value_reference").expect("valid fixture");
-    assert_key_value_store(&store, &fixture).await.expect("kv suite");
-    assert_eq!(store.len().expect("len"), 1);
+    assert_key_value_store(&store).await.expect("legacy kv suite");
+    assert_key_value_store_isolated(&store, &fixture).await.expect("isolated kv suite");
+    assert_eq!(store.len().expect("len"), 2);
 }
 
 #[tokio::test]
 async fn suite_event_bus_on_fake() {
     let bus = FakeEventBus::new();
     let fixture = FixtureNamespace::new("ctk_event_bus_reference").expect("valid fixture");
-    assert_event_bus(&bus, &fixture).await.expect("bus suite");
+    assert_event_bus(&bus).await.expect("snapshot/replay profile suite");
+    assert_event_bus_with_fixture(&bus, &fixture).await.expect("portable bus surface");
 }
 
 #[tokio::test]
 async fn suite_object_store_on_reference_fake() {
     let fixture = FixtureNamespace::new("ctk_object_reference").expect("valid fixture");
-    assert_object_store(&FakeObjectStore::new(), &fixture).await.expect("object store suite");
+    assert_object_store_with_fixture(&FakeObjectStore::new(), &fixture)
+        .await
+        .expect("object store suite");
 }
 
 #[tokio::test]
 async fn suite_time_series_store_on_reference_fake() {
     let fixture = FixtureNamespace::new("ctk_time_series_reference").expect("valid fixture");
-    assert_time_series_store(&FakeTimeSeriesStore::new(), &fixture)
+    assert_time_series_store_with_fixture(&FakeTimeSeriesStore::new(), &fixture)
         .await
         .expect("time series suite");
 }

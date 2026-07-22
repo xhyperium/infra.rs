@@ -8,7 +8,8 @@ use canonical::{
 };
 use contract_testkit::{
     FixtureNamespace, assert_analytics_sink_callable, assert_analytics_sink_observed,
-    assert_event_bus, assert_object_store, assert_pub_sub_smoke, assert_time_series_store,
+    assert_event_bus_with_fixture, assert_key_value_store_isolated,
+    assert_object_store_with_fixture, assert_pub_sub_smoke, assert_time_series_store_with_fixture,
 };
 use contracts::{
     AccountSource, AnalyticsSink, BusMessage, EventBus, ExecutionVenue, InstrumentCatalog,
@@ -35,12 +36,12 @@ impl ObjectStore for CorruptingObjectStore {
 #[tokio::test]
 async fn object_store_suite_rejects_corrupted_roundtrip() {
     let fixture = FixtureNamespace::new("ctk_object_broken").expect("valid fixture");
-    let failure = assert_object_store(&CorruptingObjectStore, &fixture)
+    let failure = assert_object_store_with_fixture(&CorruptingObjectStore, &fixture)
         .await
         .expect_err("broken implementation must fail");
 
     assert_eq!(failure.contract, "ObjectStore");
-    assert_eq!(failure.case, "roundtrip_payload");
+    assert_eq!(failure.case, "roundtrip");
 }
 
 struct DroppingTimeSeriesStore;
@@ -59,12 +60,12 @@ impl TimeSeriesStore for DroppingTimeSeriesStore {
 #[tokio::test]
 async fn time_series_suite_rejects_dropped_write() {
     let fixture = FixtureNamespace::new("ctk_time_series_broken").expect("valid fixture");
-    let failure = assert_time_series_store(&DroppingTimeSeriesStore, &fixture)
+    let failure = assert_time_series_store_with_fixture(&DroppingTimeSeriesStore, &fixture)
         .await
         .expect_err("broken implementation must fail");
 
     assert_eq!(failure.contract, "TimeSeriesStore");
-    assert_eq!(failure.case, "roundtrip_missing");
+    assert_eq!(failure.case, "read_after_write");
 }
 
 struct RejectingAnalyticsSink;
@@ -72,7 +73,7 @@ struct RejectingAnalyticsSink;
 #[async_trait]
 impl AnalyticsSink for RejectingAnalyticsSink {
     async fn sink(&self, _event: &str, _payload: Bytes) -> XResult<()> {
-        Err(XError::unavailable("analytics sink unavailable"))
+        Err(XError::unavailable("分析写入不可用"))
     }
 }
 
@@ -113,7 +114,7 @@ struct RejectingPubSub;
 #[async_trait]
 impl PubSub for RejectingPubSub {
     async fn pub_message(&self, _channel: &str, _msg: Bytes) -> XResult<()> {
-        Err(XError::unavailable("pubsub unavailable"))
+        Err(XError::unavailable("发布订阅不可用"))
     }
 
     async fn sub_channel(&self, _channel: &str) -> XResult<BoxStream<'static, BusMessage>> {
@@ -137,7 +138,7 @@ struct RejectingEventBus;
 #[async_trait]
 impl EventBus for RejectingEventBus {
     async fn publish(&self, _topic: &str, _payload: Bytes) -> XResult<()> {
-        Err(XError::unavailable("event bus unavailable"))
+        Err(XError::unavailable("事件总线不可用"))
     }
 
     async fn subscribe(&self, _topic: &str) -> XResult<BoxStream<'static, BusMessage>> {
@@ -148,12 +149,12 @@ impl EventBus for RejectingEventBus {
 #[tokio::test]
 async fn event_bus_suite_rejects_publish_error_without_delivery_claims() {
     let fixture = FixtureNamespace::new("ctk_event_bus_broken").expect("valid fixture");
-    let failure = assert_event_bus(&RejectingEventBus, &fixture)
+    let failure = assert_event_bus_with_fixture(&RejectingEventBus, &fixture)
         .await
         .expect_err("broken implementation must fail");
 
     assert_eq!(failure.contract, "EventBus");
-    assert_eq!(failure.case, "publish");
+    assert_eq!(failure.case, "surface_publish");
 }
 
 struct DroppingKeyValueStore;
@@ -172,7 +173,7 @@ impl contracts::KeyValueStore for DroppingKeyValueStore {
 #[tokio::test]
 async fn key_value_suite_rejects_dropped_set() {
     let fixture = FixtureNamespace::new("ctk_key_value_broken").expect("valid fixture");
-    let failure = contract_testkit::assert_key_value_store(&DroppingKeyValueStore, &fixture)
+    let failure = assert_key_value_store_isolated(&DroppingKeyValueStore, &fixture)
         .await
         .expect_err("broken implementation must fail");
 
