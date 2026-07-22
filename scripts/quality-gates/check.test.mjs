@@ -79,6 +79,7 @@ ok(src.includes("const run ="), "run function declared");
 ok(src.includes("CLAUDE.md 存在"), "checks for CLAUDE.md");
 ok(src.includes("AGENTS.md 存在"), "checks for AGENTS.md");
 ok(src.includes("Beads"), "checks for Beads");
+ok(src.includes("check-test-support-graph.mjs"), "checks test-support production graph");
 ok(src.includes("git rev-parse"), "git branch detection present");
 ok(src.includes("process.exit(0)"), "success exit present");
 ok(src.includes("process.exit(1)"), "failure exit present");

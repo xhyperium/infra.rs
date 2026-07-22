@@ -39,6 +39,8 @@ const DEFAULT_PACKAGES = [
   "decimalx",
   "canonical",
   "contracts",
+  "schedulex",
+  "contract-testkit",
 ];
 
 const args = process.argv.slice(2);
