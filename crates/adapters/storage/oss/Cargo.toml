@@ -22,7 +22,9 @@ contracts = { path = "../../../contracts", version = "0.1.0" }
 hmac = "0.12"
 kernel = { path = "../../../kernel", version = "0.3.0" }
 reqwest = { workspace = true }
-resiliencx = { path = "../../../resiliencx", version = "0.1.0", features = ["tokio"] }
+resiliencx = { path = "../../../resiliencx", version = "0.1.0", features = [
+  "tokio",
+] }
 sha1 = "0.10"
 thiserror = { workspace = true }
 tokio = { workspace = true }

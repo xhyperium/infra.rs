@@ -7,7 +7,7 @@
 | 实现 | `crates/adapters/storage/kafka` |
 | 审计日期 | 2026-07-22 |
 | version | `0.3.1` |
-| 结论 | **生产 EventBus + 应用层 ALO/offset/EOS 已落地**；**未**宣称 package stable |
+| 结论 | **生产 EventBus + 应用层 at-least-once/offset/EOS 已落地**；**未**宣称 package stable |
 
 ## 结论摘要
 
@@ -17,10 +17,10 @@
 | offset commit | `OffsetCommitStore` + `MemoryOffsetStore` / `FileOffsetStore` |
 | at-least-once | `AtLeastOnceConsumer` / `KafkaAtLeastOnceBus`（显式 ack） |
 | EOS | `EosCoordinator` / `EosSession`（**应用级**；rskafka 无 transactional producer） |
-| contracts | `EventBus`（默认 AMO；ALO 另面） |
+| contracts | `EventBus`（默认 AMO；at-least-once 另面） |
 | 环境变量 | `FOUNDATIONX_KAFKAX_{BROKERS,SASL_MECHANISM,SASL_USERNAME,SASL_PASSWORD,TLS}` |
 | live | `tests/live_event_bus.rs`（`#[ignore]`） |
-| 原 OBJECTIVE DEFER | **PASS**（offset commit / ALO / 应用级 EOS） |
+| 原 OBJECTIVE DEFER | **PASS**（offset commit / at-least-once / 应用级 EOS） |
 | 仍 OPEN（非 OBJECTIVE） | schema registry / group coordinator 强依赖路径 / broker 事务 |
 
 ## 对齐矩阵
@@ -36,7 +36,7 @@
 | KAFKAX-7–8 | docs / SSOT | PASS | — |
 | KAFKAX-9 | package stable | OPEN | 禁止宣称 |
 | KAFKAX-10 | offset commit | PASS | `src/offset.rs` |
-| KAFKAX-11 | at-least-once | PASS | `src/alo.rs` |
+| KAFKAX-11 | at-least-once | PASS | `src/at_least_once.rs` |
 | KAFKAX-12 | 应用级 EOS | PASS | `src/eos.rs` |
 
 ## 诚实边界

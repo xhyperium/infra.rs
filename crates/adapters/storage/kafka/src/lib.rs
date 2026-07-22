@@ -26,7 +26,7 @@
 
 #![forbid(unsafe_code)]
 
-mod alo;
+mod at_least_once;
 mod bus;
 mod config;
 mod consumer;
@@ -37,7 +37,7 @@ mod offset;
 mod pool;
 mod producer;
 
-pub use alo::{AtLeastOnceConsumer, KafkaAtLeastOnceBus, resolve_start_offset};
+pub use at_least_once::{AtLeastOnceConsumer, KafkaAtLeastOnceBus, resolve_start_offset};
 pub use bus::KafkaEventBus;
 pub use config::{DEFAULT_BROKERS, DEFAULT_SASL_MECHANISM, KafkaConfig};
 pub use consumer::{ConsumerConfig, KafkaConsumer};

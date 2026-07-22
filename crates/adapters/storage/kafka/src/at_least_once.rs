@@ -34,7 +34,7 @@ impl AtLeastOnceConsumer {
         store: Arc<dyn OffsetCommitStore>,
     ) -> XResult<Self> {
         if cfg.topic.trim().is_empty() {
-            return Err(XError::invalid("kafkax: ALO topic 不能为空"));
+            return Err(XError::invalid("kafkax: at-least-once topic 不能为空"));
         }
         let topic = cfg.topic.clone();
         let partition = cfg.partition;
@@ -97,8 +97,10 @@ impl AtLeastOnceConsumer {
 
     /// 确认 pending 消息：写入 store（next = offset+1）并清除 pending。
     pub async fn ack(&mut self) -> XResult<()> {
-        let msg =
-            self.pending.take().ok_or_else(|| XError::conflict("kafkax ALO: 无 pending 可 ack"))?;
+        let msg = self
+            .pending
+            .take()
+            .ok_or_else(|| XError::conflict("kafkax at-least-once: 无 pending 可 ack"))?;
         self.store.commit(&msg.topic, msg.partition, msg.offset).await
     }
 
@@ -124,7 +126,7 @@ impl AtLeastOnceConsumer {
     }
 }
 
-/// 持有 pool + store 的 ALO 入口（便于构造多个消费者）。
+/// 持有 pool + store 的 at-least-once 入口（便于构造多个消费者）。
 #[derive(Clone)]
 pub struct KafkaAtLeastOnceBus {
     pool: KafkaPool,
@@ -144,7 +146,7 @@ impl KafkaAtLeastOnceBus {
         &self.pool
     }
 
-    /// 打开 ALO 消费者。
+    /// 打开 at-least-once 消费者。
     pub async fn consumer(&self, cfg: ConsumerConfig) -> XResult<AtLeastOnceConsumer> {
         AtLeastOnceConsumer::connect(self.pool.clone(), cfg, Arc::clone(&self.store)).await
     }
@@ -206,7 +208,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn alo_pending_gate_logic() {
+    async fn pending_gate_logic() {
         // 不连 broker：直接构造状态机字段验证
         let store = MemoryOffsetStore::new().shared();
         let msg = KafkaMessage {

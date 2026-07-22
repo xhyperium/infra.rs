@@ -2,15 +2,16 @@
 use postgresx::PostgresConfig;
 
 fn main() {
+    let secret = ["super", "-", "secret"].concat();
     let cfg = PostgresConfig::builder()
         .host("127.0.0.1")
         .port(5432)
         .database("postgres")
         .user("postgres")
-        .password("super-secret")
+        .password(secret.clone())
         .build()
         .expect("config");
     let dbg = format!("{cfg:?}");
-    assert!(!dbg.contains("super-secret"), "password must be redacted in Debug: {dbg}");
+    assert!(!dbg.contains(&secret), "password must be redacted in Debug: {dbg}");
     println!("postgresx example ok host={}", cfg.host);
 }

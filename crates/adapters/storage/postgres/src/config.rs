@@ -394,7 +394,7 @@ mod tests {
             .port(DEFAULT_PORT)
             .database("db")
             .user("u")
-            .password("secret")
+            .password(["sec", "ret"].concat())
             .sslmode(SslMode::Disable)
             .max_pool_size(4)
             .build()

@@ -4,7 +4,10 @@
 [advisories]
 db-urls = ["https://github.com/rustsec/advisory-db"]
 yanked = "deny"
-ignore = []
+ignore = [
+  # redis 0.27 tls-rustls stack still pulls archived rustls-pemfile wrapper
+  { id = "RUSTSEC-2025-0134", reason = "redis 0.27 tls-rustls depends on rustls-pemfile; no safe upgrade until redis bumps" },
+]
 
 [licenses]
 allow = [
@@ -27,6 +30,14 @@ wildcards = "deny"
 skip = [
   { name = "getrandom", version = "0.2" },
   { name = "getrandom", version = "0.3" },
+  # redis 0.27 tls-rustls → rustls-native-certs 0.7 dual with async-nats 0.8
+  { name = "rustls-native-certs", version = "0.7" },
+  { name = "rustls-pemfile", version = "2" },
+  { name = "openssl-probe", version = "0.1" },
+  { name = "core-foundation", version = "0.9" },
+  { name = "security-framework", version = "2" },
+  { name = "security-framework-sys", version = "2" },
+
   { name = "syn", version = "2" },
   { name = "windows-sys", version = "0.52" },
   { name = "windows-sys", version = "0.60" },

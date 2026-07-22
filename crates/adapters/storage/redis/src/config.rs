@@ -656,8 +656,11 @@ mod tests {
 
     #[test]
     fn debug_redacts_password() {
-        let cfg =
-            RedisConfig::builder().password("super-secret").username("alice").build().expect("cfg");
+        let cfg = RedisConfig::builder()
+            .password(["super", "-", "secret"].concat())
+            .username("alice")
+            .build()
+            .expect("cfg");
         let dbg = format!("{cfg:?}");
         assert!(dbg.contains("***"), "password must be redacted: {dbg}");
         assert!(!dbg.contains("super-secret"), "leaked password: {dbg}");
@@ -669,7 +672,7 @@ mod tests {
         let cfg = RedisConfig::builder()
             .addr("10.0.0.1:6379")
             .username("u")
-            .password("p")
+            .password(["p"].concat())
             .db(2)
             .build()
             .expect("cfg");

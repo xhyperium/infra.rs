@@ -4,7 +4,7 @@
 |--------|--------------|---------|------------------|------------------------|
 | redisx | Pool+KV+timeout+live | production RedisPool + Cluster/Sentinel/TLS/resiliencx | **done** DEFER closed | Streams full |
 | postgresx | Pool+query+tx | production PostgresPool + PgRepository + SSL require + resiliencx | **done** DEFER closed | COPY/migrations |
-| kafkax | Producer+EventBus | production KafkaPool + ALO + offset + 应用级 EOS | **done** DEFER closed | schema registry / broker tx |
+| kafkax | Producer+EventBus | production KafkaPool + at-least-once + offset + 应用级 EOS | **done** DEFER closed | schema registry / broker tx |
 | natsx | Core EventBus | production NatsPool + JetStream + TLS policy | **done** DEFER closed | NKey / JS KV full |
 | ossx | ObjectStore | production OssClient + multipart + retry | **done** DEFER closed | lifecycle/STS |
 | clickhousex | Analytics | production HTTP + insert_batch + 有界池 | **done** DEFER closed | native/cluster |

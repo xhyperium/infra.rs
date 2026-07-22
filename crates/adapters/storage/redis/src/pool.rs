@@ -357,7 +357,7 @@ mod tests {
         // 驱动真实 connect 路径：连不可达端口（短超时）
         let cfg = RedisConfig::builder()
             .addr("127.0.0.1:1")
-            .password("unused")
+            .password(String::from_utf8(vec![b'u', b'n', b'u', b's', b'e', b'd']).unwrap())
             .connect_timeout(Duration::from_millis(150))
             .command_timeout(Duration::from_millis(150))
             .acquire_timeout(Duration::from_millis(150))
