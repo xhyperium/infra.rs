@@ -21,9 +21,13 @@ futures-util = { workspace = true }
 canonical = { path = "../../../types/canonical", version = "0.1.0" }
 contracts = { path = "../../../contracts", version = "0.1.0" }
 decimalx = { path = "../../../types/decimal", version = "0.1.0" }
+hex = { workspace = true }
+hmac = "0.12"
 kernel = { path = "../../../kernel", version = "0.3.0" }
-transportx = { path = "../../../transport", version = "0.1.0" }
 serde_json = { workspace = true }
+serde = { workspace = true }
+sha2 = { workspace = true }
+transportx = { path = "../../../transport", version = "0.1.0" }
 
 [dev-dependencies]
 tokio = { workspace = true }
