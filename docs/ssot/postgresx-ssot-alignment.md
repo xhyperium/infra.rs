@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/adapters/storage/postgres/` |
 | 实现 | `crates/adapters/storage/postgres` |
 | 审计日期 | 2026-07-22 |
-| version | `0.3.1` |
+| version | `0.3.2` |
 | 结论 | **生产默认池/Tx/Repository/TLS/resiliencx 已落地**；**未**宣称 package stable |
 
 ## 结论摘要

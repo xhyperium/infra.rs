@@ -29,8 +29,8 @@
 | `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **0.3.1** offset/at-least-once/应用级 EOS + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.1** JetStream + TLS 策略 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `ossx` | `crates/adapters/storage/oss/` | `ossx` | **0.3.1** ObjectStore + multipart + retry + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **0.3.1** Pool/Tx + PgRepository + SSL require + resiliencx + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `redisx` | `crates/adapters/storage/redis/` | `redisx` | **0.3.1** Cluster/Sentinel/TLS + resiliencx + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **0.3.2** Pool/Tx + PgRepository + SSL require + resiliencx + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `redisx` | `crates/adapters/storage/redis/` | `redisx` | **0.3.2** Cluster/Sentinel/TLS + resiliencx + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `taosx` | `crates/adapters/storage/taos/` | `taosx` | **0.3.1** batch write + Native WS 探测 + 有界池 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `goalctl` | `tools/goalctl/` | `goalctl` | 最小 Goal→Contract CLI（doctor/validate/compile）· #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | `verifyctl` | `tools/verifyctl/` | `verifyctl` | 最小 plan/execute/report CLI · #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
@@ -78,7 +78,7 @@
 | resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
 | observex | `.agents/ssot/observex/` | `crates/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
 | infra 其余域 | `.agents/ssot/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
-| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **storage×7 OBJECTIVE DEFER 闭合（`0.3.1`）** + **exchange 生产默认 REST+WS** + live/bench；**非** package stable / crates.io |
+| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **storage×7 OBJECTIVE DEFER 闭合（`0.3.1`/`0.3.2`）** + **exchange 生产默认 REST+WS** + live/bench；**非** package stable / crates.io |
 | （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Venue 业务 live **DEFER** |
 | transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
 | tools | `.agents/ssot/tools/` | `crates/evidence` + `tools/goalctl` + `tools/verifyctl` | evidence + **goalctl/verifyctl 最小生产 CLI 已 member**（#188）；live env 构建器 #191；xtask **未**落地 |
