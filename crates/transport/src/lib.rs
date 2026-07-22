@@ -182,11 +182,17 @@ pub fn is_sensitive_header_name(name: &str) -> bool {
             | "set-cookie"
             | "x-api-key"
             | "x-auth-token"
+            // OKX v5 鉴权头（勿把 passphrase/key 打进 Debug）
+            | "ok-access-key"
+            | "ok-access-sign"
+            | "ok-access-timestamp"
+            | "ok-access-passphrase"
     ) || n.contains("token")
         || n.contains("secret")
         || n.contains("password")
         || n.contains("api-key")
         || n.contains("apikey")
+        || n.contains("passphrase")
 }
 
 /// Typed HTTP driver boundary.

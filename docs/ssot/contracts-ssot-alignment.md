@@ -19,8 +19,10 @@
 | first-batch 语义文档 + 套件 | **部分闭合**（CT-8） |
 | VenueAdapter override 门禁 | **部分闭合**（CT-10） |
 | Tx/Bus/Repo/Venue **live helpers** | **PASS**：`src/live.rs` · `LiveContractProfile` + `LiveHandles` + kv/bus/tx helpers |
-| 交易所 **业务** live（签名/下单） | **NO-GO**（adapters exchange 仍 scaffold） |
+| 交易所 **业务** live（签名/下单） | **NO-GO 默认 CI**（exchange **生产默认 REST+WS 离线** #210+#214；live 仅 `#[ignore]` server_time） |
 | bootstrap 双平面 | **已收敛**：`Bounded*` + Instrumentation re-export |
+
+替换 `#43`/`#46`/`#53` 的 `xhyper-contracts` 草图。消费者：`observex` 实现 `Instrumentation`；`resiliencx` 消费；adapters storage 生产客户端 + **exchange binancex/okxx 生产默认 VenueAdapter**（#210+#214）为实现面（非 package stable）。
 
 ## 本仓可观察事实
 

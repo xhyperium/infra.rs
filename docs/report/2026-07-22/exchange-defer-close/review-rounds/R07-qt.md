@@ -1,6 +1,4 @@
-# R7 QT 场景
+# R7 QT
 
-- place → Open ack；error code → Invalid
-- cancel → ok；query filled/canceled 映射
-- WS fixture → 非空 Tick/Trade/Book
-- no-key → Open mock not Filled
+- PASS：place/cancel/query/error/WS（binance 三流；okx tick+trades+books 流测）
+- fixed 本轮：okx trades/book adapter fixture；place sCode≠0

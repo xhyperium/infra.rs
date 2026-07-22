@@ -30,7 +30,7 @@
 | **连接/客户端池** | **PASS** | `src/pool.rs` · `HttpClientPool` / `PoolConfig` |
 | **代理配置** | **PASS** | `src/proxy.rs` · `ProxyConfig` / `build_reqwest_proxy` |
 | 完整生产 TLS 合规矩阵 / mTLS 产品 | **OPEN** | 声明层配置 ≠ 企业 PKI 产品 |
-| exchange 业务协议 | **NO-GO**（adapters） | 仅 transport 边界 |
+| exchange 业务协议 | **adapters 生产默认 REST+WS**（#210+#214） | transport 仅边界；业务在 binancex/okxx |
 
 ## OBJECTIVE 处置（2026-07-22 defer-close）
 
@@ -39,6 +39,15 @@
 | TLS 矩阵 | DEFER | **PASS（配置面）** | `crates/transport/src/tls.rs` |
 | 池 | DEFER | **PASS** | `crates/transport/src/pool.rs` |
 | 代理 | DEFER | **PASS** | `crates/transport/src/proxy.rs` |
+| 敏感头 Debug | 部分 | **PASS（含 OKX）** | `is_sensitive_header_name` 含 `OK-ACCESS-*` / passphrase（0.1.1） |
+| exchange 适配器验收 | scaffold | **PASS（生产默认）** | `cargo test -p binancex -p okxx --all-targets`；live `server_time` ignore |
+
+## §6 测试与验收（摘要）
+
+| ID | 要求 | 状态 | 证据 |
+|----|------|------|------|
+| 6.cmd.binance/okx | adapter 验收命令 | **PASS（生产默认）** | 签名/协议/WS + 4xx/`sCode`；全量私有流/OCO **DEFER** |
+| 6.cmd.local | test/clippy/fmt | **PASS** | 本仓质量门禁 |
 
 ## 本目标 FAIL 计数
 

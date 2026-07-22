@@ -1,6 +1,5 @@
 # R6 安全
 
-- secret 不进 Debug / query string 明文（仅 signature）
-- OKX passphrase 在头（协议要求）
-- 无硬编码生产密钥
-- residual: passphrase 头可观测 — 协议必需，记 DEFER 文档化
+- PASS：secret Debug 脱敏；不进 URL
+- fixed 本轮：transport 脱敏 OK-ACCESS-* / passphrase（HttpRequest Debug）
+- DEFER：pub 字段可被直接读（调用方责任）
