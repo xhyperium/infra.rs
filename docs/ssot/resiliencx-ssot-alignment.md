@@ -6,6 +6,7 @@
 | Active SSOT | `.agents/ssot/resiliencx/spec/spec.md` |
 | 用户路径别名 | `.agent/ssot/resiliencx` → `.agents/ssot/resiliencx` |
 | 实现 | `crates/resiliencx` · package `resiliencx` |
+| 当前版本 | 0.1.1（L1 重试 + 熔断 + 限流；budget PASS）|
 
 ## 结论
 
@@ -22,6 +23,17 @@
 | adapter 接线（redis/pg） | **PASS** | 生产入口：`RedisClient::get/set` + `PostgresPool::execute/query*` 可选 `with_retry_budget`；显式 `*_with_budget` 始终经 `with_budget_async`；helpers 在 `resilience.rs` |
 | 全 9 adapters 统一接线 / package stable | **OPEN** | 本轮关闭 redis+pg 最小 wire；其余 adapter 按需跟进 |
 | Agent L5 | **未填** | — |
+
+## 诚实边界（非目标）
+
+| 领域 | 说明 |
+|------|------|
+| 弹性范围 | L1 最小弹性面（重试 / 熔断 / 限流 / 舱壁）；不宣称完整弹性平台 |
+| 熔断策略 | 本地无墙钟判定；不提供分布式熔断 / 跨进程协调 |
+| 限流 | 令牌桶无自动补充（仅显式 `refill`）；不提供动态速率调整 |
+| 舱壁（bulkhead） | 仅并发上限 RAII；不提供队列 / 超时舱壁 |
+| Package stability | **未宣称 package stable** |
+| 基础设施层级 | L1 最小；不提供 chaos-engineering / 弹性实验 |
 
 ## OBJECTIVE 处置（2026-07-22 defer-close）
 

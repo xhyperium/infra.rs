@@ -1,6 +1,6 @@
 # binance 交易所适配器规范
 
-> 状态：当前 mock 实现说明，不批准真实交易。权威顺序为 `CONSTITUTION.md` → canonical spec → Approved ADR → 本文 → 代码。
+> 状态：当前 `0.3.2` 生产默认 REST+WS 实现（mock + 签名 REST + WS 行情；`#[ignore]` 真测）。**未宣称 package stable。**权威顺序为 `CONSTITUTION.md` → canonical spec → Approved ADR → 本文 → 代码。
 
 ## 1. 边界、范围与证据
 
@@ -12,7 +12,7 @@
 
 ## 2. 位置、依赖、版本
 
-路径 `crates/adapters/exchange/binance`，版本 `0.1.0`，无 features。依赖：`xlib_standard`、`contracts`、`canonical`、`decimalx`、`async-trait`、`futures-core`、`futures-util`；dev 为 `tokio`。符合 R2.1，当前无需 L1；缺 canonical spec 要求的 `mock` feature。独立版本更新必须恰为 `x.y.z → x.y.(z+1)`。
+路径 `crates/adapters/exchange/binance`（package `binancex`），版本 `0.3.2`，无 features。依赖：`xlib_standard`、`contracts`、`canonical`、`decimalx`、`async-trait`、`futures-core`、`futures-util`；dev 为 `tokio`。符合 R2.1，当前无需 L1；缺 canonical spec 要求的 `mock` feature。独立版本更新必须恰为 `x.y.z → x.y.(z+1)`。
 
 ## 3. 当前 API 与精确行为
 
@@ -27,9 +27,9 @@
 现有 11 个测试覆盖 13 方法的 mock 结果及 trait object。运行：
 
 ```bash
-cargo test -p binance
-cargo check -p binance --all-targets
-cargo clippy -p binance --all-targets -- -D warnings
+cargo test -p binancex
+cargo check -p binancex --all-targets
+cargo clippy -p binancex --all-targets -- -D warnings
 ```
 
 缺失：真实报文 fixture/重放、认证错误、限频重试、断线恢复、订单簿一致性、热路径 benchmark、mock feature。验收要求第 3 节行为、R2.1、测试/clippy 均通过，且不得宣称生产就绪。

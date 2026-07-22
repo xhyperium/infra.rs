@@ -1,5 +1,5 @@
 > **infra.rs 说明**：本文为控制面生产 Goal/Spec，落在 `.agents/ssot/tools/`。  
-> 组件期望路径：`tools/{goalctl,verifyctl}`；**本仓尚未创建对应 crate**。  
+> 组件已落地：`tools/verifyctl`（workspace member，package `verifyctl` 0.1.0）；`tools/goalctl` 同理。  
 > 对齐：[docs/ssot/tools-ssot-alignment.md](../../../../../docs/ssot/tools-ssot-alignment.md)
 
 ---

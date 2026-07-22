@@ -3,8 +3,8 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| SSOT（只读） | `.agents/ssot/bootstrap/spec/spec.md` ≡ `spec/bootstrap-complete-spec.md`（`cmp` 同构） |
-| 实现路径 | `crates/bootstrap`（package `bootstrap` / lib `bootstrap`） |
+| SSOT（只读） | `.agents/ssot/bootstrap/spec/spec.md` ≡ `spec/xhyper-bootstrap-complete-spec.md`（`cmp` 同构） |
+| 实现路径 | `crates/bootstrap`（package `bootstrap` / lib `bootstrap`）· **v0.3.1** |
 | 权威 | 本文件描述 **本仓** 落地状态；**不**编辑 `.agents/ssot/**` 镜像 |
 | 上游参考 | `xhyper.rs/crates/infra/bootstrap`（可移植源，非本仓 member） |
 | OBJECTIVE | StoreSet + AsyncDrain **PASS**；**≠** 交易栈全量装配 / Agent L5 |
@@ -31,8 +31,8 @@
 
 | SSOT 依赖 | 本仓 | 判定 |
 |-----------|------|------|
-| `xhyper-kernel`（Shutdown / ErrorKind） | path `crates/kernel` | **PASS** |
-| `xhyper-contracts`（Instrumentation） | path `crates/contracts`；re-export `Instrumentation` | **PASS**（ADR-005 trait 权威） |
+| `kernel`（别名 `xhyper-kernel` 已废弃）（Shutdown / ErrorKind） | path `crates/kernel` | **PASS** |
+| `contracts`（别名 `xhyper-contracts` 已废弃）（Instrumentation） | path `crates/contracts`；re-export `Instrumentation` | **PASS**（ADR-005 trait 权威） |
 | 有界 venue/storage 替面 | `BoundedMarketDataSource` / `BoundedKeyValueStore` / …（**非** contracts 同名 trait） | **PASS**（命名收敛） |
 | `StoreSet` 适配器接线面 | `src/store_set.rs`；`Bootstrap::with_store_set` | **PASS**（类型化注入；禁止动态 register/resolve） |
 | `AsyncDrain` 关停排空 | `src/drain.rs`；`register_drain` / `AppContext::run_drain` | **PASS**（组合根 drain 所有权；LIFO hooks） |
@@ -118,6 +118,7 @@ rg -n 'fn register|fn resolve|pub struct Gate|pub enum Gate' crates/bootstrap/sr
 | 日期 | 说明 |
 |------|------|
 | 2026-07-22 | **defer-close**：StoreSet + AsyncDrain PASS；交易装配仍 NO-GO |
+| 2026-07-22 | 对齐 Cargo 真相：版本 `0.3.1`；明确组合根装配 kernel+contracts+observex+evidence，**非** 完整应用运行时；`xhyper-bootstrap` 仅废弃别名 |
 | 2026-07-21 | 生产就绪：`Bounded*` 有界面命名收敛；与 contracts 权威 trait 区分；PR #98 **合入 main** |
 | 2026-07-21 | infra-s9t.4：`require_evidence` 在 `build`/`build_app` 路径 release panic fail-closed；#168 |
 

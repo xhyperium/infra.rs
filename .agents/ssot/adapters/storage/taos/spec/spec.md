@@ -1,6 +1,6 @@
 # taosx 实现规范
 
-状态：当前 `0.1.0` 实现合同（Mock + rest 默认 + native FFI；真测 `#[ignore]`，未达 M3）
+状态：当前 `0.3.1` 实现合同（Mock + rest 默认 + native FFI；真测 `#[ignore]`，未达 M3）。**未宣称 package stable。**
 
 ## 0. 权威、职责与非目标
 
@@ -12,7 +12,7 @@
 
 ## 1. Cargo、版本与当前 API
 
-版本 `0.1.0`。
+版本 `0.3.1`（package `taosx`）。
 
 | 项目 | 当前事实 |
 | --- | --- |
