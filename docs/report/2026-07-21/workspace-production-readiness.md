@@ -182,6 +182,33 @@ bootstrap → postgresx → resiliencx
 
 6 个 crate 即可在量化交易场景中建立基础持久化 + 重试 + 类型系统。
 
-## 6. 结论
+
+## 7. 依赖链分析（第二遍审计）
+
+**关键发现：12 个 crate 为生产孤儿**——无任何其他 crate 消费它们。
+
+```
+孤儿 crate (无消费方):
+  bootstrap, clickhousex, configx, kafkax, natsx, ossx,
+  postgresx, redisx, resiliencx, schedulex, taosx
+
+已连线 crate (有消费):
+  kernel ← 所有 crate (L0 信任根)
+  contracts ← 14/21 crates (trait 定义)
+  canonical ← 5 crates (wire DTOs)
+  decimalx ← 4 crates (numeric types)
+  testkit ← 仅 dev-dep
+  observex ← bootstrap (ADR-005 注入)
+  evidence ← bootstrap
+```
+
+**影响：** bootstrap 组合根仅依赖 kernel + contracts + observex + evidence。
+所有 storage 和 exchange adapter 均为独立构建和测试，但从未接入实际应用。
+这意味着即使 adapter 达到生产就绪，仍无法在 bootstrap 层被使用，除非完成 bounded trait wiring。
+
+**依赖深度：** 所有 crate 距离 kernel 均为 1 跳——扁平的层次结构，无深层嵌套链。
+这是良好设计的标志，但孤儿问题抵消了其优势。
+
+## 8. 结论
 
 21 个 crate 中 6 个生产就绪，5 个接近就绪，10 个需要补齐。L0 信任根（kernel + testkit）和 types 层（canonical + decimalx）是最成熟的区域。L1 核心服务差距显著——configx/schedulex/evidence/observex/transport 均无法满足量化交易生产需求。Exchange adapter 从 scaffold 到 production 的差距最大。Storage adapter 分为两个梯队：postgresx 就绪，redisx/kafkax/natsx 接近就绪，taosx/ossx/clickhousex 需要 mock + pool。
