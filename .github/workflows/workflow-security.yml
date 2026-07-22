@@ -1,7 +1,7 @@
 name: Workflow Security
 
 on:
-  # 必填 status check「Workflow Security / 审计工作流安全基线」：
+  # 必填 status check 名是 job name「审计工作流安全基线」（非「Workflow Security / …」前缀）。
   # 不得仅限 paths: .github/workflows/**，否则纯 docs/code PR 永不上报该 check，
   # ruleset 会永久 BLOCK（mergeable_state=blocked）。
   pull_request:
