@@ -88,7 +88,7 @@ node scripts/sre/secrets-migrate-all.mjs --source tables --env dev --live
 
 1. Constitution Check
 2. Template Validation
-3. Workflow Security / 审计工作流安全基线
+3. 审计工作流安全基线
 
 ### Credential Complexity Baseline
 
