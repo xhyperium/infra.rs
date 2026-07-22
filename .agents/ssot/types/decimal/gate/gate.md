@@ -1,6 +1,6 @@
 # decimalx 交付门禁
 
-> **状态**：Active gate definition · focused fmt/test/doc/clippy/API/专项门禁已通过；最终全仓门禁与独立终审待执行
+> **状态**：Active gate definition · R3 内容候选 `387a1dc` 的全仓/专项门禁已通过；独立终审待闭合
 >
 > 本文件定义通过条件，不替代独立 reviewer 的裁决。
 

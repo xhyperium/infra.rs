@@ -2,9 +2,9 @@
 
 | 字段 | 值 |
 |---|---|
-| 输入 HEAD | `cc932231afafc4feff44965fe3d97facf19538cf`（R2 evidence） |
-| 内容候选 | 待固定提交 SHA |
-| 当前状态 | **VERIFYING** |
+| 输入 HEAD | `cc93223161880fbeb41fe770e7785a89f8dadf72`（R2 evidence） |
+| 内容候选 | `387a1dc550341767a24a1548dd9ae47b2c8b84ee` |
+| 当前状态 | **GATES PASS / INDEPENDENT REVIEW PENDING** |
 | 轮次目标 | 当前权威、历史战役、Cargo package 真相与生成状态一致 |
 
 ## 基线 RED
@@ -26,4 +26,4 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
 3. 仅用证据/裁决提交形成 SHA B，并独立复核 `A..B` 为 evidence-only；
 4. 独立 reviewer 审查 `origin/main...B` 全量差异并给出 GO。
 
-在上述条件全部满足前，本轮不写 GO，也不把 R1/R2 PASS 继承给最终候选。
+内容候选上的机器门禁已闭合；独立 review 与 evidence-only diff 复核完成前，本轮仍不写 GO，也不把 R1/R2 PASS 继承给最终候选。GREEN 命令和结果见 [`evidence/r3-green.txt`](evidence/r3-green.txt)。

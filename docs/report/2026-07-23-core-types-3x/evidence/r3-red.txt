@@ -1,6 +1,6 @@
 R3 基线失败证据
 日期：2026-07-23 Asia/Shanghai
-输入 HEAD：cc932231afafc4feff44965fe3d97facf19538cf
+输入 HEAD：cc93223161880fbeb41fe770e7785a89f8dadf72
 
 执行命令：
   cargo build --workspace &&
