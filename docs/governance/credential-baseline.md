@@ -32,6 +32,47 @@ python3 -c "import secrets; print(secrets.token_hex(16))"
 `extract_all_secrets.sh` 在 dry-run 时自动验证所��凭据是否符合��杂度要求。
 不符合要求的凭据将标记并列出。
 
+### 快速使用
+
+```bash
+# 运行完整审计（范围 + 复杂度 + 强度报告）
+scripts/sre/extract_all_secrets.sh dev
+
+# dev + prod 环境
+scripts/sre/extract_all_secrets.sh all
+```
+
+### 输出示例
+
+```
+=== dev.md Scope Check ===
+  PASSWORD/TOKEN entries: 57
+  ✅ No DATABASE/USER in scope
+
+=== dev.md Complexity Check ===
+
+  -------------------------------------------------
+  Strength Report
+  -------------------------------------------------
+  Total checked:     57
+  Pass:              36 (63.2%)
+  Fail:              21 (36.8%)
+  | By Category
+  |-- Length < 24:    21 (36.8%)
+  |-- Token/API Key:  0 (0.0%) [exempt]
+
+  Overall rating: WARNING (63.2% pass rate)
+```
+
+### 评级阈值
+
+| Rating | Pass Rate | Meaning |
+|--------|:--------:|---------|
+| HEALTHY | > 75% | Most passwords compliant |
+| WARNING | 50-75% | Multiple passwords need rotation |
+| IMPROVING | > 0% | Fixes in progress |
+| CRITICAL | < 50% | Immediate attention required |
+
 ### 检查项
 
 | 检查 | 规则 | 触发条件 |
