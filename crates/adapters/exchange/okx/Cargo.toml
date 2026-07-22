@@ -15,7 +15,7 @@ live-test = []
 
 [dependencies]
 async-trait = { workspace = true }
-base64 = "0.22"
+base64 = { workspace = true }
 bytes = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
@@ -23,7 +23,7 @@ canonical = { path = "../../../types/canonical", version = "0.1.1" }
 contracts = { path = "../../../contracts", version = "0.1.1" }
 decimalx = { path = "../../../types/decimal", version = "0.1.1" }
 hex = { workspace = true }
-hmac = "0.12"
+hmac = { workspace = true }
 kernel = { path = "../../../kernel", version = "0.3.0" }
 serde_json = { workspace = true }
 serde = { workspace = true }

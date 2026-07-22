@@ -20,11 +20,7 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 # 捕获 tracing 事件字段（测试合同）
-tracing-subscriber = { version = "0.3", default-features = false, features = [
-  "std",
-  "fmt",
-  "registry",
-] }
+tracing-subscriber = { workspace = true }
 
 [features]
 default = []
