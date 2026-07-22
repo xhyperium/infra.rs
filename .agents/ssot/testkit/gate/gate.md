@@ -6,7 +6,7 @@
 | Design | [design/design.md](../design/design.md) |
 | Test | [test/test.md](../test/test.md) |
 | 当前 package 版本 | `0.1.3` |
-| 当前裁定 | **REVIEW PENDING — PR #258 coverage 修复待固定候选** |
+| 当前裁定 | **REVIEW PENDING — `55b8997` GATES PASS** |
 
 前一证据候选 `c27b7ce` 的终门禁发现 `thiserror`、panic 首错停止、公开方法测试与并发重叠缺口；
 该候选已经失效。最终状态校正候选 `c4604ce` 的全量机器门禁与 `fff07ea` 独立终审曾通过；
@@ -16,15 +16,15 @@ PR #258 随后发现 testkit 100% 行覆盖门禁缺口，旧 GO 按 failure con
 
 | Gate | 当前状态 | GO 条件 |
 |---|---|---|
-| G-01 SSOT 一致 | `c4604ce` PASS / REVIEW GO | spec/design/test/gate/matrix/AGENTS 使用 `testkit`、`0.1.3` 当前事实与同一边界；旧战役文档显式标为历史 |
-| G-02 ManualClock 合同 | `c4604ce` PASS / REVIEW GO | 单 Mutex、checked、fault、snapshot、poison、独立 domain 全部有新鲜测试 |
-| G-03 Runner typed API | `c4604ce` PASS / REVIEW GO | 导出 `HarnessReport`、`HarnessRunError`、四态 `StepOutcome`；`StepRecord` 字段私有且 getter 完整 |
-| G-04 Runner fail-closed | `c4604ce` PASS / REVIEW GO | `step(self)->Self`、`run(self)` 编译期排除重跑/运行后追加；clock fault/panic 返回 terminal error；首错停止 |
-| G-05 无 sentinel | `c4604ce` PASS / REVIEW GO | 所有 runner/clock 错误路径均不使用 epoch 0、空串或布尔成功掩盖失败 |
-| G-06 图隔离 | `c4604ce` PASS / REVIEW GO | 仅 dev-dependency 消费；normal production dependents 为零 |
-| G-07 外部边界 | `c4604ce` PASS / REVIEW GO | crate 无网络/进程/I/O/真实时间；external harness 仍在 tools/CI OOS |
-| G-08 质量门禁 | `c4604ce` PASS / REVIEW GO | fmt/clippy/test/API surface/相关质量门禁在固定候选上新鲜通过 |
-| G-09 版本同步 | `c4604ce` PASS / REVIEW GO | 行为变化交付执行 PATCH bump，并同步 Cargo/lock/消费者/CHANGELOG/对齐文/SSOT |
+| G-01 SSOT 一致 | `55b8997` PASS / REVIEW PENDING | spec/design/test/gate/matrix/AGENTS 使用 `testkit`、`0.1.3` 当前事实与同一边界；旧战役文档显式标为历史 |
+| G-02 ManualClock 合同 | `55b8997` PASS / REVIEW PENDING | 单 Mutex、checked、fault、snapshot、poison、独立 domain 全部有新鲜测试 |
+| G-03 Runner typed API | `55b8997` PASS / REVIEW PENDING | 导出 `HarnessReport`、`HarnessRunError`、四态 `StepOutcome`；`StepRecord` 字段私有且 getter 完整 |
+| G-04 Runner fail-closed | `55b8997` PASS / REVIEW PENDING | `step(self)->Self`、`run(self)` 编译期排除重跑/运行后追加；clock fault/panic 返回 terminal error；首错停止 |
+| G-05 无 sentinel | `55b8997` PASS / REVIEW PENDING | 所有 runner/clock 错误路径均不使用 epoch 0、空串或布尔成功掩盖失败 |
+| G-06 图隔离 | `55b8997` PASS / REVIEW PENDING | 仅 dev-dependency 消费；normal production dependents 为零 |
+| G-07 外部边界 | `55b8997` PASS / REVIEW PENDING | crate 无网络/进程/I/O/真实时间；external harness 仍在 tools/CI OOS |
+| G-08 质量门禁 | `55b8997` PASS / REVIEW PENDING | fmt/clippy/test/API surface/相关质量门禁在固定候选上新鲜通过 |
+| G-09 版本同步 | `55b8997` PASS / REVIEW PENDING | 行为变化交付执行 PATCH bump，并同步 Cargo/lock/消费者/CHANGELOG/对齐文/SSOT |
 
 ## 2. Residual
 

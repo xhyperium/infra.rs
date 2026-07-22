@@ -5,7 +5,7 @@
 | Active Spec | [SPEC-TESTKIT-002](../spec/spec.md) |
 | package / current version | `testkit` / `0.1.3` |
 | 身份 | T0 测试支持平面；L1 确定性测试原语；非 production runtime |
-| 当前 Gate | **PR #258 coverage 修复 REVIEW PENDING；旧 GO 不继承** |
+| 当前 Gate | **`55b8997` 机器门禁 PASS；独立重审 PENDING；旧 GO 不继承** |
 
 ## 1. 能力矩阵
 
@@ -51,4 +51,4 @@
 - `R-CLK-DOMAIN-EXHAUSTION`：OPEN；保持 process-lifetime 边界，禁止回绕后继续宣称唯一。
 - `R-EXTERNAL-HARNESS`：OOS；不与 crate 内 `IntegrationHarness` 混同。
 - typed runner、`thiserror` 错误、fail-closed/并发/公开方法测试和 PATCH bump：IMPLEMENTED；前一
-  `c27b7ce` 裁决已失效；PR #258 coverage 修复完成机器门禁与独立重审前保持 REVIEW PENDING。
+  `c27b7ce` 裁决已失效；PR #258 coverage 修复候选 `55b8997` 机器门禁 PASS，独立重审前保持 REVIEW PENDING。
