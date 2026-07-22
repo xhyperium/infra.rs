@@ -8,6 +8,17 @@
 - 日志采集：每条命令独立保存 stdout/stderr，记录字节数与 SHA-256；遇到非零立即停止。
 - 安全边界：本轮只使用隔离容器/临时证书，不读取 `dev.md` 或 `prod.md`，日志不含凭据值。
 - 本文件是候选测试后的证据提交，只增加证据，不改变被测 Rust、脚本、配置或 SSOT 行为。
+- 完整日志归档：`storage-round3-raw-gates.tar.gz`，24949 字节，SHA-256
+  `b65ce9926f3f134ebc59cdc0b40422be76d496abeee38eb9e560a06891230973`；归档内含下表 18 个原始日志。
+
+独立复验：
+
+```bash
+sha256sum docs/report/2026-07-23/storage-round3-raw-gates.tar.gz
+verify_dir=$(mktemp -d /tmp/storage-round3-verify.XXXXXX)
+tar -xzf docs/report/2026-07-23/storage-round3-raw-gates.tar.gz -C "$verify_dir"
+sha256sum "$verify_dir"/*.log
+```
 
 ## 完整日志清单
 
