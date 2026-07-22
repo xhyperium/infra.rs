@@ -106,8 +106,6 @@ function parseMdTables(text) {
   // PostgreSQL per-db
   for (const m of text.matchAll(/\|\s*(market_\w+|macro_\w+)\s*\|\s*[\d.]+\s*\|\s*5432\s*\|\s*(\w+)\s*\|\s*`([^`]+)`/g)) {
     entries.push({ prefix: "POSTGRESX", db: m[1], name: "PASSWORD", value: m[3] });
-    entries.push({ prefix: "POSTGRESX", db: m[1], name: "USER", value: m[2] });
-    entries.push({ prefix: "POSTGRESX", db: m[1], name: "DATABASE", value: m[1] });
   }
   // PostgreSQL admin
   const pgAdmin = text.match(/\|\s*PostgreSQL\s*\|\s*[\d.]+\s*\|\s*5432\s*\|\s*postgres\s*\|\s*`([^`]+)`/);
@@ -116,7 +114,6 @@ function parseMdTables(text) {
   // TDengine per-db
   for (const m of text.matchAll(/\|\s*(market_\w+|macro_\w+|macro_coinglass)\s*\|\s*[\d.]+\s*\|\s*6030\s*\/\s*6041\s*\|\s*(\w+)\s*\|\s*`([^`]+)`/g)) {
     entries.push({ prefix: "TAOSX", db: m[1], name: "PASSWORD", value: m[3] });
-    entries.push({ prefix: "TAOSX", db: m[1], name: "USER", value: m[2] });
   }
   // TDengine root
   const tdRoot = text.match(/\|\s*TDengine\s*\|\s*[\d.]+\s*\|\s*6030\s*\/\s*6041\s*\|\s*root\s*\|\s*`([^`]+)`/);
