@@ -1,0 +1,3 @@
+[submodule ".agents/ssot"]
+	path = .agents/ssot
+	url = git@github.com:xhyperium/ssot.git
