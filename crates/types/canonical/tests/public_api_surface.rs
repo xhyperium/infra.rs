@@ -226,23 +226,25 @@ fn exact_wire_inventory_and_time_boundaries_are_exhaustive() {
 fn envelope_negative_paths_remain_explicit_and_fail_closed() {
     type AckEnvelope = Envelope<OrderAck>;
 
-    assert!(serde_json::from_str::<AckEnvelope>(r#"{"schema_version":1}"#).is_err());
-    assert!(serde_json::from_str::<AckEnvelope>(
-        r#"{"schema_version":1,"schema_version":1,"payload":{"id":"x","status":"Open","ts":1}}"#,
-    )
-    .is_err());
-    assert!(
-        serde_json::from_str::<AckEnvelope>(
+    for (json, expected_fragment) in [
+        (r#"{"schema_version":1}"#, "missing field `payload`"),
+        (
+            r#"{"schema_version":1,"schema_version":1,"payload":{"id":"x","status":"Open","ts":1}}"#,
+            "duplicate field `schema_version`",
+        ),
+        (
             r#"{"schema_version":1,"payload":{"id":"x","status":"Open","ts":1},"extra":true}"#,
-        )
-        .is_err()
-    );
-    assert!(
-        serde_json::from_str::<AckEnvelope>(
-            r#"{"schema_version":-1,"payload":{"id":"x","status":"Open","ts":1}}"#,
-        )
-        .is_err()
-    );
+            "unknown field `extra`",
+        ),
+        (r#"{"schema_version":-1,"payload":{"id":"x","status":"Open","ts":1}}"#, "invalid value"),
+    ] {
+        let error = serde_json::from_str::<AckEnvelope>(json).expect_err("非法 envelope 必须拒绝");
+        assert_eq!(error.classify(), serde_json::error::Category::Data);
+        assert!(
+            error.to_string().contains(expected_fragment),
+            "错误诊断必须包含 {expected_fragment}: {error}"
+        );
+    }
 
     let envelope = Envelope::wrap(2, OrderAck { id: "x".into(), status: OrderStatus::Open, ts: 1 });
     let borrowed = envelope.validate_version(1).expect_err("版本不匹配必须拒绝");

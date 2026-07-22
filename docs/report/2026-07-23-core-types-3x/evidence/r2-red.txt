@@ -2,15 +2,15 @@ R2 失败证据
 日期：2026-07-23 Asia/Shanghai
 输入 HEAD：e0cc99d716638663cd605da749cc1988026528d9
 仅测试补丁：r2-red-tests.patch
-补丁 SHA-256：12a39ea8a3a91fb9cda7e5d571feae18dee367143d21b28160af3b1d5ec7f393
+补丁 SHA-256：3894c03ec1005355244b6d3e3f294d624ded5898aa6205d27d8f3f582b5d7b35
 
 补丁重放：
   git worktree add --detach /tmp/infra-r2-red-replay e0cc99d716638663cd605da749cc1988026528d9
-  git -C /tmp/infra-r2-red-replay apply <绝对路径>/r2-red-tests.patch
+  git -C /tmp/infra-r2-red-replay apply --unidiff-zero <绝对路径>/r2-red-tests.patch
   在 /tmp/infra-r2-red-replay 内执行下列两个 RED 命令
   git worktree remove /tmp/infra-r2-red-replay
 
-已独立执行 `git apply --check`，退出码为 0。
+已独立执行 `git apply --unidiff-zero --check`，退出码为 0。
 
 [kernel 完成优先级]
 命令：cargo test -p kernel --lib wait_timeout_completed_state_precedes_deadline_validation

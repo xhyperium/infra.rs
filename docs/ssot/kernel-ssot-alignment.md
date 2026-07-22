@@ -26,7 +26,7 @@
 | mutants / miri CI | **有** 周调度：`kernel-mutants.yml` / `kernel-miri.yml` |
 | loom CI | **有** PR/push 门禁：`kernel-loom.yml` + `scripts/quality-gates/run-kernel-loom.mjs` |
 | ClockDomain | **R1 PASS**：SystemClock 共享进程 domain；跨 domain 间隔 → `None` |
-| 关停 deadline | **R1 PASS**：不可表示 deadline 返回 `WaitTimeoutError::DeadlineOverflow`，不再伪装普通超时 |
+| 关停 deadline | **R2 PASS**：未触发且不可表示时返回 `DeadlineOverflow`；已触发时完成优先并立即 `Ok(true)` |
 | 用户可见错误中文 | **PASS**：`ClockError` / `LifecycleError` Display 中文 |
 | 公开面集成测 / 示例 / bench | **PASS**：`tests/public_api_surface.rs` · `examples/basic.rs` · `benches/hot_path` |
 

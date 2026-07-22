@@ -12,6 +12,7 @@ node：v24.14.0
   cargo fmt --all -- --check &&
   cargo test -p kernel -p testkit -p decimalx -p canonical --all-targets &&
   cargo test -p kernel -p testkit -p decimalx -p canonical --doc &&
+  cargo test -p decimalx --features panicking-ops &&
   RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release &&
   cargo clippy -p kernel -p testkit -p decimalx -p canonical --all-targets --all-features -- -D warnings &&
   node scripts/quality-gates/check-canonical-align.mjs &&
@@ -19,12 +20,13 @@ node：v24.14.0
   node scripts/quality-gates/check-workspace-deps.mjs &&
   node scripts/quality-gates/check-crate-versions.mjs &&
   node scripts/quality-gates/check-public-api.mjs --require-tool -p kernel -p testkit -p decimalx -p canonical &&
-  git diff --check
+  git diff --check e0cc99d716638663cd605da749cc1988026528d9..<最终候选>
 退出码：0
 
 关键工具输出：
   kernel lib：67 passed
   decimalx boundary_matrix：16 passed
+  decimalx panicking-ops：69 unit tests 及全部集成测试 passed
   testkit lib：22 passed
   testkit manual_clock_concurrency：3 passed
   canonical lib：45 passed
