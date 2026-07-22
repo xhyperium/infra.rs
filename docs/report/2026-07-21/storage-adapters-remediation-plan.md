@@ -1,34 +1,30 @@
-# Storage Adapters — Production Remediation Plan & Effort Estimate
+# 存储适配器 — 生产补救计划与工作量估算
 
-> **Date:** 2026-07-21 | **Based on:** [storage-adapters-production-readiness.md](storage-adapters-production-readiness.md)
-> **Total Gap:** 3 P0 items, 5 P1 items, 5 P2 items | **Estimate:** 10-14 days
+> **日期:** 2026-07-21 | **依据:** [storage-adapters-production-readiness.md](storage-adapters-production-readiness.md)
+> **总差距:** 3 个 P0 项，5 个 P1 项，5 个 P2 项 | **估算:** 10-14 天
 
----
+## 1. 计划总览
 
-## 1. Plan Overview
+| 阶段 | 优先级 | 任务数 | 影响 Crate | 天数 |
+|------|:--------:|-------|:---------------:|:----:|
+| A. Mock | P0 | 3 个 mock | taosx, ossx, clickhousex | 2 |
+| B. 连接池 | P0 | 3 个 pool | taosx, ossx, clickhousex | 2-3 |
+| C. JetStream | P0 | NATS 持久化 | natsx | 1-2 |
+| D. 批量写入 | P0 | Batch insert | clickhousex, taosx | 1-2 |
+| E. 重试集成 | P1 | 7 个断路器 | 全部 7 个 | 2-3 |
+| F. TLS 强制 | P1 | 4 个适配器 SSL 配置 | postgresx, redisx, kafkax, natsx | 1 |
+| G. 错误类型化 | P1 | 3 个适配器类型错误 | taosx, ossx, clickhousex | 1 |
+| H. Repository Trait | P1 | PostgresPool 生产级 impl | postgresx | 1 |
+| I. 打磨 | P2 | 测试、文档、scaffold 清理 | 全部 7 个 | 2-3 |
+| **合计** | | | | **10-14** |
 
-| Phase | Priority | Tasks | Crates Affected | Days |
-|-------|:--------:|-------|:---------------:|:----:|
-| A. Mocks | P0 | 3 mocks | taosx, ossx, clickhousex | 2 |
-| B. Connection Pools | P0 | 3 pools | taosx, ossx, clickhousex | 2-3 |
-| C. JetStream | P0 | NATS persistence | natsx | 1-2 |
-| D. Batch Writes | P0 | Batch insert | clickhousex, taosx | 1-2 |
-| E. Retry Integration | P1 | Circuit breaker × 7 | all 7 | 2-3 |
-| F. TLS Enforcement | P1 | SSL config in 4 adapters | postgresx, redisx, kafkax, natsx | 1 |
-| G. Error Typing | P1 | Type errors in 3 adapters | taosx, ossx, clickhousex | 1 |
-| H. Repository Trait | P1 | Production Repository impl | postgresx | 1 |
-| I. Polish | P2 | Tests, docs, scaffold cleanup | all 7 | 2-3 |
-| **Total** | | | | **10-14** |
+## 2. 详细任务分解
 
----
+### 阶段 A：Mock 实现（P0，2 天）
 
-## 2. Detailed Task Breakdown
+**目标：** 提供内存 mock 以实现离线测试。
 
-### Phase A: Mock Implementations (P0, 2 days)
-
-**Goal:** Provide in-memory mock implementations for offline testing.
-
-#### A.1 MockTaos (taosx) — 0.7 days
+#### A.1 MockTaos（taosx）— 0.7 天
 
 ```rust
 // crates/adapters/storage/taos/src/mock.rs
@@ -36,23 +32,11 @@
 pub struct MockTaosStore {
     tables: Arc<RwLock<HashMap<String, Vec<Tick>>>>,
 }
-
-#[async_trait]
-impl TimeSeriesStore for MockTaosStore {
-    async fn write_series(&self, table: &str, points: Vec<Tick>) -> XResult<()> {
-        self.tables.write().unwrap().entry(table.into()).or_default().extend(points);
-        Ok(())
-    }
-    async fn query_series(&self, table: &str, start: i64, end: i64) -> XResult<Vec<Tick>> {
-        // Filter by time range from in-memory store
-    }
-}
 ```
 
-Files to create: `src/mock.rs` (~150 LOC)
-Feature gate: `#[cfg(feature = "scaffold")]`
+新文件：`src/mock.rs`（~150 LOC），通过 `#[cfg(feature = "scaffold")]` 门控。
 
-#### A.2 MockOss (ossx) — 0.7 days
+#### A.2 MockOss（ossx）— 0.7 天
 
 ```rust
 // crates/adapters/storage/oss/src/mock.rs
@@ -61,9 +45,9 @@ pub struct MockObjectStore {
 }
 ```
 
-Files to create: `src/mock.rs` (~120 LOC)
+新文件：`src/mock.rs`（~120 LOC）。
 
-#### A.3 MockClickHouse (clickhousex) — 0.6 days
+#### A.3 MockClickHouse（clickhousex）— 0.6 天
 
 ```rust
 // crates/adapters/storage/clickhouse/src/mock.rs
@@ -72,52 +56,42 @@ pub struct MockAnalyticsSink {
 }
 ```
 
-Files to create: `src/mock.rs` (~100 LOC)
+新文件：`src/mock.rs`（~100 LOC）。
 
-**Deliverable:** 3 new `mock.rs` files (~370 LOC total), gated behind `scaffold` feature.
+**交付物：** 3 个新 `mock.rs` 文件（~370 LOC），scaffold feature 门控。
 
----
+### 阶段 B：连接池（P0，2-3 天）
 
-### Phase B: Connection Pools (P0, 2-3 days)
+**目标：** 为当前使用单连接的适配器添加连接池。
 
-**Goal:** Add connection pooling to adapters that currently use single connections.
+#### B.1 TaosPool（taosx）— 1 天
 
-#### B.1 TaosPool (taosx) — 1 day
+当前 TaosPool 是直接 REST 客户端。需要添加：
+- 可配置最大连接数的连接池
+- 健康检查（`SELECT 1`）
+- REST 客户端连接复用
 
-Current `TaosPool` is a direct REST client. Need to add:
-- Connection pool with configurable max connections
-- Health check (`SELECT 1`)
-- Connection reuse for REST client
+修改文件：`src/client.rs`、`src/config.rs`（~200 LOC）
 
-Files to modify: `src/client.rs`, `src/config.rs` (~200 LOC)
+#### B.2 OssPool（ossx）— 0.7 天
 
-#### B.2 OssPool (ossx) — 0.7 days
+通过 `reqwest::Client` 池添加 OSS HTTP 连接池。
 
-Add `reqwest::Client` pool for OSS HTTP connections:
-- Connection pooling via `reqwest::Client::builder().pool_max_idle_per_host()`
-- Health check via `HEAD /` on bucket
+修改文件：`src/client.rs`、`src/config.rs`（~120 LOC）
 
-Files to modify: `src/client.rs`, `src/config.rs` (~120 LOC)
+#### B.3 ClickHousePool（clickhousex）— 0.7 天
 
-#### B.3 ClickHousePool (clickhousex) — 0.7 days
+通过 `reqwest::Client` 池添加 ClickHouse HTTP 连接池。
 
-Add `reqwest::Client` pool for ClickHouse HTTP connections:
-- Same pattern as OSS
-- Health check via `SELECT 1`
+修改文件：`src/client.rs`、`src/config.rs`（~100 LOC）
 
-Files to modify: `src/client.rs`, `src/config.rs` (~100 LOC)
+**交付物：** 3 个适配器连接池配置（~420 LOC）。
 
-**Deliverable:** Pool configurations for 3 adapters (~420 LOC).
+### 阶段 C：NATS JetStream（P0，1-2 天）
 
----
+**目标：** 为 natsx 添加 JetStream 持久流支持。
 
-### Phase C: NATS JetStream (P0, 1-2 days)
-
-**Goal:** Add JetStream persistent stream support to natsx.
-
-Current `NatsEventBus` is at-most-once (Core NATS). For quant trading production:
-- In-flight market data and orders must survive service restart
-- JetStream provides at-least-once delivery with persistent storage
+当前 NatsEventBus 是 at-most-once（Core NATS）。量化交易生产需 JetStream 实现持久化。
 
 ```rust
 // crates/adapters/storage/nats/src/jetstream.rs
@@ -126,54 +100,41 @@ pub struct JetStreamBus {
 }
 ```
 
-Files to create: `src/jetstream.rs` (~300 LOC)
-Files to modify: `src/config.rs` (add JetStream config), `src/lib.rs` (feature gate)
+新文件：`src/jetstream.rs`（~300 LOC），feature gate: `jetstream`
 
-Feature gate: `jetstream`
+**交付物：** JetStream consumer/producer（~300 LOC）。
 
-**Deliverable:** JetStream consumer/producer (`~300 LOC`), behind `jetstream` feature.
+### 阶段 D：批量写入（P0，1-2 天）
 
----
+**目标：** 为分析型和时序型适配器增加批量/分块插入。
 
-### Phase D: Batch Writes (P0, 1-2 days)
+#### D.1 clickhousex 批量插入 — 0.5 天
 
-**Goal:** Add batch/chunked insert support for analytics and time-series adapters.
+当前：`sink()` 调用时逐行 `INSERT INTO ... FORMAT JSONEachRow`。
+目标：缓冲累积行并在批次中刷新。
 
-#### D.1 clickhousex batch insert — 0.5 days
+修改文件：`src/client.rs`（~80 LOC）
 
-Current: single-row `INSERT INTO ... FORMAT JSONEachRow` per `sink()` call.
-Target: Buffer accumulated rows and flush in batches.
+#### D.2 taosx 批量插入 — 0.5 天
 
-```rust
-impl ClickHousePool {
-    pub async fn sink_batch(&self, rows: &[Bytes]) -> XResult<()> { ... }
-}
-```
+当前：`write_series()` 调用时逐行 `INSERT INTO ... VALUES (...)`。
+目标：每条 INSERT 语句多行写入。
 
-Files to modify: `src/client.rs` (~80 LOC)
+修改文件：`src/client.rs`（~60 LOC）
 
-#### D.2 taosx batch insert — 0.5 days
+**交付物：** 2 个适配器批量插入方法（~140 LOC）。
 
-Current: single `INSERT INTO ... VALUES (...)` per `write_series()` call.
-Target: Multiple rows per INSERT statement.
+### 阶段 E：重试集成（P1，2-3 天）
 
-Files to modify: `src/client.rs` (~60 LOC)
+**目标：** 集成 `resiliencx` 重试/断路器到全部 7 个适配器。
 
-**Deliverable:** Batch insert methods for 2 adapters (~140 LOC).
-
----
-
-### Phase E: Retry Integration (P1, 2-3 days)
-
-**Goal:** Integrate `resiliencx` retry/circuit-breaking across all 7 adapters.
-
-Each adapter gets a `RetryConfig` with:
-- Max retries: 3
-- Backoff: exponential (1s, 2s, 4s)
-- Circuit breaker: 5 consecutive failures → open for 30s
+每个适配器添加 RetryConfig，配置如下：
+- 最大重试：3
+- 退避：指数型（1s、2s、4s）
+- 断路器：连续 5 次失败 → 打开 30 秒
 
 ```rust
-// Example: postgresx
+// 示例：postgresx
 use resiliencx::RetryPolicy;
 
 impl PostgresPool {
@@ -183,137 +144,119 @@ impl PostgresPool {
 }
 ```
 
-Each adapter: ~60 LOC for retry config + ~20 LOC for pool integration × 7 = ~560 LOC total.
+每个适配器约 60 LOC 重试配置 + 20 LOC 池集成 × 7 = ~560 LOC total。
 
-**Deliverable:** Retry policy classes per adapter (~560 LOC), configurable via `RetryConfigBuilder`.
+**交付物：** 每个适配器一个 RetryPolicy 类（~560 LOC），通过 `RetryConfigBuilder` 可配置。
 
----
+### 阶段 F：TLS 强制（P1，1 天）
 
-### Phase F: TLS Enforcement (P1, 1 day)
+**目标：** 生产部署时增加 SSL/TLS 配置强制。
 
-**Goal:** Add SSL/TLS config enforcement for production deployments.
-
-| Adapter | Current | Target | LOC |
+| 适配器 | 当前 | 目标 | LOC |
 |---------|---------|--------|:--:|
-| postgresx | `SslMode::Disable` default | `SslMode::Require` or `VerifyFull` in prod | 50 |
-| redisx | No TLS config builder | `use_tls: bool` with `rustls` feature | 50 |
-| kafkax | SASL_PLAINTEXT default | SASL_SSL enforcement | 50 |
-| natsx | No TLS config | `tls: bool` config option | 50 |
+| postgresx | `SslMode::Disable` 默认 | 生产环境 `SslMode::Require` 或 `VerifyFull` | 50 |
+| redisx | 无 TLS 配置 | `use_tls: bool`，含 `rustls` feature | 50 |
+| kafkax | SASL_PLAINTEXT 默认 | SASL_SSL 强制 | 50 |
+| natsx | 无 TLS 配置 | `tls: bool` 配置选项 | 50 |
 
-**Deliverable:** TLS config options for 4 adapters (~200 LOC).
+**交付物：** 4 个适配器 TLS 配置选项（~200 LOC）。
 
----
+### 阶段 G：错误类型化（P1，1 天）
 
-### Phase G: Error Typing (P1, 1 day)
+**目标：** 用 `thiserror` 类型化错误替换通用错误类型。
 
-**Goal:** Replace generic error types with `thiserror` typed errors.
-
-| Adapter | Current | Target | LOC |
+| 适配器 | 当前 | 目标 | LOC |
 |---------|---------|--------|:--:|
-| taosx | Generic XError | `TaosError` with variants (ConnectionFailed, InsertFailed, QueryTimedOut) | 80 |
-| ossx | Generic XError | `OssError` with variants (BucketNotFound, SignatureInvalid, UploadFailed) | 80 |
-| clickhousex | Generic XError | `ClickHouseError` with variants (TableNotFound, InsertFailed, QueryError) | 80 |
+| taosx | 通用 XError | `TaosError`（ConnectionFailed, InsertFailed, QueryTimedOut 等变体）| 80 |
+| ossx | 通用 XError | `OssError`（BucketNotFound, SignatureInvalid, UploadFailed 等变体）| 80 |
+| clickhousex | 通用 XError | `ClickHouseError`（TableNotFound, InsertFailed, QueryError 等变体）| 80 |
 
-**Deliverable:** Typed error enums for 3 adapters (~240 LOC).
+**交付物：** 3 个适配器类型化错误枚举（~240 LOC）。
 
----
+### 阶段 H：Repository Trait（P1，1 天）
 
-### Phase H: Repository Trait (P1, 1 day)
+**目标：** 在生产环境 PostgresPool 上实现 `Repository<T, Id>`。
 
-**Goal:** Implement `Repository<T, Id>` on `PostgresPool` in production.
+当前：Repository 仅在 scaffold PostgresAdapter 上实现。
+目标：PostgresPool 增加 Repository impl，支持 `find(id)` 和 `save(entity)`。
 
-Current: Repository only implemented on scaffold `PostgresAdapter`.
-Target: Add `Repository` impl on `PostgresPool` with:
-- `find(id)` → `SELECT * FROM {table} WHERE id = $1`
-- `save(entity)` → `INSERT INTO {table} ... ON CONFLICT (id) DO UPDATE`
+新文件 `src/repository.rs` 或修改 `src/pool.rs`（~150 LOC）。
 
-Files to modify: `src/pool.rs` or new `src/repository.rs` (~150 LOC).
+**交付物：** 生产级 Repository impl（~150 LOC）。
 
-**Deliverable:** Production `Repository` impl (~150 LOC).
+### 阶段 I：打磨（P2，2-3 天）
 
----
+#### I.1 测试覆盖 — 1 天
+- 每个适配器从 1 个扩展到 3+ 集成测试
+- 增加连接失败测试
+- postgresx 增加事务边界测试
 
-### Phase I: Polish (P2, 2-3 days)
+#### I.2 文档 — 0.5 天
+- 每个适配器迁移指南
+- 配置参考完整性
+- 增加量化交易使用示例
 
-#### I.1 Test Coverage — 1 day
-- Expand integration tests from 1 to 3+ per adapter
-- Add connection failure tests
-- Add transaction boundary tests for postgresx
+#### I.3 Scaffold 清理 — 0.5 天
+- 验证所有 scaffold 均在 feature gate 后
+- 移除泄漏到生产路径的 scaffold 模块
 
-#### I.2 Documentation — 0.5 days
-- Migrate guides for each adapter
-- Config reference completeness
-- Add quant trading usage examples
-
-#### I.3 Scaffold Cleanup — 0.5 days
-- Verify all scaffolds are behind feature gates
-- Remove any scaffold modules leaking into production paths
-
----
-
-## 3. Dependency Graph
+## 3. 依赖图
 
 ```
-Phase A (Mocks) ─────────────────────────────┐
-Phase B (Pools) ─────────────────────────────┤
-Phase C (JetStream) ─────────────────────────┤  All independent (parallel)
-Phase D (Batch) ─────────────────────────────┤
+阶段 A (Mock) ───────────────────────────────┐
+阶段 B (Pool) ───────────────────────────────┤
+阶段 C (JetStream) ─────────────────────────┤  均独立（可并行）
+阶段 D (Batch) ──────────────────────────────┤
                                               │
-Phase E (Retry) ← depends on B (pools exist) ┘
-Phase F (TLS)   ← independent
-Phase G (Error)  ← independent
-Phase H (Repo)   ← independent
+阶段 E (重试) ← 依赖 B (pool 存在) ──────────┘
+阶段 F (TLS)  ← 独立
+阶段 G (错误) ← 独立
+阶段 H (Repo) ← 独立
 
-Phase I (Polish) ← depends on A-H
+阶段 I (打磨) ← 依赖 A-H
 ```
 
-Phases A-D can run in parallel (different crates). Phases E-H can start after B is done.
+A-D 阶段可并行执行（不同 crate）。E-H 阶段可在 B 完成后启动。
 
----
+## 4. 单人与双人资源计划
 
-## 4. Resource Plan
+### 单人：10-14 个日历日
 
-### Single Developer: 10-14 calendar days
-
-| Week | Mon | Tue | Wed | Thu | Fri |
+| 周 | 一 | 二 | 三 | 四 | 五 |
 |------|-----|-----|-----|-----|-----|
-| 1 | A1 (MockTaos) | A2 (MockOss) | B1 (TaosPool) | B2 (OssPool) | C (JetStream) |
-| 2 | D (Batch) | E (Retry × 4) | E (Retry × 3) + F (TLS) | G (Error) + H (Repo) | I (Polish) |
+| 1 | A1 (MockTaos) | A2 (MockOss) | B1 (TaosPool) | B2 (OssPool) | C (JetStream) + D1 (CH batch) |
+| 2 | D2 (Taos batch) + E (重试 ×4) | E (重试 ×3) + F (TLS) | G (错误) + H (Repo) | I (打磨) | I (打磨) |
 
-### Two Developers: 7-10 days
+### 双人：7-10 天
 
-| Developer 1 | Developer 2 |
+| 开发者 1 | 开发者 2 |
 |-------------|-------------|
-| A (Mocks) + C (JetStream) | B (Pools) + D (Batch) |
-| E (Retry × 4) + H (Repo) | E (Retry × 3) + F (TLS) + G (Error) |
-| I (Polish — tests) | I (Polish — docs) |
+| A (Mock) + C (JetStream) | B (Pool) + D (Batch) |
+| E (重试 ×4) + H (Repo) | E (重试 ×3) + F (TLS) + G (错误) |
+| I (打磨 — 测试) | I (打磨 — 文档) |
 
----
+## 5. 验收标准
 
-## 5. Success Criteria
+��个阶段**完成**的标志：
 
-Each phase is **done** when:
-
-| Phase | Criteria |
+| 阶段 | 标准 |
 |-------|----------|
-| A | `cargo test -p {crate} --features scaffold` passes with mock |
-| B | Health check endpoint responds, pool size configurable |
-| C | `cargo test -p natsx --features jetstream` passes with local NATS |
-| D | Batch insert throughput > 10× single-row insert |
-| E | Circuit breaker opens after 5 consecutive failures |
-| F | `SslMode::Require` is default, connection fails without TLS in CI |
-| G | All error variants have docstrings, error chain preserved |
-| H | `impl Repository<T, Id> for PostgresPool` compiles and passes tests |
-| I | `cargo test --workspace` passes, `cargo clippy -D warnings` passes |
+| A | `cargo test -p {crate} --features scaffold` 通过，含 mock |
+| B | 健康检查端点响应，pool 大小可配置 |
+| C | `cargo test -p natsx --features jetstream` 通过，使用本地 NATS |
+| D | 批量插入吞吐量 > 单行插入吞吐量的 10 倍 |
+| E | 连续 5 次失败后断路器打开 |
+| F | `SslMode::Require` 为默认，CI 中无 TLS 连接失败 |
+| G | 所有错误变体含文档注释，错误链完整保留 |
+| H | `impl Repository<T, Id> for PostgresPool` 编译并测试通过 |
+| I | `cargo test --workspace` 通过，`cargo clippy -D warnings` 通过 |
 
----
+## 6. 风险登记
 
-## 6. Risk Register
-
-| Risk | Likelihood | Impact | Mitigation |
+| 风险 | 概率 | 影响 | 缓解措施 |
 |------|:---------:|:------:|------------|
-| NATS JetStream API changes | Low | Medium | Pin async-nats version |
-| TDengine REST API changes | Low | Low | Use stable v3.x API endpoints |
-| Aliyun OSS signature incompatibility | Low | Medium | Test with dev bucket before production |
-| Connection pool configuration conflicts | Medium | Low | Use `ConfigBuilder` pattern with sensible defaults |
-| Scaffold feature gate breakage | Low | Low | Verify `#[cfg(feature = "scaffold")]` in CI |
+| NATS JetStream API 变更 | 低 | 中 | 锁定 async-nats 版本 |
+| TDengine REST API 变更 | 低 | 低 | 使用稳定 v3.x API 端点 |
+| Aliyun OSS 签名兼容性 | 低 | 中 | 生产前用 dev bucket 测试 |
+| 连接池配置冲�� | 中 | 低 | 使用 ConfigBuilder 模式，附合理默认值 |
+| Scaffold feature gate 断裂 | 低 | 低 | CI 中验证 `#[cfg(feature = "scaffold")]` |
