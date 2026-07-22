@@ -6,7 +6,7 @@
 | 镜像 | `.agents/ssot/adapters/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 本仓路径 | `crates/adapters/{exchange,storage}/<name>` |
 | 审计日期 | 2026-07-22 |
-| 结论 | **7 个 storage 默认生产客户端已落地**（RedisPool / PostgresPool / KafkaPool / NatsPool / OssClient / ClickHousePool / TaosPool）+ live `#[ignore]` + benches；scaffold 改 `feature = "scaffold"`；exchange 仍只读 server_time；**未**宣称 package stable / Cluster·JetStream·EOS 全量 / crates.io |
+| 结论 | **7 个 storage 默认生产客户端已落地**（#188–#190）：RedisPool / PostgresPool / KafkaPool / NatsPool / OssClient / ClickHousePool / TaosPool + live `#[ignore]`（ZoneCNH 真凭据已验）+ 有界 benches；scaffold 改 `feature = "scaffold"`；exchange 仍只读 server_time；**未**宣称 package stable / Cluster·JetStream·EOS 全量 / crates.io |
 
 ## 结论摘要
 
@@ -82,10 +82,23 @@ for d in exchange/binance exchange/okx \
       .agents/ssot/adapters/$d/spec/xhyper-*-complete-spec.md
 done
 
-# scaffold 可构建
+# 默认生产路径（含 storage 生产客户端）
 cargo check -p binancex -p okxx -p redisx -p kafkax -p natsx \
   -p postgresx -p taosx -p ossx -p clickhousex
+cargo test -p redisx -p postgresx -p kafkax -p natsx \
+  -p ossx -p clickhousex -p taosx --all-targets
 cargo test --workspace --all-targets
+
+# live（默认 ignore；凭据见 scripts/live/build-foundationx-env.mjs）
+# node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
+# set -a; source /tmp/foundationx-live.env; set +a
+# cargo test -p redisx --test live_kv -- --ignored
+# cargo test -p postgresx --test live_postgres -- --ignored
+# cargo test -p kafkax --test live_event_bus -- --ignored
+# cargo test -p natsx --test live_event_bus -- --ignored
+# cargo test -p ossx --test live_object_store -- --ignored
+# cargo test -p clickhousex --test live_smoke -- --ignored
+# cargo test -p taosx --test live_smoke -- --ignored
 ```
 
 ## 对齐矩阵（本仓证据，非镜像勾选）
@@ -100,10 +113,11 @@ cargo test --workspace --all-targets
 | A-6 | scaffold 可 `cargo check` / `cargo test` | PASS | feature `scaffold` 可选；默认生产路径可编译测试 |
 | A-7 | 标准八项布局 | PASS | 9 adapters + contracts 均已补齐（含 benches/） |
 | A-8 | `publish = false` | PASS | 各 `Cargo.toml` 显式关闭 |
-| A-9 | 实现真实 I/O / adapter 业务 | **部分（storage P0）** | 7 storage 生产客户端 + live 内容断言；exchange 交易 / Cluster / JetStream / EOS / multipart **OPEN** |
+| A-9 | 实现真实 I/O / adapter 业务 | **部分（storage P0）** | 7 storage 生产客户端 + live 内容断言（真凭据 2026-07-22 已验）；exchange 交易 / Cluster / JetStream / EOS / multipart **OPEN** |
 | A-10 | package stable / Spec Approved 本仓宣称 | OPEN | **禁止**用镜像 COMPLETE 代替；P0 生产入口 ≠ package stable |
 | A-11 | contracts workspace 注册 | PASS | #43 `crates/contracts` → `xhyper-contracts` |
-| A-12 | `FOUNDATIONX_*` 环境注入 + 密钥不入库 | PASS | `from_env` + live tests；secrets 仅进程 env |
+| A-12 | `FOUNDATIONX_*` 环境注入 + 密钥不入库 | PASS | `from_env` + live tests；`scripts/live/build-foundationx-env.mjs`（#191）；secrets 仅进程 env |
+| A-13 | 有界 benches（`cargo test --all-targets` 不挂） | PASS | #190：kafka/nats/clickhouse/taos hot_path 3s 超时；redis/postgres/oss 既有 |
 
 ## 与镜像文档的关系
 
@@ -115,14 +129,13 @@ cargo test --workspace --all-targets
 ## 依赖与边界（本仓意图）
 
 ```text
-adapters/*  →  (future) contracts / types / kernel
+adapters/*  →  contracts / kernel（+ 外部 SDK：redis/tokio-postgres/rskafka/async-nats/reqwest…）
                禁止  kernel/types 反向依赖 adapters
                禁止  把 adapter 当 L0
 ```
 
-- 当前 scaffold **仅**依赖 `thiserror`
-- 未来引入 `canonical` / 外部 SDK 时，须在对应对齐文档与 PR 中显式声明
-- 真实交易 / 生产 I/O **默认禁止**，直至 Spec + 证据批准（镜像 binance 规范亦声明 mock 边界）
+- **storage 生产路径**依赖对应驱动（见各 crate `Cargo.toml`）；`scaffold` feature 保留 mock 面
+- exchange 仍以 mock + 可选 HTTP 为主；真实交易 / 签名 **默认禁止**，直至 Spec + 证据批准
 
 ## `crates/contracts` 评估结论
 
@@ -137,66 +150,48 @@ adapters/*  →  (future) contracts / types / kernel
 
 ## 未做（follow-up / OPEN）
 
-1. 按域实现 adapter（mock → 集成测 `#[ignore]` → M3）— 一域一战役，禁止混做
-2. adapters 依赖 `xhyper-contracts` 并实现 trait
+1. Cluster / Sentinel / Streams / JetStream / EOS / multipart / native protocol — **DEFER**（非 P0）
+2. adapters 全量实现 contracts trait 的业务深度（当前生产客户端 + 部分 trait 绑定）
 3. contracts：`Ticker` 等金额字段迁离 `f64`（改 decimalx / canonical）
-4. package 命名是否统一 `xhyper-*` 前缀 — 需 Lead 裁决；当前保留 #42 / #43 命名
+4. package stable / crates.io — **禁止**宣称
+5. package 命名是否统一 `xhyper-*` 前缀 — 需 Lead 裁决；当前保留 #42 / #43 命名
 
 ## 相关索引
 
 - 总览：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
+- gap：[draft-gap-matrix.md](./draft-gap-matrix.md) · [gap-matrix.md](./gap-matrix.md)
 - 同步报告：[SSOT_SYNC_REPORT.md](./SSOT_SYNC_REPORT.md)
+- live 凭据：`scripts/live/build-foundationx-env.mjs`（#191）
 - 规则：[.agents/ssot/SSOT.md](../../.agents/ssot/SSOT.md)
 - 初始化 commit：`b586260` feat: initialize adapter crates (#42)
 
-## 跟进（2026-07-21 / PR #98）
-
-| 项 | 状态 |
-|----|------|
-| scaffold 签名适配 | **PASS**：EventBus/PubSub 流项为 `BusMessage`（kafka/nats/redis）；TxRunner `begin_tx`（postgres） |
-| 业务协议 / 真实后端 | **部分**：redis live + public time；其余 **仍 DEFER** |
-
-## 跟进（2026-07-21 / infra-asa.5 · DEFER-1 mock-first）
-
-目标：为 first-batch contracts traits 提供 **非 scaffold 命名** 的进程内 mock 验证入口；
-默认 `cargo test --workspace` **始终离线绿灯**（无 Docker / 无外部服务 / 无云凭证）。
-
-| trait | package | mock 验证入口 | 证明点 |
-|-------|---------|---------------|--------|
-| `Repository` + `TxRunner`/`TxContext` | `postgresx` | scaffold `ScaffoldTxContext`（本地）+ `ObservingPostgresAdapter` / `MockPostgresBackend` | scaffold 无 rows 事务边界；mock staged 写入仅 commit 后可见；**禁止** prod 依赖 `contract-testkit` |
-| `KeyValueStore` + `PubSub` | `redisx` | `MockRedisAdapter` | TTL 过期返回 `None`；PubSub 单调 `BusMessage.id` |
-| `EventBus` | `kafkax` | `MockKafkaBus` | 跨 topic 单调消息 ID；`dyn EventBus` 可测 |
-| `EventBus` | `natsx` | `MockNatsBus` | 同上 |
-| `VenueAdapter`（结构化 cancel/query） | `binancex` / `okxx` | 注入 `transportx::MockHttpTransport` | `cancel_order_request` / `query_order_request` 经 `HttpDriver`；缺 mock 映射为 `Invalid` |
-
-| 项 | 状态 |
-|----|------|
-| 默认 CI 离线 | **PASS**：mock 始终编译；无 `live` feature 默认开启；无外部服务 |
-| 可选 workflow | `redisx-live.yml`（PR path + service）；`exchange-live-readonly.yml`（**仅** `workflow_dispatch`，防 451） |
-| 真实 DB/MQ/交易所业务 | **仍 DEFER**（明确非 Production Ready） |
-| clickhouse / oss / taos | **仍 pure scaffold**（非 first-batch） |
-
-验证命令：
-
-```bash
-cargo test -p postgresx -p redisx -p kafkax -p natsx -p okxx -p binancex --all-targets
-cargo test -p contracts --all-targets
-cargo clippy -p postgresx -p redisx -p kafkax -p okxx --all-targets -- -D warnings
-```
-
-## 跟进（2026-07-21 / infra-s9t.2 · .13 · #168/#172）
+## 跟进（2026-07-22 / #188–#191 · draft 生产落地）
 
 | 项 | 状态 | 证据 |
 |----|------|------|
-| 非 scaffold 真实后端（W4） | **PASS（KV 子集）** | `redisx::RedisLiveKv` + `tests/live_kv_conformance.rs` + workflow `Redisx Live` |
-| exchange 只读 `server_time` | **PASS（入口）** | `parse_*_server_time` + mock 断言；`tests/live_server_time.rs` `#[ignore]`；workflow **不**挡 PR |
-| scaffold 误用红线 | **PASS** | 各 adapter README 统一警示（s9t.14 / prod-consume-surface） |
-| 业务下单 / 签名 / postgres live Tx | **DEFER** | 禁止宣称 Production Ready |
+| storage×7 默认生产客户端 | **PASS（P0）** | #188 源码 + `cargo test -p <pkg> --all-targets` |
+| live `#[ignore]` 真凭据 | **PASS（本地）** | ZoneCNH `secrets/env/dev.md` + `/etc/nats/nats.conf` overlay；7 包全绿 |
+| benches 有界 | **PASS** | #190 超时包装；`--all-targets` 不挂死 |
+| `FOUNDATIONX_*` env 构建 | **PASS** | #191 `scripts/live/build-foundationx-env.mjs` |
+| package stable / 全业务 Production Ready | **OPEN** | 禁止宣称 |
 
 ```bash
-# live Redis（需 REDIS_URL）
-cargo test -p redisx --features live --test live_kv_conformance -- --ignored --nocapture
-# live public time（需外网；GitHub-hosted 可能 HTTP 451）
-cargo test -p binancex --test live_server_time -- --ignored --nocapture
-cargo test -p okxx --test live_server_time -- --ignored --nocapture
+node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
+set -a; source /tmp/foundationx-live.env; set +a
+cargo test -p redisx --test live_kv -- --ignored --nocapture
+cargo test -p postgresx --test live_postgres -- --ignored --nocapture
+cargo test -p kafkax --test live_event_bus -- --ignored --nocapture
+cargo test -p natsx --test live_event_bus -- --ignored --nocapture
+cargo test -p ossx --test live_object_store -- --ignored --nocapture
+cargo test -p clickhousex --test live_smoke -- --ignored --nocapture
+cargo test -p taosx --test live_smoke -- --ignored --nocapture
 ```
+
+## 跟进（历史 · 2026-07-21 / PR #98 · asa.5 · s9t）
+
+| 项 | 状态 |
+|----|------|
+| scaffold 签名适配 | **PASS**：EventBus/PubSub 流项为 `BusMessage`；TxRunner `begin_tx` |
+| mock-first 离线 CI | **PASS**：默认无外部服务 |
+| redis live KV（s9t 子集） | **PASS**（后由 #188 升级为默认生产 `RedisPool`） |
+| exchange 只读 `server_time` | **PASS（入口）** |

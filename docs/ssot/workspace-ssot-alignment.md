@@ -25,13 +25,15 @@
 | `contracts` | `crates/contracts/` | `contracts` | adapter trait 出口；L3 子集（KV+Instr） | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
 | `binancex` | `crates/adapters/exchange/binance/` | `binancex` | exchange scaffold + mock HTTP + `server_time` 解析 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx/` | `okxx` | exchange scaffold + mock HTTP + `server_time` 解析 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `natsx` | `crates/adapters/storage/nats/` | `natsx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `ossx` | `crates/adapters/storage/oss/` | `ossx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `redisx` | `crates/adapters/storage/redis/` | `redisx` | storage scaffold + `live` `RedisLiveKv`（CT-9） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `taosx` | `crates/adapters/storage/taos/` | `taosx` | storage adapter scaffold | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **生产** HTTP `ClickHousePool` + live/bench（#188–#190） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **生产** `KafkaPool`/`Producer`/`Consumer` + SASL + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `natsx` | `crates/adapters/storage/nats/` | `natsx` | **生产** `NatsPool` + EventBus + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `ossx` | `crates/adapters/storage/oss/` | `ossx` | **生产** `OssClient`（OSS V1 签名）+ live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **生产** `PostgresPool`/`PgTransaction` + SQLSTATE + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `redisx` | `crates/adapters/storage/redis/` | `redisx` | **生产** `RedisPool`/`RedisClient` + KV + live/bench（默认路径，非仅 `live` feature） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `taosx` | `crates/adapters/storage/taos/` | `taosx` | **生产** `TaosPool` REST（6041）+ live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `goalctl` | `tools/goalctl/` | `goalctl` | 最小 Goal→Contract CLI（doctor/validate/compile）· #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
+| `verifyctl` | `tools/verifyctl/` | `verifyctl` | 最小 plan/execute/report CLI · #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | `transportx` | `crates/transport/` | `transportx` | L1 HTTP/WS 传输 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) |
 
 > **已移除**：`infra-core`（不在 SSOT 三域 kernel/testkit/types 内；文档历史见根 `CHANGELOG` / DDR-003 撤销说明）。
@@ -54,9 +56,11 @@
 │canonical│  L2 committed wire subset
 └─────────┘
 
-  adapters/* (scaffold) ── thiserror（+ contracts/decimalx when implementing）
+  adapters/storage/* ── 生产客户端（redis/pg/kafka/nats/oss/ch/taos）+ scaffold feature 可选
+  adapters/exchange/* ── scaffold + mock HTTP + server_time
   contracts ── serde + thiserror + decimalx（trait 出口；#43）
   contract-testkit ── contracts（**仅 dev-dep**；Fake/suite；禁止 production graph）
+  tools/goalctl · tools/verifyctl ── 最小生产 CLI（#188）
   （kernel/types MUST NOT depend on adapters）
 ```
 
@@ -74,10 +78,10 @@
 | resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
 | observex | `.agents/ssot/observex/` | `crates/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
 | infra 其余域 | `.agents/ssot/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
-| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **storage 7 库生产默认客户端已落地** + live/bench；exchange 只读 server_time；**非** package stable / 全业务 Production Ready |
+| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **storage 7 库生产默认客户端** + live `#[ignore]`（ZoneCNH 真凭据已验）+ benches（#188–#190）；exchange 只读 server_time；**非** package stable / Cluster·JetStream·EOS 全量 |
 | （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Venue 业务 live **DEFER** |
 | transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
-| tools | `.agents/ssot/tools/` | `crates/evidence` + `tools/goalctl` + `tools/verifyctl` | evidence + **goalctl/verifyctl 最小生产 CLI 已 member**；xtask **未**落地 |
+| tools | `.agents/ssot/tools/` | `crates/evidence` + `tools/goalctl` + `tools/verifyctl` | evidence + **goalctl/verifyctl 最小生产 CLI 已 member**（#188）；live env 构建器 #191；xtask **未**落地 |
 
 规则：
 
@@ -114,10 +118,19 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 # adapters / contracts
 cargo check -p contracts -p binancex -p okxx -p redisx -p kafkax \
   -p natsx -p postgresx -p taosx -p ossx -p clickhousex
-cargo test -p contracts -p binancex -p okxx -p redisx --all-targets
-# optional live（需服务 / 外网；默认 ignore；凭据经 FOUNDATIONX_* 注入）
-# source scripts/live/export-foundationx-env.sh /path/to/secrets/env
-# cargo test -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p taosx -- --ignored
+cargo test -p contracts -p binancex -p okxx \
+  -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p taosx --all-targets
+# optional live（需本机服务；默认 ignore；凭据经 FOUNDATIONX_* 注入，禁止入库）
+# node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
+# set -a; source /tmp/foundationx-live.env; set +a
+# cargo test -p redisx --test live_kv -- --ignored
+# cargo test -p redisx --test live_kv_conformance -- --ignored
+# cargo test -p postgresx --test live_postgres -- --ignored
+# cargo test -p kafkax --test live_event_bus -- --ignored
+# cargo test -p natsx --test live_event_bus -- --ignored
+# cargo test -p ossx --test live_object_store -- --ignored
+# cargo test -p clickhousex --test live_smoke -- --ignored
+# cargo test -p taosx --test live_smoke -- --ignored
 # cargo test -p binancex -p okxx --test live_server_time -- --ignored
 
 # tools（本地化后与上游非零 diff 为预期；校验目录存在）
@@ -127,7 +140,7 @@ test -d .agents/ssot/tools/xtask
 test -d .agents/ssot/tools/verifyctl
 cargo test -p evidence -p goalctl -p verifyctl --all-targets
 cargo run -p goalctl -- doctor
-VERIFYCTL_DRY=1 cargo run -p verifyctl -- plan --changed tools/verifyctl
+cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 ```
 
 ## 核心 crate 生产就绪快照（2026-07-21 · 更新）
@@ -140,7 +153,8 @@ VERIFYCTL_DRY=1 cargo run -p verifyctl -- plan --changed tools/verifyctl
 | `decimalx` | **L1 Internal Ready**（四包 GO 内） | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `canonical` | **L2 committed wire subset**（v1–v1.3；四包 GO 内） | 同上 |
 | `contracts` | **部分就绪**：L3 子集（KV+Instr）；非 first-batch 全绿 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) · [L3_FIRST_BATCH_STATUS](../../crates/contracts/docs/L3_FIRST_BATCH_STATUS.md) |
-| `redisx`（live） | **非 scaffold KV 入口**（feature `live`；optional CI） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| storage×7（redis…taos） | **生产默认路径 P0**（#188–#190）；live 真凭据已验；≠ package stable | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) · [draft-gap-matrix.md](./draft-gap-matrix.md) |
+| `goalctl` / `verifyctl` | **最小生产 CLI member**（#188）；自验证 schema v1 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | L1 平台（bootstrap/resiliencx/transport/…） | **P0 阻断已收敛**（`infra-s9t`）；≠ 各包 Production Ready | [七包双栏](../report/2026-07-21/seven-l1-contracts-dual-bar-readiness.md) · [prod-consume-surface](../plans/artifacts/prod-consume-surface.md) |
 
 - 四包证据：[`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md)
@@ -162,7 +176,7 @@ VERIFYCTL_DRY=1 cargo run -p verifyctl -- plan --changed tools/verifyctl
 | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) | schedulex active registry 本仓矩阵 |
 | [types-ssot-alignment.md](./types-ssot-alignment.md) | decimal + canonical 本仓状态 |
 | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) | bootstrap 组合根本仓矩阵 |
-| [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) | adapters 九域镜像 + scaffold 状态 |
+| [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) | adapters 九域：storage 生产 P0 + exchange scaffold |
 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) | contracts 镜像 + trait 落地 |
 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) | transportx 本仓矩阵 |
 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) | tools 四域镜像 + 本地化状态 |
@@ -182,6 +196,7 @@ VERIFYCTL_DRY=1 cargo run -p verifyctl -- plan --changed tools/verifyctl
 | 2026-07-21 | 对齐/同步文档刷新 #174；follow-up CLOSED + report partials closeout #175；本文件补引用 |
 | 2026-07-22 | **#178** 独立 `contract-testkit` 落地；members 表补行；Fake 迁出 contracts；SSOT 同步报告纠偏 |
 | 2026-07-22 | 七包双栏 STATUS 结构 100%（configx/evidence/observex/resiliencx/schedulex/transportx/contracts）；≠ workspace Production Ready / L5 |
+| 2026-07-22 | **#188–#191** draft 生产落地：storage×7 默认客户端 + live/bench；goalctl/verifyctl member；`build-foundationx-env.mjs`；members 表与验证入口同步 |
 
 ## 七包双栏（2026-07-22）
 
