@@ -5,7 +5,7 @@
 | 输入 HEAD | `cc93223161880fbeb41fe770e7785a89f8dadf72`（R2 evidence） |
 | 初始内容候选 | `387a1dc550341767a24a1548dd9ae47b2c8b84ee` |
 | 主干同步候选 | `70d402a9a8b7b796077cba33e30ddf0c069c5e03`（包含 `origin/main 5fe242c`） |
-| 当前状态 | **POST-MAIN-SYNC GATES PASS / INDEPENDENT REVIEW PENDING** |
+| 当前状态 | **GO** |
 | 轮次目标 | 当前权威、历史战役、Cargo package 真相与生成状态一致 |
 
 ## 基线 RED
@@ -36,3 +36,4 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
 - 首轮 Standards 轴：GO；仅发现 testkit terminal report 重复组装这一项 P2 判断性气味，已登记 follow-up `infra-1j3`。
 - 首轮 Spec 轴：NO-GO；要求把 allocator residual 登记 Beads、统一 test/gate/matrix 状态，并澄清 stdout 的持久证据边界。本提交已逐项修复，等待固定新 HEAD 重审。
 - `R-CLK-DOMAIN-EXHAUSTION` 保持 OPEN，已登记 `infra-lip`；本轮不实现、不关闭，也不扩张唯一性声明。
+- 主干同步后的最终 Standards 与 Spec reviewer 均对 `3d34082` 给出 **GO（0.99）**；原始终局输出见 [`reviews/r3-final-standards-reviewer.md`](reviews/r3-final-standards-reviewer.md) 与 [`reviews/r3-final-spec-reviewer.md`](reviews/r3-final-spec-reviewer.md)。

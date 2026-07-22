@@ -6,23 +6,23 @@
 | Design | [design/design.md](../design/design.md) |
 | Test | [test/test.md](../test/test.md) |
 | 当前 package 版本 | `0.1.3` |
-| 当前裁定 | **NO-GO / R3 GATES PASS / INDEPENDENT REVIEW PENDING** |
+| 当前裁定 | **GO / R3 GATES PASS / INDEPENDENT REVIEW GO** |
 
-当前 active 合同与实现已收敛，固定内容候选的机器门禁已闭合；独立终审尚未闭合。历史 Stable/COMPLETE/PASS 不自动继承到本轮候选。
+当前 active 合同与实现已收敛，固定内容候选的机器门禁与独立双轴终审均已闭合。历史 Stable/COMPLETE/PASS 不自动继承到本轮候选。
 
 ## 1. 必须闭合的门禁
 
 | Gate | 当前状态 | GO 条件 |
 |---|---|---|
-| G-01 SSOT 一致 | `70d402a` PASS / REVIEW PENDING | spec/design/test/gate/matrix/AGENTS 使用 `testkit`、`0.1.3` 当前事实与同一边界；旧战役文档显式标为历史 |
-| G-02 ManualClock 合同 | `70d402a` PASS / REVIEW PENDING | 单 Mutex、checked、fault、snapshot、poison、独立 domain 全部有新鲜测试 |
-| G-03 Runner typed API | `70d402a` PASS / REVIEW PENDING | 导出 `HarnessReport`、`HarnessRunError`、四态 `StepOutcome`；`StepRecord` 字段私有且 getter 完整 |
-| G-04 Runner fail-closed | `70d402a` PASS / REVIEW PENDING | `step(self)->Self`、`run(self)` 编译期排除重跑/运行后追加；clock fault/panic 返回 terminal error；首错停止 |
-| G-05 无 sentinel | `70d402a` PASS / REVIEW PENDING | 所有 runner/clock 错误路径均不使用 epoch 0、空串或布尔成功掩盖失败 |
+| G-01 SSOT 一致 | `70d402a` PASS / REVIEW GO | spec/design/test/gate/matrix/AGENTS 使用 `testkit`、`0.1.3` 当前事实与同一边界；旧战役文档显式标为历史 |
+| G-02 ManualClock 合同 | `70d402a` PASS / REVIEW GO | 单 Mutex、checked、fault、snapshot、poison、独立 domain 全部有新鲜测试 |
+| G-03 Runner typed API | `70d402a` PASS / REVIEW GO | 导出 `HarnessReport`、`HarnessRunError`、四态 `StepOutcome`；`StepRecord` 字段私有且 getter 完整 |
+| G-04 Runner fail-closed | `70d402a` PASS / REVIEW GO | `step(self)->Self`、`run(self)` 编译期排除重跑/运行后追加；clock fault/panic 返回 terminal error；首错停止 |
+| G-05 无 sentinel | `70d402a` PASS / REVIEW GO | 所有 runner/clock 错误路径均不使用 epoch 0、空串或布尔成功掩盖失败 |
 | G-06 图隔离 | `70d402a` PASS | 仅 dev-dependency 消费；normal production dependents 为零 |
 | G-07 外部边界 | `70d402a` PASS | crate 无网络/进程/I/O/真实时间；external harness 仍在 tools/CI OOS |
-| G-08 质量门禁 | `70d402a` PASS / REVIEW PENDING | fmt/clippy/test/API surface/相关质量门禁在固定候选上新鲜通过 |
-| G-09 版本同步 | `70d402a` PASS / REVIEW PENDING | 行为变化交付执行 PATCH bump，并同步 Cargo/lock/消费者/CHANGELOG/对齐文/SSOT |
+| G-08 质量门禁 | `70d402a` PASS / REVIEW GO | fmt/clippy/test/API surface/相关质量门禁在固定候选上新鲜通过 |
+| G-09 版本同步 | `70d402a` PASS / REVIEW GO | 行为变化交付执行 PATCH bump，并同步 Cargo/lock/消费者/CHANGELOG/对齐文/SSOT |
 
 ## 2. Residual
 
