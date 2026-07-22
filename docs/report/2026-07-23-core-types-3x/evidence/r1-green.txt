@@ -3,8 +3,11 @@ date: 2026-07-23 Asia/Shanghai
 base: 3cd29a942710c0fb42f3f6bc05e3c31570acad47
 fixed-candidate: fc201d7dd8b63b3eb16c2d9e49ac95a03fd6f283
 verified-repair-candidate: 6e4e5999e708e126a9b511cbeedaa0176abc5408
+verified-contract-candidate: e58976fd86e0de60ff38373fd3c9494797024ecd
 verified-repair-diff-command: git diff 3cd29a942710c0fb42f3f6bc05e3c31570acad47..6e4e5999e708e126a9b511cbeedaa0176abc5408 | sha256sum
 verified-repair-diff-sha256: 6c414160b2b339f5d752f3a570ce4ed7bb8c71eebb59498978b228bd3341e060
+verified-contract-diff-command: git diff 3cd29a942710c0fb42f3f6bc05e3c31570acad47..e58976fd86e0de60ff38373fd3c9494797024ecd | sha256sum
+verified-contract-diff-sha256: 9fb8d7e9cb3912ff9caa5fad33cbbfc30a0967fd618f543dd20af5c31251ec44
 rustc: 1.97.0 (2d8144b78 2026-07-07)
 cargo: 1.97.0 (c980f4866 2026-06-30)
 node: v24.14.0
