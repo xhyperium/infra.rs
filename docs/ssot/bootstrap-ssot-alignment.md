@@ -38,7 +38,7 @@
 | `AsyncDrain` 关停排空 | `src/drain.rs`；`register_drain` / `AppContext::run_drain` | **PASS**（组合根 drain 所有权；LIFO hooks） |
 | `observex`（`TracingInstrumentation`） | path `crates/observex`；`Bootstrap::new` 默认 | **PASS**（ADR-005 默认实现） |
 | `evidence`（`EvidenceAppender`） | path `crates/evidence`；re-export + `InMemoryEvidenceAppender` | **PASS**（注入/可选/require；远程见 evidence 对齐） |
-| 真实 exchange 业务装配 e2e | 非本包职责 | **OPEN**（exchange 仍 scaffold；**≠** StoreSet API 缺失） |
+| 真实 exchange 业务装配 e2e | 非本包职责 | **OPEN**（exchange 生产默认 REST+WS（业务 live 签名下单仍 NO-GO 默认 CI）；**≠** StoreSet API 缺失） |
 
 ## §3 公开 API
 
@@ -79,7 +79,7 @@
 | composition manifest（BOOT-MAN-001） | **OPEN** | 非本轮 OBJECTIVE |
 | 异步组件启动/逆序补偿（全量） | **OPEN** | drain 提供 hook 面；完整 async 启动编排非目标 |
 | 生产就绪 / package stable / Agent L5 | **未宣称** | 人签模板未填 |
-| 交易栈端到端装配 | **NO-GO** | exchange 业务仍 scaffold；StoreSet 只能接线已有 trait 实现 |
+| 交易栈端到端装配 | **NO-GO** | exchange 生产默认 REST+WS（live 签名交易非默认 CI）；StoreSet 只能接线已有 trait 实现 |
 
 ## §6 验收命令（本仓）
 
