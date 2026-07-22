@@ -2,7 +2,7 @@
 
 use decimalx::{
     Currency, Decimal, DecimalError, DecimalErrorKind, DecimalLimits, DecimalResult, MAX_SCALE,
-    Money, Price, Qty, Ratio, RoundingStrategy, TECH_MAX_POW10_EXP,
+    Money, Price, Qty, Ratio, RoundingStrategy, TECH_MAX_POW10_EXP, WIRE_SCHEMA_VERSION,
 };
 use std::cmp::Ordering;
 use std::str::FromStr;
@@ -13,6 +13,7 @@ fn constants_and_limits() {
     assert_eq!(TECH_MAX_POW10_EXP, 38);
     assert_eq!(DecimalLimits::MAX_SCALE, MAX_SCALE);
     assert_eq!(DecimalLimits::TECH_MAX_POW10_EXP, TECH_MAX_POW10_EXP);
+    assert_eq!(WIRE_SCHEMA_VERSION, 1);
 }
 
 #[test]
@@ -46,15 +47,25 @@ fn decimal_construct_ops_normalize() {
     assert_eq!(parsed.to_string(), "12.34");
     assert!(Decimal::from_str("not-a-number").is_err());
 
-    // panicking 运算符在合法输入上返回正确值
-    assert_eq!((a + b).mantissa(), 13);
-    assert_eq!((a - b).mantissa(), 7);
-    assert_eq!((a * b).mantissa(), 30);
+    // 默认 feature 下生产路径走 checked_*（+/-/* 需 panicking-ops）
+    assert_eq!(a.checked_add(b).unwrap().mantissa(), 13);
+    assert_eq!(a.checked_sub(b).unwrap().mantissa(), 7);
+    assert_eq!(a.checked_mul(b).unwrap().mantissa(), 30);
 
     // 除零
     let div0 = a.checked_div(Decimal::ZERO, RoundingStrategy::Floor).unwrap_err();
     assert_eq!(div0.kind(), DecimalErrorKind::DivisionByZero);
     assert!(div0.to_string().contains("除零"));
+}
+
+#[cfg(feature = "panicking-ops")]
+#[test]
+fn panicking_ops_available_when_feature_enabled() {
+    let a = Decimal::new(10, 0);
+    let b = Decimal::new(3, 0);
+    assert_eq!((a + b).mantissa(), 13);
+    assert_eq!((a - b).mantissa(), 7);
+    assert_eq!((a * b).mantissa(), 30);
 }
 
 #[test]

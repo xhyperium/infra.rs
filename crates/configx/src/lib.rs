@@ -2,11 +2,18 @@
 #![deny(missing_docs)]
 #![deny(unreachable_pub)]
 
-//! # `configx` — L1 内存字符串键值配置存储
+//! # `configx` — L1 配置存储与多源合并
 //!
-//! 当前 active 合同（0.1.0）提供线程安全的内存 `String` key-value 存储与
-//! **存在性校验**辅助。**不是**多源加载、类型化 schema 或热更新系统。
+//! 提供线程安全的内存 `String` key-value 存储、存在性校验，以及：
 //!
+//! | 模块 | 能力 |
+//! |------|------|
+//! | [`source`] | [`ConfigSource`]：内存 / 环境变量 / KEY=VALUE 文件 |
+//! | [`layered`] | [`LayeredConfig`]：多层合并（后源覆盖前源） |
+//! | [`watch`] | [`ConfigWatch`]：进程内热更新通知 + 可选 reload |
+//! | [`secret`] | [`SecretString`] 脱敏 + `set_secret` / `get_secret` |
+//!
+//! **非目标**：类型化 schema、分布式配置中心、远端 secret manager。
 //! 生产依赖仅 [`kernel`]；不依赖其他 L1。
 
 use std::collections::HashMap;
@@ -14,10 +21,18 @@ use std::sync::RwLock;
 
 use kernel::{XError, XResult};
 
-mod diff;
-mod view;
+pub mod diff;
+pub mod layered;
+pub mod secret;
+pub mod source;
+pub mod view;
+pub mod watch;
 pub use diff::{ConfigDiff, diff_snapshots};
+pub use layered::LayeredConfig;
+pub use secret::{SECRET_KEY_PREFIX, SecretString, get_secret, is_secret_key, set_secret};
+pub use source::{ConfigSource, EnvSource, FileSource, MemorySource, parse_key_value_file};
 pub use view::{snapshots_agree, subset_snapshot};
+pub use watch::{ConfigChange, ConfigSubscription, ConfigWatch};
 
 /// 线程安全的拥有型内存配置存储。
 ///
@@ -125,7 +140,7 @@ impl Default for ConfigStore {
 
 /// 配置键存在性校验（schema 边界最小面，infra-s9t.7）。
 ///
-/// **不是** 类型化 schema / 多源配置。仅检查内存 [`ConfigStore`] 是否包含必填 key。
+/// **不是** 类型化 schema。仅检查内存 [`ConfigStore`] 是否包含必填 key。
 pub fn require_keys(store: &ConfigStore, keys: &[&str]) -> XResult<()> {
     for k in keys {
         if store.get(k).is_none() {
@@ -402,5 +417,22 @@ mod tests {
         s.clear().unwrap();
         assert!(s.is_empty());
         assert!(validate_key(&"x".repeat(513)).is_err());
+    }
+
+    #[test]
+    fn multi_source_merge_priority_and_secret() {
+        use std::sync::Arc;
+        let low = Arc::new(MemorySource::from_pairs([("k", "low"), ("only_low", "1")]));
+        let high = Arc::new(MemorySource::from_pairs([("k", "high")]));
+        let layered = LayeredConfig::new().with_source(low).with_source(high);
+        let m = layered.load_merged().unwrap();
+        assert_eq!(m.get("k").map(String::as_str), Some("high"));
+        assert_eq!(m.get("only_low").map(String::as_str), Some("1"));
+        let secret = SecretString::new("s3cr3t");
+        assert!(format!("{secret:?}").contains("***"));
+        assert!(!format!("{secret:?}").contains("s3cr3t"));
+        let store = ConfigStore::new();
+        set_secret(&store, "token", &secret).unwrap();
+        assert_eq!(get_secret(&store, "token").unwrap().expose(), "s3cr3t");
     }
 }

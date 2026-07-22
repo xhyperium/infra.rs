@@ -18,16 +18,17 @@
 
 - `Decimal`：`mantissa × 10^(-scale)`；数值 `Eq`/`Ord`/`Hash`（非结构字段）
 - **生产主路径**：`try_new` / `FromStr` / `checked_add` / `checked_sub` / `checked_mul` / `checked_div` / `checked_rescale`
-- panicking：`+` / `-` / `*` / `rescale` 在溢出时 panic；**非**推荐生产错误处理
+- panicking 运算符 `+` / `-` / `*`：仅 feature **`panicking-ops`**（**默认关闭**）；`rescale` 仍 panicking
 - `RoundingStrategy`：Floor / Ceiling / HalfUp / HalfDown / HalfEven
 - Newtypes：`Price` / `Qty` / `Ratio`；`Currency` / `Money`
+- wire：`WIRE_SCHEMA_VERSION = 1`（`Decimal`/`Money`/`Currency` 字段形状；见 `docs/WIRE.md`）
 
 ## 硬限制
 
 - `MAX_SCALE = 18`；字段私有，非法 scale 不可在 crate 外表示
 - 禁止 `f32` / `f64` 参与金额 / 数量运算
 - 资金路径只用 `checked_*`；CI 门禁扫描 panicking 运算符
-- serde 字段 shape 为**当前事实**，**不等于**跨版本 stable（见 `docs/WIRE.md`）
+- serde 字段 shape 由 `WIRE_SCHEMA_VERSION` 标识；破坏性变更须升版本（见 `docs/WIRE.md`）
 - 不提供汇率、跨币种运算、tick/step、会计/手续费政策
 
 ## 最小用法

@@ -19,9 +19,9 @@ base64 = "0.22"
 bytes = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-canonical = { path = "../../../types/canonical", version = "0.1.0" }
-contracts = { path = "../../../contracts", version = "0.1.0" }
-decimalx = { path = "../../../types/decimal", version = "0.1.0" }
+canonical = { path = "../../../types/canonical", version = "0.1.1" }
+contracts = { path = "../../../contracts", version = "0.1.1" }
+decimalx = { path = "../../../types/decimal", version = "0.1.1" }
 hex = { workspace = true }
 hmac = "0.12"
 kernel = { path = "../../../kernel", version = "0.3.0" }

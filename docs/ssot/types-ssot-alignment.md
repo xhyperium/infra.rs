@@ -4,10 +4,10 @@
 |------|-----|
 | 域 | `/types/`（decimal + canonical） |
 | 镜像 | `.agents/ssot/types/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
-| 审计日期 | 2026-07-21 |
-| 跟进 | 2026-07-21 P0/P1 **#98**；W1–W2 证据 **#121/#124**；四包内部 GO **#159** · tag `v0.3.0-four-crates` |
-| 内部生产层级 | **decimalx = L1 Internal Ready**；**canonical = L2 committed wire subset（v1–v1.3）** |
-| 结论 | **两 crate 均已注册 workspace 并有可运行测试**；decimal 不变量已硬化；canonical committed wire 覆盖 v1–v1.3；分层内部 GO（**≠** package Production Ready / crates.io） |
+| 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
+| 跟进 | 2026-07-21 P0/P1 **#98**；W1–W2 证据 **#121/#124**；四包内部 GO **#159** · tag `v0.3.0-four-crates`；**defer-close**：wire schema / panicking-ops gate / envelope |
+| 内部生产层级 | **decimalx = L1 Internal Ready**；**canonical = L2 committed wire subset（v1–v1.3）+ envelope** |
+| 结论 | **两 crate 均已注册 workspace 并有可运行测试**；decimal 不变量已硬化；canonical committed wire 覆盖 v1–v1.3；分层内部 GO（**≠** package Production Ready / crates.io / Agent L5） |
 
 ## 结论摘要
 
@@ -15,11 +15,13 @@
 |------|------|
 | 上游镜像 COMPLETE / Spec Approved 叙事 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
 | 本仓 `crates/types/decimal` | **已落地**（package **`decimalx`** / lib `decimalx`）；字段私有 + 校验 serde + `DecimalError` |
-| 本仓 `crates/types/canonical` | **已落地**（package **`canonical`** / lib `canonical`）；committed wire v1 / v1.1 / v1.2 / v1.3 子集冻结 |
+| 本仓 `crates/types/canonical` | **已落地**（package **`canonical`** / lib `canonical`）；committed wire v1 / v1.1 / v1.2 / v1.3 子集冻结 + **`Envelope<T>`** |
 | 内部生产 GO（声明层级） | decimalx **L1**；canonical **L2 wire 子集**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
 | `infra-core` | **已移除**；types 不依赖它 |
 | package stable / crates.io | **未**宣称；`publish = false` |
-| 全量 wire stable / package stable | **未**宣称；见 `wire::COMMITTED_WIRE_V1{,_1,_2,_3}` 与 residual |
+| wire schema 版本常量 | **PASS**：`decimalx::WIRE_SCHEMA_VERSION`（见 `docs/WIRE.md`）；破坏性变更须升版本 |
+| panicking 算子默认关闭 | **PASS**：feature `panicking-ops` **default off**；生产主路径 `checked_*` |
+| schema_version envelope | **PASS**：`crates/types/canonical/src/envelope.rs` · `Envelope { schema_version, payload }` |
 | public-api / examples / benches | **PASS**：baselines + `public_api_surface` + `examples/basic` + `hot_path` |
 
 ## 本仓可观察事实
@@ -42,7 +44,10 @@ crates/types/canonical/         EXISTS · members 已注册
   生产依赖                      decimalx + serde
   Active SSOT                   .agents/ssot/types/canonical/spec/spec.md
   wire 模块                     src/wire.rs（Committed v1 / v1.1 / v1.2 / v1.3 清单与策略）
+  envelope                      src/envelope.rs（schema_version + payload）
   examples / baseline           examples/basic.rs · docs/api-baselines/canonical.txt
+  decimal WIRE_SCHEMA_VERSION   crates/types/decimal/src/lib.rs = 1 · docs/WIRE.md
+  panicking-ops                 feature default off（Cargo.toml）
 ```
 
 验证（本仓权威命令）：
@@ -79,11 +84,11 @@ canonical  →  decimalx  →  kernel
 | D-1 | 路径 `/types/decimal`；package/lib 命名 | PASS | `Cargo.toml` + workspace members |
 | D-2 | Decimal 族唯一定义点；无业务政策 | PASS | `src/lib.rs` + README |
 | D-3 | 生产主路径 `try_new` / `FromStr` / `checked_*` | PASS | lib + `tests/entry_checked_ops.rs` |
-| D-4 | panicking ops 非生产主路径 | PASS | rustdoc `# Panics` + AGENTS |
+| D-4 | panicking ops 非生产主路径 | **PASS** | feature `panicking-ops` **default off**；`#[cfg(feature = "panicking-ops")]` 门控 `+/-/*`；rustdoc `# Panics` + AGENTS |
 | D-5 | 禁止 f32/f64 金额 | PASS | AGENTS + 实现无浮点金额 API |
 | D-6 | 生产依赖仅 kernel + serde | PASS | `Cargo.toml` |
 | D-7 | unit / property 测试存在 | PASS | `tests/entry_checked_ops.rs`、`tests/proptest_ops.rs` |
-| D-8 | wire shape = 当前事实 ≠ stable 承诺 | PASS（文档） | `docs/WIRE.md` + residual |
+| D-8 | wire shape 版本化 + 当前事实 | **PASS** | `WIRE_SCHEMA_VERSION = 1` · `docs/WIRE.md` · wire golden 测；**≠** 跨语言 multi-major stable 产品宣称 |
 | D-9 | package stable / Spec Approved | OPEN | 未宣称；见 SSOT residual |
 | D-10 | 字段私有；非法 scale 不可表示 | PASS | `Decimal`/`Currency`/`Money` 私有字段；`new` 拒 `> MAX_SCALE` |
 | D-11 | 校验型 serde | PASS | `Deserialize` → `try_new`；非法 scale/currency 失败 |
@@ -110,6 +115,7 @@ canonical  →  decimalx  →  kernel
 | C-12 | 双向 golden / N-1 / 拒绝样例 | PASS | `wire` 单元测 + `fixtures/market/canonical/v1{,.1,.2,.3}/` |
 | C-13 | 未晋升类型诚实标注 | PASS | 公开市场 DTO 均已晋升；Money/alias 不在 committed 清单（wire SSOT 在 decimalx / alias） |
 | C-14 | `[lints] workspace = true` | PASS | `Cargo.toml` |
+| C-15 | `schema_version` envelope | **PASS** | `src/envelope.rs` · `Envelope::wrap/expect_version` · unit + public_api_surface |
 
 ## 与镜像文档的关系
 
@@ -119,17 +125,27 @@ canonical  →  decimalx  →  kernel
 - 生产就绪审计跟进：[docs/report/2026-07-21/core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) §11
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
 
-## 未做（follow-up / OPEN / DEFER）
+## OBJECTIVE 处置（2026-07-22 defer-close）
 
-- decimal：full productized fuzz；wire 跨版本 stable 协议；package stable
-- decimal：oracle / boundary / panicking 门禁 **已有**（#121）；scheduled mutants/miri **有 CI**，非每次 PR 阻断
-- canonical：package stable / 跨语言 wire 协议 / envelope；镜像 `wire-commitment-matrix.md` 与实现清单同步（上游 R6）
+| 项 | 前状态 | 现状态 | 证据 |
+|----|--------|--------|------|
+| decimal wire 跨版本 stable | DEFER | **PASS（声明层）** | `WIRE_SCHEMA_VERSION` + `docs/WIRE.md`；破坏性字段变更须升版本 |
+| panicking 算子仍公开 | DEFER | **PASS** | `panicking-ops` feature default off |
+| canonical schema_version envelope | DEFER | **PASS** | `crates/types/canonical/src/envelope.rs` |
+
+## 未做（follow-up / 诚实边界）
+
+- decimal：full productized fuzz；跨语言 multi-major wire 产品协议；package stable
+- decimal：oracle / boundary 门禁 **已有**（#121）；scheduled mutants/miri **有 CI**，非每次 PR 阻断
+- canonical：package stable / 跨语言 wire 产品协议；镜像 `wire-commitment-matrix.md` 与实现清单同步（上游 R6）
 - 上游 SSOT 镜像措辞收口（应在 xhyper.rs 修，再删除感知同步）
+- **Agent L5 / Production Ready 人签** — 未填
 
 ## 变更记录
 
 | 日期 | 说明 |
 |------|------|
+| 2026-07-22 | **defer-close**：WIRE_SCHEMA_VERSION / panicking-ops gate / Envelope PASS |
 | 2026-07-21 | 初版：decimal + canonical 本仓落地状态；配合移除 `infra-core` 后的 workspace 地图 |
 | 2026-07-21 | 生产就绪闭合：字段私有 / DecimalError / committed wire v1 / Uncommitted 标注；同步 PR #98 |
 | 2026-07-21 | PR #98 合入 main：本对齐文随主干生效 |

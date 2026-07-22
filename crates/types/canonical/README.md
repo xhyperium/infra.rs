@@ -23,6 +23,7 @@
 - 枚举：`OrderStatus` / `Side`
 - DTO：`Order` / `OrderAck` / `OrderBookSnapshot` / `Position` / `SymbolMeta` / `Tick` / `Trade` / `PriceLevel`
 - 辅助：`shape`（形状检查）、`proposed_time`（ns↔ms）、`wire`（承诺等级）
+- 信封：`Envelope<T>`（`schema_version` + `payload`；无业务校验）
 - **时间**：DTO `ts: i64` = Unix epoch **纳秒**（CAN-TIME-001）
 
 ## Committed wire 清单

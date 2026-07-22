@@ -11,6 +11,9 @@
 |------|------|
 | `VenueId` / `InstrumentId` | `String` 别名 |
 | `Money` | `decimalx::Money` re-export（wire SSOT 在 decimalx） |
+| `Envelope<T>` | `schema_version` + `payload` 通用信封（无业务校验） |
+| `ENVELOPE_SCHEMA_VERSION` / `CURRENT_PAYLOAD_SCHEMA_VERSION` | 均为 `1` |
+| `EnvelopeVersionError` | 版本不匹配错误 |
 
 ### DTO / 枚举
 

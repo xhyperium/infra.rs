@@ -1,10 +1,10 @@
 [package]
 name = "configx"
-version = "0.1.0"
+version = "0.1.1"
 publish = false
 edition.workspace = true
 rust-version.workspace = true
-description = "L1 in-memory string key-value config store (active configx 0.1.0 contract)"
+description = "L1 config store: memory KV + multi-source merge + watch + secret redaction"
 license.workspace = true
 repository.workspace = true
 

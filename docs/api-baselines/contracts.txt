@@ -1,4 +1,82 @@
 pub mod contracts
+pub mod contracts::live
+pub struct contracts::live::AckedMessage
+pub contracts::live::AckedMessage::ack: contracts::MessageAck
+pub contracts::live::AckedMessage::message: contracts::BusMessage
+impl core::clone::Clone for contracts::live::AckedMessage
+pub fn contracts::live::AckedMessage::clone(&self) -> contracts::live::AckedMessage
+impl core::cmp::Eq for contracts::live::AckedMessage
+impl core::cmp::PartialEq for contracts::live::AckedMessage
+pub fn contracts::live::AckedMessage::eq(&self, &contracts::live::AckedMessage) -> bool
+impl core::fmt::Debug for contracts::live::AckedMessage
+pub fn contracts::live::AckedMessage::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for contracts::live::AckedMessage
+impl !core::marker::Freeze for contracts::live::AckedMessage
+impl core::marker::Send for contracts::live::AckedMessage
+impl core::marker::Sync for contracts::live::AckedMessage
+impl core::marker::Unpin for contracts::live::AckedMessage
+impl core::marker::UnsafeUnpin for contracts::live::AckedMessage
+impl core::panic::unwind_safe::RefUnwindSafe for contracts::live::AckedMessage
+impl core::panic::unwind_safe::UnwindSafe for contracts::live::AckedMessage
+pub struct contracts::live::LiveContractProfile
+pub contracts::live::LiveContractProfile::account: bool
+pub contracts::live::LiveContractProfile::bus: bool
+pub contracts::live::LiveContractProfile::kv: bool
+pub contracts::live::LiveContractProfile::repo: bool
+pub contracts::live::LiveContractProfile::tx: bool
+pub contracts::live::LiveContractProfile::venue: bool
+pub contracts::live::LiveContractProfile::venue_time: bool
+impl contracts::live::LiveContractProfile
+pub const fn contracts::live::LiveContractProfile::all() -> Self
+pub const fn contracts::live::LiveContractProfile::any(self) -> bool
+pub fn contracts::live::LiveContractProfile::enabled_count(self) -> usize
+pub const fn contracts::live::LiveContractProfile::first_batch_kv() -> Self
+pub const fn contracts::live::LiveContractProfile::none() -> Self
+pub const fn contracts::live::LiveContractProfile::storage_stack() -> Self
+pub const fn contracts::live::LiveContractProfile::venue_stack() -> Self
+impl core::clone::Clone for contracts::live::LiveContractProfile
+pub fn contracts::live::LiveContractProfile::clone(&self) -> contracts::live::LiveContractProfile
+impl core::cmp::Eq for contracts::live::LiveContractProfile
+impl core::cmp::PartialEq for contracts::live::LiveContractProfile
+pub fn contracts::live::LiveContractProfile::eq(&self, &contracts::live::LiveContractProfile) -> bool
+impl core::default::Default for contracts::live::LiveContractProfile
+pub fn contracts::live::LiveContractProfile::default() -> contracts::live::LiveContractProfile
+impl core::fmt::Debug for contracts::live::LiveContractProfile
+pub fn contracts::live::LiveContractProfile::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for contracts::live::LiveContractProfile
+impl core::marker::StructuralPartialEq for contracts::live::LiveContractProfile
+impl core::marker::Freeze for contracts::live::LiveContractProfile
+impl core::marker::Send for contracts::live::LiveContractProfile
+impl core::marker::Sync for contracts::live::LiveContractProfile
+impl core::marker::Unpin for contracts::live::LiveContractProfile
+impl core::marker::UnsafeUnpin for contracts::live::LiveContractProfile
+impl core::panic::unwind_safe::RefUnwindSafe for contracts::live::LiveContractProfile
+impl core::panic::unwind_safe::UnwindSafe for contracts::live::LiveContractProfile
+pub struct contracts::live::LiveHandles<'a>
+pub contracts::live::LiveHandles::bus: core::option::Option<&'a dyn contracts::EventBus>
+pub contracts::live::LiveHandles::kv: core::option::Option<&'a dyn contracts::KeyValueStore>
+pub contracts::live::LiveHandles::profile: contracts::live::LiveContractProfile
+pub contracts::live::LiveHandles::tx: core::option::Option<&'a dyn contracts::TxRunner>
+pub contracts::live::LiveHandles::venue: core::option::Option<&'a dyn contracts::ExecutionVenue>
+impl<'a> contracts::live::LiveHandles<'a>
+pub fn contracts::live::LiveHandles<'a>::empty(contracts::live::LiveContractProfile) -> Self
+pub fn contracts::live::LiveHandles<'a>::validate(&self) -> kernel::error::XResult<()>
+impl<'a> core::marker::Freeze for contracts::live::LiveHandles<'a>
+impl<'a> core::marker::Send for contracts::live::LiveHandles<'a>
+impl<'a> core::marker::Sync for contracts::live::LiveHandles<'a>
+impl<'a> core::marker::Unpin for contracts::live::LiveHandles<'a>
+impl<'a> core::marker::UnsafeUnpin for contracts::live::LiveHandles<'a>
+impl<'a> !core::panic::unwind_safe::RefUnwindSafe for contracts::live::LiveHandles<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for contracts::live::LiveHandles<'a>
+pub fn contracts::live::apply_ack(contracts::BusMessage, contracts::MessageAck) -> contracts::live::AckedMessage
+pub async fn contracts::live::bus_publish(&dyn contracts::EventBus, &str, bytes::bytes::Bytes) -> kernel::error::XResult<()>
+pub async fn contracts::live::kv_roundtrip(&dyn contracts::KeyValueStore, &str, &[u8]) -> kernel::error::XResult<()>
+pub async fn contracts::live::kv_set_ttl(&dyn contracts::KeyValueStore, &str, alloc::vec::Vec<u8>, core::option::Option<core::time::Duration>) -> kernel::error::XResult<()>
+pub async fn contracts::live::repo_roundtrip<T, Id>(&dyn contracts::Repository<T, Id>, Id, &T) -> kernel::error::XResult<core::option::Option<T>> where T: core::clone::Clone + core::marker::Send + core::marker::Sync, Id: core::marker::Send
+pub async fn contracts::live::run_on_tx_context<R, F, Fut>(&mut dyn contracts::TxContext, F) -> kernel::error::XResult<R> where F: core::ops::function::FnOnce() -> Fut + core::marker::Send, Fut: core::future::future::Future<Output = kernel::error::XResult<R>> + core::marker::Send, R: core::marker::Send
+pub async fn contracts::live::tx_kv_set(&dyn contracts::TxRunner, alloc::sync::Arc<dyn contracts::KeyValueStore>, alloc::string::String, alloc::vec::Vec<u8>) -> kernel::error::XResult<()>
+pub async fn contracts::live::venue_health(&dyn contracts::AccountSource, &dyn contracts::VenueTimeSource) -> kernel::error::XResult<(usize, i64)>
+pub async fn contracts::live::venue_place_and_query(&dyn contracts::ExecutionVenue, &canonical::Order, &canonical::CancelOrderRequest) -> kernel::error::XResult<(canonical::OrderAck, canonical::OrderStatus)>
 pub enum contracts::MessageAck
 pub contracts::MessageAck::Ack
 pub contracts::MessageAck::Nack
@@ -18,6 +96,24 @@ impl core::marker::Unpin for contracts::MessageAck
 impl core::marker::UnsafeUnpin for contracts::MessageAck
 impl core::panic::unwind_safe::RefUnwindSafe for contracts::MessageAck
 impl core::panic::unwind_safe::UnwindSafe for contracts::MessageAck
+pub struct contracts::AckedMessage
+pub contracts::AckedMessage::ack: contracts::MessageAck
+pub contracts::AckedMessage::message: contracts::BusMessage
+impl core::clone::Clone for contracts::live::AckedMessage
+pub fn contracts::live::AckedMessage::clone(&self) -> contracts::live::AckedMessage
+impl core::cmp::Eq for contracts::live::AckedMessage
+impl core::cmp::PartialEq for contracts::live::AckedMessage
+pub fn contracts::live::AckedMessage::eq(&self, &contracts::live::AckedMessage) -> bool
+impl core::fmt::Debug for contracts::live::AckedMessage
+pub fn contracts::live::AckedMessage::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for contracts::live::AckedMessage
+impl !core::marker::Freeze for contracts::live::AckedMessage
+impl core::marker::Send for contracts::live::AckedMessage
+impl core::marker::Sync for contracts::live::AckedMessage
+impl core::marker::Unpin for contracts::live::AckedMessage
+impl core::marker::UnsafeUnpin for contracts::live::AckedMessage
+impl core::panic::unwind_safe::RefUnwindSafe for contracts::live::AckedMessage
+impl core::panic::unwind_safe::UnwindSafe for contracts::live::AckedMessage
 pub struct contracts::BusMessage
 pub contracts::BusMessage::id: alloc::string::String
 pub contracts::BusMessage::payload: bytes::bytes::Bytes
@@ -36,6 +132,56 @@ impl core::marker::Unpin for contracts::BusMessage
 impl core::marker::UnsafeUnpin for contracts::BusMessage
 impl core::panic::unwind_safe::RefUnwindSafe for contracts::BusMessage
 impl core::panic::unwind_safe::UnwindSafe for contracts::BusMessage
+pub struct contracts::LiveContractProfile
+pub contracts::LiveContractProfile::account: bool
+pub contracts::LiveContractProfile::bus: bool
+pub contracts::LiveContractProfile::kv: bool
+pub contracts::LiveContractProfile::repo: bool
+pub contracts::LiveContractProfile::tx: bool
+pub contracts::LiveContractProfile::venue: bool
+pub contracts::LiveContractProfile::venue_time: bool
+impl contracts::live::LiveContractProfile
+pub const fn contracts::live::LiveContractProfile::all() -> Self
+pub const fn contracts::live::LiveContractProfile::any(self) -> bool
+pub fn contracts::live::LiveContractProfile::enabled_count(self) -> usize
+pub const fn contracts::live::LiveContractProfile::first_batch_kv() -> Self
+pub const fn contracts::live::LiveContractProfile::none() -> Self
+pub const fn contracts::live::LiveContractProfile::storage_stack() -> Self
+pub const fn contracts::live::LiveContractProfile::venue_stack() -> Self
+impl core::clone::Clone for contracts::live::LiveContractProfile
+pub fn contracts::live::LiveContractProfile::clone(&self) -> contracts::live::LiveContractProfile
+impl core::cmp::Eq for contracts::live::LiveContractProfile
+impl core::cmp::PartialEq for contracts::live::LiveContractProfile
+pub fn contracts::live::LiveContractProfile::eq(&self, &contracts::live::LiveContractProfile) -> bool
+impl core::default::Default for contracts::live::LiveContractProfile
+pub fn contracts::live::LiveContractProfile::default() -> contracts::live::LiveContractProfile
+impl core::fmt::Debug for contracts::live::LiveContractProfile
+pub fn contracts::live::LiveContractProfile::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for contracts::live::LiveContractProfile
+impl core::marker::StructuralPartialEq for contracts::live::LiveContractProfile
+impl core::marker::Freeze for contracts::live::LiveContractProfile
+impl core::marker::Send for contracts::live::LiveContractProfile
+impl core::marker::Sync for contracts::live::LiveContractProfile
+impl core::marker::Unpin for contracts::live::LiveContractProfile
+impl core::marker::UnsafeUnpin for contracts::live::LiveContractProfile
+impl core::panic::unwind_safe::RefUnwindSafe for contracts::live::LiveContractProfile
+impl core::panic::unwind_safe::UnwindSafe for contracts::live::LiveContractProfile
+pub struct contracts::LiveHandles<'a>
+pub contracts::LiveHandles::bus: core::option::Option<&'a dyn contracts::EventBus>
+pub contracts::LiveHandles::kv: core::option::Option<&'a dyn contracts::KeyValueStore>
+pub contracts::LiveHandles::profile: contracts::live::LiveContractProfile
+pub contracts::LiveHandles::tx: core::option::Option<&'a dyn contracts::TxRunner>
+pub contracts::LiveHandles::venue: core::option::Option<&'a dyn contracts::ExecutionVenue>
+impl<'a> contracts::live::LiveHandles<'a>
+pub fn contracts::live::LiveHandles<'a>::empty(contracts::live::LiveContractProfile) -> Self
+pub fn contracts::live::LiveHandles<'a>::validate(&self) -> kernel::error::XResult<()>
+impl<'a> core::marker::Freeze for contracts::live::LiveHandles<'a>
+impl<'a> core::marker::Send for contracts::live::LiveHandles<'a>
+impl<'a> core::marker::Sync for contracts::live::LiveHandles<'a>
+impl<'a> core::marker::Unpin for contracts::live::LiveHandles<'a>
+impl<'a> core::marker::UnsafeUnpin for contracts::live::LiveHandles<'a>
+impl<'a> !core::panic::unwind_safe::RefUnwindSafe for contracts::live::LiveHandles<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for contracts::live::LiveHandles<'a>
 pub const contracts::VENUE_CANCEL_REQUEST_DEFAULT_MSG: &str
 pub const contracts::VENUE_QUERY_REQUEST_DEFAULT_MSG: &str
 pub trait contracts::AccountSource: core::marker::Send + core::marker::Sync
@@ -99,6 +245,15 @@ pub fn contracts::VenueAdapter::symbol_info<'life0, 'life1, 'async_trait>(&'life
 pub fn contracts::VenueAdapter::venue_id(&self) -> &'static str
 pub trait contracts::VenueTimeSource: core::marker::Send + core::marker::Sync
 pub fn contracts::VenueTimeSource::server_time<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<i64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn contracts::apply_ack(contracts::BusMessage, contracts::MessageAck) -> contracts::live::AckedMessage
+pub async fn contracts::bus_publish(&dyn contracts::EventBus, &str, bytes::bytes::Bytes) -> kernel::error::XResult<()>
 pub fn contracts::is_default_cancel_order_request_error(&kernel::error::XError) -> bool
 pub fn contracts::is_default_query_order_request_error(&kernel::error::XError) -> bool
+pub async fn contracts::kv_roundtrip(&dyn contracts::KeyValueStore, &str, &[u8]) -> kernel::error::XResult<()>
+pub async fn contracts::kv_set_ttl(&dyn contracts::KeyValueStore, &str, alloc::vec::Vec<u8>, core::option::Option<core::time::Duration>) -> kernel::error::XResult<()>
+pub async fn contracts::repo_roundtrip<T, Id>(&dyn contracts::Repository<T, Id>, Id, &T) -> kernel::error::XResult<core::option::Option<T>> where T: core::clone::Clone + core::marker::Send + core::marker::Sync, Id: core::marker::Send
+pub async fn contracts::run_on_tx_context<R, F, Fut>(&mut dyn contracts::TxContext, F) -> kernel::error::XResult<R> where F: core::ops::function::FnOnce() -> Fut + core::marker::Send, Fut: core::future::future::Future<Output = kernel::error::XResult<R>> + core::marker::Send, R: core::marker::Send
 pub async fn contracts::run_tx_commit_on_ok<R, F, Fut>(&dyn contracts::TxRunner, F) -> kernel::error::XResult<R> where F: core::ops::function::FnOnce(&mut dyn contracts::TxContext) -> Fut + core::marker::Send, Fut: core::future::future::Future<Output = kernel::error::XResult<R>> + core::marker::Send, R: core::marker::Send
+pub async fn contracts::tx_kv_set(&dyn contracts::TxRunner, alloc::sync::Arc<dyn contracts::KeyValueStore>, alloc::string::String, alloc::vec::Vec<u8>) -> kernel::error::XResult<()>
+pub async fn contracts::venue_health(&dyn contracts::AccountSource, &dyn contracts::VenueTimeSource) -> kernel::error::XResult<(usize, i64)>
+pub async fn contracts::venue_place_and_query(&dyn contracts::ExecutionVenue, &canonical::Order, &canonical::CancelOrderRequest) -> kernel::error::XResult<(canonical::OrderAck, canonical::OrderStatus)>

@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-22 — DEFER close: IntegrationHarness
+
+### Added
+
+- `IntegrationHarness`：基于 `ManualClock` 的多步确定性集成 harness
+  （`step` / `step_advance_wall` / `step_advance_monotonic` / `run` / 断言辅助）
+- `StepRecord` 结果记录；`dyn Clock` 经 `clock()` 访问内部 `ManualClock`
+- unit 测试覆盖成功路径、首失败中止、空 run、缓存 re-run
+
 ## [0.1.1] - 2026-07-21 — four-crate production tranche（test-support L1）
 
 ### Added

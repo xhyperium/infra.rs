@@ -2,9 +2,10 @@
 
 use canonical::{
     COMMITTED_WIRE_V1, COMMITTED_WIRE_V1_1, COMMITTED_WIRE_V1_2, COMMITTED_WIRE_V1_3,
-    CancelOrderRequest, InstrumentId, Money, Order, OrderAck, OrderBookSnapshot, OrderRef,
-    OrderStatus, PROPOSED_TS_UNIT, Position, PriceLevel, Side, SymbolMeta, TS_UNIT, Tick, Trade,
-    VenueId, WireCommitment, cancel_request_shape_ok, dto_ts_from_unix_millis, is_nonempty_token,
+    CURRENT_PAYLOAD_SCHEMA_VERSION, CancelOrderRequest, ENVELOPE_SCHEMA_VERSION, Envelope,
+    InstrumentId, Money, Order, OrderAck, OrderBookSnapshot, OrderRef, OrderStatus,
+    PROPOSED_TS_UNIT, Position, PriceLevel, Side, SymbolMeta, TS_UNIT, Tick, Trade, VenueId,
+    WireCommitment, cancel_request_shape_ok, dto_ts_from_unix_millis, is_nonempty_token,
     is_plausible_instrument_id, is_plausible_venue_slug, ns_from_unix_millis,
     order_ref_payload_nonempty, proposed_dto_ts_from_unix_millis, proposed_ns_from_unix_millis,
     proposed_unix_millis_from_ns, unix_millis_from_ns, wire_commitment,
@@ -76,6 +77,15 @@ fn shape_and_time_and_wire_surface() {
     let money = Money::try_new(Decimal::new(1, 0), ccy).unwrap();
     assert_eq!(money.amount().mantissa(), 1);
     assert_roundtrip(&money);
+
+    // Envelope 公开面
+    assert_eq!(ENVELOPE_SCHEMA_VERSION, 1);
+    assert_eq!(CURRENT_PAYLOAD_SCHEMA_VERSION, 1);
+    let env =
+        Envelope::wrap_current(OrderAck { id: "e1".into(), status: OrderStatus::Open, ts: 9 });
+    assert_eq!(env.schema_version, 1);
+    assert_roundtrip(&env);
+    assert_eq!(env.validate_version(1).unwrap().id, "e1");
 }
 
 #[test]

@@ -4,7 +4,7 @@ version = "0.1.1"
 publish = false
 edition.workspace = true
 rust-version.workspace = true
-description = "L1 unified network client abstraction (HTTP/WS; SSOT infra/transport)"
+description = "L1 HTTP/WS transport with TLS mode, client pool, and proxy config"
 license.workspace = true
 repository.workspace = true
 

@@ -1,5 +1,57 @@
 pub mod canonical
 pub use canonical::Money
+pub mod canonical::envelope
+pub struct canonical::envelope::Envelope<T>
+pub canonical::envelope::Envelope::payload: T
+pub canonical::envelope::Envelope::schema_version: u32
+impl<T> canonical::envelope::Envelope<T>
+pub fn canonical::envelope::Envelope<T>::into_payload_if_version(self, u32) -> core::result::Result<T, canonical::envelope::EnvelopeVersionError>
+pub fn canonical::envelope::Envelope<T>::validate_version(&self, u32) -> core::result::Result<&T, canonical::envelope::EnvelopeVersionError>
+pub fn canonical::envelope::Envelope<T>::wrap(u32, T) -> Self
+pub fn canonical::envelope::Envelope<T>::wrap_current(T) -> Self
+impl<'de, T> serde_core::de::Deserialize<'de> for canonical::envelope::Envelope<T> where T: serde_core::de::Deserialize<'de>
+pub fn canonical::envelope::Envelope<T>::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl<T: core::clone::Clone> core::clone::Clone for canonical::envelope::Envelope<T>
+pub fn canonical::envelope::Envelope<T>::clone(&self) -> canonical::envelope::Envelope<T>
+impl<T: core::cmp::Eq> core::cmp::Eq for canonical::envelope::Envelope<T>
+impl<T: core::cmp::PartialEq> core::cmp::PartialEq for canonical::envelope::Envelope<T>
+pub fn canonical::envelope::Envelope<T>::eq(&self, &canonical::envelope::Envelope<T>) -> bool
+impl<T: core::cmp::PartialEq> core::marker::StructuralPartialEq for canonical::envelope::Envelope<T>
+impl<T: core::fmt::Debug> core::fmt::Debug for canonical::envelope::Envelope<T>
+pub fn canonical::envelope::Envelope<T>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T> serde_core::ser::Serialize for canonical::envelope::Envelope<T> where T: serde_core::ser::Serialize
+pub fn canonical::envelope::Envelope<T>::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<T> core::marker::Freeze for canonical::envelope::Envelope<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for canonical::envelope::Envelope<T> where T: core::marker::Send
+impl<T> core::marker::Sync for canonical::envelope::Envelope<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for canonical::envelope::Envelope<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for canonical::envelope::Envelope<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for canonical::envelope::Envelope<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for canonical::envelope::Envelope<T> where T: core::panic::unwind_safe::UnwindSafe
+pub struct canonical::envelope::EnvelopeVersionError
+pub canonical::envelope::EnvelopeVersionError::actual: u32
+pub canonical::envelope::EnvelopeVersionError::expected: u32
+impl core::clone::Clone for canonical::envelope::EnvelopeVersionError
+pub fn canonical::envelope::EnvelopeVersionError::clone(&self) -> canonical::envelope::EnvelopeVersionError
+impl core::cmp::Eq for canonical::envelope::EnvelopeVersionError
+impl core::cmp::PartialEq for canonical::envelope::EnvelopeVersionError
+pub fn canonical::envelope::EnvelopeVersionError::eq(&self, &canonical::envelope::EnvelopeVersionError) -> bool
+impl core::error::Error for canonical::envelope::EnvelopeVersionError
+impl core::fmt::Debug for canonical::envelope::EnvelopeVersionError
+pub fn canonical::envelope::EnvelopeVersionError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for canonical::envelope::EnvelopeVersionError
+pub fn canonical::envelope::EnvelopeVersionError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for canonical::envelope::EnvelopeVersionError
+impl core::marker::StructuralPartialEq for canonical::envelope::EnvelopeVersionError
+impl core::marker::Freeze for canonical::envelope::EnvelopeVersionError
+impl core::marker::Send for canonical::envelope::EnvelopeVersionError
+impl core::marker::Sync for canonical::envelope::EnvelopeVersionError
+impl core::marker::Unpin for canonical::envelope::EnvelopeVersionError
+impl core::marker::UnsafeUnpin for canonical::envelope::EnvelopeVersionError
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::envelope::EnvelopeVersionError
+impl core::panic::unwind_safe::UnwindSafe for canonical::envelope::EnvelopeVersionError
+pub const canonical::envelope::CURRENT_PAYLOAD_SCHEMA_VERSION: u32
+pub const canonical::envelope::ENVELOPE_SCHEMA_VERSION: u32
 pub mod canonical::proposed_time
 pub const canonical::proposed_time::TS_UNIT: &str
 pub fn canonical::proposed_time::dto_ts_from_unix_millis(i64) -> core::option::Option<i64>
@@ -153,6 +205,55 @@ impl core::marker::Unpin for canonical::CancelOrderRequest
 impl core::marker::UnsafeUnpin for canonical::CancelOrderRequest
 impl core::panic::unwind_safe::RefUnwindSafe for canonical::CancelOrderRequest
 impl core::panic::unwind_safe::UnwindSafe for canonical::CancelOrderRequest
+pub struct canonical::Envelope<T>
+pub canonical::Envelope::payload: T
+pub canonical::Envelope::schema_version: u32
+impl<T> canonical::envelope::Envelope<T>
+pub fn canonical::envelope::Envelope<T>::into_payload_if_version(self, u32) -> core::result::Result<T, canonical::envelope::EnvelopeVersionError>
+pub fn canonical::envelope::Envelope<T>::validate_version(&self, u32) -> core::result::Result<&T, canonical::envelope::EnvelopeVersionError>
+pub fn canonical::envelope::Envelope<T>::wrap(u32, T) -> Self
+pub fn canonical::envelope::Envelope<T>::wrap_current(T) -> Self
+impl<'de, T> serde_core::de::Deserialize<'de> for canonical::envelope::Envelope<T> where T: serde_core::de::Deserialize<'de>
+pub fn canonical::envelope::Envelope<T>::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl<T: core::clone::Clone> core::clone::Clone for canonical::envelope::Envelope<T>
+pub fn canonical::envelope::Envelope<T>::clone(&self) -> canonical::envelope::Envelope<T>
+impl<T: core::cmp::Eq> core::cmp::Eq for canonical::envelope::Envelope<T>
+impl<T: core::cmp::PartialEq> core::cmp::PartialEq for canonical::envelope::Envelope<T>
+pub fn canonical::envelope::Envelope<T>::eq(&self, &canonical::envelope::Envelope<T>) -> bool
+impl<T: core::cmp::PartialEq> core::marker::StructuralPartialEq for canonical::envelope::Envelope<T>
+impl<T: core::fmt::Debug> core::fmt::Debug for canonical::envelope::Envelope<T>
+pub fn canonical::envelope::Envelope<T>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T> serde_core::ser::Serialize for canonical::envelope::Envelope<T> where T: serde_core::ser::Serialize
+pub fn canonical::envelope::Envelope<T>::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<T> core::marker::Freeze for canonical::envelope::Envelope<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for canonical::envelope::Envelope<T> where T: core::marker::Send
+impl<T> core::marker::Sync for canonical::envelope::Envelope<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for canonical::envelope::Envelope<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for canonical::envelope::Envelope<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for canonical::envelope::Envelope<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for canonical::envelope::Envelope<T> where T: core::panic::unwind_safe::UnwindSafe
+pub struct canonical::EnvelopeVersionError
+pub canonical::EnvelopeVersionError::actual: u32
+pub canonical::EnvelopeVersionError::expected: u32
+impl core::clone::Clone for canonical::envelope::EnvelopeVersionError
+pub fn canonical::envelope::EnvelopeVersionError::clone(&self) -> canonical::envelope::EnvelopeVersionError
+impl core::cmp::Eq for canonical::envelope::EnvelopeVersionError
+impl core::cmp::PartialEq for canonical::envelope::EnvelopeVersionError
+pub fn canonical::envelope::EnvelopeVersionError::eq(&self, &canonical::envelope::EnvelopeVersionError) -> bool
+impl core::error::Error for canonical::envelope::EnvelopeVersionError
+impl core::fmt::Debug for canonical::envelope::EnvelopeVersionError
+pub fn canonical::envelope::EnvelopeVersionError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for canonical::envelope::EnvelopeVersionError
+pub fn canonical::envelope::EnvelopeVersionError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for canonical::envelope::EnvelopeVersionError
+impl core::marker::StructuralPartialEq for canonical::envelope::EnvelopeVersionError
+impl core::marker::Freeze for canonical::envelope::EnvelopeVersionError
+impl core::marker::Send for canonical::envelope::EnvelopeVersionError
+impl core::marker::Sync for canonical::envelope::EnvelopeVersionError
+impl core::marker::Unpin for canonical::envelope::EnvelopeVersionError
+impl core::marker::UnsafeUnpin for canonical::envelope::EnvelopeVersionError
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::envelope::EnvelopeVersionError
+impl core::panic::unwind_safe::UnwindSafe for canonical::envelope::EnvelopeVersionError
 pub struct canonical::Order
 pub canonical::Order::id: alloc::string::String
 pub canonical::Order::price: decimalx::Price
@@ -349,6 +450,8 @@ pub const canonical::COMMITTED_WIRE_V1: &[&str]
 pub const canonical::COMMITTED_WIRE_V1_1: &[&str]
 pub const canonical::COMMITTED_WIRE_V1_2: &[&str]
 pub const canonical::COMMITTED_WIRE_V1_3: &[&str]
+pub const canonical::CURRENT_PAYLOAD_SCHEMA_VERSION: u32
+pub const canonical::ENVELOPE_SCHEMA_VERSION: u32
 pub const canonical::TS_UNIT: &str
 pub fn canonical::cancel_request_shape_ok(&canonical::CancelOrderRequest) -> bool
 pub fn canonical::dto_ts_from_unix_millis(i64) -> core::option::Option<i64>

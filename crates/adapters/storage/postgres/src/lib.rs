@@ -33,6 +33,7 @@ mod tx;
 mod adapter;
 #[cfg(feature = "scaffold")]
 mod mock;
+mod resilience;
 
 pub use config::{
     DEFAULT_MAX_POOL_SIZE, DEFAULT_PORT, PostgresConfig, PostgresConfigBuilder, SslMode,
@@ -40,6 +41,7 @@ pub use config::{
 pub use conn::PgConnection;
 pub use error::{error_kind_from_sqlstate, map_pool_error, map_tokio_error, xerror_from_sqlstate};
 pub use pool::{PoolStats, PostgresPool};
+pub use resilience::{with_budget, with_budget_noop};
 pub use runner::PgTxRunner;
 pub use tx::{PgTransaction, TxState};
 
