@@ -128,6 +128,11 @@ ok(
   "crates 独立版本门禁脚本缺失",
 );
 ok("scripts/quality-gates/check-workspace-deps.mjs", exists("scripts/quality-gates/check-workspace-deps.mjs"), "依赖集中管理门禁脚本缺失");
+ok(
+  "scripts/quality-gates/check-test-support-graph.mjs",
+  exists("scripts/quality-gates/check-test-support-graph.mjs"),
+  "test-support 生产依赖图门禁脚本缺失",
+);
 
 // crates/ 独立版本 + path version 对齐（VERSIONING.md R-C1/R-C2）
 const crateVersionsCheck = run(
@@ -146,6 +151,16 @@ ok(
   "依赖集中管理门禁",
   wsDepsCheck.includes("PASS") && !wsDepsCheck.includes("FAIL"),
   wsDepsCheck.slice(0, 400) || "node scripts/quality-gates/check-workspace-deps.mjs 失败",
+);
+
+const testSupportGraphCheck = run(
+  "node scripts/quality-gates/check-test-support-graph.mjs 2>&1",
+  120000,
+);
+ok(
+  "test-support 生产依赖图门禁",
+  testSupportGraphCheck.includes("PASS") && !testSupportGraphCheck.includes("FAIL"),
+  testSupportGraphCheck.slice(0, 400) || "check-test-support-graph.mjs 失败",
 );
 
 // settings.json nice/timeout/fail-closed 门禁（与 validation.yml settings-hooks job 同源）
