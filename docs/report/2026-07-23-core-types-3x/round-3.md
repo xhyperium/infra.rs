@@ -44,3 +44,4 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
 - 对 `c27b7ce` 的最终聚合审查发现五项真实缺口：crate 专用错误未用 `thiserror`、HAR-04 未用 marker 证明 panic 后停止、decimal source 未断言类型身份、三个公开方法缺少行为测试、并发 reader loop 可能零次重叠。工作树已按测试先行闭合这些缺口；旧 evidence 与 reviewer GO 均不继承，新内容 SHA 固定前保持 NO-GO。
 - 阻断修复候选 `f26e29c` 的全仓与四域机器门禁已全部退出 0，见 [`evidence/r3-hardening-green.txt`](evidence/r3-hardening-green.txt)；独立复审完成前仍不恢复 GO。
 - 最终 verifier 随后发现 testkit alignment 的事实摘要仍残留 `prod deps kernel only`；已按 Cargo 与 active spec 校正为 `kernel, thiserror`。该文档改动使 `f26e29c` 不再是最终内容候选，必须重新固定 SHA 与复验。
+- 同轮 Standards 复核还发现 `IntegrationHarness::run` 缺少组织 Rust P1 要求的 `# Errors`；修复扩展到 testkit 全部公开 fallible API，逐项写明 typed error 条件。

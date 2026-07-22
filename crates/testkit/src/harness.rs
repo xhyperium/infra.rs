@@ -307,6 +307,11 @@ impl IntegrationHarness {
     }
 
     /// 按登记顺序执行全部步骤；首个失败或 panic 立即终止。
+    ///
+    /// # Errors
+    ///
+    /// step 前后快照不可用、存在墙钟 fault、step 返回错误或发生 panic 时返回
+    /// [`HarnessRunError`]；错误始终保留 terminal report，并在存在原始错误时保留 source chain。
     pub fn run(mut self) -> Result<HarnessReport, HarnessRunError> {
         let steps = std::mem::take(&mut self.steps);
         let mut records = Vec::with_capacity(steps.len());

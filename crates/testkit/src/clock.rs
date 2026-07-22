@@ -132,6 +132,10 @@ impl ManualClock {
     }
 
     /// 直接设置墙钟；失败不修改状态。
+    ///
+    /// # Errors
+    ///
+    /// 状态锁已中毒时返回 [`ManualClockError::Synchronization`]。
     pub fn set_wall(&self, wall: Timestamp) -> Result<(), ManualClockError> {
         let mut g = self.lock()?;
         g.wall = wall;
@@ -139,6 +143,11 @@ impl ManualClock {
     }
 
     /// 墙钟前进（checked）；失败不修改状态。
+    ///
+    /// # Errors
+    ///
+    /// 结果超出 [`Timestamp`] 范围时返回 [`ManualClockError::WallOverflow`]；状态锁已中毒时返回
+    /// [`ManualClockError::Synchronization`]。
     pub fn advance_wall(&self, delta: Duration) -> Result<Timestamp, ManualClockError> {
         let mut g = self.lock()?;
         let next = g.wall.checked_add(delta).ok_or(ManualClockError::WallOverflow)?;
@@ -147,6 +156,11 @@ impl ManualClock {
     }
 
     /// 墙钟回退（checked）；允许回拨；失败不修改状态。
+    ///
+    /// # Errors
+    ///
+    /// 结果超出 [`Timestamp`] 范围时返回 [`ManualClockError::WallOverflow`]；状态锁已中毒时返回
+    /// [`ManualClockError::Synchronization`]。
     pub fn rewind_wall(&self, delta: Duration) -> Result<Timestamp, ManualClockError> {
         let mut g = self.lock()?;
         let next = g.wall.checked_sub(delta).ok_or(ManualClockError::WallOverflow)?;
@@ -155,6 +169,11 @@ impl ManualClock {
     }
 
     /// 设置单调流逝；新值严格小于当前值时返回 [`ManualClockError::MonotonicRegression`]。
+    ///
+    /// # Errors
+    ///
+    /// 新值回退时返回 [`ManualClockError::MonotonicRegression`]；状态锁已中毒时返回
+    /// [`ManualClockError::Synchronization`]。
     pub fn set_monotonic_elapsed(&self, elapsed: Duration) -> Result<(), ManualClockError> {
         let mut g = self.lock()?;
         if elapsed < g.monotonic_elapsed {
@@ -165,6 +184,11 @@ impl ManualClock {
     }
 
     /// 单调钟前进；失败不修改状态；不提供 rewind。
+    ///
+    /// # Errors
+    ///
+    /// 流逝时间溢出时返回 [`ManualClockError::MonotonicOverflow`]；状态锁已中毒时返回
+    /// [`ManualClockError::Synchronization`]。
     pub fn advance_monotonic(&self, delta: Duration) -> Result<MonotonicInstant, ManualClockError> {
         let mut g = self.lock()?;
         let next =
@@ -174,6 +198,10 @@ impl ManualClock {
     }
 
     /// 注入墙钟 fault；不改变已保存的 wall 值；不影响单调钟。
+    ///
+    /// # Errors
+    ///
+    /// 状态锁已中毒时返回 [`ManualClockError::Synchronization`]。
     pub fn set_wall_fault(&self, fault: ManualClockFault) -> Result<(), ManualClockError> {
         let mut g = self.lock()?;
         g.wall_fault = Some(fault);
@@ -181,6 +209,10 @@ impl ManualClock {
     }
 
     /// 清除墙钟 fault。
+    ///
+    /// # Errors
+    ///
+    /// 状态锁已中毒时返回 [`ManualClockError::Synchronization`]。
     pub fn clear_wall_fault(&self) -> Result<(), ManualClockError> {
         let mut g = self.lock()?;
         g.wall_fault = None;
@@ -188,12 +220,20 @@ impl ManualClock {
     }
 
     /// 当前墙钟 fault。
+    ///
+    /// # Errors
+    ///
+    /// 状态锁已中毒时返回 [`ManualClockError::Synchronization`]。
     pub fn wall_fault(&self) -> Result<Option<ManualClockFault>, ManualClockError> {
         let g = self.lock()?;
         Ok(g.wall_fault)
     }
 
     /// 一致快照（同锁读取全部字段）。
+    ///
+    /// # Errors
+    ///
+    /// 状态锁已中毒时返回 [`ManualClockError::Synchronization`]。
     pub fn snapshot(&self) -> Result<ManualClockSnapshot, ManualClockError> {
         let g = self.lock()?;
         Ok(ManualClockSnapshot {
