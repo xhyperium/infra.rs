@@ -122,6 +122,22 @@ ok(
   exists("scripts/quality-gates/check-settings-hooks.mjs"),
   "settings hook 格式门禁缺失",
 );
+ok(
+  "scripts/quality-gates/check-crate-versions.mjs",
+  exists("scripts/quality-gates/check-crate-versions.mjs"),
+  "crates 独立版本门禁脚本缺失",
+);
+
+// crates/ 独立版本 + path version 对齐（VERSIONING.md R-C1/R-C2）
+const crateVersionsCheck = run(
+  "node scripts/quality-gates/check-crate-versions.mjs 2>&1",
+  120000,
+);
+ok(
+  "crates 独立版本门禁",
+  /\bPASS\b/.test(crateVersionsCheck) && !/\bFAIL\b/.test(crateVersionsCheck),
+  crateVersionsCheck.slice(0, 400) || "node scripts/quality-gates/check-crate-versions.mjs 失败",
+);
 
 // settings.json nice/timeout/fail-closed 门禁（与 validation.yml settings-hooks job 同源）
 const settingsHooksCheck = run("node scripts/quality-gates/check-settings-hooks.mjs 2>&1", 15000);

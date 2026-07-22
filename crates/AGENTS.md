@@ -36,7 +36,7 @@ crates/<crate-name>/
 
 | 路径 | 级别 | 职责 |
 |------|------|------|
-| `Cargo.toml` | 必选 | 包元数据、依赖、feature；版本跟 `workspace.package` |
+| `Cargo.toml` | 必选 | 包元数据、依赖、feature；**版本必须独立**（禁止 `version.workspace`，见 [VERSIONING.md](../docs/governance/VERSIONING.md) R-C1） |
 | `src/` | 必选 | 实现与单元测试（`#[cfg(test)] mod tests`） |
 | `tests/` | 必选目录 | 集成测试、跨模块契约、公开 API 稳定性 |
 | `docs/` | 必选目录 | 至少 `README.md`（入口索引 + 对齐链接）；设计笔记/API 契约/迁移；不替代 rustdoc |
@@ -60,12 +60,23 @@ crates/<crate-name>/
 ### 新增 crate 检查清单
 
 1. 在 `crates/<name>/` 按上表建齐骨架（含空目录的 `.gitkeep`）
-2. `Cargo.toml` 使用 `*.workspace = true` 对齐 workspace 元数据
+2. `Cargo.toml`：`edition` / `license` / `repository` / `rust-version` 可用 `*.workspace = true`；**`version` 必须显式独立**（默认 `0.1.0`）
 3. 在根 `Cargo.toml` 的 `workspace.members` 注册
 4. 编写 `README.md`（职责一句话 + 最小用法）
 5. 建立 `review/` 与 `releases/` 目录（暂无内容时 `.gitkeep`）
 6. 更新本文件「Crate 概览」表
 7. 更新 `ARCHITECTURE.md` 层次模型（如职责变更）
+8. 确认 `node scripts/quality-gates/check-crate-versions.mjs` 通过
+
+### 版本规则（强制，SSOT: [VERSIONING.md](../docs/governance/VERSIONING.md)）
+
+| 规则 | 要求 |
+|------|------|
+| **独立版本** | 每个 `crates/**` package 在自身 `Cargo.toml` 写 `version = "x.y.z"`；**禁止** `version.workspace = true` |
+| **统一更新** | 该 crate 每次交付性更新 → **PATCH +1**（`x.y.z` → `x.y.(z+1)`） |
+| **只 bump 变更 crate** | 禁止无关 crate 齐涨 |
+| **path 依赖** | `dep = { path = "...", version = "…" }` 的 version 必须与目标 package 一致 |
+| **工具** | `node scripts/version/crate-bump.mjs <name>`；门禁 `node scripts/quality-gates/check-crate-versions.mjs` |
 
 ### 合规现状（自动同步）
 

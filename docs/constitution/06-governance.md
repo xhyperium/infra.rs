@@ -89,6 +89,8 @@ cd .worktrees/feat/my-feature
 - 遵循语义化版本 [SemVer](https://semver.org/)
 - `0.x.y` 期间不保证向后兼容
 - `1.0.0` 后严格 SemVer
+- **`crates/` 每个子模块独立版本**（禁止 `version.workspace = true`）
+- **统一更新规则**：某 crate 每次交付性更新，默认 **PATCH +1**（`x.y.z` → `x.y.(z+1)`）；仅 bump 实际变更的 package
 - 统一版本管理细则见 [docs/governance/VERSIONING.md](../governance/VERSIONING.md)
 
 ## 6.3 所有权

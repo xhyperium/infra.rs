@@ -123,6 +123,18 @@ jobs:
       - name: 扫描生产路径 panicking Decimal 用法
         run: node scripts/quality-gates/check-decimal-no-panicking-ops.mjs
 
+  crate-versions:
+    name: crates 独立版本门禁
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: 校验 crates 独立 version + path 依赖对齐
+        run: node scripts/quality-gates/check-crate-versions.mjs
+
   settings-hooks:
     name: settings hooks 门禁
     runs-on: ubuntu-latest

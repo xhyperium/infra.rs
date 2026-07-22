@@ -15,6 +15,7 @@
 
 | 版本 | 日期 | 修订内容 |
 |------|------|----------|
+| v1.7.0 | 2026-07-22 | §6.2：`crates/` 强制独立版本；每次交付更新默认 PATCH +1（`x.y.z+1`）；细则见 VERSIONING.md R-C1/R-C2 |
 | v1.6.1 | 2026-07-21 | §4.0 SSOT 迁至 `xhyperium/.github` `rulesets/rust/`；接入组织复用 CI `ci-rust-*` 与 `setup-global-rules.sh` |
 | v1.6.0 | 2026-07-21 | 新增 §4.0：显式采纳组织《Rust 编码规范（完整版）v2.0》为上位全局标准；本仓仅可加严 |
 | v1.5.0 | 2026-07-21 | 正文拆分至 `docs/constitution/` 分章；根 `CONSTITUTION.md` 改为索引 |

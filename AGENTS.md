@@ -129,11 +129,13 @@ cargo fmt --all --check
 cargo clippy --workspace --all-features --all-targets -- -D warnings
 cargo deny check
 node scripts/quality-gates/check.mjs
+node scripts/quality-gates/check-crate-versions.mjs
 ```
 
 - **target-dir**：`.cargo/target/`
 - **alias**：`cargo xtask` → `infra-xtask`（crate 尚未添加时可忽略）
 - **突变测试输出**：`.cargo/cache/mutants/`
+- **Crate 版本**：`crates/` 每个 package **独立** `version`；交付更新默认 **PATCH +1**（`x.y.z → x.y.z+1`）。SSOT：[docs/governance/VERSIONING.md](./docs/governance/VERSIONING.md)；bump：`node scripts/version/crate-bump.mjs <name>`
 
 ## Git Worktree（强制）
 
