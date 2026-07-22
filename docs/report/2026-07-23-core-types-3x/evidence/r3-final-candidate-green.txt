@@ -1,0 +1,58 @@
+R3 最终校正候选通过证据
+日期：2026-07-23 Asia/Shanghai
+最新主干：5fe242cefc873117d024f0d09f8ad5cbf449d2ec
+已验证候选：ec2d938a031a659748d638902ea2d85a730335cd
+origin/main...candidate 差异 SHA-256：493712e7d7951d95ec6187ec1c90b33a2974f75de6703362fd7d4755acff87c4
+rustc：1.97.0 (2d8144b78 2026-07-07)
+cargo：1.97.0 (c980f4866 2026-06-30)
+node：v24.14.0
+
+固定条件：
+  git rev-parse HEAD == ec2d938a031a659748d638902ea2d85a730335cd
+  git status --porcelain 为空
+  git merge-base --is-ancestor origin/main HEAD == 0
+
+验证命令：
+  cargo build --workspace
+  cargo test --workspace
+  cargo fmt --all -- --check
+  cargo clippy --workspace --all-features --all-targets -- -D warnings
+  cargo deny check
+  node scripts/quality-gates/check.mjs
+  node scripts/quality-gates/check-crate-versions.mjs
+  node scripts/quality-gates/check-workspace-deps.mjs
+  node scripts/quality-gates/check-ssot-current-state.mjs
+  cargo test -p kernel -p testkit -p decimalx -p canonical --doc
+  cargo test -p decimalx --features panicking-ops
+  RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release
+  node scripts/quality-gates/check-canonical-align.mjs
+  node scripts/quality-gates/check-decimal-no-panicking-ops.mjs
+  node scripts/quality-gates/check-public-api.mjs --require-tool -p kernel -p testkit -p decimalx -p canonical
+  cmp -s .agents/ssot/types/decimal/spec/spec.md .agents/ssot/types/decimal/spec/xhyper-decimalx-complete-spec.md
+  git diff --check origin/main...HEAD
+
+最终退出码：全部为 0。
+
+关键结果：
+  workspace build/test/fmt/all-features clippy/cargo deny：PASS
+  Harness health：46/46 PASS
+  current-state：26 对 active/complete spec 同构，全部 PASS
+  crate versions / workspace dependencies：PASS
+  kernel/testkit doc tests：12/4 PASS
+  decimalx panicking-ops feature：69 unit + 全部集成测试 PASS
+  kernel loom release cfg：3 PASS
+  canonical alignment：ALL CHECKS PASSED
+  decimal panicking-ops 扫描：104 files，0 hits
+  public API：4 package baselines match
+  decimalx active/complete spec：字节级一致
+  固定范围 git diff --check：PASS
+
+第一次组合执行在上述 current-state 门禁通过后，误调用了仓库中不存在的
+`scripts/quality-gates/check-four-domain-docs.mjs`，Node 以 MODULE_NOT_FOUND 中止。该命令不在仓库门禁定义中，
+未产生源码或文档变更；随后按仓库实际存在的命令补跑剩余四域专项门禁，全部退出 0。此处保留失败事实，
+不把命令清单转录错误写成产品门禁 PASS。
+
+观察到的非阻断既有警告仍为 basic example 产物文件名碰撞与 cargo-deny skip 配置；未由本轮新增。
+
+完整 stdout 未入库，执行会话也不是持久仓库证据；本文件保存固定 SHA、可复算 diff 指纹、完整可重放命令、
+退出码、工具链、关键输出摘要和组合执行失误。任何无法由这些输入重放的会话内容均不作为完成声明依据。

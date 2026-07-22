@@ -5,7 +5,8 @@
 | 输入 HEAD | `cc93223161880fbeb41fe770e7785a89f8dadf72`（R2 evidence） |
 | 初始内容候选 | `387a1dc550341767a24a1548dd9ae47b2c8b84ee` |
 | 主干同步候选 | `70d402a9a8b7b796077cba33e30ddf0c069c5e03`（包含 `origin/main 5fe242c`） |
-| 当前状态 | **双轴终审 GO；最终聚合门禁复验中** |
+| 最终校正候选 | `ec2d938a031a659748d638902ea2d85a730335cd` |
+| 当前状态 | **机器门禁 GREEN；双轴复审与最终聚合门禁待裁决** |
 | 轮次目标 | 当前权威、历史战役、Cargo package 真相与生成状态一致 |
 
 ## 基线 RED
@@ -38,3 +39,4 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
 - `R-CLK-DOMAIN-EXHAUSTION` 保持 OPEN，已登记 `infra-lip`；本轮不实现、不关闭，也不扩张唯一性声明。
 - 主干同步后的最终 Standards 与 Spec reviewer 均对 `3d34082` 给出 **GO（0.99）**；原始终局输出见 [`reviews/r3-final-standards-reviewer.md`](reviews/r3-final-standards-reviewer.md) 与 [`reviews/r3-final-spec-reviewer.md`](reviews/r3-final-spec-reviewer.md)。
 - 最终聚合门禁发现 decimalx active spec 的三项验收勾选仍停留在实现前状态。实现、测试和双轴终审证据均已存在，因此本轮将其作为声明状态漂移校正；校正后的固定 SHA 必须重新通过全量机器门禁、双轴复审与最终聚合门禁后，才能恢复本轮 GO。
+- 校正候选 `ec2d938a` 的全仓与四域机器门禁已全部退出 0；固定条件、命令、摘要及一次无效路径转录失败见 [`evidence/r3-final-candidate-green.txt`](evidence/r3-final-candidate-green.txt)。

@@ -1,6 +1,6 @@
 # decimalx 交付门禁
 
-> **状态**：Active gate definition · R3 主干同步候选 `70d402a` 的全仓/专项门禁与独立双轴终审均为 GO
+> **状态**：Active gate definition · 最终校正候选 `ec2d938a` 的全仓/专项机器门禁 GREEN；独立复审待裁决
 >
 > 本文件定义通过条件，不替代独立 reviewer 的裁决。
 
