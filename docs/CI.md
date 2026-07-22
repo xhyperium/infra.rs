@@ -30,17 +30,17 @@
 
 `validation.yml` 中的 `utf8-encoding` 作业分两步检测：
 
-**步骤 1：非 UTF-8 编码扫描（阻断）**
+#### 步骤 1：非 UTF-8 编码扫描（阻断）
 
-```
+```text
 检测工具：file -b --mime-encoding
 通过标准：utf-8 / ascii / us-ascii / binary
 失败行为：❌ PR 阻塞
 ```
 
-**步骤 2：U+FFFD 替换字符扫描（警告）**
+#### 步骤 2：U+FFFD 替换字符扫描（警告）
 
-```
+```text
 检测工具：grep -P '\xef\xbf\xbd'
 通过标准：无匹配
 失败行为：⚠️ 仅警告，不阻断
@@ -66,6 +66,7 @@
 **原因**：文件以 GBK 编码保存。
 
 **修复**：
+
 ```bash
 # 方式 1：自动修复
 node scripts/fix-encoding.mjs --fix
@@ -79,6 +80,7 @@ iconv -f gbk -t utf-8 文件路径 > /tmp/fixed && mv /tmp/fixed 文件路径
 **原因**：文件曾在 GBK→UTF-8 转换中部分损坏。
 
 **修复**：
+
 ```bash
 # 方式 1：脚本修复
 node scripts/fix-encoding.mjs --fix

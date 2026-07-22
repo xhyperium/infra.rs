@@ -796,8 +796,8 @@ mod tests {
     fn decimal_text_path_preserves_i128_scale_18() {
         let bid =
             Decimal::try_new(123_456_789_012_345_678_901_234_567_890_123_456, 18).expect("bid");
-        let ask =
-            Decimal::try_new(-123_456_789_012_345_678_901_234_567_890_123_455, 18).expect("ask");
+        let ask_mantissa = -123_456_789_012_345_678_901_234_567_890_123_455;
+        let ask = Decimal::try_new(ask_mantissa, 18).expect("ask");
         let tick =
             Tick { symbol: "BTC/USDT".into(), bid: Price::new(bid), ask: Price::new(ask), ts: 1 };
         let sql =
