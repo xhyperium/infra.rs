@@ -1,14 +1,20 @@
 //! KeyValueStore 合同 suite。
 
 use crate::failure::{ContractResult, ensure};
+use crate::fixture::FixtureNamespace;
 use contracts::KeyValueStore;
 use std::time::Duration;
 
 const C: &str = "KeyValueStore";
 
 /// 断言实现满足最小 KV 合同：miss → set → hit。
-pub async fn assert_key_value_store(store: &dyn KeyValueStore) -> ContractResult {
-    match store.get("missing").await {
+pub async fn assert_key_value_store(
+    store: &dyn KeyValueStore,
+    fixture: &FixtureNamespace,
+) -> ContractResult {
+    let missing_key = fixture.resource("key_value_missing");
+    let hit_key = fixture.resource("key_value_hit");
+    match store.get(&missing_key).await {
         Ok(None) => {}
         Ok(Some(_)) => {
             return Err(crate::failure::ContractFailure::new(
@@ -27,12 +33,12 @@ pub async fn assert_key_value_store(store: &dyn KeyValueStore) -> ContractResult
     }
 
     store
-        .set("k", b"hello".to_vec(), Some(Duration::from_secs(30)))
+        .set(&hit_key, b"hello".to_vec(), Some(Duration::from_secs(30)))
         .await
         .map_err(|e| crate::failure::ContractFailure::new(C, "set", format!("set 失败: {e}")))?;
 
     let v = store
-        .get("k")
+        .get(&hit_key)
         .await
         .map_err(|e| crate::failure::ContractFailure::new(C, "get_hit", format!("get 失败: {e}")))?
         .ok_or_else(|| crate::failure::ContractFailure::new(C, "get_hit", "期望 Some"))?;

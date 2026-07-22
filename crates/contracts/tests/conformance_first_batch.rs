@@ -1,9 +1,9 @@
 //! First-batch trait 合同套件：委托 `contract-testkit` suite（禁止空断言）。
 
 use contract_testkit::{
-    FakeEventBus, FakeKeyValueStore, FakeRepository, FakeTxRunner, RecordingInstrumentation,
-    RecordingTxRunner, assert_event_bus, assert_instrumentation, assert_key_value_store,
-    assert_repository, assert_tx_runner,
+    FakeEventBus, FakeKeyValueStore, FakeRepository, FakeTxRunner, FixtureNamespace,
+    RecordingInstrumentation, RecordingTxRunner, assert_event_bus, assert_instrumentation,
+    assert_instrumentation_observed, assert_key_value_store, assert_repository, assert_tx_runner,
 };
 use contracts::run_tx_lifecycle;
 use kernel::XError;
@@ -11,7 +11,8 @@ use kernel::XError;
 #[tokio::test]
 async fn key_value_store_trait_get_set() {
     let store = FakeKeyValueStore::new();
-    assert_key_value_store(&store).await.expect("kv suite");
+    let fixture = FixtureNamespace::new("ctk_contracts_key_value").expect("valid fixture");
+    assert_key_value_store(&store, &fixture).await.expect("kv suite");
     assert_eq!(store.len().expect("len"), 1);
 }
 
@@ -57,12 +58,17 @@ async fn tx_runner_and_context_commit_rollback_paths() {
 #[tokio::test]
 async fn event_bus_publish_subscribe_ids() {
     let bus = FakeEventBus::new();
-    assert_event_bus(&bus).await.expect("bus suite");
+    let fixture = FixtureNamespace::new("ctk_contracts_event_bus").expect("valid fixture");
+    assert_event_bus(&bus, &fixture).await.expect("bus suite");
 }
 
 #[test]
 fn instrumentation_recording_surface() {
     let rec = RecordingInstrumentation::new();
     assert_instrumentation(&rec).expect("instr suite");
+    rec.clear().expect("clear smoke events");
+    let fixture = FixtureNamespace::new("ctk_contracts_instrumentation").expect("valid fixture");
+    assert_instrumentation_observed(&rec, &fixture, || rec.snapshot())
+        .expect("observed instr suite");
     assert_eq!(rec.snapshot().expect("snap").len(), 3);
 }

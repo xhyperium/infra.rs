@@ -38,14 +38,14 @@ impl FakeObjectStore {
 #[async_trait]
 impl ObjectStore for FakeObjectStore {
     async fn put_object(&self, key: &str, data: Bytes) -> XResult<()> {
-        let mut g = self.inner.lock().map_err(|_| XError::internal("obj lock 中毒"))?;
+        let mut g = self.inner.lock().map_err(|_| XError::internal("对象存储锁中毒"))?;
         g.insert(key.to_string(), data);
         Ok(())
     }
 
     async fn get_object(&self, key: &str) -> XResult<Bytes> {
-        let g = self.inner.lock().map_err(|_| XError::internal("obj lock 中毒"))?;
-        g.get(key).cloned().ok_or_else(|| XError::missing(format!("object not found: {key}")))
+        let g = self.inner.lock().map_err(|_| XError::internal("对象存储锁中毒"))?;
+        g.get(key).cloned().ok_or_else(|| XError::missing(format!("对象不存在: {key}")))
     }
 }
 
@@ -66,13 +66,13 @@ impl FakeTimeSeriesStore {
 #[async_trait]
 impl TimeSeriesStore for FakeTimeSeriesStore {
     async fn write_series(&self, table: &str, points: Vec<Tick>) -> XResult<()> {
-        let mut g = self.inner.lock().map_err(|_| XError::internal("ts lock 中毒"))?;
+        let mut g = self.inner.lock().map_err(|_| XError::internal("时序存储锁中毒"))?;
         g.entry(table.to_string()).or_default().extend(points);
         Ok(())
     }
 
     async fn query_series(&self, table: &str, start: i64, end: i64) -> XResult<Vec<Tick>> {
-        let g = self.inner.lock().map_err(|_| XError::internal("ts lock 中毒"))?;
+        let g = self.inner.lock().map_err(|_| XError::internal("时序存储锁中毒"))?;
         let Some(rows) = g.get(table) else {
             return Ok(vec![]);
         };
@@ -95,7 +95,7 @@ impl FakeAnalyticsSink {
 
     /// 已写入事件。
     pub fn events(&self) -> XResult<Vec<(String, Bytes)>> {
-        Ok(self.events.lock().map_err(|_| XError::internal("analytics lock 中毒"))?.clone())
+        Ok(self.events.lock().map_err(|_| XError::internal("分析汇聚锁中毒"))?.clone())
     }
 }
 
@@ -104,7 +104,7 @@ impl AnalyticsSink for FakeAnalyticsSink {
     async fn sink(&self, event: &str, payload: Bytes) -> XResult<()> {
         self.events
             .lock()
-            .map_err(|_| XError::internal("analytics lock 中毒"))?
+            .map_err(|_| XError::internal("分析汇聚锁中毒"))?
             .push((event.to_string(), payload));
         Ok(())
     }
@@ -146,7 +146,7 @@ impl PubSub for FakePubSub {
     async fn pub_message(&self, channel: &str, msg: Bytes) -> XResult<()> {
         self.channels
             .lock()
-            .map_err(|_| XError::internal("pubsub lock 中毒"))?
+            .map_err(|_| XError::internal("发布订阅锁中毒"))?
             .entry(channel.to_string())
             .or_default()
             .push(msg);
@@ -157,7 +157,7 @@ impl PubSub for FakePubSub {
         let msgs = self
             .channels
             .lock()
-            .map_err(|_| XError::internal("pubsub lock 中毒"))?
+            .map_err(|_| XError::internal("发布订阅锁中毒"))?
             .get(channel)
             .cloned()
             .unwrap_or_default();

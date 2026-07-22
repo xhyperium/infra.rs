@@ -1,28 +1,33 @@
-//! ObjectStore 可移植核心 suite。
+//! ObjectStore 精确 roundtrip 合同 suite。
 
 use crate::failure::{ContractFailure, ContractResult, ensure};
+use crate::fixture::FixtureNamespace;
 use bytes::Bytes;
 use contracts::ObjectStore;
 
 const C: &str = "ObjectStore";
 
-/// 对调用方提供的唯一 key 执行 put/get，并断言字节精确往返。
+/// 断言同一隔离 key 的 put/get 返回精确 payload。
 ///
-/// 本 suite 不假定 missing、overwrite、metadata 或清理语义；真实后端调用方负责
-/// 在 suite 返回后删除测试对象。
+/// 本 suite 不声明持久化时长、覆盖、删除、列表或跨进程一致性语义。
 pub async fn assert_object_store(
     store: &dyn ObjectStore,
-    unique_key: &str,
-    payload: Bytes,
+    fixture: &FixtureNamespace,
 ) -> ContractResult {
-    ensure(C, "unique_key", !unique_key.is_empty(), "测试 key 不得为空")?;
+    let key = fixture.resource("object_store_roundtrip");
+    let expected = Bytes::from_static(b"contract-testkit-object-v1");
     store
-        .put_object(unique_key, payload.clone())
+        .put_object(&key, expected.clone())
         .await
-        .map_err(|e| ContractFailure::new(C, "put", format!("put_object 失败: {e}")))?;
-    let got = store
-        .get_object(unique_key)
+        .map_err(|error| ContractFailure::new(C, "put", format!("put_object 失败: {error}")))?;
+    let actual = store
+        .get_object(&key)
         .await
-        .map_err(|e| ContractFailure::new(C, "get", format!("get_object 失败: {e}")))?;
-    ensure(C, "roundtrip", got == payload, "对象字节往返不一致")
+        .map_err(|error| ContractFailure::new(C, "get", format!("get_object 失败: {error}")))?;
+    ensure(
+        C,
+        "roundtrip_payload",
+        actual == expected,
+        format!("roundtrip payload 不一致: {actual:?}"),
+    )
 }

@@ -1,28 +1,40 @@
-//! TimeSeriesStore 可移植核心 suite。
+//! TimeSeriesStore 最小 roundtrip 合同 suite。
 
 use crate::failure::{ContractFailure, ContractResult, ensure};
+use crate::fixture::FixtureNamespace;
 use canonical::Tick;
 use contracts::TimeSeriesStore;
+use decimalx::{Decimal, Price};
 
 const C: &str = "TimeSeriesStore";
+const SAMPLE_TS: i64 = 1_700_000_000_000_000_000;
 
-/// 写入一个调用方已按后端精度对齐的点，并验证给定闭区间内可读。
+/// 断言写入的确定点能在覆盖其时间戳的范围查询中被找回。
 ///
-/// 本 suite 不假定返回顺序、唯一性或测试表中没有其他历史数据。
+/// 本 suite 不声明返回顺序、重复写策略、唯一性或查询端点闭合规则。
 pub async fn assert_time_series_store(
     store: &dyn TimeSeriesStore,
-    unique_table: &str,
-    point: Tick,
+    fixture: &FixtureNamespace,
 ) -> ContractResult {
-    ensure(C, "unique_table", !unique_table.is_empty(), "测试表名不得为空")?;
-    let ts = point.ts;
+    let table = fixture.resource("time_series_roundtrip");
+    let expected = Tick {
+        symbol: fixture.resource("symbol"),
+        bid: Price::new(Decimal::new(10_001, 2)),
+        ask: Price::new(Decimal::new(10_002, 2)),
+        ts: SAMPLE_TS,
+    };
     store
-        .write_series(unique_table, vec![point.clone()])
+        .write_series(&table, vec![expected.clone()])
         .await
-        .map_err(|e| ContractFailure::new(C, "write", format!("write_series 失败: {e}")))?;
+        .map_err(|error| ContractFailure::new(C, "write", format!("write_series 失败: {error}")))?;
     let rows = store
-        .query_series(unique_table, ts, ts)
+        .query_series(&table, SAMPLE_TS - 1, SAMPLE_TS + 1)
         .await
-        .map_err(|e| ContractFailure::new(C, "query", format!("query_series 失败: {e}")))?;
-    ensure(C, "read_after_write", rows.contains(&point), "查询结果不含刚写入的点")
+        .map_err(|error| ContractFailure::new(C, "query", format!("query_series 失败: {error}")))?;
+    ensure(
+        C,
+        "roundtrip_missing",
+        rows.iter().any(|row| row == &expected),
+        format!("查询结果未包含写入点: rows={rows:?}"),
+    )
 }
