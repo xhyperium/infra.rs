@@ -62,4 +62,33 @@ mod tests {
         assert!(raw.contains("verification-run/v1"));
         assert!(raw.contains("exit_code"));
     }
+
+    /// 默认 crate-root 导出均被单元测试点名（含错误类型）。
+    #[test]
+    fn default_exports_named() {
+        let opts = PlanOptions { dry: true };
+        let contract = r#"{"digest":"d","touches":["tools/verifyctl"]}"#;
+        let plan: VerificationPlan =
+            build_plan(contract, &["tools/verifyctl".into()], &opts).expect("plan");
+        assert!(!plan.checks.is_empty());
+        let _spec: &CheckSpec = &plan.checks[0];
+        let _kind: CheckKind = _spec.kind;
+
+        let empty = ExecuteError::EmptyArgv("x".into());
+        assert!(format!("{empty}").contains("empty argv"));
+        let parse_err = PlanError::Parse("bad".into());
+        assert!(format!("{parse_err}").contains("parse"));
+
+        let _ = execute_plan;
+        fn assert_type<T: ?Sized>() {}
+        assert_type::<ExecuteError>();
+        assert_type::<PlanError>();
+        assert_type::<PlanOptions>();
+        assert_type::<VerificationPlan>();
+        assert_type::<CheckSpec>();
+        assert_type::<CheckKind>();
+        assert_type::<RunResult>();
+        assert_type::<RunStatus>();
+        assert_type::<CheckResult>();
+    }
 }

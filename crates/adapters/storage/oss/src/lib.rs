@@ -26,3 +26,38 @@ pub use sign::{authorization_header, canonicalized_resource, sign_v1};
 mod adapter;
 #[cfg(feature = "scaffold")]
 pub use adapter::OssAdapter;
+
+#[cfg(test)]
+mod public_api_surface {
+    use super::*;
+
+    /// 默认 feature crate-root 导出均被单元测试点名（含 ENV_* / Config）。
+    #[test]
+    fn default_exports_named() {
+        assert_eq!(ENV_ENDPOINT, "FOUNDATIONX_OSSX_ENDPOINT");
+        assert_eq!(ENV_BUCKET, "FOUNDATIONX_OSSX_BUCKET");
+        assert_eq!(ENV_ACCESS_KEY_ID, "FOUNDATIONX_OSSX_ACCESS_KEY_ID");
+        assert_eq!(ENV_ACCESS_KEY_SECRET, "FOUNDATIONX_OSSX_ACCESS_KEY_SECRET");
+        assert_eq!(ENV_REGION, "FOUNDATIONX_OSSX_REGION");
+
+        let builder: OssConfigBuilder = OssConfig::builder();
+        let cfg: OssConfig = builder
+            .endpoint("https://oss.example.com")
+            .bucket("b")
+            .access_key_id("id")
+            .access_key_secret("sec")
+            .region("r")
+            .build()
+            .expect("cfg");
+        assert_eq!(cfg.bucket, "b");
+
+        let resource = canonicalized_resource("b", "/k");
+        let sig = sign_v1("sec", "GET", "", "", "date", "", &resource);
+        let _ = authorization_header("id", &sig);
+
+        fn assert_type<T: ?Sized>() {}
+        assert_type::<OssClient>();
+        assert_type::<OssConfig>();
+        assert_type::<OssConfigBuilder>();
+    }
+}

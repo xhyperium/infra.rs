@@ -184,4 +184,26 @@ mod tests {
         let err = OssConfig::builder().build().unwrap_err();
         assert!(format!("{err}").contains("endpoint"));
     }
+
+    /// 覆盖 crate-root 导出的 `ENV_*` 常量与 `OssConfigBuilder` 类型名。
+    #[test]
+    fn env_constants_and_builder_type() {
+        assert_eq!(ENV_ENDPOINT, "FOUNDATIONX_OSSX_ENDPOINT");
+        assert_eq!(ENV_BUCKET, "FOUNDATIONX_OSSX_BUCKET");
+        assert_eq!(ENV_ACCESS_KEY_ID, "FOUNDATIONX_OSSX_ACCESS_KEY_ID");
+        assert_eq!(ENV_ACCESS_KEY_SECRET, "FOUNDATIONX_OSSX_ACCESS_KEY_SECRET");
+        assert_eq!(ENV_REGION, "FOUNDATIONX_OSSX_REGION");
+
+        let builder: OssConfigBuilder = OssConfig::builder();
+        let cfg: OssConfig = builder
+            .endpoint("https://oss-cn-hangzhou.aliyuncs.com")
+            .bucket("b")
+            .access_key_id("id")
+            .access_key_secret("secret")
+            .region("cn-hangzhou")
+            .build()
+            .expect("cfg");
+        cfg.validate().expect("validate");
+        assert_eq!(cfg.bucket, "b");
+    }
 }

@@ -17,3 +17,19 @@ pub use config::ClickHouseConfig;
 mod adapter;
 #[cfg(feature = "scaffold")]
 pub use adapter::ClickHouseAdapter;
+
+#[cfg(test)]
+mod public_api_surface {
+    use super::*;
+
+    /// 默认 feature crate-root 导出均被单元测试点名。
+    #[test]
+    fn default_exports_named() {
+        assert!(!ANALYTICS_TABLE.is_empty());
+        let _cfg = ClickHouseConfig::default();
+        fn assert_type<T: ?Sized>() {}
+        assert_type::<ClickHouseClient>();
+        assert_type::<ClickHousePool>();
+        assert_type::<ClickHouseConfig>();
+    }
+}

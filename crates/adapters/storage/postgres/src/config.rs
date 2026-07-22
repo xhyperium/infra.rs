@@ -385,9 +385,10 @@ mod tests {
 
     #[test]
     fn builder_roundtrip() {
-        let cfg = PostgresConfig::builder()
+        let builder: PostgresConfigBuilder = PostgresConfig::builder();
+        let cfg: PostgresConfig = builder
             .host("127.0.0.1")
-            .port(5432)
+            .port(DEFAULT_PORT)
             .database("db")
             .user("u")
             .password("secret")
@@ -396,10 +397,20 @@ mod tests {
             .build()
             .expect("build");
         assert_eq!(cfg.host, "127.0.0.1");
+        assert_eq!(cfg.port, DEFAULT_PORT);
         assert_eq!(cfg.password, "secret");
         let dbg = format!("{cfg:?}");
         assert!(dbg.contains("***"));
         assert!(!dbg.contains("secret"));
+    }
+
+    #[test]
+    fn defaults_and_sslmode_as_str() {
+        assert_eq!(DEFAULT_PORT, 5432);
+        assert_eq!(DEFAULT_MAX_POOL_SIZE, 16);
+        assert_eq!(SslMode::Disable.as_str(), "disable");
+        assert_eq!(SslMode::Prefer.as_str(), "prefer");
+        assert_eq!(SslMode::Require.as_str(), "require");
     }
 
     #[test]
