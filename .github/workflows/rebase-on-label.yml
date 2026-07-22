@@ -1,0 +1,147 @@
+name: 自动 Rebase
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-fork:
+    name: 检查 Fork PR
+    runs-on: ubuntu-latest
+    if: |
+      github.event.label.name == 'rebase' &&
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.head.repo.full_name != github.repository
+    steps:
+      - name: 通知不支持 Fork PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              name: 'rebase'
+            }).catch(() => {});
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `❌ **自动 Rebase 不支持 Fork PR**
+
+              | 项目 | 值 |
+              |------|-----|
+              | PR | #${context.issue.number} |
+              | 来源 | \`${{ github.event.pull_request.head.repo.full_name }}\`（Fork） |
+              | 原因 | 安全限制：Fork PR 不可自动推送 |
+
+              请手动 rebase 后 force-push：
+              \`\`\`bash
+              git fetch origin main
+              git rebase origin/main
+              git push --force-with-lease origin ${{ github.event.pull_request.head.ref }}
+              \`\`\`
+              `
+            });
+
+  rebase:
+    name: Rebase on label
+    if: |
+      github.event.label.name == 'rebase' &&
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    needs: []
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 移除 rebase 标签
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: 'rebase'
+              });
+            } catch (e) {
+              if (e.status !== 404) throw e;
+            }
+
+      - name: Checkout 仓库
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 配置 Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Rebase 到目标分支
+        id: rebase
+        run: |
+          set -o pipefail
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          HEAD_BRANCH="${{ github.event.pull_request.head.ref }}"
+
+          echo "base=$BASE_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD_BRANCH" >> "$GITHUB_OUTPUT"
+
+          git fetch origin "$BASE_BRANCH"
+
+          if git rebase "origin/$BASE_BRANCH"; then
+            echo "status=success" >> "$GITHUB_OUTPUT"
+            echo "message=Rebase 成功：${HEAD_BRANCH} ← ${BASE_BRANCH}" >> "$GITHUB_OUTPUT"
+          else
+            git rebase --abort
+            echo "status=conflict" >> "$GITHUB_OUTPUT"
+            echo "message=Rebase 冲突：${HEAD_BRANCH} ← ${BASE_BRANCH}，请手动解决" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 强制推送
+        if: steps.rebase.outputs.status == 'success'
+        run: |
+          git push --force-with-lease origin "${{ steps.rebase.outputs.head }}"
+
+      - name: 报告结果
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.rebase.outputs.status }}';
+            const message = '${{ steps.rebase.outputs.message }}';
+
+            const icon = status === 'success' ? '✅' : '❌';
+            const body = `${icon} **${message}**
+
+            | 项目 | 值 |
+            |------|-----|
+            | PR | #${context.issue.number} |
+            | 分支 | \`${{ steps.rebase.outputs.head }}\` |
+            | 目标 | \`${{ steps.rebase.outputs.base }}\` |
+            | 结果 | ${status === 'success' ? '成功' : '冲突需手动解决'} |
+            | 触发者 | @${{ github.actor }} |`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
