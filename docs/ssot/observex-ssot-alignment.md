@@ -1,86 +1,89 @@
 # observex SSOT 对齐与本仓落地状态
 
 | 字段 | 值 |
-|------|-----|
-| 策略 | **B — 本仓移植 observex 最小面 + 进程内 export** |
-| 日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| 规范 | `.agents/ssot/observex/spec/spec.md` |
-| 当前版本 | 0.1.1（L1 TracingInstrumentation 最小面；OTEL 进程内 PASS）|
-| package（`cargo -p`） | `observex` · lib `observex`（产品名别名 `xhyper-observex`，不可用于 `-p`） |
-| 契约面 | `contracts` · **Instrumentation** |
-| 跟进 | L3 Instrumentation 真入口（#172）；**export/flush 声明层 PASS**；**≠** 完整 OpenTelemetry SDK |
+| --- | --- |
+| 策略 | 本仓最小 tracing 面 + 自定义有界进程内 sink |
+| 日期 | 2026-07-23（round 03 候选准备） |
+| active spec | `.agents/ssot/observex/spec/spec.md` |
+| 当前版本 | 0.1.2 |
+| package / lib | `observex` / `observex` |
+| 发布 | `false` |
 
-## 结论摘要
+## 结论
 
-| 问题 | 状态 |
-|------|------|
-| 上游/镜像 COMPLETE 叙事 | **禁止**单独当作本仓交付证明 |
-| 本仓 `crates/observex` | **已落地**（`TracingInstrumentation` + tracing 三方法） |
-| 本仓 Instrumentation 契约 | `contracts::Instrumentation`；L3 子集非 scaffold 入口 |
-| OTEL-**compatible** 进程内导出 | **PASS**：`export.rs` · `TelemetryExporter` / `InMemoryExporter` / `ExportingInstrumentation` · `flush` / `shutdown` |
-| 完整 OpenTelemetry SDK / OTLP 远端 | **OPEN（诚实边界）** — **禁止**宣称 OTEL 栈完成 |
-| resiliencx / bootstrap 注入链 | **PASS**（bootstrap 默认 `TracingInstrumentation`） |
-| LCOV 行覆盖率 100% | **PASS** |
-| Agent L5 | **未填** |
+`TracingInstrumentation`、`PrefixedInstrumentation` 与 `ExportingInstrumentation` 已统一使用
+有界的 `op` 清理路径；`InMemoryExporter` 已改为有界进程内 sink，并公开一致性统计与
+flush-and-close 生命周期。
 
-## 本仓可观察事实
+这只证明自定义进程内行为。它不是 OpenTelemetry API/SDK 或语义约定，不实现 OTLP、远端持久化、
+异步隔离、timeout、采样、PII/secret 检测或 op allowlist。
 
-```text
-crates/observex/                EXISTS
-  TracingInstrumentation        impl Instrumentation
-  export.rs                     TelemetryExporter / InMemoryExporter / ExportingInstrumentation
-  flush / shutdown              ExportingInstrumentation::{flush,shutdown}
-publish                         false
-prod deps                       kernel, contracts, tracing
-features.default                []
-```
+## 实现映射
 
-## 验证命令
+| 条款 | 状态 | 证据 |
+| --- | --- | --- |
+| contracts Instrumentation 三事件 | PASS | `src/lib.rs` |
+| tracing 路径 op 清理 | PASS | `src/lib.rs` + `src/ops.rs` |
+| prefix / export 路径 op 清理 | PASS | `src/lib.rs` + `src/export.rs` |
+| 128 UTF-8 字节上限 | PASS | `MAX_OP_BYTES` / `sanitize_op` |
+| PII/secret/allowlist | OPEN | 明确非本清理职责 |
+| 默认与显式容量 | PASS | `DEFAULT_BUFFER_CAPACITY` / `with_capacity` |
+| 单次同类批次全有或全无 | PASS | 容量检查先于 `Vec::extend` |
+| 跨 span + metric 事务原子 | OPEN | 两次独立 trait 调用，不作承诺 |
+| dropped / buffered / flushed / shutdown 统计 | PASS | `InMemoryExporterStats` |
+| 计数溢出可见性 | PASS | `counters_saturated` 标记饱和值为下界 |
+| shutdown 先 flush 计数再关闭 | PASS | 同一 mutex 临界区 |
+| exporter Err 隔离 | PASS | record 忽略 export Result |
+| exporter unwind panic 隔离与诊断 | PASS | `catch_unwind` + `ExportingInstrumentationStats` |
+| wrapper 失败事件语义 | PASS | `unconfirmed_*`：交付未知、不重试，非实际 dropped 声明 |
+| exporter abort 隔离 | OOS | `panic=abort` 不可捕获 |
+| exporter 阻塞隔离 | OPEN / OOS | trait 要求非阻塞；违反合同的实现仍能阻塞调用线程 |
+| OpenTelemetry SDK / OTLP | OPEN / OOS | 未引入相关依赖或协议实现 |
+
+## 容量与生命周期语义
+
+- span 与 metric 各自拥有独立的 `capacity_per_signal`。
+- 默认每类 1024；显式容量可以为 0。
+- 单次 `export_spans` 或 `export_metrics` 容量不足时整批拒绝，缓冲不变，整批计入 dropped。
+- flushed/dropped 在 `usize` 范围内精确；溢出后饱和并设置 `counters_saturated`。
+- 槽位容量限制事件数，不限制直接 exporter 调用中单个事件字段的字节数。
+- `flush` 只把进程内 buffered 转为 flushed 计数并清空。
+- 首次 `shutdown` 原子执行 flush-and-close；重复调用成功且统计不变。
+- shutdown 后 export/flush 返回 `Shutdown`；关闭拒绝不重复计入容量 dropped。
+
+## 失败边界
+
+`ExportingInstrumentation` 先执行 inner，再同步调用 exporter。普通 `ExportError` 与 unwind panic
+不会跨无返回值的记录接口传播，并累计诊断；flush/shutdown unwind panic 转为
+`ExportError::Panicked`。`panic=abort` 不可捕获。泛型 exporter 必须快速返回；本轮没有 timeout
+或阻塞线程隔离。
+
+失败调用涉及的事件计入 `unconfirmed_spans/metrics`。exporter 可能在 Err/unwind 前已有部分副作用，
+wrapper 无法确认交付状态且不会重试；该诊断不得解释为实际丢弃量。
+
+## 验证
 
 ```bash
-cargo test -p contracts -p observex
-cargo clippy -p contracts -p observex --all-targets -- -D warnings
 cargo fmt --all --check
-node scripts/quality-gates/cov-gate-100.mjs -p observex --filter crates/observex/src
+cargo test -p observex --all-targets
+cargo clippy -p observex --all-targets -- -D warnings
+cmp .agents/ssot/observex/spec/spec.md \
+    .agents/ssot/observex/spec/xhyper-observex-complete-spec.md
 ```
 
-## Clause matrix（摘要）
+round 01 发现与残余风险见
+`.agents/ssot/observex/plan/round-01-findings.md`。
 
-| ID | 条款 | 状态 | 证据 |
-|----|------|------|------|
-| 1.1 | L1 tracing 封装，实现 Instrumentation | PASS | `impl Instrumentation` |
-| 1.2 | 默认路径 tracing info | PASS | `tracing::info!` |
-| 3.x | TracingInstrumentation 公开面 | PASS | unit |
-| 4.1 | 实现 contracts trait | PASS | trait impl |
-| 4.6 / 6.7 | exporter / flush | **PASS（进程内）** | `src/export.rs` |
-| 7.3 | 不把 tracing/export 宣称为完整 OTEL SDK | PASS | README / 本文 |
-| 7.4 | bootstrap 注入链 | PASS | bootstrap 默认 |
+Round 2 已闭合 sanitizer、有界 exporter、错误/unwind 诊断、简体中文、`thiserror` 与 poison 恢复；
+本轮新树 root 串行覆盖率为 942/942、zeros 0、100.0000%、exit 0。治理修正后候选已重冻，
+本地独立 reviewer 已完成实现/证据审查，独立 verifier 已完成技术/证据初验；本次纯状态 delta
+不改变受审源码/测试。GitHub 固定提交 CI artifact、PR、维护者审批、合并、tag/发布仍 pending，详见
+`.agents/ssot/observex/plan/round-03-findings.md`。
 
-## OBJECTIVE 处置（2026-07-22 defer-close）
+## 残余边界
 
-| 项 | 前状态 | 现状态 | 证据 |
-|----|--------|--------|------|
-| OTEL exporter / flush | DEFER | **PASS（in-process compatible）** | `crates/observex/src/export.rs` |
-| 完整 OTEL SDK / OTLP | — | **OPEN** | 明确非目标 |
-
-## 未做（诚实边界）
-
-- OpenTelemetry SDK、OTLP 导出、metric 命名规范产品、采样/缓冲策略全集
-- `op` 受控集合强制校验
-- Agent L5 人签
-
-## 双栏落地（2026-07-22 · STATUS 100% structure）
-
-| 标尺 | 状态 |
-|------|------|
-| STATUS 结构完成度 | **100%**（layout+tests+content；非 Production Ready） |
-| 声明面生产硬化 | 公共 API 集成测 + 热路径 bench + `docs/` 红线；**cov-gate-100 行覆盖** |
-| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 完整 OTEL 产品 |
-
-自验证：`cargo test -p observex --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p observex`。
-
-## 变更记录
-
-| 日期 | 说明 |
-|------|------|
-| 2026-07-22 | **defer-close**：进程内 TelemetryExporter/flush PASS；full OTEL 仍 OPEN |
+- 没有完整事件信封、trace/span 上下文、资源属性或 schema 演进合同。
+- 没有真实远端 exporter、持久化、重试、batch、timeout、backpressure worker 或运行时健康 SLO。
+- `op` 清理不阻止敏感但无控制字符的值，也不把高基数字符串映射到受控词表。
+- 当前 buffer 是测试/本地组合用进程内存，进程退出即丢失。
+- 事件数有界不等于总字节严格有界；直接 exporter 调用者仍能构造大字段。

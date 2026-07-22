@@ -2,21 +2,26 @@
 
 use crate::{ConfigSnapshot, ConfigStore};
 
-/// 从存储挑选子集键构建快照（缺失键跳过）。
+/// 从存储挑选子集键构建快照（缺失键跳过；读锁中毒折叠为空快照）。
+///
+/// 需要区分 poison 时使用 [`try_subset_snapshot`]。
 #[must_use]
 pub fn subset_snapshot(store: &ConfigStore, keys: &[&str]) -> ConfigSnapshot {
-    let mut pairs = Vec::new();
-    for k in keys {
-        if let Some(v) = store.get(k) {
-            pairs.push(((*k).to_string(), v));
-        }
-    }
-    // rebuild via capture of temporary store
-    let tmp = ConfigStore::new();
-    for (k, v) in pairs {
-        let _ = tmp.set(k, v);
-    }
-    ConfigSnapshot::capture(&tmp)
+    try_subset_snapshot(store, keys).unwrap_or_default()
+}
+
+/// 从存储挑选子集键构建快照，并显式报告 store 读锁失败。
+///
+/// # Errors
+///
+/// 配置读锁中毒时返回 [`kernel::XError::invalid`]。
+pub fn try_subset_snapshot(store: &ConfigStore, keys: &[&str]) -> kernel::XResult<ConfigSnapshot> {
+    let full = store.try_snapshot()?;
+    let entries = keys
+        .iter()
+        .filter_map(|key| full.get(key).map(|value| ((*key).to_string(), value.to_string())))
+        .collect();
+    Ok(ConfigSnapshot { entries })
 }
 
 /// 两个快照是否在给定 keys 上一致。
@@ -45,6 +50,7 @@ mod tests {
         }
         let many = subset_snapshot(&s, &["k0", "k1", "k2"]);
         assert_eq!(many.len(), 3);
+        assert_eq!(try_subset_snapshot(&s, &["b"]).unwrap().get("b"), Some("2"));
     }
 
     #[test]

@@ -2,23 +2,36 @@
 
 use std::collections::HashMap;
 use std::env;
+use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use kernel::{XError, XResult};
+
+use crate::RedactedEntries;
 
 /// 可加载配置条目的源。
 ///
 /// 实现应返回完整快照；调用方负责合并与覆盖策略。
 pub trait ConfigSource: Send + Sync {
     /// 加载当前键值映射。
+    ///
+    /// # Errors
+    ///
+    /// 配置源读取或解析失败时返回 [`XError::invalid`]。
     fn load(&self) -> XResult<HashMap<String, String>>;
 }
 
 /// 内存配置源。
-#[derive(Debug, Clone, Default)]
+#[derive(Clone, Default)]
 pub struct MemorySource {
     entries: HashMap<String, String>,
+}
+
+impl fmt::Debug for MemorySource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("MemorySource").field("entries", &RedactedEntries(&self.entries)).finish()
+    }
 }
 
 impl MemorySource {
@@ -81,6 +94,10 @@ impl ConfigSource for EnvSource {
 
 impl EnvSource {
     /// 从任意键值迭代器加载（测试与注入用；生产路径用 [`ConfigSource::load`]）。
+    ///
+    /// # Errors
+    ///
+    /// 当前内存迭代路径不产生错误；返回 Result 以保持 [`ConfigSource`] 形状一致。
     pub fn load_from_iter<I, K, V>(&self, vars: I) -> XResult<HashMap<String, String>>
     where
         I: IntoIterator<Item = (K, V)>,
@@ -127,14 +144,19 @@ impl FileSource {
 
 impl ConfigSource for FileSource {
     fn load(&self) -> XResult<HashMap<String, String>> {
-        let text = fs::read_to_string(&self.path).map_err(|e| {
-            XError::invalid(format!("read config file {}: {e}", self.path.display()))
+        let text = fs::read_to_string(&self.path).map_err(|error| {
+            XError::invalid(format!("读取配置文件失败：路径={}", self.path.display()))
+                .with_source(error)
         })?;
         parse_key_value_file(&text)
     }
 }
 
 /// 解析 `KEY=VALUE` 文本。
+///
+/// # Errors
+///
+/// 非注释行不符合 `KEY=VALUE` 或键为空时返回 [`XError::invalid`]；错误不回显原始行。
 pub fn parse_key_value_file(text: &str) -> XResult<HashMap<String, String>> {
     let mut out = HashMap::new();
     for (lineno, raw) in text.lines().enumerate() {
@@ -143,14 +165,11 @@ pub fn parse_key_value_file(text: &str) -> XResult<HashMap<String, String>> {
             continue;
         }
         let Some((k, v)) = line.split_once('=') else {
-            return Err(XError::invalid(format!(
-                "config file line {}: expected KEY=VALUE, got `{raw}`",
-                lineno + 1
-            )));
+            return Err(XError::invalid(format!("配置文件第 {} 行：应为 KEY=VALUE", lineno + 1)));
         };
         let key = k.trim();
         if key.is_empty() {
-            return Err(XError::invalid(format!("config file line {}: empty key", lineno + 1)));
+            return Err(XError::invalid(format!("配置文件第 {} 行：键为空", lineno + 1)));
         }
         let mut val = v.trim().to_string();
         if (val.starts_with('"') && val.ends_with('"') && val.len() >= 2)
@@ -166,6 +185,7 @@ pub fn parse_key_value_file(text: &str) -> XResult<HashMap<String, String>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use kernel::ErrorKind;
     use std::io::Write;
 
     #[test]
@@ -178,8 +198,27 @@ mod tests {
         let parsed = parse_key_value_file("# c\nHOST=h\nPORT = \"8080\"\n\n").unwrap();
         assert_eq!(parsed.get("HOST").map(String::as_str), Some("h"));
         assert_eq!(parsed.get("PORT").map(String::as_str), Some("8080"));
-        assert!(parse_key_value_file("nope").is_err());
-        assert!(parse_key_value_file("=v").is_err());
+        assert_invalid_context(
+            parse_key_value_file("nope").unwrap_err(),
+            "配置文件第 1 行：应为 KEY=VALUE",
+        );
+        assert_invalid_context(parse_key_value_file("=v").unwrap_err(), "配置文件第 1 行：键为空");
+    }
+
+    #[test]
+    fn memory_debug_redacts_secret_and_parse_error_omits_raw_line() {
+        let source =
+            MemorySource::from_pairs([("plain", "visible"), ("secret:token", "must-not-leak")]);
+        let debug = format!("{source:?}");
+        assert!(debug.contains("visible"));
+        assert!(debug.contains("secret:token"));
+        assert!(debug.contains("***"));
+        assert!(!debug.contains("must-not-leak"));
+
+        let err = parse_key_value_file("must-not-echo-this-secret").unwrap_err();
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        assert_eq!(err.context(), "配置文件第 1 行：应为 KEY=VALUE");
+        assert!(!err.context().contains("must-not-echo-this-secret"));
     }
 
     #[test]
@@ -196,7 +235,13 @@ mod tests {
         let map = src.load().unwrap();
         assert_eq!(map.get("A").map(String::as_str), Some("1"));
         let missing = FileSource::new(dir.join("no-such.conf"));
-        assert!(missing.load().is_err());
+        let error = missing.load().unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Invalid);
+        assert_eq!(error.context(), format!("读取配置文件失败：路径={}", missing.path().display()));
+        let source = std::error::Error::source(&error).expect("文件读取错误必须保留 source");
+        let io_error =
+            source.downcast_ref::<std::io::Error>().expect("source 必须可还原为 std::io::Error");
+        assert_eq!(io_error.kind(), std::io::ErrorKind::NotFound);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -221,5 +266,10 @@ mod tests {
         assert!(empty.is_empty());
         // 真实环境变量路径可调用（不依赖特定键）
         let _ = EnvSource::new("UNLIKELY_PREFIX_XYZ_").load().unwrap();
+    }
+
+    fn assert_invalid_context(error: XError, expected: &str) {
+        assert_eq!(error.kind(), ErrorKind::Invalid);
+        assert_eq!(error.context(), expected);
     }
 }

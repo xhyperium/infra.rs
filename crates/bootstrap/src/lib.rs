@@ -3,7 +3,7 @@
 //! 组合根（PLAN-GATE-RETIRE-001 Implemented）：
 //! - [`PlatformContext`]：横切只读依赖（instrumentation、shutdown_signal、可选 evidence）
 //! - [`AppContext`]：已组装只读上下文
-//! - [`BootstrappedApp`] + [`ShutdownController`]：build 产物与关停所有权
+//! - [`AppContext`] / [`BootstrappedApp`]：build 产物与关停所有权
 //! - [`MarketDataContext`] / [`ExecutionContext`]：有界服务上下文（§4）
 //! - [`BootstrapError`]：组装错误 → kernel 反应分类
 //!
@@ -16,7 +16,7 @@
 //! - 静默替面：[`NoopInstrumentation`]（`with_instrumentation` 可选）
 //! - 消费方（如 resiliencx）只依赖 `contracts`，**禁止**依赖 observex
 //!
-//! evidence：权威在 `xhyper-evidence`（re-export trait + `InMemoryEvidenceAppender`）。
+//! evidence：权威在 package/lib `evidence`（re-export trait + `InMemoryEvidenceAppender`）。
 //! 适配器接线：[`StoreSet`]；关停排空：[`AsyncDrain`]（组合根 drain 所有权）。
 //! 完整 venue 业务协议仍由 adapters 承载；本 crate 提供有界对象安全接线面。
 
@@ -95,11 +95,15 @@ pub struct ShutdownController {
 }
 
 impl ShutdownController {
+    fn trigger_guard(&mut self) {
+        if let Some(guard) = self.guard.take() {
+            guard.trigger();
+        }
+    }
+
     /// 取出并触发关停信号。
     pub fn trigger(mut self) {
-        if let Some(g) = self.guard.take() {
-            g.trigger();
-        }
+        self.trigger_guard();
     }
 
     /// 是否仍持有未触发的 guard（测试用）。
@@ -111,7 +115,6 @@ impl ShutdownController {
 /// build 后的应用：上下文 + 关停所有权。
 pub struct BootstrappedApp {
     context: AppContext,
-    shutdown: ShutdownController,
 }
 
 impl BootstrappedApp {
@@ -121,13 +124,31 @@ impl BootstrappedApp {
     }
 
     /// 拆成上下文与关停控制器。
+    ///
+    /// 此兼容路径把唯一关停所有权显式移交给返回的 controller；返回的
+    /// `AppContext` 仍可执行 drain，但不能再自行触发 signal。
     pub fn into_parts(self) -> (AppContext, ShutdownController) {
-        (self.context, self.shutdown)
+        self.context.into_shutdown_parts()
     }
 
-    /// 消费并触发关停。
+    /// 消费并触发关停 signal；不执行 drain。
     pub fn trigger_shutdown(self) {
-        self.shutdown.trigger();
+        self.context.trigger_shutdown();
+    }
+
+    /// 消费应用，先触发关停 signal，再按 LIFO 执行 drain。
+    ///
+    /// 返回本次快照内全部正常返回的步骤结果；单步返回错误不会中断后续步骤。
+    /// 同步 hook 的阻塞和 panic 不由本 crate 超时、取消或隔离。
+    /// 若应用已失去 guard 且 signal 尚未由外部 owner 触发，返回
+    /// [`BootstrapError::MissingDependency`]，不执行 hook。
+    ///
+    /// # Errors
+    ///
+    /// 关停所有权已移出且 signal 尚未由外部 owner 触发时，返回
+    /// [`BootstrapError::MissingDependency`]。
+    pub fn graceful_shutdown(self) -> Result<Vec<DrainStepResult>, BootstrapError> {
+        self.context.graceful_shutdown()
     }
 }
 
@@ -194,13 +215,19 @@ impl Bootstrap {
     }
 
     /// 注册关停 drain hook（LIFO；见 [`AsyncDrain`]）。
+    ///
+    /// drain 注册锁中毒时返回 [`BootstrapError::DependencyUnavailable`] 并保留下层原因。
+    ///
+    /// # Errors
+    ///
+    /// drain 注册锁中毒时返回 [`BootstrapError::DependencyUnavailable`]。
     pub fn register_drain<F>(self, name: impl Into<String>, hook: F) -> Result<Self, BootstrapError>
     where
         F: FnOnce() -> kernel::XResult<()> + Send + 'static,
     {
-        self.drain
-            .register(name, hook)
-            .map_err(|_e| BootstrapError::InvalidConfiguration { name: "drain" })?;
+        self.drain.register(name, hook).map_err(|source| {
+            BootstrapError::DependencyUnavailable { name: "drain", source: Box::new(source) }
+        })?;
         Ok(self)
     }
 
@@ -221,7 +248,8 @@ impl Bootstrap {
         Ok(())
     }
 
-    fn into_app_context(self) -> AppContext {
+    fn into_app_context(mut self) -> AppContext {
+        let shutdown = ShutdownController { guard: self.shutdown_guard.take() };
         AppContext {
             platform: PlatformContext {
                 instrumentation: Arc::clone(&self.instrumentation),
@@ -233,41 +261,55 @@ impl Bootstrap {
             instrumentation: self.instrumentation,
             shutdown_signal: self.shutdown_signal,
             drain: self.drain,
+            shutdown,
         }
     }
 
-    /// 消费 builder，返回 [`AppContext`]（不绑定 ShutdownController）。
+    /// 消费 builder，返回保有关停所有权的 [`AppContext`]。
     ///
     /// 未 `require_evidence` 时总是成功。
     /// 若 `require_evidence` 且未注入：**release/debug 均 panic**（fail-closed，infra-s9t.4）。
     /// 可恢复路径请用 [`try_build`](Self::try_build)。
+    ///
+    /// # Panics
+    ///
+    /// 启用 `require_evidence` 但未注入 evidence 时 panic。
     pub fn build(self) -> AppContext {
         if let Err(e) = self.validate() {
             // PANIC: require_evidence 未满足时禁止静默成功（含 release）
-            panic!("Bootstrap::build 失败: {e}；请注入 evidence 或使用 try_build");
+            panic!("Bootstrap::build 失败：{e}；请注入 evidence 或使用 try_build");
         }
         self.into_app_context()
     }
 
     /// 校验后 build；缺必需依赖返回 [`BootstrapError`]。
+    ///
+    /// # Errors
+    ///
+    /// 启用 `require_evidence` 但未注入 evidence 时返回
+    /// [`BootstrapError::MissingDependency`]。
     pub fn try_build(self) -> Result<AppContext, BootstrapError> {
         self.validate()?;
         Ok(self.into_app_context())
     }
 
     /// 消费 builder，返回 [`BootstrappedApp`]。
-    pub fn build_app(mut self) -> BootstrappedApp {
-        let guard = self.shutdown_guard.take();
-        let context = self.build();
-        BootstrappedApp { context, shutdown: ShutdownController { guard } }
+    ///
+    /// # Panics
+    ///
+    /// 与 [`Self::build`] 相同：启用 `require_evidence` 但未注入 evidence 时 panic。
+    pub fn build_app(self) -> BootstrappedApp {
+        BootstrappedApp { context: self.build() }
     }
 
     /// 校验后返回 [`BootstrappedApp`]。
-    pub fn try_build_app(mut self) -> Result<BootstrappedApp, BootstrapError> {
-        self.validate()?;
-        let guard = self.shutdown_guard.take();
-        let context = self.into_app_context();
-        Ok(BootstrappedApp { context, shutdown: ShutdownController { guard } })
+    ///
+    /// # Errors
+    ///
+    /// 与 [`Self::try_build`] 相同：缺少强制 evidence 时返回
+    /// [`BootstrapError::MissingDependency`]。
+    pub fn try_build_app(self) -> Result<BootstrappedApp, BootstrapError> {
+        Ok(BootstrappedApp { context: self.try_build()? })
     }
 }
 
@@ -285,6 +327,7 @@ pub struct AppContext {
     instrumentation: Arc<dyn InstrumentationTrait>,
     shutdown_signal: ShutdownSignal,
     drain: AsyncDrain,
+    shutdown: ShutdownController,
 }
 
 impl AppContext {
@@ -324,8 +367,43 @@ impl AppContext {
     }
 
     /// 执行组合根 drain（LIFO）。
+    ///
+    /// 此方法只 drain，不触发关停 signal。完整组合语义请用
+    /// [`graceful_shutdown`](Self::graceful_shutdown)。
     pub fn run_drain(&self) -> Vec<DrainStepResult> {
         self.drain.drain()
+    }
+
+    /// 消费上下文并触发关停 signal；不执行 drain。
+    pub fn trigger_shutdown(mut self) {
+        self.shutdown.trigger_guard();
+    }
+
+    /// 消费上下文，先触发关停 signal，再按 LIFO 执行 drain。
+    ///
+    /// 返回本次快照内全部正常返回的步骤结果；单步返回错误不会中断后续步骤。
+    /// 同步 hook 在调用线程执行，可能永久阻塞；本 crate 不提供 deadline、取消或
+    /// panic 隔离，调用方必须在 hook 内自行建立这些边界。
+    ///
+    /// 若本 context 没有 guard 且 signal 在检查点尚未由外部 owner 触发，返回
+    /// [`BootstrapError::MissingDependency`] 且不执行任何 hook。此方法消费 `self`，
+    /// 因而错误返回后 context 与未执行 hook 均被丢弃，不能重试。
+    ///
+    /// # Errors
+    ///
+    /// 关停所有权已移出且 signal 尚未由外部 owner 触发时，返回
+    /// [`BootstrapError::MissingDependency`]。
+    pub fn graceful_shutdown(mut self) -> Result<Vec<DrainStepResult>, BootstrapError> {
+        self.shutdown.trigger_guard();
+        if !self.shutdown_signal.is_triggered() {
+            return Err(BootstrapError::MissingDependency { name: "shutdown_guard" });
+        }
+        Ok(self.drain.drain())
+    }
+
+    fn into_shutdown_parts(mut self) -> (Self, ShutdownController) {
+        let shutdown = std::mem::replace(&mut self.shutdown, ShutdownController { guard: None });
+        (self, shutdown)
     }
 }
 
@@ -624,5 +702,26 @@ mod tests {
         assert_eq!(results.len(), 1);
         assert!(results[0].ok);
         assert_eq!(N.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn register_drain_preserves_poison_as_dependency_unavailable() {
+        fn successful_hook() -> kernel::XResult<()> {
+            Ok(())
+        }
+
+        assert!(successful_hook().is_ok());
+        let builder = Bootstrap::new();
+        builder.drain.poison_hooks_for_test();
+        let error = builder
+            .register_drain("rejected", successful_hook)
+            .map(drop)
+            .expect_err("中毒 drain lock 不得接受注册");
+        assert_eq!(error.kind(), ErrorKind::Unavailable);
+        assert_eq!(error.to_string(), "依赖不可用：drain");
+        let source = std::error::Error::source(&error).expect("必须保留下层 source");
+        let source = source.downcast_ref::<kernel::XError>().expect("source 必须保留 XError 分类");
+        assert_eq!(source.kind(), ErrorKind::Internal);
+        assert_eq!(source.context(), "关停钩子锁中毒");
     }
 }

@@ -75,3 +75,31 @@ fn public_new_helpers_require_nonempty_snapshot_diff() {
     let d = diff_snapshots(&snap, &sub);
     assert!(d.only_left.contains(&"b".to_string()));
 }
+
+#[test]
+fn result_read_and_snapshot_distinguish_healthy_missing() {
+    use configx::{
+        ConfigWaitOutcome, ConfigWatch, SecretString, set_secret, try_get_secret,
+        try_subset_snapshot,
+    };
+    use std::sync::Arc;
+    use std::time::Duration;
+
+    let store = ConfigStore::new();
+    assert_eq!(store.try_get("missing").unwrap(), None);
+    store.set("present", "value").unwrap();
+    assert_eq!(store.try_get("present").unwrap().as_deref(), Some("value"));
+    let snapshot = store.try_snapshot().unwrap();
+    assert_eq!(snapshot.get("present"), Some("value"));
+    assert_eq!(try_subset_snapshot(&store, &["present"]).unwrap().get("present"), Some("value"));
+
+    set_secret(&store, "token", &SecretString::new("secret-value")).unwrap();
+    assert_eq!(try_get_secret(&store, "token").unwrap().unwrap().expose(), "secret-value");
+
+    let watch = Arc::new(ConfigWatch::new());
+    let mut subscription = watch.subscribe();
+    assert_eq!(
+        subscription.wait_timeout_outcome(Duration::ZERO).unwrap(),
+        ConfigWaitOutcome::TimedOut
+    );
+}

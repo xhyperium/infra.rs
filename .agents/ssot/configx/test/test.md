@@ -1,7 +1,19 @@
 # configx — Test
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 测试策略入口；测试代码在实现 crate，不在本树。
+> 状态：确定性加强与本地 reviewer 实现/证据审查已完成；独立 verifier 已完成技术/证据初验。
+> 本次纯状态 delta 不改变受审源码/测试；GitHub 固定提交 CI artifact pending。
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+测试覆盖批量中点不可见、reload 只见完整旧/新快照、加载/校验失败保留旧值、poison 显式失败、
+secret Debug 与 parse 错误脱敏、generation 溢出、reload/state 锁边界、真实伪通知与显式 wait outcome。
+
+| 证据 | 结果 |
+|---|---|
+| Round 2 `cargo test -p configx --all-targets` | 49 个 Rust 测试通过；详见 round-02 findings |
+| Round 2 clippy / doc | 本地退出码 0 |
+| Round 3 `cargo test -p configx --all-targets` | 50 个 Rust 测试通过；bench/examples 通过 |
+| Round 3 phase-hook 竞态测试 | 连续 100 轮通过 |
+| Round 3 root 串行覆盖率 | `1164 / 1164`（100.0000%），exit 0 |
+
+并发测试已改用 per-watch phase hook + Barrier，并连续运行 100 轮；覆盖率与本地审查均已闭合。
+可复验命令见
+[`../evidence/README.md`](../evidence/README.md)。

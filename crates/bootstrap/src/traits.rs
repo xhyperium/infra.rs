@@ -7,7 +7,7 @@
 
 // ── observability（ADR-005）────────────────────────────────────────────────
 
-/// 可观测性注入点（ADR-005）——权威定义在 `xhyper-contracts`。
+/// 可观测性注入点（ADR-005）——权威定义在 package/lib `contracts`。
 pub use contracts::Instrumentation;
 
 /// 静默 no-op instrumentation。
@@ -30,7 +30,7 @@ impl Instrumentation for NoopInstrumentation {
     fn record_circuit_close(&self, _op: &str) {}
 }
 
-// ── evidence（权威在 xhyper-evidence）─────────────────────────────────────
+// ── evidence（权威在 package/lib evidence）───────────────────────────────
 
 pub use evidence::{AppendReceipt, EvidenceAppender, EvidenceError, InMemoryEvidenceAppender};
 

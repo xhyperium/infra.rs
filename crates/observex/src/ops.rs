@@ -2,6 +2,11 @@
 
 use super::normalize_op;
 
+/// 真实记录路径允许的 `op` 最大 UTF-8 字节数。
+///
+/// 该限制只约束资源占用并移除控制字符；它不检测 PII、secret，也不把输入校验为受控词表。
+pub const MAX_OP_BYTES: usize = 128;
+
 /// 将层级路径片段连接为 op 名（跳过空片段）。
 #[must_use]
 pub fn join_op_segments(segments: &[&str]) -> String {
@@ -21,37 +26,72 @@ fn floor_char_boundary(s: &str, index: usize) -> usize {
     i
 }
 
-/// 限制 op 显示长度（按字节预算截断，落在 UTF-8 字符边界）。
+/// 清理控制字符并限制 op 显示长度（按字节预算截断，落在 UTF-8 字符边界）。
 ///
-/// - 未超长：原样返回。
+/// - 输入先 trim 并移除控制字符；结果为空时回落为 `"_"`。
+/// - 未超长：返回清理后的值。
 /// - `max_bytes == 0`：空串。
-/// - `max_bytes == 1`：取首字符（可能多字节，与「至少展示一字」一致）。
-/// - 其余：在 `max_bytes - 1` 字节内 floor 到字符边界后追加 `~`。
+/// - 超长：在 `max_bytes - 1` 字节内落到字符边界后追加 `~`。
+///
+/// 返回值在所有情况下都满足 `len() <= max_bytes`。该函数不检测 PII、secret，
+/// 也不执行 `op` allowlist 校验。
 #[must_use]
 pub fn truncate_op(op: &str, max_bytes: usize) -> String {
-    let op = normalize_op(op);
     if max_bytes == 0 {
         return String::new();
     }
-    if op.len() <= max_bytes {
-        return op.to_string();
+
+    let mut result = String::with_capacity(op.len().min(max_bytes));
+    let mut pending_whitespace = String::with_capacity(max_bytes.min(8));
+    let mut pending_overflow = false;
+    let mut truncated = false;
+    let mut started = false;
+    for ch in op.chars().filter(|ch| !ch.is_control()) {
+        if !started && ch.is_whitespace() {
+            continue;
+        }
+        if ch.is_whitespace() {
+            if result.len().saturating_add(pending_whitespace.len()).saturating_add(ch.len_utf8())
+                <= max_bytes
+            {
+                pending_whitespace.push(ch);
+            } else {
+                pending_overflow = true;
+            }
+            continue;
+        }
+        if pending_overflow
+            || result.len().saturating_add(pending_whitespace.len()).saturating_add(ch.len_utf8())
+                > max_bytes
+        {
+            truncated = true;
+            break;
+        }
+        result.push_str(&pending_whitespace);
+        pending_whitespace.clear();
+        started = true;
+        result.push(ch);
     }
-    if max_bytes == 1 {
-        return op.chars().take(1).collect();
+
+    if result.is_empty() && !truncated {
+        result.push('_');
     }
-    let budget = max_bytes.saturating_sub(1);
-    let end = floor_char_boundary(op, budget);
-    if end == 0 {
-        return "~".to_string();
+
+    if truncated {
+        let budget = max_bytes.saturating_sub(1);
+        let end = floor_char_boundary(&result, budget);
+        result.truncate(end);
+        result.push('~');
     }
-    format!("{}~", &op[..end])
+
+    result
 }
 
 /// 判断 op 是否「可观测友好」（非空、无控制字符、长度受限）。
 #[must_use]
 pub fn is_friendly_op(op: &str) -> bool {
     let op = op.trim();
-    !op.is_empty() && op.len() <= 128 && !op.chars().any(|c| c.is_control())
+    !op.is_empty() && op.len() <= MAX_OP_BYTES && !op.chars().any(|c| c.is_control())
 }
 
 /// 统计 op 层级深度（以 `.` 分段；空/归一后 `_` 视为 1）。
@@ -64,12 +104,13 @@ pub fn op_depth(op: &str) -> usize {
     op.split('.').filter(|s| !s.is_empty()).count().max(1)
 }
 
-/// 去掉控制字符并 trim；结果为空则回落 `"_"`。
+/// 将 `op` 规范为真实记录路径使用的有界值。
+///
+/// 处理包括 trim、移除控制字符、空值回落和 [`MAX_OP_BYTES`] UTF-8 安全字节上限。
+/// 这不是 PII/secret 检测，也不是受控词表 allowlist；调用方仍须治理字段来源与基数。
 #[must_use]
 pub fn sanitize_op(op: &str) -> String {
-    let cleaned: String =
-        op.chars().filter(|c| !c.is_control()).collect::<String>().trim().to_string();
-    if cleaned.is_empty() { "_".to_string() } else { cleaned }
+    truncate_op(op, MAX_OP_BYTES)
 }
 
 /// 取 op 的叶子段（最后一段）；无点则整段。
@@ -92,6 +133,8 @@ mod tests {
         assert_eq!(truncate_op("abcdefghij", 4).len(), 4);
         assert_eq!(truncate_op("", 3), "_");
         assert_eq!(truncate_op("x", 0), "");
+        assert_eq!(truncate_op("配", 1), "~");
+        assert_eq!(truncate_op("配", 2), "~");
         assert!(is_friendly_op("svc.fetch"));
         assert!(!is_friendly_op(""));
         assert!(!is_friendly_op("a\nb"));
@@ -119,14 +162,11 @@ mod tests {
             assert!(t.is_char_boundary(t.len()), "result must be valid UTF-8 for max={max}: {t:?}");
             if max == 0 {
                 assert!(t.is_empty());
-            } else if max == 1 {
-                // 至少一字（可能超过 1 字节）
-                assert_eq!(t, "配");
-            } else if max >= zh.len() {
-                assert_eq!(t, zh);
-            } else {
+            } else if max < zh.len() {
                 assert!(t.ends_with('~'), "max={max} got {t:?}");
                 assert!(t.len() <= max, "max={max} got len={} {t:?}", t.len());
+            } else {
+                assert_eq!(t, zh);
             }
         }
         // 明确边界：max=4 → budget=3 → 一字 + ~
@@ -147,12 +187,7 @@ mod tests {
         assert_eq!(j.matches('.').count(), 19);
         for max in [1usize, 2, 8, 64] {
             let t = truncate_op(&j, max);
-            // max==1 时可能返回单字符（len 1）；否则带 ~ 时 len <= max
-            if max == 1 {
-                assert!(!t.is_empty());
-            } else {
-                assert!(t.len() <= max, "max={max} got {}", t.len());
-            }
+            assert!(t.len() <= max, "max={max} got {}", t.len());
         }
     }
 
@@ -163,6 +198,18 @@ mod tests {
         assert_eq!(op_depth("  single  "), 1);
         assert_eq!(sanitize_op("a\nb"), "ab");
         assert_eq!(sanitize_op("   "), "_");
+        assert_eq!(sanitize_op("\0  api.fetch  \0"), "api.fetch");
+        assert_eq!(sanitize_op("\0 \t\r \0"), "_");
+        assert_eq!(truncate_op("api      ", 4), "api");
+        assert_eq!(truncate_op(&format!("a{}", " ".repeat(200)), 4), "a");
+        assert_eq!(truncate_op("  配置  ", 7), "配置");
+        assert_eq!(truncate_op("\0 配置服务 \0", 4), "配~");
+        assert_eq!(sanitize_op("a \0 b"), "a  b");
+        let malicious = format!("{}\nsecret", "配".repeat(80));
+        let sanitized = sanitize_op(&malicious);
+        assert!(sanitized.len() <= MAX_OP_BYTES);
+        assert!(!sanitized.chars().any(char::is_control));
+        assert!(!sanitized.contains("secret"));
         assert_eq!(op_leaf("api.orders.create"), "create");
         assert_eq!(op_leaf(""), "_");
         for n in 1..=10 {

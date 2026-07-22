@@ -50,10 +50,10 @@
   - `crates/test-support/contracts` → `contract-testkit`（Fake + suite；仅 dev-dep）
   - `crates/configx` → `configx`（L1 本地 Memory/Env/File source + 分层 + 宿主 reload/通知 + secret 脱敏；非远端配置中心）
   - `crates/schedulex` → `schedulex`（L1 任务 ID 登记 + 宿主驱动确定性 `JobRunner::tick`；非 runtime/分布式 scheduler）
-  - `crates/bootstrap` → `bootstrap`（L1 组合根；已注入 contracts/observex/evidence + 正式 KV/EventBus 固定槽位）
+  - `crates/bootstrap` → `bootstrap`（L1 组合根；已注入 contracts/observex/evidence + 正式 KV/EventBus 固定槽位 + 显式 shutdown/drain）
   - `crates/evidence` → `xhyper-evidence`（L1 审计证据追加面）
-  - `crates/observex` → `xhyper-observex`（L1 TracingInstrumentation 最小面）
-  - `crates/resiliencx` → `xhyper-resiliencx`（L1 重试 + 熔断 + 限流）
+  - `crates/observex` → `observex`（L1 instrumentation + 有界进程内遥测 sink；非 OpenTelemetry/OTLP 实现）
+  - `crates/resiliencx` → `resiliencx`（L1 安全重试 + 熔断 + 限流 + bulkhead）
   - `crates/transport` → `xhyper-transportx`（L1 HTTP/WS）
   - `crates/types/decimal` → `decimalx`
   - `crates/types/canonical` → `canonical`

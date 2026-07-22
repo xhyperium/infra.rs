@@ -66,6 +66,10 @@ impl From<&str> for SecretString {
 pub const SECRET_KEY_PREFIX: &str = "secret:";
 
 /// 将密钥写入 store（key 自动加 [`SECRET_KEY_PREFIX`] 若尚未带前缀）。
+///
+/// # Errors
+///
+/// 配置写锁中毒时返回 [`kernel::XError::invalid`]。
 pub fn set_secret(store: &ConfigStore, key: impl AsRef<str>, secret: &SecretString) -> XResult<()> {
     let raw = key.as_ref();
     let full = if raw.starts_with(SECRET_KEY_PREFIX) {
@@ -76,17 +80,28 @@ pub fn set_secret(store: &ConfigStore, key: impl AsRef<str>, secret: &SecretStri
     store.set(full, secret.expose())
 }
 
-/// 读取密钥；缺失返回 `None`。
+/// 兼容读取密钥；缺失或 store 读锁中毒均返回 `None`。
 ///
-/// 接受裸 key 或已带前缀的 key。
+/// 接受裸 key 或已带前缀的 key；需要区分 poison 时使用 [`try_get_secret`]。
 #[must_use]
 pub fn get_secret(store: &ConfigStore, key: &str) -> Option<SecretString> {
+    try_get_secret(store, key).unwrap_or_default()
+}
+
+/// 读取密钥，并显式报告 store 读锁失败。
+///
+/// 接受裸 key 或已带前缀的 key；[`None`] 只表示 key 缺失。
+///
+/// # Errors
+///
+/// 配置读锁中毒时返回 [`kernel::XError::invalid`]。
+pub fn try_get_secret(store: &ConfigStore, key: &str) -> XResult<Option<SecretString>> {
     let full = if key.starts_with(SECRET_KEY_PREFIX) {
         key.to_string()
     } else {
         format!("{SECRET_KEY_PREFIX}{key}")
     };
-    store.get(&full).map(SecretString::new)
+    store.try_get(&full).map(|value| value.map(SecretString::new))
 }
 
 /// 判断 store key 是否为密钥标记。
@@ -125,6 +140,8 @@ mod tests {
         assert!(!is_secret_key("db_password"));
         let again = get_secret(&store, "secret:db_password").unwrap();
         assert_eq!(again.expose(), "p@ss");
+        assert_eq!(try_get_secret(&store, "missing").unwrap(), None);
+        assert_eq!(try_get_secret(&store, "db_password").unwrap().unwrap().expose(), "p@ss");
         // 已带前缀的 key 不再二次加前缀
         set_secret(&store, "secret:token", &SecretString::new("t")).unwrap();
         assert_eq!(get_secret(&store, "token").unwrap().expose(), "t");

@@ -41,6 +41,9 @@ pub(crate) enum RedisBackend {
     Standalone(Box<ConnectionManager>),
     /// Redis Cluster。
     Cluster(ClusterConnection),
+    /// 测试 driver：记录命令调用并返回错误。
+    #[cfg(test)]
+    Probe(Arc<AtomicUsize>),
 }
 
 impl ConnectionLike for RedisBackend {
@@ -48,6 +51,13 @@ impl ConnectionLike for RedisBackend {
         match self {
             Self::Standalone(c) => c.req_packed_command(cmd),
             Self::Cluster(c) => c.req_packed_command(cmd),
+            #[cfg(test)]
+            Self::Probe(calls) => {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Box::pin(async {
+                    Err(redis::RedisError::from((redis::ErrorKind::IoError, "测试 driver 被调用")))
+                })
+            }
         }
     }
 
@@ -60,6 +70,13 @@ impl ConnectionLike for RedisBackend {
         match self {
             Self::Standalone(c) => c.req_packed_commands(cmd, offset, count),
             Self::Cluster(c) => c.req_packed_commands(cmd, offset, count),
+            #[cfg(test)]
+            Self::Probe(calls) => {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Box::pin(async {
+                    Err(redis::RedisError::from((redis::ErrorKind::IoError, "测试 driver 被调用")))
+                })
+            }
         }
     }
 
@@ -67,6 +84,8 @@ impl ConnectionLike for RedisBackend {
         match self {
             Self::Standalone(c) => c.get_db(),
             Self::Cluster(c) => c.get_db(),
+            #[cfg(test)]
+            Self::Probe(_) => 0,
         }
     }
 }
@@ -103,6 +122,25 @@ impl std::fmt::Debug for RedisPool {
 }
 
 impl RedisPool {
+    #[cfg(test)]
+    pub(crate) fn test_probe(driver_calls: Arc<AtomicUsize>) -> Self {
+        Self {
+            inner: Arc::new(PoolInner {
+                backend: RedisBackend::Probe(driver_calls),
+                #[cfg(feature = "pubsub")]
+                config: RedisConfig::default(),
+                sem: Arc::new(Semaphore::new(1)),
+                max_in_flight: 1,
+                in_flight: AtomicUsize::new(0),
+                waiters: AtomicUsize::new(0),
+                closed: AtomicBool::new(false),
+                command_timeout: Duration::from_secs(1),
+                acquire_timeout: Duration::from_secs(1),
+                display_endpoint: "redis://测试-driver".to_owned(),
+            }),
+        }
+    }
+
     /// 按配置建立连接（Standalone / Cluster / Sentinel）。
     pub async fn connect(config: RedisConfig) -> XResult<Self> {
         config.validate()?;
@@ -210,7 +248,7 @@ impl RedisPool {
         channels: impl IntoIterator<Item = String>,
     ) -> XResult<RedisPubSub> {
         if self.is_closed() {
-            return Err(XError::unavailable("redis pool 已关闭"));
+            return Err(XError::unavailable("redis 连接池已关闭"));
         }
         RedisPubSub::connect_config(self.inner.config.clone(), channels).await
     }
@@ -223,7 +261,7 @@ impl RedisPool {
     {
         let _permit = self.acquire().await?;
         if self.is_closed() {
-            return Err(XError::unavailable("redis pool 已关闭"));
+            return Err(XError::unavailable("redis 连接池已关闭"));
         }
         self.inner.in_flight.fetch_add(1, Ordering::SeqCst);
         let conn = self.inner.backend.clone();
@@ -237,7 +275,7 @@ impl RedisPool {
 
     async fn acquire(&self) -> XResult<OwnedSemaphorePermit> {
         if self.is_closed() {
-            return Err(XError::unavailable("redis pool 已关闭"));
+            return Err(XError::unavailable("redis 连接池已关闭"));
         }
         self.inner.waiters.fetch_add(1, Ordering::SeqCst);
         let result =
@@ -247,7 +285,7 @@ impl RedisPool {
             Ok(Ok(permit)) => {
                 if self.is_closed() {
                     drop(permit);
-                    return Err(XError::unavailable("redis pool 已关闭"));
+                    return Err(XError::unavailable("redis 连接池已关闭"));
                 }
                 Ok(permit)
             }

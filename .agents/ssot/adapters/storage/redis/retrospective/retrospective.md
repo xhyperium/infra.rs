@@ -8,6 +8,8 @@
 
 ## 教训
 
+- 重试安全不能用“读/写”二分：无 TTL SET/MSET 可按固定输入幂等处理，相对 TTL 写入与返回值敏感写入
+  必须 fail-closed；粗粒度操作枚举无法替代 client 参数分类。
 - NATS 凭据以本机 conf 为准（md 可能过期）
 - TDengine REST 端口 6041 而非 native 6030
 - Kafka/NATS/CH/Taos bench 必须超时有界

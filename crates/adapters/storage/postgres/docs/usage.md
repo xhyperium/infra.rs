@@ -1,6 +1,6 @@
 # postgresx 用法
 
-**Package**：`postgresx` · 默认导出为**生产 SQL / 连接池 API**。
+**Package**：`postgresx` `0.3.4` 未发布候选 · 默认导出为**生产 SQL / 连接池 API**。
 
 ## 最小示例
 
@@ -75,6 +75,16 @@ assert_eq!(n, 1);
 ```
 
 业务 SQL 请走 `with_transaction`，不要指望 `dyn TxContext` 执行查询。
+
+## 显式安全预算包装
+
+`postgresx::with_budget_safe` / `with_budget_async_safe` 接受 `RetrySafety`。当前 `PostgresPool`
+不保存 retry budget，也不自动重试任意 SQL。由于任意 SQL 可能写入、调用易变函数或包含写 CTE，
+调用方未能证明语义时必须使用 `UnsafeSideEffect`；多次尝试会在首次 operation 前拒绝。
+
+未带 `safe` 的 `with_budget*` / `with_retry*` 是 unchecked compatibility，仅供上层已完成 safety
+验证的旧组合使用。legacy `with_budget_async` 与 safe wrapper 共享标准 budget exhaustion 和失败
+attempt 观测 core，但仍不会自行校验 `RetrySafety`。
 
 ## scaffold（可选）
 

@@ -9,7 +9,10 @@ cargo clippy -p redisx --all-targets --features pubsub -- -D warnings
 ```
 
 覆盖期望：config 校验/脱敏、pool close、error map、公共 API、Pub/Sub 配置同源与拓扑失败关闭、
-只读/写入重试分类、原子性边界、non-retryable 失败只执行一次。
+只读/无 TTL SET/MSET 重试、相对 TTL SET/DEL/PEXPIRE 多试前拒绝、PUBLISH 不自动重试、
+`RedisOperation::Set` 粗粒度 `AmbiguousWrite`、原子性边界与 non-retryable 失败只执行一次。
+
+最终本地结果：51 passed + 8 ignored；ignored live 测试需要外部 Redis，不作为默认 CI 通过证据。
 
 ## Live（可选 · 真凭据）
 

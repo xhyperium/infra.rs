@@ -81,7 +81,7 @@ impl CircuitBreaker {
 
     /// 经熔断保护执行 `f`。
     ///
-    /// Open 时不调用 `f`，返回 `XError::unavailable("circuit open")`。
+    /// Open 时不调用 `f`，返回 `XError::unavailable("熔断器已打开")`。
     pub fn call<R>(
         &mut self,
         instrumentation: &dyn Instrumentation,
@@ -97,7 +97,7 @@ impl CircuitBreaker {
                     self.consecutive_successes = 0;
                     self.consecutive_failures = 0;
                 }
-                return Err(XError::unavailable("circuit open"));
+                return Err(XError::unavailable("熔断器已打开"));
             }
             CircuitState::Closed | CircuitState::HalfOpen => {}
         }

@@ -19,7 +19,7 @@
 | 项目 | 当前裁定 |
 |------|----------|
 | Pub/Sub 配置漂移 | 复用建池配置；Cluster/Sentinel 失败关闭 |
-| 重试/原子性 | 只读自动重试；写入默认单次；可查询合同 |
+| 重试/原子性 | budget 下 ReadOnly + 无 TTL SET/MSET 幂等重试；相对 TTL SET/DEL/PEXPIRE 多试前拒绝；PUBLISH 不自动重试 |
 | Cluster live | OPEN（另行受控环境验证） |
 | Sentinel live/failover | OPEN（另行受控环境验证） |
 | TLS/ACL live | OPEN（另行受控环境验证） |

@@ -64,7 +64,7 @@ impl PostgresAdapter {
     }
 
     fn lock(&self) -> XResult<std::sync::MutexGuard<'_, HashMap<String, Record>>> {
-        self.rows.lock().map_err(|e| XError::internal(format!("rows lock poisoned: {e}")))
+        self.rows.lock().map_err(|e| XError::internal(format!("行数据锁已污染: {e}")))
     }
 }
 

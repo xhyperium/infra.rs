@@ -1,6 +1,6 @@
 # resiliencx docs
 
-**Package**：`xhyper-resiliencx` · **lib**：`resiliencx` · **角色**：L1 重试 + 熔断 + 限流
+**Package / lib**：`resiliencx` / `resiliencx` · **版本**：`0.1.2` · **角色**：L1 重试 + 熔断 + 限流
 
 本目录存放 **crate 级**设计 / 契约补充 / 迁移笔记。
 不替代 rustdoc；不重复仓库根治理文档（见分层边界 `crates/AGENTS.md`）。
@@ -13,7 +13,7 @@
 | Agent 规则 | [../AGENTS.md](../AGENTS.md) |
 | 变更日志 | [../CHANGELOG.md](../CHANGELOG.md) |
 | 本仓 SSOT 对齐 | [`docs/ssot/resiliencx-ssot-alignment.md`](../../../docs/ssot/resiliencx-ssot-alignment.md) |
-| 上游 SSOT 镜像 | `.agents/ssot/resiliencx/` |
+| 本仓域规格 SSOT | `.agents/ssot/resiliencx/` |
 | Workspace 总览 | [`docs/ssot/workspace-ssot-alignment.md`](../../../docs/ssot/workspace-ssot-alignment.md) |
 
 ## 边界

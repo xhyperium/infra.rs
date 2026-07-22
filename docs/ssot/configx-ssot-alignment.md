@@ -1,169 +1,80 @@
 # configx SSOT 对齐与本仓落地状态
 
 | 字段 | 值 |
-|------|-----|
-| Spec | active configx 0.1.1（`.agents/ssot/configx/spec/spec.md` ≡ `xhyper-configx-complete-spec.md`） |
-| Active SSOT | `.agents/ssot/configx/**`（本仓权威；变更须同步 dual spec、alignment 与门禁） |
-| 本仓实现 | `crates/configx` · package `configx` · lib `configx` · version `0.1.1` |
-| 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| 结论 | 本地 `MemorySource`/`EnvSource`/`FileSource`、`LayeredConfig`、宿主 reload/进程内通知与 `SecretString` 已实现；远端配置中心、自动文件监听和 secret manager 仍 OPEN |
+| --- | --- |
+| Active spec | `.agents/ssot/configx/spec/spec.md` |
+| Complete copy | `.agents/ssot/configx/spec/xhyper-configx-complete-spec.md`（必须 `cmp` 一致） |
+| 本仓实现 | `crates/configx` · package/lib `configx` · version `0.1.2` |
+| Round baseline | `3cd29a942710c0fb42f3f6bc05e3c31570acad47` |
+| 当前结论 | 候选已重冻；本地 reviewer 完成、verifier 技术/证据初验完成；GitHub CI/交付 pending，不宣称 Production Ready |
 
-## 结论摘要
+## 能力裁定
 
-| 问题 | 状态 |
-|------|------|
-| 上游镜像 COMPLETE / 布局对齐 | 描述的是 **goal 管线布局**；**禁止**单独当作本仓实现证明 |
-| 本仓 `crates/configx` | **已落地**并与 active SSOT §2–§6 可移植子集对齐 |
-| 本地多源 / 分层合并 | **PASS** — `MemorySource` / `EnvSource` / `FileSource`；后源覆盖先源 |
-| reload / 进程内通知 | **PASS（宿主驱动）** — `ConfigWatch::reload` / subscription；无自动 File watcher 或后台远端推送 |
-| secret | **PASS**：`secret.rs` · `SecretString`（Debug 脱敏）+ `set_secret`/`get_secret` |
-| 远端配置中心 / 动态服务发现 | **OPEN（诚实边界）** — **未**实现；禁止宣称配置中心产品 |
-| line/branch cov | 目标 100%（`cargo llvm-cov -p configx`） |
-| 本仓 crates.io 再发布 | **不做**；`publish = false` |
+| 能力 | 状态 | 证据与边界 |
+| --- | --- | --- |
+| 内存字符串 KV | PASS | `ConfigStore` |
+| Result 读取/快照 | PASS | `try_get / try_snapshot / try_capture / try_subset_snapshot` |
+| Result secret | PASS | `try_get_secret`；兼容 `get_secret` 保留折叠 |
+| 兼容折叠读取 | PASS | `get / capture` 保留 poison 折叠 |
+| 原子批量提交 | PASS | `extend_pairs / apply_to / merge_into` 单写锁 |
+| 多源优先级 | PASS | `LayeredConfig` 组合 `MemorySource` / `EnvSource` / `FileSource`；后源覆盖前源 |
+| reload | PASS（进程内手动） | 完整 load + key 校验后单写锁替换 |
+| 更新通知 | PASS（进程内手动） | mutation 串行；显式 wait outcome；无自动 watcher |
+| 诊断脱敏 | PASS | `ConfigSnapshot` / `MemorySource` Debug 对 `secret:` 值输出 `***`；`SecretString` 的 Debug / Display 不泄露明文 |
+| parse 错误脱敏 | PASS | 不回显原始配置行 |
+| generation 溢出 | PASS | `checked_add`；溢出不替换 store |
+| timeout 总 deadline | PASS | state `try_lock`；锁竞争与伪通知不重置时限 |
+| deadline 后 generation | PASS | 接受 Changed 前二次判时；late notify 返回 TimedOut |
+| 中文错误合同 | PASS | 用户可见 XError 中文；关键测试精确断言 kind/context |
+| 类型化 schema | OPEN | 仅 key 形状校验，不校验 value 类型 |
+| 远端配置中心 | NOT IMPLEMENTED | 无远端源、推送或多机一致性 |
+| 自动文件 watcher | NOT IMPLEMENTED | `FileSource` / `EnvSource` 只在显式调用时加载 |
+| secret manager | NOT IMPLEMENTED | 脱敏不是加密、权限控制或托管 |
 
-## 本仓可观察事实
+## 原子性与失败矩阵
 
-```text
-crates/configx/                 EXISTS
-Cargo.toml members              含 crates/configx
-package name                    configx
-lib name                        configx
-version                         0.1.1
-publish                         false
-生产依赖                        仅 kernel（path crates/kernel）
-features                        default = []
-公开面                          ConfigStore（内存字符串 KV）
-模块                            lib · source · layered · watch · secret（本地/宿主驱动）
-```
+| 场景 | 合同 | 测试证据 |
+| --- | --- | --- |
+| 批量迭代器尚未收集完成 | store 保持旧状态 | `extend_pairs_does_not_expose_partial_commit` |
+| reload 与 store 等待 | per-watch phase hook 精确证明 state 已释放、mutation 仍持有 | `reload_releases_state_lock_while_waiting_for_store_and_serializes_notify` ×100 |
+| source load 失败 | store 不变 | `reload_preserves_on_source_error` |
+| key 校验失败 | store 不变 | `reload_preserves_on_validation_error` |
+| overlay poison | merge 返回错误，base 不变 | `merge_into_reports_when_overlay_read_poisons` |
+| 校验 store poison | 返回 poison 错误，不伪装成 missing | `production_validation_reports_poison` |
+| generation 溢出 | notify 报错；watch reload 不替换 store | watch 溢出两测 |
+| reload 等待 store | state 锁可获取；notify 排为下一 generation | `reload_releases_state_lock_while_waiting_for_store_and_serializes_notify` |
+| state 锁被占用 | timed wait 按 deadline 返回 | `wait_timeout_is_bounded_when_state_mutex_is_held` |
+| 实际伪通知 | 握手且通知计数 > 1；不延长 deadline | `wait_timeout_deadline_survives_actual_spurious_notifications` |
+| deadline 后通知 | 实际 notify 后仍返回 TimedOut，seen 不前移 | `wait_timeout_rejects_generation_arriving_at_deadline` |
 
-验证（本仓权威命令）：
+## 公开语义边界
+
+- `get` 的 `None` 仍可能表示读锁中毒；需要区分时使用 `try_get`。
+- `ConfigSnapshot::capture` 仍可能把毒锁折叠为空；生产校验/merge 使用 Result 快照。
+- `get_secret / subset_snapshot` 保留折叠；需要区分 poison 时使用对应 `try_*` API。
+- 单次快照具有完整 map 视图；多次独立 `get` 可跨 reload，不是事务。
+- `ConfigSnapshot::Debug` 只按 `secret:` 前缀脱敏；读取值仍为明文。
+- `ConfigWatch::reload` 必须由调用方触发，不监控文件或远端变化。
+- 兼容 `wait / wait_timeout` 的 `None` 仍有歧义；新调用方使用显式 outcome。
+
+## 定向验证
 
 ```bash
+cargo fmt -p configx -- --check
 cargo test -p configx --all-targets
 cargo clippy -p configx --all-targets -- -D warnings
-cargo fmt --all --check
-cargo run -p configx --example basic
-cargo llvm-cov -p configx --summary-only
+node scripts/quality-gates/cov-gate-100.mjs -p configx --filter crates/configx/src
+cmp .agents/ssot/configx/spec/spec.md \
+    .agents/ssot/configx/spec/xhyper-configx-complete-spec.md
 ```
 
-## 与 active spec 的关系
+完整验证结果记录在 `.agents/ssot/configx/plan/round-03-findings.md`；定向通过不扩大为全 workspace
+可靠性声明。Round 1/2 执行者未改版本，root 已在发布准备阶段统一 PATCH bump 至 `0.1.2`。
 
-- `.agents/ssot/configx/**`：本仓 active spec；不得只改 Done/COMPLETE 叙事冒充实现证据
-- 实现 SSOT 以 **源码 + 本仓测试输出** 为准
-- 文件名 `xhyper-configx-complete-spec.md` 与 `spec.md` 同构，内容是 0.1.1 本地多源/分层/reload/secret current-state 合同，不是远端配置平台
-- 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
+## 非目标 / 开放项
 
----
-
-## 逐条对齐矩阵（active SSOT §2–§7 可移植子集）
-
-> 判定：`PASS` = 本仓有源码/测试证据；`FAIL` = 语义缺失须修；`DEFER` = Unknown/未批准/环境专属，写明原因。  
-> 证据指针为 crate 相对路径（`crates/configx/...`）。
-
-### §2 位置、依赖与版本
-
-| ID | 要求 | 本仓证据 | 判定 |
-|----|------|----------|------|
-| 2.1 | 路径 `crates/configx`，L1 Infra | `crates/configx/`；根 `Cargo.toml` members | PASS |
-| 2.2 | package `configx` / lib `configx` | `Cargo.toml` `[package]` / `[lib]` | PASS |
-| 2.3 | 版本独立维护；当前 `0.1.1` | `Cargo.toml` `version = "0.1.1"` | PASS |
-| 2.4 | 普通依赖仅 `kernel` | `Cargo.toml` `[dependencies]` 唯一 path 依赖 | PASS |
-| 2.5 | 不得增加其他 L1 依赖 | 生产 deps 扫描无 observex/其他 L1 | PASS |
-| 2.6 | feature 无；`default = []` | `Cargo.toml` `[features]` | PASS |
-| 2.7 | 不引入 serde/async runtime/后台 watcher 依赖 | 生产 `Cargo.toml` 无上述依赖 | PASS |
-
-### §3 当前公开 API
-
-| ID | 要求 | 本仓证据 | 判定 |
-|----|------|----------|------|
-| 3.1 | `ConfigStore`：`RwLock<HashMap<String,String>>` 拥有型封装；字段私有 | `src/lib.rs` | PASS |
-| 3.2 | `new() -> Self` 空存储 | `src/lib.rs` + `tests/public_api.rs` | PASS |
-| 3.3 | `get(&self, key) -> Option<String>` 克隆；缺失/读中毒 → None | `src/lib.rs` + 单元/集成测 | PASS |
-| 3.4 | `set(&self, key, val) -> XResult<()>` 插入或覆盖 | `src/lib.rs` + 测试 | PASS |
-| 3.5 | 写锁中毒 → `XError::Invalid` 上下文含 `config lock poisoned` | `src/lib.rs` `tests` `write_lock_poison_returns_invalid` | PASS |
-| 3.6 | `Default` 等价 `new()` | `src/lib.rs` + `default_equals_empty_new` | PASS |
-| 3.7 | additive source/layered/watch/snapshot/diff API 与源码一致 | `src/{source,layered,watch,diff,view}.rs` | PASS |
-
-### §4 行为与不变量
-
-| ID | 要求 | 本仓证据 | 判定 |
-|----|------|----------|------|
-| 4.1 | 空状态：任意 key → None | `empty_store_returns_none` / `public_api` | PASS |
-| 4.2 | 同 key 覆盖后只读新值；多 key 隔离 | `set_overwrites_same_key` / `multi_key_isolation` | PASS |
-| 4.3 | `get` 返回拥有字符串 | `set_then_get_returns_owned_clone` / `get_returns_owned_string_not_borrow` | PASS |
-| 4.4 | 锁失败不对称：读→None，写→Invalid | poison 两测 | PASS |
-| 4.5 | 不通过直接依赖 observex 观测 | `Cargo.toml` 无 observex | PASS |
-| 4.6 | 上位：多源优先级 / 更新通知 / 热重载 | **PASS（进程内）** | `LayeredConfig` 后覆盖先；`ConfigWatch::reload`；**≠** 远端配置中心 / schema 产品 |
-| 4.7 | 不得声称所有 None 都是正常缺失 | README / rustdoc 写明读中毒折叠 | PASS |
-
-### §5 错误、并发、生命周期与信任边界
-
-| ID | 要求 | 本仓证据 | 判定 |
-|----|------|----------|------|
-| 5.1 | std `RwLock` 共享并发；不承诺公平性/批量原子/无饥饿 | 实现 + 并发 smoke 不证明公平性 | PASS |
-| 5.2 | 无隐式后台 daemon | 无自动 spawn 的远程轮询 | PASS |
-| 5.3 | 热更新通知（进程内） | **PASS** | `ConfigWatch` / `ConfigSubscription`；**无** 去抖/背压产品矩阵 |
-| 5.4 | 基础 KV 仍为字符串 | `ConfigStore` 仍 `String` map | PASS |
-| 5.5 | secret 脱敏 | **PASS** | `SecretString` Debug=`***`；`SECRET_KEY_PREFIX` |
-| 5.6 | 可恢复失败不得 panic | poison 测不 panic；set/get 可恢复 | PASS |
-| 5.7 | 未来解析失败不得半更新替换有效配置 | KV 路径无 schema 解析半更新 | **N/A**（无此产品路径；诚实边界） |
-
-### §6 测试合同
-
-| ID | 要求 | 本仓证据 | 判定 |
-|----|------|----------|------|
-| 6.1 | 空存储 / set-get / 覆盖 / Default / 多 key 隔离 | `src/lib.rs` tests + `tests/public_api.rs` | PASS |
-| 6.2 | 命令：`cargo test/check/clippy/fmt -p configx` | 本仓可执行；见验证入口 | PASS |
-| 6.3 | 锁中毒语义 | `read_lock_poison_folds_to_none` / `write_lock_poison_returns_invalid` | PASS |
-| 6.4 | 并发读写 | `tests/concurrency.rs` + 单元 concurrent smoke | PASS |
-| 6.5 | 源优先级 / 更新通知 / secret 脱敏 | **PASS** | source/layered/watch/secret 模块 + 单测 |
-| 6.6 | lint-deps 证明无 L1 横向依赖 | 生产依赖仅 kernel（`Cargo.toml` + metadata 扫描） | PASS（等价证据） |
-
-### §7 验收标准与开放决策
-
-| ID | 要求 | 本仓证据 | 判定 |
-|----|------|----------|------|
-| 7.1 | API/错误字符串/依赖/测试与 §2–§6 一致 | 本矩阵 + 测试套件 | PASS |
-| 7.2 | 文档诚实：file/env ≠ 远端配置中心 | `README.md` / rustdoc / 本文 | PASS |
-| 7.3 | 声明层源/分层/watch/secret 已落地 | 见 OBJECTIVE | PASS |
-| 7.4 | 版本仅 `x.y.z → x.y.(z+1)` | 独立 package version | PASS |
-| 7.5 | 远端配置中心 / schema 产品 / 类型化 API | 未实现 | **OPEN（诚实边界）** |
-
-## OBJECTIVE 处置（2026-07-22 defer-close）
-
-| 项 | 前状态 | 现状态 | 证据 |
-|----|--------|--------|------|
-| 多源 | DEFER | **PASS** | `crates/configx/src/source.rs` · Memory/Env/File |
-| 分层/优先级 | DEFER | **PASS** | `crates/configx/src/layered.rs` · 后覆盖先 |
-| 热更新 | DEFER | **PASS（进程内）** | `crates/configx/src/watch.rs` |
-| secret | DEFER | **PASS** | `crates/configx/src/secret.rs` |
-
-## 非目标 / 诚实边界
-
-- **远端配置中心**、服务发现、动态推送、多机一致性
-- 完整 JSON/TOML/YAML schema 校验产品
-- 类型化配置 builder 全家桶
-- 其他 infra 域（gate 等）
-
-## 覆盖率目标
-
-| 度量 | 目标 | 命令 |
-|------|------|------|
-| line | 100% | `cargo llvm-cov -p configx --summary-only` |
-| branch | 100% | 同上 TOTAL branches |
-
-毒锁两分支与空/有值路径均由真实测试驱动，禁止 mock `ConfigStore`。
-
-## 本轮增量
-
-| `require_keys` | **PASS**（必填 key 存在性；非完整 schema） |
-
-## 双栏落地（2026-07-22 · STATUS 100% structure）
-
-| 标尺 | 状态 |
-|------|------|
-| STATUS 结构完成度 | **100%**（layout+tests+content；非 Production Ready） |
-| 声明面生产硬化 | 公共 API 集成测 + 热路径 bench + `docs/` 红线；**cov-gate-100 行覆盖** |
-| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
-
-自验证：`cargo test -p configx --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p configx`；`cargo run -p configx --example …`；`cargo bench -p configx --bench hot_path -- --quick`。
+- 自动 watcher、后台轮询、远端动态推送
+- 分布式配置中心、服务发现、多机一致性
+- 类型化 JSON / TOML / YAML schema
+- secret 加密、访问控制与远端托管
+- package stable、workspace Production Ready、Agent L5

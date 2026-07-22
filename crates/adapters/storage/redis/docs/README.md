@@ -1,6 +1,7 @@
 # redisx docs
 
-**Package**：`redisx` · **角色**：生产 Redis 客户端（P0 KV）+ 可选 scaffold
+**Package**：`redisx` · **版本**：`0.3.4` 未发布候选 ·
+**角色**：生产 Redis 客户端（P0 KV）+ 可选 scaffold
 
 | 文档 | 路径 |
 |------|------|
@@ -17,4 +18,4 @@
 - **scaffold feature**：进程内 HashMap，仅测试/迁移
 - 命令通道已有 Cluster / Sentinel / TLS 代码路径，但三者真实 live 证据仍 OPEN
 - Pub/Sub 仅 Standalone；复用池配置，Cluster / Sentinel 失败关闭
-- 写重试与原子性边界见 [operations.md](./operations.md)
+- 参数化 retry safety 与原子性边界见 [operations.md](./operations.md)

@@ -54,11 +54,11 @@ impl RedisAdapter {
     }
 
     fn lock_kv(&self) -> XResult<std::sync::MutexGuard<'_, HashMap<String, Vec<u8>>>> {
-        self.kv.lock().map_err(|e| XError::internal(format!("kv lock poisoned: {e}")))
+        self.kv.lock().map_err(|e| XError::internal(format!("KV 锁已污染: {e}")))
     }
 
     fn lock_ch(&self) -> XResult<std::sync::MutexGuard<'_, HashMap<String, Vec<BusMessage>>>> {
-        self.channels.lock().map_err(|e| XError::internal(format!("pubsub lock poisoned: {e}")))
+        self.channels.lock().map_err(|e| XError::internal(format!("PubSub 锁已污染: {e}")))
     }
 }
 
@@ -143,11 +143,11 @@ impl MockRedisAdapter {
     }
 
     fn lock_kv(&self) -> XResult<std::sync::MutexGuard<'_, HashMap<String, Entry>>> {
-        self.kv.lock().map_err(|e| XError::internal(format!("kv lock poisoned: {e}")))
+        self.kv.lock().map_err(|e| XError::internal(format!("KV 锁已污染: {e}")))
     }
 
     fn lock_ch(&self) -> XResult<std::sync::MutexGuard<'_, HashMap<String, Vec<BusMessage>>>> {
-        self.channels.lock().map_err(|e| XError::internal(format!("pubsub lock poisoned: {e}")))
+        self.channels.lock().map_err(|e| XError::internal(format!("PubSub 锁已污染: {e}")))
     }
 
     fn is_alive(entry: &Entry, now: Instant) -> bool {

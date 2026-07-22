@@ -3,6 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | package | `redisx` |
+| 当前版本 | `0.3.4`（`0.3.3` 为 main 历史） |
 | 标题 | Redis KV |
 | 实现 | `crates/adapters/storage/redis` |
 | 战役 | draft SPEC_GOAL → 本仓生产默认路径 |
@@ -25,10 +26,14 @@
 
 - Cluster / Sentinel / TLS 命令代码路径存在，但真实拓扑、握手、切换和恢复证据保持 OPEN。
 - Pub/Sub 仅 Standalone；Cluster / Sentinel 失败关闭，重连与必达 NO-GO。
-- 写入默认不自动重试；单命令原子性不消除响应丢失后的结果歧义。
+- 配置 budget 后，GET/EXISTS/PTTL/MGET 按 `ReadOnly` 重试，无 TTL SET/MSET 按 `Idempotent` 重试。
+- 相对 TTL SET、DEL、PEXPIRE 的多次尝试在 I/O 前拒绝；PUBLISH 不自动重试。单命令原子性不消除
+  响应丢失后的结果歧义。
+- `RedisOperation::Set` 是无法表达 TTL 参数的粗粒度查询面，保守保持 `AmbiguousWrite`；client 按
+  实际 TTL 参数细分。
 
 ## 证据指针
 
 - 落地说明：[../plan/infra-rs-landing.md](../plan/infra-rs-landing.md)
 - draft 快照：[../plan/infra-rs-draft-spec-goal.md](../plan/infra-rs-draft-spec-goal.md)
-- 对齐：[docs/ssot/redisx-ssot-alignment.md](../../../../../docs/ssot/redisx-ssot-alignment.md)
+- 对齐：[docs/ssot/redisx-ssot-alignment.md](../../../../../../docs/ssot/redisx-ssot-alignment.md)

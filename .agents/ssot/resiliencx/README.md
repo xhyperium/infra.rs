@@ -4,7 +4,8 @@
 > **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-resiliencx-complete-spec.md](spec/xhyper-resiliencx-complete-spec.md)  
 > **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
 > **布局**：对齐 [`.agents/ssot/kernel/`](../kernel/)（[AGENTS.md](../../../AGENTS.md) §2）  
-> **状态**：布局已对齐 kernel · 战役内容未宣称闭合
+> **当前轮次**：[round-03-findings.md](plan/round-03-findings.md) — 候选已重冻；本地 reviewer 完成，verifier 技术/证据初验完成
+> **状态**：`0.1.2` 进程内弹性合同已加固；发布门禁 BLOCKED
 
 ## 11 层映射
 
@@ -12,23 +13,23 @@
 |--------|------|------|
 | Goal | [goal/goal.md](goal/goal.md) | 入口存在 · 未宣称 AC 闭合 |
 | Spec | [spec/spec.md](spec/spec.md) | **SSOT 入口**（布局迁移） |
-| Design | [design/design.md](design/design.md) | 入口 / 占位 |
-| Plan | [plan/plan.md](plan/plan.md) | 入口；战役文件可并列于 plan/ |
+| Design | [design/design.md](design/design.md) | 当前 retry / budget / local primitives 设计 |
+| Plan | [plan/plan.md](plan/plan.md) | Round 01/02/03 findings 已记录 |
 | Tasks | [tasks/tasks.md](tasks/tasks.md) | 入口 / 占位 |
 | Prompt | [prompt/prompt.md](prompt/prompt.md) | 入口 / 占位 |
 | **Code** | **`crates/resiliencx`** | 实现不在 `.agents/ssot/` |
-| Test | [test/test.md](test/test.md) | 入口 / 占位 |
-| Review | [review/review.md](review/review.md) | 默认 NOT PASS |
-| Release | [release/release.md](release/release.md) | 默认 BLOCKED |
-| Retrospective | [retrospective/retrospective.md](retrospective/retrospective.md) | 入口 / 占位 |
+| Test | [test/test.md](test/test.md) | 本地证据已审；GitHub 固定提交 CI artifact pending |
+| Review | [review/review.md](review/review.md) | 本地独立 reviewer 完成；verifier 技术/证据初验完成 |
+| Release | [release/release.md](release/release.md) | `0.1.2` 候选；BLOCKED |
+| Retrospective | [retrospective/retrospective.md](retrospective/retrospective.md) | 阶段性复盘 |
 
 ## 横切
 
 | 制品 | 路径 |
 |------|------|
 | Matrix | [matrix/matrix.md](matrix/matrix.md) |
-| Gate | [gate/gate.md](gate/gate.md) |
-| Evidence | [evidence/](evidence/) |
+| Gate | [gate/gate.md](gate/gate.md)（BLOCKED） |
+| Evidence | [evidence/](evidence/)（Round 01/02/03） |
 
 ## 硬限制
 

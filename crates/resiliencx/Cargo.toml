@@ -1,6 +1,6 @@
 [package]
 name = "resiliencx"
-version = "0.1.1"
+version = "0.1.2"
 edition.workspace = true
 rust-version.workspace = true
 description = "L1 弹性：重试 + 预算 + 熔断 + 限流 + 舱壁（无墙钟；ADR-005）"

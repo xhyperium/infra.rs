@@ -10,7 +10,10 @@ use bytes::Bytes;
 use contracts::{EventBus, KeyValueStore};
 use futures_core::stream::BoxStream;
 use kernel::ErrorKind;
-use std::sync::{Arc, Mutex};
+use std::sync::{
+    Arc, Mutex,
+    atomic::{AtomicUsize, Ordering},
+};
 
 struct CountingInstr {
     n: Arc<Mutex<u32>>,
@@ -100,11 +103,16 @@ impl bootstrap::BoundedVenueTimeSource for Cap {
 #[test]
 fn four_build_paths_and_shutdown_ownership() {
     let ctx = Bootstrap::new().build();
-    assert!(!ctx.shutdown_signal().is_triggered());
+    let signal = ctx.shutdown_signal().clone();
     assert!(ctx.platform().evidence().is_none());
+    assert!(ctx.graceful_shutdown().expect("build graceful").is_empty());
+    assert!(signal.is_triggered());
 
     let ctx2 = Bootstrap::new().try_build().expect("try_build");
+    let signal2 = ctx2.shutdown_signal().clone();
     assert!(ctx2.platform().evidence().is_none());
+    assert!(ctx2.graceful_shutdown().expect("try_build graceful").is_empty());
+    assert!(signal2.is_triggered());
 
     let app = Bootstrap::new().build_app();
     assert!(!app.context().shutdown_signal().is_triggered());
@@ -116,6 +124,133 @@ fn four_build_paths_and_shutdown_ownership() {
     let signal = app2.context().shutdown_signal().clone();
     app2.trigger_shutdown();
     assert!(signal.is_triggered());
+}
+
+#[test]
+fn app_context_graceful_shutdown_signals_then_drains_lifo_and_keeps_all_results() {
+    let order = Arc::new(Mutex::new(Vec::new()));
+    let builder = Bootstrap::new();
+    let signal = builder.shutdown_signal().clone();
+
+    let order_a = Arc::clone(&order);
+    let signal_a = signal.clone();
+    let builder = builder
+        .register_drain("a", move || {
+            assert!(signal_a.is_triggered(), "drain 前必须先触发 signal");
+            order_a.lock().expect("order lock").push("a");
+            Ok(())
+        })
+        .expect("register a");
+    let order_b = Arc::clone(&order);
+    let signal_b = signal.clone();
+    let builder = builder
+        .register_drain("b", move || {
+            assert!(signal_b.is_triggered(), "失败 hook 也必须观察到 signal");
+            order_b.lock().expect("order lock").push("b");
+            Err(kernel::XError::unavailable("b failed"))
+        })
+        .expect("register b");
+    let order_c = Arc::clone(&order);
+    let signal_c = signal.clone();
+    let ctx = builder
+        .register_drain("c", move || {
+            assert!(signal_c.is_triggered(), "drain 前必须先触发 signal");
+            order_c.lock().expect("order lock").push("c");
+            Ok(())
+        })
+        .expect("register c")
+        .build();
+
+    let results = ctx.graceful_shutdown().expect("graceful shutdown");
+    assert!(signal.is_triggered());
+    assert_eq!(*order.lock().expect("order lock"), ["c", "b", "a"]);
+    assert_eq!(results.iter().map(|step| step.name.as_str()).collect::<Vec<_>>(), ["c", "b", "a"]);
+    assert_eq!(results.iter().map(|step| step.ok).collect::<Vec<_>>(), [true, false, true]);
+    assert!(results[1].error.as_deref().is_some_and(|error| error.contains("b failed")));
+}
+
+#[test]
+fn bootstrapped_app_graceful_shutdown_delegates_and_trigger_only_stays_compatible() {
+    let graceful_builder = Bootstrap::new();
+    let graceful_signal = graceful_builder.shutdown_signal().clone();
+    let observed = graceful_signal.clone();
+    let app = graceful_builder
+        .register_drain("app", move || {
+            assert!(observed.is_triggered());
+            Ok(())
+        })
+        .expect("register app")
+        .try_build_app()
+        .expect("try_build_app");
+    let results = app.graceful_shutdown().expect("app graceful shutdown");
+    assert!(graceful_signal.is_triggered());
+    assert_eq!(results.iter().map(|step| step.name.as_str()).collect::<Vec<_>>(), ["app"]);
+
+    let ran = Arc::new(AtomicUsize::new(0));
+    let ran_hook = Arc::clone(&ran);
+    let trigger_builder = Bootstrap::new();
+    let trigger_signal = trigger_builder.shutdown_signal().clone();
+    let app = trigger_builder
+        .register_drain("must-not-run", move || {
+            ran_hook.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        })
+        .expect("register trigger-only hook")
+        .build_app();
+    app.trigger_shutdown();
+    assert!(trigger_signal.is_triggered());
+    assert_eq!(ran.load(Ordering::SeqCst), 0);
+
+    let ownerless_ran = Arc::new(AtomicUsize::new(0));
+    let ownerless_hook = Arc::clone(&ownerless_ran);
+    let mut ownerless_builder = Bootstrap::new();
+    let ownerless_signal = ownerless_builder.shutdown_signal().clone();
+    let _external_guard = ownerless_builder.take_shutdown_guard().expect("取出 app guard");
+    let ownerless_app = ownerless_builder
+        .register_drain("ownerless-app", move || {
+            ownerless_hook.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        })
+        .expect("register ownerless app hook")
+        .build_app();
+    let error = ownerless_app.graceful_shutdown().expect_err("ownerless app 必须 fail closed");
+    assert!(matches!(&error, BootstrapError::MissingDependency { name: "shutdown_guard" }));
+    assert_eq!(error.to_string(), "缺少必需依赖：shutdown_guard");
+    assert!(!ownerless_signal.is_triggered());
+    assert_eq!(ownerless_ran.load(Ordering::SeqCst), 0);
+}
+
+#[test]
+fn into_parts_transfers_shutdown_owner_and_context_can_still_drain() {
+    let blocked_ran = Arc::new(AtomicUsize::new(0));
+    let blocked_hook = Arc::clone(&blocked_ran);
+    let blocked_builder = Bootstrap::new();
+    let blocked_signal = blocked_builder.shutdown_signal().clone();
+    let blocked_app = blocked_builder
+        .register_drain("blocked-split", move || {
+            blocked_hook.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        })
+        .expect("register blocked split")
+        .build_app();
+    let (blocked_ctx, blocked_shutdown) = blocked_app.into_parts();
+    let error = blocked_ctx.graceful_shutdown().expect_err("未触发 controller 必须拒绝 drain");
+    assert!(matches!(&error, BootstrapError::MissingDependency { name: "shutdown_guard" }));
+    assert_eq!(error.to_string(), "缺少必需依赖：shutdown_guard");
+    assert_eq!(blocked_ran.load(Ordering::SeqCst), 0);
+    assert!(!blocked_signal.is_triggered());
+    blocked_shutdown.trigger();
+    assert!(blocked_signal.is_triggered());
+
+    let builder = Bootstrap::new();
+    let signal = builder.shutdown_signal().clone();
+    let app = builder.register_drain("split", || Ok(())).expect("register split").build_app();
+    let (ctx, shutdown) = app.into_parts();
+    assert!(shutdown.has_guard());
+    shutdown.trigger();
+    let results = ctx.graceful_shutdown().expect("外部 controller 已触发");
+    assert!(signal.is_triggered());
+    assert_eq!(results.iter().map(|step| step.name.as_str()).collect::<Vec<_>>(), ["split"]);
 }
 
 #[test]
