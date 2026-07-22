@@ -30,7 +30,7 @@
 crates/types/decimal/           EXISTS · members 已注册
   package                       decimalx（-p decimalx）
   lib                           decimalx
-  version                       0.1.0
+  version                       0.1.1
   publish                       false
   生产依赖                      kernel + serde
   Active SSOT                   .agents/ssot/types/decimal/spec/spec.md
@@ -39,7 +39,7 @@ crates/types/decimal/           EXISTS · members 已注册
 crates/types/canonical/         EXISTS · members 已注册
   package                       canonical（-p canonical）
   lib                           canonical
-  version                       0.1.0
+  version                       0.1.1
   publish                       false
   生产依赖                      decimalx + serde
   Active SSOT                   .agents/ssot/types/canonical/spec/spec.md

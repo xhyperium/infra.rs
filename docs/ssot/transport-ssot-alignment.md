@@ -5,6 +5,7 @@
 | 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
 | SSOT | `.agents/ssot/transport/spec/spec.md` |
 | 本仓 crate | `crates/transport` → package `transportx` / lib `transportx` |
+| 当前版本 | 0.1.2（L1 HTTP/WS）|
 | 覆盖率门禁 | `cargo llvm-cov -p transportx --fail-under-lines 100` |
 
 > 镜像写 COMPLETE ≠ 本仓可宣称 ship。本表以 **members + 源码 + 本仓测试** 为准。

@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/tools/**` |
 | 本仓实现 | 见下表；**禁止**把文档 COMPLETE 当作 ship |
 | 审计日期 | 2026-07-22 |
-| 结论 | **tools SSOT 已本仓化**；`evidence` 最小面 + **goalctl / verifyctl 最小生产 CLI 已 member**（#188）；live env 构建器 #191；xtask **未**宣称 ship |
+| 结论 | **tools SSOT 已本仓化**；`evidence` 最小面 + **goalctl / verifyctl 最小生产 CLI 已 member**（#188）；live env 构建器 #191；xtask **未**宣称 ship。`xhyper-goalctl`/`xhyper-verifyctl` 前缀仅作为 SSOT 双镜像文件名惯例出现，实际 cargo package 名为 `goalctl`（0.2.0）/ `verifyctl`（0.1.0） |
 
 ## 结论摘要
 

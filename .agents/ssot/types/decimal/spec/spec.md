@@ -1,10 +1,10 @@
 # decimalx 实现规范
 
-状态：当前 `0.1.0` 实现的 active 验收合同（wire/生产边界未稳定）
+状态：当前 `0.1.1` 实现的 active 验收合同（wire/生产边界未稳定）
 权威来源：`CONSTITUTION.md`、XLib spec v0.2、Approved ADR-006/007
 crate：`crates/types/decimal`
 
-- Package / lib：`xhyper-decimalx` / `decimalx`
+- Package / lib：`decimalx` / lib `decimalx`（**Cargo 选择器 `-p decimalx`**；历史产品名 `xhyper-decimalx`，不可用于 `-p`）
 - Implementation snapshot：`b0934baa`（2026-07-15）
 - Document commit：`e0b98df4`
 - Verified at：`e0b98df4`（相关实现路径未变化）
@@ -28,10 +28,10 @@ XLib spec §9，而不能由本文静默批准。
 | 项目 | 当前事实 | 合同 |
 |---|---|---|
 | 路径 | `crates/types/decimal` | **Evidence**：固定于 `/types/`（ADR-007） |
-| 版本 | `0.1.0` | **Evidence**：独立维护；每次只允许 `x.y.z → x.y.(z+1)`（XLib spec §5；Constitution §7.3） |
-| 生产依赖 | `xhyper-kernel`, `serde` | **Evidence**：当前 Cargo；kernel 为架构依赖，`serde` 为已声明外部依赖 |
+| 版本 | `0.1.1` | **Evidence**：独立维护；每次只允许 `x.y.z → x.y.(z+1)`（XLib spec §5；Constitution §7.3） |
+| 生产依赖 | `kernel`（别名 `xhyper-kernel` 已废弃）, `serde` | **Evidence**：当前 Cargo；kernel 为架构依赖，`serde` 为已声明外部依赖 |
 
-ADR-007 历史文本中的 `xlib_standard` 当前对应 package `xhyper-kernel` / lib `kernel`；`serde` 是第三方序列化依赖，
+ADR-007 历史文本中的 `xlib_standard` 当前对应 package `kernel` / lib `kernel`（别名 `xhyper-kernel` 已废弃）；`serde` 是第三方序列化依赖，
 须继续满足 Constitution Article VII 的必要性、安全与许可证审查。不得新增 workspace 生产依赖；
 新增第三方依赖需先走相同审查，若改变架构合同还须走 XLib spec §9。
 
@@ -126,7 +126,7 @@ Additive Only 仅适用于 `contracts` trait 层，不适用于本 crate。
 聚焦命令：
 
 ```text
-cargo test -p xhyper-decimalx
+cargo test -p decimalx
 cargo check -p decimalx --all-targets
 cargo clippy -p decimalx --all-targets -- -D warnings
 cargo fmt -- --check

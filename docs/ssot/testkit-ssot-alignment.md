@@ -6,6 +6,7 @@
 | 日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
 | 规范 | SPEC-TESTKIT-002（镜像 `.agents/ssot/testkit/spec/spec.md`） |
 | package | **`testkit`** · lib `testkit`（Cargo 选择器 `-p testkit`；历史名 `xhyper-testkit` 已废弃） |
+| 当前版本 | 0.1.2（L1 ManualClock test-support；contract-testkit 0.1.1）|
 | 内部生产层级 | **L1 ManualClock test-support**（**不是**生产 runtime；PR #159 · tag `v0.3.0-four-crates`） |
 
 ## 结论摘要
