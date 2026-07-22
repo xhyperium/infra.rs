@@ -203,3 +203,17 @@ cargo test -p taosx --test live_smoke -- --ignored --nocapture
 | `adapters/README.md` | 九域索引 + storage P0 表 |
 | `storage/*/plan/infra-rs-landing.md` | 本仓生产落地说明 |
 | `storage/*/plan/infra-rs-draft-spec-goal.md` | draft SPEC_GOAL 入库快照 |
+
+## storage 分 package 对齐（2026-07-22）
+
+| package | 对齐文档 | SSOT |
+|---------|----------|------|
+| redisx | [redisx-ssot-alignment.md](./redisx-ssot-alignment.md) | `.agents/ssot/adapters/storage/redis/` |
+| postgresx | [postgresx-ssot-alignment.md](./postgresx-ssot-alignment.md) | `.agents/ssot/adapters/storage/postgres/` |
+| kafkax | [kafkax-ssot-alignment.md](./kafkax-ssot-alignment.md) | `.agents/ssot/adapters/storage/kafka/` |
+| natsx | [natsx-ssot-alignment.md](./natsx-ssot-alignment.md) | `.agents/ssot/adapters/storage/nats/` |
+| ossx | [ossx-ssot-alignment.md](./ossx-ssot-alignment.md) | `.agents/ssot/adapters/storage/oss/` |
+| clickhousex | [clickhousex-ssot-alignment.md](./clickhousex-ssot-alignment.md) | `.agents/ssot/adapters/storage/clickhouse/` |
+| taosx | [taosx-ssot-alignment.md](./taosx-ssot-alignment.md) | `.agents/ssot/adapters/storage/taos/` |
+
+各域 `goal/design/plan/tasks/test/review/release/matrix/gate/evidence` 已从布局占位改为 **infra.rs P0 实质合同**。

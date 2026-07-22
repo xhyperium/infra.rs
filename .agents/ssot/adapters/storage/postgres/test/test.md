@@ -1,7 +1,29 @@
-# adapters/storage/postgres — Test
+# adapters/storage/postgres — Test 合同
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 测试策略入口；测试代码在实现 crate，不在本树。
+## 离线（默认 CI）
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+```bash
+cargo test -p postgresx --all-targets
+cargo clippy -p postgresx --all-targets -- -D warnings
+```
+
+覆盖期望：config 校验/脱敏、pool close、error map、消息/ID 编解码（若有）、公共 API 引用。
+
+## Live（可选 · 真凭据）
+
+```bash
+node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
+set -a; source /tmp/foundationx-live.env; set +a
+cargo test -p postgresx -- --ignored --nocapture
+```
+
+- live 文件：`tests/live_postgres.rs`
+- 端口提示：5432
+
+## Bench
+
+```bash
+cargo test -p postgresx --bench '*' -- --nocapture   # 或 cargo bench -p postgresx
+```
+
+`benches/query_hot_path.rs` 必须有界，避免 `--all-targets` 挂死。

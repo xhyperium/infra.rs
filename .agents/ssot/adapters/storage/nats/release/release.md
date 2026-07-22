@@ -1,7 +1,16 @@
 # adapters/storage/nats — Release
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 发布清单 · 默认 BLOCKED until Spec/AC 证据。
+| 项 | 状态 |
+|----|------|
+| workspace member | 是 · `natsx` |
+| publish | `publish = false` |
+| crates.io | **未发布** |
+| SemVer package stable | **未宣称** |
+| 内部可用 | P0 生产入口可用（#188+） |
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+## 发布前清单（若未来 stable）
+
+- [ ] 公共 API 冻结说明 + CHANGELOG
+- [ ] live 在 CI 可选 job 稳定
+- [ ] DEFER 项明确 out-of-scope 或落地
+- [ ] `publish = true` 与 Lead 批准

@@ -52,3 +52,16 @@ cargo test -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p t
 
 - [docs/ssot/adapters-ssot-alignment.md](../../docs/ssot/adapters-ssot-alignment.md)
 - [docs/ssot/draft-gap-matrix.md](../../docs/ssot/draft-gap-matrix.md)
+
+## docs/ssot 分 package
+
+| package | 文档 |
+|---------|------|
+| redisx | [redisx-ssot-alignment.md](../../docs/ssot/redisx-ssot-alignment.md) |
+| postgresx | [postgresx-ssot-alignment.md](../../docs/ssot/postgresx-ssot-alignment.md) |
+| kafkax | [kafkax-ssot-alignment.md](../../docs/ssot/kafkax-ssot-alignment.md) |
+| natsx | [natsx-ssot-alignment.md](../../docs/ssot/natsx-ssot-alignment.md) |
+| ossx | [ossx-ssot-alignment.md](../../docs/ssot/ossx-ssot-alignment.md) |
+| clickhousex | [clickhousex-ssot-alignment.md](../../docs/ssot/clickhousex-ssot-alignment.md) |
+| taosx | [taosx-ssot-alignment.md](../../docs/ssot/taosx-ssot-alignment.md) |
+

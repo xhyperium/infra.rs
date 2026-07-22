@@ -48,7 +48,14 @@
 | [schedulex-ssot-alignment.md](schedulex-ssot-alignment.md) | schedulex |
 | [types-ssot-alignment.md](types-ssot-alignment.md) | types |
 | [bootstrap-ssot-alignment.md](bootstrap-ssot-alignment.md) | bootstrap |
-| [adapters-ssot-alignment.md](adapters-ssot-alignment.md) | adapters |
+| [adapters-ssot-alignment.md](adapters-ssot-alignment.md) | adapters 九域汇总 |
+| [redisx-ssot-alignment.md](redisx-ssot-alignment.md) | redisx 生产 P0 |
+| [postgresx-ssot-alignment.md](postgresx-ssot-alignment.md) | postgresx 生产 P0 |
+| [kafkax-ssot-alignment.md](kafkax-ssot-alignment.md) | kafkax 生产 P0 |
+| [natsx-ssot-alignment.md](natsx-ssot-alignment.md) | natsx 生产 P0 |
+| [ossx-ssot-alignment.md](ossx-ssot-alignment.md) | ossx 生产 P0 |
+| [clickhousex-ssot-alignment.md](clickhousex-ssot-alignment.md) | clickhousex 生产 P0 |
+| [taosx-ssot-alignment.md](taosx-ssot-alignment.md) | taosx 生产 P0 |
 | [contracts-ssot-alignment.md](contracts-ssot-alignment.md) | contracts |
 | [observex-ssot-alignment.md](observex-ssot-alignment.md) | observex |
 | [resiliencx-ssot-alignment.md](resiliencx-ssot-alignment.md) | resiliencx |
@@ -66,3 +73,4 @@
 |------|------|
 | 2026-07-22 | **#178** 独立 `contract-testkit` 落地；Fake 在 `crates/test-support/contracts`；对齐/同步报告已纠偏 |
 | 2026-07-22 | **#188–#191** storage×7 生产路径 + goalctl/verifyctl + live env；workspace/adapters/tools 对齐文刷新 |
+| 2026-07-22 | storage×7 分 package 对齐文 + SSOT 层实质化（非占位） |

@@ -176,7 +176,8 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) | schedulex active registry 本仓矩阵 |
 | [types-ssot-alignment.md](./types-ssot-alignment.md) | decimal + canonical 本仓状态 |
 | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) | bootstrap 组合根本仓矩阵 |
-| [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) | adapters 九域：storage 生产 P0 + exchange scaffold |
+| [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) | adapters 九域汇总 |
+| [redisx-ssot-alignment.md](./redisx-ssot-alignment.md) 等 7 份 | storage 分 package 对齐 |
 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) | contracts 镜像 + trait 落地 |
 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) | transportx 本仓矩阵 |
 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) | tools 四域镜像 + 本地化状态 |
@@ -202,3 +203,4 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 
 `configx` / `evidence` / `observex` / `resiliencx` / `schedulex` / `transportx` / `contracts`：
 STATUS **结构 100%** + 声明面测/bench/cov-100；**≠** workspace Production Ready / L5。
+| 2026-07-22 | storage×7：SSOT 层实质化 + 分 package `*-ssot-alignment.md` |

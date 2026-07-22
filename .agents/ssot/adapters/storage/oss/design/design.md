@@ -1,7 +1,30 @@
-# adapters/storage/oss — Design
+# adapters/storage/oss — Design（infra.rs）
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> Design 入口；无完整稿时不伪造 DESIGN-* 双镜像。
+## 模块形状
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+| 组件 | 职责 |
+|------|------|
+| Config | `FOUNDATIONX_OSSX_{ENDPOINT,BUCKET,ACCESS_KEY_ID,ACCESS_KEY_SECRET,REGION}` / builder；密码 Debug 脱敏 |
+| Pool / Client | 连接、超时、健康、close 语义 |
+| Error map | 驱动错误 → `kernel::XError` / `ErrorKind` |
+| contracts 适配 | contracts::ObjectStore |
+| scaffold feature | 进程内 mock / 旧适配器（非默认） |
+
+## 依赖方向
+
+```text
+ossx → kernel + contracts（+ 驱动 crate）
+禁止  kernel/types 反向依赖 adapters
+```
+
+## 不变量
+
+1. 默认 feature = 生产路径；scaffold 可选
+2. 外部 I/O 有 timeout / close 路径
+3. 无硬编码生产密钥
+4. 公共 API 中文文档 + 英文标识符
+
+## 参考
+
+- 实现：`crates/adapters/storage/oss/src/`
+- 用法：`crates/adapters/storage/oss/docs/usage.md` · `config.md` · `operations.md`

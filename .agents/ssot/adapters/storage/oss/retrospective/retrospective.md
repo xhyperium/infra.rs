@@ -1,7 +1,17 @@
 # adapters/storage/oss — Retrospective
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 复盘待战役结束后填写。
+## 做得好
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+- 默认生产路径与 scaffold 分离，避免“假生产”
+- live 默认 ignore，保护离线 CI
+- draft 合同入库 SSOT，可审计
+
+## 教训
+
+- NATS 凭据以本机 conf 为准（md 可能过期）
+- TDengine REST 端口 6041 而非 native 6030
+- Kafka/NATS/CH/Taos bench 必须超时有界
+
+## 后续
+
+- multipart / lifecycle / STS 临时凭证
