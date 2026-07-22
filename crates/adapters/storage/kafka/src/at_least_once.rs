@@ -116,7 +116,8 @@ impl AtLeastOnceConsumer {
         Ok(())
     }
 
-    /// 显式提交任意 offset（高级；通常用 [`Self::ack`]）。
+    /// 显式提交任意 offset（高级兼容面；通常用 [`Self::ack`]）。
+    #[deprecated(since = "0.3.2", note = "可绕过 pending 所有权；生产路径请使用 ack")]
     pub async fn commit(&self, topic: &str, partition: i32, offset: i64) -> XResult<()> {
         self.store.commit(topic, partition, offset).await
     }

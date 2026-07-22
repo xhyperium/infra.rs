@@ -6,6 +6,8 @@
 - [`KafkaProducer::publish`](src/producer.rs)：等待 broker produce 确认
 - [`KafkaConsumer`](src/consumer.rs)：按分区流式消费（不依赖 group coordinator）
 - [`KafkaEventBus`](src/bus.rs)：`contracts::EventBus` facade（**at-most-once**）
+- [`AtLeastOnceConsumer`](src/at_least_once.rs)：单 owner、应用自管单调 checkpoint
+- [`ProduceThenCheckpointCoordinator`](src/eos.rs)：非原子 produce/checkpoint，存在重复窗口
 - feature `scaffold`：旧内存 `KafkaAdapter` / `MockKafkaBus`
 
 详见 [docs/usage.md](docs/usage.md) · [docs/config.md](docs/config.md) · [docs/operations.md](docs/operations.md)。
@@ -34,4 +36,7 @@ pool.close(std::time::Duration::from_secs(3)).await?;
 | `BROKERS` | bootstrap，默认 `127.0.0.1:9092` |
 | `SASL_MECHANISM` | 如 `PLAIN`；空则关闭 SASL |
 | `SASL_USERNAME` / `SASL_PASSWORD` | SASL 凭据 |
-| `TLS` | `true`/`false`（TLS 需额外 feature 路径时见 ops） |
+| `TLS` | 当前未接入；`true` 会 fail-closed，禁止静默明文降级 |
+
+可复现的单节点 broker 语义测试：`./scripts/broker-conformance.sh`。该结果不证明
+group/rebalance/HA/TLS/native EOS。

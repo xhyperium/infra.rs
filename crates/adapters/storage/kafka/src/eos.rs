@@ -1,9 +1,9 @@
-//! 应用层 Exactly-Once 语义（EOS）协调。
+//! Produce-then-checkpoint 协调。
 //!
 //! # 能力边界
 //!
 //! `rskafka` **没有** transactional producer / 幂等 producer 的完整 EOS 协议。
-//! 本模块提供 **应用级 dual-write 模式**：
+//! 本模块提供 **非原子的应用级 dual-write 模式**：
 //!
 //! 1. 消费业务消息（或本地副作用）
 //! 2. **先** produce 到 side-effect / 日志 topic
@@ -11,7 +11,8 @@
 //! 4. produce 失败 → **fail-closed**：绝不 commit（at-least-once 重投）
 //!
 //! 这保证「副作用已写出」与「消费位点前进」的单向依赖，避免「提交了 offset 但副作用丢失」。
-//! 反向（副作用写出但 commit 失败）会在重启后重投 → 业务需幂等。
+//! 反向（副作用写出但 checkpoint 失败）会在重启后重投，形成明确的重复窗口。
+//! 调用方必须用稳定幂等键去重；本模块不提供 Kafka 原生事务或 exactly-once 保证。
 
 use std::sync::Arc;
 
@@ -22,13 +23,13 @@ use crate::message::Delivery;
 use crate::offset::OffsetCommitStore;
 use crate::producer::KafkaProducer;
 
-/// EOS 协调器：绑定 offset store。
+/// Produce-then-checkpoint 协调器：绑定应用自管的 offset store。
 #[derive(Clone)]
-pub struct EosCoordinator {
+pub struct ProduceThenCheckpointCoordinator {
     store: Arc<dyn OffsetCommitStore>,
 }
 
-impl EosCoordinator {
+impl ProduceThenCheckpointCoordinator {
     /// 构造。
     #[must_use]
     pub fn new(store: Arc<dyn OffsetCommitStore>) -> Self {
@@ -48,8 +49,8 @@ impl EosCoordinator {
         commit_topic: impl Into<String>,
         commit_partition: i32,
         commit_offset: i64,
-    ) -> EosSession {
-        EosSession {
+    ) -> ProduceThenCheckpointSession {
+        ProduceThenCheckpointSession {
             store: Arc::clone(&self.store),
             commit_topic: commit_topic.into(),
             commit_partition,
@@ -60,7 +61,7 @@ impl EosCoordinator {
         }
     }
 
-    /// Dual-write 一步完成：produce → 成功才 commit。
+    /// 非原子 dual-write：produce → 成功才 checkpoint。
     ///
     /// Fail-closed：`produce` 失败时 **不** 调用 store.commit。
     pub async fn produce_then_commit(
@@ -84,10 +85,11 @@ impl EosCoordinator {
         }
     }
 
-    /// 对任意 produce 结果应用 fail-closed 规则（离线可测）。
+    /// 对调用方提供的 produce 结果应用 fail-closed 规则（高级兼容面）。
     ///
     /// - `Ok(delivery)` → commit 后返回 delivery
     /// - `Err(_)` → **不** commit，原样返回错误
+    #[deprecated(since = "0.3.2", note = "结果可由调用方伪造；生产路径请使用 produce_then_commit")]
     pub async fn after_produce_result(
         &self,
         produce: XResult<Delivery>,
@@ -105,8 +107,11 @@ impl EosCoordinator {
     }
 }
 
-/// 单次 EOS 会话：标记 produce 成功后才允许 commit。
-pub struct EosSession {
+/// 单次 produce-then-checkpoint 会话。
+///
+/// 此状态机适合离线编排测试；真实生产路径应优先使用
+/// [`ProduceThenCheckpointCoordinator::produce_then_commit`]，避免手工伪造 produce 成功。
+pub struct ProduceThenCheckpointSession {
     store: Arc<dyn OffsetCommitStore>,
     commit_topic: String,
     commit_partition: i32,
@@ -117,7 +122,7 @@ pub struct EosSession {
     aborted: bool,
 }
 
-impl EosSession {
+impl ProduceThenCheckpointSession {
     /// 消费位点。
     #[must_use]
     pub fn commit_offset(&self) -> i64 {
@@ -142,13 +147,21 @@ impl EosSession {
         self.aborted
     }
 
-    /// 标记 side-effect produce 成功（调用方在真实 produce Ok 后调用）。
+    /// 标记 side-effect produce 成功（高级兼容面）。
+    #[deprecated(
+        since = "0.3.2",
+        note = "调用方可伪造成功；生产路径请使用 ProduceThenCheckpointCoordinator::produce_then_commit"
+    )]
     pub fn mark_produce_ok(&mut self) -> XResult<()> {
         if self.aborted {
-            return Err(XError::conflict("kafkax EOS: 会话已 abort，禁止 mark_produce_ok"));
+            return Err(XError::conflict(
+                "kafkax produce-then-checkpoint: 会话已 abort，禁止标记 produce 成功",
+            ));
         }
         if self.committed {
-            return Err(XError::conflict("kafkax EOS: 会话已提交，禁止 mark_produce_ok"));
+            return Err(XError::conflict(
+                "kafkax produce-then-checkpoint: 会话已提交，禁止标记 produce 成功",
+            ));
         }
         self.produce_ok = true;
         Ok(())
@@ -164,13 +177,17 @@ impl EosSession {
     /// Fail-closed：produce 未成功 → `Conflict`，store 不变。
     pub async fn try_commit(&mut self) -> XResult<()> {
         if self.aborted {
-            return Err(XError::conflict("kafkax EOS: 会话已 abort，拒绝 commit"));
+            return Err(XError::conflict(
+                "kafkax produce-then-checkpoint: 会话已 abort，拒绝 checkpoint",
+            ));
         }
         if self.committed {
-            return Err(XError::conflict("kafkax EOS: 会话已提交"));
+            return Err(XError::conflict("kafkax produce-then-checkpoint: 会话已 checkpoint"));
         }
         if !self.produce_ok {
-            return Err(XError::conflict("kafkax EOS: produce 未成功，拒绝 commit（fail-closed）"));
+            return Err(XError::conflict(
+                "kafkax produce-then-checkpoint: produce 未成功，拒绝 checkpoint（fail-closed）",
+            ));
         }
         self.store.commit(&self.commit_topic, self.commit_partition, self.commit_offset).await?;
         self.committed = true;
@@ -185,8 +202,18 @@ impl EosSession {
     }
 }
 
+/// 旧名称兼容别名；不代表 broker 原生 EOS。
+#[deprecated(since = "0.3.2", note = "该能力并非 EOS；请改用 ProduceThenCheckpointCoordinator")]
+pub type EosCoordinator = ProduceThenCheckpointCoordinator;
+
+/// 旧名称兼容别名；不代表 broker 原生 EOS。
+#[deprecated(since = "0.3.2", note = "该能力并非 EOS；请改用 ProduceThenCheckpointSession")]
+pub type EosSession = ProduceThenCheckpointSession;
+
 #[cfg(test)]
 mod tests {
+    #![allow(deprecated)]
+
     use super::*;
     use crate::offset::MemoryOffsetStore;
     use kernel::ErrorKind;
@@ -194,9 +221,13 @@ mod tests {
     #[tokio::test]
     async fn produce_ok_allows_commit() {
         let store = MemoryOffsetStore::new().shared();
-        let eos = EosCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
+        let coordinator =
+            ProduceThenCheckpointCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
         let delivery = Delivery { partition: 0, offset: 42 };
-        let out = eos.after_produce_result(Ok(delivery), "consume-topic", 0, 7).await.expect("ok");
+        let out = coordinator
+            .after_produce_result(Ok(delivery), "consume-topic", 0, 7)
+            .await
+            .expect("ok");
         assert_eq!(out.offset, 42);
         // commit next-to-read = 8
         assert_eq!(store.committed("consume-topic", 0).await.expect("c"), Some(8));
@@ -205,8 +236,9 @@ mod tests {
     #[tokio::test]
     async fn produce_fail_no_commit() {
         let store = MemoryOffsetStore::new().shared();
-        let eos = EosCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
-        let err = eos
+        let coordinator =
+            ProduceThenCheckpointCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
+        let err = coordinator
             .after_produce_result(Err(XError::unavailable("broker down")), "consume-topic", 0, 7)
             .await
             .expect_err("must fail");
@@ -218,8 +250,9 @@ mod tests {
     #[tokio::test]
     async fn session_fail_closed_and_rollback() {
         let store = MemoryOffsetStore::new().shared();
-        let eos = EosCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
-        let mut session = eos.begin("t", 0, 3);
+        let coordinator =
+            ProduceThenCheckpointCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
+        let mut session = coordinator.begin("t", 0, 3);
 
         // 未 produce → commit 拒绝
         let e = session.try_commit().await.expect_err("closed");
@@ -233,7 +266,7 @@ mod tests {
         assert_eq!(store.committed("t", 0).await.expect("c"), Some(4));
 
         // 新会话 + rollback
-        let mut s2 = eos.begin("t", 0, 10);
+        let mut s2 = coordinator.begin("t", 0, 10);
         s2.mark_produce_ok().expect("mark");
         s2.rollback();
         let e2 = s2.try_commit().await.expect_err("rolled back");
@@ -245,8 +278,9 @@ mod tests {
     #[tokio::test]
     async fn session_produce_fail_path() {
         let store = MemoryOffsetStore::new().shared();
-        let eos = EosCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
-        let mut session = eos.begin("orders", 1, 100);
+        let coordinator =
+            ProduceThenCheckpointCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
+        let mut session = coordinator.begin("orders", 1, 100);
         session.mark_produce_ok().expect("mark");
         session.mark_produce_failed();
         assert!(!session.produce_ok());

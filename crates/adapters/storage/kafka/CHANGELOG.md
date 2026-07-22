@@ -1,12 +1,24 @@
 # Changelog
 
+## [0.3.2] — 2026-07-22
+
+### Added
+
+- 可复现 broker conformance：未确认重建、确认后推进、checkpoint 失败重复窗口
+
+### Changed
+
+- 将主能力诚实命名为 `ProduceThenCheckpointCoordinator` / `Session`；旧 `Eos*` 仅保留弃用别名
+- Memory/File checkpoint 改为单调提交，拒绝 offset 溢出；文件落盘补齐文件与父目录 `sync_all`
+- TLS 配置在当前未实现的传输上 fail-closed，禁止静默明文降级
+
 ## [0.3.1] — 2026-07-22
 
 ### Added
 
 - 应用层 offset 提交：`OffsetCommitStore` / `MemoryOffsetStore` / `FileOffsetStore`
 - At-least-once：`AtLeastOnceConsumer` / `KafkaAtLeastOnceBus`（显式 `ack`/`commit`）
-- 应用级 EOS：`EosCoordinator` / `EosSession`（produce 成功后才允许 commit；fail-closed）
+- 历史名称 `EosCoordinator` / `EosSession`（自 0.3.2 起弃用；该能力并非 EOS）
 - `ConsumerConfig::start_offset` / `with_start_offset` / `resolve_start_offset`（`StartOffset::At`）
 
 ### Notes

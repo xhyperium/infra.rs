@@ -1,11 +1,12 @@
-//! `natsx` — 生产级 NATS 适配（`async-nats` Core NATS + JetStream 薄封装）。
+//! `natsx` — NATS 适配（`async-nats` Core NATS + JetStream durable pull）。
 //!
 //! ## 默认入口
 //!
 //! - [`NatsConfig`] / [`NatsConfig::from_env`] / [`TlsPolicy`]
 //! - [`NatsPool`]：`connect` / `publish` / `subscribe` / `ping` / `health` / `close`
 //! - [`NatsEventBus`]：[`contracts::EventBus`]（**at-most-once**）
-//! - [`JetStream`]：`publish` / `get_or_create_stream` / `create_pull_consumer`
+//! - [`JetStream`]：持久 publish、stream 管理与显式确认 consumer
+//! - [`JetStreamConsumer`] / [`JetStreamDelivery`]：有限拉取与 ack/nak/progress/term
 //!
 //! ## TLS 默认策略
 //!
@@ -31,7 +32,9 @@ mod pool;
 pub use bus::NatsEventBus;
 pub use config::{DEFAULT_URL, NatsConfig, TlsPolicy, url_is_loopback};
 pub use jetstream::{
-    JetStream, PullConsumerConfig, StreamConfig, validate_consumer_name, validate_stream_name,
+    JetStream, JetStreamConsumer, JetStreamConsumerConfig, JetStreamDelivery,
+    JetStreamDeliveryMetadata, PullConsumerConfig, StreamConfig, validate_consumer_name,
+    validate_stream_name,
 };
 pub use pool::{NatsHealth, NatsMessage, NatsPool, NatsPoolStats, NatsSubscription};
 
@@ -56,10 +59,13 @@ mod public_api_surface {
         assert!(validate_stream_name("EVENTS").is_ok());
         let _sc = StreamConfig::new("S", "s.>");
         let _pc = PullConsumerConfig::durable("d");
+        let _durable = JetStreamConsumerConfig::durable("durable");
         fn assert_type<T: ?Sized>() {}
         assert_type::<NatsPool>();
         assert_type::<NatsEventBus>();
         assert_type::<JetStream>();
+        assert_type::<JetStreamConsumer>();
+        assert_type::<JetStreamDelivery>();
         assert_type::<TlsPolicy>();
         assert!(url_is_loopback("nats://127.0.0.1:4222"));
     }

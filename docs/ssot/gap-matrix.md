@@ -7,8 +7,8 @@
 |--------|--------------|---------|----------------------------------------|
 | redisx | Pool+KV+timeout+live | **done** + Cluster/Sentinel/TLS/resiliencx (`0.3.2`) | Streams full / pubsub 默认关 / package stable |
 | postgresx | Pool+query+tx+TLS | **done** + prod Repository + SSL require + resiliencx (`0.3.2`) | COPY / migrations / read-replica |
-| kafkax | Producer pool + EventBus | **done** + offset commit + at-least-once + 应用级 EOS (`0.3.1`) | schema registry / broker 事务协议 |
-| natsx | Core NATS EventBus | **done** + JetStream 薄封装 + TLS 默认策略 (`0.3.1`) | NKey / JetStream KV·Object 全量 |
+| kafkax | Producer pool + EventBus | **done** + 单调 checkpoint + 单 owner ALO + broker conformance (`0.3.2`) | TLS / group/rebalance / native EOS / DLQ |
+| natsx | Core NATS EventBus | **done** + JetStream durable pull/显式确认 + broker conformance (`0.3.2`) | NKey / Cluster/HA / 自动 DLQ / KV·Object 全量 |
 | ossx | ObjectStore put/get | **done** + multipart + resiliencx retry (`0.3.1`) | lifecycle / STS |
 | clickhousex | Analytics insert+select | **done** + insert_batch + 有界池 (`0.3.1`) | native 9000 / cluster 运维 |
 | taosx | TimeSeries write+query | **done** + batch write + Native WS 探测 + 有界池 (`0.3.1`) | 完整 WS SQL 会话 / 超表治理 |

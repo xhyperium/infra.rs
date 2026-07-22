@@ -1404,7 +1404,7 @@ dependencies = [
 
 [[package]]
 name = "kafkax"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1569,7 +1569,7 @@ dependencies = [
 
 [[package]]
 name = "natsx"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "async-nats",
  "async-trait",

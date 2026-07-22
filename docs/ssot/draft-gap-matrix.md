@@ -4,8 +4,8 @@
 |--------|--------------|---------|------------------|------------------------|
 | redisx | Pool+KV+timeout+live | production RedisPool + Cluster/Sentinel/TLS/resiliencx | **done** DEFER closed | Streams full |
 | postgresx | Pool+query+tx | production PostgresPool + PgRepository + SSL require + resiliencx | **done** DEFER closed | COPY/migrations |
-| kafkax | Producer+EventBus | production KafkaPool + at-least-once + offset + 应用级 EOS | **done** DEFER closed | schema registry / broker tx |
-| natsx | Core EventBus | production NatsPool + JetStream + TLS policy | **done** DEFER closed | NKey / JS KV full |
+| kafkax | Producer+EventBus | AMO + 单 owner ALO + 非原子 produce/checkpoint | **done** broker conformance PASS | TLS/group/rebalance/native EOS/DLQ |
+| natsx | Core EventBus | Core AMO + JetStream durable pull/显式确认 | **done** broker conformance PASS | NKey/Cluster/HA/自动 DLQ/JS KV full |
 | ossx | ObjectStore | production OssClient + multipart + retry | **done** DEFER closed | lifecycle/STS |
 | clickhousex | Analytics | production HTTP + insert_batch + 有界池 | **done** DEFER closed | native/cluster |
 | taosx | TimeSeries | production REST + batch + Native WS 探测 + 有界池 | **done** DEFER closed | full WS SQL session |

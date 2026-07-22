@@ -26,8 +26,8 @@
 | `binancex` | `crates/adapters/exchange/binance/` | `binancex` | HMAC 签名 REST + 公共 WS 解析/注入；仅 server_time live，**交易 NO-GO** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx/` | `okxx` | 四头签名 REST + 公共 WS 解析/注入；仅 server_time live，**交易 NO-GO** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **0.3.1** insert_batch + 有界池 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **0.3.1** offset/at-least-once/应用级 EOS + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.1** JetStream + TLS 策略 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **0.3.2** AMO + 单 owner ALO + 非原子 produce/checkpoint；native EOS NO-GO | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.2** Core AMO + JetStream durable pull/显式确认 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `ossx` | `crates/adapters/storage/oss/` | `ossx` | **0.3.1** ObjectStore + multipart + retry + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **0.3.2** Pool/Tx + PgRepository + SSL require + resiliencx + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `redisx` | `crates/adapters/storage/redis/` | `redisx` | **0.3.2** Cluster/Sentinel/TLS + resiliencx + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |

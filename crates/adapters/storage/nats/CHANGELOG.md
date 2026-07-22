@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.2] — 2026-07-22
+
+### Added
+
+- `JetStreamConsumerConfig` / `JetStreamConsumer` / `JetStreamDelivery` 持久 pull 消费面
+- 显式 `ack` / `double_ack` / `nak` / `progress` / `term` 与稳定投递元数据
+- Core 无回放、JetStream 重投/确认/背压/MaxDeliver/Term broker conformance
+
+### Security
+
+- `JetStreamDelivery::Debug` 不输出 payload 或底层消息
+- `term` 与 `max_deliver` 明确不冒充自动 DLQ
+
 ## [0.3.1] — 2026-07-22
 
 ### Added

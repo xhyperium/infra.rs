@@ -53,15 +53,15 @@ lib 入口                        adapters: Error/Result；contracts: ExchangeAd
 实现深度                        storage 声明面见专项；exchange **签名 REST + 公共 WS 解析/注入（交易 NO-GO）**
 标准布局八项                    已齐
 publish                         false（显式）
-version                         storage×7 `0.3.1`（redis/postgres `0.3.2`）与 exchange 独立版本```
+version                         storage 独立版本；redis/postgres/kafka/nats `0.3.2`
 
 | 镜像路径 | 本仓路径 | package | 本仓状态 |
 |----------|----------|---------|----------|
 | `.agents/ssot/adapters/exchange/binance` | `crates/adapters/exchange/binance` | `binancex` | **`0.3.2`** HMAC 签名 REST + 公共 WS 解析/注入；live 仅 server_time；交易 NO-GO |
 | `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | **`0.3.3`** 四头签名 REST + 公共 WS 解析/注入；live 仅 server_time；交易 NO-GO |
 | `.agents/ssot/adapters/storage/clickhouse` | `crates/adapters/storage/clickhouse` | `clickhousex` | **`0.3.1`** HTTP + `insert_batch` + 有界池；live 入口默认 ignore |
-| `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **`0.3.1`** Pool/EventBus + offset/at-least-once/应用级 EOS 表面；broker conformance OPEN |
-| `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **`0.3.1`** Core + JetStream + TLS 策略表面；broker conformance OPEN |
+| `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **`0.3.2`** AMO + 单 owner ALO + 非原子 produce/checkpoint；broker conformance PASS；native EOS NO-GO |
+| `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **`0.3.2`** Core AMO + JetStream durable pull/显式确认；broker conformance PASS |
 | `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | **`0.3.1`** ObjectStore + multipart + retry；live 入口默认 ignore |
 | `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **`0.3.2`** Pool/Tx + PgRepository + SSL 策略；live 入口默认 ignore |
 | `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **`0.3.2`** Standalone/Cluster/Sentinel + TLS；Redis live CI 可复验 |
@@ -121,7 +121,7 @@ cargo test --workspace --all-targets
 | A-6 | scaffold 可 `cargo check` / `cargo test` | PASS | feature `scaffold` 可选；默认生产路径可编译测试 |
 | A-7 | 标准八项布局 | PASS | 9 adapters + contracts 均已补齐（含 benches/） |
 | A-8 | `publish = false` | PASS | 各 `Cargo.toml` 显式关闭 |
-| A-9 | 实现真实 I/O / adapter 业务 | **部分（storage OBJECTIVE DEFER 闭合 + exchange 生产默认）** | storage×7 生产客户端 + Cluster/Sentinel/TLS/resiliencx/Repository/offset/at-least-once/应用级 EOS/JetStream/multipart/batch/pool 等 OBJECTIVE 面 **PASS**（#211）+ live；binancex/okxx 签名 REST + WS 行情 **PASS**；全量管理订单 WS / OCO / Streams full / broker 事务 / native 9000 / package stable **OPEN（非 OBJECTIVE）** |
+| A-9 | 实现真实 I/O / adapter 业务 | **部分（声明范围有证据）** | storage 真实客户端已落地；Kafka 为 AMO/单 owner ALO、NATS 为 Core AMO/JetStream durable pull；不得用历史“应用级 EOS”或薄封装冒充 native EOS/自动 DLQ；exchange 交易仍 NO-GO |
 | A-10 | package stable / Spec Approved 本仓宣称 | OPEN | **禁止**用镜像 COMPLETE 代替；P0 生产入口 ≠ package stable |
 | A-11 | contracts workspace 注册 | PASS | #43 `crates/contracts` → `contracts`（别名 `xhyper-contracts` 已废弃） |
 | A-12 | `FOUNDATIONX_*` 环境注入 + 密钥不入库 | PASS | `from_env` + live tests；`scripts/live/build-foundationx-env.mjs`（#191）；secrets 仅进程 env |
@@ -158,7 +158,7 @@ adapters/*  →  contracts / kernel（+ 外部 SDK：redis/tokio-postgres/rskafk
 
 ## 未做（follow-up / OPEN）
 
-> **OBJECTIVE 说明（#211）**：原 storage×7 DEFER 行（Cluster / Sentinel / TLS / resiliencx / Repository / SSL require / offset / at-least-once / 应用级 EOS / JetStream / TLS 默认 / multipart / retry / batch insert / pool / native 探测）**已闭合**，见各包 `*-ssot-alignment.md` 与 `draft-gap-matrix.md`。下列仅剩 **非 OBJECTIVE** 项。
+> **Current-state 说明**：历史 #211 的 DEFER 裁定不能替代当前能力证据。Kafka/NATS 只按专项 alignment 中的 AMO、单 owner ALO、JetStream durable pull 与 NO-GO 边界验收。
 
 1. Redis Streams full / Kafka schema registry / broker 事务协议 EOS / JetStream KV full / CH native 9000 / taos full WS SQL session — **非 OBJECTIVE 残留**（生产默认路径已有替代面）
 2. adapters 全量实现 contracts trait 的业务深度（当前生产客户端 + 部分 trait 绑定）

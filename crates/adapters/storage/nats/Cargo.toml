@@ -1,7 +1,7 @@
 [package]
 name = "natsx"
 description = "nats storage adapter (NatsPool + EventBus; optional scaffold)"
-version = "0.3.1"
+version = "0.3.2"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true

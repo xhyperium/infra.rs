@@ -11,13 +11,20 @@ cargo clippy -p natsx --all-targets -- -D warnings
 
 ## Live（可选 · 真凭据）
 
+可复现单节点 conformance（优先）：
+
+```bash
+./scripts/broker-conformance.sh
+```
+
 ```bash
 node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
 set -a; source /tmp/foundationx-live.env; set +a
 cargo test -p natsx -- --ignored --nocapture
 ```
 
-- live 文件：`tests/live_event_bus.rs`
+- conformance：`tests/broker_conformance.rs`
+- 受控 live：`tests/live_event_bus.rs`
 - 端口提示：4222
 
 ## Bench

@@ -4,6 +4,7 @@
 
 - [`NatsPool`](src/pool.rs)：`connect` / `publish` / `subscribe` / `ping` / `health` / `close`
 - [`NatsEventBus`](src/bus.rs)：`contracts::EventBus`（**at-most-once**）
+- [`JetStreamConsumer`](src/jetstream.rs)：durable pull、有限等待与显式确认
 - feature `scaffold`：旧内存 `NatsAdapter` / `MockNatsBus`
 
 ## 配置
@@ -13,8 +14,8 @@
 | 变量 | 默认（本地草稿） |
 |------|------------------|
 | `URL` | `nats://127.0.0.1:4222` |
-| `USER` / `USERNAME` | `admin` |
-| `PASSWORD` | （本地草稿默认；生产必须覆盖） |
+| `USER` / `USERNAME` | 无默认值 |
+| `PASSWORD` | 无默认值 |
 
 **禁止**把草稿默认凭据用于生产；`Debug` 已脱敏密码。
 
@@ -37,7 +38,8 @@ bus.publish("events.demo", Bytes::from_static(b"p")).await?;
 
 - Core NATS：实时 pub/sub，无历史回放
 - `BusMessage.id` = `{subject}/{session_seq}`（跨重连不可去重）
-- 非 JetStream → 非 durable；at-least-once 需后续 JetStream 扩展
+- 非 JetStream → 非 durable；持久消费必须显式选择 `JetStreamConsumer`
+- JetStream 的 `term` / `max_deliver` 不等于自动 DLQ
 
 ## 测试
 
@@ -46,6 +48,7 @@ cargo test -p natsx
 cargo test -p natsx --features scaffold
 cargo test -p natsx --test live_event_bus -- --ignored
 cargo bench -p natsx --bench hot_path -- --quick
+./scripts/broker-conformance.sh
 ```
 
 ## 生产误用警示

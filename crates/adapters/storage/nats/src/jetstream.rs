@@ -9,7 +9,11 @@
 //!
 //! 完整 Cluster / 跨账户 / 对象存储 **不在** 本版本稳定承诺内。
 
+use std::fmt;
+use std::time::Duration;
+
 use bytes::Bytes;
+use futures_util::StreamExt;
 use kernel::{XError, XResult};
 
 use crate::pool::NatsPool;
@@ -27,6 +31,211 @@ pub struct PullConsumerConfig {
     pub durable_name: String,
     /// 可选 filter subject。
     pub filter_subject: Option<String>,
+}
+
+/// 可持久消费的 JetStream consumer 配置。
+///
+/// 与旧 [`PullConsumerConfig`] 分离，避免给公开结构体追加字段而破坏下游字面量构造。
+#[derive(Debug, Clone)]
+pub struct JetStreamConsumerConfig {
+    /// durable 名（亦作 consumer name）。
+    pub durable_name: String,
+    /// 可选 filter subject。
+    pub filter_subject: Option<String>,
+    /// 未确认消息的重投等待时间。
+    pub ack_wait: Duration,
+    /// 单条消息最多投递次数；达到上限不会自动进入 DLQ。
+    pub max_deliver: i64,
+    /// consumer 允许的最大未确认消息数。
+    pub max_ack_pending: i64,
+}
+
+impl JetStreamConsumerConfig {
+    /// 以保守的显式确认默认值创建 durable consumer 配置。
+    #[must_use]
+    pub fn durable(name: impl Into<String>) -> Self {
+        Self {
+            durable_name: name.into(),
+            filter_subject: None,
+            ack_wait: Duration::from_secs(30),
+            max_deliver: 5,
+            max_ack_pending: 1_024,
+        }
+    }
+
+    fn validate(&self) -> XResult<()> {
+        validate_consumer_name(&self.durable_name)?;
+        if self.ack_wait.is_zero() {
+            return Err(XError::invalid("natsx jetstream: ack_wait 必须大于零"));
+        }
+        if self.max_deliver <= 0 {
+            return Err(XError::invalid("natsx jetstream: max_deliver 必须大于零"));
+        }
+        if self.max_ack_pending <= 0 {
+            return Err(XError::invalid("natsx jetstream: max_ack_pending 必须大于零"));
+        }
+        if self.filter_subject.as_ref().is_some_and(|subject| subject.trim().is_empty()) {
+            return Err(XError::invalid("natsx jetstream: filter_subject 不能为空"));
+        }
+        Ok(())
+    }
+}
+
+/// JetStream 持久 pull consumer。
+#[derive(Clone)]
+pub struct JetStreamConsumer {
+    inner: async_nats::jetstream::consumer::Consumer<async_nats::jetstream::consumer::pull::Config>,
+}
+
+impl fmt::Debug for JetStreamConsumer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("JetStreamConsumer")
+            .field("stream", &self.inner.cached_info().stream_name)
+            .field("name", &self.inner.cached_info().name)
+            .finish_non_exhaustive()
+    }
+}
+
+/// 一次 JetStream 投递的稳定元数据。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct JetStreamDeliveryMetadata {
+    /// stream 名。
+    pub stream: String,
+    /// consumer 名。
+    pub consumer: String,
+    /// stream 内序号；重投时保持不变。
+    pub stream_sequence: u64,
+    /// consumer 投递序号。
+    pub consumer_sequence: u64,
+    /// 当前消息已投递次数。
+    pub delivery_attempts: u64,
+    /// 服务端报告的待投递数。
+    pub pending: u64,
+}
+
+/// 一次可显式确认的 JetStream 投递。
+///
+/// `Debug` 故意不输出 payload 和底层消息，避免业务数据进入日志。
+pub struct JetStreamDelivery {
+    subject: String,
+    payload: Bytes,
+    metadata: JetStreamDeliveryMetadata,
+    raw: async_nats::jetstream::Message,
+}
+
+impl fmt::Debug for JetStreamDelivery {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("JetStreamDelivery")
+            .field("subject", &self.subject)
+            .field("payload_len", &self.payload.len())
+            .field("metadata", &self.metadata)
+            .finish()
+    }
+}
+
+impl JetStreamDelivery {
+    fn from_raw(raw: async_nats::jetstream::Message) -> XResult<Self> {
+        let info = raw.info().map_err(|error| {
+            XError::invalid("natsx jetstream: 投递缺少合法的 JetStream 元数据").with_source(error)
+        })?;
+        let delivery_attempts = u64::try_from(info.delivered).map_err(|error| {
+            XError::invalid("natsx jetstream: delivery attempts 不能为负").with_source(error)
+        })?;
+        let metadata = JetStreamDeliveryMetadata {
+            stream: info.stream.to_string(),
+            consumer: info.consumer.to_string(),
+            stream_sequence: info.stream_sequence,
+            consumer_sequence: info.consumer_sequence,
+            delivery_attempts,
+            pending: info.pending,
+        };
+        Ok(Self { subject: raw.subject.to_string(), payload: raw.payload.clone(), metadata, raw })
+    }
+
+    /// 原始 subject。
+    #[must_use]
+    pub fn subject(&self) -> &str {
+        &self.subject
+    }
+
+    /// 消息 payload。
+    #[must_use]
+    pub fn payload(&self) -> &Bytes {
+        &self.payload
+    }
+
+    /// 稳定、已复制的投递元数据。
+    #[must_use]
+    pub fn metadata(&self) -> &JetStreamDeliveryMetadata {
+        &self.metadata
+    }
+
+    /// 异步发送确认；消费 `self`，避免同一句柄重复终结。
+    pub async fn ack(self) -> XResult<()> {
+        self.raw.ack().await.map_err(|error| {
+            XError::unavailable("natsx jetstream: ack 发送失败").with_source(error)
+        })
+    }
+
+    /// 发送确认并等待服务端确认；消费 `self`。
+    pub async fn double_ack(self) -> XResult<()> {
+        self.raw.double_ack().await.map_err(|error| {
+            XError::unavailable("natsx jetstream: double_ack 失败").with_source(error)
+        })
+    }
+
+    /// 请求重投，可选延迟；消费 `self`。
+    pub async fn nak(self, delay: Option<Duration>) -> XResult<()> {
+        self.raw.ack_with(async_nats::jetstream::AckKind::Nak(delay)).await.map_err(|error| {
+            XError::unavailable("natsx jetstream: nak 发送失败").with_source(error)
+        })
+    }
+
+    /// 通知服务端处理仍在进行，延长 ack wait。
+    pub async fn progress(&self) -> XResult<()> {
+        self.raw.ack_with(async_nats::jetstream::AckKind::Progress).await.map_err(|error| {
+            XError::unavailable("natsx jetstream: progress 发送失败").with_source(error)
+        })
+    }
+
+    /// 终止该消息后续重投；消费 `self`。
+    ///
+    /// `term` **不是 DLQ**，不会自动把 payload 发布到隔离 subject。
+    pub async fn term(self) -> XResult<()> {
+        self.raw.ack_with(async_nats::jetstream::AckKind::Term).await.map_err(|error| {
+            XError::unavailable("natsx jetstream: term 发送失败").with_source(error)
+        })
+    }
+}
+
+impl JetStreamConsumer {
+    /// 有限等待下一条消息。
+    ///
+    /// 服务端 fetch expiry 正常结束返回 `Ok(None)`；broker/协议错误返回 `Err`。
+    /// 外层客户端超时比服务端 expiry 多一秒，仅用于阻止连接异常时无限挂起。
+    pub async fn next_timeout(&self, timeout: Duration) -> XResult<Option<JetStreamDelivery>> {
+        if timeout.is_zero() {
+            return Err(XError::invalid("natsx jetstream: fetch timeout 必须大于零"));
+        }
+        let client_deadline = timeout.saturating_add(Duration::from_secs(1));
+        let batch = self.inner.fetch().max_messages(1).expires(timeout).messages();
+        let mut batch = tokio::time::timeout(client_deadline, batch)
+            .await
+            .map_err(|_| XError::deadline_exceeded("natsx jetstream: 创建有限 fetch 超时"))?
+            .map_err(|error| {
+                XError::unavailable("natsx jetstream: 创建有限 fetch 失败").with_source(error)
+            })?;
+        match tokio::time::timeout(client_deadline, batch.next()).await {
+            Ok(Some(Ok(message))) => JetStreamDelivery::from_raw(message).map(Some),
+            Ok(Some(Err(error))) => {
+                Err(XError::unavailable("natsx jetstream: 拉取消息失败").with_source(error))
+            }
+            Ok(None) => Ok(None),
+            Err(_) => Err(XError::deadline_exceeded(
+                "natsx jetstream: 服务端未在 fetch expiry 后终止批次",
+            )),
+        }
+    }
 }
 
 impl PullConsumerConfig {
@@ -126,7 +335,33 @@ impl JetStream {
         Ok(())
     }
 
-    /// 获取已有 pull consumer 并返回是否存在（高级调用方自行 messages()）。
+    /// 创建或更新显式确认的 durable consumer，并返回稳定消费面。
+    pub async fn consumer(
+        &self,
+        stream: &str,
+        cfg: JetStreamConsumerConfig,
+    ) -> XResult<JetStreamConsumer> {
+        validate_stream_name(stream)?;
+        cfg.validate()?;
+        let pull = async_nats::jetstream::consumer::pull::Config {
+            durable_name: Some(cfg.durable_name),
+            filter_subject: cfg.filter_subject.unwrap_or_default(),
+            ack_policy: async_nats::jetstream::consumer::AckPolicy::Explicit,
+            ack_wait: cfg.ack_wait,
+            max_deliver: cfg.max_deliver,
+            max_ack_pending: cfg.max_ack_pending,
+            ..Default::default()
+        };
+        let inner =
+            self.context.create_consumer_on_stream(pull, stream).await.map_err(|error| {
+                XError::unavailable("natsx jetstream: 创建持久 consumer 失败").with_source(error)
+            })?;
+        Ok(JetStreamConsumer { inner })
+    }
+
+    /// 获取已有 pull consumer 的底层句柄（高级逃生口）。
+    ///
+    /// 普通调用方应使用 [`Self::consumer`]，由稳定包装面统一有限等待和确认语义。
     pub async fn get_pull_consumer(
         &self,
         stream: &str,
@@ -204,6 +439,24 @@ mod tests {
             filter_subject: Some("orders.created".into()),
         };
         assert_eq!(pc2.filter_subject.as_deref(), Some("orders.created"));
+
+        let durable = JetStreamConsumerConfig::durable("worker-3");
+        assert_eq!(durable.max_deliver, 5);
+        assert_eq!(durable.max_ack_pending, 1_024);
+        assert!(durable.validate().is_ok());
+    }
+
+    #[test]
+    fn durable_consumer_config_rejects_unbounded_values() {
+        let mut cfg = JetStreamConsumerConfig::durable("worker");
+        cfg.ack_wait = Duration::ZERO;
+        assert!(cfg.validate().is_err());
+        cfg.ack_wait = Duration::from_secs(1);
+        cfg.max_deliver = 0;
+        assert!(cfg.validate().is_err());
+        cfg.max_deliver = 1;
+        cfg.max_ack_pending = 0;
+        assert!(cfg.validate().is_err());
     }
 
     #[test]
@@ -247,5 +500,8 @@ mod tests {
         fn assert_send_sync<T: Send + Sync>() {}
         assert_send_sync::<StreamConfig>();
         assert_send_sync::<PullConsumerConfig>();
+        assert_send_sync::<JetStreamConsumerConfig>();
+        assert_send_sync::<JetStreamConsumer>();
+        assert_send_sync::<JetStreamDelivery>();
     }
 }

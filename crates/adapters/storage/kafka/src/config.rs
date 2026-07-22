@@ -112,6 +112,9 @@ impl KafkaConfig {
         if self.brokers.trim().is_empty() {
             return Err(XError::invalid("kafkax: brokers 不能为空"));
         }
+        if self.tls {
+            return Err(XError::invalid("kafkax: 当前 rskafka 构建未接入 TLS，拒绝静默降级为明文"));
+        }
         if self.sasl_mechanism.is_some() {
             if self.sasl_username.as_ref().map(|s| s.is_empty()).unwrap_or(true) {
                 return Err(XError::invalid("kafkax: 已启用 SASL 但缺少 username"));
@@ -178,5 +181,12 @@ mod tests {
         assert_eq!(c.security_protocol(), "SSL");
         c.tls = false;
         assert_eq!(c.security_protocol(), "PLAINTEXT");
+    }
+
+    #[test]
+    fn tls_fails_closed_until_transport_is_implemented() {
+        let cfg = KafkaConfig { tls: true, ..KafkaConfig::default() };
+        let error = cfg.validate().expect_err("不得静默忽略 TLS");
+        assert!(error.context().contains("未接入 TLS"));
     }
 }

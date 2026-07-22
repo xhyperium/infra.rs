@@ -6,6 +6,8 @@
 //! - [`OffsetCommitStore::committed`]：读取 next-to-read（若无则 `None`）
 
 use std::collections::HashMap;
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -44,10 +46,15 @@ impl MemoryOffsetStore {
         Arc::new(self)
     }
 
-    /// 直接写入 next-to-read（测试辅助）。
-    pub async fn put_next(&self, topic: &str, partition: i32, next_offset: i64) {
+    /// 单调写入 next-to-read（测试辅助）。
+    pub async fn put_next(&self, topic: &str, partition: i32, next_offset: i64) -> XResult<()> {
+        if next_offset < 0 {
+            return Err(XError::invalid("kafkax: next offset 不能为负"));
+        }
         let mut g = self.inner.lock().await;
-        g.insert((topic.to_string(), partition), next_offset);
+        let entry = g.entry((topic.to_string(), partition)).or_insert(next_offset);
+        *entry = (*entry).max(next_offset);
+        Ok(())
     }
 }
 
@@ -62,10 +69,12 @@ impl OffsetCommitStore for MemoryOffsetStore {
         if offset < 0 {
             return Err(XError::invalid("kafkax: commit offset 不能为负"));
         }
-        // next-to-read = delivered + 1（与 Kafka 组提交语义一致）
-        let next = offset.saturating_add(1);
+        // next-to-read = delivered + 1；溢出必须显式失败，不能饱和后伪报成功。
+        let next =
+            offset.checked_add(1).ok_or_else(|| XError::invalid("kafkax: commit offset 溢出"))?;
         let mut g = self.inner.lock().await;
-        g.insert((topic.to_string(), partition), next);
+        let entry = g.entry((topic.to_string(), partition)).or_insert(next);
+        *entry = (*entry).max(next);
         Ok(())
     }
 }
@@ -141,10 +150,28 @@ impl FileOffsetStore {
         lines.sort();
         let body = lines.join("\n");
         let tmp = self.path.with_extension("tmp");
-        std::fs::write(&tmp, body.as_bytes())
+        let mut file = OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(&tmp)
+            .map_err(|e| XError::unavailable(format!("kafkax offset 打开临时文件失败: {e}")))?;
+        file.write_all(body.as_bytes())
             .map_err(|e| XError::unavailable(format!("kafkax offset 写临时文件失败: {e}")))?;
+        file.sync_all()
+            .map_err(|e| XError::unavailable(format!("kafkax offset sync 临时文件失败: {e}")))?;
         std::fs::rename(&tmp, &self.path)
             .map_err(|e| XError::unavailable(format!("kafkax offset rename 失败: {e}")))?;
+        let parent = self
+            .path
+            .parent()
+            .filter(|path| !path.as_os_str().is_empty())
+            .unwrap_or(Path::new("."));
+        OpenOptions::new()
+            .read(true)
+            .open(parent)
+            .and_then(|directory| directory.sync_all())
+            .map_err(|e| XError::unavailable(format!("kafkax offset sync 父目录失败: {e}")))?;
         Ok(())
     }
 }
@@ -161,10 +188,12 @@ impl OffsetCommitStore for FileOffsetStore {
         if offset < 0 {
             return Err(XError::invalid("kafkax: commit offset 不能为负"));
         }
-        let next = offset.saturating_add(1);
+        let next =
+            offset.checked_add(1).ok_or_else(|| XError::invalid("kafkax: commit offset 溢出"))?;
         let _g = self.lock.lock().await;
         let mut map = self.load_map()?;
-        map.insert((topic.to_string(), partition), next);
+        let entry = map.entry((topic.to_string(), partition)).or_insert(next);
+        *entry = (*entry).max(next);
         self.save_map(&map)
     }
 }
@@ -199,6 +228,30 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn memory_commit_is_monotonic_and_rejects_overflow() {
+        let store = MemoryOffsetStore::new();
+        store.commit("t", 0, 10).await.expect("forward");
+        store.commit("t", 0, 3).await.expect("stale commit is idempotent");
+        assert_eq!(store.committed("t", 0).await.expect("read"), Some(11));
+        let err = store.commit("t", 0, i64::MAX).await.expect_err("overflow");
+        assert!(err.context().contains("溢出"));
+    }
+
+    #[tokio::test]
+    async fn concurrent_memory_commits_keep_high_watermark() {
+        let store = Arc::new(MemoryOffsetStore::new());
+        let mut tasks = Vec::new();
+        for offset in [100, 3, 50, 99, 1] {
+            let store = Arc::clone(&store);
+            tasks.push(tokio::spawn(async move { store.commit("t", 0, offset).await }));
+        }
+        for task in tasks {
+            task.await.expect("join").expect("commit");
+        }
+        assert_eq!(store.committed("t", 0).await.expect("read"), Some(101));
+    }
+
+    #[tokio::test]
     async fn file_store_roundtrip() {
         let dir = std::env::temp_dir().join(format!("kafkax-offset-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
@@ -210,6 +263,8 @@ mod tests {
 
         // 重新打开应能读到
         let store2 = FileOffsetStore::new(&path);
+        assert_eq!(store2.committed("orders", 2).await.expect("c"), Some(100));
+        store2.commit("orders", 2, 10).await.expect("stale");
         assert_eq!(store2.committed("orders", 2).await.expect("c"), Some(100));
         let _ = std::fs::remove_dir_all(&dir);
     }

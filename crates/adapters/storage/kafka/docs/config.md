@@ -9,7 +9,8 @@
 ## 安全
 
 - 密码 / AccessKey **不得**写入源码、日志、Debug 明文
-- 生产应启用 TLS（dev 可明文，须在 ops 文档标明风险）
+- 当前 `rskafka` 构建未接入 TLS；`TLS=true` 会 fail-closed
+- 需要 TLS 的部署在能力补齐并通过 live 证据前为 **NO-GO**，不得静默改用明文
 - 凭据轮换：更新 secret provider / 环境变量后重启进程
 
 ## 校验
