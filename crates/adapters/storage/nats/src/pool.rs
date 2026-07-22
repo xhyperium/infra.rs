@@ -8,8 +8,8 @@ use async_nats::Client;
 use bytes::Bytes;
 use futures_util::StreamExt;
 use kernel::{XError, XResult};
-use tokio::sync::{Notify, mpsc};
-use tokio::task::AbortHandle;
+use tokio::sync::mpsc;
+use tokio::task::{AbortHandle, JoinHandle};
 
 use crate::config::NatsConfig;
 
@@ -50,18 +50,6 @@ struct SubscriptionTask(AbortHandle);
 impl Drop for SubscriptionTask {
     fn drop(&mut self) {
         self.0.abort();
-    }
-}
-
-struct SubscriptionGuard {
-    active: Arc<AtomicU64>,
-    drained: Arc<Notify>,
-}
-
-impl Drop for SubscriptionGuard {
-    fn drop(&mut self) {
-        self.active.fetch_sub(1, Ordering::AcqRel);
-        self.drained.notify_waiters();
     }
 }
 
@@ -106,9 +94,7 @@ struct PoolInner {
     connected: Arc<AtomicU64>,
     disconnected: Arc<AtomicU64>,
     slow_consumers: Arc<AtomicU64>,
-    subscription_tasks: Mutex<Vec<AbortHandle>>,
-    active_subscriptions: Arc<AtomicU64>,
-    subscriptions_drained: Arc<Notify>,
+    subscription_tasks: Mutex<Vec<JoinHandle<()>>>,
 }
 
 impl NatsPool {
@@ -190,8 +176,6 @@ impl NatsPool {
                 disconnected,
                 slow_consumers,
                 subscription_tasks: Mutex::new(Vec::new()),
-                active_subscriptions: Arc::new(AtomicU64::new(0)),
-                subscriptions_drained: Arc::new(Notify::new()),
             }),
         })
     }
@@ -280,21 +264,27 @@ impl NatsPool {
         let counter = Arc::new(AtomicU64::new(0));
         let slow_consumers = Arc::clone(&self.inner.slow_consumers);
         let operation_timeout = self.inner.config.operation_timeout;
+        let finished_tasks = {
+            let mut tasks = self
+                .inner
+                .subscription_tasks
+                .lock()
+                .map_err(|_| XError::invariant("natsx 订阅任务注册表锁已中毒"))?;
+            self.ensure_open()?;
+            let (finished, active): (Vec<_>, Vec<_>) =
+                tasks.drain(..).partition(JoinHandle::is_finished);
+            *tasks = active;
+            finished
+        };
+        join_subscription_tasks(finished_tasks, false).await?;
+
         let mut tasks = self
             .inner
             .subscription_tasks
             .lock()
             .map_err(|_| XError::invariant("natsx 订阅任务注册表锁已中毒"))?;
         self.ensure_open()?;
-        tasks.retain(|handle| !handle.is_finished());
-
-        self.inner.active_subscriptions.fetch_add(1, Ordering::AcqRel);
-        let guard = SubscriptionGuard {
-            active: Arc::clone(&self.inner.active_subscriptions),
-            drained: Arc::clone(&self.inner.subscriptions_drained),
-        };
         let task = tokio::spawn(async move {
-            let _guard = guard;
             while let Some(msg) = sub.next().await {
                 let n = counter.fetch_add(1, Ordering::Relaxed);
                 let out = NatsMessage {
@@ -313,9 +303,8 @@ impl NatsPool {
             }
         });
         let abort_handle = task.abort_handle();
-        tasks.push(abort_handle.clone());
+        tasks.push(task);
         drop(tasks);
-        drop(task);
         Ok(NatsSubscription { rx, task: Some(SubscriptionTask(abort_handle)) })
     }
 
@@ -362,28 +351,14 @@ impl NatsPool {
                 .map_err(|_| XError::invariant("natsx 订阅任务注册表锁已中毒"))?;
             tasks.drain(..).collect::<Vec<_>>()
         };
-        for handle in handles {
-            handle.abort();
-        }
-        let drain = async {
-            loop {
-                if self.inner.active_subscriptions.load(Ordering::Acquire) == 0 {
-                    return;
-                }
-                let notified = self.inner.subscriptions_drained.notified();
-                tokio::pin!(notified);
-                notified.as_mut().enable();
-                if self.inner.active_subscriptions.load(Ordering::Acquire) == 0 {
-                    return;
-                }
-                notified.await;
-            }
-        };
-        tokio::time::timeout(self.inner.config.operation_timeout, drain).await.map_err(
-            |error| {
-                XError::deadline_exceeded("natsx close 等待订阅任务退出超时").with_source(error)
-            },
-        )?;
+        tokio::time::timeout(
+            self.inner.config.operation_timeout,
+            join_subscription_tasks(handles, true),
+        )
+        .await
+        .map_err(|error| {
+            XError::deadline_exceeded("natsx close 等待订阅任务退出超时").with_source(error)
+        })??;
         // async-nats Client 无显式 close；flush 后丢弃引用
         tokio::time::timeout(self.inner.config.operation_timeout, self.inner.client.flush())
             .await
@@ -402,12 +377,31 @@ impl NatsPool {
     }
 }
 
+async fn join_subscription_tasks(tasks: Vec<JoinHandle<()>>, abort: bool) -> XResult<()> {
+    if abort {
+        for task in &tasks {
+            task.abort();
+        }
+    }
+    for task in tasks {
+        match task.await {
+            Ok(()) => {}
+            Err(error) if error.is_cancelled() => {}
+            Err(error) => {
+                return Err(XError::invariant("natsx 订阅转发任务异常退出").with_source(error));
+            }
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::config::NatsConfig;
     use futures_util::StreamExt;
     use kernel::ErrorKind;
+    use std::error::Error;
 
     #[tokio::test]
     async fn connect_refused_returns_unavailable() {
@@ -438,6 +432,19 @@ mod tests {
         drop(subscription);
         let error = task.await.expect_err("订阅 drop 必须取消转发任务");
         assert!(error.is_cancelled());
+    }
+
+    #[tokio::test]
+    async fn joining_subscription_task_reports_panic() {
+        let task = tokio::spawn(async { panic!("注入订阅转发任务 panic") });
+        while !task.is_finished() {
+            tokio::task::yield_now().await;
+        }
+        let error = join_subscription_tasks(vec![task], true)
+            .await
+            .expect_err("任务 panic 必须作为关闭错误上报");
+        assert_eq!(error.kind(), ErrorKind::Invariant);
+        assert!(error.source().is_some());
     }
 
     #[tokio::test]
