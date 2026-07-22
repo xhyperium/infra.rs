@@ -1,0 +1,39 @@
+R2 GREEN EVIDENCE
+date: 2026-07-23 Asia/Shanghai
+input-head: e0cc99d716638663cd605da749cc1988026528d9
+verified-code-candidate: 8a2c35cd1e8bdc16304c0fef41e40d2a0f7dfa35
+diff-command: git diff e0cc99d716638663cd605da749cc1988026528d9..8a2c35cd1e8bdc16304c0fef41e40d2a0f7dfa35 | sha256sum
+diff-sha256: 73634205dfaca477757e8db2a87195b51e999d6173e0e0edda6291e74f0b3bfe
+rustc: 1.97.0 (2d8144b78 2026-07-07)
+cargo: 1.97.0 (c980f4866 2026-06-30)
+node: v24.14.0
+
+command:
+  cargo fmt --all -- --check &&
+  cargo test -p kernel -p testkit -p decimalx -p canonical --all-targets &&
+  cargo test -p kernel -p testkit -p decimalx -p canonical --doc &&
+  RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release &&
+  cargo clippy -p kernel -p testkit -p decimalx -p canonical --all-targets --all-features -- -D warnings &&
+  node scripts/quality-gates/check-canonical-align.mjs &&
+  node scripts/quality-gates/check-decimal-no-panicking-ops.mjs &&
+  node scripts/quality-gates/check-workspace-deps.mjs &&
+  node scripts/quality-gates/check-crate-versions.mjs &&
+  node scripts/quality-gates/check-public-api.mjs --require-tool -p kernel -p testkit -p decimalx -p canonical &&
+  git diff --check
+exit: 0
+
+key output:
+  kernel lib: 67 passed
+  decimalx boundary_matrix: 16 passed
+  testkit lib: 22 passed
+  testkit manual_clock_concurrency: 3 passed
+  canonical lib: 45 passed
+  canonical public_api_surface: 5 passed
+  testkit compile-fail doctests: 4 passed
+  kernel compile-fail doctests: 12 passed
+  kernel loom release cfg: 3 passed
+  canonical-align: ALL CHECKS PASSED
+  decimal panicking-ops: OK (102 files scanned, 0 hits)
+  workspace dependencies: PASS
+  crate versions: PASS
+  public API: OK (4 baselines match)

@@ -3,6 +3,7 @@
 | 字段 | 值 |
 |---|---|
 | 输入 gate HEAD | `e0cc99d716638663cd605da749cc1988026528d9`（R1 GO） |
+| R2 代码候选 | `8a2c35cd1e8bdc16304c0fef41e40d2a0f7dfa35` |
 | 轮次目标 | 两个真实行为 RED 修复 + 两个公开 seam adversarial 回归加固 |
 | 声明边界 | kernel L1/L4 已证面；testkit T0/L1；decimalx L1 checked；canonical L2 strict serde JSON subset |
 
@@ -30,3 +31,8 @@
 - 不实现 external harness、真实服务/网络/进程 fault。
 - 不把 domain allocator exhaustion 从诚实 residual 伪装为已闭合。
 - 本 PR 不重复 bump 四 crate 版本，不扩张 package stable / crates.io / overall Production Ready 声明。
+
+## Evidence
+
+- RED 原因与退出码：[`evidence/r2-red.txt`](evidence/r2-red.txt)。
+- GREEN 命令、工具链、计数与可复算指纹：[`evidence/r2-green.txt`](evidence/r2-green.txt)。
