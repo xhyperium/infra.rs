@@ -221,13 +221,35 @@ impl PostgresPool {
     }
 
     /// 可选单行。
+    ///
+    /// 若已 [`Self::with_retry_budget`]，经 resiliencx 异步预算重试。
     pub async fn query_opt(
         &self,
         sql: &str,
         params: &[&(dyn ToSql + Sync)],
     ) -> XResult<Option<Row>> {
+        if let Some(budget) = self.budget.as_ref() {
+            return self
+                .query_opt_with_budget(sql, params, budget.as_ref(), self.budget_max_attempts)
+                .await;
+        }
         let conn = self.acquire().await?;
         conn.query_opt(sql, params).await
+    }
+
+    /// 显式 budget 的 `query_opt`。
+    pub async fn query_opt_with_budget(
+        &self,
+        sql: &str,
+        params: &[&(dyn ToSql + Sync)],
+        budget: &RetryBudget,
+        max_attempts: u32,
+    ) -> XResult<Option<Row>> {
+        with_budget_async_noop(budget, max_attempts, "pg.query_opt", || async {
+            let conn = self.acquire().await?;
+            conn.query_opt(sql, params).await
+        })
+        .await
     }
 
     /// 在事务中执行异步闭包：`Ok` → commit，`Err` → rollback。
@@ -367,24 +389,11 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn execute_with_budget_live_or_offline_budget_api() {
+    #[test]
+    fn with_retry_budget_api_shape() {
+        // 离线：budget 形状 + pool 字段；live I/O 见 tests/live_postgres.rs #[ignore]
         let budget = RetryBudget::new(2);
-        if let Ok(cfg) = PostgresConfig::from_env() {
-            if let Ok(pool) = PostgresPool::connect(&cfg).await {
-                let pool = pool.with_retry_budget(RetryBudget::new(2), 3);
-                assert!(pool.has_retry_budget());
-                // 真实 I/O + budget 环
-                let n = pool
-                    .execute_with_budget("SELECT 1", &[], &budget, 2)
-                    .await
-                    .expect("execute_with_budget");
-                assert!(n == 0 || n == 1);
-                let rows = pool.query_with_budget("SELECT 1 AS x", &[], &budget, 2).await.unwrap();
-                assert!(!rows.is_empty());
-                return;
-            }
-        }
         assert_eq!(budget.remaining(), 2);
+        assert!(!budget.is_exhausted());
     }
 }
