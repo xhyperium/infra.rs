@@ -68,7 +68,7 @@ mod tests {
         let p = ProxyConfig::with_auth("http://proxy:1", "u", secret.clone());
         let d = format!("{p:?}");
         assert!(d.contains("***"));
-        assert!(!d.contains(secret.clone()));
+        assert!(!d.contains(secret.as_str()));
         assert!(p.has_auth());
         let plain = ProxyConfig::new("http://proxy:1");
         assert!(!plain.has_auth());

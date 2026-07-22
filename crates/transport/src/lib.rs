@@ -768,7 +768,7 @@ mod builder_tests {
             1024,
             1024,
             Some(TlsConfig::system_roots()),
-            Some(ProxyConfig::with_auth("http://127.0.0.1:9", "u", &format!("{}{}", "p", "w"))),
+            Some(ProxyConfig::with_auth("http://127.0.0.1:9", "u", format!("{}{}", "p", "w"))),
         )
         .expect("builder combo");
     }
