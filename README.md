@@ -140,6 +140,7 @@ Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTU
 | [docs/ssot/](docs/ssot/) | SSOT 对齐矩阵与同步手册 |
 | [docs/status/](docs/status/) | CI/配置状态与验证记录 |
 | [docs/decisions/](docs/decisions/) | 架构决策记录（DDR-001 ~ DDR-009） |
+| [docs/handoff/](docs/handoff/) | 交接文档 — bead sync, secrets migration, security baseline (v0.4.0) |
 
 ## AI 协作
 
