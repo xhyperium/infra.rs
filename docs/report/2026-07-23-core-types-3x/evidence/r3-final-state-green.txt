@@ -1,0 +1,15 @@
+R3 最终状态校正候选 GREEN 证据
+日期：2026-07-23 Asia/Shanghai
+最新主干：5fe242cefc873117d024f0d09f8ad5cbf449d2ec
+已验证内容候选：c4604ceb6c79df310ebe91fe56c516f88b1c8a6e
+origin/main...candidate 差异 SHA-256：a8b790f0b65b4d398b83cb7d1505afe9ec665bbc1b75f73f3aede91f8b16b1a3
+
+相对 `f62859b`，本候选只把 canonical current-state test 的旧 R1 reviewer GO 改为“当前机器 PASS / 独立终审
+待裁决”，并记录该状态修复；无 Cargo、源码行为、测试 oracle、API baseline、脚本或 CI 变化。
+
+在 `c4604ce` 上完整重跑 `r3-final-green.txt` 所列全部命令，退出码全部为 0：workspace
+build/test/fmt/clippy/deny、46/46、26 对 current-state、版本/依赖、四域 doc、decimal feature、loom、
+canonical alignment、104 files/0 hits、四包 API baseline 与固定范围 diff 均 PASS；工作树为空。
+
+工具链仍为 rustc 1.97.0、cargo 1.97.0、node v24.14.0。完整 stdout 未入库；本文件与前一证据共同
+保存固定 SHA、可复算指纹、完整可重放命令、退出码、工具链与关键摘要。

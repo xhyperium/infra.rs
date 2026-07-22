@@ -8,6 +8,7 @@
 | 最终校正候选 | `ec2d938a031a659748d638902ea2d85a730335cd` |
 | 终门禁阻断修复候选 | `f26e29cf8f76c6db14be7210e41bd72b04791493` |
 | 最终内容候选 | `f62859b484dc3774a444623d8e2537e0204c4ca8` |
+| 最终状态校正候选 | `c4604ceb6c79df310ebe91fe56c516f88b1c8a6e` |
 | 当前状态 | **机器门禁 GREEN；独立双轴复审与最终聚合门禁待裁决** |
 | 轮次目标 | 当前权威、历史战役、Cargo package 真相与生成状态一致 |
 
@@ -48,3 +49,4 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
 - 同轮 Standards 复核还发现 `IntegrationHarness::run` 缺少组织 Rust P1 要求的 `# Errors`；修复扩展到 testkit 全部公开 fallible API，逐项写明 typed error 条件。
 - 最终内容候选 `f62859b` 已重新通过完整机器闭包，见 [`evidence/r3-final-green.txt`](evidence/r3-final-green.txt)；独立双轴与聚合门禁仍待裁决。
 - Spec 复审发现 canonical current-state test 的“本轮证据”仍继承 R1 reviewer GO；已改为最新机器 PASS / REVIEW PENDING，R1/R2 只保留为历史回归输入。
+- 状态校正候选 `c4604ce` 已再次通过完整机器闭包，见 [`evidence/r3-final-state-green.txt`](evidence/r3-final-state-green.txt)。
