@@ -1,26 +1,47 @@
 //! 可克隆的 Redis 命令客户端（共享 [`RedisPool`]）。
 
+use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
 use contracts::KeyValueStore;
 use kernel::{XError, XResult};
 use redis::AsyncCommands;
+use resiliencx::RetryBudget;
 
 use crate::error_map::map_redis_result;
 use crate::pool::RedisPool;
+use crate::resilience::with_budget_async_noop;
 
 /// 生产 Redis KV 客户端。
 ///
 /// `Clone` 只共享底层池引用；所有命令受池级 Semaphore 与超时约束。
+/// 可选 [`RetryBudget`]：配置后 `get`/`set` 等经 resiliencx 重试生产路径。
 #[derive(Clone, Debug)]
 pub struct RedisClient {
     pool: RedisPool,
+    /// 可选重试预算（与 `budget_max_attempts` 一起启用）。
+    budget: Option<Arc<RetryBudget>>,
+    budget_max_attempts: u32,
 }
 
 impl RedisClient {
     pub(crate) fn from_pool(pool: RedisPool) -> Self {
-        Self { pool }
+        Self { pool, budget: None, budget_max_attempts: 3 }
+    }
+
+    /// 注入 [`RetryBudget`]：后续 `get`/`set` 走 resiliencx 异步重试。
+    #[must_use]
+    pub fn with_retry_budget(mut self, budget: RetryBudget, max_attempts: u32) -> Self {
+        self.budget = Some(Arc::new(budget));
+        self.budget_max_attempts = max_attempts.max(1);
+        self
+    }
+
+    /// 是否已配置重试预算。
+    #[must_use]
+    pub fn has_retry_budget(&self) -> bool {
+        self.budget.is_some()
     }
 
     /// 兼容旧 `RedisLiveKv::connect(url)`：从 URL 建池并返回客户端。
@@ -47,8 +68,8 @@ impl RedisClient {
         self.pool.endpoint()
     }
 
-    /// `GET`；缺失返回 `Ok(None)`。空字节串视为合法值。
-    pub async fn get(&self, key: &str) -> XResult<Option<Vec<u8>>> {
+    /// 单次 `GET` I/O（无 budget 环）。
+    async fn get_once(&self, key: &str) -> XResult<Option<Vec<u8>>> {
         let key = key.to_owned();
         self.pool
             .with_conn(|mut conn| async move {
@@ -58,12 +79,8 @@ impl RedisClient {
             .await
     }
 
-    /// `SET` / `PSETEX`。
-    ///
-    /// - `ttl = None`：不过期；
-    /// - `ttl = Some(0)` 或 `< 1ms`：[`XError::invalid`]；
-    /// - 其余：使用毫秒精度 `PSETEX`。
-    pub async fn set(&self, key: &str, val: Vec<u8>, ttl: Option<Duration>) -> XResult<()> {
+    /// 单次 `SET` I/O（无 budget 环）。
+    async fn set_once(&self, key: &str, val: Vec<u8>, ttl: Option<Duration>) -> XResult<()> {
         validate_ttl(ttl)?;
         let key = key.to_owned();
         self.pool
@@ -79,8 +96,71 @@ impl RedisClient {
             .await
     }
 
-    /// `DEL`；返回是否删除了 key。
-    pub async fn delete(&self, key: &str) -> XResult<bool> {
+    /// `GET`；缺失返回 `Ok(None)`。空字节串视为合法值。
+    ///
+    /// 若已 [`Self::with_retry_budget`]，经 resiliencx 异步预算重试。
+    pub async fn get(&self, key: &str) -> XResult<Option<Vec<u8>>> {
+        if let Some(budget) = self.budget.as_ref() {
+            return self.get_with_budget(key, budget.as_ref(), self.budget_max_attempts).await;
+        }
+        self.get_once(key).await
+    }
+
+    /// 显式 budget 的 `GET`：始终经 [`crate::with_budget_async_noop`] 驱动真实 I/O。
+    pub async fn get_with_budget(
+        &self,
+        key: &str,
+        budget: &RetryBudget,
+        max_attempts: u32,
+    ) -> XResult<Option<Vec<u8>>> {
+        let this = self.clone();
+        let key = key.to_owned();
+        with_budget_async_noop(budget, max_attempts, "redis.get", || {
+            let this = this.clone();
+            let key = key.clone();
+            async move { this.get_once(&key).await }
+        })
+        .await
+    }
+
+    /// `SET` / `PSETEX`。
+    ///
+    /// - `ttl = None`：不过期；
+    /// - `ttl = Some(0)` 或 `< 1ms`：[`XError::invalid`]；
+    /// - 其余：使用毫秒精度 `PSETEX`。
+    ///
+    /// 若已 [`Self::with_retry_budget`]，经 resiliencx 异步预算重试。
+    pub async fn set(&self, key: &str, val: Vec<u8>, ttl: Option<Duration>) -> XResult<()> {
+        if let Some(budget) = self.budget.as_ref() {
+            return self
+                .set_with_budget(key, val, ttl, budget.as_ref(), self.budget_max_attempts)
+                .await;
+        }
+        self.set_once(key, val, ttl).await
+    }
+
+    /// 显式 budget 的 `SET`：始终经 resiliencx 驱动真实 I/O。
+    pub async fn set_with_budget(
+        &self,
+        key: &str,
+        val: Vec<u8>,
+        ttl: Option<Duration>,
+        budget: &RetryBudget,
+        max_attempts: u32,
+    ) -> XResult<()> {
+        let this = self.clone();
+        let key = key.to_owned();
+        with_budget_async_noop(budget, max_attempts, "redis.set", || {
+            let this = this.clone();
+            let key = key.clone();
+            let val = val.clone();
+            async move { this.set_once(&key, val, ttl).await }
+        })
+        .await
+    }
+
+    /// 单次 `DEL` I/O（无 budget 环）。
+    async fn delete_once(&self, key: &str) -> XResult<bool> {
         let key = key.to_owned();
         self.pool
             .with_conn(|mut conn| async move {
@@ -90,8 +170,23 @@ impl RedisClient {
             .await
     }
 
-    /// `EXISTS`。
-    pub async fn exists(&self, key: &str) -> XResult<bool> {
+    /// `DEL`；返回是否删除了 key。配置 budget 时经 resiliencx 重试。
+    pub async fn delete(&self, key: &str) -> XResult<bool> {
+        if let Some(budget) = self.budget.as_ref() {
+            let this = self.clone();
+            let key = key.to_owned();
+            return with_budget_async_noop(budget, self.budget_max_attempts, "redis.del", || {
+                let this = this.clone();
+                let key = key.clone();
+                async move { this.delete_once(&key).await }
+            })
+            .await;
+        }
+        self.delete_once(key).await
+    }
+
+    /// 单次 `EXISTS` I/O（无 budget 环）。
+    async fn exists_once(&self, key: &str) -> XResult<bool> {
         let key = key.to_owned();
         self.pool
             .with_conn(|mut conn| async move {
@@ -101,15 +196,34 @@ impl RedisClient {
             .await
     }
 
-    /// `PEXPIRE`；key 不存在返回 `Ok(false)`。
-    pub async fn expire(&self, key: &str, ttl: Duration) -> XResult<bool> {
+    /// `EXISTS`。配置 budget 时经 resiliencx 重试。
+    pub async fn exists(&self, key: &str) -> XResult<bool> {
+        if let Some(budget) = self.budget.as_ref() {
+            let this = self.clone();
+            let key = key.to_owned();
+            return with_budget_async_noop(
+                budget,
+                self.budget_max_attempts,
+                "redis.exists",
+                || {
+                    let this = this.clone();
+                    let key = key.clone();
+                    async move { this.exists_once(&key).await }
+                },
+            )
+            .await;
+        }
+        self.exists_once(key).await
+    }
+
+    /// 单次 `PEXPIRE` I/O（无 budget 环）。
+    async fn expire_once(&self, key: &str, ttl: Duration) -> XResult<bool> {
         validate_ttl(Some(ttl))?;
         let ms =
             i64::try_from(duration_to_millis(ttl)?).map_err(|_| XError::invalid("TTL 过大"))?;
         let key = key.to_owned();
         self.pool
             .with_conn(move |mut conn| async move {
-                // PEXPIRE key milliseconds
                 let n: i64 = map_redis_result(
                     redis::cmd("PEXPIRE").arg(&key).arg(ms).query_async(&mut conn).await,
                 )?;
@@ -118,11 +232,28 @@ impl RedisClient {
             .await
     }
 
-    /// `PTTL`：
-    /// - key 不存在 → [`XError::missing`]
-    /// - 无过期 → `Ok(None)`
-    /// - 有过期 → `Ok(Some(duration))`
-    pub async fn ttl(&self, key: &str) -> XResult<Option<Duration>> {
+    /// `PEXPIRE`；key 不存在返回 `Ok(false)`。配置 budget 时经 resiliencx 重试。
+    pub async fn expire(&self, key: &str, ttl: Duration) -> XResult<bool> {
+        if let Some(budget) = self.budget.as_ref() {
+            let this = self.clone();
+            let key = key.to_owned();
+            return with_budget_async_noop(
+                budget,
+                self.budget_max_attempts,
+                "redis.expire",
+                || {
+                    let this = this.clone();
+                    let key = key.clone();
+                    async move { this.expire_once(&key, ttl).await }
+                },
+            )
+            .await;
+        }
+        self.expire_once(key, ttl).await
+    }
+
+    /// 单次 `PTTL` I/O（无 budget 环）。
+    async fn ttl_once(&self, key: &str) -> XResult<Option<Duration>> {
         let key = key.to_owned();
         self.pool
             .with_conn(|mut conn| async move {
@@ -141,8 +272,28 @@ impl RedisClient {
             .await
     }
 
-    /// `MGET`。
-    pub async fn mget(&self, keys: &[&str]) -> XResult<Vec<Option<Vec<u8>>>> {
+    /// `PTTL`：
+    /// - key 不存在 → [`XError::missing`]
+    /// - 无过期 → `Ok(None)`
+    /// - 有过期 → `Ok(Some(duration))`
+    ///
+    /// 配置 budget 时经 resiliencx 重试。
+    pub async fn ttl(&self, key: &str) -> XResult<Option<Duration>> {
+        if let Some(budget) = self.budget.as_ref() {
+            let this = self.clone();
+            let key = key.to_owned();
+            return with_budget_async_noop(budget, self.budget_max_attempts, "redis.ttl", || {
+                let this = this.clone();
+                let key = key.clone();
+                async move { this.ttl_once(&key).await }
+            })
+            .await;
+        }
+        self.ttl_once(key).await
+    }
+
+    /// 单次 `MGET` I/O（无 budget 环）。
+    async fn mget_once(&self, keys: &[&str]) -> XResult<Vec<Option<Vec<u8>>>> {
         if keys.is_empty() {
             return Ok(Vec::new());
         }
@@ -155,8 +306,26 @@ impl RedisClient {
             .await
     }
 
-    /// `MSET`（无 TTL；需要 TTL 请逐条 `set`）。
-    pub async fn mset(&self, items: &[(&str, &[u8])]) -> XResult<()> {
+    /// `MGET`。配置 budget 时经 resiliencx 重试。
+    pub async fn mget(&self, keys: &[&str]) -> XResult<Vec<Option<Vec<u8>>>> {
+        if let Some(budget) = self.budget.as_ref() {
+            let this = self.clone();
+            let owned: Vec<String> = keys.iter().map(|k| (*k).to_owned()).collect();
+            return with_budget_async_noop(budget, self.budget_max_attempts, "redis.mget", || {
+                let this = this.clone();
+                let owned = owned.clone();
+                async move {
+                    let refs: Vec<&str> = owned.iter().map(String::as_str).collect();
+                    this.mget_once(&refs).await
+                }
+            })
+            .await;
+        }
+        self.mget_once(keys).await
+    }
+
+    /// 单次 `MSET` I/O（无 budget 环）。
+    async fn mset_once(&self, items: &[(&str, &[u8])]) -> XResult<()> {
         if items.is_empty() {
             return Ok(());
         }
@@ -168,6 +337,26 @@ impl RedisClient {
                 Ok(())
             })
             .await
+    }
+
+    /// `MSET`（无 TTL；需要 TTL 请逐条 `set`）。配置 budget 时经 resiliencx 重试。
+    pub async fn mset(&self, items: &[(&str, &[u8])]) -> XResult<()> {
+        if let Some(budget) = self.budget.as_ref() {
+            let this = self.clone();
+            let owned: Vec<(String, Vec<u8>)> =
+                items.iter().map(|(k, v)| ((*k).to_owned(), (*v).to_vec())).collect();
+            return with_budget_async_noop(budget, self.budget_max_attempts, "redis.mset", || {
+                let this = this.clone();
+                let owned = owned.clone();
+                async move {
+                    let refs: Vec<(&str, &[u8])> =
+                        owned.iter().map(|(k, v)| (k.as_str(), v.as_slice())).collect();
+                    this.mset_once(&refs).await
+                }
+            })
+            .await;
+        }
+        self.mset_once(items).await
     }
 }
 
@@ -219,5 +408,13 @@ mod tests {
     #[test]
     fn ttl_none_ok() {
         validate_ttl(None).unwrap();
+    }
+
+    #[test]
+    fn with_retry_budget_api_shape() {
+        // 离线：budget API 形状；live I/O 见 tests/live_* #[ignore]
+        let budget = RetryBudget::new(2);
+        assert_eq!(budget.remaining(), 2);
+        assert!(!budget.is_exhausted());
     }
 }

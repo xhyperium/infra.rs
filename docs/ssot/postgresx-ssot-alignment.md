@@ -14,6 +14,7 @@
 |------|------|
 | 生产默认面 | `PostgresPool / PgConnection / PgTransaction / PgTxRunner` |
 | contracts | contracts::TxRunner 边界 + SQL 参数化 API |
+| resiliencx | `with_retry_budget` / `execute_with_budget` / `query*_with_budget` 经 `with_budget_async` |
 | 环境变量 | `FOUNDATIONX_POSTGRESX_{HOST,PORT,DATABASE,USER,PASSWORD,SSLMODE} 或 DATABASE_URL` |
 | live | `tests/live_postgres.rs`（`#[ignore]`） |
 | bench | `benches/query_hot_path.rs` |
@@ -33,6 +34,7 @@
 | POSTGRESX-8 | SSOT 11 层 + landing/draft | PASS | `.agents/ssot/adapters/storage/postgres/` |
 | POSTGRESX-9 | package stable | OPEN | 禁止宣称 |
 | POSTGRESX-10 | DEFER 能力 | OPEN | COPY / migrations / read-replica / SSL require-only 默认 |
+| POSTGRESX-11 | resiliencx 生产入口 | PASS | `pool.rs` · `execute`/`query*` + `*_with_budget`；`resilience.rs` async |
 
 ## 验证
 

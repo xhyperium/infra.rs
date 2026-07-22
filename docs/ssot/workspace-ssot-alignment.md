@@ -157,8 +157,8 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 | `schedulex` | registry + tick JobRunner **PASS**；分布式 **NO** | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) |
 | `evidence` | query/sign/remote **PASS**；合规产品 **OPEN** | [evidence-ssot-alignment.md](./evidence-ssot-alignment.md) |
 | `observex` | 进程内 export/flush **PASS**；full OTEL **OPEN** | [observex-ssot-alignment.md](./observex-ssot-alignment.md) |
-| `resiliencx` | budget + redis/pg wire **PASS** | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
-| `transportx` | TLS/池/代理配置面 **PASS** | [transport-ssot-alignment.md](./transport-ssot-alignment.md) |
+| `resiliencx` | budget + redis/pg **生产 I/O 入口** wire **PASS** | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
+| `transportx` | TLS/池/代理 + pool factory-Err 槽位回滚 **PASS** | [transport-ssot-alignment.md](./transport-ssot-alignment.md) |
 | `contracts` | L3 子集 + LiveContractProfile **PASS**；exchange 业务 **NO-GO** | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
 | storage×7 | **生产默认路径 P0**；≠ package stable | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `goalctl` / `verifyctl` | 最小生产 CLI member | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
@@ -214,3 +214,4 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 STATUS **结构 100%** + 声明面测/bench/cov-100；**≠** workspace Production Ready / L5。
 | 2026-07-22 | storage×7：SSOT 层实质化 + 分 package `*-ssot-alignment.md` |
 | 2026-07-22 | **defer-close**：13 包 OBJECTIVE 非 OOS DEFER→PASS（archgate OOS-Accept）；见 `docs/report/2026-07-22-defer-close/` |
+| 2026-07-22 | **skeptic-fix**（goal 7d2c7806cb8e）：pool factory-Err 泄漏修复；redis/pg 生产入口接 resiliencx；implementer SCRATCH 证据补齐 |

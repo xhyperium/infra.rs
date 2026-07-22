@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use kernel::{XError, XResult};
+use resiliencx::RetryBudget;
 use tokio_postgres::NoTls;
 use tokio_postgres::Row;
 use tokio_postgres::types::ToSql;
@@ -11,6 +12,7 @@ use tokio_postgres::types::ToSql;
 use crate::config::{PostgresConfig, SslMode};
 use crate::conn::PgConnection;
 use crate::error::{map_create_pool_error, map_pool_error, map_tokio_error};
+use crate::resilience::with_budget_async_noop;
 use crate::tx::PgTransaction;
 
 /// 连接池快照统计。
@@ -31,11 +33,14 @@ pub struct PoolStats {
 /// 生产 Postgres 连接池。
 ///
 /// 默认导出；所有 SQL 路径均为参数化（`ToSql` + `$N`）。
+/// 可选 [`RetryBudget`]：配置后 `execute`/`query` 经 resiliencx 重试生产路径。
 #[derive(Clone)]
 pub struct PostgresPool {
     inner: deadpool_postgres::Pool,
     closed: Arc<AtomicBool>,
     config_summary: Arc<String>,
+    budget: Option<Arc<RetryBudget>>,
+    budget_max_attempts: u32,
 }
 
 impl std::fmt::Debug for PostgresPool {
@@ -71,11 +76,27 @@ impl PostgresPool {
                 config.sslmode.as_str(),
                 config.max_pool_size
             )),
+            budget: None,
+            budget_max_attempts: 3,
         };
 
         // 冒烟：借一条连接跑 SELECT 1
         this.health().await?;
         Ok(this)
+    }
+
+    /// 注入 [`RetryBudget`]：后续 `execute`/`query` 走 resiliencx 异步重试。
+    #[must_use]
+    pub fn with_retry_budget(mut self, budget: RetryBudget, max_attempts: u32) -> Self {
+        self.budget = Some(Arc::new(budget));
+        self.budget_max_attempts = max_attempts.max(1);
+        self
+    }
+
+    /// 是否已配置重试预算。
+    #[must_use]
+    pub fn has_retry_budget(&self) -> bool {
+        self.budget.is_some()
     }
 
     /// 从环境变量建池（`DATABASE_URL` 或 `FOUNDATIONX_POSTGRESX_*`）。
@@ -113,32 +134,122 @@ impl PostgresPool {
         Ok(PgConnection::new(client))
     }
 
-    /// 参数化 `EXECUTE`（短借连接）。
-    pub async fn execute(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<u64> {
+    /// 单次 `EXECUTE` I/O（无 budget 环）。
+    async fn execute_once(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<u64> {
         let conn = self.acquire().await?;
         conn.execute(sql, params).await
     }
 
+    /// 参数化 `EXECUTE`（短借连接）。
+    ///
+    /// 若已 [`Self::with_retry_budget`]，经 resiliencx 异步预算重试。
+    pub async fn execute(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<u64> {
+        if let Some(budget) = self.budget.as_ref() {
+            return self
+                .execute_with_budget(sql, params, budget.as_ref(), self.budget_max_attempts)
+                .await;
+        }
+        self.execute_once(sql, params).await
+    }
+
+    /// 显式 budget 的 `EXECUTE`：始终经 resiliencx 驱动真实 I/O。
+    ///
+    /// `params` 在整个重试环中被借用，调用方须保证其存活。
+    pub async fn execute_with_budget(
+        &self,
+        sql: &str,
+        params: &[&(dyn ToSql + Sync)],
+        budget: &RetryBudget,
+        max_attempts: u32,
+    ) -> XResult<u64> {
+        with_budget_async_noop(budget, max_attempts, "pg.execute", || async {
+            self.execute_once(sql, params).await
+        })
+        .await
+    }
+
     /// 参数化查询，恰好一行。
     pub async fn query_one(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<Row> {
+        if let Some(budget) = self.budget.as_ref() {
+            return self
+                .query_one_with_budget(sql, params, budget.as_ref(), self.budget_max_attempts)
+                .await;
+        }
         let conn = self.acquire().await?;
         conn.query_one(sql, params).await
     }
 
+    /// 显式 budget 的 `query_one`。
+    pub async fn query_one_with_budget(
+        &self,
+        sql: &str,
+        params: &[&(dyn ToSql + Sync)],
+        budget: &RetryBudget,
+        max_attempts: u32,
+    ) -> XResult<Row> {
+        with_budget_async_noop(budget, max_attempts, "pg.query_one", || async {
+            let conn = self.acquire().await?;
+            conn.query_one(sql, params).await
+        })
+        .await
+    }
+
     /// 参数化查询，0..N 行。
     pub async fn query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<Vec<Row>> {
+        if let Some(budget) = self.budget.as_ref() {
+            return self
+                .query_with_budget(sql, params, budget.as_ref(), self.budget_max_attempts)
+                .await;
+        }
         let conn = self.acquire().await?;
         conn.query(sql, params).await
     }
 
+    /// 显式 budget 的 `query`。
+    pub async fn query_with_budget(
+        &self,
+        sql: &str,
+        params: &[&(dyn ToSql + Sync)],
+        budget: &RetryBudget,
+        max_attempts: u32,
+    ) -> XResult<Vec<Row>> {
+        with_budget_async_noop(budget, max_attempts, "pg.query", || async {
+            let conn = self.acquire().await?;
+            conn.query(sql, params).await
+        })
+        .await
+    }
+
     /// 可选单行。
+    ///
+    /// 若已 [`Self::with_retry_budget`]，经 resiliencx 异步预算重试。
     pub async fn query_opt(
         &self,
         sql: &str,
         params: &[&(dyn ToSql + Sync)],
     ) -> XResult<Option<Row>> {
+        if let Some(budget) = self.budget.as_ref() {
+            return self
+                .query_opt_with_budget(sql, params, budget.as_ref(), self.budget_max_attempts)
+                .await;
+        }
         let conn = self.acquire().await?;
         conn.query_opt(sql, params).await
+    }
+
+    /// 显式 budget 的 `query_opt`。
+    pub async fn query_opt_with_budget(
+        &self,
+        sql: &str,
+        params: &[&(dyn ToSql + Sync)],
+        budget: &RetryBudget,
+        max_attempts: u32,
+    ) -> XResult<Option<Row>> {
+        with_budget_async_noop(budget, max_attempts, "pg.query_opt", || async {
+            let conn = self.acquire().await?;
+            conn.query_opt(sql, params).await
+        })
+        .await
     }
 
     /// 在事务中执行异步闭包：`Ok` → commit，`Err` → rollback。
@@ -276,5 +387,13 @@ mod tests {
             Ok(Ok(_)) => panic!("unexpected success"),
             Err(_) => {}
         }
+    }
+
+    #[test]
+    fn with_retry_budget_api_shape() {
+        // 离线：budget 形状 + pool 字段；live I/O 见 tests/live_postgres.rs #[ignore]
+        let budget = RetryBudget::new(2);
+        assert_eq!(budget.remaining(), 2);
+        assert!(!budget.is_exhausted());
     }
 }

@@ -27,7 +27,7 @@
 | 429 → RateLimited | **PASS** | reqwest 驱动测 |
 | payload 上限 / Debug 脱敏 | **PASS** | #166 |
 | **TLS 配置面** | **PASS** | `src/tls.rs` · `TlsMode` / `TlsConfig` |
-| **连接/客户端池** | **PASS** | `src/pool.rs` · `HttpClientPool` / `PoolConfig` |
+| **连接/客户端池** | **PASS** | `src/pool.rs` · `HttpClientPool` / `PoolConfig`；`checkout_with` factory `Err` 回滚 `checked_out`（`factory_err_releases_slot_so_pool_not_exhausted`） |
 | **代理配置** | **PASS** | `src/proxy.rs` · `ProxyConfig` / `build_reqwest_proxy` |
 | 完整生产 TLS 合规矩阵 / mTLS 产品 | **OPEN** | 声明层配置 ≠ 企业 PKI 产品 |
 | exchange 业务协议 | **adapters 生产默认 REST+WS**（#210+#214） | transport 仅边界；业务在 binancex/okxx |
@@ -37,7 +37,7 @@
 | 项 | 前状态 | 现状态 | 证据 |
 |----|--------|--------|------|
 | TLS 矩阵 | DEFER | **PASS（配置面）** | `crates/transport/src/tls.rs` |
-| 池 | DEFER | **PASS** | `crates/transport/src/pool.rs` |
+| 池 | DEFER | **PASS** | `crates/transport/src/pool.rs`；factory 失败槽位回滚 + 回归测 |
 | 代理 | DEFER | **PASS** | `crates/transport/src/proxy.rs` |
 | 敏感头 Debug | 部分 | **PASS（含 OKX）** | `is_sensitive_header_name` 含 `OK-ACCESS-*` / passphrase（0.1.1） |
 | exchange 适配器验收 | scaffold | **PASS（生产默认）** | `cargo test -p binancex -p okxx --all-targets`；live `server_time` ignore |
@@ -77,3 +77,4 @@ node scripts/quality-gates/cov-gate-100.mjs -p transportx
 | 日期 | 说明 |
 |------|------|
 | 2026-07-22 | **defer-close**：tls/pool/proxy 声明层 PASS |
+| 2026-07-22 | **skeptic-fix**：`checkout_with` factory Err 回滚 `checked_out`（避免 size=1 池永久耗尽） |
