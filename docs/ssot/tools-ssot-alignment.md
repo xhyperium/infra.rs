@@ -105,4 +105,3 @@ needle=$'xhyper\x2ers'
 | `tools/*/plan/infra-rs-draft-*.md` | `.cargo/draft` 入库只读快照 |
 | `.agents/ssot/AGENTS.md` | 操作说明（非空） |
 | `.agents/ssot/adapters/README.md` | adapters 索引 |
-
