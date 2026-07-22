@@ -6,7 +6,6 @@ on:
   # ruleset 会永久 BLOCK（mergeable_state=blocked）。
   pull_request:
     branches: [main, develop]
-  merge_group:
   workflow_dispatch:
 
 permissions:
