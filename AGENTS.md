@@ -4,20 +4,21 @@
 
 ## Rust 编码规范（强制）
 
-- **上位全局标准**：《[Rust 编码规范（完整版）v2.0](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md)》——组织 SSOT：[`xhyperium/.github`](https://github.com/xhyperium/.github) → `rulesets/rust/`（上游镜像：`bytechainx/.github`）
-- **Agent 加载**：`~/.claude/rules/rust.md`（symlink）；专项见同目录 `security` / `async-runtime` / `api-design` 等
-- **本仓关系**：宪章 [§4.0](./docs/constitution/04-code-standards.md#40-rust-全局编码规范强制上位) 采纳上位标准；项目细则可**加严**、**不可削弱** P0
+- **上位全局标准**：《[Rust 编码规范（完整版）v2.1.1](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md)》——组织 SSOT：[`xhyperium/.github`](https://github.com/xhyperium/.github) → `rulesets/rust/`
+- **Agent 加载**：`~/.claude/rules/rust.md`、`language.md`（`setup-global-rules.sh`）；专项见同目录 `security` / `async-runtime` 等
+- **本仓关系**：宪章 [§4.0](./docs/constitution/04-code-standards.md#40-rust-全局编码规范强制上位) 采纳上位标准；项目细则可**加严**、**不可削弱** 组织 P0
 - 提交前：`cargo fmt` + `clippy -D warnings` + `test`（与完整版 / §5 门禁一致）
 
 ## 语言与编码（强制）
 
+- **组织上位**：[language.md](https://github.com/xhyperium/.github/blob/main/rulesets/language.md) — **人类可读文本强制简体中文**
 - **字符编码**：全部文本文件使用 **UTF-8（无 BOM）**，换行 **LF**
-- **注释 / 中文治理文档**：统一使用**中文**（技术术语可保留英文）
-- **英文技术文档**：**ASD-STE100（Simplified Technical English）**（宪章 §4.6）
-- **用户可见错误信息**：中文
-- **标识符**：英文（Rust 惯例）
+- **注释 / 治理文档 / Agent 输出 / 用户可见错误**：**中文**
+- **提交说明**：`type(scope): 中文说明`
+- **标识符**：英文（Rust 惯例）；技术术语可保留英文本体
 - **LICENSE**：保留英文许可证原文
-- 细则见 [docs/constitution/04-code-standards.md §4.0 / §4.5 / §4.6](./docs/constitution/04-code-standards.md)、[docs/governance/编码与语言约定.md](./docs/governance/编码与语言约定.md)、[docs/governance/ASD-STE100.md](./docs/governance/ASD-STE100.md)；索引 [docs/constitution/](./docs/constitution/)
+- **英文技术正文**：非默认；须书面豁免后可参考 STE（宪章 §4.6 可选）
+- 细则：[§4.5 / §4.6](./docs/constitution/04-code-standards.md)、[编码与语言约定.md](./docs/governance/编码与语言约定.md)
 
 ## 项目身份
 
