@@ -14,10 +14,8 @@ permissions:
   actions: read
 
 env:
-  # 受保护分支列表（逗号分隔），禁止 force-push
-  PROTECTED_BRANCHES: "main,develop,release/*"
-  # 允许触发 rebase 的团队 slug
-  ALLOWED_TEAMS: "maintainers"
+  # 受保护分支模式（空格分隔，shell glob）
+  PROTECTED_PATTERNS: "main develop release/*"
 
 jobs:
   # ── 安全校验层 ──────────────────────────────────────────────
@@ -33,12 +31,12 @@ jobs:
       is_protected: ${{ steps.check.outputs.is_protected }}
       head_valid: ${{ steps.check.outputs.head_valid }}
       base_valid: ${{ steps.check.outputs.base_valid }}
-      is_admin: ${{ steps.check.outputs.is_admin }}
       head_branch: ${{ steps.check.outputs.head_branch }}
       base_branch: ${{ steps.check.outputs.base_branch }}
       pr_number: ${{ steps.check.outputs.pr_number }}
+      actor: ${{ steps.check.outputs.actor }}
     steps:
-      - name: 输入校验与分支名验证
+      - name: 输入校验与分��名验证
         id: check
         uses: actions/github-script@v7
         with:
@@ -49,65 +47,46 @@ jobs:
             const headRepo = pr.head.repo.full_name;
             const repo = context.repo.owner + '/' + context.repo.repo;
 
-            // 1. 严格输入校验：分支名仅允许 [a-zA-Z0-9._/-]
+            // 1. 严格输入校验
+            //    拒绝 ..（路径遍历）
+            //    拒绝以 . 开头或包含 /. （隐藏目录）
+            //    仅允许 [a-zA-Z0-9][a-zA-Z0-9._/-]
             const BRANCH_RE = /^[a-zA-Z0-9][a-zA-Z0-9._\/-]{0,253}$/;
-            const headValid = BRANCH_RE.test(headBranch) && !headBranch.includes('..');
+            const hasDots = headBranch.includes('..');
+            const hasHidden = headBranch.split('/').some(s => s.startsWith('.'));
+            const headValid = BRANCH_RE.test(headBranch) && !hasDots && !hasHidden;
             const baseValid = BRANCH_RE.test(baseBranch) && !baseBranch.includes('..');
 
-            // 2. 禁止 force-push 受保护分支
-            const protectedPatterns = '${{ env.PROTECTED_BRANCHES }}'.split(',');
-            const isProtected = protectedPatterns.some(p => {
-              const re = new RegExp('^' + p.trim().replace(/\*/g, '.*') + '$');
-              return re.test(headBranch);
-            });
+            // 2. 受保护分支检查（换用 shell 数组格式）
+            const protectedPatterns = '${{ env.PROTECTED_PATTERNS }}'.split(/\s+/).filter(Boolean);
+            const shGlobToRegex = (g) => new RegExp(
+              '^' + g.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$'
+            );
+            const isProtected = protectedPatterns.some(p => shGlobToRegex(p).test(headBranch));
 
             // 3. Fork / Draft 检查
             const isFork = headRepo !== repo;
             const isDraft = pr.draft;
-
-            // 4. 检查触发者是否为管理员
-            const allowedTeams = '${{ env.ALLOWED_TEAMS }}'.split(',');
-            let isAdmin = false;
-            try {
-              const { data: membership } = await github.rest.orgs.getMembershipForUser({
-                org: context.repo.owner,
-                username: context.actor,
-              });
-              isAdmin = membership.role === 'admin';
-            } catch {
-              // 非 org 成员或 API 不可用
-              isAdmin = false;
-            }
 
             core.setOutput('is_fork', isFork.toString());
             core.setOutput('is_draft', isDraft.toString());
             core.setOutput('is_protected', isProtected.toString());
             core.setOutput('head_valid', headValid.toString());
             core.setOutput('base_valid', baseValid.toString());
-            core.setOutput('is_admin', isAdmin.toString());
             core.setOutput('head_branch', headBranch);
             core.setOutput('base_branch', baseBranch);
             core.setOutput('pr_number', pr.number.toString());
+            core.setOutput('actor', context.actor);
 
             // 输出校验摘要
-            const checks = [
-              ['Fork PR', isFork, '❌', '✅'],
-              ['Draft PR', isDraft, '⚠️', '✅'],
-              ['受保护分支', isProtected, '❌', '✅'],
-              ['分支名 head 有效', !headValid, '❌', '✅'],
-              ['分支名 base 有效', !baseValid, '❌', '✅'],
-              ['管理员触发', !isAdmin, '⚠️', '✅'],
-            ];
-
-            const lines = checks.map(([name, fail, failIcon, passIcon]) =>
-              `| ${name} | ${fail ? failIcon : passIcon} |`
-            );
             core.summary.addHeading('Rebase 安全校验', 2);
             core.summary.addTable([
               ['检查项', '结果'],
-              ...checks.map(([name, fail, failIcon, passIcon]) =>
-                [name, fail ? failIcon : passIcon]
-              ),
+              ['Fork PR', isFork ? '❌' : '✅'],
+              ['Draft PR', isDraft ? '⚠️' : '✅'],
+              ['受保护分支', isProtected ? '❌' : '✅'],
+              ['分支名 head 有效', headValid ? '✅' : '❌'],
+              ['分支名 base 有效', baseValid ? '✅' : '❌'],
             ]);
             core.summary.write();
 
@@ -178,78 +157,17 @@ git push --force-with-lease origin ${{ needs.validate.outputs.head_branch }}
 |------|
 ${reasons.map(r => `| ${r} |`).join('\n')}
 
-审计日志：
+审计：
 - 触发者：@${{ github.actor }}
 - 分支：\`${{ needs.validate.outputs.head_branch }}\`
 - 时间：${new Date().toISOString()}`
             });
-
-  # ── 非管理员二次确认 ───────────────────────────────────────
-  confirm-non-admin:
-    name: 非管理员二次确认
-    needs: validate
-    if: |
-      needs.validate.outputs.is_admin == 'false' &&
-      needs.validate.outputs.is_fork == 'false' &&
-      needs.validate.outputs.is_draft == 'false' &&
-      needs.validate.outputs.is_protected == 'false' &&
-      needs.validate.outputs.head_valid == 'true' &&
-      needs.validate.outputs.base_valid == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 请求确认
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const prNumber = ${{ needs.validate.outputs.pr_number }};
-
-            // 检查是否已有待确认的评论
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              sort: 'created',
-              direction: 'desc',
-              per_page: 10,
-            });
-
-            const pendingConfirm = comments.some(c =>
-              c.user.login === 'github-actions[bot]' &&
-              c.body.includes('非管理员触发 Rebase')
-            );
-
-            if (!pendingConfirm) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body: `⚠️ **非管理员触发 Rebase — 需二次确认**
-
-触发者 @${{ github.actor }} 不是 \`${{ env.ALLOWED_TEAMS }}\` 成员。
-
-请在 5 分钟内回复 \`/rebase-confirm\` 确认执行，或由管理员重新添加 \`rebase\` 标签。
-
-审计记录：
-| 项目 | 值 |
-|------|-----|
-| PR | #${prNumber} |
-| 分支 | \`${{ needs.validate.outputs.head_branch }}\` |
-| 目标 | \`${{ needs.validate.outputs.base_branch }}\` |
-| 触发者 | @${{ github.actor }} |
-| 时间 | ${new Date().toISOString()} |`
-              });
-            }
-
-            // 等待确认命令（简化实现：输出提示，人工通过在 PR 回复 /rebase-confirm 确认）
-            core.summary.addRaw('非管理员触发 — 已请求二次确认', true);
-            core.summary.write();
 
   # ── 执行 Rebase ─────────────────────────────────────────────
   rebase:
     name: Rebase 执行
     needs: validate
     if: |
-      needs.validate.outputs.is_admin == 'true' &&
       needs.validate.outputs.is_fork == 'false' &&
       needs.validate.outputs.is_draft == 'false' &&
       needs.validate.outputs.is_protected == 'false' &&
@@ -263,7 +181,7 @@ ${reasons.map(r => `| ${r} |`).join('\n')}
         id: audit-start
         run: |
           echo "action=rebase-on-label" >> "$GITHUB_OUTPUT"
-          echo "actor=${{ github.actor }}" >> "$GITHUB_OUTPUT"
+          echo "actor=${{ needs.validate.outputs.actor }}" >> "$GITHUB_OUTPUT"
           echo "pr=${{ needs.validate.outputs.pr_number }}" >> "$GITHUB_OUTPUT"
           echo "head=${{ needs.validate.outputs.head_branch }}" >> "$GITHUB_OUTPUT"
           echo "base=${{ needs.validate.outputs.base_branch }}" >> "$GITHUB_OUTPUT"
@@ -322,44 +240,60 @@ ${reasons.map(r => `| ${r} |`).join('\n')}
 
       - name: 强制推送
         if: steps.rebase.outputs.status == 'success'
+        id: push
         run: |
-          # 二次核验：目标不可为受保护分支
           HEAD="${{ steps.rebase.outputs.head }}"
-          for p in ${{ env.PROTECTED_BRANCHES }}; do
-            pattern=$(echo "$p" | sed 's/\*/.*/g')
-            if echo "$HEAD" | grep -qE "^${pattern}$"; then
-              echo "::error::拒绝 push：${HEAD} 匹配受保护分支模式 ${p}"
+
+          # 二次核验：使用 shell 数组避免解析歧义
+          PROTECTED=(${{ env.PROTECTED_PATTERNS }})
+          for pat in "${PROTECTED[@]}"; do
+            re=$(echo "$pat" | sed 's/[.+^${}()|[]/\\&/g; s/\*/.*/g')
+            if echo "$HEAD" | grep -qE "^${re}$"; then
+              echo "::error::拒绝 push：${HEAD} 匹配受保护分支 ${pat}"
               exit 1
             fi
           done
-          git push --force-with-lease origin "${HEAD}"
+
+          if git push --force-with-lease origin "${HEAD}" 2>&1; then
+            echo "push_status=pushed" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::force-with-lease 推送失败——远程分支可能已被更新"
+            echo "push_status=lease-fail" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
 
       - name: 审计日志 — 结果
         if: always()
-        id: audit-end
         run: |
-          echo "result=${{ steps.rebase.outputs.status || 'blocked' }}" >> "$GITHUB_OUTPUT"
+          result="${{ steps.push.outputs.push_status || steps.rebase.outputs.status || 'blocked' }}"
+          echo "result=${result}" >> "$GITHUB_OUTPUT"
 
       - name: 报告结果
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
-            const status = '${{ steps.rebase.outputs.status }}' || 'blocked';
-            const message = '${{ steps.rebase.outputs.message }}' || '执行被阻断';
+            const STATUS = '${{ steps.push.outputs.push_status || steps.rebase.outputs.status }}' || 'blocked';
+            const MESSAGE = '${{ steps.rebase.outputs.message }}' || '执行被阻断';
 
-            const icon = status === 'success' ? '✅' : status === 'conflict' ? '❌' : '🚫';
+            const map = {
+              'pushed':       ['✅', 'Rebase 成功并已推送'],
+              'success':      ['✅', 'Rebase 成功（推送状态未知）'],
+              'lease-fail':   ['⚠️', 'Rebase 成功但 force-with-lease 失败，请手动推送'],
+              'conflict':     ['❌', 'Rebase 冲突，请手动解决'],
+              'blocked':      ['🚫', '执行被阻断'],
+            };
+            const [icon, text] = map[STATUS] || ['❓', STATUS];
 
-            const body = `${icon} **${message}**
+            const body = `${icon} **${text}**
 
-            | 项目 | 值 |
-            |------|-----|
-            | PR | #${{ needs.validate.outputs.pr_number }} |
-            | 分支 | \`${{ steps.rebase.outputs.head }}\` |
-            | 目标 | \`${{ steps.rebase.outputs.base }}\` |
-            | 结果 | ${status === 'success' ? '成功' : status === 'conflict' ? '冲突需手动解决' : '已阻断'} |
-            | 触发者 | @${{ github.actor }} |
-            | 审计 | \`${{ steps.audit-start.outputs.ts }}\` \`${{ github.run_id }}\` |`;
+| 项目 | 值 |
+|------|-----|
+| PR | #${{ needs.validate.outputs.pr_number }} |
+| 分支 | \`${{ steps.rebase.outputs.head }}\` |
+| 目标 | \`${{ steps.rebase.outputs.base }}\` |
+| 触发者 | @${{ needs.validate.outputs.actor }} |
+| 审计 | \`${{ steps.audit-start.outputs.ts }}\` / \`${{ github.run_id }}\``;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,

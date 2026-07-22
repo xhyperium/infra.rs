@@ -14,10 +14,13 @@ permissions:
   actions: read
 
 env:
-  # 受保护分支列表（逗号分隔），禁止 force-push
-  PROTECTED_BRANCHES: "main,develop,release/*"
-  # 是否启用自动推送（设为 false 时仅 dry-run 报告）
+  # 受保护分支模式（空格分隔，shell glob）
+  PROTECTED_PATTERNS: "main develop release/*"
+  # 是否启用自动推送（设为 false 时仅 dry-run）
   AUTO_PUSH_ENABLED: "true"
+  # 可选保护：限定触发 push 者必须满足的条件
+  # 留空 = 无限制；设为 team slug 列表（逗号分隔）
+  ALLOWED_PUSHERS: ""
 
 jobs:
   # ── 安全校验 + 审计 ─────────────────────────────────────────
@@ -59,20 +62,28 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
+          PROTECTED_RAW: "${{ env.PROTECTED_PATTERNS }}"
+          AUTO_PUSH: "${{ env.AUTO_PUSH_ENABLED }}"
         run: |
           set -o pipefail
 
           git fetch origin main
 
+          # 受保护分支：空格分隔 → shell 数组
+          IFS=' ' read -ra PROTECTED <<< "${PROTECTED_RAW:-}"
+
           success_count=0
           conflict_count=0
           skip_count=0
           block_count=0
-          results_json='['
+          lease_fail=0
+
+          # 用 jq 安全构建 JSON 数组
+          results_file=$(mktemp)
+          echo '[]' > "$results_file"
 
           OWNER="${{ github.repository_owner }}"
 
-          # 列出同仓库开放 PR（非 fork）
           pr_list=$(gh pr list \
             --state open \
             --base main \
@@ -85,41 +96,47 @@ jobs:
             exit 0
           fi
 
-          first=true
           while IFS='|' read -r pr_number head_branch; do
             echo "---" >> "$GITHUB_STEP_SUMMARY"
             echo "### PR #${pr_number} (\`${head_branch}\`)" >> "$GITHUB_STEP_SUMMARY"
 
-            # 1. 严格输入校验：分支名仅允许合法字符
-            if ! echo "${head_branch}" | grep -qE '^[a-zA-Z0-9][a-zA-Z0-9._/-]{0,253}$' || \
-               echo "${head_branch}" | grep -q '\.\.'; then
+            # 1. 严格输入校验
+            invalid=0
+            if ! echo "${head_branch}" | grep -qE '^[a-zA-Z0-9][a-zA-Z0-9._/-]{0,253}$'; then
+              invalid=1
+            fi
+            if echo "${head_branch}" | grep -q '\.\.'; then
+              invalid=1
+            fi
+            # 拒绝以 . 开头的路径段（隐藏目录）
+            if echo "${head_branch}" | grep -qE '(^|/)\.'; then
+              invalid=1
+            fi
+
+            if [ "$invalid" -eq 1 ]; then
               echo "- 状态：阻断（分支名包含非法字符）" >> "$GITHUB_STEP_SUMMARY"
               block_count=$((block_count + 1))
-              status="blocked-invalid"
-              [ "$first" = true ] && first=false || results_json+=','
-              results_json+="{\"number\":${pr_number},\"branch\":\"${head_branch}\",\"status\":\"${status}\"}"
-              skip_count=$((skip_count + 1))
+              jq --arg n "$pr_number" --arg b "$head_branch" \
+                '. + [{"number":($n|tonumber),"branch":$b,"status":"blocked-invalid"}]' \
+                "$results_file" > "${results_file}.tmp" && mv "${results_file}.tmp" "$results_file"
               continue
             fi
 
             # 2. 受保护分支检查
             protected=0
-            IFS=',' read -ra PROTECTED <<< "${{ env.PROTECTED_BRANCHES }}"
-            for p in "${PROTECTED[@]}"; do
-              p=$(echo "$p" | xargs)
-              pattern=$(echo "$p" | sed 's/\*/.*/g')
-              if echo "${head_branch}" | grep -qE "^${pattern}$"; then
+            for pat in "${PROTECTED[@]}"; do
+              re=$(echo "$pat" | sed 's/[.+^${}()|[]/\\&/g; s/\*/.*/g')
+              if echo "${head_branch}" | grep -qE "^${re}$"; then
                 protected=1
                 break
               fi
             done
             if [ "$protected" -eq 1 ]; then
-              echo "- 状态：阻断（受保护分支，禁止 force-push）" >> "$GITHUB_STEP_SUMMARY"
+              echo "- 状态：阻断（受保护分支）" >> "$GITHUB_STEP_SUMMARY"
               block_count=$((block_count + 1))
-              status="blocked-protected"
-              [ "$first" = true ] && first=false || results_json+=','
-              results_json+="{\"number\":${pr_number},\"branch\":\"${head_branch}\",\"status\":\"${status}\"}"
-              skip_count=$((skip_count + 1))
+              jq --arg n "$pr_number" --arg b "$head_branch" \
+                '. + [{"number":($n|tonumber),"branch":$b,"status":"blocked-protected"}]' \
+                "$results_file" > "${results_file}.tmp" && mv "${results_file}.tmp" "$results_file"
               continue
             fi
 
@@ -130,91 +147,86 @@ jobs:
               continue
             fi
 
-            if git checkout -b "ci-rebase-${pr_number}" "origin/${head_branch}" 2>/dev/null && \
+            tmp_branch="ci-rebase-${pr_number}"
+            if git checkout -b "${tmp_branch}" "origin/${head_branch}" 2>/dev/null && \
                git rebase origin/main 2>/dev/null; then
               echo "- 状态：成功" >> "$GITHUB_STEP_SUMMARY"
 
-              AUTO_PUSH="${{ env.AUTO_PUSH_ENABLED }}"
               if [ "${AUTO_PUSH}" = "true" ]; then
-                if git push --force-with-lease origin "ci-rebase-${pr_number}:${head_branch}" 2>/dev/null; then
+                if git push --force-with-lease origin "${tmp_branch}:${head_branch}" 2>&1; then
                   echo "  (已推送)" >> "$GITHUB_STEP_SUMMARY"
-                  status="pushed"
+                  rebase_status="pushed"
                 else
-                  echo "  (rebase 成功但推送失败)" >> "$GITHUB_STEP_SUMMARY"
-                  status="rebased-no-push"
+                  echo "  (rebase 成功但 force-with-lease 失败)" >> "$GITHUB_STEP_SUMMARY"
+                  rebase_status="lease-fail"
+                  lease_fail=$((lease_fail + 1))
                 fi
               else
                 echo "  (dry-run 模式，未推送)" >> "$GITHUB_STEP_SUMMARY"
-                status="dry-run"
+                rebase_status="dry-run"
               fi
 
               git checkout main 2>/dev/null
-              git branch -D "ci-rebase-${pr_number}" 2>/dev/null || true
+              git branch -D "${tmp_branch}" 2>/dev/null || true
               success_count=$((success_count + 1))
             else
               git rebase --abort 2>/dev/null || true
               git checkout main 2>/dev/null
-              git branch -D "ci-rebase-${pr_number}" 2>/dev/null || true
-              echo "- 状态：冲突，需手动解决" >> "$GITHUB_STEP_SUMMARY"
-              status="conflict"
+              git branch -D "${tmp_branch}" 2>/dev/null || true
+              echo "- 状态：冲突" >> "$GITHUB_STEP_SUMMARY"
+              rebase_status="conflict"
               conflict_count=$((conflict_count + 1))
             fi
 
-            [ "$first" = true ] && first=false || results_json+=','
-            results_json+="{\"number\":${pr_number},\"branch\":\"${head_branch}\",\"status\":\"${status}\"}"
+            jq --arg n "$pr_number" --arg b "$head_branch" --arg s "$rebase_status" \
+              '. + [{"number":($n|tonumber),"branch":$b,"status":$s}]' \
+              "$results_file" > "${results_file}.tmp" && mv "${results_file}.tmp" "$results_file"
+
           done <<< "$pr_list"
 
-          results_json+=']'
-          echo "results=${results_json}" >> "$GITHUB_OUTPUT"
+          # 输出 JSON 结果
+          results_content=$(cat "$results_file")
+          echo "results=${results_content}" >> "$GITHUB_OUTPUT"
+          rm -f "$results_file" "${results_file}.tmp" 2>/dev/null || true
 
           # 审计摘要
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### 审计结果" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 统计 | 数量 |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|------|------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 成功 | ${success_count} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 冲突 | ${conflict_count} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 阻断 | ${block_count} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 跳过 | ${skip_count} |" >> "$GITHUB_STEP_SUMMARY"
+          cat >> "$GITHUB_STEP_SUMMARY" << SUMMARY_TABLE
+
+          ### 审计结果
+          | 统计 | 数量 |
+          |------|------|
+          | 成功 | ${success_count} |
+          | 冲突 | ${conflict_count} |
+          | 阻断 | ${block_count} |
+          | lease-fail | ${lease_fail} |
+          | 跳过 | ${skip_count} |
+          SUMMARY_TABLE
 
       - name: 发布 PR 评论
         if: always() && steps.rebase-all.outputs.results != '[]'
         uses: actions/github-script@v7
         with:
           script: |
-            const results = JSON.parse('${{ steps.rebase-all.outputs.results }}');
+            const results = JSON.parse(`${{ steps.rebase-all.outputs.results }}`);
 
             for (const pr of results) {
               let emoji, statusText;
 
               switch (pr.status) {
                 case 'pushed':
-                  emoji = '✅';
-                  statusText = 'rebase 成功并已推送';
-                  break;
-                case 'rebased-no-push':
-                  emoji = '⚠️';
-                  statusText = 'rebase 成功但推送失败';
-                  break;
+                  emoji = '✅'; statusText = 'rebase 成功并已推送'; break;
+                case 'lease-fail':
+                  emoji = '⚠️'; statusText = 'rebase 成功但 force-with-lease 失败，请手动推送'; break;
                 case 'dry-run':
-                  emoji = '🔍';
-                  statusText = 'rebase 成功（dry-run 模式，未推送）';
-                  break;
+                  emoji = '🔍'; statusText = 'rebase 成功（dry-run 模式）'; break;
                 case 'conflict':
-                  emoji = '❌';
-                  statusText = 'rebase 冲突，请手动解决';
-                  break;
+                  emoji = '❌'; statusText = 'rebase 冲突，请手动解决'; break;
                 case 'blocked-protected':
-                  emoji = '🚫';
-                  statusText = '阻断：分支匹配受保护分支模��，禁止 force-push';
-                  break;
+                  emoji = '🚫'; statusText = '阻断：受保护分支，禁止 force-push'; break;
                 case 'blocked-invalid':
-                  emoji = '🚫';
-                  statusText = '阻断：分支名包含非法字符';
-                  break;
+                  emoji = '🚫'; statusText = '阻断：分支名包含非法字符'; break;
                 default:
-                  emoji = '❓';
-                  statusText = pr.status;
+                  emoji = '❓'; statusText = pr.status;
               }
 
               const body = `${emoji} **自动 Rebase：\`${pr.branch}\` ← \`main\`**
@@ -226,7 +238,7 @@ jobs:
               | 目标 | \`main\` |
               | 触发 | push \`${{ github.sha }}\` |
               | 结果 | ${statusText} |
-              | 审计 | \`${{ github.run_id }}\` / $(date -u +%Y-%m-%dT%H:%M:%SZ) |
+              | 审计 | \`${{ github.run_id }}\` |
               ${pr.status === 'conflict' ? '| 操作 | \`git fetch origin main && git rebase origin/main\` |' : ''}`;
 
               await github.rest.issues.createComment({
@@ -240,7 +252,7 @@ jobs:
       - name: 审计日志 — 完成
         if: always()
         run: |
-          cat >> "$GITHUB_STEP_SUMMARY" << 'AUDIT_FOOTER'
+          cat >> "$GITHUB_STEP_SUMMARY" << AUDIT_FOOTER
 
           ---
           **审计完成** | Run: \`${{ github.run_id }}\` | 状态: ${{ job.status }}
