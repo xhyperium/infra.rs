@@ -58,6 +58,8 @@ jobs:
             AGENTS.md
             CLAUDE.md
             docs/**/*.md
+            crates/**/*.md
+            tools/**/*.md
 
   spellcheck:
     name: 拼写检查
@@ -65,11 +67,21 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: 运行 codespell
-        uses: codespell-project/actions-codespell@v2
+      - name: 运行 cspell
+        run: npx cspell --no-progress "{README,AGENTS,CLAUDE}.md" "docs/**/*.md" "crates/**/*.md" "tools/**/*.md"
+
+  fence-check:
+    name: 代码块结构检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Python
+        uses: actions/setup-python@v5
         with:
-          ignore_words_list: ser,ans,implementors,multiplikation,methoden,ALO
-          skip: scripts/beads/gh-sync-i18n-test.mjs
+          python-version: '3.12'
+      - name: 检查代码块开闭标记交替
+        run: python3 scripts/standards/check-fences.py
 
   link-check:
     name: 链接检查
