@@ -107,6 +107,21 @@ chrono = { version = "0.4", default-features = false, features = [
   "clock",
   "std",
 ] }
+# crypto / encoding（exchange + oss 签名）
+base64 = "0.22"
+hmac = "0.12"
+sha1 = "0.10"
+# test / bench / loom（R-DEP-004：成员禁止内联 version）
+proptest = "1"
+static_assertions = "1"
+bigdecimal = "0.4"
+criterion = { version = "0.5", default-features = false }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+  "std",
+  "fmt",
+  "registry",
+] }
+loom = "0.7"
 
 # SPEC-KERNEL-002 §4：crate 可通过 [lints] workspace = true 继承
 # 默认保持 warn 级，避免拖垮兄弟 crate；各 crate 可再加严

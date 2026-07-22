@@ -22,8 +22,8 @@ kernel = { path = "../../kernel", version = "0.3.0" }
 serde = { workspace = true }
 
 [dev-dependencies]
-bigdecimal = "0.4"
-proptest = "1"
+bigdecimal = { workspace = true }
+proptest = { workspace = true }
 serde_json = { workspace = true }
 
 [lints]

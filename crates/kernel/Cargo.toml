@@ -18,13 +18,13 @@ thiserror = { workspace = true }
 # loom：仅在 RUSTFLAGS='--cfg loom' 构建时链接（库内 lifecycle 切换并发原语）
 # 非 feature：符合 §3.4 default=[]；正常生产构建不拉 loom
 [target.'cfg(loom)'.dependencies]
-loom = "0.7"
+loom = { workspace = true }
 
 [dev-dependencies]
 # SPEC-KERNEL-002 §3.3 / §11：测试合同依赖（不进生产 / 不进公开 API）
-proptest = "1"
+proptest = { workspace = true }
 serde = { workspace = true } # 仅用于 §11.4 负向面（assert !Serialize/!Deserialize）
-static_assertions = "1"
+static_assertions = { workspace = true }
 
 [features]
 # SPEC-KERNEL-002 §3.4：不允许任何 feature；显式 default=[] 满足字面合同
