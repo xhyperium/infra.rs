@@ -11,6 +11,7 @@ on:
       - "clippy.toml"
       - ".github/workflows/quality.yml"
 
+  merge_group:
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
