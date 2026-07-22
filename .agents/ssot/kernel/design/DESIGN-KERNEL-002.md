@@ -17,7 +17,7 @@
 | Date | 2026-07-14 |
 | Status | **Active design**；发布历史不等于当前生产认证 |
 
-### 文档 SSOT 过渡
+## 文档 SSOT 过渡
 
 | 阶段 | 权威 |
 |------|------|
@@ -43,7 +43,6 @@
 >
 > 下文若出现「OPEN / DEFER / publish=false / 14 规则」等**战役中途**措辞，以本表 + `gate.md` + `residual-open.txt` 为准。
 
-
 ## Overview
 
 `kernel` 是 infra.rs workspace 的 **L0 语义信任根**。它不提供业务能力、不承担 DI / IO / 观测 / 网络 / async runtime，只冻结全系统被迫共享的三类语义：
@@ -60,6 +59,7 @@
 |------|------|
 | **已 merge 进 main / land** | PR #235 对 main 的 merge 完成（**已完成**，2026-07-14，`e7bda98e`） |
 | **已 ship / 可 tag** | main 含 0.1.1 + stable + 已 tag `kernel-v0.1.1` + 已 publish crates.io |
+
 ---
 
 ## Background & Motivation
@@ -168,7 +168,7 @@ flowchart TB
   subgraph L0reg["registry layer=kernel（语义层标签）"]
     K["kernel · path: crates/kernel · L0 语义根"]
     TK["testkit · path: crates/testkit · registry layer=kernel"]
-    EV["evidence · path: tools/evidence · registry layer=kernel"]
+    EV["evidence · path: crates/evidence · registry layer=kernel"]
   end
 
   D -->|R1: L0 + types only| K
@@ -188,7 +188,7 @@ flowchart TB
 **双轴说明（layer 标签 vs 物理目录）**：
 
 - registry `layer = "kernel"` 表示 **语义归属 L0 信任带**，不是「与 `kernel` 同 crate」。
-- `evidence` 物理在 `tools/evidence`；`testkit` 在 `crates/testkit`。上图边均为 **依赖 kernel**，无反向箭头。
+- `evidence` 物理在 `crates/evidence`；current-state spec 位于 `.agents/ssot/evidence/`；`testkit` 在 `crates/testkit`。上图边均为 **依赖 kernel**，无反向箭头。
 - 注：历史 `crates/gate` 已退役；历史 monorepo 机器门禁曾由 `tools/archgate` 承载。**infra.rs 不适用（OOS）**：本仓不移植 archgate，不维护 `.architecture/**`；机控走结构扫描 / tests / CI。
 
 | 规则 | 对 kernel 的含义 |
@@ -674,6 +674,7 @@ gantt
 - [ ] API 快照已**人工**更新且 PR 说明 additive/breaking（API-001 不会自动 diff）
 - [ ] 未把 feature 分支 campaign 误写成「已 merge main」
 - [ ] 未声称 from_clock_elapsed / 全 Display 禁令已被全自动机控全覆盖（archgate 本仓 **OOS**）
+
 ---
 
 ## 测试与证据策略
@@ -974,7 +975,7 @@ PR:   https://github.com/xhyperium/infra.rs/pull/235
 | Historical residual snapshot | `.agents/ssot/kernel/evidence/2026-07-14/residual-open.txt`（immutable） |
 | §18 释放证据 | `.agents/ssot/kernel/evidence/2026-07-14/EVID-KERNEL-002-18-RELEASE.md` |
 | testkit ManualClock | `crates/testkit/src/lib.rs` |
-| Ship PR（**MERGED**） | https://github.com/xhyperium/infra.rs/pull/235 · merge `e7bda98e`（2026-07-14）· 实际 title：`feat(kernel): SPEC-KERNEL-002 E1–E3/C/L code path + alignment` |
+| Ship PR（**MERGED**） | [PR #235](https://github.com/xhyperium/infra.rs/pull/235) · merge `e7bda98e`（2026-07-14）· 实际 title：`feat(kernel): SPEC-KERNEL-002 E1–E3/C/L code path + alignment` |
 | 宪法 / 贡献 | `CONSTITUTION.md` · `docs/governance/` |
 
 ---
@@ -986,4 +987,3 @@ PR #235、tag `kernel-v0.1.1` 与 crates.io `xhyper-kernel` 0.1.1 是
 的 OPEN/CLOSED 是时间线，不得改写为当前状态。
 
 当前共享任务状态只由 Beads `xhyper-g09` 管理，本文不复制任务板。
-

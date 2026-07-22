@@ -2,6 +2,8 @@
 
 十轮 `crates/` SSOT 完整性 · 生产就绪 · 量化场景审查。
 
+`round-01`…`round-10` 是审查过程的**历史快照**，保留当轮观察，不是 current-state SSOT。当前事实以 `.agents/ssot/**/spec/spec.md`、`docs/ssot/*-ssot-alignment.md`、本目录 `crate-inventory.md` 与 `review-workspace.md` 的最新裁定为准。
+
 | 文档 | 说明 |
 |------|------|
 | [production-readiness-criteria.md](./production-readiness-criteria.md) | **生产条件标准**（L1–L5 · S1–S7 · QT · QT-Ship） |

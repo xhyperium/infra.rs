@@ -2,96 +2,141 @@
 
 | 字段 | 值 |
 |---|---|
-| Status | 当前 `0.1.1` 公开契约说明；多数生产语义未稳定 |
-| Package / lib | `contracts` / lib `contracts`（**Cargo 选择器 `-p contracts`**；历史产品名 `xhyper-contracts`，不可用于 `-p`） |
+| Status | 当前 `0.1.2` additive 契约；未宣称 package stable / Production Ready |
+| Package / lib | `contracts` / `contracts`（Cargo 选择器 `-p contracts`） |
 | Path | `crates/contracts` |
 | Layer | Contract / R4 唯一跨层 trait 出口 |
-| Authority | 本文件是 active current-state spec；上位架构批准状态仍优先 |
-| Candidate | [SPEC-CONTRACTS-002](../../../draft/contracts-complete-spec.md)（Draft，非权威，不覆盖本文） |
-| Implementation snapshot | `b0934baa`（2026-07-15） |
-| Document commit | `e0b98df4` |
-| Verified at | `e0b98df4`（相关实现路径未变化） |
+| Authority | 本文件是 active current-state spec；源码、Cargo metadata 与测试结果优先 |
+| Candidate | `draft/contracts-complete-spec.md`（Draft，非权威） |
+| Implementation baseline | `350c1c2` + 本轮 contracts 变更 |
+| Verified at | 2026-07-22 |
 
-> `[KNOWN]` 表示当前 Cargo/源码/消费方直接证明；代码存在不自动等于生产语义或上位架构已批准。trait 清单、消费者或上位规则变化会使对应结论失效。
+> `[KNOWN]` 仅表示当前 Cargo、源码与测试可直接证明。规格存在、ignored live
+> 测试可编译或 profile flag 为 true，都不自动等于真实后端已通过生产验收。
 
 ## 1. 定位与依赖
 
-`contracts` 只定义跨层 trait/type，不放实现；发布后受 Additive Only 约束。当前依赖：
+`contracts` 只定义跨层 trait/type 与小型编排 helper，不放 adapter 实现。公开面受
+Additive Only 约束。正常依赖仅为 `kernel`、`canonical`、`async-trait`、`bytes`、
+`futures-core`、`thiserror`；禁止依赖 runtime、adapter、service、app 或动态实现 registry。
 
-```text
-kernel（别名 xhyper-kernel 已废弃）
-canonical（别名 xhyper-canonical 已废弃）
-async-trait
-bytes
-futures-core
-```
+`contract-testkit` 位于 `crates/test-support/contracts`，只能作为 dev-dependency，
+不得进入 production normal graph。
 
-无 features。**不**直接依赖 `serde` / `thiserror`；`decimalx` 仅 `[dev-dependencies]`。禁止依赖 L1、domain、adapter、service、app 或具体 async runtime。
+## 2. 当前 16 个公开 trait
 
-## 2. 当前 15 个公开 trait
-
-| 领域 | Trait | 当前实现/消费事实 | 生产语义状态 |
+| 领域 | Trait | 当前实现事实 | 已冻结边界 |
 |---|---|---|---|
-| Storage | `KeyValueStore` | redis | TTL/原子性等未统一 |
-| Messaging | `EventBus` | kafka、nats | delivery/live/snapshot 未统一 |
-| Storage | `Repository<T, Id>` | postgres | schema/一致性未统一 |
-| Storage | `TxRunner` | postgres | transaction handle 语义有已知缺口 |
-| Storage | `TimeSeriesStore` | taos | range/order/time 语义未统一 |
-| Storage | `ObjectStore` | oss | missing/overwrite/metadata 未统一 |
-| Analytics | `AnalyticsSink` | clickhouse | schema/delivery 未统一 |
-| Messaging | `PubSub` | 实现/消费需逐项登记 | delivery/backpressure 未统一 |
-| Observability | `Instrumentation` | observex 实现、resiliencx 消费 | 仅 retry/circuit 三方法 |
-| Venue legacy | `VenueAdapter` | binance、okx 实现 | 13 方法宽接口；legacy compatibility |
-| Venue | `MarketDataSource` | binance、okx；bootstrap bounded context 持有，crate 测试覆盖 | stream runtime error 未统一 |
-| Venue | `InstrumentCatalog` | binance、okx；bootstrap bounded context 持有，crate 测试覆盖 | missing/cache 未统一 |
-| Venue | `ExecutionVenue` | binance、okx；bootstrap bounded context 持有，crate 测试覆盖 | structured cancel；幂等未统一 |
-| Venue | `AccountSource` | binance、okx；bootstrap bounded context 持有，crate 测试覆盖 | freshness/consistency 未统一 |
-| Venue | `VenueTimeSource` | binance、okx；bootstrap bounded context 持有，crate 测试覆盖 | unit/accuracy 未统一 |
+| Storage | `KeyValueStore` | redis | get/set/可选 TTL；原子性未统一 |
+| Messaging | `EventBus` | kafka、nats | 无 ack handle；不承诺 replay/必达 |
+| Storage | `Repository<T, Id>` | postgres | find/save；schema/一致性未统一 |
+| Storage | `TxContext` | postgres、Fake | `Send`、`&mut` commit/rollback；非 `Sync` 要求 |
+| Storage | `TxRunner` | postgres、Fake | `Send + Sync`、对象安全、只提供生命周期 |
+| Storage | `TimeSeriesStore` | taos | write/query；顺序、精度、去重未统一 |
+| Storage | `ObjectStore` | oss | put/get；metadata/overwrite/missing 未统一 |
+| Analytics | `AnalyticsSink` | clickhouse | write-only 接受面；落盘需 adapter 查询证明 |
+| Messaging | `PubSub` | redis 可选面 | at-most-once 最小面不等于必达 |
+| Observability | `Instrumentation` | observex | retry/circuit 三方法 |
+| Venue legacy | `VenueAdapter` | binance、okx | 迁移 facade；树内需覆盖 additive defaults |
+| Venue | `MarketDataSource` | binance、okx | runtime stream error 未统一 |
+| Venue | `InstrumentCatalog` | binance、okx | missing/cache 未统一 |
+| Venue | `ExecutionVenue` | binance、okx | structured cancel/query；幂等未统一 |
+| Venue | `AccountSource` | binance、okx | freshness/consistency 未统一 |
+| Venue | `VenueTimeSource` | binance、okx | unit/accuracy 未统一 |
 
-新增 5 个细粒度 venue traits 是当前代码事实，并出现在已实现 gate-retirement 计划；`docs/architecture/spec.md` 的正式契约清单仍需单独治理对齐，不由本文静默宣布全部生产批准。
+除 `TxContext: Send` 外，其余当前 trait 为 `Send + Sync`。异步 trait 使用
+`#[async_trait]`；stream 为 `BoxStream<'static, T>`，item 没有运行期 `XResult`
+错误通道。
 
-## 3. 当前共同语义
+## 3. 事务生命周期合同
 
-- 所有 trait 为 `Send + Sync`；异步 trait 使用 `#[async_trait]`。
-- stream 当前为 `BoxStream<'static, T>`；运行期 item 无 `XResult` 错误通道。
-- 除 `Send + Sync`、签名与 `XResult` 外，多数 trait 不统一规定幂等、排序、背压、超时、取消、交付次数、鉴权或一致性。
-- `TxRunner` 含 generic method，不应被描述为 object-safe。
-- `VenueAdapter` 使用 deprecated `OrderId`；新 `ExecutionVenue` 使用 `CancelOrderRequest` 与 `VenueId`。
+### 3.1 对象安全与非原子边界
 
-## 4. Additive Only 与兼容
+- `TxRunner::begin_tx(&self) -> XResult<Box<dyn TxContext>>` 没有 generic method，
+  `dyn TxRunner` 与 `dyn TxContext` 均可用。
+- `TxContext` 只有 commit/rollback，不暴露 SQL、Repository 或 KV 操作面。
+- `run_tx_lifecycle` 的业务闭包不接收 context；它只证明
+  begin → work → commit/rollback 的生命周期顺序。
+- 闭包捕获的 Repository、KV、HTTP 或消息调用**不因此获得原子性**。
+- Future 取消或 panic 时只 drop context；本通用合同不保证可异步等待 rollback。
 
-- 不修改/删除已发布 trait 方法或类型。
-- 缺口必须通过新 trait、extension trait 或新 request/response type additive 处理，并先完成上位批准。
-- deprecated 不等于可删除；repository patch-only 版本策略不降低兼容要求。
-- runtime implementation registry 不进入 contracts；实现选择属于 bootstrap。
+真正的业务原子事务必须由后端提供 tx-bound resource，并经 ADR、Fake 与真实后端
+原子性测试后 additive 新增；当前不创建未经证明的 TxRepository/GAT/UoW 公共面。
 
-Candidate Draft 中的 V2/deadline/stream/conformance 方案均不是当前合同。
+### 3.2 结构化失败
 
-## 5. 测试与 conformance 现状
+`run_tx_lifecycle` 返回 `TxRunResult<T>`：
 
-- contracts crate 当前只有 2 个编译形状测试：`KeyValueStore`、`Instrumentation`。
-- `contract-testkit` 已有 7 类 suite：KeyValueStore、EventBus、MarketDataSource、InstrumentCatalog、ExecutionVenue、AccountSource、VenueTimeSource，另有 exchange mock profile。
-- 其中空 stream、固定时间/余额等断言可能只适用于特定 mock profile，不得冒充所有真实 adapter 的通用语义。
-- 其余 trait 尚无完整 conformance/object-safety/API baseline 证据。
+| Variant | 语义 |
+|---|---|
+| `Begin` | begin 失败，业务未执行 |
+| `Business` | 业务失败且 rollback 成功 |
+| `BusinessAndRollback` | 同时保留 business 与 rollback 两个 `XError` |
+| `Commit` | commit 失败，结果可能未知；不自动 rollback、不建议无条件重试 |
 
-## 6. 验收
+兼容符号 `run_tx_commit_on_ok`、`tx_kv_set`、`run_on_tx_context` 保留但 deprecated。
+其中 `tx_kv_set` 把独立 KV 与事务生命周期顺序组合，**不是原子写入**；旧 helper
+仍保持历史 `XResult` 行为并可能丢弃 rollback 错误。
+
+## 4. Live capability fail-closed
+
+`LiveContractProfile` 的七个 flag 是声明意图，不是运行证据。`LiveHandles` 当前只有
+kv、bus、tx、venue 四个句柄槽：
+
+- 对四个已表示槽，flag=true 且 handle=None 时返回 `Missing`；
+- repo、account、venue_time 没有句柄槽，flag=true 时一律 fail-closed；
+- 因此 `storage_stack()`、`venue_stack()`、`all()` 当前不能通过 `validate()`；
+- 不得把 preset 或 ignored live test 的存在写成全量 live PASS。
+
+## 5. Conformance 分层
+
+`contract-testkit` 当前公开 15 个 suite 入口：原 10 个入口，加四个 Batch-2
+portable suite 与 `assert_event_bus_surface`。分层如下：
+
+- portable core：ObjectStore 精确字节往返、TimeSeries 单点 write/query、
+  AnalyticsSink 接受面、PubSub/EventBus subscribe+publish surface；
+- snapshot profile：`assert_event_bus` 的 publish→subscribe 同步回放，只适用于
+  进程内快照 Fake，不得套用 Kafka/NATS 实时订阅；
+- adapter-specific：持久化查询、清理、投递/超时、顺序、replay 与故障注入。
+
+portable suite 使用调用方提供的唯一 key/table/event/channel，避免并发污染；
+PubSub/EventBus portable surface 不 poll，at-most-once 不得被推导为必达。
+
+四个真实 adapter 已有 ignored live target 接入对应 suite：OSS、TAOS、ClickHouse、
+Redis PubSub。默认门禁只证明这些 target 可编译；只有受控执行后的日志才能记为
+live PASS。
+
+## 6. Additive Only 与验收
+
+- 不修改/删除既有 trait 方法或类型；deprecated 不等于可删除。
+- 新错误类型与 helper additive；旧 helper 签名和既有错误映射保持兼容。
+- public API baseline 必须包含 `TxRunError`、`TxRunResult`、`run_tx_lifecycle`。
+- 同一 PR 内发生行为/API 变化的 crate 最终只 PATCH bump 一次；本轮不重复 bump。
 
 ```bash
-cargo test -p contracts
-cargo test -p contract-testkit
-cargo check -p contracts --all-targets
-cargo clippy -p contracts --all-targets -- -D warnings
-cargo xtl lint-deps
-cargo fmt -- --check
+cargo test -p contracts -p contract-testkit --all-targets
+cargo test -p ossx -p taosx -p clickhousex -p redisx --all-targets --all-features
+cargo test -p postgresx --all-targets --all-features
+cargo clippy -p contracts -p contract-testkit -p ossx -p taosx -p clickhousex -p redisx \
+  --all-targets --all-features -- -D warnings
+cargo clippy -p postgresx --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS='-D warnings' cargo doc -p contracts -p contract-testkit -p ossx -p taosx \
+  -p clickhousex -p redisx --all-features --no-deps
+cargo fmt --all --check
+cmp .agents/ssot/contracts/spec/spec.md \
+  .agents/ssot/contracts/spec/xhyper-contracts-complete-spec.md
+node scripts/quality-gates/check-public-api.mjs
+node scripts/quality-gates/check-ssot-current-state.mjs
+node scripts/quality-gates/check-workspace-deps.mjs
+git diff --check HEAD
 ```
 
-通过条件：当前 15-trait 清单与源码一致；R4 依赖通过；无实现进入 crate；Additive Only 未破坏。adapter 可编译不等于生产语义可替换。
+通过仅表示当前声明范围闭合，不等于 workspace Production Ready、交易可用或 L5。
 
 ## 7. 追溯
 
 - `docs/architecture/spec.md` R4/R6、§4.3、§5
-- [ADR-001](../../../../docs/architecture/adr/001-venue-adapter-boundary.md)
-- [ADR-005](../../../../docs/architecture/adr/005-resiliencx-observability-boundary.md)
-- [ADR-007](../../../../docs/architecture/adr/007-spec-consistency-revision.md)
-- [PLAN-GATE-RETIRE-001](../gate/plan/xhyper-gate-retirement-complete-plan.md)
-- `crates/contracts/{Cargo.toml,src/lib.rs}`
+- `docs/architecture/adr/001-venue-adapter-boundary.md`
+- `docs/architecture/adr/005-resiliencx-observability-boundary.md`
+- `crates/contracts/{src/lib.rs,src/live.rs,docs/contracts/**}`
+- `crates/test-support/contracts/src/{suite,fakes}/**`

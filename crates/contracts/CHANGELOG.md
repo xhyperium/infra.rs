@@ -4,7 +4,7 @@
 
 ### 新增
 
-- R4 15 trait（SSOT）
+- R4 16 trait（含 `TxContext`）
 - 最小 contract-testkit：`fakes` 模块（`FakeTx*` / `FakeEventBus` / `FakeKeyValueStore` /
   `FakeRepository` / `RecordingInstrumentation` / `RecordingTxRunner`）
 - First-batch trait 语义文档：`docs/contracts/*.md`
@@ -21,7 +21,7 @@
 
 - **非**整体 Production Ready；CT-8 其余 trait / 真实后端 / 编译期 override lint 仍 DEFER
 
-## [Unreleased]
+## [0.1.2] — 2026-07-22
 
 ### Breaking
 
@@ -32,7 +32,15 @@
 
 ### Added
 
+- `TxRunError` / `TxRunResult` / `run_tx_lifecycle`：结构化保留事务生命周期失败
+- ObjectStore / TimeSeriesStore / AnalyticsSink / PubSub 语义文档
 - `venue_gate` 模块：保留 `VENUE_*_DEFAULT_MSG` / `is_default_*`
 - 真实 `benches/hot_path`
 - 公开 API 集成覆盖扩展
 - `docs/API.md`
+
+### Changed
+
+- `TxRunner` / `TxContext` 明确为对象安全的生命周期面，不宣称业务操作原子绑定
+- `LiveHandles::validate` 对 repo/account/venue_time 无句柄声明 fail-closed
+- 旧 `run_tx_commit_on_ok` / `tx_kv_set` / `run_on_tx_context` 标记 deprecated 兼容

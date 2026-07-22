@@ -3,6 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | package | `clickhousex` |
+| version | `0.3.2` |
 | 标题 | ClickHouse Analytics |
 | 实现 | `crates/adapters/storage/clickhouse` |
 | 战役 | draft SPEC_GOAL → 本仓生产默认路径 |
@@ -15,15 +16,19 @@
 ## Acceptance（本仓可验证）
 
 1. workspace member `clickhousex` 可 `cargo test -p clickhousex --all-targets`
-2. 生产默认面：`ClickHousePool / ClickHouseClient HTTP`
-3. 环境注入：`FOUNDATIONX_CLICKHOUSEX_{HOST,HTTP_PORT/PORT,USER,PASSWORD,DATABASE}`（密钥不入库）
+2. 生产默认面：`ClickHousePool / ClickHouseClient HTTP(S)`
+3. 环境注入：`FOUNDATIONX_CLICKHOUSEX_{HOST,HTTP_PORT,PORT,USER,PASSWORD,DATABASE}`；
+   `HTTP_PORT` 优先，双设不同值 fail-closed（密钥不入库）
 4. live：`tests/live_smoke.rs` 默认 `#[ignore]`，真凭据可绿
 5. bench：`benches/hot_path.rs（3s 有界）`（不得挂死 `--all-targets`）
 6. scaffold 仅 `feature = "scaffold"`，禁止当作生产默认
+7. 远程 HTTP、CA/明文冲突与零 deadline 在连接前 fail-closed
+8. HTTP 失败只暴露状态/数字错误码，不回显 SQL、payload 或认证正文
 
 ## Not in scope
 
-native 9000 protocol / cluster / ReplicatedMergeTree 运维面
+真实 ClickHouse TLS/auth/deadline/并发证据、native 9000 protocol、cluster、
+ReplicatedMergeTree 运维面
 
 ## 证据指针
 

@@ -96,6 +96,29 @@ impl core::marker::Unpin for contracts::MessageAck
 impl core::marker::UnsafeUnpin for contracts::MessageAck
 impl core::panic::unwind_safe::RefUnwindSafe for contracts::MessageAck
 impl core::panic::unwind_safe::UnwindSafe for contracts::MessageAck
+#[non_exhaustive] pub enum contracts::TxRunError
+pub contracts::TxRunError::Begin
+pub contracts::TxRunError::Begin::source: kernel::error::XError
+pub contracts::TxRunError::Business
+pub contracts::TxRunError::Business::source: kernel::error::XError
+pub contracts::TxRunError::BusinessAndRollback
+pub contracts::TxRunError::BusinessAndRollback::business: kernel::error::XError
+pub contracts::TxRunError::BusinessAndRollback::rollback: kernel::error::XError
+pub contracts::TxRunError::Commit
+pub contracts::TxRunError::Commit::source: kernel::error::XError
+impl core::error::Error for contracts::TxRunError
+pub fn contracts::TxRunError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for contracts::TxRunError
+pub fn contracts::TxRunError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for contracts::TxRunError
+pub fn contracts::TxRunError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for contracts::TxRunError
+impl core::marker::Send for contracts::TxRunError
+impl core::marker::Sync for contracts::TxRunError
+impl core::marker::Unpin for contracts::TxRunError
+impl core::marker::UnsafeUnpin for contracts::TxRunError
+impl !core::panic::unwind_safe::RefUnwindSafe for contracts::TxRunError
+impl !core::panic::unwind_safe::UnwindSafe for contracts::TxRunError
 pub struct contracts::AckedMessage
 pub contracts::AckedMessage::ack: contracts::MessageAck
 pub contracts::AckedMessage::message: contracts::BusMessage
@@ -254,6 +277,8 @@ pub async fn contracts::kv_set_ttl(&dyn contracts::KeyValueStore, &str, alloc::v
 pub async fn contracts::repo_roundtrip<T, Id>(&dyn contracts::Repository<T, Id>, Id, &T) -> kernel::error::XResult<core::option::Option<T>> where T: core::clone::Clone + core::marker::Send + core::marker::Sync, Id: core::marker::Send
 pub async fn contracts::run_on_tx_context<R, F, Fut>(&mut dyn contracts::TxContext, F) -> kernel::error::XResult<R> where F: core::ops::function::FnOnce() -> Fut + core::marker::Send, Fut: core::future::future::Future<Output = kernel::error::XResult<R>> + core::marker::Send, R: core::marker::Send
 pub async fn contracts::run_tx_commit_on_ok<R, F, Fut>(&dyn contracts::TxRunner, F) -> kernel::error::XResult<R> where F: core::ops::function::FnOnce(&mut dyn contracts::TxContext) -> Fut + core::marker::Send, Fut: core::future::future::Future<Output = kernel::error::XResult<R>> + core::marker::Send, R: core::marker::Send
+pub async fn contracts::run_tx_lifecycle<R, F, Fut>(&dyn contracts::TxRunner, F) -> contracts::TxRunResult<R> where F: core::ops::function::FnOnce() -> Fut + core::marker::Send, Fut: core::future::future::Future<Output = kernel::error::XResult<R>> + core::marker::Send, R: core::marker::Send
 pub async fn contracts::tx_kv_set(&dyn contracts::TxRunner, alloc::sync::Arc<dyn contracts::KeyValueStore>, alloc::string::String, alloc::vec::Vec<u8>) -> kernel::error::XResult<()>
 pub async fn contracts::venue_health(&dyn contracts::AccountSource, &dyn contracts::VenueTimeSource) -> kernel::error::XResult<(usize, i64)>
 pub async fn contracts::venue_place_and_query(&dyn contracts::ExecutionVenue, &canonical::Order, &canonical::CancelOrderRequest) -> kernel::error::XResult<(canonical::OrderAck, canonical::OrderStatus)>
+pub type contracts::TxRunResult<T> = core::result::Result<T, contracts::TxRunError>

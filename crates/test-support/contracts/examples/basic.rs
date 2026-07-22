@@ -10,7 +10,7 @@
 use contract_testkit::{
     FakeKeyValueStore, FakeTxRunner, RecordingTxRunner, assert_key_value_store, assert_tx_runner,
 };
-use contracts::{KeyValueStore, run_tx_commit_on_ok};
+use contracts::{KeyValueStore, run_tx_lifecycle};
 
 #[tokio::main]
 async fn main() {
@@ -22,7 +22,7 @@ async fn main() {
 
     assert_tx_runner(&FakeTxRunner).await.expect("tx suite");
     let rec = RecordingTxRunner::new();
-    let n = run_tx_commit_on_ok(&rec, |_ctx| async move { Ok::<_, kernel::XError>(7u8) })
+    let n = run_tx_lifecycle(&rec, || async move { Ok::<_, kernel::XError>(7u8) })
         .await
         .expect("commit");
     assert_eq!(n, 7);

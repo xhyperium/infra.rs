@@ -11,6 +11,7 @@
   - 默认实现：`xhyper-observex`（`TracingInstrumentation`）
   - 静默：`NoopInstrumentation`（本 crate）
   - 消费方（resiliencx 等）只依赖 contracts，禁止依赖 observex
+- `ContractStoreSet` 只允许固定正式 contracts 槽位；禁止演化为通用 Service Locator 或跨资源事务协调器。
 - evidence 全量协议仍 DEFER；有界 venue 能力以 `traits` 最小对象安全替面保留。
 - 禁止新增 `register` / `resolve` / 公开 `Gate` 类型。
 - 对应 SSOT：`.agents/ssot/bootstrap/spec/spec.md`。
@@ -20,7 +21,7 @@
 ```text
 crates/bootstrap/
 ├── Cargo.toml
-├── src/{lib,error,bounded,traits}.rs
+├── src/{lib,error,bounded,traits,contract_store_set}.rs
 ├── examples/minimal.rs
 ├── docs/
 ├── tests/public_api.rs
@@ -34,4 +35,5 @@ crates/bootstrap/
 ```bash
 cargo test -p bootstrap --all-targets
 cargo clippy -p bootstrap --all-targets -- -D warnings
+node scripts/storage-composition-conformance.mjs
 ```

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2] — 2026-07-23
+
+### Changed
+
+- 远程明文 fail-closed，并增加对象/错误体/并发/缓冲硬上限。
+- multipart 使用单一总 deadline、XML 安全编码和有界 orphan 补偿注册表。
+- 版本 PATCH 0.3.1 → 0.3.2。
+
 ## [0.3.1] — 2026-07-22
 
 ### Added

@@ -2,30 +2,31 @@
 
 | 字段 | 值 |
 |------|-----|
-| 域 | `tools/`（evidence · goalctl · xtask · verifyctl） |
+| 域 | `tools/`（goalctl · xtask · verifyctl）+ evidence 历史重定向 |
 | SSOT | `.agents/ssot/tools/**` |
 | 本仓实现 | 见下表；**禁止**把文档 COMPLETE 当作 ship |
 | 审计日期 | 2026-07-22 |
-| 结论 | **tools SSOT 已本仓化**；`evidence` 最小面 + **goalctl / verifyctl 最小生产 CLI 已 member**（#188）；live env 构建器 #191；xtask **未**宣称 ship。`xhyper-goalctl`/`xhyper-verifyctl` 前缀仅作为 SSOT 双镜像文件名惯例出现，实际 cargo package 名为 `goalctl`（0.2.0）/ `verifyctl`（0.1.0） |
+| 结论 | evidence canonical SSOT 位于 `.agents/ssot/evidence/`；`tools/evidence` 仅历史重定向。goalctl / verifyctl 最小 CLI 已 member；verifyctl **非生产 verifier**；xtask 未宣称 ship。实际 package 为 `goalctl`（0.2.0）/ `verifyctl`（0.1.0） |
 
 ## 结论摘要
 
 | 问题 | 状态 |
 |------|------|
-| tools SSOT 树 | **已就位**：`evidence` / `goalctl` / `xtask` / `verifyctl` |
+| tools SSOT 树 | `goalctl` / `xtask` / `verifyctl` 已就位；`tools/evidence` 为历史入口 |
 | 路径约定 | 统一 `.agents/ssot/tools/**`（保留 `tools/` 层级） |
 | `verifyctl` | **workspace member** `tools/verifyctl` · package `verifyctl`：plan / execute / report |
 | `goalctl` | **workspace member** `tools/goalctl` · package `goalctl`：doctor / validate / compile |
+| evidence 权威 | `.agents/ssot/evidence/spec/spec.md` → `crates/evidence`；不在 tools 树维护第二份 active spec |
 | 本仓 crate 落地 | `crates/evidence`；`tools/goalctl`；`tools/verifyctl` |
 | `tools/xtask` | **未** member · **未**宣称 ship |
-| live 凭据工具 | `scripts/live/build-foundationx-env.mjs`（#191）+ `export-foundationx-env.sh` |
+| live 凭据工具 | `build-foundationx-env.mjs` 独占创建 0600 文件；`export-foundationx-env.sh` 仅为 dev 子进程注入并自动清理 |
 
 ## 目录
 
 ```text
 .agents/ssot/tools/
 ├── README.md
-├── evidence/              # → crates/evidence
+├── evidence/              # 历史重定向 → .agents/ssot/evidence/
 ├── goalctl/               # → tools/goalctl（最小编译器已落地）
 ├── xtask/                 # → tools/xtask（期望；未落地）
 └── verifyctl/             # → tools/verifyctl（最小 plan/execute/report 已落地）
@@ -35,10 +36,10 @@
 
 | 子域 | SSOT 路径 | 本仓路径 | package | 本仓状态 |
 |------|----------|----------|---------|----------|
-| evidence | `.agents/ssot/tools/evidence` | `crates/evidence` | `evidence` | 最小面 + `FileEvidenceAppender`；远程/签名 DEFER |
+| evidence | `.agents/ssot/evidence`（canonical） | `crates/evidence` | `evidence` **0.1.1** | 最小 append/query/sign/remote trait 面；非合规产品 |
 | goalctl | `.agents/ssot/tools/goalctl` | `tools/goalctl` | `goalctl` **0.2.0** | **最小 Goal→Contract**：doctor/validate/compile + fixtures + `VERSION` 单测；**非**完整 authority plane |
 | xtask | `.agents/ssot/tools/xtask` | `tools/xtask` | — | **未** member |
-| verifyctl | `.agents/ssot/tools/verifyctl` | `tools/verifyctl` | `verifyctl` **0.1.0** | **最小** plan/execute/report；schema `verification-plan/v1` · `verification-run/v1`；`aggregate_report`/`write_report` 单测；可选 `with-evidence` |
+| verifyctl | `.agents/ssot/tools/verifyctl` | `tools/verifyctl` | `verifyctl` **0.1.0** | **最小** plan/execute/report；schema v1；超时/输入完整闭锁/远程 runner 等 OPEN，非生产 verifier |
 
 ### 自验证（本仓证据）
 
@@ -77,6 +78,7 @@ needle=$'xhyper\x2ers'
 
 - goalctl 完整 monorepo index/reconcile/authority plane（旧 Phase-1 大实现已收敛为最小编译器）
 - verifyctl 变更感知闭包 / 远程 runner / 签名证据链 / 完整 V0–V3 矩阵
+- verifyctl schema/digest/check 非空校验、真实 timeout/cancel 与 evidence-required fail-closed
 - xtask / gate 工作流编排
 
 ## 相关
@@ -96,6 +98,7 @@ needle=$'xhyper\x2ers'
 | 2026-07-22 | #188：goalctl/verifyctl 进入 workspace members |
 | 2026-07-22 | #190：VERSION / report API 单测；公共 API 清单闭合 |
 | 2026-07-22 | #191：`scripts/live/build-foundationx-env.mjs`；对齐文档刷新 |
+| 2026-07-22 | evidence current-state 唯一化到 `.agents/ssot/evidence/`；tools 入口改为历史重定向；verifyctl 生产边界显式化 |
 
 ## SSOT 树补充（2026-07-22）
 

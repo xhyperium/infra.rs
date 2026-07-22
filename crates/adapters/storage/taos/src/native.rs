@@ -32,14 +32,16 @@ pub async fn connect_native_ws(config: &TaosConfig) -> XResult<()> {
     let url = build_native_ws_url(config);
     debug!(target: "taosx", %url, "taos native ws connect attempt");
 
-    let fut = connect_async(&url);
-    match tokio::time::timeout(config.timeout, fut).await {
-        Ok(Ok((mut ws, _resp))) => {
-            // 握手成功：礼貌关闭
-            let _ = ws.close(None).await;
-            Ok(())
-        }
-        Ok(Err(e)) => Err(XError::unavailable(format!("taos native ws 连接失败: {e}"))),
+    let attempt = async {
+        let (mut ws, _response) = connect_async(&url)
+            .await
+            .map_err(|error| XError::unavailable(format!("taos ws 握手失败: {error}")))?;
+        ws.close(None)
+            .await
+            .map_err(|error| XError::unavailable(format!("taos ws 关闭失败: {error}")))
+    };
+    match tokio::time::timeout(config.timeout, attempt).await {
+        Ok(result) => result,
         Err(_) => Err(XError::deadline_exceeded(format!("taos native ws 连接超时: {url}"))),
     }
 }
@@ -54,12 +56,12 @@ mod tests {
     #[test]
     fn url_builder_and_mode() {
         let cfg = TaosConfig {
-            host: "tdengine.local".into(),
+            host: "localhost".into(),
             port: 6041,
             transport: TransportMode::NativeWs,
             ..TaosConfig::default()
         };
-        assert_eq!(build_native_ws_url(&cfg), "ws://tdengine.local:6041/rest/ws");
+        assert_eq!(build_native_ws_url(&cfg), "ws://localhost:6041/rest/ws");
         validate_mode(&cfg).expect("ok");
 
         let bad = TaosConfig { max_in_flight: 0, ..cfg };

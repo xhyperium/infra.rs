@@ -3,6 +3,49 @@
 //! SQLSTATE 分类基于 PostgreSQL 官方错误类；未知码回落为 `Internal`。
 
 use kernel::{ErrorKind, XError};
+use std::fmt;
+
+/// 事务业务失败且回滚也失败时的结构化复合 source。
+///
+/// [`std::error::Error::source`] 沿主业务错误继续；[`Self::rollback`] 保留独立回滚
+/// 错误及其完整 source chain，调用方可从外层 [`XError`] source downcast 后分别处理。
+#[derive(Debug)]
+pub struct TransactionRollbackFailure {
+    original: XError,
+    rollback: XError,
+}
+
+impl TransactionRollbackFailure {
+    /// 构造双失败 source。
+    #[must_use]
+    pub fn new(original: XError, rollback: XError) -> Self {
+        Self { original, rollback }
+    }
+
+    /// 原始业务/操作错误。
+    #[must_use]
+    pub fn original(&self) -> &XError {
+        &self.original
+    }
+
+    /// 回滚错误。
+    #[must_use]
+    pub fn rollback(&self) -> &XError {
+        &self.rollback
+    }
+}
+
+impl fmt::Display for TransactionRollbackFailure {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "事务原操作失败且回滚失败")
+    }
+}
+
+impl std::error::Error for TransactionRollbackFailure {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.original)
+    }
+}
 
 /// 将 SQLSTATE 五字符码映射为 [`ErrorKind`]。
 ///
@@ -142,6 +185,8 @@ pub fn map_create_pool_error(err: deadpool_postgres::CreatePoolError) -> XError 
 mod tests {
     use super::*;
     use kernel::ErrorKind;
+    use std::error::Error;
+    use std::io;
 
     #[test]
     fn sqlstate_unique_violation_is_conflict() {
@@ -195,5 +240,20 @@ mod tests {
         let e = xerror_from_sqlstate("23505", "duplicate key");
         assert_eq!(e.kind(), ErrorKind::Conflict);
         assert!(e.context().contains("23505"));
+    }
+
+    #[test]
+    fn transaction_rollback_failure_preserves_both_source_branches() {
+        let original = XError::deadline_exceeded("业务超时")
+            .with_source(io::Error::new(io::ErrorKind::TimedOut, "business-source"));
+        let rollback = XError::unavailable("回滚断连")
+            .with_source(io::Error::new(io::ErrorKind::ConnectionReset, "rollback-source"));
+        let composite = TransactionRollbackFailure::new(original, rollback);
+
+        assert_eq!(composite.original().kind(), ErrorKind::DeadlineExceeded);
+        assert_eq!(composite.rollback().kind(), ErrorKind::Unavailable);
+        assert!(Error::source(composite.original()).is_some());
+        assert!(Error::source(composite.rollback()).is_some());
+        assert!(Error::source(&composite).is_some());
     }
 }

@@ -6,7 +6,7 @@
 | 标题 | TDengine TimeSeries |
 | 实现 | `crates/adapters/storage/taos` |
 | 战役 | draft SPEC_GOAL → 本仓生产默认路径 |
-| 状态 | **P0 生产入口已落地**（#188–#191）；package stable **未宣称** |
+| 状态 | **REST SQL 受限生产入口已落地**；Native SQL / HA / package stable **NO-GO** |
 
 ## Outcome
 
@@ -16,14 +16,15 @@
 
 1. workspace member `taosx` 可 `cargo test -p taosx --all-targets`
 2. 生产默认面：`TaosPool / TaosClient REST`
-3. 环境注入：`FOUNDATIONX_TAOSX_{HOST,PORT,USER,PASSWORD,DATABASE,TLS,PRECISION}`（密钥不入库）
-4. live：`tests/live_smoke.rs` 默认 `#[ignore]`，真凭据可绿
-5. bench：`benches/hot_path.rs（3s 有界）`（不得挂死 `--all-targets`）
-6. scaffold 仅 `feature = "scaffold"`，禁止当作生产默认
+3. 远程 TLS/auth fail-closed；Decimal 以 NCHAR 文本往返且存量 DOUBLE schema 拒绝
+4. 响应、SQL batch、query rows、in-flight 与 close drain 均有编译期硬上限
+5. live：`scripts/taos-live-conformance.mjs` 可启动隔离固定 digest 服务；测试本体默认 `#[ignore]`
+6. bench：`benches/hot_path.rs（3s 有界）`（不得挂死 `--all-targets`）
+7. scaffold 仅 `feature = "scaffold"`，禁止当作生产默认
 
 ## Not in scope
 
-native WS / 全超表治理 / 集群
+Native SQL / FFI / WS 认证长会话 / 幂等自动重试 / 全超表治理 / HA 集群
 
 ## 证据指针
 

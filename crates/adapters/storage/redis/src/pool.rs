@@ -79,6 +79,9 @@ pub struct RedisPool {
 
 struct PoolInner {
     backend: RedisBackend,
+    /// 建池时使用的完整配置。Pub/Sub 必须复用它，禁止重新读取环境变量。
+    #[cfg(feature = "pubsub")]
+    config: RedisConfig,
     sem: Arc<Semaphore>,
     max_in_flight: usize,
     in_flight: AtomicUsize,
@@ -127,6 +130,8 @@ impl RedisPool {
                 command_timeout: config.command_timeout(),
                 acquire_timeout: config.acquire_timeout(),
                 display_endpoint: config.display_endpoint(),
+                #[cfg(feature = "pubsub")]
+                config,
             }),
         })
     }
@@ -207,7 +212,7 @@ impl RedisPool {
         if self.is_closed() {
             return Err(XError::unavailable("redis pool 已关闭"));
         }
-        RedisPubSub::connect(self.inner.display_endpoint.clone(), channels).await
+        RedisPubSub::connect_config(self.inner.config.clone(), channels).await
     }
 
     /// 获取命令连接许可并执行异步闭包（计入 in-flight / 超时）。

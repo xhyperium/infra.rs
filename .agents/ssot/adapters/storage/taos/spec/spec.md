@@ -1,73 +1,90 @@
 # taosx 实现规范
 
-状态：当前 `0.3.1` 实现合同（Mock + rest 默认 + native FFI；真测 `#[ignore]`，未达 M3）。**未宣称 package stable。**
+状态：当前 `0.3.2` 实现合同（REST SQL + WS 可达性探测；真实后端测试默认 `#[ignore]`）。**未宣称 package stable。**
 
 ## 0. 权威、职责与非目标
 
-按 Constitution → XLib spec → 已批准 ADR → 本文 → 代码裁定。**Evidence** 是直接事实，
-**Inference** 是最低验收收窄，**Unknown** 必须评审。`taosx` 位于 `crates/adapters/storage/taos`，
-让 ADR-003 的 `native`/`rest` 驱动与 mock 实现同一 `TimeSeriesStore`。
+按 Constitution → 已批准 Goal/Design → 本文 → 代码裁定。`taosx` 位于
+`crates/adapters/storage/taos`，实现 `contracts::TimeSeriesStore`；`Tick.ts` 在合同侧始终是纳秒 epoch。
 
-非目标：把 ignored 真测描述为 CI 已通过的生产证据；不在本 crate 承担建库建表与超级表治理。
+当前真实边界：
 
-## 1. Cargo、版本与当前 API
+- SQL、建库、建表、写入与查询全部经 HTTP(S) `POST /rest/sql`。
+- `TransportMode::NativeWs` 只对 `/rest/ws` 做有 deadline 的握手及关闭探测；不执行 SQL，
+  不证明 WS 认证、长会话、TMQ 或原生 6030 能力。
+- scaffold 仅为可选进程内测试实现，不是默认生产路径。
+- Native SQL、FFI、HA/Cluster、迁移治理、自动幂等重试与 package stable 均为 **NO-GO / OPEN**。
 
-版本 `0.3.1`（package `taosx`）。
+## 1. Cargo、版本与公开面
 
-| 项目 | 当前事实 |
-| --- | --- |
-| 普通依赖 | `kernel`、`contracts`、`canonical`、`async-trait`；按 feature：`decimalx`、`anyhow`、`reqwest`、`serde_json` |
-| features | `default = ["rest"]`；`rest`；`native`；二者互斥（`compile_error!`） |
-| dev-dependency | `tokio`、`decimalx` |
+版本 `0.3.2`，package `taosx`，默认 feature 为空；可选 feature 仅 `scaffold`。
 
-依赖符合 R2。更新仅允许 `x.y.z → x.y.(z+1)`。
+公开生产面：
 
-### 1.1 MockTimeSeriesStore（始终可用）
+- `TaosConfig` / `TransportMode` / `TsPrecision`
+- `TaosPool`（别名 `TaosClient`）/ `TaosPoolStats`
+- `build_insert_sql_chunks`
+- `build_native_ws_url` / `connect_native_ws`（仅 reachability probe）
+- 编译期硬上限常量 `HARD_MAX_*`
 
-`Debug + Default`；按 table 分桶 `RwLock<HashMap<String, Vec<Tick>>>`。
-`write_series` 追加（空 vec no-op）；`query_series(table, start, end)` 按 `Tick.ts` 闭区间
-`[start, end]` 过滤，缺失 table 返回空 vec。
+## 2. 安全与资源合同
 
-### 1.2 TaosRestStore（feature `rest`）
+### 2.1 TLS 与认证
 
-- `new(host, port, user, pass)`：REST 端点默认端口 6041，Basic Auth。
-- `POST /rest/sql`；`bid`/`ask` 以 NCHAR 十进制字符串存储 Decimal（ADR-006）。
-- 表结构假设：`ts TIMESTAMP, symbol NCHAR(32), bid NCHAR(64), ask NCHAR(64)`。
+- 仅精确 `localhost`、`localhost.` 或 `IpAddr::is_loopback()` 可使用明文 HTTP/WS。
+- 远程地址必须启用 TLS，且用户名与密码均非空；host 中的 scheme、userinfo、路径、查询和片段拒绝。
+- REST 客户端禁止 redirect，避免 Basic Auth 跨端点传播或 HTTPS 降级。
+- 密码仅从配置/环境注入，`Debug` 固定脱敏；错误和日志不得输出密码。
+- Native WS 探测不证明认证成功；远程 WSS 生产认证仍为 OPEN。
 
-### 1.3 TaosNativeStore（feature `native`）
+### 2.2 Decimal 精度
 
-- 手工 FFI 链接 `libtaos`（非 `taos-rust` crate）：`taos_connect` / `taos_query` /
-  `taos_fetch_row` 等。
-- `new(host, port, user, pass, db)`：原生端口默认 6030。
-- 连接句柄经 `Mutex` 串行；C API 为同步阻塞，async 方法内直接 FFI（生产可外层 `spawn_blocking`）。
-- 与 REST 相同表结构与 Decimal 字符串编码。
+- 新建 stable 固定 `ts TIMESTAMP, bid NCHAR(64), ask NCHAR(64)`，symbol 为 tag。
+- 写入使用 `Decimal::to_string()` 的带引号文本；查询使用 `Decimal::from_str`。
+- 每次写入和查询前以 `DESCRIBE` 校验 bid/ask 为 `NCHAR(64+)`；存量 `DOUBLE` schema
+  必须返回 Conflict，禁止静默精度降级。
+- 离线测试覆盖 i128 大 mantissa、scale=18、正负值；live test 覆盖 REST JSON 完整往返。
+- 时间戳仍按数据库 ms/us/ns precision 量化；该量化不属于 Decimal 金额精度声明。
 
-## 2. ADR/架构差距、生命周期与安全
+### 2.3 硬上界
 
-- **证据**：ADR-003 互斥 feature、mock 始终可用、rest 默认、native 隔离链接——**代码侧已落地**。
-- **证据**：`rest_real` / `native_real` 集成测均 `#[ignore]`；**不得**当作 CI 默认通过或 M3 生产证据。
-- **证据**：现行 contracts API 使用 `Tick` 的 `write_series/query_series`。
-- **推论**：行情金额/数量继续使用 Decimal 派生类型，不得降为 f64。
-- **未知**：生产连接池、超时重试、保留策略、批量上限、native 专用 CI runner 是否强制。
-- table/时间范围/Tick 是信任边界；真实实现必须防注入、限制批量/结果大小、保护凭据。
+| 资源 | 默认 | 编译期硬上限 |
+|---|---:|---:|
+| in-flight | 64 | 1024 |
+| batch rows | 500 | 10000 |
+| 单条 SQL / batch bytes | 1 MiB | 8 MiB |
+| REST response bytes | 8 MiB | 64 MiB |
+| query rows | 10000 | 100000 |
+| close drain | 5 s | 30 s |
 
-## 3. 测试、验收与追溯
+- Content-Length 预检与逐 chunk `checked_add` 同时保护成功和错误响应。
+- 公开 `exec_sql` 与批写共用 SQL byte cap；自定义 chunk 不得超过配置及硬上限。
+- symbol 最多 48 UTF-8 bytes，并以完整十六进制编码映射子表，避免清洗碰撞。
+- acquire 通过 RAII guard 计数；任务取消归还计数。close 原子关闭入口、拒绝新 I/O，
+  并在配置 deadline 内等待在途请求排空；超时返回 DeadlineExceeded，重复 close 可继续排空。
 
-Mock 测试覆盖写查、闭区间过滤、缺失表、追加、空写、表隔离和 trait object。
-`rest` 有纯函数 Decimal 往返单元测试；REST/native 真测 `#[ignore]`。运行：
+## 3. 重试与一致性边界
 
-```text
-cargo test -p taosx
-cargo test -p taosx --features rest -- --ignored rest_real   # 需 TDengine REST；非 CI 默认
-cargo test -p taosx --no-default-features --features native -- --ignored native_real
+本 crate 不做内部自动重试。多 chunk 写入发生部分成功时，调用方不得把整批盲目重试视为已证明幂等。
+TDengine 更新/去重策略、operation-id 与故障后重复写证据均未闭合，因此幂等重试为 **NO-GO**。
+
+## 4. 测试与证据
+
+离线门禁：
+
+```bash
+cargo test -p taosx --all-targets
 cargo clippy -p taosx --all-targets -- -D warnings
-cargo fmt -- --check
-cargo run -p xtask -- lint-deps
+cargo fmt --all -- --check
+node scripts/quality-gates/check-workspace-deps.mjs
+cmp .agents/ssot/adapters/storage/taos/spec/spec.md \
+  .agents/ssot/adapters/storage/taos/spec/xhyper-taosx-complete-spec.md
 ```
 
-验收要求：mock 行为准确；feature 互斥与 Decimal 编码符合 ADR-003/006；不夸大生产就绪；
-API/依赖/测试与精确 patch 规则一致。
+隔离 live conformance（固定镜像 digest、动态 loopback 端口、全局 timeout、finally 清理）：
 
-开放决策：生产超时/连接池、错误映射细粒度、保留与重试策略、native CI 强制策略。
-追溯：XLib spec §§2 R2/R6、4.3、4.5、5；ADR-003；ADR-006；
-`crates/adapters/storage/taos/{Cargo.toml,src/lib.rs,README.md}`。
+```bash
+node scripts/taos-live-conformance.mjs
+```
+
+人工外部服务入口仍保留 `tests/live_smoke.rs` 且默认 ignored；ignored/未运行不得记为 PASS。

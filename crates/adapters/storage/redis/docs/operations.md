@@ -30,6 +30,27 @@
 | 认证失败 | `Unavailable` |
 | `close` 后 | 新请求 `Unavailable` |
 
+## 重试与原子性
+
+| 操作 | 自动预算重试 | 原子性边界 | 失败后含义 |
+|------|--------------|------------|------------|
+| GET / EXISTS / PTTL / MGET | 仅 Transient | 单命令；MGET 仅单节点/同 slot | 可安全重读 |
+| SET / PSETEX | 否；`set_with_budget` 为显式 opt-in | value + TTL 单命令原子 | 响应丢失时可能已写入；重试会重置 TTL |
+| DEL | 否 | 单命令原子 | 响应丢失时可能已删除；重试返回值会漂移 |
+| PEXPIRE | 否 | 单命令原子 | 响应丢失时可能已生效；重试会重置 TTL 起点 |
+| MSET | 否 | Standalone/Cluster 同 slot 单命令 | 不承诺跨 slot 原子性 |
+| PUBLISH | 否 | 无可靠投递原子性 | 不重试，避免重复消息；仍可能丢消息 |
+
+`RedisOperation::{retry_safety,atomicity}` 是上述合同的可测试代码入口。超时只说明客户端未收到
+确定结果，不能证明 Redis 未执行写命令。
+
+## Pub/Sub 拓扑
+
+- `pool.subscribe` 复用建池时的完整 `RedisConfig`，不重新读取环境变量。
+- Standalone 继承相同端点、ACL、db、TLS、连接超时和响应超时。
+- Cluster / Sentinel 当前返回 `Invalid`，不得降级到 Standalone 或把 Sentinel 种子当 master。
+- 断线重订阅与消息必达没有实现证据，维持 NO-GO。
+
 ## Live 验证
 
 ```bash
@@ -45,8 +66,9 @@ cargo bench -p redisx --bench kv_hot_path
 
 CI：`.github/workflows/redisx-live.yml`（service redis；可用 `REDIS_URL`）。
 
-## 非目标（P0）
+## 尚未闭合
 
-- Cluster / Sentinel 路由
+- 真实 Cluster / Sentinel / TLS live 与故障切换
+- Cluster / Sentinel Pub/Sub 路由与重订阅
 - Streams / 分布式锁完整合同
 - 默认自动重试非幂等写

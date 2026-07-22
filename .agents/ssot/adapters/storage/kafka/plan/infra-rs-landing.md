@@ -6,7 +6,7 @@
 | 实现路径 | `crates/adapters/storage/kafka` |
 | 生产默认面 | KafkaPool/Producer/Consumer |
 | scaffold | `feature = "scaffold"`（可选 mock） |
-| live | `tests/live_event_bus.rs`（默认 `#[ignore]`） |
+| live | `tests/live_event_bus.rs`；`tests/broker_conformance.rs`（默认 `#[ignore]`） |
 | 凭据 | `FOUNDATIONX_*` via `scripts/live/build-foundationx-env.mjs` |
 | PR | #188 · #189 · #190 · #191 |
 | 对齐 | [docs/ssot/adapters-ssot-alignment.md](../../../../../docs/ssot/adapters-ssot-alignment.md) |
@@ -15,13 +15,15 @@
 ## 硬限制
 
 1. 本文件描述 **infra.rs 本仓 P0 生产入口**，不是 monorepo 战役 COMPLETE。
-2. Cluster / JetStream / EOS / multipart 等 **DEFER**。
+2. TLS/CA 与 SASL/PLAIN 已接入；SCRAM/OAuth/mTLS、group、rebalance、自动重连、multi-owner fencing、native EOS、DLQ 为 **NO-GO**。
 3. 无 live 证据不得宣称“全后端 Production Ready”。
 
 ## 验证
 
 ```bash
 cargo test -p kafkax --all-targets
+node scripts/kafka-broker-conformance.mjs
+node scripts/kafka-tls-sasl-conformance.mjs
 # live:
 # node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
 # set -a; source /tmp/foundationx-live.env; set +a

@@ -28,6 +28,8 @@ let s = pool.stats();
 | `available == 0` 且 `waiting > 0` | 池耗尽 | 扩 `max_pool_size` 或缩短事务 |
 | `closed` | 已 `close` | 停写；重建池 |
 | 频繁 `DeadlineExceeded` | 获取连接超时 | 查慢查询 / 后端连接上限 |
+| SQL `DeadlineExceeded` | 调用侧截止；连接已丢弃 | 查慢查询并确认池可新建连接 |
+| COMMIT `DeadlineExceeded` | 提交结果未知 | 用业务幂等键/对账处理，禁止直接判定回滚 |
 
 ## 关闭
 
@@ -64,6 +66,7 @@ export FOUNDATIONX_POSTGRESX_PASSWORD=...
 export FOUNDATIONX_POSTGRESX_SSLMODE=disable
 
 cargo test -p postgresx --test live_postgres -- --ignored --nocapture
+node scripts/postgres-deadline-conformance.mjs
 ```
 
 默认 CI **不**跑 ignored live。
@@ -79,7 +82,12 @@ cargo bench -p postgresx --bench query_hot_path
 
 ## 回滚与连接池卫生
 
-- `PgTransaction` 在 `Drop` 且仍为 `Active` 时，会在当前 runtime 上异步 `ROLLBACK`
+- `PgTransaction` 在可取消 await 前先进入 `TxStatus::Failed`；仅在连接安全恢复后回到 `Active`
+- 服务端语句错误保持 rollback-only `TxStatus::Failed`：允许显式回滚，禁止继续 SQL 或 COMMIT
+- `PgTransaction` 在 `Drop` 且仍持有 Active 连接时，永久分离并关闭连接，由 PostgreSQL 在 session 终止时回滚；不启动 fire-and-forget 任务
+- deprecated raw client/pool 保留一个迁移周期：raw client 使用后强制脱池，raw pool
+  返回关闭的隔离池并拒绝全部 I/O；新代码必须使用受 deadline 保护的正式 API
+- `TransactionRollbackFailure` 可从外层错误 source downcast，分别读取原错误与 rollback 错误
 - 业务路径优先 `with_transaction`（自动终结）
 - 避免跨 `.await` 长时间占用事务（占连接）
 
@@ -88,4 +96,4 @@ cargo bench -p postgresx --bench query_hot_path
 - 迁移工具 / schema 所有权
 - COPY 批量
 - 读写分离 / 只读副本路由
-- TLS `require`（见 config.md）
+- 自定义 CA / mTLS

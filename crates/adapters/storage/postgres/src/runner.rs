@@ -3,7 +3,7 @@
 //! # 诚实限制
 //!
 //! [`contracts::TxContext`] 只暴露 `commit` / `rollback`，**不**传递 SQL 句柄。
-//! 因此本适配器保证的是**事务边界**可被 `run_tx_commit_on_ok` 驱动；
+//! 因此本适配器保证的是**事务生命周期边界**可被 `run_tx_lifecycle` 驱动；
 //! 若要在同一事务内执行业务 SQL，请使用 [`crate::PostgresPool::with_transaction`]
 //! 或 [`crate::PgTransaction`]。
 
@@ -14,7 +14,7 @@ use contracts::{TxContext, TxRunner};
 use kernel::{XError, XResult};
 
 use crate::pool::PostgresPool;
-use crate::tx::{PgTransaction, TxState};
+use crate::tx::{PgTransaction, TxStatus};
 
 /// 基于 [`PostgresPool`] 的 [`TxRunner`]。
 #[derive(Clone)]
@@ -41,12 +41,12 @@ impl PgTxRunner {
 /// 仅边界语义；不暴露 SQL。
 struct PgTxContext {
     inner: Option<PgTransaction>,
-    state: TxState,
+    state: TxStatus,
 }
 
 impl PgTxContext {
     fn new(tx: PgTransaction) -> Self {
-        Self { inner: Some(tx), state: TxState::Active }
+        Self { inner: Some(tx), state: TxStatus::Active }
     }
 }
 
@@ -54,39 +54,47 @@ impl PgTxContext {
 impl TxContext for PgTxContext {
     async fn commit(&mut self) -> XResult<()> {
         match self.state {
-            TxState::Committed => {
+            TxStatus::Committed => {
                 return Err(XError::invariant("TxContext 已 commit".to_string()));
             }
-            TxState::RolledBack => {
+            TxStatus::RolledBack => {
                 return Err(XError::invariant("TxContext 已 rollback，无法 commit".to_string()));
             }
-            TxState::Active => {}
+            TxStatus::Failed => {
+                return Err(XError::unavailable("TxContext 已失败，无法 commit"));
+            }
+            TxStatus::Active => {}
         }
         let tx = self
             .inner
             .take()
             .ok_or_else(|| XError::invariant("TxContext 无底层事务".to_string()))?;
+        self.state = TxStatus::Failed;
         tx.commit().await?;
-        self.state = TxState::Committed;
+        self.state = TxStatus::Committed;
         Ok(())
     }
 
     async fn rollback(&mut self) -> XResult<()> {
         match self.state {
-            TxState::RolledBack => {
+            TxStatus::RolledBack => {
                 return Err(XError::invariant("TxContext 已 rollback".to_string()));
             }
-            TxState::Committed => {
+            TxStatus::Committed => {
                 return Err(XError::invariant("TxContext 已 commit，无法 rollback".to_string()));
             }
-            TxState::Active => {}
+            TxStatus::Failed => {
+                return Err(XError::unavailable("TxContext 已失败且无可用事务句柄"));
+            }
+            TxStatus::Active => {}
         }
         let tx = self
             .inner
             .take()
             .ok_or_else(|| XError::invariant("TxContext 无底层事务".to_string()))?;
+        self.state = TxStatus::Failed;
         tx.rollback().await?;
-        self.state = TxState::RolledBack;
+        self.state = TxStatus::RolledBack;
         Ok(())
     }
 }

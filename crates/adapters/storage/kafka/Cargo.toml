@@ -1,7 +1,7 @@
 [package]
 name = "kafkax"
 description = "kafka storage adapter (KafkaPool + EventBus via pure-Rust rskafka)"
-version = "0.3.1"
+version = "0.3.2"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -21,11 +21,15 @@ bytes = { workspace = true }
 chrono = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.1" }
+contracts = { path = "../../../contracts", version = "0.1.2" }
 kernel = { path = "../../../kernel", version = "0.3.0" }
 rskafka = { workspace = true }
+rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
+url = { workspace = true }
+webpki-roots = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

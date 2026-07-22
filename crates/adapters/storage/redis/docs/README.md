@@ -15,4 +15,6 @@
 
 - **默认路径**：真实 `redis` 异步客户端（`RedisPool` / `RedisClient`）
 - **scaffold feature**：进程内 HashMap，仅测试/迁移
-- Cluster / Sentinel / 完整 PubSub 合同：见 draft 后续里程碑
+- 命令通道已有 Cluster / Sentinel / TLS 代码路径，但三者真实 live 证据仍 OPEN
+- Pub/Sub 仅 Standalone；复用池配置，Cluster / Sentinel 失败关闭
+- 写重试与原子性边界见 [operations.md](./operations.md)

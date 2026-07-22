@@ -10,7 +10,7 @@
 //! - 勿将 Fake 路径当作集成测完成或生产存储。
 
 use contract_testkit::{FakeKeyValueStore, FakeTxRunner, RecordingTxRunner};
-use contracts::{KeyValueStore, run_tx_commit_on_ok};
+use contracts::{KeyValueStore, run_tx_lifecycle};
 
 #[tokio::main]
 async fn main() {
@@ -23,7 +23,7 @@ async fn main() {
 
     // ── Tx: Ok → commit ───────────────────────────────────
     let runner = FakeTxRunner;
-    let v = run_tx_commit_on_ok(&runner, |_ctx| async move { Ok::<_, kernel::XError>(42u32) })
+    let v = run_tx_lifecycle(&runner, || async move { Ok::<_, kernel::XError>(42u32) })
         .await
         .expect("commit path");
     assert_eq!(v, 42);
@@ -31,7 +31,7 @@ async fn main() {
 
     // ── Recording: 可观察 commit 标志 ─────────────────────
     let rec = RecordingTxRunner::new();
-    run_tx_commit_on_ok(&rec, |_ctx| async move { Ok::<_, kernel::XError>(()) })
+    run_tx_lifecycle(&rec, || async move { Ok::<_, kernel::XError>(()) })
         .await
         .expect("record commit");
     let committed = *rec.committed.lock().expect("lock");

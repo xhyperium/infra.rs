@@ -11,7 +11,7 @@
 - 落地说明：[plan/infra-rs-landing.md](plan/infra-rs-landing.md)
 - draft SPEC_GOAL 快照：[plan/infra-rs-draft-spec-goal.md](plan/infra-rs-draft-spec-goal.md)
 - 对齐：[docs/ssot/adapters-ssot-alignment.md](../../../../docs/ssot/adapters-ssot-alignment.md)
-- **状态**：生产默认客户端 **P0 已落地**；package stable **未宣称**
+- **状态**：生产默认客户端与安全/资源上界 **P0 已落地**；package stable **未宣称**
 
 ## 11 层映射
 

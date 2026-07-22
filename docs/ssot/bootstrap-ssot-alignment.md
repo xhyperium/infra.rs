@@ -2,12 +2,12 @@
 
 | 字段 | 值 |
 |------|-----|
-| 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| SSOT（只读） | `.agents/ssot/bootstrap/spec/spec.md` ≡ `spec/xhyper-bootstrap-complete-spec.md`（`cmp` 同构） |
-| 实现路径 | `crates/bootstrap`（package `bootstrap` / lib `bootstrap`）· **v0.3.1** |
-| 权威 | 本文件描述 **本仓** 落地状态；**不**编辑 `.agents/ssot/**` 镜像 |
+| 审计日期 | 2026-07-22；**第 4 轮正式 contracts 注入复核** |
+| SSOT | `.agents/ssot/bootstrap/spec/spec.md` ≡ `spec/xhyper-bootstrap-complete-spec.md`（`cmp` 同构） |
+| 实现路径 | `crates/bootstrap`（package `bootstrap` / lib `bootstrap`）· **v0.3.2** |
+| 权威 | active SSOT、源码、可复现实验共同描述本仓当前状态 |
 | 上游参考 | `xhyper.rs/crates/infra/bootstrap`（可移植源，非本仓 member） |
-| OBJECTIVE | StoreSet + AsyncDrain **PASS**；**≠** 交易栈全量装配 / Agent L5 |
+| OBJECTIVE | `ContractStoreSet` 正式 KV/EventBus 注入 + Redis/NATS E2E **PASS**；**≠** 跨资源事务 / 交易栈全量装配 |
 
 ## 路径映射
 
@@ -33,7 +33,8 @@
 |-----------|------|------|
 | `kernel`（别名 `xhyper-kernel` 已废弃）（Shutdown / ErrorKind） | path `crates/kernel` | **PASS** |
 | `contracts`（别名 `xhyper-contracts` 已废弃）（Instrumentation） | path `crates/contracts`；re-export `Instrumentation` | **PASS**（ADR-005 trait 权威） |
-| 有界 venue/storage 替面 | `BoundedMarketDataSource` / `BoundedKeyValueStore` / …（**非** contracts 同名 trait） | **PASS**（命名收敛） |
+| 正式 storage contracts | `ContractStoreSet` 固定 `KeyValueStore` / `EventBus` trait-object 槽位 | **PASS**（additive；无动态注册） |
+| 有界 venue/storage 替面 | `BoundedMarketDataSource` / `BoundedKeyValueStore` / …（**非** contracts 同名 trait） | **PASS**（兼容保留） |
 | `StoreSet` 适配器接线面 | `src/store_set.rs`；`Bootstrap::with_store_set` | **PASS**（类型化注入；禁止动态 register/resolve） |
 | `AsyncDrain` 关停排空 | `src/drain.rs`；`register_drain` / `AppContext::run_drain` | **PASS**（组合根 drain 所有权；LIFO hooks） |
 | `observex`（`TracingInstrumentation`） | path `crates/observex`；`Bootstrap::new` 默认 | **PASS**（ADR-005 默认实现） |
@@ -52,6 +53,7 @@
 | `BootstrappedApp` | **PASS** | `into_parts` / `trigger_shutdown` |
 | `ShutdownController` | **PASS** | `trigger` / `has_guard`；drop 不触发 |
 | `StoreSet` | **PASS** | `src/store_set.rs`；KV/Tx/Bus/Repo/Venue 可选句柄 |
+| `ContractStoreSet` | **PASS** | `src/contract_store_set.rs`；正式 KV/EventBus typed slots |
 | `AsyncDrain` / `DrainStepResult` | **PASS** | `src/drain.rs`；LIFO 执行 |
 | `BootstrapError` | **PASS** | `src/error.rs` |
 | 无 `Gate` / `Capability` / `register_capability` / 动态 mutation | **PASS** | 静态检查 + 公开导出列表 |
@@ -75,6 +77,8 @@
 |----|------|------|
 | workspace 非测试 consumer | **PASS（本仓）** | `examples/minimal.rs` 为库外 consumer 路径（非生产 app） |
 | StoreSet 适配器接线 API | **PASS** | `with_store_set` + `StoreSet::with_*`；**诚实边界**：注入句柄 ≠ 交易所业务协议完成 |
+| 正式 contracts 接线 | **PASS** | `with_contract_store_set`；真实 Redis/NATS 仅从 `AppContext` trait 访问器调用 |
+| 跨资源事务 / 泛型 Repository 注册 | **NO-GO** | 明确非目标；无全局 locator |
 | AsyncDrain 关停排空 | **PASS** | 进程内 LIFO hooks；**≠** 分布式编排器 |
 | composition manifest（BOOT-MAN-001） | **OPEN** | 非本轮 OBJECTIVE |
 | 异步组件启动/逆序补偿（全量） | **OPEN** | drain 提供 hook 面；完整 async 启动编排非目标 |
@@ -88,6 +92,7 @@ cargo test -p bootstrap --all-targets
 cargo check -p bootstrap --all-targets
 cargo clippy -p bootstrap --all-targets -- -D warnings
 cargo fmt --all --check
+node scripts/storage-composition-conformance.mjs
 cargo llvm-cov -p bootstrap --all-targets --fail-under-lines 100 --summary-only
 # 静态：无 Service Locator / Gate
 rg -n 'fn register|fn resolve|pub struct Gate|pub enum Gate' crates/bootstrap/src || true
@@ -112,11 +117,13 @@ rg -n 'fn register|fn resolve|pub struct Gate|pub enum Gate' crates/bootstrap/sr
 |----|--------|--------|------|
 | StoreSet / adapter 接线 | DEFER | **PASS** | `crates/bootstrap/src/store_set.rs` · `Bootstrap::with_store_set` |
 | async drain | DEFER | **PASS** | `crates/bootstrap/src/drain.rs` · `register_drain` / `run_drain` |
+| 正式 storage trait 注入 | DEFER | **PASS** | `ContractStoreSet` + 固定摘要 Redis/NATS E2E |
 
 ## 变更记录
 
 | 日期 | 说明 |
 |------|------|
+| 2026-07-22 | v0.3.2：新增正式 `ContractStoreSet` KV/EventBus 注入与真实 Redis/NATS 组合实验；不声明跨资源事务 |
 | 2026-07-22 | **defer-close**：StoreSet + AsyncDrain PASS；交易装配仍 NO-GO |
 | 2026-07-22 | 对齐 Cargo 真相：版本 `0.3.1`；明确组合根装配 kernel+contracts+observex+evidence，**非** 完整应用运行时；`xhyper-bootstrap` 仅废弃别名 |
 | 2026-07-21 | 生产就绪：`Bounded*` 有界面命名收敛；与 contracts 权威 trait 区分；PR #98 **合入 main** |

@@ -50,7 +50,10 @@ pool.close(Duration::from_secs(2)).await?;
 - `Debug` / `endpoint()` 脱敏密码
 - `close` 后拒绝新命令；排空 in-flight
 - 全局 Semaphore 限制 in-flight
-- Cluster / Sentinel / TLS feature：**P0 未宣称**
+- `RedisPool` 有 Standalone / Cluster / Sentinel 与安全 TLS 代码路径；真实 Cluster、Sentinel、TLS live 证据仍 **OPEN**
+- Pub/Sub 仅支持 Standalone，并复用建池时的 ACL / TLS / deadline；Cluster / Sentinel 明确失败关闭
+- `with_retry_budget` 只自动重试 GET / EXISTS / PTTL / MGET；写操作默认单次
+- Redis 单命令的服务端原子性不消除“响应丢失后写入结果未知”；`MSET` 跨 Cluster slot 不承诺原子性
 
 ## 禁止误用
 

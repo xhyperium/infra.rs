@@ -90,7 +90,7 @@ impl TxRunner for PostgresAdapter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use contracts::run_tx_commit_on_ok;
+    use contracts::run_tx_lifecycle;
 
     #[tokio::test]
     async fn repository_roundtrip() {
@@ -103,9 +103,9 @@ mod tests {
     #[tokio::test]
     async fn tx_runner_commit_path() {
         let a = PostgresAdapter::local();
-        let v = run_tx_commit_on_ok(&a, |_ctx| async move { Ok::<_, kernel::XError>(42) })
+        let v = run_tx_lifecycle(&a, || async move { Ok::<_, kernel::XError>(42) })
             .await
-            .expect("tx");
+            .expect("事务成功");
         assert_eq!(v, 42);
     }
 

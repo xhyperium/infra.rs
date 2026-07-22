@@ -6,6 +6,7 @@
 //! ```
 
 use canonical::Tick;
+use contract_testkit::assert_time_series_store;
 use contracts::TimeSeriesStore;
 use decimalx::{Decimal, Price};
 use taosx::{TaosConfig, TaosPool};
@@ -48,19 +49,41 @@ async fn live_write_query_ticks() {
     let t0 = now_ns - 2_000_000_000; // -2s
     let t1 = now_ns - 1_000_000_000;
     let t2 = now_ns;
+    let exact_bid =
+        Decimal::try_new(123_456_789_012_345_678_901_234_567_890_123_456, 18).expect("exact bid");
+    let exact_ask =
+        Decimal::try_new(-123_456_789_012_345_678_901_234_567_890_123_455, 18).expect("exact ask");
+    let exact_ts = now_ns + 1_000_000_000;
 
-    let points = vec![
+    let mut points = vec![
         sample_tick("BTCUSDT", t0, 10050, 10060),
         sample_tick("BTCUSDT", t1, 10055, 10065),
         sample_tick("ETHUSDT", t2, 350000, 350100),
     ];
+    points.push(Tick {
+        symbol: "DECIMAL_EXACT".into(),
+        bid: Price::new(exact_bid),
+        ask: Price::new(exact_ask),
+        ts: exact_ts,
+    });
+
+    let suite_table = format!("{table}_contract");
+    let mut suite_tick = points[0].clone();
+    let precision = pool.precision();
+    suite_tick.ts = precision.to_nanos(precision.from_nanos(suite_tick.ts));
+    assert_time_series_store(&pool, &suite_table, suite_tick)
+        .await
+        .expect("可移植 TimeSeriesStore suite");
 
     pool.write_series(&table, points).await.expect("write");
 
-    let rows = pool.query_series(&table, t0, t2).await.expect("query");
-    assert!(rows.len() >= 3, "expected >=3 ticks, got {} ({rows:?})", rows.len());
+    let rows = pool.query_series(&table, t0, exact_ts).await.expect("query");
+    assert!(rows.len() >= 4, "expected >=4 ticks, got {} ({rows:?})", rows.len());
     assert!(rows.iter().any(|t| t.symbol == "BTCUSDT"));
     assert!(rows.iter().any(|t| t.symbol == "ETHUSDT"));
+    let exact = rows.iter().find(|tick| tick.symbol == "DECIMAL_EXACT").expect("exact decimal row");
+    assert_eq!(exact.bid.as_decimal(), exact_bid);
+    assert_eq!(exact.ask.as_decimal(), exact_ask);
 
     // 窄范围只命中中间点附近
     let mid = pool.query_series(&table, t1 - 100, t1 + 100).await.expect("mid");

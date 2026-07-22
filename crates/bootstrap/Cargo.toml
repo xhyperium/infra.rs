@@ -1,7 +1,7 @@
 [package]
 name = "bootstrap"
 description = "L1 启动期依赖组装（R3.1 豁免 / ADR-016）；typed composition root"
-version = "0.3.1"
+version = "0.3.2"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -14,10 +14,19 @@ name = "bootstrap"
 [dependencies]
 kernel = { path = "../kernel", version = "0.3.0" }
 # ADR-005：Instrumentation 契约权威在 contracts；默认实现来自 observex
-contracts = { path = "../contracts", version = "0.1.1" }
+contracts = { path = "../contracts", version = "0.1.2" }
 observex = { path = "../observex", version = "0.1.1" }
 # 审计证据追加权威在 evidence
 evidence = { path = "../evidence", version = "0.1.1" }
+
+[dev-dependencies]
+async-trait = { workspace = true }
+bytes = { workspace = true }
+futures-core = { workspace = true }
+futures-util = { workspace = true }
+natsx = { path = "../adapters/storage/nats", version = "0.3.2" }
+redisx = { path = "../adapters/storage/redis", version = "0.3.3" }
+tokio = { workspace = true }
 
 [lints]
 workspace = true

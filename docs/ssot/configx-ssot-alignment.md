@@ -3,10 +3,10 @@
 | 字段 | 值 |
 |------|-----|
 | Spec | active configx 0.1.1（`.agents/ssot/configx/spec/spec.md` ≡ `xhyper-configx-complete-spec.md`） |
-| 镜像 | `.agents/ssot/configx/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
+| Active SSOT | `.agents/ssot/configx/**`（本仓权威；变更须同步 dual spec、alignment 与门禁） |
 | 本仓实现 | `crates/configx` · package `configx` · lib `configx` · version `0.1.1` |
 | 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| 结论 | **active 合同面（§2–§7）无 FAIL**；**多源加载 / 热更新 NOT IMPLEMENTED（诚实边界，仅内存字符串 KV）**；**≠** 远端配置中心 / Agent L5 |
+| 结论 | 本地 `MemorySource`/`EnvSource`/`FileSource`、`LayeredConfig`、宿主 reload/进程内通知与 `SecretString` 已实现；远端配置中心、自动文件监听和 secret manager 仍 OPEN |
 
 ## 结论摘要
 
@@ -14,8 +14,8 @@
 |------|------|
 | 上游镜像 COMPLETE / 布局对齐 | 描述的是 **goal 管线布局**；**禁止**单独当作本仓实现证明 |
 | 本仓 `crates/configx` | **已落地**并与 active SSOT §2–§6 可移植子集对齐 |
-| 多源加载 / 分层合并 | **NOT IMPLEMENTED（诚实边界）** — 当前仅内存字符串 KV；多源加载/分层合并未实现；禁止宣称配置平台 |
-| 热更新通知 / 热重载 | **NOT IMPLEMENTED（诚实边界）** — 当前无 watcher / 后台热重载；仅内存字符串 KV |
+| 本地多源 / 分层合并 | **PASS** — `MemorySource` / `EnvSource` / `FileSource`；后源覆盖先源 |
+| reload / 进程内通知 | **PASS（宿主驱动）** — `ConfigWatch::reload` / subscription；无自动 File watcher 或后台远端推送 |
 | secret | **PASS**：`secret.rs` · `SecretString`（Debug 脱敏）+ `set_secret`/`get_secret` |
 | 远端配置中心 / 动态服务发现 | **OPEN（诚实边界）** — **未**实现；禁止宣称配置中心产品 |
 | line/branch cov | 目标 100%（`cargo llvm-cov -p configx`） |
@@ -33,7 +33,7 @@ publish                         false
 生产依赖                        仅 kernel（path crates/kernel）
 features                        default = []
 公开面                          ConfigStore（内存字符串 KV）
-模块                            lib · source · layered · watch · secret（多源/热更新 NOT IMPLEMENTED）
+模块                            lib · source · layered · watch · secret（本地/宿主驱动）
 ```
 
 验证（本仓权威命令）：
@@ -46,11 +46,11 @@ cargo run -p configx --example basic
 cargo llvm-cov -p configx --summary-only
 ```
 
-## 与镜像文档的关系
+## 与 active spec 的关系
 
-- `.agents/ssot/configx/**`：只读镜像；禁止本地改 Done/COMPLETE 叙事冒充同步
+- `.agents/ssot/configx/**`：本仓 active spec；不得只改 Done/COMPLETE 叙事冒充实现证据
 - 实现 SSOT 以 **源码 + 本仓测试输出** 为准
-- 文件名 `xhyper-configx-complete-spec.md` 与 `spec.md` 同构，内容仍是 0.1.1 **最小内存 KV 合同**，不是完整配置平台
+- 文件名 `xhyper-configx-complete-spec.md` 与 `spec.md` 同构，内容是 0.1.1 本地多源/分层/reload/secret current-state 合同，不是远端配置平台
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
 
 ---
@@ -70,7 +70,7 @@ cargo llvm-cov -p configx --summary-only
 | 2.4 | 普通依赖仅 `kernel` | `Cargo.toml` `[dependencies]` 唯一 path 依赖 | PASS |
 | 2.5 | 不得增加其他 L1 依赖 | 生产 deps 扫描无 observex/其他 L1 | PASS |
 | 2.6 | feature 无；`default = []` | `Cargo.toml` `[features]` | PASS |
-| 2.7 | 未批准 serde/watcher/async runtime | 生产 `Cargo.toml` 无上述依赖 | PASS |
+| 2.7 | 不引入 serde/async runtime/后台 watcher 依赖 | 生产 `Cargo.toml` 无上述依赖 | PASS |
 
 ### §3 当前公开 API
 
@@ -82,7 +82,7 @@ cargo llvm-cov -p configx --summary-only
 | 3.4 | `set(&self, key, val) -> XResult<()>` 插入或覆盖 | `src/lib.rs` + 测试 | PASS |
 | 3.5 | 写锁中毒 → `XError::Invalid` 上下文含 `config lock poisoned` | `src/lib.rs` `tests` `write_lock_poison_returns_invalid` | PASS |
 | 3.6 | `Default` 等价 `new()` | `src/lib.rs` + `default_equals_empty_new` | PASS |
-| 3.7 | 无 builder / 类型化 / 批量 / 订阅 / 快照 / 删除 / 枚举 API | 公开面仅 re-export `ConfigStore`；`rg` 无上述符号 | PASS |
+| 3.7 | additive source/layered/watch/snapshot/diff API 与源码一致 | `src/{source,layered,watch,diff,view}.rs` | PASS |
 
 ### §4 行为与不变量
 

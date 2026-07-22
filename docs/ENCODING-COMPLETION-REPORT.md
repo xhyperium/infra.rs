@@ -34,7 +34,7 @@
 
 每个仓库均部署以下文件：
 
-```
+```text
 .claude/hooks/encoding-check.mjs          # Pre-tool 编码阻断
 .claude/hooks/encoding-check.test.mjs     # 31 项测试
 .claude/hooks/encoding-batch-check.mjs    # Post-tool 批量巡检

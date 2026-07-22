@@ -6,7 +6,7 @@
 
 | 类型 | 位置 |
 |------|------|
-| 单元/集成（离线） | `cargo test -p redisx --all-targets` 日志 |
+| 单元/集成（离线） | `cargo test -p redisx --all-targets --features pubsub` 日志 |
 | live | `crates/adapters/storage/redis/tests/live_kv.rs` 等 |
 | bench | `crates/adapters/storage/redis/benches/kv_hot_path.rs` |
 | landing | [../plan/infra-rs-landing.md](../plan/infra-rs-landing.md) |

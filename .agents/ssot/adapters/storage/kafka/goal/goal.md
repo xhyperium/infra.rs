@@ -20,10 +20,11 @@
 4. live：`tests/live_event_bus.rs` 默认 `#[ignore]`，真凭据可绿
 5. bench：`benches/hot_path.rs（3s 有界）`（不得挂死 `--all-targets`）
 6. scaffold 仅 `feature = "scaffold"`，禁止当作生产默认
+7. 外部 I/O 有 deadline；有界消费队列可被 close 打断，close 超时后保持关闭
 
 ## Not in scope
 
-EOS / transactional producer / schema registry / group coordinator 强依赖路径
+EOS / transactional producer / schema registry / group coordinator / 自动重连强依赖路径
 
 ## 证据指针
 

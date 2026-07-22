@@ -1,6 +1,6 @@
 [package]
 name = "contract-testkit"
-version = "0.1.1"
+version = "0.1.2"
 publish = false
 edition.workspace = true
 rust-version.workspace = true
@@ -15,7 +15,7 @@ name = "contract_testkit"
 async-trait = { workspace = true }
 bytes = { workspace = true }
 canonical = { path = "../../types/canonical", version = "0.1.1" }
-contracts = { path = "../../contracts", version = "0.1.1" }
+contracts = { path = "../../contracts", version = "0.1.2" }
 decimalx = { path = "../../types/decimal", version = "0.1.1" }
 futures-core = { workspace = true }
 futures-util = { workspace = true }

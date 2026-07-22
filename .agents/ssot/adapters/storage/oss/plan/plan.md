@@ -8,6 +8,7 @@
 | 2 | docs usage/config/operations + pool 单测 + benches | #189 |
 | 3 | bench 超时有界 + 公共 API 单测缺口 | #190 |
 | 4 | live env 构建器 + SSOT landing/draft 入库 | #191 · #193 |
+| 5 | HTTPS fail-closed、资源硬上界、multipart 完整性/orphan、总 deadline | infra-2d9.3.4 |
 
 ## 本文件角色
 
@@ -16,5 +17,5 @@
 
 ## 下一可选波次（OPEN）
 
-- multipart / lifecycle / STS 临时凭证
+- lifecycle / STS 临时凭证 / 流式 TB 对象与 checksum
 - package stable / crates.io 发布流程

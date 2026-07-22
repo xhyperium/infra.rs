@@ -97,6 +97,7 @@ fn redact_seed_url(raw: &str) -> String {
                 let user = &creds[..colon];
                 return format!("{}://{}:***@{}", &s[..scheme_end], user, host);
             }
+            return format!("{}://***@{}", &s[..scheme_end], host);
         }
     }
     s.to_string()
@@ -308,7 +309,11 @@ impl RedisConfig {
             RedisMode::Cluster => " mode=cluster",
             RedisMode::Sentinel => " mode=sentinel",
         };
-        let seeds = if self.nodes.is_empty() { self.addr.clone() } else { self.nodes.join(",") };
+        let seeds = if self.nodes.is_empty() {
+            redact_seed_url(&self.addr)
+        } else {
+            self.nodes.iter().map(|seed| redact_seed_url(seed)).collect::<Vec<_>>().join(",")
+        };
         if self.password.is_some() {
             if user.is_empty() {
                 format!("{scheme}://***@{}/{db}{mode_tag}", seeds, db = self.db)
@@ -368,9 +373,10 @@ impl RedisConfig {
         let seed = seed.trim();
         if seed.starts_with("redis://") || seed.starts_with("rediss://") {
             use redis::IntoConnectionInfo;
+            let redacted = redact_seed_url(seed);
             let mut info = seed
                 .into_connection_info()
-                .map_err(|e| XError::invalid(format!("非法节点 URL `{seed}`: {e}")))?;
+                .map_err(|_| XError::invalid(format!("非法节点 URL `{redacted}`")))?;
             // 用配置覆盖认证 / db（URL 内可省略）
             if self.username.is_some() {
                 info.redis.username = self.username.clone();
@@ -643,9 +649,10 @@ fn validate_seed(seed: &str) -> XResult<()> {
     }
     if seed.starts_with("redis://") || seed.starts_with("rediss://") {
         use redis::IntoConnectionInfo;
+        let redacted = redact_seed_url(seed);
         let info = seed
             .into_connection_info()
-            .map_err(|e| XError::invalid(format!("非法节点 URL `{seed}`: {e}")))?;
+            .map_err(|_| XError::invalid(format!("非法节点 URL `{redacted}`")))?;
         if let redis::ConnectionAddr::TcpTls { insecure: true, .. } = info.addr {
             return Err(XError::invalid("拒绝 insecure TLS 节点 URL"));
         }
@@ -702,6 +709,29 @@ mod tests {
         assert!(ep.contains("***"));
         assert!(!ep.contains(":p@"));
         assert!(ep.contains("10.0.0.1:6379"));
+    }
+
+    #[test]
+    fn node_urls_are_redacted_in_debug_endpoint_and_errors() {
+        let secret: String =
+            [115_u8, 101, 110, 115, 105, 116, 105, 118, 101].into_iter().map(char::from).collect();
+        let node = format!("redis://alice:{secret}@redis.example:6379");
+        let cfg =
+            RedisConfig::builder().mode(RedisMode::Cluster).nodes([node]).build().expect("cfg");
+        let debug = format!("{cfg:?}");
+        let endpoint = cfg.display_endpoint();
+        assert!(!debug.contains(&secret));
+        assert!(!endpoint.contains(&secret));
+        assert!(debug.contains("alice:***"));
+        assert!(endpoint.contains("alice:***"));
+
+        let invalid = format!("redis://alice:{secret}@[");
+        let err = RedisConfig::builder()
+            .mode(RedisMode::Cluster)
+            .nodes([invalid])
+            .build()
+            .expect_err("invalid URL");
+        assert!(!err.to_string().contains(&secret));
     }
 
     #[test]

@@ -8,6 +8,7 @@
 | 2 | docs usage/config/operations + pool 单测 + benches | #189 |
 | 3 | bench 超时有界 + 公共 API 单测缺口 | #190 |
 | 4 | live env 构建器 + SSOT landing/draft 入库 | #191 · #193 |
+| 5 | rskafka/TLS/SASL 事实对齐；deadline/有界背压/close/脱敏错误边界 | `infra-2d9.3.3` |
 
 ## 本文件角色
 
@@ -16,5 +17,5 @@
 
 ## 下一可选波次（OPEN）
 
-- EOS / transactional producer / schema registry / group coordinator 强依赖路径
+- EOS / transactional producer / schema registry / group coordinator / 自动重连强依赖路径
 - package stable / crates.io 发布流程

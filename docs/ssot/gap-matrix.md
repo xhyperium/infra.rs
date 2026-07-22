@@ -5,13 +5,13 @@
 
 | Domain | Draft DoD P0 | Current | Deferred (not OBJECTIVE / not stable) |
 |--------|--------------|---------|----------------------------------------|
-| redisx | Pool+KV+timeout+live | **done** + Cluster/Sentinel/TLS/resiliencx (`0.3.2`) | Streams full / pubsub 默认关 / package stable |
-| postgresx | Pool+query+tx+TLS | **done** + prod Repository + SSL require + resiliencx (`0.3.2`) | COPY / migrations / read-replica |
-| kafkax | Producer pool + EventBus | **done** + offset commit + at-least-once + 应用级 EOS (`0.3.1`) | schema registry / broker 事务协议 |
-| natsx | Core NATS EventBus | **done** + JetStream 薄封装 + TLS 默认策略 (`0.3.1`) | NKey / JetStream KV·Object 全量 |
-| ossx | ObjectStore put/get | **done** + multipart + resiliencx retry (`0.3.1`) | lifecycle / STS |
-| clickhousex | Analytics insert+select | **done** + insert_batch + 有界池 (`0.3.1`) | native 9000 / cluster 运维 |
-| taosx | TimeSeries write+query | **done** + batch write + Native WS 探测 + 有界池 (`0.3.1`) | 完整 WS SQL 会话 / 超表治理 |
+| redisx | Pool+KV+timeout+live | **done** + Standalone/PubSub 安全边界 (`0.3.3`) | Cluster/Sentinel/TLS live / Streams full / package stable |
+| postgresx | Pool+query+tx+TLS | **done** + Repository + remote Require 实现 + deadline/隔离证据 (`0.3.3`) | 真实 TLS 实验 / 自定义 CA/mTLS / COPY / migrations / read-replica |
+| kafkax | Producer pool + EventBus | **done** + checkpoint/ALO + TLS/CA/PLAIN 证据 (`0.3.2`) | SCRAM/OAuth/mTLS / group/rebalance / native EOS / DLQ |
+| natsx | Core NATS EventBus | **done** + JetStream durable pull/显式确认 + 同客户端重启恢复 3/3 (`0.3.2`) | 断线窗口无回放 / NKey / Cluster/HA / 自动 DLQ / KV·Object 全量 |
+| ossx | ObjectStore put/get | **done** + 有界 multipart/retry/orphan 补偿 (`0.3.2`) | lifecycle / STS / TB 流式对象 |
+| clickhousex | Analytics insert+select | **done** + HTTPS/PEM CA + insert_batch + 有界池 (`0.3.2`) | 真实集群 TLS / mTLS / native 9000 / cluster 运维 |
+| taosx | TimeSeries write+query | **done** + REST/NCHAR Decimal + WS 探测 + 资源上界 (`0.3.2`) | 完整 WS SQL 会话 / HA / 自动幂等重试 |
 | goalctl | Goal→Contract digest | **done** | full multi-module authority plane |
 | verifyctl | plan+execute+run-result | **done** | full V0–V3 gate matrix |
 
@@ -20,9 +20,9 @@ Freeze: production-default path per domain; scaffold behind `scaffold` feature; 
 ## Live 入口
 
 ```bash
-node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
-set -a; source /tmp/foundationx-live.env; set +a
-cargo test -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p taosx -- --ignored
+scripts/live/export-foundationx-env.sh --env dev -- \
+  cargo test -p redisx -p postgresx -p kafkax -p natsx \
+    -p ossx -p clickhousex -p taosx -- --ignored
 ```
 
 ## 相关 PR

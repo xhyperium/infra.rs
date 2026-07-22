@@ -17,12 +17,21 @@ mod config;
 mod retry;
 mod sign;
 
-pub use client::OssClient;
+pub use client::{
+    MAX_MULTIPART_PART_BYTES, MAX_MULTIPART_PARTS, MAX_OBJECT_KEY_BYTES, MIN_MULTIPART_PART_BYTES,
+    MultipartOrphanAudit, ORPHAN_AUDIT_CAPACITY, OssClient,
+};
 pub use config::{
-    ENV_ACCESS_KEY_ID, ENV_ACCESS_KEY_SECRET, ENV_BUCKET, ENV_ENDPOINT, ENV_REGION, OssConfig,
+    ENV_ACCESS_KEY_ID, ENV_ACCESS_KEY_SECRET, ENV_ACQUIRE_TIMEOUT_MS, ENV_BUCKET, ENV_ENDPOINT,
+    ENV_MAX_BUFFER_BYTES, ENV_MAX_ERROR_BODY_BYTES, ENV_MAX_IN_FLIGHT, ENV_MAX_OBJECT_BYTES,
+    ENV_OPERATION_DEADLINE_MS, ENV_REGION, ENV_REQUEST_TIMEOUT_MS, HARD_MAX_BUFFER_BYTES,
+    HARD_MAX_ERROR_BODY_BYTES, HARD_MAX_IN_FLIGHT, HARD_MAX_OBJECT_BYTES, OssConfig,
     OssConfigBuilder,
 };
-pub use retry::{default_retry_config, is_oss_retryable, with_retry, with_retry_default};
+pub use retry::{
+    MAX_RETRY_ATTEMPTS, default_retry_config, is_oss_retryable, with_retry, with_retry_deadline,
+    with_retry_default,
+};
 pub use sign::{
     authorization_header, canonicalized_resource, canonicalized_resource_with_subresources,
     sign_v1, split_parts,
@@ -70,6 +79,7 @@ mod public_api_surface {
 
         fn assert_type<T: ?Sized>() {}
         assert_type::<OssClient>();
+        assert_type::<MultipartOrphanAudit>();
         assert_type::<OssConfig>();
         assert_type::<OssConfigBuilder>();
     }

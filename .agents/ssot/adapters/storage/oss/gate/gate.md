@@ -20,5 +20,8 @@ cargo test -p ossx -- --ignored
 
 - 默认路径退化为仅 scaffold
 - 硬编码密钥
+- 远程 endpoint 允许明文 HTTP
+- 对象/缓冲/错误体/in-flight/retry/multipart 任一可配置为无界
+- multipart abort 失败被静默吞掉，或 ETag 未经 XML escaping
 - live 测试去掉 `#[ignore]` 导致 CI 依赖外网/本机服务
 - 无证据宣称 package stable

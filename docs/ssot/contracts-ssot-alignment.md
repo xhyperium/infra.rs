@@ -1,112 +1,125 @@
 # contracts SSOT 对齐
 
 | 字段 | 值 |
-|------|-----|
-| package（`cargo -p`） | `contracts` / lib `contracts`（产品名别名 `xhyper-contracts`，不可用于 `-p`） |
-| path | `crates/contracts` |
-| version | `0.1.1`（**非** package stable；adapter-trait 出口面；未宣称 Production Ready） |
-| Active Spec | `.agents/ssot/contracts/spec/spec.md`（若存在；以本仓源码为准） |
-| 审计/跟进 | 2026-07-21 W3 + L3 子集（#172）；**defer-close 2026-07-22**：live helpers |
-| 状态 | R4 trait 面 + first-batch 语义；L3 子集 KV+Instr；**LiveContractProfile** 业务 live 助手 **PASS**；**≠** first-batch 全绿 / Agent L5 |
+|---|---|
+| package / lib | `contracts` / `contracts`（Cargo 选择器 `-p contracts`） |
+| path / version | `crates/contracts` / `0.1.2` |
+| Active Spec | `.agents/ssot/contracts/spec/spec.md` |
+| 本轮 | 2026-07-22 第2轮：事务生命周期、capability fail-closed、portable suites |
+| 状态 | R4 trait 面；**不宣称**业务原子事务、live PASS、package stable 或 Agent L5 |
 
 ## 结论摘要
 
-| 问题 | 状态 |
-|------|------|
-| trait 出口（storage / venue / Instrumentation） | **已落地** |
-| 事务可测语义 | **部分闭合**：`TxContext` + `TxRunner` + `run_tx_commit_on_ok` |
-| 消息可测语义 | **部分闭合**：`BusMessage` + `MessageAck` |
-| contract-testkit | **独立 crate 已落地**（Fake + suite + **Batch-2** + **BackendProfile**） |
-| first-batch 语义文档 + 套件 | **部分闭合**（CT-8） |
-| VenueAdapter override 门禁 | **部分闭合**（CT-10） |
-| Tx/Bus/Repo/Venue **live helpers** | **PASS**：`src/live.rs` · `LiveContractProfile` + `LiveHandles` + kv/bus/tx helpers |
-| 交易所 **业务** live（签名/下单） | **NO-GO 默认 CI**（exchange **生产默认 REST+WS 离线** #210+#214；live 仅 `#[ignore]` server_time） |
-| bootstrap 双平面 | **已收敛**：`Bounded*` + Instrumentation re-export |
-
-替换 `#43`/`#46`/`#53` 的 `xhyper-contracts` 草图。消费者：`observex` 实现 `Instrumentation`；`resiliencx` 消费；adapters storage 生产客户端 + **exchange binancex/okxx 生产默认 VenueAdapter**（#210+#214）为实现面（非 package stable）。
-
-**依赖澄清**：contracts **不**直接依赖 `serde` / `thiserror`；`decimalx` 仅 `[dev-dependencies]`（用于交易所 adapter 测试）。正常依赖仅限于 `kernel`、`canonical`、`async-trait`、`bytes`、`futures-core`。
+| 问题 | 当前裁定 |
+|---|---|
+| 16 trait 出口 | 已落地；`TxContext: Send`，其余当前为 `Send + Sync` |
+| `TxRunner` 对象安全 | PASS：无 generic method，返回 `Box<dyn TxContext>` |
+| 事务错误闭合 | PASS：`run_tx_lifecycle` + `TxRunError` 四分支 |
+| 业务原子性 | NO-GO：context 没有 SQL/Repository/KV 操作面 |
+| 旧事务 helpers | deprecated 兼容；保持旧签名/错误映射，不作为生产推荐 |
+| Live capability | fail-closed：repo/account/venue_time 无句柄槽时拒绝 |
+| contract-testkit | Fake + 15 个 suite 入口；portable 与 snapshot profile 分层 |
+| 真实 adapter suite | OSS/TAOS/ClickHouse/Redis ignored target **可编译**；live **NOT RUN** |
+| exchange 业务 live | NO-GO：本轮不提供交易签核证据 |
 
 ## 本仓可观察事实
 
 ```text
 crates/contracts/
-  live.rs                       LiveContractProfile / LiveHandles / kv_roundtrip / bus_publish / apply_ack
-  TxContext / TxRunner / …
-  docs/contracts/*.md           first-batch 语义
-  tests/conformance_first_batch 委托 contract_testkit
+  src/lib.rs                    16 traits / TxRunError / run_tx_lifecycle
+  src/live.rs                   LiveContractProfile / LiveHandles fail-closed
+  docs/contracts/*.md           trait 语义与非保证边界
 
-crates/test-support/contracts/  package contract-testkit
-  fakes/batch2.rs               Batch-2 Fake 面
-  backend.rs                    BackendProfile 真后端探测（缺凭据 → Unavailable，诚实回退 Fake）
+crates/test-support/contracts/
+  src/fakes/                    Fake / Recording / Batch-2
+  src/suite/                    per-trait suites
+  portable                      不承诺 replay、必达、排序或后端专有语义
+  snapshot                      仅进程内快照/回放 Fake profile
+
+真实 adapter ignored 调用入口：
+  oss/tests/live_object_store.rs
+  taos/tests/live_smoke.rs
+  clickhouse/tests/live_smoke.rs
+  redis/tests/live_pubsub_conformance.rs（feature pubsub）
 ```
 
-验证：
-
-```bash
-cargo test -p contracts --all-targets
-cargo test -p contract-testkit --all-targets
-cargo clippy -p contracts -p contract-testkit --all-targets -- -D warnings
-```
-
-## 条款矩阵（本仓）
+## 条款矩阵
 
 | ID | 条款 | 状态 | 证据 |
-|----|------|------|------|
-| CT-1 | KeyValueStore / Instrumentation 可调用 | PASS | contract-testkit Fake + public_surface |
-| CT-2 | Tx 可测 commit/rollback | PASS | run_tx + RecordingTxRunner |
-| CT-3 | TxRunner 对象安全 | PASS | `&dyn TxRunner` |
-| CT-4 | 消息带 ID；subscribe 流为 BusMessage | PASS | FakeEventBus |
-| CT-5 | 失败注入至少一类 | PASS | FakeTxContext::with_commit_failure |
-| CT-6 | public_surface 非空断言 | PASS | contract-testkit 驱动 |
-| CT-7 | bootstrap 无静默同名冲突 | PASS | Bounded* |
-| CT-8 | 全 trait 深度文档+套件 | **部分** | first-batch 11 篇；ObjectStore 等仍 OPEN |
-| CT-9 | 非 scaffold 真实后端验证入口 | **加厚 PASS** | redis live KV + observex Instr + **live.rs helpers** + BackendProfile |
-| CT-10 | VenueAdapter override 门禁 | **部分** | venue_override_gate |
-| CT-11 | `[lints] workspace = true` | PASS | Cargo.toml |
-| CT-12 | LiveContractProfile 业务 live 助手 | **PASS** | `src/live.rs` |
-| CT-13 | Batch-2 Fake + backend profile | **PASS** | `contract-testkit` fakes/batch2 + backend |
+|---|---|---|---|
+| CT-1 | R4 依赖白名单 / 无 adapter 实现 | PASS | manifest + workspace deps gate |
+| CT-2 | `TxRunner` / `TxContext` 对象安全 | PASS | public surface + dyn 单元测试 |
+| CT-3 | Begin / Business / Rollback / Commit 分类 | PASS | `TxRunError` 分支测试 |
+| CT-4 | business + rollback 双错误均保留 | PASS | kind/context 分别断言 |
+| CT-5 | commit 失败不自动 rollback | PASS | rollback 计数为 0 |
+| CT-6 | 旧 helper 兼容 | PASS | 局部 `allow(deprecated)` 兼容测试 |
+| CT-7 | 外部业务操作不冒充原子 | PASS | helper 签名不传 context + spec 禁止声明 |
+| CT-8 | 七个 capability flag 可验证 | PASS | 四槽缺失 + 三个无槽 flag 全部 fail-closed |
+| CT-9 | Batch-2 四 suite | PASS | Fake self-test |
+| CT-10 | portable / snapshot 分型 | PASS | EventBus surface 与 snapshot 入口分离 |
+| CT-11 | 真实 adapter 调用证据 | COMPILE PASS | 四个 ignored test target；live 未运行 |
+| CT-12 | public API additive | 待最终门禁 | API baseline + 统一 PATCH bump |
 
-## OBJECTIVE 处置（2026-07-22 defer-close）
+## 事务边界
 
-| 项 | 前状态 | 现状态 | 证据 |
-|----|--------|--------|------|
-| Tx/Bus/Repo/Venue 业务 live | DEFER | **PASS（helpers/profile）** | `crates/contracts/src/live.rs` |
-| Batch-2 Fake | DEFER | **PASS** | `crates/test-support/contracts/src/fakes/batch2.rs` |
-| 真后端 profile | DEFER | **PASS** | `crates/test-support/contracts/src/backend.rs` |
+`run_tx_lifecycle` 只表达以下顺序：
 
-## 与 testkit / contract-testkit 的关系
+```text
+begin ── work Ok  ── commit
+      └─ work Err ── rollback
+```
 
-- **不**在 `crates/testkit` 内放 contracts fake（testkit = ManualClock + IntegrationHarness）
-- **独立** `contract-testkit`：Fake/Recording + suite + Batch-2 + BackendProfile
-- `contracts` 生产依赖图 **不含** contract-testkit
+- work 闭包不接收 `TxContext`，不能通过类型取得事务绑定业务能力；
+- `BusinessAndRollback` 同时保留两个 `XError`；
+- `Commit` 表示结果可能未知，禁止自动 rollback 或无条件重试；
+- 取消/panic 只会 drop context，本合同不保证异步 rollback 完成；
+- `tx_kv_set` 的 KV 来自独立对象，因此不是原子 KV 事务。
 
-## 未做（诚实边界 / OPEN）
+真正的业务原子面必须新增 tx-bound resource，并同时提供 ADR、staged Fake、真实
+PostgreSQL 同连接/不可见性/全有全无证据；本轮刻意不创建未验证 UoW seam。
 
-- **全** trait 深度 conformance（ObjectStore / TimeSeries / PubSub / Analytics）
-- 交易所 **业务** live（签名/下单/WS 行情）— adapters NO-GO
-- VenueAdapter **强制 compile-fail** override 机控
-- first-batch **全绿** L3 宣称；Agent L5
+## Conformance 边界
 
-## L3 子集（infra-s9t.3 · closed）+ live 加厚
+- ObjectStore：唯一 key 的 put/get 精确字节往返；cleanup 由 adapter 负责。
+- TimeSeriesStore：后端精度已对齐的单点 write/query；不假定顺序或无历史数据。
+- AnalyticsSink：只验证接受成功；持久化由 adapter 后端查询证明。
+- PubSub/EventBus surface：先 subscribe 后 publish，但不 poll、不承诺必达/replay/order。
+- `assert_event_bus` 是 snapshot/replay Fake profile，不能套用 Kafka/NATS 实时订阅。
 
-| Trait | L3 三条件 | 本仓 |
-|-------|-----------|------|
-| KeyValueStore | 语义 + Fake + 非 scaffold 入口 | **满足**（RedisLiveKv + live helpers） |
-| Instrumentation | 同上 | **满足**（observex） |
-| Tx / Bus / Repository / Venue | live **helpers** | **PASS（helpers）**；交易所业务路径仍 **NO-GO** |
+ignored target 存在和编译成功只记为 `COMPILE PASS`。没有受控环境实际运行输出时，
+live 状态保持 `NOT RUN`，不得计作 Production Ready 证据。
 
-## 双栏落地
+## 未闭合 / 后续
 
-| 标尺 | 状态 |
-|------|------|
-| STATUS 结构完成度 | **100%** |
-| 非宣称 | **禁止** workspace Production Ready / Agent L5 / exchange 可交易 |
+- tx-bound Repository/UoW 与 PostgreSQL 真实原子性、取消和 commit outcome 分类；
+- Kafka/NATS delivery、ack、redelivery、崩溃矩阵与 broker conformance；
+- ObjectStore/TimeSeries/Analytics/PubSub 的后端专有持久化、清理、重连和背压；
+- 交易所交易业务 live、人工签核与 Agent L5；
+- 整 PR 最终只对受影响 crate PATCH bump 一次并更新所有 path version。
+
+## 验证
+
+```bash
+cargo test -p contracts -p contract-testkit --all-targets
+cargo test -p ossx -p taosx -p clickhousex -p redisx --all-targets --all-features
+cargo test -p postgresx --all-targets --all-features
+cargo clippy -p contracts -p contract-testkit -p ossx -p taosx -p clickhousex -p redisx \
+  --all-targets --all-features -- -D warnings
+cargo clippy -p postgresx --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS='-D warnings' cargo doc -p contracts -p contract-testkit -p ossx -p taosx \
+  -p clickhousex -p redisx --all-features --no-deps
+cargo fmt --all --check
+cmp .agents/ssot/contracts/spec/spec.md \
+  .agents/ssot/contracts/spec/xhyper-contracts-complete-spec.md
+node scripts/quality-gates/check-public-api.mjs
+node scripts/quality-gates/check-ssot-current-state.mjs
+node scripts/quality-gates/check-workspace-deps.mjs
+git diff --check HEAD
+```
 
 ## 变更记录
 
 | 日期 | 说明 |
-|------|------|
-| 2026-07-22 | **defer-close**：live.rs + contract-testkit Batch-2/backend PASS |
-| 2026-07-22 | SSOT 同步纠偏：Fake 命名空间 `contract_testkit::` |
-| 2026-07-21 | 独立 contract-testkit（#178）；L3 子集 #172 |
+|---|---|
+| 2026-07-22 | 第2轮：冻结事务生命周期非原子边界、结构化双失败、capability fail-closed、portable suites |
+| 2026-07-22 | 既有 Batch-2 Fake / BackendProfile 与 live helpers 落地 |

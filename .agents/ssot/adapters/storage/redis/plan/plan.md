@@ -14,7 +14,13 @@
 - 入口 plan；战役细节见 [infra-rs-landing.md](infra-rs-landing.md) 与 [infra-rs-draft-spec-goal.md](infra-rs-draft-spec-goal.md)
 - 后续 DEFER 项不得混入已关闭 P0 波次
 
-## 下一可选波次（OPEN）
+## 当前收敛与后续证据
 
-- Cluster / Sentinel / Streams full / pubsub 默认关闭
-- package stable / crates.io 发布流程
+| 项目 | 当前裁定 |
+|------|----------|
+| Pub/Sub 配置漂移 | 复用建池配置；Cluster/Sentinel 失败关闭 |
+| 重试/原子性 | 只读自动重试；写入默认单次；可查询合同 |
+| Cluster live | OPEN（另行受控环境验证） |
+| Sentinel live/failover | OPEN（另行受控环境验证） |
+| TLS/ACL live | OPEN（另行受控环境验证） |
+| Streams / package stable | OPEN |
