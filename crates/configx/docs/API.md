@@ -65,6 +65,8 @@
 
 `wait_timeout_outcome` 在读取 state 前和接受新 generation 前都检查 deadline。若 deadline 已到，返回
 `TimedOut` 且不推进 subscription 的 `seen`，即使 generation 已在最后观察窗口增长。
+state 可立即观察且 watch 已关闭时，`Closed` 优先于同时到期的 deadline；若 state 锁正在竞争，
+实现不会为确认关闭而越过总 deadline 阻塞。
 
 所有 Result / wait API 的 rustdoc 都包含 `# Errors`；用户可见 `XError` context 为简体中文。
 

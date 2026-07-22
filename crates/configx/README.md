@@ -62,6 +62,7 @@ assert_eq!(snapshot.get("host"), Some("localhost"));
 - `wait_outcome / wait_timeout_outcome` 区分 `Changed / TimedOut / Closed`。
 - 兼容 `wait / wait_timeout` 仍返回 `Option`；timed wait 用 `try_lock` 保证 mutex 竞争受总 deadline 限界。
 - timed wait 在接受 `Changed` 前再次检查 deadline；deadline 后 generation 增长仍返回 `TimedOut`。
+- state 可立即观察时，已关闭 watch 即使零时限也返回 `Closed`；锁竞争仍受总 deadline 限界。
 
 ## 错误合同
 

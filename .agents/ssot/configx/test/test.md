@@ -12,7 +12,7 @@ secret Debug 与 parse 错误脱敏、generation 溢出、reload/state 锁边界
 | Round 2 clippy / doc | 本地退出码 0 |
 | Round 3 `cargo test -p configx --all-targets` | 50 个 Rust 测试通过；bench/examples 通过 |
 | Round 3 phase-hook 竞态测试 | 连续 100 轮通过 |
-| Round 3 root 串行覆盖率 | `1164 / 1164`（100.0000%），exit 0 |
+| Round 3 root 串行覆盖率 | `1166 / 1166`（100.0000%），exit 0 |
 
 并发测试已改用 per-watch phase hook + Barrier，并连续运行 100 轮；覆盖率与本地审查均已闭合。
 可复验命令见

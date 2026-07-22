@@ -43,6 +43,7 @@
 - KEY=VALUE parse 错误不再回显原始行
 - 用户可见 `XError` context 统一为简体中文，关键错误测试精确断言 kind/context
 - timed wait 在接受 generation 前二次裁定 deadline，late notify 不再返回 Changed
+- state 可立即观察时，已关闭 watch 的零时限等待返回 Closed，不再误报 TimedOut
 - reload 锁边界测试改用 per-watch phase hook + Barrier，移除轮询竞态
 
 ### Compatibility

@@ -6,7 +6,7 @@
 | 门禁 | 当前状态 |
 |---|---|
 | 定向 test / clippy / doc | Round 2 本地通过 |
-| 行覆盖率 | root 串行 `1164 / 1164`（100.0000%），exit 0 |
+| 行覆盖率 | root 串行 `1166 / 1166`（100.0000%），exit 0 |
 | active / complete spec `cmp` | writer 本轮复验 |
 | 并发测试确定性加强 | Done；phase hook + Barrier 连续 100 轮通过 |
 | 本地独立 reviewer | 已完成 |

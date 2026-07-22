@@ -25,6 +25,7 @@
 | generation 溢出 | PASS | `checked_add`；溢出不替换 store |
 | timeout 总 deadline | PASS | state `try_lock`；锁竞争与伪通知不重置时限 |
 | deadline 后 generation | PASS | 接受 Changed 前二次判时；late notify 返回 TimedOut |
+| closed 与 deadline 同时成立 | PASS | state 可立即观察时 Closed 优先；零时限回归测试 |
 | 中文错误合同 | PASS | 用户可见 XError 中文；关键测试精确断言 kind/context |
 | 类型化 schema | OPEN | 仅 key 形状校验，不校验 value 类型 |
 | 远端配置中心 | NOT IMPLEMENTED | 无远端源、推送或多机一致性 |

@@ -9,7 +9,7 @@
 - [第 3 轮候选准备](../plan/round-03-findings.md)
 - 行为测试：`crates/configx/src/**`、`crates/configx/tests/**`
 
-最终行覆盖率由 root 串行确认为 `1164 / 1164`（100.0000%），exit 0。Round 2/3 记录了定向 test、clippy、doc、
+最终行覆盖率由 root 串行确认为 `1166 / 1166`（100.0000%），exit 0。Round 2/3 记录了定向 test、clippy、doc、
 确定性 phase hook 与覆盖率收敛过程。确定性加强已完成，治理修正后候选已重冻；本地独立 reviewer
 已完成实现/证据审查，独立 verifier 已完成技术/证据初验。本次纯状态 delta 不改变受审源码/测试。
 GitHub 固定提交 CI artifact 与发布证据仍 pending。

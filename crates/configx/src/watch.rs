@@ -254,9 +254,6 @@ impl ConfigSubscription {
         let watch = Arc::clone(&self.watch);
         loop {
             let current_elapsed = elapsed();
-            if current_elapsed >= timeout {
-                return Ok(ConfigWaitOutcome::TimedOut);
-            }
             match watch.state.try_lock() {
                 Ok(state) => {
                     if state.closed {
@@ -276,6 +273,10 @@ impl ConfigSubscription {
                     return Err(XError::invalid(WATCH_STATE_LOCK_POISONED_CONTEXT));
                 }
                 Err(TryLockError::WouldBlock) => {}
+            }
+
+            if current_elapsed >= timeout {
+                return Ok(ConfigWaitOutcome::TimedOut);
             }
 
             let remaining = timeout.saturating_sub(current_elapsed);
@@ -340,6 +341,11 @@ mod tests {
         let mut closed = watch.subscribe();
         watch.close().unwrap();
         assert_eq!(closed.wait_outcome().unwrap(), ConfigWaitOutcome::Closed);
+        assert_eq!(
+            closed.wait_timeout_outcome(Duration::ZERO).unwrap(),
+            ConfigWaitOutcome::Closed,
+            "已关闭状态应优先于同时到期的 deadline"
+        );
     }
 
     #[test]

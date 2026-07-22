@@ -4,7 +4,7 @@
 
 - Package / lib：`configx` / `configx`
 - Implementation baseline：`3cd29a942710c0fb42f3f6bc05e3c31570acad47`
-- Round：03 reviewer 阻断修复；root 串行覆盖率 `1164 / 1164`（100.0000%）
+- Round：03 reviewer 阻断修复；root 串行覆盖率 `1166 / 1166`（100.0000%）
 - 双镜像：本文必须与 `xhyper-configx-complete-spec.md` 逐字节一致
 
 ## 0. 文档定位与裁定边界
@@ -90,6 +90,8 @@
 - `wait_timeout_outcome` 以整次调用的总时限为 deadline；使用 `try_lock` 观察 state，mutex 竞争
   不得产生无界阻塞，实际伪通知也不得延长 deadline；接受 `Changed` 前必须再次裁定 deadline，
   deadline 到达后即使 generation 已增长也返回 `TimedOut`。
+- state 可立即观察且 watch 已关闭时，`Closed` 优先于同时到期的 deadline；锁竞争仍不得为确认
+  closed 而越过 deadline 阻塞。
 - `close` 唤醒订阅者；本 crate 没有后台 watcher 生命周期。
 
 ### 3.4 secret 诊断边界
@@ -130,6 +132,7 @@
 - reload 等待 store 时 state 可获取，且并发 notify 排到下一 generation；
 - state mutex 被长期持有时 timed wait 仍按 deadline 返回；
 - generation 在 deadline 到达后出现或在接受前跨过 deadline 时必须返回 `TimedOut`；
+- 已关闭 watch 的零时限等待必须返回 `Closed`；
 - 就绪握手与通知计数证明实际伪通知不会延长总 deadline；
 - 显式 wait outcome 与兼容 Option 路径；
 - 新 Result / wait API rustdoc 包含 `# Errors`；
