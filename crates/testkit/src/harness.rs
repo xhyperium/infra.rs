@@ -188,11 +188,13 @@ mod tests {
             .step_advance_monotonic("mono+7", Duration::from_nanos(7))
             .step("check", |c| {
                 let w = c.now().map_err(|e| e.to_string())?.as_unix_nanos();
-                if w != 150 {
-                    return Err(format!("expected wall 150, got {w}"));
-                }
+                assert_eq!(w, 150, "wall after advances");
                 Ok(())
             });
+        // PendingStep Debug via IntegrationHarness Debug（执行前仍有 pending）
+        let mut pending = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(0));
+        pending.step("dbg", |_| Ok(()));
+        let _ = format!("{:?}", pending);
         let records = h.run().expect("all ok");
         assert_eq!(records.len(), 3);
         assert!(records.iter().all(|r| r.ok));
@@ -201,6 +203,7 @@ mod tests {
         h.assert_monotonic_elapsed(Duration::from_nanos(7));
         // 通过 clock() 使用 Clock trait
         assert_eq!(h.clock().now().unwrap().as_unix_nanos(), 150);
+        assert_eq!(h.records().len(), 3);
     }
 
     #[test]
@@ -213,6 +216,9 @@ mod tests {
         assert!(!err[1].ok);
         assert_eq!(err[1].detail, "boom");
         assert_eq!(err[1].name, "fail");
+        // re-run 在失败缓存上返回 Err
+        assert!(h.run().is_err());
+        assert_eq!(h.records().len(), 2);
     }
 
     #[test]
@@ -221,6 +227,7 @@ mod tests {
         assert!(h.run().is_ok());
         h.assert_all_ok(0);
         h.assert_wall_ns(1);
+        assert!(h.records().is_empty());
     }
 
     #[test]
@@ -241,5 +248,18 @@ mod tests {
         h.step("ignored", |_| Err("no".into()));
         let rec = h.run().unwrap();
         assert_eq!(rec.len(), 1);
+        assert_eq!(h.records().len(), 1);
+    }
+
+    #[test]
+    fn step_err_detail_path() {
+        let mut h = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(0));
+        h.step("check", |c| {
+            let w = c.now().map_err(|e| e.to_string())?.as_unix_nanos();
+            Err(format!("expected wall 999, got {w}"))
+        });
+        let err = h.run().expect_err("wall mismatch");
+        assert!(!err[0].ok);
+        assert!(err[0].detail.contains("expected wall 999"));
     }
 }

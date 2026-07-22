@@ -111,5 +111,8 @@ mod tests {
         assert_eq!(store.get("keep"), None);
         assert_eq!(store.get("a").as_deref(), Some("1"));
         let _ = format!("{:?}", layered);
+        let empty = LayeredConfig::default();
+        assert!(empty.is_empty());
+        assert_eq!(empty.len(), 0);
     }
 }

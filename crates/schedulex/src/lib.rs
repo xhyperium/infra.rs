@@ -248,6 +248,7 @@ mod tests {
         assert!(format!("{}", ScheduleError::EmptyId).contains("不能为空"));
         assert!(format!("{}", ScheduleError::IdTooLong { max: MAX_ID_LEN }).contains("最大长度"));
         assert!(format!("{}", ScheduleError::IdControlChar).contains("控制字符"));
+        assert!(format!("{}", ScheduleError::JobFailed("x".into())).contains("任务执行失败"));
     }
 
     #[test]

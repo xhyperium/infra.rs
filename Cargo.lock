@@ -195,8 +195,12 @@ dependencies = [
  "decimalx",
  "futures-core",
  "futures-util",
+ "hex",
+ "hmac 0.12.1",
  "kernel",
+ "serde",
  "serde_json",
+ "sha2 0.10.9",
  "tokio",
  "transportx",
 ]
@@ -1670,14 +1674,19 @@ name = "okxx"
 version = "0.3.0"
 dependencies = [
  "async-trait",
+ "base64",
  "bytes",
  "canonical",
  "contracts",
  "decimalx",
  "futures-core",
  "futures-util",
+ "hex",
+ "hmac 0.12.1",
  "kernel",
+ "serde",
  "serde_json",
+ "sha2 0.10.9",
  "tokio",
  "transportx",
 ]

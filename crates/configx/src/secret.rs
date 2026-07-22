@@ -125,5 +125,9 @@ mod tests {
         assert!(!is_secret_key("db_password"));
         let again = get_secret(&store, "secret:db_password").unwrap();
         assert_eq!(again.expose(), "p@ss");
+        // 已带前缀的 key 不再二次加前缀
+        set_secret(&store, "secret:token", &SecretString::new("t")).unwrap();
+        assert_eq!(get_secret(&store, "token").unwrap().expose(), "t");
+        assert!(!store.contains_key("secret:secret:token"));
     }
 }

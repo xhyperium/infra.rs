@@ -16,6 +16,7 @@
 **方法：** 扫描新增模块 `#[cfg(test)]` 与 crate tests 引用。
 
 **发现：**
+
 - harness / envelope / drain / store_set / export / budget / live / batch2 / backend 等均含 unit 或 crate 测试。
 - 本轮**不**替代 `cargo test --workspace` 全量 CI 门禁记录；对齐文指向可复现命令。
 - live 真后端仍 `#[ignore]` + 环境探测（BackendProfile）。
@@ -41,7 +42,6 @@
 | transportx | TLS/pool/proxy | PASS | tls/pool/proxy.rs |
 | contracts | Tx/Bus/Repo/Venue live | PASS (helpers) | contracts/src/live.rs |
 | contract-testkit | Batch-2; backend | PASS | fakes/batch2.rs; backend.rs |
-
 
 ## 3. 残留
 

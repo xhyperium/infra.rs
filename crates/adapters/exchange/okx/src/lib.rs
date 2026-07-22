@@ -7,9 +7,9 @@
 //! 注入 [`OkxApiKey`]（`OkxAdapter::with_api_key`）启用已认证端点。
 //! 未注入时回退为内存占位。
 
+mod adapter;
 pub mod auth;
 pub mod response;
-mod adapter;
 
 pub use adapter::{AdapterState, OkxAdapter, parse_okx_server_time};
 pub use auth::OkxApiKey;

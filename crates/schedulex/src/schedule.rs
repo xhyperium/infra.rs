@@ -183,17 +183,26 @@ mod tests {
             CronParsed::EveryMs { every_ms: 2000 }
         ));
         assert!(parse_cron_expr("every:0").is_err());
+        assert!(parse_cron_expr("every:bad").is_err());
+        assert!(parse_cron_expr("every:badS").is_err());
         assert!(parse_cron_expr("").is_err());
         assert!(parse_cron_expr("* * *").is_err());
         assert!(parse_cron_expr("1 2 * * *").is_err());
+        let star = parse_cron_expr("* * * * *").unwrap();
+        assert!(matches!(star, CronParsed::MinuteMatch { every_n: None, exact: None }));
         let m = parse_cron_expr("*/5 * * * *").unwrap();
         assert!(matches!(m, CronParsed::MinuteMatch { every_n: Some(5), exact: None }));
+        assert!(parse_cron_expr("*/0 * * * *").is_err());
+        assert!(parse_cron_expr("*/x * * * *").is_err());
         let ex = parse_cron_expr("15 * * * *").unwrap();
         assert!(matches!(ex, CronParsed::MinuteMatch { exact: Some(15), .. }));
         assert!(parse_cron_expr("60 * * * *").is_err());
+        assert!(parse_cron_expr("xx * * * *").is_err());
         assert!(Schedule::fixed_delay(0).is_err());
         Schedule::fixed_delay(10).unwrap();
         Schedule::cron("every:50").unwrap();
+        // every seconds overflow
+        assert!(parse_cron_expr(&format!("every:{}s", u64::MAX)).is_err());
     }
 
     #[test]
@@ -210,5 +219,9 @@ mod tests {
         ));
         assert!(cron_matches(&CronParsed::EveryMs { every_ms: 100 }, 200));
         assert!(!cron_matches(&CronParsed::EveryMs { every_ms: 100 }, 150));
+        // every_ms == 0 防御返回 false
+        assert!(!cron_matches(&CronParsed::EveryMs { every_ms: 0 }, 0));
+        // every_n == 0 防御 false
+        assert!(!cron_matches(&CronParsed::MinuteMatch { every_n: Some(0), exact: None }, 0));
     }
 }

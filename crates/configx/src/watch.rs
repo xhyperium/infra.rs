@@ -195,4 +195,51 @@ mod tests {
         });
         assert!(sub.wait().unwrap().is_none());
     }
+
+    #[test]
+    fn default_debug_and_seen() {
+        let watch = Arc::new(ConfigWatch::default());
+        let _ = format!("{:?}", watch);
+        let mut sub = watch.subscribe();
+        assert_eq!(sub.seen(), 0);
+        watch.notify().unwrap();
+        // 非阻塞限时等待应立刻拿到 generation
+        let change = sub.wait_timeout(Duration::from_millis(50)).unwrap().expect("gen");
+        assert_eq!(change.generation, 1);
+        assert_eq!(sub.seen(), 1);
+        // 已追上 generation 时超时返回 None
+        assert!(sub.wait_timeout(Duration::from_millis(20)).unwrap().is_none());
+    }
+
+    #[test]
+    fn notify_after_close_errors() {
+        let watch = ConfigWatch::new();
+        watch.close().unwrap();
+        assert!(watch.notify().is_err());
+    }
+
+    #[test]
+    fn wait_timeout_sees_close() {
+        let watch = Arc::new(ConfigWatch::new());
+        let mut sub = watch.subscribe();
+        let w2 = Arc::clone(&watch);
+        thread::spawn(move || {
+            thread::sleep(Duration::from_millis(10));
+            w2.close().unwrap();
+        });
+        assert!(sub.wait_timeout(Duration::from_secs(1)).unwrap().is_none());
+    }
+
+    #[test]
+    fn wait_timeout_wakes_on_notify() {
+        let watch = Arc::new(ConfigWatch::new());
+        let mut sub = watch.subscribe();
+        let w2 = Arc::clone(&watch);
+        thread::spawn(move || {
+            thread::sleep(Duration::from_millis(15));
+            w2.notify().unwrap();
+        });
+        let change = sub.wait_timeout(Duration::from_secs(1)).unwrap().expect("notified");
+        assert_eq!(change.generation, 1);
+    }
 }

@@ -16,6 +16,7 @@
 **方法：** 抽检 `docs/ssot/*-ssot-alignment.md` 与 workspace 总览。
 
 **发现：**
+
 - 13 包对齐文已写 OBJECTIVE 处置表与路径证据。
 - 统一保留「禁止 Agent L5 / workspace Production Ready」。
 - 诚实边界（OTEL/分布式调度/配置中心/交易装配）显式 OPEN/NO。
@@ -42,7 +43,6 @@
 | transportx | TLS/pool/proxy | PASS | tls/pool/proxy.rs |
 | contracts | Tx/Bus/Repo/Venue live | PASS (helpers) | contracts/src/live.rs |
 | contract-testkit | Batch-2; backend | PASS | fakes/batch2.rs; backend.rs |
-
 
 ## 3. 残留
 

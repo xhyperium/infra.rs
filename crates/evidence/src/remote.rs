@@ -111,6 +111,8 @@ mod tests {
         let r = remote.append_named("evt").unwrap();
         assert_eq!(r.seq, 1);
         assert_eq!(remote.transport().lines(), vec!["1\tevt".to_string()]);
+        // 覆盖 local() 访问器：本地序号侧与 append 一致
+        assert_eq!(remote.local().len(), 1);
         remote.transport().fail_next();
         assert_eq!(remote.append_named("x"), Err(EvidenceError::DurabilityFailure));
     }

@@ -16,6 +16,7 @@ QT-1…QT-7 在 DEFER 关闭后是否改变可交易性。
 **方法：** 对照 QT 场景与 13 包能力增量。
 
 **发现：**
+
 - QT-1/QT-2 仍 Gap（exchange）。
 - QT-3 改善：budget + adapter wire。
 - QT-4 改善：evidence query/sign/remote 声明层。
@@ -44,7 +45,6 @@ QT-1…QT-7 在 DEFER 关闭后是否改变可交易性。
 | transportx | TLS/pool/proxy | PASS | tls/pool/proxy.rs |
 | contracts | Tx/Bus/Repo/Venue live | PASS (helpers) | contracts/src/live.rs |
 | contract-testkit | Batch-2; backend | PASS | fakes/batch2.rs; backend.rs |
-
 
 ## 3. 残留
 

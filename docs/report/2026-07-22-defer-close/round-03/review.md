@@ -16,6 +16,7 @@
 **方法：** 对照 `pub use` / 模块文档与对齐文 OBJECTIVE 表。
 
 **发现：**
+
 - IntegrationHarness、Envelope、StoreSet、AsyncDrain、JobRunner、TelemetryExporter、LiveContractProfile、BackendProfile 均已导出或 crate 内可达。
 - observex 文档明确 **不是** 完整 OTEL SDK。
 - schedulex JobRunner 为 `tick(now_ms)`，非隐式墙钟 daemon。
@@ -42,7 +43,6 @@
 | transportx | TLS/pool/proxy | PASS | tls/pool/proxy.rs |
 | contracts | Tx/Bus/Repo/Venue live | PASS (helpers) | contracts/src/live.rs |
 | contract-testkit | Batch-2; backend | PASS | fakes/batch2.rs; backend.rs |
-
 
 ## 3. 残留
 

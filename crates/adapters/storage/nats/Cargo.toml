@@ -19,7 +19,7 @@ async-nats = { workspace = true }
 bytes = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.0" }
+contracts = { path = "../../../contracts", version = "0.1.1" }
 kernel = { path = "../../../kernel", version = "0.3.0" }
 tokio = { workspace = true }
 tracing = { workspace = true }

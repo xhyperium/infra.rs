@@ -36,10 +36,7 @@ impl BinanceApiKey {
     }
 
     fn now_millis() -> u64 {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis() as u64
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64
     }
 
     pub fn sign_query(&self, mut query: String) -> (String, String) {
@@ -54,11 +51,7 @@ impl BinanceApiKey {
     }
 
     pub fn sign_params(&self, params: &[(&str, &str)]) -> (String, String) {
-        let query = params
-            .iter()
-            .map(|(k, v)| format!("{k}={v}"))
-            .collect::<Vec<_>>()
-            .join("&");
+        let query = params.iter().map(|(k, v)| format!("{k}={v}")).collect::<Vec<_>>().join("&");
         self.sign_query(query)
     }
 }

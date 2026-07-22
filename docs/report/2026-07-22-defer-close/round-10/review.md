@@ -16,6 +16,7 @@
 **方法：** 压力测试乐观误读。
 
 **对抗问题与回答：**
+
 1. 「13 包 DEFER 全关 = 可上线？」→ **否**。缺 L5 人签；exchange NO-GO。
 2. 「observex flush = OTEL 完成？」→ **否**。in-process only。
 3. 「JobRunner = 生产调度平台？」→ **否**。tick 驱动，非分布式。
@@ -24,11 +25,11 @@
 6. 「Agent 可填 prod-signoff？」→ **否**。明确禁止。
 
 **终裁：**
+
 - 非 OOS OBJECTIVE DEFER（13 包）= **空**
 - 声明层 code+test 就绪 = **GO**
 - workspace 生产发布 = **NO-GO**
 - exchange 可交易 = **NO-GO**
-
 
 **硬边界：** 不构成 Maintainer L5；不宣称 workspace Production Ready；不宣称 exchange 可交易。
 
@@ -49,7 +50,6 @@
 | transportx | TLS/pool/proxy | PASS | tls/pool/proxy.rs |
 | contracts | Tx/Bus/Repo/Venue live | PASS (helpers) | contracts/src/live.rs |
 | contract-testkit | Batch-2; backend | PASS | fakes/batch2.rs; backend.rs |
-
 
 ## 3. 残留
 

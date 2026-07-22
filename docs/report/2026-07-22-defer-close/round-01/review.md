@@ -16,6 +16,7 @@
 **方法：** 对照前序 synthesis 主 DEFER 列与当前 crate 树 `rg`。
 
 **发现：**
+
 - 13/13 关闭项可定位到文件（archgate 仅文档 OOS）。
 - 无「文档声称 ship 但路径缺失」项。
 - adapters exchange 不在本 13 包关闭范围。
@@ -41,7 +42,6 @@
 | transportx | TLS/pool/proxy | PASS | tls/pool/proxy.rs |
 | contracts | Tx/Bus/Repo/Venue live | PASS (helpers) | contracts/src/live.rs |
 | contract-testkit | Batch-2; backend | PASS | fakes/batch2.rs; backend.rs |
-
 
 ## 3. 残留
 

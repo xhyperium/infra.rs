@@ -103,9 +103,8 @@ impl JobRunner {
             .collect();
 
         for id in due {
-            let Some(entry) = self.entries.get_mut(&id) else {
-                continue;
-            };
+            // due 来自当前 entries 快照；单线程下 id 必然仍在 map 中
+            let entry = self.entries.get_mut(&id).expect("due id must exist in runner");
             match (entry.job.run)() {
                 Ok(()) => {
                     fired += 1;
@@ -244,5 +243,105 @@ mod tests {
     fn invalid_cron_rejected() {
         assert!(Schedule::cron("not-a-cron").is_err());
         assert!(Schedule::cron("1 2 3 4 5").is_err());
+    }
+
+    #[test]
+    fn add_rejects_zero_fixed_delay_and_debug_meta() {
+        let mut runner = JobRunner::new();
+        // FixedDelay every_ms==0 在 add 时拒绝（绕过 Schedule::fixed_delay 校验）
+        let bad = Schedule::FixedDelay { every_ms: 0, first_at_ms: 0 };
+        assert!(runner.add(Job::new("z", || Ok(())), bad).is_err());
+        runner.add(Job::new("a", || Ok(())).with_name("n"), Schedule::once(1)).unwrap();
+        assert_eq!(runner.active_len(), 1);
+        assert_eq!(runner.list_meta().len(), 1);
+        let _ = format!("{:?}", runner);
+        assert!(runner.cancel("a"));
+        assert_eq!(runner.active_len(), 0);
+    }
+
+    #[test]
+    fn tick_records_job_errors_and_continues() {
+        let mut runner = JobRunner::new();
+        runner
+            .add(
+                Job::new("bad", || Err(ScheduleError::JobFailed("boom".into()))),
+                Schedule::once(0),
+            )
+            .unwrap();
+        runner.add(Job::new("good", || Ok(())), Schedule::once(0)).unwrap();
+        let r = runner.tick(0);
+        assert_eq!(r.fired, 1);
+        assert_eq!(r.errors.len(), 1);
+        assert!(format!("{}", r.errors[0].1).contains("任务执行失败"));
+    }
+
+    #[test]
+    fn fixed_delay_respects_first_at() {
+        let hits = Arc::new(Mutex::new(0u32));
+        let h = Arc::clone(&hits);
+        let mut runner = JobRunner::new();
+        runner
+            .add(
+                Job::new("fd", move || {
+                    *h.lock().unwrap() += 1;
+                    Ok(())
+                }),
+                Schedule::FixedDelay { every_ms: 10, first_at_ms: 50 },
+            )
+            .unwrap();
+        assert_eq!(runner.tick(40).fired, 0);
+        assert_eq!(runner.tick(50).fired, 1);
+        assert_eq!(runner.tick(55).fired, 0);
+        assert_eq!(runner.tick(60).fired, 1);
+        assert_eq!(*hits.lock().unwrap(), 2);
+    }
+
+    #[test]
+    fn cron_every_ms_and_minute_match_paths() {
+        let hits = Arc::new(Mutex::new(0u32));
+        let h = Arc::clone(&hits);
+        let mut runner = JobRunner::new();
+        runner
+            .add(
+                Job::new("every", move || {
+                    *h.lock().unwrap() += 1;
+                    Ok(())
+                }),
+                Schedule::cron("every:10").unwrap(),
+            )
+            .unwrap();
+        // 首次：last_fire None；now_ms==0 或 cron_matches
+        assert_eq!(runner.tick(0).fired, 1);
+        assert_eq!(runner.tick(5).fired, 0);
+        assert_eq!(runner.tick(10).fired, 1);
+
+        let hits2 = Arc::new(Mutex::new(0u32));
+        let h2 = Arc::clone(&hits2);
+        runner
+            .add(
+                Job::new("min", move || {
+                    *h2.lock().unwrap() += 1;
+                    Ok(())
+                }),
+                Schedule::cron("*/5 * * * *").unwrap(),
+            )
+            .unwrap();
+        // minute 0 at t=0
+        assert!(runner.tick(0).fired >= 1);
+        // same minute index → no re-fire for MinuteMatch
+        let before = *hits2.lock().unwrap();
+        runner.tick(1);
+        assert_eq!(*hits2.lock().unwrap(), before);
+        // next matching minute (5 min)
+        runner.tick(5 * 60_000);
+        assert!(*hits2.lock().unwrap() > before);
+
+        // exact minute：不匹配时 is_due 走 cron_matches false 分支
+        let mut runner2 = JobRunner::new();
+        runner2.add(Job::new("exact", || Ok(())), Schedule::cron("15 * * * *").unwrap()).unwrap();
+        assert_eq!(runner2.tick(0).fired, 0);
+        assert_eq!(runner2.tick(15 * 60_000).fired, 1);
+        // 同一逻辑分钟不再触发
+        assert_eq!(runner2.tick(15 * 60_000 + 1).fired, 0);
     }
 }

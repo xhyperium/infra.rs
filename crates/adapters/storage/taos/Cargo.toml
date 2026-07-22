@@ -17,7 +17,7 @@ scaffold = []
 async-trait = { workspace = true }
 canonical = { path = "../../../types/canonical", version = "0.1.1" }
 chrono = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.0" }
+contracts = { path = "../../../contracts", version = "0.1.1" }
 decimalx = { path = "../../../types/decimal", version = "0.1.1" }
 kernel = { path = "../../../kernel", version = "0.3.0" }
 reqwest = { workspace = true }

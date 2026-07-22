@@ -47,12 +47,7 @@ impl OkxApiKey {
             .expect("HMAC-SHA256: key size is valid");
         mac.update(prehash.as_bytes());
         let sig = BASE64.encode(mac.finalize().into_bytes());
-        (
-            self.api_key.clone(),
-            sig,
-            timestamp.to_string(),
-            self.passphrase.clone(),
-        )
+        (self.api_key.clone(), sig, timestamp.to_string(), self.passphrase.clone())
     }
 
     /// 生成所有四个已认证头部，自动获取当前时间戳（ISO 8601）。
@@ -70,21 +65,14 @@ impl OkxApiKey {
     }
 
     fn now_iso() -> String {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis()
-            .to_string()
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis().to_string()
     }
 }
 
 impl fmt::Debug for OkxApiKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("OkxApiKey")
-            .field(
-                "api_key",
-                &format_args!("{}...***", &self.api_key[..4.min(self.api_key.len())]),
-            )
+            .field("api_key", &format_args!("{}...***", &self.api_key[..4.min(self.api_key.len())]))
             .field("secret_key", &"<redacted>")
             .field("passphrase", &"<redacted>")
             .finish()
@@ -98,7 +86,8 @@ mod tests {
     #[test]
     fn sign_produces_correct_headers() {
         let key = OkxApiKey::new("test-key", "test-secret", "test-passphrase");
-        let (ak, sig, ts, pp) = key.sign("2024-01-01T00:00:00.000Z", "GET", "/api/v5/account/balance", "");
+        let (ak, sig, ts, pp) =
+            key.sign("2024-01-01T00:00:00.000Z", "GET", "/api/v5/account/balance", "");
         assert_eq!(ak, "test-key");
         assert_eq!(ts, "2024-01-01T00:00:00.000Z");
         assert_eq!(pp, "test-passphrase");

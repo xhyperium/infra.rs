@@ -230,7 +230,11 @@ mod tests {
         assert_eq!(set.account().expect("a").label(), "a");
         assert_eq!(set.venue_time().expect("t").label(), "t");
         assert!(set.kv_arc().is_some());
+        assert!(set.market_data_arc().is_some());
+        assert!(set.catalog_arc().is_some());
         assert!(set.venue_arc().is_some());
+        assert!(set.account_arc().is_some());
+        assert!(set.venue_time_arc().is_some());
     }
 
     #[test]
@@ -239,5 +243,9 @@ mod tests {
         assert!(set.is_empty());
         assert_eq!(set.wired_count(), 0);
         assert!(set.kv().is_none());
+        assert!(set.market_data_arc().is_none());
+        assert!(set.catalog_arc().is_none());
+        assert!(set.account_arc().is_none());
+        assert!(set.venue_time_arc().is_none());
     }
 }

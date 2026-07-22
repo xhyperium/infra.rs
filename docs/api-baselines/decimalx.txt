@@ -146,15 +146,6 @@ pub fn decimalx::Decimal::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt
 impl core::hash::Hash for decimalx::Decimal
 pub fn decimalx::Decimal::hash<H: core::hash::Hasher>(&self, &mut H)
 impl core::marker::Copy for decimalx::Decimal
-impl core::ops::arith::Add for decimalx::Decimal
-pub type decimalx::Decimal::Output = decimalx::Decimal
-pub fn decimalx::Decimal::add(self, decimalx::Decimal) -> decimalx::Decimal
-impl core::ops::arith::Mul for decimalx::Decimal
-pub type decimalx::Decimal::Output = decimalx::Decimal
-pub fn decimalx::Decimal::mul(self, decimalx::Decimal) -> decimalx::Decimal
-impl core::ops::arith::Sub for decimalx::Decimal
-pub type decimalx::Decimal::Output = decimalx::Decimal
-pub fn decimalx::Decimal::sub(self, decimalx::Decimal) -> decimalx::Decimal
 impl core::str::traits::FromStr for decimalx::Decimal
 pub type decimalx::Decimal::Err = decimalx::DecimalError
 pub fn decimalx::Decimal::from_str(&str) -> decimalx::DecimalResult<Self>
@@ -310,4 +301,5 @@ impl core::panic::unwind_safe::RefUnwindSafe for decimalx::Ratio
 impl core::panic::unwind_safe::UnwindSafe for decimalx::Ratio
 pub const decimalx::MAX_SCALE: u8
 pub const decimalx::TECH_MAX_POW10_EXP: u32
+pub const decimalx::WIRE_SCHEMA_VERSION: u32
 pub type decimalx::DecimalResult<T> = core::result::Result<T, decimalx::DecimalError>

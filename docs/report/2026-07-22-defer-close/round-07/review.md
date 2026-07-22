@@ -16,6 +16,7 @@ StoreSet、live helpers、adapter resilience 是否构成可组合面。
 **方法：** bootstrap StoreSet + contracts live + redis/pg resilience 交叉阅读。
 
 **发现：**
+
 - StoreSet 可注入 KV/Tx/Bus/Repo/Venue 句柄；**不能**弥补 exchange 业务缺失。
 - LiveContractProfile 提供 first_batch_kv / storage_stack / venue_stack 配置面。
 - redisx/postgresx 有 resilience 模块挂接 resiliencx。
@@ -42,7 +43,6 @@ StoreSet、live helpers、adapter resilience 是否构成可组合面。
 | transportx | TLS/pool/proxy | PASS | tls/pool/proxy.rs |
 | contracts | Tx/Bus/Repo/Venue live | PASS (helpers) | contracts/src/live.rs |
 | contract-testkit | Batch-2; backend | PASS | fakes/batch2.rs; backend.rs |
-
 
 ## 3. 残留
 

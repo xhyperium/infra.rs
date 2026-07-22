@@ -150,4 +150,19 @@ mod tests {
         assert!(drain.drain().is_empty());
         assert!(drain.drain_strict().unwrap().is_empty());
     }
+
+    #[test]
+    fn drain_recovers_from_poisoned_lock() {
+        let drain = AsyncDrain::new();
+        drain.register("after-poison", || Ok(())).unwrap();
+        // 毒化 hooks 锁；drain 应 via into_inner 恢复
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _guard = drain.hooks.lock().expect("lock");
+            panic!("poison drain lock");
+        }));
+        let results = drain.drain();
+        assert_eq!(results.len(), 1);
+        assert!(results[0].ok);
+        assert_eq!(results[0].name, "after-poison");
+    }
 }

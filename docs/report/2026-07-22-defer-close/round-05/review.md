@@ -16,6 +16,7 @@ secret 脱敏、TLS 默认、签名/HMAC、禁止日志泄密。
 **方法：** 阅读 secret/tls/sign/proxy Debug 实现。
 
 **发现：**
+
 - `SecretString` Debug = `***`。
 - transport `ProxyConfig` 密码 Debug 脱敏。
 - evidence 签名为 HMAC-SHA256 本地面；**不是** 远程 CA / 不可抵赖合规产品。
@@ -43,7 +44,6 @@ secret 脱敏、TLS 默认、签名/HMAC、禁止日志泄密。
 | transportx | TLS/pool/proxy | PASS | tls/pool/proxy.rs |
 | contracts | Tx/Bus/Repo/Venue live | PASS (helpers) | contracts/src/live.rs |
 | contract-testkit | Batch-2; backend | PASS | fakes/batch2.rs; backend.rs |
-
 
 ## 3. 残留
 

@@ -114,6 +114,9 @@ mod tests {
         let id = JobId::checked("j1").unwrap();
         assert_eq!(id.as_str(), "j1");
         assert_eq!(format!("{id}"), "j1");
+        assert_eq!(AsRef::<str>::as_ref(&id), "j1");
+        let from_string = JobId::from(String::from("s1"));
+        assert_eq!(from_string.as_str(), "s1");
         let hits = std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0));
         let h = std::sync::Arc::clone(&hits);
         let mut job = Job::new("j1", move || {

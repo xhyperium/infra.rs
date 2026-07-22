@@ -16,6 +16,7 @@
 **方法：** 阅读各 crate `Cargo.toml` 与模块 `use`。
 
 **发现：**
+
 - configx 仍仅依赖 kernel；source/watch 为 std。
 - bootstrap 新增 StoreSet 持 `Arc<dyn …>` 对象安全面，不 re-export 具体 adapter 类型。
 - resiliencx 仍禁止依赖 observex；redis/pg 可选消费 resiliencx。
@@ -43,7 +44,6 @@
 | transportx | TLS/pool/proxy | PASS | tls/pool/proxy.rs |
 | contracts | Tx/Bus/Repo/Venue live | PASS (helpers) | contracts/src/live.rs |
 | contract-testkit | Batch-2; backend | PASS | fakes/batch2.rs; backend.rs |
-
 
 ## 3. 残留
 

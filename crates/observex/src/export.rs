@@ -265,6 +265,9 @@ mod tests {
         let counting = CountingInstrumentation::new();
         let exporter = InMemoryExporter::new();
         let instr = ExportingInstrumentation::new(&counting, &exporter);
+        // 访问器
+        let _ = instr.inner();
+        let _ = instr.exporter();
         instr.record_retry("op", 1);
         instr.record_circuit_open("op");
         instr.record_circuit_close("op");
@@ -274,10 +277,14 @@ mod tests {
         instr.flush().unwrap();
         assert!(exporter.buffered_spans().is_empty());
         assert!(exporter.flushed_span_count() >= 3);
+        assert!(exporter.flushed_metric_count() >= 1);
         instr.shutdown().unwrap();
         instr.shutdown().unwrap(); // idempotent
         assert!(exporter.is_shutdown());
         assert_eq!(exporter.export_spans(&[]), Err(ExportError::Shutdown));
+        assert_eq!(exporter.export_metrics(&[]), Err(ExportError::Shutdown));
+        assert_eq!(exporter.flush(), Err(ExportError::Shutdown));
         assert!(format!("{}", ExportError::Shutdown).contains("shutdown"));
+        assert!(format!("{}", ExportError::Unavailable).contains("unavailable"));
     }
 }

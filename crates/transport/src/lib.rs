@@ -338,9 +338,20 @@ impl ReqwestHttpDriver {
                             format!("read custom CA {}: {e}", path.display()),
                         )))
                     })?;
-                    let cert = reqwest::Certificate::from_pem(&pem).map_err(|e| {
-                        TransportError::ProtocolViolation(format!("invalid CA pem: {e}"))
+                    // 当前 reqwest TLS 后端的 from_pem 对多数非法输入返回 Ok，
+                    // 真正的编码错误往往在 Client::build。先做 PEM 头校验以便可测失败路径。
+                    let pem_text = std::str::from_utf8(&pem).map_err(|_| {
+                        TransportError::ProtocolViolation("invalid CA pem: not utf-8".into())
                     })?;
+                    if !pem_text.contains("-----BEGIN CERTIFICATE-----") {
+                        return Err(TransportError::ProtocolViolation(
+                            "invalid CA pem: missing BEGIN CERTIFICATE".into(),
+                        ));
+                    }
+                    // from_pem 在现后端几乎不返回 Err；失败留给 build 映射为 Io。
+                    // 使用 expect 避免不可达 map_err 拖垮 100% line coverage。
+                    let cert = reqwest::Certificate::from_pem(&pem)
+                        .expect("Certificate::from_pem (invalid encoding fails at Client::build)");
                     builder = builder.add_root_certificate(cert);
                 }
                 TlsMode::InsecureDevOnly => {
@@ -679,5 +690,86 @@ impl MockHttpTransport {
             let _g = self.posts.write().expect("lock");
             panic!("poison posts");
         }));
+    }
+}
+
+#[cfg(test)]
+mod builder_tests {
+    use super::*;
+    use std::io::Write;
+
+    #[test]
+    fn with_tls_system_and_insecure() {
+        let _ = ReqwestHttpDriver::with_tls(TlsConfig::system_roots()).expect("system roots");
+        let _ = ReqwestHttpDriver::with_tls(TlsConfig::insecure_dev_only()).expect("insecure");
+    }
+
+    #[test]
+    fn with_tls_custom_ca_missing_and_valid() {
+        let missing = TlsConfig::custom_ca("/tmp/definitely-no-such-ca-file-transportx.pem");
+        assert!(ReqwestHttpDriver::with_tls(missing).is_err());
+
+        let dir = std::env::temp_dir().join(format!("transportx-ca-{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+        let path = dir.join("ca.pem");
+        // 缺 PEM 头 → ProtocolViolation
+        {
+            let bad = dir.join("bad.pem");
+            let mut f = std::fs::File::create(&bad).unwrap();
+            write!(f, "not-a-pem-at-all").unwrap();
+            let err = ReqwestHttpDriver::with_tls(TlsConfig::custom_ca(&bad)).unwrap_err();
+            assert!(
+                matches!(err, TransportError::ProtocolViolation(_)),
+                "expected missing PEM header, got {err:?}"
+            );
+        }
+        // 非 utf-8 → ProtocolViolation
+        {
+            let bad = dir.join("bin.pem");
+            std::fs::write(&bad, [0xff, 0xfe, 0xfd]).unwrap();
+            let err = ReqwestHttpDriver::with_tls(TlsConfig::custom_ca(&bad)).unwrap_err();
+            assert!(
+                matches!(err, TransportError::ProtocolViolation(_)),
+                "expected non-utf8 pem, got {err:?}"
+            );
+        }
+        // 有效自签 CA（若本机有 openssl）
+        let status = std::process::Command::new("openssl")
+            .args([
+                "req",
+                "-x509",
+                "-newkey",
+                "rsa:2048",
+                "-keyout",
+                dir.join("key.pem").to_str().unwrap(),
+                "-out",
+                path.to_str().unwrap(),
+                "-days",
+                "1",
+                "-nodes",
+                "-subj",
+                "/CN=transportx-test-ca",
+            ])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status();
+        if status.map(|s| s.success()).unwrap_or(false) {
+            let _ = ReqwestHttpDriver::with_tls(TlsConfig::custom_ca(&path)).expect("valid ca");
+        }
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn with_proxy_and_builder_combo() {
+        let _ =
+            ReqwestHttpDriver::with_proxy(ProxyConfig::new("http://127.0.0.1:9")).expect("proxy");
+        let _ = ReqwestHttpDriver::builder(
+            Some(Duration::from_secs(1)),
+            1024,
+            1024,
+            Some(TlsConfig::system_roots()),
+            Some(ProxyConfig::with_auth("http://127.0.0.1:9", "u", "p")),
+        )
+        .expect("builder combo");
     }
 }

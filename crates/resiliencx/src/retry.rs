@@ -459,4 +459,20 @@ mod tests {
         budget.reset();
         assert_eq!(budget.remaining(), 1);
     }
+
+    #[test]
+    fn retry_fn_with_budget_wrapper() {
+        let cfg = RetryConfig::fixed(3, 0);
+        let budget = crate::RetryBudget::new(5);
+        let hits = std::sync::Mutex::new(0u32);
+        let mut op = || {
+            let mut g = hits.lock().unwrap();
+            *g += 1;
+            if *g < 2 { Err(XError::transient("t")) } else { Ok(retry_ok(7)) }
+        };
+        let v = retry_fn_with_budget(&cfg, &crate::NoopInstrumentation, "wrap", &budget, &mut op)
+            .expect("ok");
+        assert_eq!(retry_downcast::<i32>(v).unwrap(), 7);
+        assert_eq!(*hits.lock().unwrap(), 2);
+    }
 }

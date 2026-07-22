@@ -95,9 +95,7 @@ impl OkxError {
     pub fn to_error_kind(&self) -> kernel::ErrorKind {
         match self.code.as_str() {
             "50001" => kernel::ErrorKind::Transient,
-            "50100" | "50101" | "50102" | "50103" | "50104" | "50105" => {
-                kernel::ErrorKind::Invalid
-            }
+            "50100" | "50101" | "50102" | "50103" | "50104" | "50105" => kernel::ErrorKind::Invalid,
             "50111" | "50112" | "50113" | "50114" | "50115" => kernel::ErrorKind::Invalid,
             "51000" | "51001" | "51020" => kernel::ErrorKind::Invalid,
             "51006" => kernel::ErrorKind::Transient,

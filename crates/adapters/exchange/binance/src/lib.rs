@@ -7,9 +7,9 @@
 //! 注入 [`BinanceApiKey`]（`BinanceAdapter::with_api_key`）启用已认证端点。
 //! 未注入时回退为内存占位。
 
+mod adapter;
 pub mod auth;
 pub mod response;
-mod adapter;
 
 pub use adapter::{AdapterState, BinanceAdapter, Candle, Timeframe, parse_binance_server_time};
 pub use auth::BinanceApiKey;
@@ -26,7 +26,7 @@ mod public_api_surface {
         assert_eq!(ts, 1);
         let a = BinanceAdapter::mainnet();
         assert_eq!(a.state(), AdapterState::Disconnected);
-        let _ = Timeframe::M1;
+        let _ = Timeframe::M1.to_api_str();
         let c = Candle {
             open_time: 0,
             open: Price::new(Decimal::try_new(1, 0).expect("d")),

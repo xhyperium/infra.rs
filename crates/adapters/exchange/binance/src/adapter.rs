@@ -88,7 +88,9 @@ pub enum Timeframe {
 }
 
 impl Timeframe {
-    fn to_api_str(self) -> &'static str {
+    /// Binance klines interval 字符串。
+    #[must_use]
+    pub fn to_api_str(self) -> &'static str {
         match self {
             Timeframe::M1 => "1m",
             Timeframe::M5 => "5m",
@@ -213,11 +215,7 @@ impl BinanceAdapter {
             return path.to_string();
         }
         let base = self.base_url.trim_end_matches('/');
-        if path.starts_with('/') {
-            format!("{base}{path}")
-        } else {
-            format!("{base}/{path}")
-        }
+        if path.starts_with('/') { format!("{base}{path}") } else { format!("{base}/{path}") }
     }
 
     /// 经注入的 [`HttpDriver`] 发起 POST（需已 `with_http`）。
@@ -400,10 +398,7 @@ impl BinanceAdapter {
 #[async_trait]
 impl VenueAdapter for BinanceAdapter {
     async fn connect(&self) -> XResult<()> {
-        if self
-            .connected
-            .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
-            .is_err()
+        if self.connected.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_err()
         {
             return Err(XError::conflict("already connected"));
         }
@@ -411,10 +406,7 @@ impl VenueAdapter for BinanceAdapter {
     }
 
     async fn disconnect(&self) -> XResult<()> {
-        if self
-            .connected
-            .compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst)
-            .is_err()
+        if self.connected.compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst).is_err()
         {
             return Err(XError::unavailable("not connected"));
         }
@@ -446,11 +438,7 @@ impl VenueAdapter for BinanceAdapter {
             let order_resp: OrderResponse = serde_json::from_slice(&resp.body)
                 .map_err(|e| XError::invalid(format!("place_order parse: {e}")))?;
             let status = Self::map_order_status(&order_resp.status);
-            return Ok(OrderAck {
-                id: order.id.clone(),
-                status,
-                ts: order_resp.update_time,
-            });
+            return Ok(OrderAck { id: order.id.clone(), status, ts: order_resp.update_time });
         }
 
         // 降级：内存占位
@@ -477,10 +465,8 @@ impl VenueAdapter for BinanceAdapter {
             let id = match &request.id {
                 OrderRef::Exchange(s) | OrderRef::Client(s) => s.as_str(),
             };
-            let params: Vec<(&str, &str)> = vec![
-                ("symbol", &request.instrument),
-                ("origClientOrderId", id),
-            ];
+            let params: Vec<(&str, &str)> =
+                vec![("symbol", &request.instrument), ("origClientOrderId", id)];
             let resp = self.http_delete_signed("/api/v3/order", &params).await?;
             check_binance_error(&resp.body)?;
             let _cancel: CancelOrderResponse = serde_json::from_slice(&resp.body)
@@ -514,10 +500,8 @@ impl VenueAdapter for BinanceAdapter {
             let id = match &request.id {
                 OrderRef::Exchange(s) | OrderRef::Client(s) => s.as_str(),
             };
-            let params: Vec<(&str, &str)> = vec![
-                ("symbol", &request.instrument),
-                ("origClientOrderId", id),
-            ];
+            let params: Vec<(&str, &str)> =
+                vec![("symbol", &request.instrument), ("origClientOrderId", id)];
             let resp = self.http_get_signed("/api/v3/order", &params).await?;
             check_binance_error(&resp.body)?;
             let order_resp: OrderResponse = serde_json::from_slice(&resp.body)
@@ -559,9 +543,7 @@ impl VenueAdapter for BinanceAdapter {
 
         // 已签名 HTTP 路径
         if self.http.is_some() && self.api_key.is_some() {
-            let resp = self
-                .http_get_signed("/api/v3/account", &[])
-                .await?;
+            let resp = self.http_get_signed("/api/v3/account", &[]).await?;
             check_binance_error(&resp.body)?;
             let account: AccountInfo = serde_json::from_slice(&resp.body)
                 .map_err(|e| XError::invalid(format!("account parse: {e}")))?;
@@ -569,10 +551,10 @@ impl VenueAdapter for BinanceAdapter {
             for bal in &account.balances {
                 let free_str = bal.free.trim();
                 let locked_str = bal.locked.trim();
-                if free_str == "0" || free_str == "0.0" || free_str == "0.00" {
-                    if locked_str == "0" || locked_str == "0.0" || locked_str == "0.00" {
-                        continue;
-                    }
+                if (free_str == "0" || free_str == "0.0" || free_str == "0.00")
+                    && (locked_str == "0" || locked_str == "0.0" || locked_str == "0.00")
+                {
+                    continue;
                 }
                 // 使用解析后的 Decimal；解析失败跳过
                 let free_dec: Decimal = match free_str.parse() {
@@ -608,15 +590,12 @@ impl VenueAdapter for BinanceAdapter {
 
         // 已签名 HTTP 路径
         if self.http.is_some() && self.api_key.is_some() {
-            let resp = self
-                .http_get_signed("/api/v3/account", &[])
-                .await?;
+            let resp = self.http_get_signed("/api/v3/account", &[]).await?;
             check_binance_error(&resp.body)?;
             let account: AccountInfo = serde_json::from_slice(&resp.body)
                 .map_err(|e| XError::invalid(format!("account parse: {e}")))?;
             let mut balances = Vec::new();
             for bal in &account.balances {
-                let total_str = format!("{}{}", bal.free.trim(), bal.locked.trim());
                 // 简单检测零余额
                 if (bal.free == "0" || bal.free == "0.0" || bal.free == "0.00")
                     && (bal.locked == "0" || bal.locked == "0.0" || bal.locked == "0.00")
@@ -687,10 +666,7 @@ impl VenueAdapter for BinanceAdapter {
                 }
                 return parse_binance_server_time(&resp.body);
             }
-            return Err(XError::unavailable(format!(
-                "server_time http status {}",
-                resp.status
-            )));
+            return Err(XError::unavailable(format!("server_time http status {}", resp.status)));
         }
         Ok(0)
     }
@@ -703,17 +679,15 @@ impl VenueAdapter for BinanceAdapter {
             let path = format!("/api/v3/exchangeInfo?symbol={symbol}");
             let resp = self.http_get(&path).await?;
             if resp.status == 200 {
-                let exchange_info: crate::response::ExchangeInfo = serde_json::from_slice(&resp.body)
-                    .map_err(|e| XError::invalid(format!("exchangeInfo parse: {e}")))?;
+                let exchange_info: crate::response::ExchangeInfo =
+                    serde_json::from_slice(&resp.body)
+                        .map_err(|e| XError::invalid(format!("exchangeInfo parse: {e}")))?;
                 if let Some(sym) = exchange_info.symbols.first() {
                     return Self::parse_symbol_meta(sym);
                 }
                 return Err(XError::missing(format!("symbol not found: {symbol}")));
             }
-            return Err(XError::unavailable(format!(
-                "symbol_info http status {}",
-                resp.status
-            )));
+            return Err(XError::unavailable(format!("symbol_info http status {}", resp.status)));
         }
 
         // 降级：内存占位
@@ -858,10 +832,7 @@ mod tests {
     async fn candles_extension() {
         let a = BinanceAdapter::testnet();
         VenueAdapter::connect(&a).await.unwrap();
-        let c = a
-            .fetch_candles("BTCUSDT", Timeframe::M1, Some(3))
-            .await
-            .unwrap();
+        let c = a.fetch_candles("BTCUSDT", Timeframe::M1, Some(3)).await.unwrap();
         assert_eq!(c.len(), 3);
     }
 
@@ -894,10 +865,7 @@ mod tests {
 
         let mock = Arc::new(MockHttpTransport::new());
         let url = "https://api.binance.com/api/v3/time";
-        mock.set_get(
-            url,
-            Bytes::from_static(br#"{"serverTime":1710000000999}"#),
-        );
+        mock.set_get(url, Bytes::from_static(br#"{"serverTime":1710000000999}"#));
 
         let a = BinanceAdapter::mainnet().with_http(mock);
         assert!(a.has_http());
@@ -953,10 +921,7 @@ mod tests {
             id: OrderRef::Exchange("e1".into()),
         };
         a.cancel_order_request(&req).await.unwrap();
-        assert_eq!(
-            a.query_order_request(&req).await.unwrap(),
-            OrderStatus::Cancelled
-        );
+        assert_eq!(a.query_order_request(&req).await.unwrap(), OrderStatus::Cancelled);
     }
 
     #[tokio::test]
@@ -1014,34 +979,16 @@ mod tests {
 
     #[test]
     fn map_order_status_variants() {
-        assert_eq!(
-            BinanceAdapter::map_order_status("NEW"),
-            OrderStatus::Open
-        );
+        assert_eq!(BinanceAdapter::map_order_status("NEW"), OrderStatus::Open);
         assert_eq!(
             BinanceAdapter::map_order_status("PARTIALLY_FILLED"),
             OrderStatus::PartiallyFilled
         );
-        assert_eq!(
-            BinanceAdapter::map_order_status("FILLED"),
-            OrderStatus::Filled
-        );
-        assert_eq!(
-            BinanceAdapter::map_order_status("CANCELED"),
-            OrderStatus::Cancelled
-        );
-        assert_eq!(
-            BinanceAdapter::map_order_status("REJECTED"),
-            OrderStatus::Rejected
-        );
-        assert_eq!(
-            BinanceAdapter::map_order_status("EXPIRED"),
-            OrderStatus::Cancelled
-        );
-        assert_eq!(
-            BinanceAdapter::map_order_status("UNKNOWN"),
-            OrderStatus::Open
-        );
+        assert_eq!(BinanceAdapter::map_order_status("FILLED"), OrderStatus::Filled);
+        assert_eq!(BinanceAdapter::map_order_status("CANCELED"), OrderStatus::Cancelled);
+        assert_eq!(BinanceAdapter::map_order_status("REJECTED"), OrderStatus::Rejected);
+        assert_eq!(BinanceAdapter::map_order_status("EXPIRED"), OrderStatus::Cancelled);
+        assert_eq!(BinanceAdapter::map_order_status("UNKNOWN"), OrderStatus::Open);
     }
 
     #[test]

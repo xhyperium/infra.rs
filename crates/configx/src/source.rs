@@ -170,6 +170,8 @@ mod tests {
 
     #[test]
     fn memory_and_parse() {
+        let empty = MemorySource::new();
+        assert!(empty.load().unwrap().is_empty());
         let m = MemorySource::from_pairs([("a", "1"), ("b", "2")]);
         let map = m.load().unwrap();
         assert_eq!(map.get("a").map(String::as_str), Some("1"));
@@ -193,6 +195,8 @@ mod tests {
         assert_eq!(src.path(), path.as_path());
         let map = src.load().unwrap();
         assert_eq!(map.get("A").map(String::as_str), Some("1"));
+        let missing = FileSource::new(dir.join("no-such.conf"));
+        assert!(missing.load().is_err());
         let _ = std::fs::remove_dir_all(&dir);
     }
 

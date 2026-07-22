@@ -70,5 +70,9 @@ mod tests {
         assert!(p.has_auth());
         let plain = ProxyConfig::new("http://proxy:1");
         assert!(!plain.has_auth());
+        // build_reqwest_proxy 覆盖 URL 与 basic_auth 分支
+        build_reqwest_proxy(&plain).expect("plain proxy");
+        build_reqwest_proxy(&p).expect("auth proxy");
+        assert!(build_reqwest_proxy(&ProxyConfig::new("://bad")).is_err());
     }
 }
