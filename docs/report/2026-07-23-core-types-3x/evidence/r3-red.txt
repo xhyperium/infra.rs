@@ -1,0 +1,21 @@
+R3 基线失败证据
+日期：2026-07-23 Asia/Shanghai
+输入 HEAD：cc932231afafc4feff44965fe3d97facf19538cf
+
+执行命令：
+  cargo build --workspace &&
+  cargo test --workspace &&
+  cargo fmt --all -- --check &&
+  cargo clippy --workspace --all-features --all-targets -- -D warnings &&
+  cargo deny check &&
+  node scripts/quality-gates/check.mjs &&
+  node scripts/quality-gates/check-crate-versions.mjs &&
+  node scripts/quality-gates/check-workspace-deps.mjs
+
+结果：exit 1
+已通过：workspace build、workspace test、fmt、workspace all-features/all-targets clippy、cargo deny。
+综合门禁：43/44 PASS。
+唯一失败：STATUS.md crates 看板新鲜；`node scripts/docs/gen-crate-status.mjs --check` 报告 STATUS.md stale。
+短路说明：链中位于 check.mjs 之后的两个独立命令未执行；它们已包含在 check.mjs 的通过项中，并将在 GREEN 轨单独重跑。
+
+该 RED 是真实仓库状态漂移，不是为制造失败而改写测试或实现。

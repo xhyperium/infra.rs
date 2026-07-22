@@ -1,3 +1,5 @@
+> **历史状态快照（2026-07-17，非当前状态）**：本文件绑定旧分支与 `xhyper-decimalx 0.1.1`，不得作为当前 package/version/门禁依据。当前入口见 [../README.md](../README.md)。
+
 # CURRENT-STATE — decimalx agent-safe campaign
 
 | 字段 | 值 |

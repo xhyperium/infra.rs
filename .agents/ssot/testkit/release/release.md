@@ -1,3 +1,5 @@
+> **历史发布记录（2026-07-14，非当前发布声明）**：以下 tag/Stable 信息只描述 `xhyper-testkit 0.1.1`。本仓当前 package 为 `testkit 0.1.3`、`publish = false`；见 [../README.md](../README.md)。
+
 # Release — GOAL-DETERMINISTIC-TEST-SUPPORT
 
 | 字段 | 值 |

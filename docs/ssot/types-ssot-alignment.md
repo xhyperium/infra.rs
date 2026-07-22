@@ -4,7 +4,7 @@
 |------|-----|
 | 域 | `/types/`（decimal + canonical） |
 | SSOT | `.agents/ssot/types/**` 为本仓可编辑源层；历史 complete/plan 只作来源 |
-| 审计日期 | 2026-07-23（infra-2d9.7 R1） |
+| 审计日期 | 2026-07-23（infra-2d9.7 R3 声明收敛候选） |
 | 跟进 | 2026-07-21 P0/P1 **#98**；W1–W2 证据 **#121/#124**；四包内部 GO **#159** · tag `v0.3.0-four-crates`；**defer-close**：wire schema / panicking-ops gate / envelope |
 | 内部生产层级 | **decimalx = L1 Internal Ready**；**canonical = L2 committed wire subset（v1–v1.3）+ envelope** |
 | 结论 | **两 crate 均已注册 workspace 并有可运行测试**；decimal 不变量已硬化；canonical committed wire 覆盖 v1–v1.3；分层内部 GO（**≠** package Production Ready / crates.io / Agent L5） |
@@ -118,7 +118,7 @@ canonical  →  decimalx  →  kernel
 | C-12 | 双向 golden / N-1 / 拒绝样例 | PASS | `wire` 单元测 + `fixtures/market/canonical/v1{,.1,.2,.3}/` |
 | C-13 | 未晋升类型诚实标注 | PASS | 公开市场 DTO 均已晋升；Money/alias 不在 committed 清单（wire SSOT 在 decimalx / alias） |
 | C-14 | `[lints] workspace = true` | PASS | `Cargo.toml` |
-| C-15 | `schema_version` envelope | **PASS** | `src/envelope.rs` · `Envelope::wrap/expect_version` · unit + public_api_surface |
+| C-15 | `schema_version` envelope | **PASS** | `src/envelope.rs` · `Envelope::wrap/validate_version/into_payload_if_version` · unit + public_api_surface |
 
 ## 与镜像文档的关系
 
@@ -133,7 +133,8 @@ canonical  →  decimalx  →  kernel
 
 | 项 | 前状态 | 现状态 | 证据 |
 |----|--------|--------|------|
-| decimal wire 跨版本 stable | DEFER | **PASS（声明层）** | `WIRE_SCHEMA_VERSION` + `docs/WIRE.md`；破坏性字段变更须升版本 |
+| decimal 内部 Rust serde JSON shape 版本标记 | DEFER | **PASS（当前 shape）** | `WIRE_SCHEMA_VERSION` + `docs/WIRE.md`；破坏性字段变更须升版本 |
+| decimal 跨语言精确 wire / multi-major stable | DEFER | **OPEN** | JSON `i128` 精确承载、兼容策略与跨语言一致性套件尚未闭合 |
 | panicking 算子仍公开 | DEFER | **PASS** | `panicking-ops` feature default off |
 | canonical schema_version envelope | DEFER | **PASS** | `crates/types/canonical/src/envelope.rs` |
 

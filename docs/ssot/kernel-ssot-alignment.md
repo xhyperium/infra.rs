@@ -5,7 +5,7 @@
 | Spec | SPEC-KERNEL-002（`.agents/ssot/kernel/spec/spec.md`，本仓 active SSOT） |
 | SSOT | `.agents/ssot/kernel/**` 为本仓可编辑源层；历史 complete/evidence 只作不可变来源 |
 | 本仓实现 | `crates/kernel` · package/lib **`kernel`** · version `0.3.1` |
-| 审计日期 | 2026-07-23（infra-2d9.7 R1） |
+| 审计日期 | 2026-07-23（infra-2d9.7 R3 声明收敛候选） |
 | 内部生产层级 | **L1 Internal Ready；L4 仅限新鲜证据覆盖面** |
 | 内部发布状态 | **已执行**（PR #159 实现 · #163 发布记录 · tag/GitHub Release `v0.3.0-four-crates`） |
 | 结论 | **可移植语义面 + §11 可在本仓执行的合同：无残留 FAIL**；**内部生产已发布**；**≠** crates.io / 整体 Production Ready / Agent L5 |
@@ -25,7 +25,7 @@
 | line/branch cov CI | **有** PR 门禁：`.github/workflows/kernel-coverage.yml`（100% line gate） |
 | mutants / miri CI | **有** 周调度：`kernel-mutants.yml` / `kernel-miri.yml` |
 | loom CI | **有** PR/push 门禁：`kernel-loom.yml` + `scripts/quality-gates/run-kernel-loom.mjs` |
-| ClockDomain | **R1 PASS**：SystemClock 共享进程 domain；跨 domain 间隔 → `None` |
+| ClockDomain | **R2 PASS / FINAL PENDING**：SystemClock 共享进程 domain；跨 domain 间隔 → `None` |
 | 关停 deadline | **R2 PASS**：未触发且不可表示时返回 `DeadlineOverflow`；已触发时完成优先并立即 `Ok(true)` |
 | 用户可见错误中文 | **PASS**：`ClockError` / `LifecycleError` Display 中文 |
 | 公开面集成测 / 示例 / bench | **PASS**：`tests/public_api_surface.rs` · `examples/basic.rs` · `benches/hot_path` |

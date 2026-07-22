@@ -1,3 +1,5 @@
+> **历史战役记录（2026-07-14，非当前权威）**：以下 Done/Stable 只绑定 `xhyper-testkit 0.1.1`。当前 `testkit 0.1.3` 合同、allocator residual 与门禁见 [../README.md](../README.md)、[../spec/spec.md](../spec/spec.md) 和 [../gate/gate.md](../gate/gate.md)。
+
 # Goal — testkit Deterministic Test Support 闭合（SPEC-TESTKIT-002）
 
 | 字段 | 值 |

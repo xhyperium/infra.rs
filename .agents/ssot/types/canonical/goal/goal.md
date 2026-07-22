@@ -1,3 +1,5 @@
+> **历史战役记录（2026-07-21，非当前权威）**：以下 PASS/命令绑定旧候选与旧 package 别名。当前 `canonical 0.1.2` 合同和门禁见 [../README.md](../README.md) 与 [../gate/gate.md](../gate/gate.md)。
+
 # types/canonical — Goal
 
 | 字段 | 值 |

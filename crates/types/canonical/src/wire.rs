@@ -38,7 +38,8 @@
 //! - 未知 variant：反序列化失败（拒绝样例覆盖）
 //! - 缺省：无字段默认；缺字段反序列化失败
 //! - Decimal / Price / Qty：非法 `scale` 反序列化失败（走 decimalx 校验）
-//! - 版本：无 envelope；N-1 兼容靠 fixture + 本模块测试；破坏性变更须新类型/显式迁移
+//! - 版本：committed DTO shape 本身不嵌 envelope；crate 另提供可选 [`crate::Envelope`]，
+//!   消费方必须显式验证版本；N-1 兼容靠 fixture + 本模块测试；破坏性变更须新类型/显式迁移
 //! - 时间：`ts: i64` = Unix epoch **纳秒**（CAN-TIME-001）
 //!
 //! `Money` 的 wire SSOT 在 decimalx；本 crate 仅 re-export，不单独承诺。

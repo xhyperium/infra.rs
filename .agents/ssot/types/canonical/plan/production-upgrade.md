@@ -1,3 +1,5 @@
+> **历史执行计划（2026-07-17，非当前权威）**：本文件保留 PR #510 战役台账，不描述当前 `canonical 0.1.2` committed inventory。当前计划入口见 [../README.md](../README.md) 与 [wire-commitment-matrix.md](wire-commitment-matrix.md)。
+
 # Production Upgrade Path — `xhyper-canonical`
 
 | 字段 | 值 |

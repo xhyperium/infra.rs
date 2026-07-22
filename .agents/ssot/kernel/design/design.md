@@ -80,9 +80,9 @@ guard 是唯一、消费式触发入口。signal 可克隆，状态不可逆。d
 因此，`wait_timeout` 是 `Instant::now` 收口规则的明确例外，但只允许存在于该方法实现及其私有 helper 中。
 
 ```text
-checked_add(timeout) 失败 ────────────> Err(DeadlineOverflow)
-checked_add(timeout) 成功且已触发 ───> Ok(true)
-checked_add(timeout) 成功且未触发 ───> 等待到触发或 deadline
+首次持锁观察到已触发 ───────────────> Ok(true)
+未触发且 checked_add(timeout) 失败 ─> Err(DeadlineOverflow)
+未触发且 deadline 可表示 ──────────> 等待到触发或 deadline
 ```
 
 旧行为把不可表示的 deadline 回退为当前时刻，并返回普通 timeout。这会把调用错误伪装成真实超时，现改为 `WaitTimeoutError` typed error。

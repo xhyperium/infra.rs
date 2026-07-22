@@ -1,3 +1,5 @@
+> **历史执行计划（2026-07-17，非当前权威）**：本文件保留旧 campaign 基线与审批台账，不描述当前 `decimalx 0.1.2`。当前入口见 [../README.md](../README.md)。
+
 # Plan — GOAL-TYPES-DECIMALX-002 / SPEC-TYPES-DECIMALX-002 agent-safe 闭合
 
 | 字段 | 值 |

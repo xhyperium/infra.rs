@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 策略 | **B — 本仓移植 core testkit** |
-| 日期 | 2026-07-23（infra-2d9.7 R1） |
+| 日期 | 2026-07-23（infra-2d9.7 R3 声明收敛候选） |
 | 规范 | SPEC-TESTKIT-002（本仓 active SSOT `.agents/ssot/testkit/spec/spec.md`） |
 | package | **`testkit`** · lib `testkit`（Cargo 选择器 `-p testkit`；历史名 `xhyper-testkit` 已废弃） |
 | 当前版本 | 0.1.3（L1 确定性 test-support；contract-testkit 0.1.1）|
@@ -17,7 +17,7 @@
 | 本仓 `crates/testkit` core（ManualClock 族） | **已闭合**（§7 / §13.1–§13.5 / §24.1–§24.3 core / §24.5 core → 见 clause matrix） |
 | 内部生产 GO（声明层级） | **L1 test-support only**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
 | 本仓 `contract-testkit` | **已落地**：`crates/test-support/contracts`（package `contract-testkit`）；Fake + per-trait suite + **Batch-2 Fake** + **BackendProfile**；见 [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
-| deterministic runner | **候选已实现 / R1 重审中**：消费型 `IntegrationHarness` + terminal report/error + 私有 `StepRecord`（仅测试） |
+| deterministic runner | **R2 PASS / FINAL PENDING**：消费型 `IntegrationHarness` + terminal report/error + 私有 `StepRecord`（仅测试） |
 | ClockDomain 跟随 | **PASS**：每 `ManualClock` 实例独立 domain；跨实例 `checked_duration_since` → `None` |
 | 用户可见错误中文 | **PASS**：`ManualClockError` Display 中文 |
 | `[lints] workspace = true` | **PASS** |
@@ -68,7 +68,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 
 | Workflow | 触发 | 路径 |
 |----------|------|------|
-| `.github/workflows/testkit-coverage.yml` | push/PR（paths） | line ≥95% |
+| `.github/workflows/testkit-coverage.yml` | pull_request（paths）+ workflow_dispatch | line ≥95%（当前实测 100%） |
 | `.github/workflows/testkit-miri.yml` | schedule + dispatch | miri test |
 | `.github/workflows/testkit-mutants.yml` | schedule + dispatch | cargo mutants |
 

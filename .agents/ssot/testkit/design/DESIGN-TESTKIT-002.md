@@ -1,3 +1,5 @@
+> **历史基线（2026-07-14，非当前权威）**：本文件只记录 `xhyper-testkit 0.1.1` ManualClock V2 战役，不含当前 `testkit 0.1.3` scenario runner。当前设计以 [design.md](design.md) 为准，验收入口见 [../README.md](../README.md)。
+
 # DESIGN-TESTKIT-002 · Deterministic Test Support（索引式设计）
 
 | 字段 | 值 |

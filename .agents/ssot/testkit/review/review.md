@@ -1,3 +1,5 @@
+> **历史审查快照（2026-07-14，非当前裁决）**：COMPLETE/PASS 只证明当时 `xhyper-testkit 0.1.1`；不得覆盖当前 runner 与 allocator residual。当前裁决入口见 [../gate/gate.md](../gate/gate.md)。
+
 # Review — SPEC-TESTKIT-002
 
 | 字段 | 值 |

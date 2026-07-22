@@ -1,3 +1,5 @@
+> **历史工作台账（2026-07-21，非当前权威）**：以下 DONE/测试计数只绑定旧候选。当前 `canonical 0.1.2` 权威入口见 [README.md](README.md)。
+
 # GOAL-TYPES-CANONICAL-002 工作台账
 
 > **性质**：追溯矩阵，**不是** package stable。  

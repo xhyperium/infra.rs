@@ -17,7 +17,7 @@
 | Test | [test/test.md](test/test.md) | 当前测试合同与待验证命令 |
 | Gate | [gate/gate.md](gate/gate.md) | 当前候选门禁状态 |
 | Matrix | [matrix/matrix.md](matrix/matrix.md) | clause → code → test → claim |
-| Historical | `plan/` / `release/` / `evidence/` | 历史来源，不继承 PASS |
+| Historical | `goal/` / `design/DESIGN-TESTKIT-002.md` / `plan/` / `review/` / `release/` / `evidence/` | 旧战役来源，不继承 PASS |
 
 ## 边界
 

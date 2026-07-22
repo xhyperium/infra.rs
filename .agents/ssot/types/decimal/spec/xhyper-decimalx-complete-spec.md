@@ -1,3 +1,5 @@
+> **历史实现快照（0.1.1，非当前权威）**：本文件不描述当前 `decimalx 0.1.2`。当前 active spec 是 [spec.md](spec.md)，入口见 [../README.md](../README.md)。
+
 # decimalx 实现规范
 
 状态：当前 `0.1.1` 实现的 active 验收合同（wire/生产边界未稳定）

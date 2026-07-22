@@ -6,7 +6,7 @@
 | Design | [design/design.md](../design/design.md) |
 | Test | [test/test.md](../test/test.md) |
 | 当前 package 版本 | `0.1.3` |
-| 当前裁定 | **NO-GO / FIXED-CANDIDATE VERIFYING** |
+| 当前裁定 | **NO-GO / R3 FIXED-CANDIDATE VERIFYING** |
 
 当前 active 合同与实现已收敛；固定候选的独立重审和最终门禁尚未闭合。历史 Stable/COMPLETE/PASS 不自动继承到本轮候选。
 
@@ -14,7 +14,7 @@
 
 | Gate | 当前状态 | GO 条件 |
 |---|---|---|
-| G-01 SSOT 一致 | READY | spec/design/test/gate/matrix/AGENTS 使用 `testkit`、`0.1.3` 当前事实与同一边界 |
+| G-01 SSOT 一致 | R3 FIXED / FINAL PENDING | spec/design/test/gate/matrix/AGENTS 使用 `testkit`、`0.1.3` 当前事实与同一边界；旧战役文档显式标为历史 |
 | G-02 ManualClock 合同 | FOCUSED PASS | 单 Mutex、checked、fault、snapshot、poison、独立 domain 全部有新鲜测试 |
 | G-03 Runner typed API | IMPLEMENTED / VERIFYING | 导出 `HarnessReport`、`HarnessRunError`、四态 `StepOutcome`；`StepRecord` 字段私有且 getter 完整 |
 | G-04 Runner fail-closed | IMPLEMENTED / VERIFYING | `step(self)->Self`、`run(self)` 编译期排除重跑/运行后追加；clock fault/panic 返回 terminal error；首错停止 |

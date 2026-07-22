@@ -94,10 +94,10 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 
 | Crate | 路径 | 标准七项 |
 |-------|------|----------|
-| `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | 见 STATUS.md |
-| `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | 见 STATUS.md |
+| `kernel`（lib `kernel`） | `crates/kernel/` | 见 STATUS.md |
+| `testkit`（lib `testkit`） | `crates/testkit/` | 见 STATUS.md |
 | `xhyper-configx` / `schedulex` / `bootstrap` / `evidence` / `observex` / `resiliencx` / `transportx` | `crates/<name>/` | 见 STATUS.md |
-| `xhyper-decimalx` / `xhyper-canonical` | `crates/types/*` | 见 STATUS.md |
+| `decimalx` / `canonical` | `crates/types/*` | 见 STATUS.md |
 | `xhyper-contracts` | `crates/contracts/` | 见 STATUS.md |
 | adapters 九 package | `crates/adapters/**` | 见 STATUS.md |
 
@@ -117,7 +117,7 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 
 - 新增 crate 前先评估：是否可以用现有 crate 的模块替代
 - crate 间依赖方向单向，禁止循环引用
-- L0 信任根为 `xhyper-kernel`；`testkit` 仅允许 dev-dependency 消费
+- L0 信任根为 `kernel`；`testkit` 仅允许 dev-dependency 消费
 - 依赖方向：`canonical` → `decimalx` → `kernel`；`testkit` → `kernel`；`configx` → `kernel`（L1，禁止其他 L1）；`resiliencx` → `kernel`；`bootstrap` → `kernel`；`transportx` → `kernel`（L1，R3 禁止其他 L1）
 - 每个 crate 目录必须符合上文「子模块标准布局」
 
@@ -168,13 +168,13 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 
 | Crate | 路径 | 职责 |
 |-------|------|------|
-| `xhyper-kernel`（lib `kernel`） | `crates/kernel/` | xhyper L0 语义信任根（clock / lifecycle） |
-| `xhyper-testkit`（lib `testkit`） | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
+| `kernel`（lib `kernel`） | `crates/kernel/` | L0 语义信任根（clock / lifecycle） |
+| `testkit`（lib `testkit`） | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
 | `contract-testkit`（lib `contract_testkit`） | `crates/test-support/contracts/` | Fake + per-trait suite（仅 dev-dep） |
 | `xhyper-configx`（lib `configx`） | `crates/configx/` | L1 配置存储（MemoryConfigStore） |
 | `xhyper-schedulex`（lib `schedulex`） | `crates/schedulex/` | L1 任务 ID 登记表（active SSOT：无真实定时器） |
-| `xhyper-decimalx`（lib `decimalx`） | `crates/types/decimal/` | 十进制数值 / Money（ADR-006/007） |
-| `xhyper-canonical`（lib `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
+| `decimalx`（lib `decimalx`） | `crates/types/decimal/` | 十进制数值 / Money（ADR-006/007） |
+| `canonical`（lib `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
 | `resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | L1 重试 + 熔断 + 限流 + 舱壁 + async retry（infra-s9t） |
 | `xhyper-bootstrap`（lib `bootstrap`） | `crates/bootstrap/` | L1 唯一组合根（ADR-016；typed composition） |
 | `xhyper-contracts` | `crates/contracts/` | adapter trait 出口（Exchange/Storage） |

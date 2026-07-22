@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-22T06:03:46Z
+> **生成时间**：2026-07-22T21:59:06Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -39,10 +39,10 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 
 | Package | 路径 | 层 | 布局 | 测试 | LOC | 示例 | 成熟度 | 完成度 | SSOT |
 |---------|------|----|:----:|:----:|----:|:----:|--------|--------|------|
-| `kernel` | `crates/kernel` | L0 | 7/7 | ✅ 6i+u | 1702 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/kernel-ssot-alignment.md) |
-| `testkit` | `crates/testkit` | T0 | 7/7 | ✅ 6i+u | 845 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/testkit-ssot-alignment.md) |
-| `canonical` | `crates/types/canonical` | types | 7/7 | ✅ 2i+u | 1353 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/types-ssot-alignment.md) |
-| `decimalx` | `crates/types/decimal` | types | 7/7 | ✅ 6i+u | 1555 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/types-ssot-alignment.md) |
+| `kernel` | `crates/kernel` | L0 | 7/7 | ✅ 6i+u | 1732 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/kernel-ssot-alignment.md) |
+| `testkit` | `crates/testkit` | T0 | 7/7 | ✅ 7i+u | 1115 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/testkit-ssot-alignment.md) |
+| `canonical` | `crates/types/canonical` | types | 7/7 | ✅ 2i+u | 1429 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/types-ssot-alignment.md) |
+| `decimalx` | `crates/types/decimal` | types | 7/7 | ✅ 6i+u | 1567 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/types-ssot-alignment.md) |
 | `bootstrap` | `crates/bootstrap` | L1 | 7/7 | ✅ 2i+u | 1530 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/bootstrap-ssot-alignment.md) |
 | `configx` | `crates/configx` | L1 | 7/7 | ✅ 2i+u | 1320 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/configx-ssot-alignment.md) |
 | `evidence` | `crates/evidence` | L1 | 7/7 | ✅ 2i+u | 896 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/evidence-ssot-alignment.md) |

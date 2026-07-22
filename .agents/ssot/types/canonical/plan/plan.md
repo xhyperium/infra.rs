@@ -1,3 +1,5 @@
+> **历史执行计划（2026-07-21，非当前权威）**：本文件保留旧 campaign 基线与当时计数，不描述当前 `canonical 0.1.2`。当前权威入口见 [../README.md](../README.md)。
+
 # Plan — GOAL-TYPES-CANONICAL-002 / SPEC-TYPES-CANONICAL-002 闭合执行包
 
 > **2026-07-21 权威对齐**：§0.2/§0.3 已按 Approved 生产路径改写（OrderId 类型已删；`ts`=Unix ns；S1 Approved）。

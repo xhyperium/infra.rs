@@ -1,3 +1,5 @@
+> **历史基线（2026-07-14，非当前权威）**：本文件保留 `xhyper-kernel 0.1.1` 发布战役事实，不描述当前 `kernel 0.3.1` 候选。当前设计以 [design.md](design.md) 为准，验收入口见 [../README.md](../README.md)。
+
 # DESIGN-KERNEL-002 · L0 Kernel Runtime Semantics
 
 | 字段 | 值 |
@@ -986,4 +988,3 @@ PR #235、tag `kernel-v0.1.1` 与 crates.io `xhyper-kernel` 0.1.1 是
 的 OPEN/CLOSED 是时间线，不得改写为当前状态。
 
 当前共享任务状态只由 Beads `xhyper-g09` 管理，本文不复制任务板。
-

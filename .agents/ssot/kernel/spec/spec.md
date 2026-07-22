@@ -278,7 +278,7 @@ Err(DeadlineOverflow) = 当前 std::time::Instant 无法表示 deadline。
 
 deadline 可表示且调用时已经触发时，必须返回 `Ok(true)`。零时长在未触发时返回 `Ok(false)`。
 
-deadline 必须先以单次 `Instant::now().checked_add(timeout)` 建立。不可表示时必须返回 typed error；禁止回退到“当前时刻”并伪装成普通 timeout。
+持锁后的首次完成状态检查必须先于 deadline 构造；已触发立即返回 `Ok(true)`。仅在未触发时，以单次 `Instant::now().checked_add(timeout)` 建立 deadline；不可表示时必须返回 typed error，禁止回退到“当前时刻”并伪装成普通 timeout。
 
 循环每次按固定 deadline 计算剩余时长，抵抗伪唤醒。锁中毒按既有策略恢复 guard，但不得改变触发状态或返回含糊结果。
 
