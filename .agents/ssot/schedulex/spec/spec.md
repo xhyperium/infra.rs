@@ -2,8 +2,8 @@
 
 | 字段 | 值 |
 |---|---|
-| Status | 当前 `0.1.0` 最小登记合同；无真实定时器 |
-| Package / lib | `xhyper-schedulex` / `schedulex` |
+| Status | 当前 `0.1.1`：任务 ID 登记表（active SSOT registry）+ 确定性 tick 驱动 JobRunner（additive 面）；**非** 完整调度器/执行器 |
+| Package / lib | `schedulex` / `schedulex`（别名 `xhyper-schedulex` 仅作废弃兼容标签 / dual-mirror 文件名） |
 | Path | `crates/schedulex` |
 | Layer | L1 Infra |
 | Authority | 本文件是 active current-state spec |
@@ -14,27 +14,38 @@
 
 ## 1. 定位与依赖
 
-长期职责是定时/异步任务调度；当前 crate 为 std-only、无任何依赖，workspace 没有 owner 外的生产消费者。
+本 crate 是 L1 任务 ID 登记表（**active SSOT registry**：单一任务 ID 真源），并附带确定性、进程内 `tick(now_ms)` 驱动的 `JobRunner` additive 面（最小 cron 子集）。**登记 ≠ 自动执行**：`Scheduler`（登记表）与 `JobRunner`（执行器）相互独立，无自动联动。明确边界：**非** 完整作业调度器 / 执行器——无 async runtime、无分布式 lease、无墙钟 daemon、无生产调度平台。当前 crate 为 std-only、无任何生产依赖；workspace 无 owner 外的生产消费者。
 
 ## 2. 当前公开 API
 
-`Scheduler` 内部为 `HashMap<String, ()>`：
+`Scheduler` 内部为 `HashMap<String, ()>`（任务 ID 登记表）：
 
 | API | 当前行为 |
 |---|---|
 | `new/default` | 创建空登记表 |
-| `schedule(id)` | 插入任务 ID；重复 ID 幂等覆盖 |
-| `cancel(id)` | 删除并返回此前是否存在 |
-| `list()` | 返回当前所有 ID；顺序未承诺 |
+| `schedule(id)` / `schedule_checked` / `schedule_normalized` / `try_schedule` / `schedule_many` | 登记任务 ID；重复 ID 幂等覆盖 |
+| `cancel(id)` / `cancel_many` | 删除并返回此前是否存在 |
+| `list()` / `contains` / `len` / `is_empty` | 查询登记表 |
+| `intersection_ids` / `difference_ids` / `union_ids` / `retain` / `clear` | 集合运算 |
 
-“登记一个任务 ID”不等于定时触发或执行任务。
+`additive 面`（与登记表独立，无自动联动）：
+
+| 类型 | 当前行为 |
+|---|---|
+| `JobRunner` | `add(Job, Schedule)` + `tick(now_ms) -> TickResult`；确定性、进程内、无墙钟 |
+| `Schedule` | `once` / `fixed_delay` / `cron`（最小子集；非完整 cron 方言） |
+| `Job` / `JobFn` / `JobId` / `JobMeta` | 闭包式一次性 job 描述 |
+
+“登记一个任务 ID”**不等于**定时触发或执行任务；`JobRunner::tick` 由宿主显式驱动。
 
 ## 3. 未实现能力
 
-- Clock、timer、async runtime、Job/Run；
-- Once/FixedDelay/FixedRate/cron；
-- misfire、并发、timeout/cancellation、shutdown；
-- 持久化恢复、lease/fencing、分布式调度。
+- 分布式调度 / 跨进程 lease / fencing；
+- 墙钟后台 daemon（仅显式 `tick(now_ms)`，无自动触发）；
+- async runtime / tokio 集成；
+- 持久化恢复 / misfire 产品矩阵；
+- 完整 cron 方言 / 时区产品；
+- 把 `Scheduler`（登记表）与 `JobRunner`（执行器）混为一谈，或宣称 package stable / Agent L5。
 
 候选单进程/分布式分级方案见 Candidate Draft；未批准前不属于 active API。
 
@@ -47,7 +58,7 @@
 ## 5. 验收
 
 ```bash
-cargo test -p xhyper-schedulex
+cargo test -p schedulex
 cargo check -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
 cargo xtl lint-deps

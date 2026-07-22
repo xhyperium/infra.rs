@@ -7,12 +7,12 @@ Status:         Approved
 Target Status:  Stable
 Owner:          platform
 Physical Path:  crates/kernel
-Package:        xhyper-kernel
+Package:        kernel
 Lib:            kernel
 Layer:          L0 / Kernel
-Publish:        true (crates.io package: xhyper-kernel)
-Current Version: 0.1.1
-Target Version:  0.1.1
+Publish:        false（crates.io 历史包名 xhyper-kernel 已废弃；仅作别名记录）
+Current Version: 0.3.0
+Target Version:  0.3.0
 Source Goal:    GOAL-KERNEL-RUNTIME-SEMANTICS
 Supersedes:     SPEC-KERNEL-001
 ```
@@ -1272,7 +1272,7 @@ cargo llvm-cov -p kernel --fail-under-lines 95
 # - loom：RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom
 # - miri / mutants / public-api：按仓库 CI job 执行
 # 历史 monorepo 另有：cargo run -p xhyper-archgate -- --json；cargo xtl lint-deps；
-# cargo xtl crate-standard --check；cargo semver-checks check-release -p xhyper-kernel
+# cargo xtl crate-standard --check；cargo semver-checks check-release -p kernel
 # → **infra.rs 不适用（OOS）**，不作为本仓验收硬门禁。
 ```
 
@@ -1420,10 +1420,10 @@ AGENTS 必须列出：
 ## 15.1 当前发布状态
 
 ```text
-publish = true (crates.io package: xhyper-kernel)
+publish = false（crates.io 历史包名 xhyper-kernel 已废弃；仅作别名记录）
 ```
 
-已 publish 至 crates.io（包名 `xhyper-kernel` 0.1.1；`[lib] name = "kernel"` 保留 `use kernel::`）。仍按公开 API 治理，因为 workspace 全部下游依赖该 crate。
+crates.io 历史包名 `xhyper-kernel`（0.1.1）已废弃，仅作别名记录；当前 workspace package 为 `kernel`，version `0.3.0`，`publish = false`，`[lib] name = "kernel"` 保留 `use kernel::`。仍按公开 API 治理，因为 workspace 全部下游依赖该 crate。
 
 `publish = true` 只表达可发布/已发布事实，不构成生产认证。
 
@@ -1432,7 +1432,7 @@ publish = true (crates.io package: xhyper-kernel)
 当前仓库采用 patch-default：
 
 ```text
-0.1.0 → 0.1.1
+0.3.0 → 0.3.1
 ```
 
 但版本号不能自动授权破坏性变更。

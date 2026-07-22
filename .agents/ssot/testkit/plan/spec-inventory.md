@@ -24,7 +24,7 @@
 
 | ID | 项 |
 |----|-----|
-| I-2.1 | 生产 dep 仅 `kernel`（xhyper-kernel） |
+| I-2.1 | 生产 dep 仅 `kernel`（别名 `xhyper-kernel` 已废弃） |
 | I-2.2 | 禁止 contracts/canonical/decimalx/evidence/observex/configx/tokio/futures/serde/rand/proptest/mockall/rstest/tracing/anyhow |
 | I-2.3 | 测试 dep 允许 proptest/static_assertions/trybuild/loom |
 | I-2.4 | features default=[]；禁止 mock/async/tokio/snapshot/serde/real/integration |

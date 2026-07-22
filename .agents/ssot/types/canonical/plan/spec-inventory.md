@@ -43,7 +43,7 @@
 
 | ID | 规则 | 期望 |
 |----|------|------|
-| I-DEP-01 | 生产依赖 | 仅 `xhyper-decimalx` + `serde` |
+| I-DEP-01 | 生产依赖 | 仅 `decimalx`（别名 `xhyper-decimalx` 已废弃） + `serde` |
 | I-DEP-02 | dev 依赖 | `serde_json` |
 | I-DEP-03 | 禁止 | contracts / L1 / domain / adapter / service / app / evidence |
 | I-DEP-04 | Money | 不得本地重定义 |
@@ -92,18 +92,18 @@
 
 | ID | Package | 用途摘要 |
 |----|---------|----------|
-| I-CONS-01 | `xhyper-contracts` | trait 边界 DTO |
-| I-CONS-02 | `xhyper-binance` | REST/WS 解析与下单 |
-| I-CONS-03 | `xhyper-okx` | REST/WS 解析与取消 |
-| I-CONS-04 | `xhyper-domainx` (domain/core) | Order/Position/Status |
-| I-CONS-05 | `xhyper-domain-market` | OrderBookSnapshot |
-| I-CONS-06 | `xhyper-domain-exchange` | DomainOrder ↔ Order |
-| I-CONS-07 | `xhyper-domain-macro` | path dep |
-| I-CONS-08 | `xhyper-bootstrap` | e2e CancelOrderRequest |
-| I-CONS-09 | `xhyper-contract-testkit` | suite fixtures |
-| I-CONS-10 | `xhyper-taosx` | path dep |
+| I-CONS-01 | `contracts`（别名 `xhyper-contracts` 已废弃） | trait 边界 DTO |
+| I-CONS-02 | `binancex`（别名 `xhyper-binance` 已废弃） | REST/WS 解析与下单 |
+| I-CONS-03 | `okxx`（别名 `xhyper-okx` 已废弃） | REST/WS 解析与取消 |
+| I-CONS-04 | `domainx`（历史别名 `xhyper-domainx`） (domain/core) | Order/Position/Status |
+| I-CONS-05 | `domain-market`（历史别名 `xhyper-domain-market`） | OrderBookSnapshot |
+| I-CONS-06 | `domain-exchange`（历史别名 `xhyper-domain-exchange`） | DomainOrder ↔ Order |
+| I-CONS-07 | `domain-macro`（历史别名 `xhyper-domain-macro`） | path dep |
+| I-CONS-08 | `bootstrap`（别名 `xhyper-bootstrap` 已废弃） | e2e CancelOrderRequest |
+| I-CONS-09 | `contract-testkit`（别名 `xhyper-contract-testkit` 已废弃） | suite fixtures |
+| I-CONS-10 | `taosx`（别名 `xhyper-taosx` 已废弃） | path dep |
 
-> 注意：`tools/goalctl` / `xhyper-evidence` 中的 `canonical::` 模块名是 **另一套** encoding，不是本 crate。
+> 注意：`tools/goalctl` / `evidence`（别名 `xhyper-evidence` 已废弃） 中的 `canonical::` 模块名是 **另一套** encoding，不是本 crate。
 
 ---
 
@@ -111,7 +111,7 @@
 
 | ID | 命令 |
 |----|------|
-| I-GATE-01 | `cargo test -p xhyper-canonical` |
+| I-GATE-01 | `cargo test -p canonical（别名 xhyper-canonical 已废弃，不可用于 -p）` |
 | I-GATE-02 | `cargo check -p canonical --all-targets` |
 | I-GATE-03 | `cargo clippy -p canonical --all-targets -- -D warnings` |
 | I-GATE-04 | `cargo xtl lint-deps` |

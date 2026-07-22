@@ -73,7 +73,7 @@
 | contract-testkit | `.agents/ssot/testkit/` §3.2 | `crates/test-support/contracts` | **已落地**（Fake + per-trait suite；仅 dev-dep） |
 | schedulex | `.agents/ssot/schedulex/` | `crates/schedulex` | **registry 已落地**（active SSOT 最小合同） |
 | types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；decimal **L1**；canonical **L2** committed v1–v1.3；package stable **OPEN** |
-| configx | `.agents/ssot/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
+| configx | `.agents/ssot/configx/` | `crates/configx` | **0.1.1 内存 KV 已落地**；多源/热更新 DEFER |
 | bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根已落地**；`Bounded*` + Instrumentation/Evidence；`require_evidence` **release fail-closed**（#168）；全量 async contracts **DEFER** |
 | resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
 | observex | `.agents/ssot/observex/` | `crates/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
@@ -172,7 +172,7 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 |------|------|
 | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) | SPEC-KERNEL-002 本仓矩阵 |
 | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) | SPEC-TESTKIT-002 core 本仓矩阵 |
-| [configx-ssot-alignment.md](./configx-ssot-alignment.md) | configx 0.1.0 本仓矩阵 |
+| [configx-ssot-alignment.md](./configx-ssot-alignment.md) | configx 0.1.1 本仓矩阵 |
 | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) | schedulex active registry 本仓矩阵 |
 | [types-ssot-alignment.md](./types-ssot-alignment.md) | decimal + canonical 本仓状态 |
 | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) | bootstrap 组合根本仓矩阵 |

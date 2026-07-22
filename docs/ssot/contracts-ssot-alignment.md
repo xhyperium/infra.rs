@@ -4,6 +4,7 @@
 |------|-----|
 | package（`cargo -p`） | `contracts` / lib `contracts`（产品名别名 `xhyper-contracts`，不可用于 `-p`） |
 | path | `crates/contracts` |
+| version | `0.1.1`（**非** package stable；adapter-trait 出口面；未宣称 Production Ready） |
 | Active Spec | `.agents/ssot/contracts/spec/spec.md`（若存在；以本仓源码为准） |
 | 审计/跟进 | 2026-07-21 W3 + L3 子集（#172）；**defer-close 2026-07-22**：live helpers |
 | 状态 | R4 trait 面 + first-batch 语义；L3 子集 KV+Instr；**LiveContractProfile** 业务 live 助手 **PASS**；**≠** first-batch 全绿 / Agent L5 |
@@ -23,6 +24,8 @@
 | bootstrap 双平面 | **已收敛**：`Bounded*` + Instrumentation re-export |
 
 替换 `#43`/`#46`/`#53` 的 `xhyper-contracts` 草图。消费者：`observex` 实现 `Instrumentation`；`resiliencx` 消费；adapters storage 生产客户端 + **exchange binancex/okxx 生产默认 VenueAdapter**（#210+#214）为实现面（非 package stable）。
+
+**依赖澄清**：contracts **不**直接依赖 `serde` / `thiserror`；`decimalx` 仅 `[dev-dependencies]`（用于交易所 adapter 测试）。正常依赖仅限于 `kernel`、`canonical`、`async-trait`、`bytes`、`futures-core`。
 
 ## 本仓可观察事实
 

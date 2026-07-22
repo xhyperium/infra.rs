@@ -4,8 +4,8 @@
 |------|-----|
 | 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
 | Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ `spec/xhyper-schedulex-complete-spec.md` |
-| 本仓 crate | `crates/schedulex` · package `schedulex` · lib `schedulex` |
-| 合同范围 | **内存任务 ID 登记表** + **进程内 tick 驱动 JobRunner**（**≠** 分布式调度器） |
+| 本仓 crate | `crates/schedulex` · package `schedulex` · lib `schedulex` · **v0.1.1** |
+| 合同范围 | **任务 ID 登记表（active SSOT registry）** + **进程内 tick 驱动 JobRunner**（additive 面；**≠** 完整调度器/执行器） |
 
 ## 合同矩阵
 
@@ -77,3 +77,4 @@ cargo llvm-cov -p schedulex --fail-under-lines 100 --summary-only
 | 日期 | 说明 |
 |------|------|
 | 2026-07-22 | **defer-close**：Job/Schedule/JobRunner tick 面 PASS；分布式仍 OPEN |
+| 2026-07-22 | 对齐 Cargo 真相：版本 `0.1.1`；明确 JobRunner/TASK 面为 active SSOT 任务 ID 登记表，**非** 完整调度器/执行器；`xhyper-schedulex` 仅废弃别名 |

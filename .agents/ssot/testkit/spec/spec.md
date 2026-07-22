@@ -11,15 +11,15 @@ Package:          testkit
 Architecture:     T0 / Test Support Plane
 Production Layer: none
 Publish:          false
-Current Version:  0.1.1
-Target Version:   0.1.1
+Current Version:  0.1.2
+Target Version:   0.1.2
 Supersedes:       existing testkit-spec.md and infra/testkitx-spec.md
 Source Goal:      GOAL-DETERMINISTIC-TEST-SUPPORT
 Active Path:      .agents/ssot/testkit/spec/spec.md
-Ship:             main@testkit-v0.1.1 · PR #247 #254 #255
+Ship:             main@testkit-v0.1.2 · PR #247 #254 #255
 ```
 
-> **Status**：**Stable**（2026-07-14 ship）。实现 W0–W6 已合入 `main`（testkit **0.1.1**，PR #247 #254 #255）。  
+> **Status**：**Stable**（2026-07-14 ship）。实现 W0–W6 已合入 `main`（testkit **0.1.2**，PR #247 #254 #255）。  
 > 执行计划 / Tasks / 10x verdict 见模块 README 与 `plan/`（路径从模块根解析）。  
 > **Stable** 不等于 §24 全闭合以外的额外保证；residual 见 §24.0 与 `plan/residual-open.md`。
 
@@ -452,7 +452,7 @@ crates/test-support/contracts/
 ```toml
 [dependencies]
 kernel = {
-    package = "xhyper-kernel",
+    package = "kernel",
     path = "../kernel",
 }
 ```
