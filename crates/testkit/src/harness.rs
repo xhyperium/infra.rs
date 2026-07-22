@@ -24,10 +24,24 @@ pub enum StepOutcome {
     ObservationFailed,
 }
 
-impl StepOutcome {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum HarnessFailureKind {
+    Failed,
+    Panicked,
+    ObservationFailed,
+}
+
+impl HarnessFailureKind {
+    const fn outcome(self) -> StepOutcome {
+        match self {
+            Self::Failed => StepOutcome::Failed,
+            Self::Panicked => StepOutcome::Panicked,
+            Self::ObservationFailed => StepOutcome::ObservationFailed,
+        }
+    }
+
     fn display_zh(self) -> &'static str {
         match self {
-            Self::Passed => "成功",
             Self::Failed => "失败",
             Self::Panicked => "发生 panic",
             Self::ObservationFailed => "终态观测失败",
@@ -166,7 +180,7 @@ impl HarnessReport {
 #[error("测试步骤 {step} {}: {detail}", .kind.display_zh())]
 pub struct HarnessRunError {
     step: String,
-    kind: StepOutcome,
+    kind: HarnessFailureKind,
     detail: String,
     report: Box<HarnessReport>,
     #[source]
@@ -176,7 +190,7 @@ pub struct HarnessRunError {
 impl HarnessRunError {
     fn new(
         step: String,
-        kind: StepOutcome,
+        kind: HarnessFailureKind,
         detail: String,
         report: HarnessReport,
         source: Option<BoxError>,
@@ -191,7 +205,7 @@ impl HarnessRunError {
 
     /// 失败终态。
     pub const fn kind(&self) -> StepOutcome {
-        self.kind
+        self.kind.outcome()
     }
 
     /// 失败详情。
@@ -214,7 +228,7 @@ impl fmt::Debug for HarnessRunError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("HarnessRunError")
             .field("step", &self.step)
-            .field("kind", &self.kind)
+            .field("kind", &self.kind.outcome())
             .field("detail", &self.detail)
             .field("report", &self.report)
             .field("source", &self.source.as_ref().map(|_| "..."))
@@ -332,7 +346,7 @@ impl IntegrationHarness {
                     let report = HarnessReport { clock: self.clock, records };
                     return Err(HarnessRunError::new(
                         name,
-                        StepOutcome::ObservationFailed,
+                        HarnessFailureKind::ObservationFailed,
                         detail,
                         report,
                         Some(source),
@@ -355,7 +369,7 @@ impl IntegrationHarness {
                         let report = HarnessReport { clock: self.clock, records };
                         return Err(HarnessRunError::new(
                             name,
-                            StepOutcome::ObservationFailed,
+                            HarnessFailureKind::ObservationFailed,
                             detail,
                             report,
                             Some(source),
@@ -371,8 +385,8 @@ impl IntegrationHarness {
                 }
                 Ok(Err(source)) => {
                     let mut detail = source.to_string();
-                    let (kind, after_snapshot, source) = match after {
-                        Ok(snapshot) => (StepOutcome::Failed, Some(snapshot), source),
+                    let (failure, after_snapshot, source) = match after {
+                        Ok(snapshot) => (HarnessFailureKind::Failed, Some(snapshot), source),
                         Err((snapshot, observation)) => {
                             detail.push_str("；终态观测失败: ");
                             detail.push_str(&observation.to_string());
@@ -380,9 +394,10 @@ impl IntegrationHarness {
                                 observation,
                                 preceding: source,
                             });
-                            (StepOutcome::ObservationFailed, snapshot, combined)
+                            (HarnessFailureKind::ObservationFailed, snapshot, combined)
                         }
                     };
+                    let kind = failure.outcome();
                     records.push(StepRecord {
                         name: name.clone(),
                         outcome: kind,
@@ -391,18 +406,19 @@ impl IntegrationHarness {
                         after_snapshot,
                     });
                     let report = HarnessReport { clock: self.clock, records };
-                    return Err(HarnessRunError::new(name, kind, detail, report, Some(source)));
+                    return Err(HarnessRunError::new(name, failure, detail, report, Some(source)));
                 }
                 Err(payload) => {
                     let mut detail = panic_detail(payload.as_ref());
-                    let (kind, after_snapshot, source) = match after {
-                        Ok(snapshot) => (StepOutcome::Panicked, Some(snapshot), None),
+                    let (failure, after_snapshot, source) = match after {
+                        Ok(snapshot) => (HarnessFailureKind::Panicked, Some(snapshot), None),
                         Err((snapshot, observation)) => {
                             detail.push_str("；终态观测失败: ");
                             detail.push_str(&observation.to_string());
-                            (StepOutcome::ObservationFailed, snapshot, Some(observation))
+                            (HarnessFailureKind::ObservationFailed, snapshot, Some(observation))
                         }
                     };
+                    let kind = failure.outcome();
                     records.push(StepRecord {
                         name: name.clone(),
                         outcome: kind,
@@ -411,7 +427,7 @@ impl IntegrationHarness {
                         after_snapshot,
                     });
                     let report = HarnessReport { clock: self.clock, records };
-                    return Err(HarnessRunError::new(name, kind, detail, report, source));
+                    return Err(HarnessRunError::new(name, failure, detail, report, source));
                 }
             }
         }
@@ -459,17 +475,30 @@ mod tests {
     use super::*;
     use std::error::Error;
     use std::io;
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    fn marker_step(
+        executed: Arc<AtomicBool>,
+    ) -> impl FnOnce(&ManualClock) -> Result<(), io::Error> + Send {
+        move |_| {
+            executed.store(true, Ordering::SeqCst);
+            Ok(())
+        }
+    }
 
     #[test]
     fn snapshot_synchronization_before_step_is_terminal() {
         let clock = ManualClock::new(Timestamp::from_unix_nanos(0));
         clock.poison_state_for_test();
+        let executed = Arc::new(AtomicBool::new(false));
 
         let error = IntegrationHarness::new(clock)
-            .step_advance_wall("不得执行", Duration::from_nanos(1))
+            .step("不得执行", marker_step(Arc::clone(&executed)))
             .run()
             .expect_err("step 前快照同步失败必须终止");
 
+        assert!(!executed.load(Ordering::SeqCst));
         assert_eq!(error.kind(), StepOutcome::ObservationFailed);
         let record = &error.report().records()[0];
         assert!(record.before_snapshot().is_none());
@@ -506,6 +535,7 @@ mod tests {
         assert_eq!(error.step(), "失败步骤");
         assert_eq!(error.kind(), StepOutcome::Failed);
         assert_eq!(error.detail(), "单元错误");
+        assert!(error.to_string().contains("失败"));
         let debug = format!("{error:?}");
         assert!(debug.contains("HarnessRunError"));
         assert!(debug.contains("source: Some(\"...\")"));
@@ -525,28 +555,24 @@ mod tests {
 
     #[test]
     fn public_success_helpers_cover_complete_harness_surface() {
+        let executed = Arc::new(AtomicBool::new(false));
         let harness = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(5))
             .step_advance_wall("推进墙钟", Duration::from_nanos(2))
-            .step_advance_monotonic("推进单调钟", Duration::from_nanos(3));
+            .step_advance_monotonic("推进单调钟", Duration::from_nanos(3))
+            .step("标记执行", marker_step(Arc::clone(&executed)));
         let debug = format!("{harness:?}");
         assert!(debug.contains("PendingStep"));
         assert!(debug.contains("推进墙钟"));
 
         let report = harness.run().expect("公开成功路径必须完成");
 
-        report.assert_all_ok(2);
+        report.assert_all_ok(3);
         report.assert_wall_ns(7);
         report.assert_monotonic_elapsed(Duration::from_nanos(3));
         assert_eq!(report.records()[0].name(), "推进墙钟");
         assert_eq!(report.records()[1].name(), "推进单调钟");
-    }
-
-    #[test]
-    fn outcome_messages_cover_every_terminal_variant() {
-        assert_eq!(StepOutcome::Passed.display_zh(), "成功");
-        assert_eq!(StepOutcome::Failed.display_zh(), "失败");
-        assert_eq!(StepOutcome::Panicked.display_zh(), "发生 panic");
-        assert_eq!(StepOutcome::ObservationFailed.display_zh(), "终态观测失败");
+        assert_eq!(report.records()[2].name(), "标记执行");
+        assert!(executed.load(Ordering::SeqCst));
     }
 
     #[test]
@@ -575,7 +601,11 @@ mod tests {
         assert_eq!(error.kind(), StepOutcome::ObservationFailed);
         assert!(error.detail().contains("业务 panic"));
         assert!(error.detail().contains("终态观测失败"));
-        assert!(error.source().is_some());
+        let source = error.source().expect("必须保留终态观测错误");
+        let observation = source
+            .downcast_ref::<WallFaultObservation>()
+            .expect("source 必须是 WallFaultObservation");
+        assert_eq!(observation.0, ManualClockFault::Unavailable);
         let record = &error.report().records()[0];
         assert_eq!(record.wall_after_ns(), Some(9));
         assert_eq!(record.wall_fault_after(), Some(ManualClockFault::Unavailable));

@@ -17,7 +17,7 @@
 | 本仓 `crates/testkit` core（ManualClock 族） | **已闭合**（§7 / §13.1–§13.5 / §24.1–§24.3 core / §24.5 core → 见 clause matrix） |
 | 内部生产 GO（声明层级） | **L1 test-support only**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
 | 本仓 `contract-testkit` | **已落地**：`crates/test-support/contracts`（package `contract-testkit`）；Fake + per-trait suite + **Batch-2 Fake** + **BackendProfile**；见 [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
-| deterministic runner | **`55b8997` PASS / REVIEW PENDING**：消费型 `IntegrationHarness` + terminal report/error + 私有 `StepRecord`（仅测试） |
+| deterministic runner | **REVIEW BLOCKERS FIXED / NEW CANDIDATE PENDING**：消费型 `IntegrationHarness` + terminal report/error + 私有 `StepRecord`（仅测试） |
 | ClockDomain 跟随 | **PASS**：每 `ManualClock` 实例独立 domain；跨实例 `checked_duration_since` → `None` |
 | 用户可见错误中文 | **PASS**：`ManualClockError` Display 中文 |
 | `[lints] workspace = true` | **PASS** |
@@ -114,15 +114,15 @@ CI 入口（与 kernel 同级 paths 过滤）：
 
 | ID | 条款 | 状态 | 说明 |
 |----|------|------|------|
-| 24.1 | layer=test-support；非 L0 runtime；单 active spec；README/AGENTS 对齐 | `55b8997` PASS / REVIEW PENDING | `publish=false`、README/AGENTS、本仓 active SSOT |
-| 24.2 | 只依赖 kernel + thiserror；无 feature/宏/FixtureBuilder/provider；ManualClock V2；无真实时间/sleep/unchecked；无 Clone/Default | `55b8997` PASS / REVIEW PENDING | Cargo.toml + public_surface + api_compile + 实现 |
+| 24.1 | layer=test-support；非 L0 runtime；单 active spec；README/AGENTS 对齐 | FIXED CANDIDATE PENDING | `publish=false`、README/AGENTS、本仓 active SSOT |
+| 24.2 | 只依赖 kernel + thiserror；无 feature/宏/FixtureBuilder/provider；ManualClock V2；无真实时间/sleep/unchecked；无 Clone/Default | FIXED CANDIDATE PENDING | Cargo.toml + public_surface + api_compile + 实现 |
 | 24.3 | unit / property / concurrency / compile | PASS | 见 §13 |
 | 24.3 | line ≥95% | PASS | llvm-cov |
 | 24.3 | branch ≥90% | DEFER | OPTIONAL（上游 residual；本仓不升强制） |
 | 24.3 | mutation ≥90% | PASS | missed=0 |
 | 24.3 | Miri | PASS | 本仓 miri 日志 |
 | 24.4 | Contract 闭合 | PARTIAL→加厚 | **contract-testkit 已独立落地**；first-batch + Batch-2 Fake + `BackendProfile` 探测；ObjectStore/TimeSeries 等全深度 suite 仍 OPEN（非本轮 OBJECTIVE） |
-| 24.0-h | Integration harness | **`55b8997` PASS / REVIEW PENDING** | `src/harness.rs` · `IntegrationHarness::{new,with_wall,step,run}` + typed terminal report/error；导出见 `src/lib.rs` |
+| 24.0-h | Integration harness | **FIXED CANDIDATE PENDING** | `src/harness.rs` · `IntegrationHarness::{new,with_wall,step,run}` + typed terminal report/error；导出见 `src/lib.rs` |
 | 24.5 | 消费为 dev-dep / 无 build-dep / 无 normal graph 泄漏（core 侧） | PASS | crate 自身 `publish=false` + prod deps only kernel/thiserror；全仓 machine gate/xtask **DEFER**（无 infra-xtask graph check） |
 | 24.5 | feature 不泄漏 | PASS | `default=[]` 无其它 feature |
 | 24.6 | 治理（RFC / xtask…） | PARTIAL | CHANGELOG + Evidence 本仓已有；经 archgate 的治理机控 **OOS**（本仓明确不移植 archgate / `.architecture`） |

@@ -10,7 +10,7 @@
 | 最终内容候选 | `f62859b484dc3774a444623d8e2537e0204c4ca8` |
 | 最终状态校正候选 | `c4604ceb6c79df310ebe91fe56c516f88b1c8a6e` |
 | PR #258 coverage 修复候选 | `55b899788607bb175b47aedf4ff06dfdc2926ada` |
-| 当前状态 | **MACHINE PASS / REVIEW PENDING（PR #258 coverage 修复）** |
+| 当前状态 | **REVIEW BLOCKERS FIXED / NEW CANDIDATE PENDING** |
 | 轮次目标 | 当前权威、历史战役、Cargo package 真相与生成状态一致 |
 
 ## 基线 RED
@@ -56,3 +56,4 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
   [`reviews/r3-final-state-spec-reviewer.md`](reviews/r3-final-state-spec-reviewer.md) 与
   [`reviews/r3-final-state-gate-reviewer.md`](reviews/r3-final-state-gate-reviewer.md)。
 - PR #258 首次远端 CI 发现 `Testkit Coverage` 仅 95.9481%（25 行未覆盖），使 `bf904e3` 的最终 GO 失效。修复补齐 owned `String` panic、panic+终态观测失败、Debug/source 占位与缺失 snapshot getter 等真实路径，并以已覆盖的时钟推进步骤替代按合同不得执行的 marker 闭包；固定候选 `55b8997` 的本地同一 coverage 命令达到 100.0000%，全套 19 项机器门禁均退出 0，见 [`evidence/pr258-testkit-coverage-green.txt`](evidence/pr258-testkit-coverage-green.txt)。独立重审完成前保持 REVIEW PENDING。
+- `55b8997` 的 Spec reviewer 随后发现 HAR-13 只断言 source 存在、未验证观测错误身份；最终 Verifier 发现测试直接调用私有 formatter 覆盖不可达的 `Passed` 错误状态，属于 coverage 驱动的白盒伪测试。修复将 `HarnessRunError` 内部状态收窄为只含三种失败类型，以公开 error Display 路径覆盖文案，精确 downcast `WallFaultObservation`，并用可复用 marker step 同时保留 pre-step poison 的“不执行”直接 oracle 与真实成功路径覆盖。该私有表示收窄不改变公开 API/行为，且同一 PR 已执行一次 PATCH bump，不二次 bump；新候选与全部证据必须重建。

@@ -141,6 +141,7 @@ step 按登记顺序执行；首个非成功结果后停止，后续 step 不执
 - `assert_*` 辅助只属于 `HarnessReport`，可按 Rust 测试惯例 panic；builder 执行控制路径本身不得靠 panic 报错。
 
 `StepOutcome` 固定区分 `Passed`、`Failed`、`Panicked` 与 `ObservationFailed`；不得压缩回 `bool + String`。
+`HarnessRunError` 的内部状态空间只能包含后三种失败终态，不能表示 `Passed`；公开 `kind()` 仅把该失败状态映射回对应的 `StepOutcome`。
 
 ### 4.4 记录与时钟失败
 

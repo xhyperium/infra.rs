@@ -4,7 +4,7 @@
 |---|---|
 | Source Spec | [SPEC-TESTKIT-002](../spec/spec.md) |
 | 当前 package 版本 | `0.1.3` |
-| 本轮状态 | **`55b8997` 全量门禁 PASS；独立重审 PENDING；旧 GO 不继承** |
+| 本轮状态 | **REVIEW BLOCKERS FIXED；新内容候选与门禁 PENDING；旧 GO 不继承** |
 | 适用范围 | T0/L1 test-support；非 production runtime |
 
 本文列出实现必须通过的测试，不记录未经本轮执行的 PASS。旧 PR、tag、release evidence 与历史 coverage 只能作回归线索，不能替代当前候选的新鲜结果。
@@ -42,6 +42,7 @@
 | HAR-12 | report assert helper | 成功断言通过；不满足时按测试惯例 panic；helper 仅在 `HarnessReport`，不改变 report 状态 |
 | HAR-13 | panic + 终态观测失败 | 终态为 `ObservationFailed`；detail 同时保留 panic/观测上下文；source 为观测错误；有快照时保留 fault |
 | HAR-14 | 诊断格式 | pending step Debug 保留名称；terminal error Debug 保留结构且 source 值使用占位符，不展开底层对象 |
+| HAR-15 | 错误状态空间 | `HarnessRunError` 内部失败类型不含 `Passed`；三种错误文案均由公开 error Display 路径触发，不直接调用私有 formatter 制造覆盖 |
 
 ## 3. 边界与图测试
 
