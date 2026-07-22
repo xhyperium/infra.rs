@@ -95,6 +95,8 @@ impl<T> HttpClientPool<T> {
     }
 
     /// 借出：优先空闲；否则若未达 `max_pool_size` 用 `factory` 创建。
+    ///
+    /// `factory` 失败时会回滚 `checked_out`，避免槽位永久泄漏。
     pub fn checkout_with<F>(&self, factory: F) -> Result<T, TransportError>
     where
         F: FnOnce() -> Result<T, TransportError>,
@@ -110,12 +112,27 @@ impl<T> HttpClientPool<T> {
         if g.checked_out < self.config.max_pool_size {
             g.checked_out += 1;
             drop(g);
-            return factory();
+            match factory() {
+                Ok(item) => Ok(item),
+                Err(e) => {
+                    // factory 失败：归还许可，否则 size=1 池会永久耗尽
+                    let mut g = match self.state.lock() {
+                        Ok(g) => g,
+                        Err(p) => p.into_inner(),
+                    };
+                    if g.checked_out > 0 {
+                        g.checked_out -= 1;
+                    }
+                    self.cvar.notify_one();
+                    Err(e)
+                }
+            }
+        } else {
+            Err(TransportError::ProtocolViolation(format!(
+                "http client pool exhausted (max {})",
+                self.config.max_pool_size
+            )))
         }
-        Err(TransportError::ProtocolViolation(format!(
-            "http client pool exhausted (max {})",
-            self.config.max_pool_size
-        )))
     }
 
     /// 限时等待空闲槽（无 factory：仅从 idle 取）。
@@ -236,6 +253,23 @@ mod tests {
         assert_eq!(pool.idle_len(), 0);
         pool.return_client(item);
         assert_eq!(pool.idle_len(), 1);
+        assert_eq!(pool.checked_out(), 0);
+    }
+
+    #[test]
+    fn factory_err_releases_slot_so_pool_not_exhausted() {
+        let pool = HttpClientPool::new(PoolConfig::new(1, 1));
+        // size-1 池：factory 失败不得永久占满
+        let err = pool
+            .checkout_with(|| Err(TransportError::ProtocolViolation("factory boom".into())))
+            .unwrap_err();
+        assert!(matches!(err, TransportError::ProtocolViolation(_)));
+        assert_eq!(pool.checked_out(), 0, "factory Err must rollback checked_out");
+        // 随后成功 checkout 证明槽位已释放
+        let item = pool.checkout_with(|| Ok(99)).expect("slot free after factory err");
+        assert_eq!(item, 99);
+        assert_eq!(pool.checked_out(), 1);
+        pool.return_client(item);
         assert_eq!(pool.checked_out(), 0);
     }
 }
