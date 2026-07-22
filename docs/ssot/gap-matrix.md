@@ -31,4 +31,5 @@ cargo test -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p t
 |----|------|
 | #188–#191 | storage 生产客户端 + live 凭据 |
 | #195 | storage×7 SSOT layers |
-| （本 PR） | storage×7 OBJECTIVE DEFER 闭合 → `0.3.1`/`0.3.2` (redis/postgres) |
+| #211 | storage×7 OBJECTIVE DEFER 闭合 → `0.3.1`/`0.3.2` (redis/postgres) |
+| #219 | redisx/postgresx SSOT version 行对齐 `0.3.2` |
