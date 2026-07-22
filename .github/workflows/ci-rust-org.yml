@@ -9,22 +9,10 @@
 name: CI Rust（组织复用）
 
 on:
+  # 组织 ruleset 强制 rust-fmt/clippy/test：PR 不得用 paths 过滤，否则纯文档 PR 永远等不到 check
   pull_request:
-    paths:
-      - "crates/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "rustfmt.toml"
-      - "clippy.toml"
-      - "deny.toml"
-      - ".github/workflows/ci-rust-org.yml"
   push:
     branches: [main]
-    paths:
-      - "crates/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - ".github/workflows/ci-rust-org.yml"
   workflow_dispatch:
 
 concurrency:
