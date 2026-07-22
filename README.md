@@ -5,6 +5,7 @@
 [![校验](https://github.com/xhyperium/infra.rs/actions/workflows/validation.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/validation.yml)
 [![安全](https://github.com/xhyperium/infra.rs/actions/workflows/security.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/security.yml)
 [![Constitution](https://github.com/xhyperium/infra.rs/actions/workflows/constitution.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/constitution.yml)
+[![self-test](https://github.com/xhyperium/infra.rs/actions/workflows/self-test.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/self-test.yml)
 [![Beads Sync Test](https://github.com/xhyperium/infra.rs/actions/workflows/beads-test.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/beads-test.yml)
 
 **infra.rs** 是 [xhyper.rs](https://github.com/xhyperium/xhyper.rs) 项目的基础设施与治理仓库，承载以下职责：
