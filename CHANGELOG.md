@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **contracts 事务与 conformance 合同**：新增结构化 `TxRunError` / `run_tx_lifecycle`，明确现有 `TxContext` 仅为非原子生命周期面；`LiveHandles` 对无句柄 capability fail-closed；补齐四个 Batch-2 portable suite 并接入真实 adapter ignored targets（仅编译证据，live 未运行）
 - **SSOT current-state 治理**：冻结 Cargo metadata 的 24 个 package 名称/路径；唯一化顶层 evidence active spec；纠正 goalctl/verifyctl、configx、schedulex 与 exchange 陈旧声明；新增 fail-closed 门禁、隔离负向测试和 CI（签名 REST/公共 WS 不解除交易 NO-GO）
 - **工程宪章 v1.5.0 拆分**：正文 SSOT 迁至 `docs/constitution/` 分章（`01`–`08`）；根 `CONSTITUTION.md` 改为兼容索引；更新 AGENTS/CLAUDE/governance 引用与 `constitution.yml` 路径触发
 

@@ -109,22 +109,26 @@ async fn live_with_transaction_business_err_rolls_back() {
 #[tokio::test]
 #[ignore = "requires live Postgres; run with --ignored when available"]
 async fn live_tx_runner_boundary() {
-    use contracts::run_tx_commit_on_ok;
+    use contracts::run_tx_lifecycle;
 
     let pool = Arc::new(PostgresPool::connect(&live_config()).await.expect("connect"));
     let runner = postgresx::PgTxRunner::new(Arc::clone(&pool));
 
-    let v = run_tx_commit_on_ok(&runner, |_ctx| async move { Ok::<_, kernel::XError>(7u8) })
+    let v = run_tx_lifecycle(&runner, || async move { Ok::<_, kernel::XError>(7u8) })
         .await
         .expect("commit path");
     assert_eq!(v, 7);
 
-    let err = run_tx_commit_on_ok(&runner, |_ctx| async move {
+    let err = run_tx_lifecycle(&runner, || async move {
         Err::<(), _>(kernel::XError::invalid("rollback path"))
     })
     .await
     .expect_err("rollback path");
-    assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+    assert!(matches!(
+        err,
+        contracts::TxRunError::Business { source }
+            if source.kind() == kernel::ErrorKind::Invalid
+    ));
 
     pool.close();
 }

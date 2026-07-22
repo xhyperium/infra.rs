@@ -3,7 +3,7 @@
 //! 与 scaffold [`crate::PostgresAdapter`]（直接写 durable + 本地 ScaffoldTxContext）不同：
 //! - 事务内写入进入 staged 区，**仅**在 `commit` 后可见于 durable；
 //! - `rollback` 丢弃 staged，不触碰 durable；
-//! - 可观察 commit/rollback 计数，证明 `run_tx_commit_on_ok` 驱动真实路径。
+//! - 可观察 commit/rollback 计数，证明 `run_tx_lifecycle` 驱动真实路径。
 //!
 //! **非**真实 Postgres 客户端；默认 `cargo test` 离线可跑。
 
@@ -196,7 +196,7 @@ impl TxRunner for ObservingPostgresAdapter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use contracts::run_tx_commit_on_ok;
+    use contracts::run_tx_lifecycle;
 
     #[tokio::test]
     async fn staged_write_visible_only_after_commit() {
@@ -228,10 +228,10 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn run_tx_commit_on_ok_observes_commit() {
+    async fn run_tx_lifecycle_observes_commit() {
         let a = ObservingPostgresAdapter::local();
         let out =
-            run_tx_commit_on_ok(&a, |_ctx| async move { Ok::<_, XError>(9u8) }).await.expect("ok");
+            run_tx_lifecycle(&a, || async move { Ok::<_, XError>(9u8) }).await.expect("事务成功");
         assert_eq!(out, 9);
         assert_eq!(a.observability().commit_count(), 1);
     }
@@ -239,14 +239,14 @@ mod tests {
     #[tokio::test]
     async fn run_tx_err_observes_rollback() {
         let a = ObservingPostgresAdapter::local();
-        let err =
-            run_tx_commit_on_ok(
-                &a,
-                |_ctx| async move { Err::<(), _>(XError::invalid("业务失败")) },
-            )
+        let err = run_tx_lifecycle(&a, || async move { Err::<(), _>(XError::invalid("业务失败")) })
             .await
             .unwrap_err();
-        assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+        assert!(matches!(
+            err,
+            contracts::TxRunError::Business { source }
+                if source.kind() == kernel::ErrorKind::Invalid
+        ));
         assert_eq!(a.observability().rollback_count(), 1);
         assert_eq!(a.observability().commit_count(), 0);
     }

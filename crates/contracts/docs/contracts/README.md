@@ -1,6 +1,7 @@
-# First-batch trait 语义文档
+# Trait 语义文档
 
-本目录为 `xhyper-contracts` **首批** trait 的语义合同（DEFER-2 / CT-8 部分闭合）。
+本目录为 `contracts` 当前公开 trait 的语义合同；文档存在不等于对应后端已达到
+Production Ready，真实能力仍以 adapter 测试与 live 证据为准。
 
 | Trait | 文档 |
 |-------|------|
@@ -15,6 +16,10 @@
 | InstrumentCatalog | [instrument_catalog.md](./instrument_catalog.md) |
 | AccountSource | [account_source.md](./account_source.md) |
 | VenueTimeSource | [venue_time_source.md](./venue_time_source.md) |
+| ObjectStore | [object_store.md](./object_store.md) |
+| TimeSeriesStore | [time_series_store.md](./time_series_store.md) |
+| AnalyticsSink | [analytics_sink.md](./analytics_sink.md) |
+| PubSub | [pub_sub.md](./pub_sub.md) |
 
 ## 模板字段
 

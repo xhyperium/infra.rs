@@ -409,6 +409,7 @@ version = "0.3.1"
 dependencies = [
  "async-trait",
  "bytes",
+ "contract-testkit",
  "contracts",
  "kernel",
  "reqwest",
@@ -466,7 +467,7 @@ checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
 
 [[package]]
 name = "contract-testkit"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -481,7 +482,7 @@ dependencies = [
 
 [[package]]
 name = "contracts"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "binancex",
@@ -492,6 +493,7 @@ dependencies = [
  "futures-core",
  "kernel",
  "okxx",
+ "thiserror 2.0.19",
  "tokio",
 ]
 
@@ -1745,6 +1747,7 @@ dependencies = [
  "base64",
  "bytes",
  "chrono",
+ "contract-testkit",
  "contracts",
  "criterion",
  "hmac 0.12.1",
@@ -2187,6 +2190,7 @@ version = "0.3.2"
 dependencies = [
  "async-trait",
  "bytes",
+ "contract-testkit",
  "contracts",
  "futures-core",
  "futures-util",
@@ -2826,6 +2830,7 @@ dependencies = [
  "async-trait",
  "canonical",
  "chrono",
+ "contract-testkit",
  "contracts",
  "decimalx",
  "kernel",

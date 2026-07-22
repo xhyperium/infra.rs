@@ -3,7 +3,7 @@
 //! # 诚实限制
 //!
 //! [`contracts::TxContext`] 只暴露 `commit` / `rollback`，**不**传递 SQL 句柄。
-//! 因此本适配器保证的是**事务边界**可被 `run_tx_commit_on_ok` 驱动；
+//! 因此本适配器保证的是**事务生命周期边界**可被 `run_tx_lifecycle` 驱动；
 //! 若要在同一事务内执行业务 SQL，请使用 [`crate::PostgresPool::with_transaction`]
 //! 或 [`crate::PgTransaction`]。
 

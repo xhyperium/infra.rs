@@ -8,7 +8,7 @@ use contract_testkit::{
 use contracts::{
     AccountSource, AnalyticsSink, BusMessage, EventBus, ExecutionVenue, InstrumentCatalog,
     Instrumentation, KeyValueStore, MarketDataSource, MessageAck, ObjectStore, PubSub, Repository,
-    TimeSeriesStore, TxRunner, VenueAdapter, VenueTimeSource, run_tx_commit_on_ok,
+    TimeSeriesStore, TxRunner, VenueAdapter, VenueTimeSource, run_tx_lifecycle,
 };
 use kernel::XError;
 use std::time::Duration;
@@ -34,7 +34,7 @@ async fn contract_testkit_tx_and_bus_are_runnable() {
     let _ = (_a as fn(&dyn KeyValueStore), _h as fn(&dyn EventBus), _o as fn(&dyn TxRunner));
     let runner = FakeTxRunner;
     let n =
-        run_tx_commit_on_ok(&runner, |_ctx| async move { Ok::<_, XError>(7u8) }).await.expect("tx");
+        run_tx_lifecycle(&runner, || async move { Ok::<_, XError>(7u8) }).await.expect("事务成功");
     assert_eq!(n, 7);
 
     let bus = FakeEventBus::new();

@@ -6,6 +6,7 @@
 //! ```
 
 use canonical::Tick;
+use contract_testkit::assert_time_series_store;
 use contracts::TimeSeriesStore;
 use decimalx::{Decimal, Price};
 use taosx::{TaosConfig, TaosPool};
@@ -54,6 +55,14 @@ async fn live_write_query_ticks() {
         sample_tick("BTCUSDT", t1, 10055, 10065),
         sample_tick("ETHUSDT", t2, 350000, 350100),
     ];
+
+    let suite_table = format!("{table}_contract");
+    let mut suite_tick = points[0].clone();
+    let precision = pool.precision();
+    suite_tick.ts = precision.to_nanos(precision.from_nanos(suite_tick.ts));
+    assert_time_series_store(&pool, &suite_table, suite_tick)
+        .await
+        .expect("可移植 TimeSeriesStore suite");
 
     pool.write_series(&table, points).await.expect("write");
 

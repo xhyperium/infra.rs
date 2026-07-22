@@ -15,6 +15,7 @@
 //! 网络/鉴权失败时**如实** `Err`，不 mock 通过。
 
 use bytes::Bytes;
+use contract_testkit::assert_object_store;
 use contracts::ObjectStore;
 use ossx::OssClient;
 
@@ -38,9 +39,7 @@ async fn live_put_get_delete_under_infra_draft() {
 
     // ObjectStore trait 面
     let store: &dyn ObjectStore = &client;
-    if let Err(e) = store.put_object(&key, payload.clone()).await {
-        panic!("put_object failed (auth/network/config): {e}");
-    }
+    assert_object_store(store, &key, payload.clone()).await.expect("可移植 ObjectStore suite");
     let got = match store.get_object(&key).await {
         Ok(b) => b,
         Err(e) => panic!("get_object failed: {e}"),

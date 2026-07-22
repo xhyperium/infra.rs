@@ -1,8 +1,9 @@
-//! 业务 live 面：Tx / Bus / Repo / Venue 的可观测编排与 profile 标记。
+//! Live 能力声明与可观测路径 helper。
 //!
-//! 关闭 contracts DEFER「Tx/Bus/Repo/Venue 业务 live」：提供真实 trait 路径上的
-//! 编排辅助与「哪条契约已具备 live 实现」的声明式 profile，供 adapter / bootstrap 接线。
+//! Profile 只表达接线意图，helper 只证明 trait 路径被调用；两者都不替代真实后端
+//! live 证据，也不证明跨对象业务原子性。无法由句柄验证的 flag 必须 fail-closed。
 
+#[allow(deprecated, reason = "兼容函数必须调用旧事务 helper")]
 use crate::{
     AccountSource, BusMessage, EventBus, ExecutionVenue, KeyValueStore, MessageAck, Repository,
     TxContext, TxRunner, VenueTimeSource, run_tx_commit_on_ok,
@@ -173,7 +174,12 @@ pub async fn venue_health(
     Ok((positions.len() + balances.len(), server_time))
 }
 
-/// 将 KV 操作包进事务编排（Tx 业务 live）：commit on Ok。
+/// 兼容顺序编排：先开启事务生命周期，再执行独立 KV 写入。
+///
+/// `store` 不来自 [`TxContext`]，因此本函数**不保证** KV 写入与事务 commit/rollback
+/// 原子绑定。保留本符号仅用于兼容；生产代码应使用后端提供的真实事务操作面。
+#[deprecated(note = "独立 KV 与 TxContext 不具备原子绑定；仅保留兼容")]
+#[allow(deprecated, reason = "兼容函数必须保持旧 run_tx_commit_on_ok 语义")]
 pub async fn tx_kv_set(
     runner: &dyn TxRunner,
     store: Arc<dyn KeyValueStore>,
@@ -199,7 +205,11 @@ pub async fn kv_set_ttl(
     store.set(key, val, ttl).await
 }
 
-/// 对象安全 Tx 包装：在已 begin 的上下文上执行业务再 commit/rollback。
+/// 兼容顺序编排：在已 begin 的上下文旁执行业务再 commit/rollback。
+///
+/// 业务闭包没有事务操作句柄，本函数只驱动生命周期，不保证闭包捕获的外部操作
+/// 原子绑定；rollback 失败仍按旧接口语义丢弃。
+#[deprecated(note = "请使用 run_tx_lifecycle；本入口不保留 rollback 双失败")]
 pub async fn run_on_tx_context<R, F, Fut>(ctx: &mut dyn TxContext, f: F) -> XResult<R>
 where
     F: FnOnce() -> Fut + Send,
@@ -239,7 +249,11 @@ impl<'a> LiveHandles<'a> {
         Self { profile, kv: None, bus: None, tx: None, venue: None }
     }
 
-    /// 校验 profile 声明与句柄非空一致（声明 true 则句柄必须 Some）。
+    /// 校验 profile 声明与句柄非空一致（声明 true 则必须有可验证句柄）。
+    ///
+    /// 当前类型尚无 Repository / Account / VenueTime 槽位；对应 flag 为 true 时
+    /// fail-closed。由此 `storage_stack()`、`venue_stack()`、`all()` 当前均不能通过
+    /// 本校验，不得把 profile 意图误报成已完成 live 接线。
     pub fn validate(&self) -> XResult<()> {
         if self.profile.kv && self.kv.is_none() {
             return Err(XError::missing("live profile 声明 kv 但未注入句柄"));
@@ -252,6 +266,19 @@ impl<'a> LiveHandles<'a> {
         }
         if self.profile.venue && self.venue.is_none() {
             return Err(XError::missing("live profile 声明 venue 但未注入句柄"));
+        }
+        if self.profile.repo {
+            return Err(XError::missing("live profile 声明 repo，但 LiveHandles 尚无可验证句柄"));
+        }
+        if self.profile.account {
+            return Err(XError::missing(
+                "live profile 声明 account，但 LiveHandles 尚无可验证句柄",
+            ));
+        }
+        if self.profile.venue_time {
+            return Err(XError::missing(
+                "live profile 声明 venue_time，但 LiveHandles 尚无可验证句柄",
+            ));
         }
         Ok(())
     }
@@ -311,6 +338,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[allow(deprecated, reason = "覆盖兼容入口的既有顺序语义")]
     async fn tx_kv_set_commits() {
         let kv = Arc::new(MemKv { m: Mutex::new(HashMap::new()) });
         tx_kv_set(&StubRunner, kv.clone() as Arc<dyn KeyValueStore>, "k".into(), b"v".to_vec())
@@ -364,6 +392,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[allow(deprecated, reason = "覆盖兼容入口的既有顺序语义")]
     async fn run_on_tx_context_commit_and_rollback() {
         let mut ctx = StubTx;
         let v = run_on_tx_context(&mut ctx, || async { Ok(7u32) }).await.unwrap();
@@ -550,7 +579,20 @@ mod tests {
         }
         let ven = Ven;
         h.venue = Some(&ven);
-        assert!(h.validate().is_ok());
+        // repo/account/venue_time 没有对应句柄槽，必须 fail-closed。
+        assert!(h.validate().is_err());
+
+        let mut represented = LiveContractProfile::none();
+        represented.kv = true;
+        represented.bus = true;
+        represented.tx = true;
+        represented.venue = true;
+        let mut represented_handles = LiveHandles::empty(represented);
+        represented_handles.kv = Some(&kv);
+        represented_handles.bus = Some(&StubBus);
+        represented_handles.tx = Some(&StubRunner);
+        represented_handles.venue = Some(&ven);
+        assert!(represented_handles.validate().is_ok());
         // drive unused trait methods on stubs for LCOV
         let req = canonical::CancelOrderRequest {
             venue: "v".into(),
@@ -583,6 +625,20 @@ mod tests {
         let mut tx_only = LiveContractProfile::none();
         tx_only.tx = true;
         assert!(LiveHandles::empty(tx_only).validate().is_err());
+    }
+
+    #[test]
+    fn validate_each_unrepresented_profile_flag_fails_closed() {
+        for set_flag in [
+            |p: &mut LiveContractProfile| p.repo = true,
+            |p: &mut LiveContractProfile| p.account = true,
+            |p: &mut LiveContractProfile| p.venue_time = true,
+        ] {
+            let mut profile = LiveContractProfile::none();
+            set_flag(&mut profile);
+            let err = LiveHandles::empty(profile).validate().expect_err("无句柄 flag 必须拒绝");
+            assert_eq!(err.kind(), kernel::ErrorKind::Missing);
+        }
     }
 
     #[tokio::test]
