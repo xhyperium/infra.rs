@@ -98,7 +98,7 @@ impl RedisClient {
 
     /// `GET`；缺失返回 `Ok(None)`。空字节串视为合法值。
     ///
-    /// 若已 [`with_retry_budget`]，经 resiliencx 异步预算重试。
+    /// 若已 [`Self::with_retry_budget`]，经 resiliencx 异步预算重试。
     pub async fn get(&self, key: &str) -> XResult<Option<Vec<u8>>> {
         if let Some(budget) = self.budget.as_ref() {
             return self.get_with_budget(key, budget.as_ref(), self.budget_max_attempts).await;
@@ -106,7 +106,7 @@ impl RedisClient {
         self.get_once(key).await
     }
 
-    /// 显式 budget 的 `GET`：始终经 [`with_budget_async_noop`] 驱动真实 I/O。
+    /// 显式 budget 的 `GET`：始终经 [`crate::with_budget_async_noop`] 驱动真实 I/O。
     pub async fn get_with_budget(
         &self,
         key: &str,
@@ -129,7 +129,7 @@ impl RedisClient {
     /// - `ttl = Some(0)` 或 `< 1ms`：[`XError::invalid`]；
     /// - 其余：使用毫秒精度 `PSETEX`。
     ///
-    /// 若已 [`with_retry_budget`]，经 resiliencx 异步预算重试。
+    /// 若已 [`Self::with_retry_budget`]，经 resiliencx 异步预算重试。
     pub async fn set(&self, key: &str, val: Vec<u8>, ttl: Option<Duration>) -> XResult<()> {
         if let Some(budget) = self.budget.as_ref() {
             return self

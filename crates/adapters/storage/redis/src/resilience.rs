@@ -1,6 +1,6 @@
 //! resiliencx 接入：对可重试 KV 操作施加 [`RetryBudget`]。
 //!
-//! 生产路径：[`RedisClient::get`] / [`set`] 在配置了 budget 时经
+//! 生产路径：[`crate::RedisClient::get`] / [`crate::RedisClient::set`] 在配置了 budget 时经
 //! [`with_budget_async`] 驱动真实 I/O。
 
 use std::future::Future;

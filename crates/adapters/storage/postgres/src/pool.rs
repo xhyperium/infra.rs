@@ -142,7 +142,7 @@ impl PostgresPool {
 
     /// 参数化 `EXECUTE`（短借连接）。
     ///
-    /// 若已 [`with_retry_budget`]，经 resiliencx 异步预算重试。
+    /// 若已 [`Self::with_retry_budget`]，经 resiliencx 异步预算重试。
     pub async fn execute(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<u64> {
         if let Some(budget) = self.budget.as_ref() {
             return self

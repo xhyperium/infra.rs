@@ -1,6 +1,6 @@
 //! resiliencx 接入：对可重试 SQL 操作施加 [`RetryBudget`]。
 //!
-//! 生产路径：[`PostgresPool::execute`] / [`query`] 在配置了 budget 时经
+//! 生产路径：[`crate::PostgresPool::execute`] / [`crate::PostgresPool::query`] 在配置了 budget 时经
 //! [`with_budget_async`] 驱动真实 I/O。
 
 use std::future::Future;
