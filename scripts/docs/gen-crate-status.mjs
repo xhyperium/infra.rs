@@ -103,7 +103,16 @@ const SSOT_DOC_BY_PREFIX = [
   { prefix: "crates/transport", doc: "docs/ssot/transport-ssot-alignment.md" },
   { prefix: "crates/contracts", doc: "docs/ssot/contracts-ssot-alignment.md" },
   { prefix: "crates/types/", doc: "docs/ssot/types-ssot-alignment.md" },
+  { prefix: "crates/adapters/storage/redis", doc: "docs/ssot/redisx-ssot-alignment.md" },
+  { prefix: "crates/adapters/storage/postgres", doc: "docs/ssot/postgresx-ssot-alignment.md" },
+  { prefix: "crates/adapters/storage/kafka", doc: "docs/ssot/kafkax-ssot-alignment.md" },
+  { prefix: "crates/adapters/storage/nats", doc: "docs/ssot/natsx-ssot-alignment.md" },
+  { prefix: "crates/adapters/storage/oss", doc: "docs/ssot/ossx-ssot-alignment.md" },
+  { prefix: "crates/adapters/storage/clickhouse", doc: "docs/ssot/clickhousex-ssot-alignment.md" },
+  { prefix: "crates/adapters/storage/taos", doc: "docs/ssot/taosx-ssot-alignment.md" },
   { prefix: "crates/adapters/", doc: "docs/ssot/adapters-ssot-alignment.md" },
+  { prefix: "tools/goalctl", doc: "docs/ssot/tools-ssot-alignment.md" },
+  { prefix: "tools/verifyctl", doc: "docs/ssot/tools-ssot-alignment.md" },
 ];
 
 function parseWorkspaceMembers(text) {
@@ -172,19 +181,27 @@ function hasCfgTest(srcFiles) {
 }
 
 function scaffoldSignal(cratePath, srcFiles) {
-  // infra-s9t.18：仅以源码信号判定，避免 adapters 路径一律 scaffold+mock 误报。
-  // 有 live 实现模块时，若生产路径不再写 scaffold 字样，则不再强制 scaffold。
-  const hasLiveMod =
-    cratePath.startsWith("crates/adapters/") &&
-    existsSync(join(ROOT, cratePath, "src", "live.rs"));
+  // 生产默认路径优先：adapters 若 default features 不含 scaffold，且存在 pool/client
+  // 生产模块，则 **不** 因文档/可选 feature 中的 "scaffold" 字样封顶为 scaffold+mock。
+  if (cratePath.startsWith("crates/adapters/")) {
+    const cargo = readSafe(join(ROOT, cratePath, "Cargo.toml"));
+    const defaultBlock = cargo.match(/\[features\][\s\S]*?default\s*=\s*\[([^\]]*)\]/);
+    const defaultHasScaffold =
+      defaultBlock && /\bscaffold\b/.test(defaultBlock[1] || "");
+    const hasProdMod =
+      existsSync(join(ROOT, cratePath, "src", "pool.rs")) ||
+      existsSync(join(ROOT, cratePath, "src", "client.rs")) ||
+      existsSync(join(ROOT, cratePath, "src", "live.rs"));
+    if (!defaultHasScaffold && hasProdMod) {
+      return false;
+    }
+  }
+  // 非生产默认：源码头部显式 scaffold 信号，或 adapters 无生产模块
   for (const f of srcFiles.slice(0, 40)) {
     const head = readSafe(f).slice(0, 6000);
     if (/\bscaffold\b/i.test(head)) return true;
   }
-  // adapters 无 scaffold 字样但无 live 模块 → 仍视为 scaffold（保守）
-  if (cratePath.startsWith("crates/adapters/") && !hasLiveMod) return true;
-  // 有 live.rs 且源码未标 scaffold → 非 scaffold（真实入口存在）
-  if (hasLiveMod) return false;
+  if (cratePath.startsWith("crates/adapters/")) return true;
   return false;
 }
 

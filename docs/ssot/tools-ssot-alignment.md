@@ -105,3 +105,8 @@ needle=$'xhyper\x2ers'
 | `tools/*/plan/infra-rs-draft-*.md` | `.cargo/draft` 入库只读快照 |
 | `.agents/ssot/AGENTS.md` | 操作说明（非空） |
 | `.agents/ssot/adapters/README.md` | adapters 索引 |
+
+## 标准布局（2026-07-22）
+
+`tools/goalctl` 与 `tools/verifyctl` 均已补齐 `crates/AGENTS.md` 规范七项（`src/` · `tests/` · `docs/` · `benches/` · `README.md` · `review/` · `releases/`）。
+STATUS 成熟度 `active` · 完成度 **100%**（结构进度，≠ crates.io ship）。
