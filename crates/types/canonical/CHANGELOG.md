@@ -5,6 +5,17 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-23 — 精确 wire 版本与无损时间转换
+
+### Added
+
+- `WireVersion` 与 `committed_wire_version`：精确区分 v1/v1.1/v1.2/v1.3 committed shape。
+- `unix_millis_from_ns_exact`：纳秒无法无损转为毫秒时返回 `None`。
+
+### Notes
+
+- 承诺仍限 strict serde JSON DTO shape；不宣称 canonical bytes、通用 codec 或跨语言协议。
+
 ## [0.1.1] - 2026-07-22 — DEFER close: schema_version envelope
 
 ### Added

@@ -28,6 +28,15 @@ pub fn unix_millis_from_ns(ns: i64) -> i64 {
     ns / 1_000_000
 }
 
+/// DTO **纳秒** → 毫秒；仅在转换无精度损失时返回值。
+///
+/// adapter 在禁止截断的协议入口应使用本函数；需要显式向 0 截断时使用
+/// [`unix_millis_from_ns`]。
+#[must_use]
+pub fn unix_millis_from_ns_exact(ns: i64) -> Option<i64> {
+    if ns % 1_000_000 == 0 { Some(ns / 1_000_000) } else { None }
+}
+
 /// 兼容旧名。
 #[must_use]
 pub fn proposed_unix_millis_from_ns(ns: i64) -> i64 {
@@ -56,6 +65,14 @@ mod tests {
         let ns = proposed_ns_from_unix_millis(ms).expect("mul");
         assert_eq!(ns, ms * 1_000_000);
         assert_eq!(proposed_unix_millis_from_ns(ns), ms);
+    }
+
+    #[test]
+    fn exact_nanos_to_millis_rejects_precision_loss() {
+        assert_eq!(unix_millis_from_ns_exact(1_000_000), Some(1));
+        assert_eq!(unix_millis_from_ns_exact(-1_000_000), Some(-1));
+        assert_eq!(unix_millis_from_ns_exact(1), None);
+        assert_eq!(unix_millis_from_ns_exact(-1), None);
     }
 
     #[test]

@@ -1,3 +1,5 @@
+> **历史发布记录（2026-07-14，非当前发布声明）**：以下 tag/crates.io 信息仅描述 `xhyper-kernel 0.1.1`。本仓当前 package 为 `kernel 0.3.1`、`publish = false`；见 [../README.md](../README.md)。
+
 # Release — GOAL-KERNEL-RUNTIME-SEMANTICS
 
 | 字段 | 值 |

@@ -14,12 +14,12 @@ name = "contract_testkit"
 [dependencies]
 async-trait = { workspace = true }
 bytes = { workspace = true }
-canonical = { path = "../../types/canonical", version = "0.1.1" }
+canonical = { path = "../../types/canonical", version = "0.1.2" }
 contracts = { path = "../../contracts", version = "0.1.2" }
-decimalx = { path = "../../types/decimal", version = "0.1.1" }
+decimalx = { path = "../../types/decimal", version = "0.1.2" }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-kernel = { path = "../../kernel", version = "0.3.0" }
+kernel = { path = "../../kernel", version = "0.3.1" }
 tokio = { workspace = true }
 
 [dev-dependencies]

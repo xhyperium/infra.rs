@@ -31,7 +31,7 @@
 ## 项目身份
 
 - **类型**：Rust Cargo workspace
-- **根 crate 示例**：`crates/kernel`（`xhyper-kernel`）
+- **根 crate 示例**：`crates/kernel`（package/lib `kernel`）
 - **非目标**：不是其他产品的元仓库镜像；本地即为源码与约定的 SSOT
 
 ## 域规格 SSOT 与本仓落地
@@ -45,7 +45,7 @@
 - **规格写 COMPLETE / Stable ≠ 本仓已有对应实现**；必须以 `crates/` + `cargo metadata` 为准
 - **archgate / `.architecture`：OOS**（PR #164）— 本仓明确不移植
 - **当前 workspace members**（无 `infra-core`）：
-  - `crates/kernel` → `xhyper-kernel`（L0）
+  - `crates/kernel` → `kernel`（L0）
   - `crates/testkit` → `testkit`（core ManualClock；仅 dev-dep）
   - `crates/test-support/contracts` → `contract-testkit`（Fake + suite；仅 dev-dep）
   - `crates/configx` → `configx`（L1 本地 Memory/Env/File source + 分层 + 宿主 reload/通知 + secret 脱敏；非远端配置中心）
@@ -55,8 +55,8 @@
   - `crates/observex` → `xhyper-observex`（L1 TracingInstrumentation 最小面）
   - `crates/resiliencx` → `xhyper-resiliencx`（L1 重试 + 熔断 + 限流）
   - `crates/transport` → `xhyper-transportx`（L1 HTTP/WS）
-  - `crates/types/decimal` → `xhyper-decimalx`
-  - `crates/types/canonical` → `xhyper-canonical`
+  - `crates/types/decimal` → `decimalx`
+  - `crates/types/canonical` → `canonical`
   - `crates/contracts` → `xhyper-contracts`（adapter trait 出口；#43）
   - `crates/adapters/**` → 9 个 adapter package（storage×7 默认客户端入口；exchange 签名 REST + 公共 WS 解析/注入，交易 **NO-GO**；均非 package stable）
   - `tools/goalctl` · `tools/verifyctl` → 最小 CLI members（#188；verifyctl 非生产 verifier）

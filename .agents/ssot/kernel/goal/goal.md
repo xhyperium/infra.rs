@@ -1,3 +1,5 @@
+> **历史战役记录（2026-07-14，非当前权威）**：以下 Done/发布结论只绑定 `xhyper-kernel 0.1.1`。当前 `kernel 0.3.1` 合同与门禁见 [../README.md](../README.md) 和 [../gate/gate.md](../gate/gate.md)。
+
 # Goal — kernel L0 Runtime Semantics 闭合（SPEC-KERNEL-002）
 
 | 字段 | 值 |

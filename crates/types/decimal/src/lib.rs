@@ -112,7 +112,8 @@ impl std::error::Error for DecimalError {}
 
 impl From<DecimalError> for XError {
     fn from(err: DecimalError) -> Self {
-        XError::invalid(err.to_string())
+        let context = err.to_string();
+        XError::invalid(context).with_source(err)
     }
 }
 
@@ -456,13 +457,13 @@ impl FromStr for Decimal {
             return Err(DecimalError::Parse(format!("非法十进制: {s}")));
         }
 
-        if frac_part.len() > MAX_SCALE as usize {
-            return Err(DecimalError::ScaleOutOfRange {
-                scale: frac_part.len() as u8,
-                max: MAX_SCALE,
-            });
+        let fraction_len = frac_part.len();
+        let scale = u8::try_from(fraction_len).map_err(|_| {
+            DecimalError::Parse(format!("小数位数 {fraction_len} 超过可表示范围 {}", u8::MAX))
+        })?;
+        if scale > MAX_SCALE {
+            return Err(DecimalError::ScaleOutOfRange { scale, max: MAX_SCALE });
         }
-        let scale = frac_part.len() as u8;
 
         let digits = if int_part.is_empty() {
             frac_part.to_string()
@@ -472,13 +473,24 @@ impl FromStr for Decimal {
             format!("{int_part}{frac_part}")
         };
 
-        let abs_mantissa: i128 = if digits.is_empty() || digits.bytes().all(|b| b == b'0') {
+        let magnitude: u128 = if digits.is_empty() || digits.bytes().all(|b| b == b'0') {
             0
         } else {
-            digits.parse::<i128>().map_err(|_| DecimalError::MantissaOverflow)?
+            digits.parse::<u128>().map_err(|_| DecimalError::MantissaOverflow)?
         };
 
-        let mantissa = if negative && abs_mantissa != 0 { -abs_mantissa } else { abs_mantissa };
+        let mantissa = if negative {
+            const I128_MIN_MAGNITUDE: u128 = i128::MIN.unsigned_abs();
+            if magnitude == I128_MIN_MAGNITUDE {
+                i128::MIN
+            } else {
+                let positive: i128 =
+                    magnitude.try_into().map_err(|_| DecimalError::MantissaOverflow)?;
+                -positive
+            }
+        } else {
+            magnitude.try_into().map_err(|_| DecimalError::MantissaOverflow)?
+        };
 
         Decimal { mantissa, scale }.finish()
     }

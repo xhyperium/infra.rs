@@ -103,15 +103,16 @@ fn manual_clock_full_surface() {
     let _ = format!("{:?}", ManualClockFault::BeforeUnixEpoch);
 
     // IntegrationHarness 公开面
-    let mut h = IntegrationHarness::new(ManualClock::new(Timestamp::from_unix_nanos(1_000)));
-    h.step_advance_wall("w", Duration::from_nanos(5))
-        .step_advance_monotonic("m", Duration::from_nanos(3));
-    let rec = h.run().expect("harness steps");
-    assert_eq!(rec.len(), 2);
-    assert!(rec[0].ok && rec[1].ok);
-    h.assert_wall_ns(1_005);
-    h.assert_monotonic_elapsed(Duration::from_nanos(3));
-    assert_eq!(h.clock().now().unwrap().as_unix_nanos(), 1_005);
-    let as_clock: &dyn Clock = h.clock();
+    let report = IntegrationHarness::new(ManualClock::new(Timestamp::from_unix_nanos(1_000)))
+        .step_advance_wall("w", Duration::from_nanos(5))
+        .step_advance_monotonic("m", Duration::from_nanos(3))
+        .run()
+        .expect("harness steps");
+    assert_eq!(report.records().len(), 2);
+    assert!(report.records().iter().all(|record| record.outcome() == testkit::StepOutcome::Passed));
+    report.assert_wall_ns(1_005);
+    report.assert_monotonic_elapsed(Duration::from_nanos(3));
+    assert_eq!(report.clock().now().unwrap().as_unix_nanos(), 1_005);
+    let as_clock: &dyn Clock = report.clock();
     assert_eq!(as_clock.now().unwrap().as_unix_nanos(), 1_005);
 }

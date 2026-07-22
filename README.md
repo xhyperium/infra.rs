@@ -61,7 +61,7 @@ xhyper-decimalx = { git = "https://github.com/xhyperium/infra.rs.git", package =
 xhyper-testkit = { git = "https://github.com/xhyperium/infra.rs.git", package = "testkit" }
 ```
 
-> `xhyper-testkit` 仅允许作为 **dev-dependency**。
+> 上述 `xhyper-*` 是依赖键别名；Cargo package 选择器仍分别为 `kernel`、`decimalx`、`testkit`。`testkit` 仅允许作为 **dev-dependency**。
 
 ### 初始化 Harness
 
@@ -102,13 +102,13 @@ wt
 
 | Crate | 路径 | 说明 |
 |-------|------|------|
-| `xhyper-kernel` | `crates/kernel/` | L0 语义信任根（clock / lifecycle） |
+| `kernel` | `crates/kernel/` | L0 语义信任根（clock / lifecycle） |
 | `testkit` | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
 | `contract-testkit` | `crates/test-support/contracts/` | Fake + per-trait suite（仅 dev-dep） |
 | `contracts` | `crates/contracts/` | R4 trait 出口（Additive Only） |
 | `xhyper-configx` | `crates/configx/` | L1 配置存储（MemoryConfigStore） |
-| `xhyper-decimalx` | `crates/types/decimal/` | 十进制数值 / Money |
-| `xhyper-canonical` | `crates/types/canonical/` | 跨层共享纯 DTO（Money 复用 decimalx） |
+| `decimalx` | `crates/types/decimal/` | 十进制数值 / Money |
+| `canonical` | `crates/types/canonical/` | 跨层共享纯 DTO（Money 复用 decimalx） |
 | `resiliencx` | `crates/resiliencx/` | L1 重试 + 熔断 + 限流 + 舱壁 + `retry_async` |
 | `xhyper-bootstrap` | `crates/bootstrap/` | L1 唯一组合根（ADR-016 typed composition） |
 

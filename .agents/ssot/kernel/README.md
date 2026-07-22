@@ -1,53 +1,37 @@
-> **Post-ship**：战役 COMPLETE · residual OPEN=0 · crates.io xhyper-kernel 0.1.1。
-> **infra.rs 不适用（OOS）**：archgate / `.architecture/**` 不构成本仓验收条件；本仓机控 = 结构扫描 / unit tests / CI（coverage, loom, miri, public-api）。
+# kernel — 本仓 SSOT 入口
 
-# kernel — Goal 管线契约
+| 项 | 当前事实 |
+|---|---|
+| 实现 | `crates/kernel` |
+| package / lib / version | `kernel` / `kernel` / `0.3.1` |
+| Active Spec | [spec/spec.md](spec/spec.md)（SPEC-KERNEL-002） |
+| 声明边界 | L1 Internal Ready；L4 仅限最终 SHA 新鲜证据覆盖面 |
+| 分发 | `publish = false`；不宣称 crates.io / production-certified |
 
-> 实现代码唯一位置：[`crates/kernel`](../../../crates/kernel)  
-> **当前 SSOT Spec**：`SPEC-KERNEL-002`（[spec/spec.md](spec/spec.md) ≡ [xhyper-kernel-complete-spec.md](spec/xhyper-kernel-complete-spec.md)）  
-> **Source Goal**：`GOAL-KERNEL-RUNTIME-SEMANTICS` — **Done**（§18 闭合 · stable · published）  
-> **Ship PR**：[\#235](https://github.com/xhyperium/infra.rs/pull/235) · 分支 `feat/kernel-002-e2-migrate-banned-apis`  
-> **历史**：`SPEC-KERNEL-001` → [spec/SPEC-KERNEL-001.superseded.md](spec/SPEC-KERNEL-001.superseded.md)
+## 当前管线
 
-## 11 层映射
+| 层 | 入口 | 当前用途 |
+|---|---|---|
+| Spec | [spec/spec.md](spec/spec.md) | 唯一 current-state 验收合同 |
+| Design | [design/design.md](design/design.md) | seam、依赖与权衡 |
+| Test | [test/test.md](test/test.md) | 当前测试合同与待验证命令 |
+| Gate | [gate/gate.md](gate/gate.md) | 当前候选门禁状态 |
+| Matrix | [matrix/matrix.md](matrix/matrix.md) | clause → code → test → claim |
+| Evidence | [evidence/](evidence/) | 历史不可变来源，不继承 PASS |
 
-| 管线层 | 路径 | 相对 002 |
-|--------|------|----------|
-| Goal | [goal/goal.md](goal/goal.md) | Active · AC-1..4 done |
-| Spec | [spec/spec.md](spec/spec.md) | **Approved** |
-| Design | [design/design.md](design/design.md) | Active · 主路径已落地 |
-| Plan | [plan/plan.md](plan/plan.md) | D/E/C/L done · G partial |
-| Tasks | [tasks/tasks.md](tasks/tasks.md) | E1–E3/C1–C2/L1–L2/G1/G2 **done**（机器轨） |
-| Prompt | [prompt/prompt.md](prompt/prompt.md) | DONE（campaign complete） |
-| **Code** | **`crates/kernel/`** | 主路径 + G2 测试/门禁 |
-| Test | [test/test.md](test/test.md) | §18.3 全实测 PASS（line/branch/mutants/miri）；mutants/miri/branch 为 ad-hoc，CI 门禁待补（P1） |
-| Review | [review/review.md](review/review.md) | PASS（PR #235/#238/#241 已 merge） |
-| Release | [release/release.md](release/release.md) | DONE（0.1.1 · tag · crates.io published） |
-| Retrospective | [retrospective/retrospective.md](retrospective/retrospective.md) | 本波记录 |
+## 硬边界
 
-## 横切
-
-| 制品 | 路径 |
-|------|------|
-| Matrix | [matrix/matrix.md](matrix/matrix.md) |
-| Gate | [gate/gate.md](gate/gate.md) |
-| Evidence | [evidence/2026-07-14/](evidence/2026-07-14/) |
-| Residual ledger | [evidence/2026-07-14/residual-open.txt](evidence/2026-07-14/residual-open.txt) |
-| R10 终裁 | [evidence/2026-07-14/EVID-KERNEL-002-R10-verdict.md](evidence/2026-07-14/EVID-KERNEL-002-R10-verdict.md) |
-
-## 硬限制
-
-1. §18 已闭合，registry = **stable**（已 publish crates.io `xhyper-kernel` 0.1.1）
-2. 无证据不得宣称 Done / 3/3 / 5/5
-3. L0 仅 error/clock/lifecycle；crates.io **`xhyper-kernel`**（`publish = true`）；`[features] default = []`
-4. 禁止再引入 `not_found` / `other` / 默认 monotonic / `Component` trait
+- 仅 `error` / `clock` / `lifecycle`，默认 feature 为空，生产依赖仅 `thiserror`。
+- `ClockDomain` 与进程共享单调 origin 是当前批准语义；跨 domain 比较返回 `None`。
+- `wait_timeout` 的不可表示 deadline 返回 typed error，不得伪装普通超时。
+- 同目录 `spec/xhyper-kernel-complete-spec.md` 是 active spec 的机械镜像，必须逐字同构；dated campaign、crates.io 记录与旧 evidence 才是历史来源，不能证明当前提交。
 
 ## 验证
 
 ```bash
-cmp .agents/ssot/kernel/spec/spec.md .agents/ssot/kernel/spec/xhyper-kernel-complete-spec.md
-cargo test -p kernel
-# 本仓机控示例（非 archgate）：fmt / clippy / test / coverage / loom / miri / public-api（按 CI 实际接线）
+cargo test -p kernel --all-targets
+cargo test -p kernel --doc
+cargo clippy -p kernel --all-targets -- -D warnings
+RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release
+node scripts/quality-gates/check-public-api.mjs -p kernel
 ```
-
-**Phase D–L + G2 机器轨：PASS · §18 全闭合（含 ad-hoc 实测）· Spec Approved · 已 publish crates.io。注：mutants/miri/branch-cov CI 门禁化见 P1 follow-up。archgate / `.architecture` 为历史 monorepo 轨，infra.rs 不适用（OOS）。**

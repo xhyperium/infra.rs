@@ -1,4 +1,4 @@
-> **Post-ship (2026-07-14)**：战役 **COMPLETE**。API-002 已机控；mutants missed=0；crates.io **xhyper-kernel 0.1.1**。live SSOT：`residual-open.txt` + `gate.md` + `release.md`。
+> **历史执行计划（2026-07-14，非当前权威）**：以下 COMPLETE/PASS 只绑定 `xhyper-kernel 0.1.1` 战役。当前 `kernel 0.3.1` 权威入口见 [../README.md](../README.md)，不得从本文件继承门禁状态。
 
 # Plan — SPEC-KERNEL-002 完整执行计划（v2）
 

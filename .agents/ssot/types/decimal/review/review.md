@@ -1,3 +1,5 @@
+> **历史审查快照（2026-07-21，非当前裁决）**：以下 NOT PASS/测试计数只绑定旧候选。当前 `decimalx 0.1.2` 裁决入口见 [../gate/gate.md](../gate/gate.md)。
+
 # types/decimal — Review
 
 > **状态**：实现基线已落地 · agent-safe 对账完成 · **未** Goal Achieved · **未** Spec Approved · **不得** READY  

@@ -48,7 +48,7 @@ pub use envelope::{
 pub use proposed_time::{
     PROPOSED_TS_UNIT, TS_UNIT, dto_ts_from_unix_millis, ns_from_unix_millis,
     proposed_dto_ts_from_unix_millis, proposed_ns_from_unix_millis, proposed_unix_millis_from_ns,
-    unix_millis_from_ns,
+    unix_millis_from_ns, unix_millis_from_ns_exact,
 };
 pub use shape::{
     cancel_request_shape_ok, is_nonempty_token, is_plausible_instrument_id,
@@ -56,7 +56,7 @@ pub use shape::{
 };
 pub use wire::{
     COMMITTED_WIRE_V1, COMMITTED_WIRE_V1_1, COMMITTED_WIRE_V1_2, COMMITTED_WIRE_V1_3,
-    WireCommitment, wire_commitment,
+    WireCommitment, WireVersion, committed_wire_version, wire_commitment,
 };
 
 /// Venue identifier string alias（CAN-ID：adapter 用 shape 校验）。
@@ -465,10 +465,10 @@ mod tests {
                 "wire-commitment-matrix.md missing public type {name}"
             );
         }
-        for token in ["Committed-candidate", "Committed-legacy", "Uncommitted"] {
+        for token in ["v1", "v1.1", "v1.2", "v1.3", "strict serde JSON DTO shape"] {
             assert!(matrix.contains(token), "wire matrix missing grade token {token}");
         }
-        // 实现承诺以 wire::COMMITTED_WIRE_* 为准；镜像矩阵可能滞后，不得反向阻塞晋升。
+        // Active SSOT 与实现 inventory 必须双向一致，不允许以“镜像滞后”跳过对账。
         assert_eq!(wire_commitment("Order"), WireCommitment::CommittedV1);
         assert_eq!(wire_commitment("Tick"), WireCommitment::CommittedV1);
         assert_eq!(wire_commitment("Trade"), WireCommitment::CommittedV1);
@@ -476,6 +476,14 @@ mod tests {
         assert_eq!(wire_commitment("PriceLevel"), WireCommitment::CommittedV1);
         assert_eq!(wire_commitment("OrderBookSnapshot"), WireCommitment::CommittedV1);
         assert_eq!(wire_commitment("SymbolMeta"), WireCommitment::CommittedV1);
+        assert_eq!(committed_wire_version("CancelOrderRequest"), Some(WireVersion::V1));
+        assert_eq!(committed_wire_version("Order"), Some(WireVersion::V1_1));
+        assert_eq!(committed_wire_version("Tick"), Some(WireVersion::V1_2));
+        assert_eq!(committed_wire_version("Trade"), Some(WireVersion::V1_2));
+        assert_eq!(committed_wire_version("Position"), Some(WireVersion::V1_3));
+        assert_eq!(committed_wire_version("PriceLevel"), Some(WireVersion::V1_3));
+        assert_eq!(committed_wire_version("OrderBookSnapshot"), Some(WireVersion::V1_3));
+        assert_eq!(committed_wire_version("SymbolMeta"), Some(WireVersion::V1_3));
     }
 
     #[test]

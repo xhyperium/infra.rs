@@ -60,6 +60,7 @@ pub fn canonical::proposed_time::proposed_dto_ts_from_unix_millis(i64) -> core::
 pub fn canonical::proposed_time::proposed_ns_from_unix_millis(i64) -> core::option::Option<i64>
 pub fn canonical::proposed_time::proposed_unix_millis_from_ns(i64) -> i64
 pub fn canonical::proposed_time::unix_millis_from_ns(i64) -> i64
+pub fn canonical::proposed_time::unix_millis_from_ns_exact(i64) -> core::option::Option<i64>
 pub mod canonical::shape
 pub fn canonical::shape::cancel_request_shape_ok(&canonical::CancelOrderRequest) -> bool
 pub fn canonical::shape::is_nonempty_token(&str) -> bool
@@ -86,10 +87,37 @@ impl core::marker::Unpin for canonical::wire::WireCommitment
 impl core::marker::UnsafeUnpin for canonical::wire::WireCommitment
 impl core::panic::unwind_safe::RefUnwindSafe for canonical::wire::WireCommitment
 impl core::panic::unwind_safe::UnwindSafe for canonical::wire::WireCommitment
+pub struct canonical::wire::WireVersion
+impl canonical::wire::WireVersion
+pub const canonical::wire::WireVersion::V1: Self
+pub const canonical::wire::WireVersion::V1_1: Self
+pub const canonical::wire::WireVersion::V1_2: Self
+pub const canonical::wire::WireVersion::V1_3: Self
+pub const fn canonical::wire::WireVersion::major(self) -> u16
+pub const fn canonical::wire::WireVersion::minor(self) -> u16
+impl core::clone::Clone for canonical::wire::WireVersion
+pub fn canonical::wire::WireVersion::clone(&self) -> canonical::wire::WireVersion
+impl core::cmp::Eq for canonical::wire::WireVersion
+impl core::cmp::PartialEq for canonical::wire::WireVersion
+pub fn canonical::wire::WireVersion::eq(&self, &canonical::wire::WireVersion) -> bool
+impl core::fmt::Debug for canonical::wire::WireVersion
+pub fn canonical::wire::WireVersion::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for canonical::wire::WireVersion
+pub fn canonical::wire::WireVersion::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for canonical::wire::WireVersion
+impl core::marker::StructuralPartialEq for canonical::wire::WireVersion
+impl core::marker::Freeze for canonical::wire::WireVersion
+impl core::marker::Send for canonical::wire::WireVersion
+impl core::marker::Sync for canonical::wire::WireVersion
+impl core::marker::Unpin for canonical::wire::WireVersion
+impl core::marker::UnsafeUnpin for canonical::wire::WireVersion
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::wire::WireVersion
+impl core::panic::unwind_safe::UnwindSafe for canonical::wire::WireVersion
 pub const canonical::wire::COMMITTED_WIRE_V1: &[&str]
 pub const canonical::wire::COMMITTED_WIRE_V1_1: &[&str]
 pub const canonical::wire::COMMITTED_WIRE_V1_2: &[&str]
 pub const canonical::wire::COMMITTED_WIRE_V1_3: &[&str]
+pub fn canonical::wire::committed_wire_version(&str) -> core::option::Option<canonical::wire::WireVersion>
 pub fn canonical::wire::wire_commitment(&str) -> canonical::wire::WireCommitment
 pub enum canonical::OrderRef
 pub canonical::OrderRef::Client(alloc::string::String)
@@ -446,6 +474,32 @@ impl core::marker::Unpin for canonical::Trade
 impl core::marker::UnsafeUnpin for canonical::Trade
 impl core::panic::unwind_safe::RefUnwindSafe for canonical::Trade
 impl core::panic::unwind_safe::UnwindSafe for canonical::Trade
+pub struct canonical::WireVersion
+impl canonical::wire::WireVersion
+pub const canonical::wire::WireVersion::V1: Self
+pub const canonical::wire::WireVersion::V1_1: Self
+pub const canonical::wire::WireVersion::V1_2: Self
+pub const canonical::wire::WireVersion::V1_3: Self
+pub const fn canonical::wire::WireVersion::major(self) -> u16
+pub const fn canonical::wire::WireVersion::minor(self) -> u16
+impl core::clone::Clone for canonical::wire::WireVersion
+pub fn canonical::wire::WireVersion::clone(&self) -> canonical::wire::WireVersion
+impl core::cmp::Eq for canonical::wire::WireVersion
+impl core::cmp::PartialEq for canonical::wire::WireVersion
+pub fn canonical::wire::WireVersion::eq(&self, &canonical::wire::WireVersion) -> bool
+impl core::fmt::Debug for canonical::wire::WireVersion
+pub fn canonical::wire::WireVersion::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for canonical::wire::WireVersion
+pub fn canonical::wire::WireVersion::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for canonical::wire::WireVersion
+impl core::marker::StructuralPartialEq for canonical::wire::WireVersion
+impl core::marker::Freeze for canonical::wire::WireVersion
+impl core::marker::Send for canonical::wire::WireVersion
+impl core::marker::Sync for canonical::wire::WireVersion
+impl core::marker::Unpin for canonical::wire::WireVersion
+impl core::marker::UnsafeUnpin for canonical::wire::WireVersion
+impl core::panic::unwind_safe::RefUnwindSafe for canonical::wire::WireVersion
+impl core::panic::unwind_safe::UnwindSafe for canonical::wire::WireVersion
 pub const canonical::COMMITTED_WIRE_V1: &[&str]
 pub const canonical::COMMITTED_WIRE_V1_1: &[&str]
 pub const canonical::COMMITTED_WIRE_V1_2: &[&str]
@@ -454,6 +508,7 @@ pub const canonical::CURRENT_PAYLOAD_SCHEMA_VERSION: u32
 pub const canonical::ENVELOPE_SCHEMA_VERSION: u32
 pub const canonical::TS_UNIT: &str
 pub fn canonical::cancel_request_shape_ok(&canonical::CancelOrderRequest) -> bool
+pub fn canonical::committed_wire_version(&str) -> core::option::Option<canonical::wire::WireVersion>
 pub fn canonical::dto_ts_from_unix_millis(i64) -> core::option::Option<i64>
 pub fn canonical::is_nonempty_token(&str) -> bool
 pub fn canonical::is_plausible_instrument_id(&str) -> bool
@@ -464,6 +519,7 @@ pub fn canonical::proposed_dto_ts_from_unix_millis(i64) -> core::option::Option<
 pub fn canonical::proposed_ns_from_unix_millis(i64) -> core::option::Option<i64>
 pub fn canonical::proposed_unix_millis_from_ns(i64) -> i64
 pub fn canonical::unix_millis_from_ns(i64) -> i64
+pub fn canonical::unix_millis_from_ns_exact(i64) -> core::option::Option<i64>
 pub fn canonical::wire_commitment(&str) -> canonical::wire::WireCommitment
 pub type canonical::InstrumentId = alloc::string::String
 pub type canonical::VenueId = alloc::string::String

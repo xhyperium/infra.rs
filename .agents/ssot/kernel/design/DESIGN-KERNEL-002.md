@@ -1,3 +1,5 @@
+> **历史基线（2026-07-14，非当前权威）**：本文件保留 `xhyper-kernel 0.1.1` 发布战役事实，不描述当前 `kernel 0.3.1` 候选。当前设计以 [design.md](design.md) 为准，验收入口见 [../README.md](../README.md)。
+
 # DESIGN-KERNEL-002 · L0 Kernel Runtime Semantics
 
 | 字段 | 值 |

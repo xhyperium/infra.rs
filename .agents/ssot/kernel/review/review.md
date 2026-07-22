@@ -1,3 +1,5 @@
+> **历史审查快照（2026-07-14，非当前裁决）**：COMPLETE/PASS 只证明当时 `xhyper-kernel 0.1.1` 战役；不得继承给当前候选。当前裁决入口见 [../gate/gate.md](../gate/gate.md)。
+
 # Review — SPEC-KERNEL-002
 
 | 字段 | 值 |

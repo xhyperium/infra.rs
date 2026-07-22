@@ -1,3 +1,5 @@
+> **历史战役记录（2026-07-21，非当前权威）**：以下对账绑定 `xhyper-decimalx 0.1.1` 候选。当前 `decimalx 0.1.2` 合同与门禁见 [../README.md](../README.md) 和 [../gate/gate.md](../gate/gate.md)。
+
 # types/decimal — Goal
 
 > **状态**：Active 合同 agent-safe 基线已落地并对账 · **未** Goal Achieved · **未** Spec Approved  

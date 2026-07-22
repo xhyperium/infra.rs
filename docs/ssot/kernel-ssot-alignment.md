@@ -2,11 +2,11 @@
 
 | 字段 | 值 |
 |------|-----|
-| Spec | SPEC-KERNEL-002（`.agents/ssot/kernel/spec/spec.md` ≡ `xhyper-kernel-complete-spec.md`） |
-| 镜像 | `.agents/ssot/kernel/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
-| 本仓实现 | `crates/kernel` · package **`kernel`** · lib `kernel` · workspace version `0.3.0` |
-| 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| 内部生产层级 | **L1 Internal Ready + L4 Platform Ready** |
+| Spec | SPEC-KERNEL-002（`.agents/ssot/kernel/spec/spec.md`，本仓 active SSOT） |
+| SSOT | `.agents/ssot/kernel/**` 为本仓可编辑源层；历史 complete/evidence 只作不可变来源 |
+| 本仓实现 | `crates/kernel` · package/lib **`kernel`** · version `0.3.1` |
+| 审计日期 | 2026-07-23（infra-2d9.7 R3 声明收敛候选） |
+| 内部生产层级 | **L1 Internal Ready；L4 仅限新鲜证据覆盖面** |
 | 内部发布状态 | **已执行**（PR #159 实现 · #163 发布记录 · tag/GitHub Release `v0.3.0-four-crates`） |
 | 结论 | **可移植语义面 + §11 可在本仓执行的合同：无残留 FAIL**；**内部生产已发布**；**≠** crates.io / 整体 Production Ready / Agent L5 |
 | OBJECTIVE 主项 | archgate = **OOS-Accept**；组合根 drain 所有权 = **PASS**（落在 bootstrap，见 bootstrap 对齐文） |
@@ -25,8 +25,8 @@
 | line/branch cov CI | **有** PR 门禁：`.github/workflows/kernel-coverage.yml`（100% line gate） |
 | mutants / miri CI | **有** 周调度：`kernel-mutants.yml` / `kernel-miri.yml` |
 | loom CI | **有** PR/push 门禁：`kernel-loom.yml` + `scripts/quality-gates/run-kernel-loom.mjs` |
-| ClockDomain | **PASS**：SystemClock 共享进程 domain；跨 domain 间隔 → `None` |
-| 关停 deadline | **PASS**：`ShutdownSignal::wait_timeout` + 组合根测 |
+| ClockDomain | **`c4604ce` PASS / `fff07ea` REVIEW GO**：SystemClock 共享进程 domain；跨 domain 间隔 → `None` |
+| 关停 deadline | **R2 PASS**：未触发且不可表示时返回 `DeadlineOverflow`；已触发时完成优先并立即 `Ok(true)` |
 | 用户可见错误中文 | **PASS**：`ClockError` / `LifecycleError` Display 中文 |
 | 公开面集成测 / 示例 / bench | **PASS**：`tests/public_api_surface.rs` · `examples/basic.rs` · `benches/hot_path` |
 
@@ -37,7 +37,7 @@ crates/kernel/                  EXISTS
 Cargo.toml members              含 crates/kernel
 package name                    kernel（Cargo 选择器 -p kernel；历史文档 xhyper-kernel 已废弃）
 lib name                        kernel
-version                         workspace 0.3.0
+version                         0.3.1
 publish                         false（显式，非默认可发布）
 生产依赖                        仅 thiserror
 features                        default = []
@@ -62,11 +62,11 @@ node scripts/quality-gates/check-public-api.mjs
 RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release
 ```
 
-## 与镜像文档的关系
+## 与历史文档的关系
 
-- `.agents/ssot/kernel/**`：只读镜像；禁止本地改 CLOSED/COMPLETE 叙事冒充同步
-- 实现 SSOT 以 **源码 + 本仓测试输出** 为准
-- 上游 gap-matrix-v2 / residual-open 的 OPEN=0 仅证明 xhyper 战役，不替代本表
+- `.agents/ssot/kernel/spec/spec.md` 是本仓 active SSOT，可随本仓 PR 修改。
+- `spec/xhyper-kernel-complete-spec.md` 是 active `spec.md` 的机械镜像，必须逐字同构；`evidence/2026-07-14/**` 与 dated campaign 才是历史来源，不继承 PASS。
+- 当前实现与验证证据以本仓源码、测试输出和最终 SHA 为准。
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
 
 ---

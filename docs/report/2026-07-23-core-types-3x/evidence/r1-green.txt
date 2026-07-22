@@ -1,0 +1,44 @@
+R1 GREEN EVIDENCE
+date: 2026-07-23 Asia/Shanghai
+base: 3cd29a942710c0fb42f3f6bc05e3c31570acad47
+fixed-candidate: fc201d7dd8b63b3eb16c2d9e49ac95a03fd6f283
+verified-repair-candidate: 6e4e5999e708e126a9b511cbeedaa0176abc5408
+verified-contract-candidate: e58976fd86e0de60ff38373fd3c9494797024ecd
+verified-repair-diff-command: git diff 3cd29a942710c0fb42f3f6bc05e3c31570acad47..6e4e5999e708e126a9b511cbeedaa0176abc5408 | sha256sum
+verified-repair-diff-sha256: 6c414160b2b339f5d752f3a570ce4ed7bb8c71eebb59498978b228bd3341e060
+verified-contract-diff-command: git diff 3cd29a942710c0fb42f3f6bc05e3c31570acad47..e58976fd86e0de60ff38373fd3c9494797024ecd | sha256sum
+verified-contract-diff-sha256: 9fb8d7e9cb3912ff9caa5fad33cbbfc30a0967fd618f543dd20af5c31251ec44
+rustc: 1.97.0 (2d8144b78 2026-07-07)
+cargo: 1.97.0 (c980f4866 2026-06-30)
+node: v24.14.0
+
+command:
+  cargo fmt --all -- --check &&
+  cargo test -p kernel -p testkit -p decimalx -p canonical --all-targets &&
+  cargo test -p kernel -p testkit -p decimalx -p canonical --doc &&
+  cargo clippy -p kernel -p testkit -p decimalx -p canonical --all-targets --all-features -- -D warnings &&
+  node scripts/quality-gates/check-canonical-align.mjs &&
+  node scripts/quality-gates/check-decimal-no-panicking-ops.mjs &&
+  node scripts/quality-gates/check-workspace-deps.mjs &&
+  node scripts/quality-gates/check-crate-versions.mjs &&
+  node scripts/quality-gates/check-public-api.mjs -p kernel -p testkit -p decimalx -p canonical
+exit: 0
+
+key output:
+  canonical lib: 45 passed
+  decimalx lib: 68 passed
+  decimalx boundary_matrix: 15 passed (includes proptest i128 × scale round-trip)
+  kernel lib: 66 passed
+  testkit lib: 22 passed (includes 2 runner snapshot synchronization cases)
+  testkit harness_fail_closed: 8 passed
+  testkit manual_clock_concurrency: 2 passed
+  testkit doctests: 4 compile-fail passed
+  kernel doctests: 12 passed
+  canonical-align: ALL CHECKS PASSED
+  decimal panicking-ops: OK (102 files scanned, 0 hits)
+  workspace dependencies: PASS
+  crate versions: PASS
+  public API: OK (4 baselines match)
+  kernel loom release cfg: 3 passed
+
+说明：完整 stdout 未入库，执行会话也不是持久仓库证据；本文件只证明可重放命令、退出码、工具链、候选内容指纹与关键计数。最终完成声明另由 R3 固定内容候选的 workspace 全量门禁承担，不从本文件继承。

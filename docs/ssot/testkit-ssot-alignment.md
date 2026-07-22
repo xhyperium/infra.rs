@@ -3,10 +3,10 @@
 | 字段 | 值 |
 |------|-----|
 | 策略 | **B — 本仓移植 core testkit** |
-| 日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| 规范 | SPEC-TESTKIT-002（镜像 `.agents/ssot/testkit/spec/spec.md`） |
+| 日期 | 2026-07-23（infra-2d9.7 R3 声明收敛候选） |
+| 规范 | SPEC-TESTKIT-002（本仓 active SSOT `.agents/ssot/testkit/spec/spec.md`） |
 | package | **`testkit`** · lib `testkit`（Cargo 选择器 `-p testkit`；历史名 `xhyper-testkit` 已废弃） |
-| 当前版本 | 0.1.2（L1 ManualClock test-support；contract-testkit 0.1.1）|
+| 当前版本 | 0.1.3（L1 确定性 test-support；contract-testkit 0.1.1）|
 | 内部生产层级 | **L1 ManualClock test-support**（**不是**生产 runtime；PR #159 · tag `v0.3.0-four-crates`） |
 
 ## 结论摘要
@@ -17,7 +17,7 @@
 | 本仓 `crates/testkit` core（ManualClock 族） | **已闭合**（§7 / §13.1–§13.5 / §24.1–§24.3 core / §24.5 core → 见 clause matrix） |
 | 内部生产 GO（声明层级） | **L1 test-support only**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
 | 本仓 `contract-testkit` | **已落地**：`crates/test-support/contracts`（package `contract-testkit`）；Fake + per-trait suite + **Batch-2 Fake** + **BackendProfile**；见 [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
-| integration harness | **PASS**：`crates/testkit/src/harness.rs` · `IntegrationHarness` / `StepRecord`（**仅测试**；非生产 runtime） |
+| deterministic runner | **`2e6d77d` PASS / `2961afd` REVIEW GO**：消费型 `IntegrationHarness` + terminal report/error + 私有 `StepRecord`（仅测试） |
 | ClockDomain 跟随 | **PASS**：每 `ManualClock` 实例独立 domain；跨实例 `checked_duration_since` → `None` |
 | 用户可见错误中文 | **PASS**：`ManualClockError` Display 中文 |
 | `[lints] workspace = true` | **PASS** |
@@ -33,12 +33,13 @@ Cargo.toml members              含 crates/testkit
 package name                    testkit
 lib name                        testkit
 publish                         false
-prod deps                       kernel only
+prod deps                       kernel, thiserror
 dev deps                        proptest, static_assertions
 features.default                []
 examples                        examples/basic.rs
 API baseline                    docs/api-baselines/testkit.txt
-IntegrationHarness              src/harness.rs（多步确定性集成 harness）
+IntegrationHarness              src/harness.rs（消费型确定性 scenario runner）
+runner result                   HarnessReport / HarnessRunError / StepOutcome
 ```
 
 ## 验证命令（本仓可复现）
@@ -67,7 +68,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 
 | Workflow | 触发 | 路径 |
 |----------|------|------|
-| `.github/workflows/testkit-coverage.yml` | push/PR（paths） | line ≥95% |
+| `.github/workflows/testkit-coverage.yml` | pull_request（paths）+ workflow_dispatch | line ≥95%（当前实测 100%） |
 | `.github/workflows/testkit-miri.yml` | schedule + dispatch | miri test |
 | `.github/workflows/testkit-mutants.yml` | schedule + dispatch | cargo mutants |
 
@@ -105,7 +106,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 | 13.4 | concurrency：多线程读/控、Arc、无撕裂 | PASS | `tests/manual_clock_concurrency.rs` |
 | 13.5 | compile assertions：!Default/!Clone/Send+Sync；不导出退役符号 | PASS | `tests/api_compile.rs` + `tests/public_surface.rs` |
 | 13.6 | mutation score ≥90% | PASS | 本仓 `cargo mutants`：missed=0（caught=10, unviable=20） |
-| 13.7 | line ≥95%；branch ≥90% OPTIONAL | PASS / DEFER | line **99.65%** PASS；branch 本工具 summary 无分支数据 → **OPTIONAL/DEFER**（与上游 residual 一致） |
+| 13.7 | line ≥95%；CI line=100%；branch ≥90% OPTIONAL | PASS / DEFER | PR #258 修复后本地 CI 同命令 line **100.00%** PASS；branch 本工具 summary 无分支数据 → **OPTIONAL/DEFER**（与上游 residual 一致） |
 | 13.8 | Miri | PASS | `cargo +nightly miri test -p testkit`（见 evidence） |
 | 13.9 | contract-testkit 自测 | PASS | `cargo test -p contract-testkit` · `tests/suite_self_tests.rs` |
 
@@ -113,16 +114,16 @@ CI 入口（与 kernel 同级 paths 过滤）：
 
 | ID | 条款 | 状态 | 说明 |
 |----|------|------|------|
-| 24.1 | layer=test-support；非 L0 runtime；单 active spec；README/AGENTS 对齐 | PASS | `publish=false`、README/AGENTS、镜像只读 |
-| 24.2 | 只依赖 kernel；无 feature/宏/FixtureBuilder/provider；ManualClock V2；无真实时间/sleep/unchecked；无 Clone/Default | PASS | Cargo.toml + public_surface + api_compile + 实现 |
+| 24.1 | layer=test-support；非 L0 runtime；单 active spec；README/AGENTS 对齐 | `2e6d77d` PASS / `2961afd` REVIEW GO | `publish=false`、README/AGENTS、本仓 active SSOT |
+| 24.2 | 只依赖 kernel + thiserror；无 feature/宏/FixtureBuilder/provider；ManualClock V2；无真实时间/sleep/unchecked；无 Clone/Default | `2e6d77d` PASS / `2961afd` REVIEW GO | Cargo.toml + public_surface + api_compile + 实现 |
 | 24.3 | unit / property / concurrency / compile | PASS | 见 §13 |
 | 24.3 | line ≥95% | PASS | llvm-cov |
 | 24.3 | branch ≥90% | DEFER | OPTIONAL（上游 residual；本仓不升强制） |
 | 24.3 | mutation ≥90% | PASS | missed=0 |
 | 24.3 | Miri | PASS | 本仓 miri 日志 |
 | 24.4 | Contract 闭合 | PARTIAL→加厚 | **contract-testkit 已独立落地**；first-batch + Batch-2 Fake + `BackendProfile` 探测；ObjectStore/TimeSeries 等全深度 suite 仍 OPEN（非本轮 OBJECTIVE） |
-| 24.0-h | Integration harness | **PASS** | `src/harness.rs` · `IntegrationHarness::{new,step,run,clock}` + unit；导出见 `src/lib.rs` |
-| 24.5 | 消费为 dev-dep / 无 build-dep / 无 normal graph 泄漏（core 侧） | PASS | crate 自身 `publish=false` + prod deps only kernel；全仓 machine gate/xtask **DEFER**（无 infra-xtask graph check） |
+| 24.0-h | Integration harness | **`2e6d77d` PASS / `2961afd` REVIEW GO** | `src/harness.rs` · `IntegrationHarness::{new,with_wall,step,run}` + typed terminal report/error；导出见 `src/lib.rs` |
+| 24.5 | 消费为 dev-dep / 无 build-dep / 无 normal graph 泄漏（core 侧） | PASS | crate 自身 `publish=false` + prod deps only kernel/thiserror；全仓 machine gate/xtask **DEFER**（无 infra-xtask graph check） |
 | 24.5 | feature 不泄漏 | PASS | `default=[]` 无其它 feature |
 | 24.6 | 治理（RFC / xtask…） | PARTIAL | CHANGELOG + Evidence 本仓已有；经 archgate 的治理机控 **OOS**（本仓明确不移植 archgate / `.architecture`） |
 
@@ -137,8 +138,9 @@ CI 入口（与 kernel 同级 paths 过滤）：
 
 ## 与镜像文档的关系
 
-- `.agents/ssot/testkit/**`：只读镜像；禁止本地改 CLOSED/COMPLETE 叙事冒充同步
-- 实现 SSOT 以 **源码 + 本仓测试/覆盖率/mutants/miri 输出** 为准
+- `.agents/ssot/testkit/spec/spec.md` 是本仓 active SSOT，可随本仓 PR 修改。
+- `spec/xhyper-testkit-complete-spec.md` 是 active `spec.md` 的机械镜像，必须逐字同构；其他 dated campaign/evidence 才是历史来源，不继承 PASS。
+- 当前实现与验证以 **源码 + 本仓测试/覆盖率/mutants/miri 输出** 为准。
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
 - Workspace 总览（members 地图、依赖方向）：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
 

@@ -7,7 +7,7 @@ T0 **deterministic test support**（SPEC-TESTKIT-002）。
 | package | `testkit` |
 | lib | `testkit` |
 | path | `crates/testkit` |
-| version | `0.1.1` |
+| version | `0.1.3` |
 | publish | `false`（internal only） |
 | **生产层级** | **L1 ManualClock test-support**（**不是**生产 runtime） |
 | 支持矩阵 | Linux x86_64 · MSRV 1.85（随 kernel） |
@@ -27,6 +27,9 @@ pub use testkit::{
     ManualClockFault,
     ManualClockSnapshot,
     IntegrationHarness,
+    HarnessReport,
+    HarnessRunError,
+    StepOutcome,
     StepRecord,
 };
 ```
@@ -34,14 +37,14 @@ pub use testkit::{
 - 墙钟 / 单调钟独立可控（checked，失败不改状态）
 - wall fault 注入；一致 `snapshot`
 - 无 `Default` / `Clone`；共享请用 `std::sync::Arc`
-- `IntegrationHarness`：基于 ManualClock 的多步确定性测试 harness（非网络 / 非进程）
+- `IntegrationHarness`：消费型多步确定性 runner（非网络 / 非进程）；运行结果由 `HarnessReport` / `HarnessRunError` 表达
 
 ## 硬限制
 
 - 不提供通用 mock 框架
 - 不提供真实网络 / 进程级 integration harness（仅 ManualClock 步进 harness）
 - contract trait suite 见独立 `contract-testkit`（`crates/test-support/contracts`）
-- 生产依赖仅 `kernel`
+- 生产依赖仅 `kernel` + workspace `thiserror`（crate 专用错误派生）
 
 ## 最小用法
 

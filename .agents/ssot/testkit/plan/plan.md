@@ -1,3 +1,5 @@
+> **历史执行计划（2026-07-14，非当前权威）**：本文件保留 `xhyper-testkit 0.1.1` 战役与当时验收计数，不描述当前 `testkit 0.1.3` runner/allocator 边界。当前入口见 [../README.md](../README.md)。
+
 # Plan — SPEC-TESTKIT-002 完整执行计划（v1）
 
 | 字段 | 值 |

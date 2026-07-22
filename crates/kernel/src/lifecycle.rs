@@ -105,6 +105,15 @@ struct ShutdownInner {
     cv: Condvar,
 }
 
+/// 带 deadline 的关停等待失败。
+#[non_exhaustive]
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum WaitTimeoutError {
+    /// `std::time::Instant` 无法表示请求的 deadline。
+    #[error("关停等待 deadline 超出平台可表示范围")]
+    DeadlineOverflow,
+}
+
 // ---------------------------------------------------------------------------
 // ShutdownSignal
 // ---------------------------------------------------------------------------
@@ -155,30 +164,40 @@ impl ShutdownSignal {
 
     /// 阻塞直到关停被触发或超时。
     ///
-    /// 返回 `true` 表示已触发；`false` 表示超时仍未触发。
+    /// 返回 `Ok(true)` 表示已触发；`Ok(false)` 表示超时仍未触发。
+    /// 请求的 deadline 超出平台可表示范围时返回 [`WaitTimeoutError`]，不得把该错误
+    /// 伪装为普通超时。
+    /// 若调用前已触发，则完成状态优先，在构造 deadline 前立即返回 `Ok(true)`。
     /// 组合根应在丢弃 [`ShutdownGuard`] 前设定 deadline；超时后升级（告警/强制退出）。
+    ///
+    /// # Errors
+    ///
+    /// 信号尚未触发，且 `timeout` 无法与当前 [`std::time::Instant`] 组成可表示的
+    /// deadline 时返回 [`WaitTimeoutError::DeadlineOverflow`]。
     ///
     /// 在 `cfg(loom)` 下不可用（loom Condvar 无 `wait_timeout`）。
     #[cfg(not(loom))]
-    pub fn wait_timeout(&self, timeout: Duration) -> bool {
+    pub fn wait_timeout(&self, timeout: Duration) -> Result<bool, WaitTimeoutError> {
         let mut triggered = self.inner.triggered.lock().unwrap_or_else(|e| e.into_inner());
-        // 使用 checked_add：极端 timeout 不 panic（infra-s9t.15）
+        if *triggered {
+            return Ok(true);
+        }
         let now0 = std::time::Instant::now();
-        let deadline = now0.checked_add(timeout).unwrap_or(now0);
+        let deadline = now0.checked_add(timeout).ok_or(WaitTimeoutError::DeadlineOverflow)?;
         while !*triggered {
             let now = std::time::Instant::now();
             if now >= deadline {
-                return false;
+                return Ok(false);
             }
             let remaining = deadline.saturating_duration_since(now);
             let (guard, result) =
                 self.inner.cv.wait_timeout(triggered, remaining).unwrap_or_else(|e| e.into_inner());
             triggered = guard;
             if result.timed_out() && !*triggered {
-                return false;
+                return Ok(false);
             }
         }
-        true
+        Ok(true)
     }
 }
 
@@ -459,21 +478,28 @@ mod tests {
     #[test]
     fn wait_timeout_returns_false_before_trigger() {
         let (_guard, signal) = ShutdownSignal::new();
-        assert!(!signal.wait_timeout(Duration::from_millis(20)));
+        assert!(!signal.wait_timeout(Duration::from_millis(20)).unwrap());
     }
 
     #[test]
     fn wait_timeout_returns_true_after_trigger() {
         let (guard, signal) = ShutdownSignal::new();
         guard.trigger();
-        assert!(signal.wait_timeout(Duration::from_secs(1)));
+        assert!(signal.wait_timeout(Duration::from_secs(1)).unwrap());
+    }
+
+    #[test]
+    fn wait_timeout_completed_state_precedes_deadline_validation() {
+        let (guard, signal) = ShutdownSignal::new();
+        guard.trigger();
+        assert_eq!(signal.wait_timeout(Duration::MAX), Ok(true));
     }
 
     #[test]
     fn composition_root_deadline_upgrade_path() {
         let (guard, signal) = ShutdownSignal::new();
         let observer = signal.clone();
-        let done = thread::spawn(move || observer.wait_timeout(Duration::from_millis(30)));
+        let done = thread::spawn(move || observer.wait_timeout(Duration::from_millis(30)).unwrap());
         let timed_out = !done.join().expect("join");
         assert!(timed_out, "deadline exceeded without trigger");
         guard.trigger();
@@ -489,21 +515,23 @@ mod tests {
     #[test]
     fn wait_timeout_huge_timeout_checked_add_no_panic() {
         let (_g, s) = ShutdownSignal::new();
-        // Instant::checked_add(Duration::MAX) 常为 None → deadline=now → 立即 false
-        assert!(!s.wait_timeout(Duration::MAX));
+        let error = s
+            .wait_timeout(Duration::MAX)
+            .expect_err("不可表示的 deadline 必须显式报错，不能伪装成普通超时");
+        assert_eq!(error, WaitTimeoutError::DeadlineOverflow);
     }
 
     #[test]
     fn wait_timeout_zero_deadline_branch() {
         let (_g, s) = ShutdownSignal::new();
         // 零超时：立即走 deadline 分支
-        assert!(!s.wait_timeout(Duration::from_millis(0)));
+        assert!(!s.wait_timeout(Duration::from_millis(0)).unwrap());
     }
 
     #[test]
     fn wait_timeout_spuriously_not_triggered_until_timeout() {
         let (_g, s) = ShutdownSignal::new();
-        assert!(!s.wait_timeout(Duration::from_millis(5)));
+        assert!(!s.wait_timeout(Duration::from_millis(5)).unwrap());
     }
 
     #[test]
@@ -514,7 +542,7 @@ mod tests {
             std::thread::sleep(Duration::from_millis(10));
             guard.trigger();
         });
-        assert!(s2.wait_timeout(Duration::from_secs(2)));
+        assert!(s2.wait_timeout(Duration::from_secs(2)).unwrap());
         h.join().unwrap();
     }
 }

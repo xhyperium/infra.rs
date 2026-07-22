@@ -1,0 +1,55 @@
+PR #258 Testkit Coverage 修复候选 GREEN 证据
+日期：2026-07-23 Asia/Shanghai
+最新主干：5fe242cefc873117d024f0d09f8ad5cbf449d2ec
+已验证内容候选：55b899788607bb175b47aedf4ff06dfdc2926ada
+origin/main...candidate 差异 SHA-256：c8be7262b818ddf8b80cb72c14d3c01e1d8dd7e8ac64249c9ceeb480233b0633
+rustc：1.97.0 (2d8144b78 2026-07-07)
+cargo：1.97.0 (c980f4866 2026-06-30)
+node：v24.14.0
+
+远端 RED：PR #258 的首次 Testkit Coverage job（run 29966032925 / job 89077615557）
+报告 instrumented=617、hit=592、zeros=25、line=95.9481%，退出码 1。缺口覆盖
+StepOutcome 中文终态、缺失 snapshot getter、两类 Debug、panic 后观测失败及 String panic；另有
+一个按合同不得执行的 marker 闭包，不能靠执行它伪造覆盖。
+
+修复：补充上述真实行为与故障路径测试；pre-step poison 改用已由成功路径覆盖的
+step_advance_wall，仍以 before_snapshot=None、terminal ObservationFailed 与 source 证明
+step 前 fail-closed。同步 active/complete spec，明确 String/non-text panic 分类及 panic 后观测
+失败优先级；未改变公开 API、Cargo 依赖、crate 版本或 residual。
+
+固定条件：
+  git rev-parse HEAD == 55b899788607bb175b47aedf4ff06dfdc2926ada
+  git status --porcelain 为空
+  git merge-base --is-ancestor origin/main HEAD == 0
+
+验证命令（19/19 退出码为 0）：
+  cargo build --workspace
+  cargo test --workspace
+  cargo fmt --all -- --check
+  cargo clippy --workspace --all-features --all-targets -- -D warnings
+  cargo deny check
+  node scripts/quality-gates/check.mjs
+  node scripts/quality-gates/check-crate-versions.mjs
+  node scripts/quality-gates/check-workspace-deps.mjs
+  node scripts/quality-gates/check-ssot-current-state.mjs
+  cargo test -p kernel -p testkit -p decimalx -p canonical --doc
+  cargo test -p decimalx --features panicking-ops
+  RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --release
+  node scripts/quality-gates/check-canonical-align.mjs
+  node scripts/quality-gates/check-decimal-no-panicking-ops.mjs
+  node scripts/quality-gates/check-public-api.mjs --require-tool -p kernel -p testkit -p decimalx -p canonical
+  node scripts/quality-gates/cov-gate-100.mjs -p testkit --filter crates/testkit/src
+  cmp testkit 与 decimal 双规格镜像
+  git diff --check origin/main...HEAD
+  test -z "$(git status --porcelain)"
+
+关键结果：workspace 全闭包 PASS；Harness 46/46；current-state 26 对；testkit 27 unit、9
+fail-closed、3 concurrency；testkit coverage instrumented=650、hit=650、zeros=0、line=100.0000%；
+loom 3；四包 public API baseline PASS；双规格镜像相同。
+
+原始 stdout 位于 /tmp/infra-pr258-55b8997-raw-20260723：19 个命令日志 + manifest.tsv，
+manifest 19/19 exit 0；SHA256SUMS 全部校验通过；日志与 manifest 合计 125621 bytes。/tmp
+不是持久制品，本文件保存固定 SHA、差异指纹、命令、退出码、工具链、远端 RED 与关键摘要。
+
+非阻断既有警告仍为 basic example 输出文件名碰撞与 cargo-deny skip 配置。独立 Standards、
+Spec 与最终门禁完成前，本证据只表示机器 PASS，不表示 REVIEW GO、人工审批或可合并。

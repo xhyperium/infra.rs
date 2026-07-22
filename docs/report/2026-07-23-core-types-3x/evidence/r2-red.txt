@@ -1,0 +1,45 @@
+R2 失败证据
+日期：2026-07-23 Asia/Shanghai
+输入 HEAD：e0cc99d716638663cd605da749cc1988026528d9
+仅测试补丁：r2-red-tests.patch
+补丁 SHA-256：3894c03ec1005355244b6d3e3f294d624ded5898aa6205d27d8f3f582b5d7b35
+
+补丁重放：
+  git worktree add --detach /tmp/infra-r2-red-replay e0cc99d716638663cd605da749cc1988026528d9
+  git -C /tmp/infra-r2-red-replay apply --unidiff-zero <绝对路径>/r2-red-tests.patch
+  在 /tmp/infra-r2-red-replay 内执行下列两个 RED 命令
+  git worktree remove /tmp/infra-r2-red-replay
+
+已独立执行 `git apply --unidiff-zero --check`，退出码为 0。
+
+[kernel 完成优先级]
+命令：cargo test -p kernel --lib wait_timeout_completed_state_precedes_deadline_validation
+退出码：101
+原始输出：r2-red-kernel-output.txt
+原始失败核心：
+  running 1 test
+  test lifecycle::tests::wait_timeout_completed_state_precedes_deadline_validation ... FAILED
+  assertion `left == right` failed
+    left: Err(DeadlineOverflow)
+   right: Ok(true)
+  test result: FAILED. 0 passed; 1 failed
+
+[decimal 超长小数位]
+命令：cargo test -p decimalx --test boundary_matrix oversized_fraction_length_never_wraps_in_diagnostic
+退出码：101
+原始输出：r2-red-decimal-output.txt
+原始失败核心：
+  running 1 test
+  test oversized_fraction_length_never_wraps_in_diagnostic ... FAILED
+  assertion `left == right` failed
+    left: Scale
+   right: Parse
+  test result: FAILED. 0 passed; 1 failed
+
+[仅回归加固的基线控制]
+命令：cargo test -p testkit --test manual_clock_concurrency multiple_controllers_advance_wall_without_lost_updates
+退出码：0；1 passed
+命令：cargo test -p canonical --test public_api_surface
+退出码：0；5 passed
+
+说明：仅 kernel/decimalx 是本轮真实 RED；testkit/canonical 不冒充 RED。命令输出中的英文是工具原文。

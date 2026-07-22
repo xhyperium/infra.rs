@@ -1,0 +1,24 @@
+diff --git a/crates/kernel/src/lifecycle.rs b/crates/kernel/src/lifecycle.rs
+--- a/crates/kernel/src/lifecycle.rs
++++ b/crates/kernel/src/lifecycle.rs
+@@ -480,0 +481,7 @@
++
++    #[test]
++    fn wait_timeout_completed_state_precedes_deadline_validation() {
++        let (guard, signal) = ShutdownSignal::new();
++        guard.trigger();
++        assert_eq!(signal.wait_timeout(Duration::MAX), Ok(true));
++    }
+diff --git a/crates/types/decimal/tests/boundary_matrix.rs b/crates/types/decimal/tests/boundary_matrix.rs
+--- a/crates/types/decimal/tests/boundary_matrix.rs
++++ b/crates/types/decimal/tests/boundary_matrix.rs
+@@ -35,0 +36,9 @@
++
++#[test]
++fn oversized_fraction_length_never_wraps_in_diagnostic() {
++    let text = format!("0.{}", "1".repeat(256));
++    let error = text.parse::<Decimal>().expect_err("超长小数位必须拒绝");
++    assert_eq!(error.kind(), DecimalErrorKind::Parse);
++    assert!(error.to_string().contains("256"), "诊断必须保留真实小数位数: {error}");
++    assert!(!error.to_string().contains("scale 0"), "诊断不得把 256 窄化为 0: {error}");
++}

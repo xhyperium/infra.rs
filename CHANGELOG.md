@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Core types（2026-07-23）
+
+- `kernel 0.3.1`：`wait_timeout` 改为 typed `Result`，deadline overflow 不再伪装成普通 timeout（破坏性 API 变更）。
+- `testkit 0.1.3`：确定性 runner 改为消费型 typed terminal report/error，并对 panic、clock fault 与观测失败 fail closed（破坏性 API 变更）。
+- `decimalx 0.1.2`：闭合 `i128::MIN` 文本往返并保留错误 source chain。
+- `canonical 0.1.2`：增加精确 committed wire version 与无损 ns→ms 查询。
+
 ### Changed
 
 - **storage 七域生产边界加固**：ClickHouse/Kafka/NATS/OSS/Postgres/Redis/TAOS

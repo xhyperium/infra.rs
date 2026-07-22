@@ -1,0 +1,32 @@
+R1 RED EVIDENCE
+date: 2026-07-23 Asia/Shanghai
+base: 3cd29a942710c0fb42f3f6bc05e3c31570acad47
+rustc: 1.97.0 (2d8144b78 2026-07-07)
+cargo: 1.97.0 (c980f4866 2026-06-30)
+
+[decimalx]
+command: cargo test -p decimalx --test boundary_matrix
+exit: 101
+observed: 2 failed; i128::MIN Display text returned MantissaOverflow; XError source was None.
+
+[kernel]
+command: cargo test -p kernel --lib wait_timeout_huge_timeout_checked_add_no_panic
+exit: 101
+observed: old bool return had no expect_err method and no WaitTimeoutError type.
+
+[canonical wire]
+command: cargo test -p canonical --test public_api_surface shape_and_time_and_wire_surface
+exit: 101
+observed: unresolved imports WireVersion and committed_wire_version.
+
+[canonical time]
+command: cargo test -p canonical --lib exact_nanos_to_millis_rejects_precision_loss
+exit: 101
+observed: unresolved function unix_millis_from_ns_exact.
+
+[testkit]
+command: cargo test -p testkit --test harness_fail_closed
+exit: 101
+observed: typed HarnessReport/HarnessRunError/StepOutcome seam absent; old runner accepted String and returned borrowed records.
+
+说明：以上为实现前命令的退出状态与诊断摘要；旧工作树未冻结，不能把首次 reviewer 的 NO-GO 升级为新候选结论。

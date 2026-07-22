@@ -1,31 +1,42 @@
-# types/decimal — Matrix
+# decimalx 当前态追溯矩阵
 
-> **状态**：Active SSOT agent-safe 对账矩阵已维护 · **not** Goal Achieved · **not** Spec Approved  
-> 追溯边横切；非 pipeline_state。
+> **状态**：Active current-state matrix · 非 Goal Achieved / Spec Approved
 
-## 追溯边（2026-07-21）
+## 合同到实现与测试
 
-| 边 | 从 | 到 | 状态 |
-|----|----|----|------|
-| Goal → Spec | `goal/goal.md` | `spec/spec.md` | Active 入口绑定 |
-| Spec → Code | `spec/spec.md` | `crates/types/decimal` | 公开 API / 行为对齐 |
-| Spec dual | `spec/spec.md` | `spec/decimalx-complete-spec.md` | `cmp` 同构 |
-| Plan residual | `plan/residual-open.md` | T-HUM / T-DEF / T-POL | **仍开放** |
-| Review | `review/review.md` | 门禁 + residual | 默认 NOT PASS（人审） |
-| Wire | `crates/types/decimal/docs/WIRE.md` | serde/text/DB | **非** stable |
+| 合同 | Active spec | 实现位置 | 主要测试位置 | 当前判定 |
+|---|---|---|---|---|
+| 私有 Decimal 字段 + 访问器 | §2–3 | `src/lib.rs::Decimal` | `tests/public_api_surface.rs` | 已实现 |
+| `MAX_SCALE = 18` | §2 | `MAX_SCALE`、`try_new`、Deserialize | `boundary_matrix.rs`、`adversarial_serde.rs` | 已实现 |
+| 私有 Currency/Money 字段 | §2 | `Currency`、`Money` | `public_api_surface.rs`、`boundary_matrix.rs` | 已实现 |
+| DecimalError / Kind | §6 | `DecimalError`、`DecimalErrorKind` | `public_api_surface.rs` | 已实现 |
+| checked 四则 / rescale | §3–4 | `checked_*`、`div` | `entry_checked_ops.rs`、`boundary_matrix.rs`、`oracle_diff.rs` | 已实现 |
+| default-off panicking ops | §3 | Cargo feature + cfg impl | `public_api_surface.rs` + 生产路径脚本 | 已实现 |
+| Display → FromStr 全表示往返 | §5 | `Display`、`FromStr` | `boundary_matrix.rs` + property 测试 | `c4604ce` PASS / `fff07ea` REVIEW GO |
+| DecimalError → XError source | §6 | `From<DecimalError> for XError` | `boundary_matrix.rs`（含类型 downcast） | `c4604ce` PASS / `fff07ea` REVIEW GO |
+| 内部 Rust serde JSON v1 | §7 | `WIRE_SCHEMA_VERSION` + 自定义 serde | unit wire tests、`adversarial_serde.rs` | 有限承诺 |
+| JSON i128 跨语言精确承载 | §7 | 不在当前实现范围 | 尚无协议一致性套件 | residual |
 
-## 条款摘要
+以上实现路径均相对 `crates/types/decimal/`。
 
-| 条款族 | 实现 | 晋级 |
-|--------|------|------|
-| DEC-LAYER / REP / ROUND / FLOAT | ALIGNED | Active 验收 |
-| MAX_SCALE 强制（代码） | ALIGNED | 取值批准 = HUMAN_ONLY |
-| DEC-LIMIT / ERR / WIRE 治理 | OPEN | HUMAN_ONLY |
-| DEC-DIV target_scale / 全 i128 oracle | OPEN | DEFERRED |
+## 权威与来源
 
-完整一一矩阵见本回合 scratch：`decimal-ssot-alignment.md`（会话证据；非 Goal Achieved）。
+| 事实 | 当前权威 | 说明 |
+|---|---|---|
+| 架构、错误链、语言、门禁 | `CONSTITUTION.md` + `docs/constitution/` | 本仓宪章正文 |
+| decimalx 当前合同 | `spec/spec.md` | Active current-state SSOT |
+| API 与行为事实 | `crates/types/decimal/src/lib.rs`、`Cargo.toml` | 必须由测试证明 |
+| 独立 crate 版本 | `docs/governance/VERSIONING.md` + crate Cargo | 行为交付 PATCH +1 |
+| “ADR-006/007” | 历史来源记录 | 本仓无可解析原件；不作当前权威 |
 
-## 禁止
+## 声明边界
 
-- 空目录批量标 DONE / READY / PASS
-- 将 HUMAN_ONLY / DEFERRED / POLICY 伪标完成
+| 能力 | 可声明 | 不可声明 |
+|---|---|---|
+| 生产就绪 | L1 checked path | 整个金融领域模型 / package stable |
+| serde v1 | 内部 Rust JSON shape + 校验 | 跨语言精确协议 / canonical wire |
+| panic | default-off ops 与便利 API 的明确 panic | checked 资金路径可 panic |
+| 完成状态 | `c4604ce` 全量门禁 PASS；`fff07ea` 独立终审 GO | Goal Achieved / package stable |
+
+开放项只在 [residual-open.md](../plan/residual-open.md) 维护；测试与门禁分别见
+[test.md](../test/test.md) 和 [gate.md](../gate/gate.md)。

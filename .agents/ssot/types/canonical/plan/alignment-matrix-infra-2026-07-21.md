@@ -1,3 +1,5 @@
+> **历史对齐快照（2026-07-21，非当前矩阵）**：以下 MATCH 仅绑定当时实现。当前 clause→code→test→claim 映射见 [../matrix/matrix.md](../matrix/matrix.md)。
+
 # Alignment Matrix — infra.rs `types/canonical` 1:1 审查
 
 | 字段 | 值 |

@@ -43,18 +43,70 @@ impl core::marker::Unpin for testkit::ManualClockFault
 impl core::marker::UnsafeUnpin for testkit::ManualClockFault
 impl core::panic::unwind_safe::RefUnwindSafe for testkit::ManualClockFault
 impl core::panic::unwind_safe::UnwindSafe for testkit::ManualClockFault
+#[non_exhaustive] pub enum testkit::StepOutcome
+pub testkit::StepOutcome::Failed
+pub testkit::StepOutcome::ObservationFailed
+pub testkit::StepOutcome::Panicked
+pub testkit::StepOutcome::Passed
+impl core::clone::Clone for testkit::StepOutcome
+pub fn testkit::StepOutcome::clone(&self) -> testkit::StepOutcome
+impl core::cmp::Eq for testkit::StepOutcome
+impl core::cmp::PartialEq for testkit::StepOutcome
+pub fn testkit::StepOutcome::eq(&self, &testkit::StepOutcome) -> bool
+impl core::fmt::Debug for testkit::StepOutcome
+pub fn testkit::StepOutcome::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for testkit::StepOutcome
+impl core::marker::StructuralPartialEq for testkit::StepOutcome
+impl core::marker::Freeze for testkit::StepOutcome
+impl core::marker::Send for testkit::StepOutcome
+impl core::marker::Sync for testkit::StepOutcome
+impl core::marker::Unpin for testkit::StepOutcome
+impl core::marker::UnsafeUnpin for testkit::StepOutcome
+impl core::panic::unwind_safe::RefUnwindSafe for testkit::StepOutcome
+impl core::panic::unwind_safe::UnwindSafe for testkit::StepOutcome
+pub struct testkit::HarnessReport
+impl testkit::HarnessReport
+pub fn testkit::HarnessReport::assert_all_ok(&self, usize)
+pub fn testkit::HarnessReport::assert_monotonic_elapsed(&self, core::time::Duration)
+pub fn testkit::HarnessReport::assert_wall_ns(&self, i64)
+pub const fn testkit::HarnessReport::clock(&self) -> &testkit::ManualClock
+pub fn testkit::HarnessReport::records(&self) -> &[testkit::StepRecord]
+impl core::fmt::Debug for testkit::HarnessReport
+pub fn testkit::HarnessReport::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for testkit::HarnessReport
+impl core::marker::Send for testkit::HarnessReport
+impl core::marker::Sync for testkit::HarnessReport
+impl core::marker::Unpin for testkit::HarnessReport
+impl core::marker::UnsafeUnpin for testkit::HarnessReport
+impl core::panic::unwind_safe::RefUnwindSafe for testkit::HarnessReport
+impl core::panic::unwind_safe::UnwindSafe for testkit::HarnessReport
+pub struct testkit::HarnessRunError
+impl testkit::HarnessRunError
+pub fn testkit::HarnessRunError::detail(&self) -> &str
+pub fn testkit::HarnessRunError::into_report(self) -> testkit::HarnessReport
+pub const fn testkit::HarnessRunError::kind(&self) -> testkit::StepOutcome
+pub fn testkit::HarnessRunError::report(&self) -> &testkit::HarnessReport
+pub fn testkit::HarnessRunError::step(&self) -> &str
+impl core::error::Error for testkit::HarnessRunError
+pub fn testkit::HarnessRunError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for testkit::HarnessRunError
+pub fn testkit::HarnessRunError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for testkit::HarnessRunError
+pub fn testkit::HarnessRunError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for testkit::HarnessRunError
+impl core::marker::Send for testkit::HarnessRunError
+impl core::marker::Sync for testkit::HarnessRunError
+impl core::marker::Unpin for testkit::HarnessRunError
+impl core::marker::UnsafeUnpin for testkit::HarnessRunError
+impl !core::panic::unwind_safe::RefUnwindSafe for testkit::HarnessRunError
+impl !core::panic::unwind_safe::UnwindSafe for testkit::HarnessRunError
 pub struct testkit::IntegrationHarness
 impl testkit::IntegrationHarness
-pub fn testkit::IntegrationHarness::assert_all_ok(&self, usize)
-pub fn testkit::IntegrationHarness::assert_monotonic_elapsed(&self, core::time::Duration)
-pub fn testkit::IntegrationHarness::assert_wall_ns(&self, i64)
-pub fn testkit::IntegrationHarness::clock(&self) -> &testkit::ManualClock
 pub fn testkit::IntegrationHarness::new(testkit::ManualClock) -> Self
-pub fn testkit::IntegrationHarness::records(&self) -> &[testkit::StepRecord]
-pub fn testkit::IntegrationHarness::run(&mut self) -> core::result::Result<&[testkit::StepRecord], &[testkit::StepRecord]>
-pub fn testkit::IntegrationHarness::step<F>(&mut self, impl core::convert::Into<alloc::string::String>, F) -> &mut Self where F: core::ops::function::FnOnce(&testkit::ManualClock) -> core::result::Result<(), alloc::string::String> + core::marker::Send + 'static
-pub fn testkit::IntegrationHarness::step_advance_monotonic(&mut self, impl core::convert::Into<alloc::string::String>, core::time::Duration) -> &mut Self
-pub fn testkit::IntegrationHarness::step_advance_wall(&mut self, impl core::convert::Into<alloc::string::String>, core::time::Duration) -> &mut Self
+pub fn testkit::IntegrationHarness::run(self) -> core::result::Result<testkit::HarnessReport, testkit::HarnessRunError>
+pub fn testkit::IntegrationHarness::step<F, E>(self, impl core::convert::Into<alloc::string::String>, F) -> Self where F: core::ops::function::FnOnce(&testkit::ManualClock) -> core::result::Result<(), E> + core::marker::Send + 'static, E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
+pub fn testkit::IntegrationHarness::step_advance_monotonic(self, impl core::convert::Into<alloc::string::String>, core::time::Duration) -> Self
+pub fn testkit::IntegrationHarness::step_advance_wall(self, impl core::convert::Into<alloc::string::String>, core::time::Duration) -> Self
 pub fn testkit::IntegrationHarness::with_wall(kernel::clock::Timestamp) -> Self
 impl core::fmt::Debug for testkit::IntegrationHarness
 pub fn testkit::IntegrationHarness::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -113,10 +165,14 @@ impl core::marker::UnsafeUnpin for testkit::ManualClockSnapshot
 impl core::panic::unwind_safe::RefUnwindSafe for testkit::ManualClockSnapshot
 impl core::panic::unwind_safe::UnwindSafe for testkit::ManualClockSnapshot
 pub struct testkit::StepRecord
-pub testkit::StepRecord::detail: alloc::string::String
-pub testkit::StepRecord::name: alloc::string::String
-pub testkit::StepRecord::ok: bool
-pub testkit::StepRecord::wall_after_ns: i64
+impl testkit::StepRecord
+pub const fn testkit::StepRecord::after_snapshot(&self) -> core::option::Option<testkit::ManualClockSnapshot>
+pub const fn testkit::StepRecord::before_snapshot(&self) -> core::option::Option<testkit::ManualClockSnapshot>
+pub fn testkit::StepRecord::detail(&self) -> core::option::Option<&str>
+pub fn testkit::StepRecord::name(&self) -> &str
+pub const fn testkit::StepRecord::outcome(&self) -> testkit::StepOutcome
+pub const fn testkit::StepRecord::wall_after_ns(&self) -> core::option::Option<i64>
+pub const fn testkit::StepRecord::wall_fault_after(&self) -> core::option::Option<testkit::ManualClockFault>
 impl core::clone::Clone for testkit::StepRecord
 pub fn testkit::StepRecord::clone(&self) -> testkit::StepRecord
 impl core::cmp::Eq for testkit::StepRecord

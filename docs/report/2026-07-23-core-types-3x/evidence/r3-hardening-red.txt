@@ -1,0 +1,16 @@
+R3 终门禁阻断修复 RED 证据
+日期：2026-07-23 Asia/Shanghai
+输入证据候选：c27b7cee4375d8f04068e1604b610e3e3b1c4537
+
+新增依赖/派生守卫后执行：
+  cargo test -p testkit --test public_surface
+
+退出码：101
+
+真实失败：
+  cargo_toml_production_deps_are_kernel_and_thiserror FAILED
+  left: ["kernel"]
+  right: ["kernel", "thiserror"]
+
+该 RED 证明 testkit 尚未声明 workspace `thiserror` normal dependency，且 crate 专用错误仍未切换派生。
+随后才实施 Cargo、错误类型与 SSOT 修复；未删除或弱化该守卫。

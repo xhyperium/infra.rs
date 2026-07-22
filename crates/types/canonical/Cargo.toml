@@ -1,6 +1,6 @@
 [package]
 name = "canonical"
-version = "0.1.1"
+version = "0.1.2"
 edition.workspace = true
 rust-version.workspace = true
 description = "/types/ 跨层共享纯 DTO（ADR-001）；Money 复用 decimalx"
@@ -13,7 +13,7 @@ name = "canonical"
 
 [dependencies]
 # path + version：满足 cargo-deny bans.wildcards=deny（禁止裸 path 通配依赖）
-decimalx = { path = "../decimal", version = "0.1.1" }
+decimalx = { path = "../decimal", version = "0.1.2" }
 serde = { workspace = true }
 
 [dev-dependencies]

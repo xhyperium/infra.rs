@@ -5,10 +5,11 @@ use canonical::{
     CURRENT_PAYLOAD_SCHEMA_VERSION, CancelOrderRequest, ENVELOPE_SCHEMA_VERSION, Envelope,
     InstrumentId, Money, Order, OrderAck, OrderBookSnapshot, OrderRef, OrderStatus,
     PROPOSED_TS_UNIT, Position, PriceLevel, Side, SymbolMeta, TS_UNIT, Tick, Trade, VenueId,
-    WireCommitment, cancel_request_shape_ok, dto_ts_from_unix_millis, is_nonempty_token,
-    is_plausible_instrument_id, is_plausible_venue_slug, ns_from_unix_millis,
-    order_ref_payload_nonempty, proposed_dto_ts_from_unix_millis, proposed_ns_from_unix_millis,
-    proposed_unix_millis_from_ns, unix_millis_from_ns, wire_commitment,
+    WireCommitment, WireVersion, cancel_request_shape_ok, committed_wire_version,
+    dto_ts_from_unix_millis, is_nonempty_token, is_plausible_instrument_id,
+    is_plausible_venue_slug, ns_from_unix_millis, order_ref_payload_nonempty,
+    proposed_dto_ts_from_unix_millis, proposed_ns_from_unix_millis, proposed_unix_millis_from_ns,
+    unix_millis_from_ns, unix_millis_from_ns_exact, wire_commitment,
 };
 use decimalx::{Currency, Decimal, Price, Qty};
 
@@ -68,6 +69,11 @@ fn shape_and_time_and_wire_surface() {
     }
     assert_eq!(wire_commitment("NotAType"), WireCommitment::Uncommitted);
     assert_eq!(wire_commitment("Money"), WireCommitment::Uncommitted);
+    assert_eq!(committed_wire_version("CancelOrderRequest"), Some(WireVersion::V1));
+    assert_eq!(committed_wire_version("Order"), Some(WireVersion::V1_1));
+    assert_eq!(committed_wire_version("Tick"), Some(WireVersion::V1_2));
+    assert_eq!(committed_wire_version("OrderBookSnapshot"), Some(WireVersion::V1_3));
+    assert_eq!(committed_wire_version("NotAType"), None);
 
     let _vid: VenueId = "binance".into();
     let _iid: InstrumentId = "BTCUSDT".into();
@@ -172,4 +178,77 @@ fn modules_reachable() {
     assert_eq!(canonical::wire::wire_commitment("Order"), WireCommitment::CommittedV1);
     assert!(canonical::shape::is_nonempty_token("x"));
     assert_eq!(canonical::proposed_time::unix_millis_from_ns(1_000_000), 1);
+}
+
+#[test]
+fn exact_wire_inventory_and_time_boundaries_are_exhaustive() {
+    let expected = [
+        ("CancelOrderRequest", WireVersion::V1),
+        ("OrderRef", WireVersion::V1),
+        ("OrderAck", WireVersion::V1),
+        ("OrderStatus", WireVersion::V1),
+        ("Side", WireVersion::V1),
+        ("Order", WireVersion::V1_1),
+        ("Tick", WireVersion::V1_2),
+        ("Trade", WireVersion::V1_2),
+        ("Position", WireVersion::V1_3),
+        ("OrderBookSnapshot", WireVersion::V1_3),
+        ("PriceLevel", WireVersion::V1_3),
+        ("SymbolMeta", WireVersion::V1_3),
+    ];
+    assert_eq!(expected.len(), 12);
+    for (name, version) in expected {
+        assert_eq!(committed_wire_version(name), Some(version), "类型 {name} 版本错误");
+    }
+    let inventory: Vec<&str> = COMMITTED_WIRE_V1
+        .iter()
+        .chain(COMMITTED_WIRE_V1_1.iter())
+        .chain(COMMITTED_WIRE_V1_2.iter())
+        .chain(COMMITTED_WIRE_V1_3.iter())
+        .copied()
+        .collect();
+    assert_eq!(
+        inventory,
+        expected.into_iter().map(|(name, _)| name).collect::<Vec<_>>(),
+        "生产 inventory 必须与独立 12 项 oracle 完全一致"
+    );
+    assert_eq!(committed_wire_version("Money"), None);
+    assert_eq!(committed_wire_version("Unknown"), None);
+
+    assert_eq!(unix_millis_from_ns_exact(1_000_000), Some(1));
+    assert_eq!(unix_millis_from_ns_exact(-1_000_000), Some(-1));
+    assert_eq!(unix_millis_from_ns_exact(1), None);
+    assert_eq!(unix_millis_from_ns_exact(-1), None);
+    assert_eq!(unix_millis_from_ns(-1), 0);
+}
+
+#[test]
+fn envelope_negative_paths_remain_explicit_and_fail_closed() {
+    type AckEnvelope = Envelope<OrderAck>;
+
+    for (json, expected_fragment) in [
+        (r#"{"schema_version":1}"#, "missing field `payload`"),
+        (
+            r#"{"schema_version":1,"schema_version":1,"payload":{"id":"x","status":"Open","ts":1}}"#,
+            "duplicate field `schema_version`",
+        ),
+        (
+            r#"{"schema_version":1,"payload":{"id":"x","status":"Open","ts":1},"extra":true}"#,
+            "unknown field `extra`",
+        ),
+        (r#"{"schema_version":-1,"payload":{"id":"x","status":"Open","ts":1}}"#, "invalid value"),
+    ] {
+        let error = serde_json::from_str::<AckEnvelope>(json).expect_err("非法 envelope 必须拒绝");
+        assert_eq!(error.classify(), serde_json::error::Category::Data);
+        assert!(
+            error.to_string().contains(expected_fragment),
+            "错误诊断必须包含 {expected_fragment}: {error}"
+        );
+    }
+
+    let envelope = Envelope::wrap(2, OrderAck { id: "x".into(), status: OrderStatus::Open, ts: 1 });
+    let borrowed = envelope.validate_version(1).expect_err("版本不匹配必须拒绝");
+    assert_eq!((borrowed.expected, borrowed.actual), (1, 2));
+    let consumed = envelope.into_payload_if_version(1).expect_err("消费路径也必须拒绝");
+    assert_eq!((consumed.expected, consumed.actual), (1, 2));
 }

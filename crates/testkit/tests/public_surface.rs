@@ -65,35 +65,29 @@ fn lib_reexports_only_manual_clock_family() {
             && code.contains("ManualClockError")
             && code.contains("ManualClockFault")
             && code.contains("ManualClockSnapshot"),
-        "lib.rs must re-export ManualClock family"
+        "lib.rs 必须重新导出 ManualClock 族"
     );
-    assert!(
-        code.contains("IntegrationHarness") && code.contains("StepRecord"),
-        "lib.rs must re-export IntegrationHarness family"
-    );
+    for name in
+        ["IntegrationHarness", "HarnessReport", "HarnessRunError", "StepOutcome", "StepRecord"]
+    {
+        assert!(code.contains(name), "lib.rs 必须重新导出 {name}");
+    }
     for banned in [
         "macro_rules! xlib_test",
         "macro_rules! mock",
         "struct FixtureBuilder",
         "provider_capability_contract_tests!",
     ] {
-        assert!(
-            !code.contains(banned),
-            "lib.rs code must not contain retired definition `{banned}`"
-        );
+        assert!(!code.contains(banned), "lib.rs 代码不得包含已退役定义 `{banned}`");
     }
     let pub_uses: Vec<&str> =
         code.lines().map(str::trim).filter(|l| l.starts_with("pub use")).collect();
-    assert_eq!(pub_uses.len(), 2, "expected clock + harness pub use lines, got {pub_uses:?}");
-    let clock_line = pub_uses.iter().find(|l| l.contains("clock::")).expect("clock pub use");
+    assert_eq!(pub_uses.len(), 2, "预期 clock + harness 两行公开导出，实际为 {pub_uses:?}");
+    let clock_line = pub_uses.iter().find(|l| l.contains("clock::")).expect("clock 公开导出");
     for name in ["ManualClock", "ManualClockError", "ManualClockFault", "ManualClockSnapshot"] {
-        assert!(clock_line.contains(name), "pub use missing {name}: {clock_line}");
+        assert!(clock_line.contains(name), "公开导出缺少 {name}: {clock_line}");
     }
-    let harness_line = pub_uses.iter().find(|l| l.contains("harness::")).expect("harness pub use");
-    assert!(
-        harness_line.contains("IntegrationHarness") && harness_line.contains("StepRecord"),
-        "harness pub use missing symbols: {harness_line}"
-    );
+    assert!(pub_uses.iter().any(|line| line.contains("harness::")), "缺少 harness 公开导出");
 }
 
 #[test]
@@ -138,7 +132,7 @@ fn source_tree_has_no_retired_macros_or_fixture_builder() {
 }
 
 #[test]
-fn cargo_toml_production_deps_only_kernel() {
+fn cargo_toml_production_deps_are_kernel_and_thiserror() {
     let deps_section = CARGO_TOML
         .split("[dependencies]")
         .nth(1)
@@ -154,7 +148,15 @@ fn cargo_toml_production_deps_only_kernel() {
         .filter(|k| !k.is_empty())
         .collect();
     prod_deps.sort_unstable();
-    assert_eq!(prod_deps, vec!["kernel"], "production deps must be only kernel, got {prod_deps:?}");
+    assert_eq!(
+        prod_deps,
+        vec!["kernel", "thiserror"],
+        "生产依赖只能是 kernel 与错误派生依赖 thiserror，实际为 {prod_deps:?}"
+    );
+    assert!(
+        HARNESS_RS.contains("thiserror::Error") && CLOCK_RS.contains("thiserror::Error"),
+        "crate 专用错误必须由 thiserror 定义"
+    );
     assert!(
         CARGO_TOML.contains("publish = false"),
         "testkit must remain publish=false (test-support plane)"
@@ -179,8 +181,10 @@ fn consumer_can_import_manual_clock_family() {
     let snap: ManualClockSnapshot = c.snapshot().expect("snap");
     assert_eq!(snap.wall().as_unix_nanos(), 7);
 
-    let mut h = IntegrationHarness::with_wall(kernel::Timestamp::from_unix_nanos(0));
-    h.step_advance_wall("t", Duration::from_nanos(1));
-    let rec: &[StepRecord] = h.run().expect("run");
+    let report = IntegrationHarness::with_wall(kernel::Timestamp::from_unix_nanos(0))
+        .step_advance_wall("t", Duration::from_nanos(1))
+        .run()
+        .expect("run");
+    let rec: &[StepRecord] = report.records();
     assert_eq!(rec.len(), 1);
 }
