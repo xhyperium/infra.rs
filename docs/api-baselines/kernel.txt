@@ -216,6 +216,24 @@ impl core::marker::Unpin for kernel::lifecycle::ComponentState
 impl core::marker::UnsafeUnpin for kernel::lifecycle::ComponentState
 impl core::panic::unwind_safe::RefUnwindSafe for kernel::lifecycle::ComponentState
 impl core::panic::unwind_safe::UnwindSafe for kernel::lifecycle::ComponentState
+#[non_exhaustive] pub enum kernel::lifecycle::WaitTimeoutError
+pub kernel::lifecycle::WaitTimeoutError::DeadlineOverflow
+impl core::cmp::Eq for kernel::lifecycle::WaitTimeoutError
+impl core::cmp::PartialEq for kernel::lifecycle::WaitTimeoutError
+pub fn kernel::lifecycle::WaitTimeoutError::eq(&self, &kernel::lifecycle::WaitTimeoutError) -> bool
+impl core::error::Error for kernel::lifecycle::WaitTimeoutError
+impl core::fmt::Debug for kernel::lifecycle::WaitTimeoutError
+pub fn kernel::lifecycle::WaitTimeoutError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for kernel::lifecycle::WaitTimeoutError
+pub fn kernel::lifecycle::WaitTimeoutError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for kernel::lifecycle::WaitTimeoutError
+impl core::marker::Freeze for kernel::lifecycle::WaitTimeoutError
+impl core::marker::Send for kernel::lifecycle::WaitTimeoutError
+impl core::marker::Sync for kernel::lifecycle::WaitTimeoutError
+impl core::marker::Unpin for kernel::lifecycle::WaitTimeoutError
+impl core::marker::UnsafeUnpin for kernel::lifecycle::WaitTimeoutError
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::lifecycle::WaitTimeoutError
+impl core::panic::unwind_safe::UnwindSafe for kernel::lifecycle::WaitTimeoutError
 pub struct kernel::lifecycle::LifecycleError
 pub kernel::lifecycle::LifecycleError::from: kernel::lifecycle::ComponentState
 pub kernel::lifecycle::LifecycleError::to: kernel::lifecycle::ComponentState
@@ -255,7 +273,7 @@ impl kernel::lifecycle::ShutdownSignal
 pub fn kernel::lifecycle::ShutdownSignal::is_triggered(&self) -> bool
 pub fn kernel::lifecycle::ShutdownSignal::new() -> (kernel::lifecycle::ShutdownGuard, kernel::lifecycle::ShutdownSignal)
 pub fn kernel::lifecycle::ShutdownSignal::wait(&self)
-pub fn kernel::lifecycle::ShutdownSignal::wait_timeout(&self, core::time::Duration) -> bool
+pub fn kernel::lifecycle::ShutdownSignal::wait_timeout(&self, core::time::Duration) -> core::result::Result<bool, kernel::lifecycle::WaitTimeoutError>
 impl core::clone::Clone for kernel::lifecycle::ShutdownSignal
 pub fn kernel::lifecycle::ShutdownSignal::clone(&self) -> kernel::lifecycle::ShutdownSignal
 impl core::fmt::Debug for kernel::lifecycle::ShutdownSignal
@@ -345,6 +363,24 @@ impl core::marker::Unpin for kernel::error::ErrorKind
 impl core::marker::UnsafeUnpin for kernel::error::ErrorKind
 impl core::panic::unwind_safe::RefUnwindSafe for kernel::error::ErrorKind
 impl core::panic::unwind_safe::UnwindSafe for kernel::error::ErrorKind
+#[non_exhaustive] pub enum kernel::WaitTimeoutError
+pub kernel::WaitTimeoutError::DeadlineOverflow
+impl core::cmp::Eq for kernel::lifecycle::WaitTimeoutError
+impl core::cmp::PartialEq for kernel::lifecycle::WaitTimeoutError
+pub fn kernel::lifecycle::WaitTimeoutError::eq(&self, &kernel::lifecycle::WaitTimeoutError) -> bool
+impl core::error::Error for kernel::lifecycle::WaitTimeoutError
+impl core::fmt::Debug for kernel::lifecycle::WaitTimeoutError
+pub fn kernel::lifecycle::WaitTimeoutError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for kernel::lifecycle::WaitTimeoutError
+pub fn kernel::lifecycle::WaitTimeoutError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for kernel::lifecycle::WaitTimeoutError
+impl core::marker::Freeze for kernel::lifecycle::WaitTimeoutError
+impl core::marker::Send for kernel::lifecycle::WaitTimeoutError
+impl core::marker::Sync for kernel::lifecycle::WaitTimeoutError
+impl core::marker::Unpin for kernel::lifecycle::WaitTimeoutError
+impl core::marker::UnsafeUnpin for kernel::lifecycle::WaitTimeoutError
+impl core::panic::unwind_safe::RefUnwindSafe for kernel::lifecycle::WaitTimeoutError
+impl core::panic::unwind_safe::UnwindSafe for kernel::lifecycle::WaitTimeoutError
 pub struct kernel::ClockDomain(_)
 impl kernel::clock::ClockDomain
 pub const kernel::clock::ClockDomain::PROCESS: Self
@@ -431,7 +467,7 @@ impl kernel::lifecycle::ShutdownSignal
 pub fn kernel::lifecycle::ShutdownSignal::is_triggered(&self) -> bool
 pub fn kernel::lifecycle::ShutdownSignal::new() -> (kernel::lifecycle::ShutdownGuard, kernel::lifecycle::ShutdownSignal)
 pub fn kernel::lifecycle::ShutdownSignal::wait(&self)
-pub fn kernel::lifecycle::ShutdownSignal::wait_timeout(&self, core::time::Duration) -> bool
+pub fn kernel::lifecycle::ShutdownSignal::wait_timeout(&self, core::time::Duration) -> core::result::Result<bool, kernel::lifecycle::WaitTimeoutError>
 impl core::clone::Clone for kernel::lifecycle::ShutdownSignal
 pub fn kernel::lifecycle::ShutdownSignal::clone(&self) -> kernel::lifecycle::ShutdownSignal
 impl core::fmt::Debug for kernel::lifecycle::ShutdownSignal

@@ -11,8 +11,11 @@
 | `ManualClockSnapshot` | `wall` · `monotonic_elapsed` · `wall_fault` |
 | `ManualClockFault` | `BeforeUnixEpoch` · `Overflow` · `Unavailable`（映射 `ClockError`） |
 | `ManualClockError` | `WallOverflow` · `MonotonicOverflow` · `MonotonicRegression` · `Synchronization`（中文 `Display`） |
-| `IntegrationHarness` | `new` · `with_wall` · `clock` · `step` · `step_advance_wall` · `step_advance_monotonic` · `run` · `records` · `assert_all_ok` · `assert_wall_ns` · `assert_monotonic_elapsed`（`dyn Clock` 经 `clock()`） |
-| `StepRecord` | `name` · `ok` · `detail` · `wall_after_ns` |
+| `IntegrationHarness` | `new` · `with_wall` · 消费型 `step` / `step_advance_wall` / `step_advance_monotonic` · `run(self)` |
+| `HarnessReport` | `clock` · `records` · `assert_all_ok` · `assert_wall_ns` · `assert_monotonic_elapsed` |
+| `HarnessRunError` | `step` · `kind` · `detail` · `report` · `into_report`；保留 `Error::source` |
+| `StepOutcome` | `Passed` · `Failed` · `Panicked` · `ObservationFailed` |
+| `StepRecord` | 私有字段；`name` · `outcome` · `detail` · `before_snapshot` · `after_snapshot` · 兼容查询 `wall_after_ns` / `wall_fault_after` |
 
 ## 不变量
 
@@ -20,6 +23,7 @@
 - 无 `Default` / `Clone`；共享用 `Arc`
 - 每个实例独立 `ClockDomain`
 - poison：`Clock::monotonic` 恢复；控制路径返回 `Synchronization`
+- runner 在 step 前后 snapshot；snapshot 失败或 wall fault 均返回 `ObservationFailed`
 
 ## 最小用法
 

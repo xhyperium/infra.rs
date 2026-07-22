@@ -1,8 +1,11 @@
 //! 完整边界策略表驱动测试（W1 / DEFER-4）。
 
 use decimalx::{
-    Currency, Decimal, DecimalErrorKind, MAX_SCALE, Money, RoundingStrategy, TECH_MAX_POW10_EXP,
+    Currency, Decimal, DecimalError, DecimalErrorKind, MAX_SCALE, Money, RoundingStrategy,
+    TECH_MAX_POW10_EXP,
 };
+use proptest::prelude::*;
+use std::error::Error;
 
 #[test]
 fn scale_bounds_try_new() {
@@ -19,6 +22,33 @@ fn mantissa_extremes_construct() {
     assert!(Decimal::try_new(i128::MIN, 0).is_ok());
     assert!(Decimal::try_new(i128::MAX, MAX_SCALE).is_ok());
     assert!(Decimal::try_new(i128::MIN, MAX_SCALE).is_ok());
+}
+
+#[test]
+fn display_parse_roundtrip_covers_i128_minimum() {
+    for scale in [0, 1, MAX_SCALE] {
+        let value = Decimal::try_new(i128::MIN, scale).expect("合法 i128::MIN 十进制");
+        let text = value.to_string();
+        let reparsed: Decimal = text.parse().expect("Display 输出必须可被 FromStr 精确读回");
+        assert_eq!(reparsed, value, "scale={scale}, text={text}");
+    }
+}
+
+proptest! {
+    /// 任意可表示 `i128 × scale` 都必须通过公开文本面精确往返。
+    #[test]
+    fn display_parse_roundtrip_property(mantissa in any::<i128>(), scale in 0_u8..=MAX_SCALE) {
+        let value = Decimal::try_new(mantissa, scale).expect("生成器只产生合法 scale");
+        let reparsed: Decimal = value.to_string().parse().expect("Display 输出必须可读回");
+        prop_assert_eq!(reparsed, value);
+    }
+}
+
+#[test]
+fn decimal_error_conversion_preserves_source_chain() {
+    let error: kernel::XError = DecimalError::DivisionByZero.into();
+    let source = error.source().expect("DecimalError 必须保留为 XError source");
+    assert_eq!(source.to_string(), "十进制除零");
 }
 
 #[test]

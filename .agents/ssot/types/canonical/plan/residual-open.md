@@ -1,73 +1,54 @@
-# Residual Open — SPEC-TYPES-CANONICAL-002
+# Residual Open — `canonical` current-state
 
 | 字段 | 值 |
-|------|-----|
-| Plan | `PLAN-TYPES-CANONICAL-002-v1` + `PLAN-TYPES-CANONICAL-PROD-001` |
-| Baseline | `main@4fe8e988` · prod branch `feat/canonical-prod-upgrade` |
-| 更新 | 2026-07-21（infra 对齐 + R6 双写） |
+|---|---|
+| 基线 | 当前 worktree package `canonical` 0.1.1 |
+| 更新 | 2026-07-23 |
+| 原则 | 仅记录真实剩余项；已闭合的 wire 合同不得继续标成 OPEN |
 
-> OPEN 不是失败；**假装 CLOSED** 才是失败。  
-> 生产晋级提案见 [production-upgrade.md](./production-upgrade.md) / [approval-packet-prod-m1.md](./approval-packet-prod-m1.md)。
+## 仍需 HUMAN / DEFER
 
----
+| ID | 状态 | 摘要 | 当前边界 |
+|---|---|---|---|
+| DEFER-STABLE | HUMAN_ONLY | package stable / crates.io 发布 | 当前 `publish = false`；L2 subset 不等于 package stable |
+| DEFER-ID-NEWTYPE | DEFER | `OrderRef` / venue newtype 二期 | 当前 `Order.id` / `OrderAck.id` 仍为 wire `String` |
+| DEFER-LAYOUT | DEFER / RFC | types/core、types/protocol 大搬迁 | 不在本轮；不得破坏现有路径与清单 |
+| DEFER-SERDE | DEFER / RFC | 移除或替换 serde | v1–v1.3 合同即 strict serde JSON shape，须先有迁移证据 |
+| DEFER-CONSUMERS | DEFER | 非主路径 consumer 全量迁移 | 不扩大 current-state DTO 承诺 |
+| HUMAN-NEXT-WIRE | 按需 | 未来破坏性 wire 版本或 migration reader | 只有出现具体变更提案时才建立版本化 RFC |
 
-## OPEN 语义（须人审或独立 RFC）
+## 已 CLOSED，不再是 OPEN
 
-| ID | 摘要 | Sev | 默认 | 生产路径 |
-|----|------|-----|------|----------|
-| OPEN-ID-001 | Venue slug 规则 + adapter shape | P1 | **CLOSED** 规范 | `shape::is_plausible_*` |
-| OPEN-ID-002 | OrderRef newtype 二期；OrderId **类型已删** | P2 | newtype Defer | 字段仍为 String wire |
-| OPEN-TIME-001 | `ts: i64` = Unix **ns**（Approved 2026-07-17） | P0 | **CLOSED** | adapter 写 DTO 用 ns_from_unix_millis |
-| OPEN-WIRE-001 | 未知字段策略（deny/ignore） | P1 | 默认 serde 忽略 | 矩阵已登记 OPEN |
-| OPEN-WIRE-002 | 未覆盖 DTO 的跨版本 wire 承诺与 golden 目录 | P1 | 仅 RT / 实现细节 | cancel/ack golden；其余 Uncommitted |
-| OPEN-WIRE-003 | 枚举新增兼容策略（non_exhaustive 等） | P2 | 未冻结 | Phase B |
-| OPEN-VALID-001 | validation owner 表 v1 | P1 | **CLOSED** 原则 | 表仍可增补 consumer |
-| OPEN-LAYOUT-001 | 新建 types/core / types/protocol 大搬迁 | GOV | 须 Approved RFC | 不在本路径 |
-| OPEN-SERDE-001 | 是否移除 serde | GOV | 须消费与数据迁移证据 | 不在本路径 |
-| OPEN-MIG-001 | legacy Order / OrderAck 字段迁结构化 ID | P1 | additive first | Phase C |
+| 旧 ID / 主题 | 当前裁定 |
+|---|---|
+| OPEN-WIRE-001 unknown-field | **CLOSED**：committed 类型 `deny_unknown_fields`；未知 variant 拒绝 |
+| OPEN-WIRE-002 全清单 / golden | **CLOSED**：v1–v1.3 共 12 个 committed 类型，均有文件或穷举 inline golden；有登记的 legacy/N-1 向量保持可读 |
+| OPEN-WIRE-003 enum 演进 | **CLOSED（当前版本）**：variant 名已冻结；未知 variant 拒绝；新增 variant 对 strict reader 是破坏性变化 |
+| coarse 版本无法区分 | **CLOSED**：新增精确 `WireVersion` / `committed_wire_version`；旧 `WireCommitment` 保兼容 |
+| ns→ms 无损语义 | **CLOSED**：`unix_millis_from_ns_exact`；`unix_millis_from_ns` 与兼容 alias 仍显式记录向 0 截断 |
+| Envelope 缺版本检查入口 | **CLOSED**：提供显式 validate/consume API；仍由调用者主动调用，不自动路由 |
 
----
+## 持续 REJECTED / OOS
 
-## REJECTED（持续禁止，非 OPEN）
+| ID | 项 | 原因 |
+|---|---|---|
+| REJ-CANONICAL-BYTES | canonical bytes / 确定性二进制编码 | 当前承诺仅 serde JSON DTO shape |
+| REJ-CODEC | 通用 codec / schema registry / 任意格式转换 | 超出纯 DTO 深模块边界 |
+| REJ-CROSS-LANGUAGE | 将 v1–v1.3 宣称为跨语言协议 | 没有跨语言 conformance 证据 |
+| REJ-AUTO-ROUTING | Envelope 自动协商、路由或选择 decoder | Envelope 只运输包装；版本由调用者显式 validate |
+| REJ-HASH | hash/sign/evidence 链 | 归属其他层 |
+| REJ-BIZ | 订单状态机、盘口 diff、风控/业务校验 | canonical 只负责数据形状 |
 
-| ID | 项 |
-|----|-----|
-| REJ-CODEC-001 | Canonical Encoding Core / schema registry / 通用 envelope |
-| REJ-HASH-001 | 本 crate 内 hash/sign/evidence 链 |
-| REJ-EMPTY-001 | `canonical → ∅`（切断 decimalx） |
-| REJ-BIZ-001 | 订单状态机 / 盘口 diff / 风控校验进本 crate |
-
----
-
-## DEFERRED（本战役明确不交付）
-
-| ID | 项 | 备注 |
-|----|-----|------|
-| DEFER-M3-REST | 非 binance/okx 的全量 consumer / domain trait 迁移 | 主路径 DONE；其余见 m3 checklist |
-| DEFER-WIRE-FULL | 未覆盖 DTO 的跨版本 golden / unknown-field 冻结 | OPEN-WIRE-001/002 |
-| DEFER-STABLE | package quality stable / crates.io | HUMAN S2 |
-| DEFER-NEWTYPE | OrderRef/Venue newtype 二期 | OPEN-ID-002 |
-
----
-
-## CLOSED（计划/agent-safe 文档与测试面）
-
-| ID | 说明 |
-|----|------|
-| PLAN-DOC-v1 | plan/gap/inventory/tasks/residual/approval 首版 |
-| PROD-DOC-v1 | production-upgrade + wire 矩阵 + validation owners + M1 人审包 |
-| PROD-TEST-v1 | 矩阵/owner 覆盖测 + legacy ack fixture + ts 形状测 |
-| INFRA-ALIGN-20260721 | alignment 矩阵 + active/pipeline 对齐 + workspace 成员 + R6 双写 |
-| INFRA-WS-CANONICAL-20260721 | 根 members 重登记 `crates/types/canonical`；path+version deny 合规；integration `tests/public_api.rs` |
-| （实现项随 PR 更新） | 见 todo.md 证据列 |
-
-## 生产路径状态（诚实）
+## 诚实完成面
 
 | 项 | 状态 |
-|----|------|
-| T1–T4 人审 | **DONE**（liukongqiang5 2026-07-17） |
-| Phase B + contracts additive + adapter ns/shape | **DONE** |
-| Phase C：OrderId 类型删除 / symbol:id 清除 / native ack | **DONE** |
-| Spec Approved | **DONE**（S1） |
-| package stable | **DEFER**（S2） |
-| 全 DTO wire 承诺 | **OPEN**（矩阵 Uncommitted） |
+|---|---|
+| v1 / v1.1 / v1.2 / v1.3 committed inventory | **DONE** |
+| strict unknown-field / unknown-variant 策略 | **DONE** |
+| 双向 golden / N-1 历史向量 | **DONE（受测向量范围）** |
+| 精确 wire version 查询 | **本轮交付** |
+| Envelope 显式版本校验 | **DONE；非自动路由** |
+| package stable | **DEFER / HUMAN_ONLY** |
+| canonical bytes / 通用 codec / 跨语言协议 | **OOS / REJECTED** |
+
+权威清单见 [wire-commitment-matrix.md](./wire-commitment-matrix.md)。

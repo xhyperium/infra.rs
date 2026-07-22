@@ -67,10 +67,11 @@ fn lib_reexports_only_manual_clock_family() {
             && code.contains("ManualClockSnapshot"),
         "lib.rs must re-export ManualClock family"
     );
-    assert!(
-        code.contains("IntegrationHarness") && code.contains("StepRecord"),
-        "lib.rs must re-export IntegrationHarness family"
-    );
+    for name in
+        ["IntegrationHarness", "HarnessReport", "HarnessRunError", "StepOutcome", "StepRecord"]
+    {
+        assert!(code.contains(name), "lib.rs must re-export {name}");
+    }
     for banned in [
         "macro_rules! xlib_test",
         "macro_rules! mock",
@@ -89,11 +90,7 @@ fn lib_reexports_only_manual_clock_family() {
     for name in ["ManualClock", "ManualClockError", "ManualClockFault", "ManualClockSnapshot"] {
         assert!(clock_line.contains(name), "pub use missing {name}: {clock_line}");
     }
-    let harness_line = pub_uses.iter().find(|l| l.contains("harness::")).expect("harness pub use");
-    assert!(
-        harness_line.contains("IntegrationHarness") && harness_line.contains("StepRecord"),
-        "harness pub use missing symbols: {harness_line}"
-    );
+    assert!(pub_uses.iter().any(|line| line.contains("harness::")), "missing harness pub use");
 }
 
 #[test]
@@ -179,8 +176,10 @@ fn consumer_can_import_manual_clock_family() {
     let snap: ManualClockSnapshot = c.snapshot().expect("snap");
     assert_eq!(snap.wall().as_unix_nanos(), 7);
 
-    let mut h = IntegrationHarness::with_wall(kernel::Timestamp::from_unix_nanos(0));
-    h.step_advance_wall("t", Duration::from_nanos(1));
-    let rec: &[StepRecord] = h.run().expect("run");
+    let report = IntegrationHarness::with_wall(kernel::Timestamp::from_unix_nanos(0))
+        .step_advance_wall("t", Duration::from_nanos(1))
+        .run()
+        .expect("run");
+    let rec: &[StepRecord] = report.records();
     assert_eq!(rec.len(), 1);
 }

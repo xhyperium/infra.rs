@@ -47,6 +47,7 @@ Committed 类型均 `deny_unknown_fields` + serde 往返。
 | `TS_UNIT` / `PROPOSED_TS_UNIT` | `"unix_epoch_nanoseconds"` |
 | `ns_from_unix_millis` / `proposed_ns_from_unix_millis` | ms → ns（溢出 `None`） |
 | `unix_millis_from_ns` / `proposed_unix_millis_from_ns` | ns → ms |
+| `unix_millis_from_ns_exact` | ns → ms；存在精度损失时返回 `None` |
 | `dto_ts_from_unix_millis` / `proposed_dto_ts_from_unix_millis` | DTO 时间入口 |
 
 ### wire
@@ -54,8 +55,10 @@ Committed 类型均 `deny_unknown_fields` + serde 往返。
 | 符号 | 说明 |
 |------|------|
 | `WireCommitment` | `CommittedV1` · `Uncommitted` |
+| `WireVersion` | `V1` · `V1_1` · `V1_2` · `V1_3`；`major` / `minor` |
 | `COMMITTED_WIRE_V1` / `_V1_1` / `_V1_2` / `_V1_3` | 类型名清单 |
 | `wire_commitment(&str)` | 查询承诺等级 |
+| `committed_wire_version(&str)` | 查询 committed shape 的精确版本 |
 
 ### 模块路径
 

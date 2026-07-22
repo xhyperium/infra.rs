@@ -7,7 +7,7 @@ xhyper.rs / infra.rs 的 **L0 语义信任根**：错误分类、时间与生命
 | package | `kernel` |
 | lib | `kernel` |
 | path | `crates/kernel` |
-| version | workspace `0.3.0` |
+| version | `0.3.1` |
 | publish | `false`（internal only） |
 | **生产层级** | **L1 Internal Ready + L4 Platform Ready** |
 | 支持矩阵 | Linux x86_64 · MSRV 1.85 |

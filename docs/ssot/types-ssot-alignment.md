@@ -3,8 +3,8 @@
 | 字段 | 值 |
 |------|-----|
 | 域 | `/types/`（decimal + canonical） |
-| 镜像 | `.agents/ssot/types/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
-| 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
+| SSOT | `.agents/ssot/types/**` 为本仓可编辑源层；历史 complete/plan 只作来源 |
+| 审计日期 | 2026-07-23（infra-2d9.7 R1） |
 | 跟进 | 2026-07-21 P0/P1 **#98**；W1–W2 证据 **#121/#124**；四包内部 GO **#159** · tag `v0.3.0-four-crates`；**defer-close**：wire schema / panicking-ops gate / envelope |
 | 内部生产层级 | **decimalx = L1 Internal Ready**；**canonical = L2 committed wire subset（v1–v1.3）+ envelope** |
 | 结论 | **两 crate 均已注册 workspace 并有可运行测试**；decimal 不变量已硬化；canonical committed wire 覆盖 v1–v1.3；分层内部 GO（**≠** package Production Ready / crates.io / Agent L5） |
@@ -19,9 +19,12 @@
 | 内部生产 GO（声明层级） | decimalx **L1**；canonical **L2 wire 子集**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
 | `infra-core` | **已移除**；types 不依赖它 |
 | package stable / crates.io | **未**宣称；`publish = false` |
-| wire schema 版本常量 | **PASS**：`decimalx::WIRE_SCHEMA_VERSION`（见 `docs/WIRE.md`）；破坏性变更须升版本 |
+| decimal 文本/错误链 | **R1 PASS**：`i128::MIN` Display→FromStr 精确往返；`DecimalError → XError` 保留 source |
+| wire schema 版本常量 | **PASS**：`decimalx::WIRE_SCHEMA_VERSION`（仅内部 Rust serde JSON shape） |
 | panicking 算子默认关闭 | **PASS**：feature `panicking-ops` **default off**；生产主路径 `checked_*` |
-| schema_version envelope | **PASS**：`crates/types/canonical/src/envelope.rs` · `Envelope { schema_version, payload }` |
+| canonical 版本查询 | **R1 PASS**：`WireVersion` / `committed_wire_version` 精确区分 v1–v1.3 |
+| canonical 时间转换 | **R1 PASS**：`unix_millis_from_ns_exact` 拒绝精度损失 |
+| schema_version envelope | **PASS（运输包装）**：调用方仍须显式 `validate_version`，不自动路由 |
 | public-api / examples / benches | **PASS**：baselines + `public_api_surface` + `examples/basic` + `hot_path` |
 
 ## 本仓可观察事实
@@ -30,7 +33,7 @@
 crates/types/decimal/           EXISTS · members 已注册
   package                       decimalx（-p decimalx）
   lib                           decimalx
-  version                       0.1.1
+  version                       0.1.2
   publish                       false
   生产依赖                      kernel + serde
   Active SSOT                   .agents/ssot/types/decimal/spec/spec.md
@@ -39,7 +42,7 @@ crates/types/decimal/           EXISTS · members 已注册
 crates/types/canonical/         EXISTS · members 已注册
   package                       canonical（-p canonical）
   lib                           canonical
-  version                       0.1.1
+  version                       0.1.2
   publish                       false
   生产依赖                      decimalx + serde
   Active SSOT                   .agents/ssot/types/canonical/spec/spec.md
@@ -119,8 +122,9 @@ canonical  →  decimalx  →  kernel
 
 ## 与镜像文档的关系
 
-- `.agents/ssot/types/**`：只读镜像；禁止本地改 CLOSED/COMPLETE 叙事冒充同步
-- 实现 SSOT 以 **源码 + 本仓 `cargo test` / align 脚本输出** 为准
+- `.agents/ssot/types/{decimal,canonical}/spec/spec.md` 是本仓 active SSOT，可随本仓 PR 修改。
+- 历史 complete/campaign/plan 仅作来源，不与 active spec 做 `cmp`，也不继承 PASS。
+- 当前实现与验证以 **源码 + 本仓 `cargo test` / align 脚本输出** 为准。
 - 候选完整规范在 `20260717/`：Draft/历史战役文档，**不**自动覆盖 active `spec/spec.md`
 - 生产就绪审计跟进：[docs/report/2026-07-21/core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) §11
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`

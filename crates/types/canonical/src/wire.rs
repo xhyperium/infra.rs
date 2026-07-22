@@ -52,6 +52,37 @@ pub enum WireCommitment {
     Uncommitted,
 }
 
+/// 已承诺 DTO shape 的精确版本标签。
+///
+/// 该标签描述本 crate 内的 serde JSON shape 批次，不代表 canonical bytes、通用 codec
+/// 或跨语言协议版本。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct WireVersion {
+    major: u16,
+    minor: u16,
+}
+
+impl WireVersion {
+    /// v1 基线。
+    pub const V1: Self = Self { major: 1, minor: 0 };
+    /// v1.1 批次。
+    pub const V1_1: Self = Self { major: 1, minor: 1 };
+    /// v1.2 批次。
+    pub const V1_2: Self = Self { major: 1, minor: 2 };
+    /// v1.3 批次。
+    pub const V1_3: Self = Self { major: 1, minor: 3 };
+
+    /// 主版本号。
+    pub const fn major(self) -> u16 {
+        self.major
+    }
+
+    /// 次版本号。
+    pub const fn minor(self) -> u16 {
+        self.minor
+    }
+}
+
 /// Committed wire v1 类型名清单（执行路径基线）。
 pub const COMMITTED_WIRE_V1: &[&str] =
     &["CancelOrderRequest", "OrderRef", "OrderAck", "OrderStatus", "Side"];
@@ -66,13 +97,25 @@ pub const COMMITTED_WIRE_V1_2: &[&str] = &["Tick", "Trade"];
 pub const COMMITTED_WIRE_V1_3: &[&str] =
     &["Position", "OrderBookSnapshot", "PriceLevel", "SymbolMeta"];
 
+/// 查询类型名对应的精确 committed shape 版本。
+#[must_use]
+pub fn committed_wire_version(type_name: &str) -> Option<WireVersion> {
+    if COMMITTED_WIRE_V1.contains(&type_name) {
+        Some(WireVersion::V1)
+    } else if COMMITTED_WIRE_V1_1.contains(&type_name) {
+        Some(WireVersion::V1_1)
+    } else if COMMITTED_WIRE_V1_2.contains(&type_name) {
+        Some(WireVersion::V1_2)
+    } else if COMMITTED_WIRE_V1_3.contains(&type_name) {
+        Some(WireVersion::V1_3)
+    } else {
+        None
+    }
+}
+
 /// 查询类型名是否在任一 committed 清单中。
 pub fn wire_commitment(type_name: &str) -> WireCommitment {
-    if COMMITTED_WIRE_V1.contains(&type_name)
-        || COMMITTED_WIRE_V1_1.contains(&type_name)
-        || COMMITTED_WIRE_V1_2.contains(&type_name)
-        || COMMITTED_WIRE_V1_3.contains(&type_name)
-    {
+    if committed_wire_version(type_name).is_some() {
         WireCommitment::CommittedV1
     } else {
         WireCommitment::Uncommitted
@@ -126,6 +169,13 @@ mod tests {
         assert_eq!(COMMITTED_WIRE_V1_1.len(), 1);
         assert_eq!(COMMITTED_WIRE_V1_2.len(), 2);
         assert_eq!(COMMITTED_WIRE_V1_3.len(), 4);
+        assert_eq!(committed_wire_version("CancelOrderRequest"), Some(WireVersion::V1));
+        assert_eq!(committed_wire_version("Order"), Some(WireVersion::V1_1));
+        assert_eq!(committed_wire_version("Tick"), Some(WireVersion::V1_2));
+        assert_eq!(committed_wire_version("OrderBookSnapshot"), Some(WireVersion::V1_3));
+        assert_eq!(committed_wire_version("NotAType"), None);
+        assert_eq!(WireVersion::V1_3.major(), 1);
+        assert_eq!(WireVersion::V1_3.minor(), 3);
     }
 
     #[test]

@@ -8,6 +8,17 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-07-23 — deadline 失败语义显式化
+
+### Changed
+
+- `ShutdownSignal::wait_timeout` 返回 `Result<bool, WaitTimeoutError>`。
+- `Duration::MAX` 等不可表示 deadline 返回 `DeadlineOverflow`，不再伪装为普通超时。
+
+### Documentation
+
+- 收敛 SPEC-KERNEL-002 的 `ClockDomain`、进程共享 origin、隐藏构造 seam 与公开面合同。
+
 ## [0.3.0] - 2026-07-21 — 内部生产发布（L1+L4）
 
 ### Added

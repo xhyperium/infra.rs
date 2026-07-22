@@ -13,4 +13,4 @@ mod clock;
 mod harness;
 
 pub use clock::{ManualClock, ManualClockError, ManualClockFault, ManualClockSnapshot};
-pub use harness::{IntegrationHarness, StepRecord};
+pub use harness::{HarnessReport, HarnessRunError, IntegrationHarness, StepOutcome, StepRecord};

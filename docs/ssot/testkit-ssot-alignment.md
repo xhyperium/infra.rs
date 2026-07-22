@@ -3,10 +3,10 @@
 | 字段 | 值 |
 |------|-----|
 | 策略 | **B — 本仓移植 core testkit** |
-| 日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| 规范 | SPEC-TESTKIT-002（镜像 `.agents/ssot/testkit/spec/spec.md`） |
+| 日期 | 2026-07-23（infra-2d9.7 R1） |
+| 规范 | SPEC-TESTKIT-002（本仓 active SSOT `.agents/ssot/testkit/spec/spec.md`） |
 | package | **`testkit`** · lib `testkit`（Cargo 选择器 `-p testkit`；历史名 `xhyper-testkit` 已废弃） |
-| 当前版本 | 0.1.2（L1 ManualClock test-support；contract-testkit 0.1.1）|
+| 当前版本 | 0.1.3（L1 确定性 test-support；contract-testkit 0.1.1）|
 | 内部生产层级 | **L1 ManualClock test-support**（**不是**生产 runtime；PR #159 · tag `v0.3.0-four-crates`） |
 
 ## 结论摘要
@@ -17,7 +17,7 @@
 | 本仓 `crates/testkit` core（ManualClock 族） | **已闭合**（§7 / §13.1–§13.5 / §24.1–§24.3 core / §24.5 core → 见 clause matrix） |
 | 内部生产 GO（声明层级） | **L1 test-support only**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
 | 本仓 `contract-testkit` | **已落地**：`crates/test-support/contracts`（package `contract-testkit`）；Fake + per-trait suite + **Batch-2 Fake** + **BackendProfile**；见 [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
-| integration harness | **PASS**：`crates/testkit/src/harness.rs` · `IntegrationHarness` / `StepRecord`（**仅测试**；非生产 runtime） |
+| deterministic runner | **R1 PASS**：消费型 `IntegrationHarness` + terminal report/error + 私有 `StepRecord`（仅测试） |
 | ClockDomain 跟随 | **PASS**：每 `ManualClock` 实例独立 domain；跨实例 `checked_duration_since` → `None` |
 | 用户可见错误中文 | **PASS**：`ManualClockError` Display 中文 |
 | `[lints] workspace = true` | **PASS** |
@@ -38,7 +38,8 @@ dev deps                        proptest, static_assertions
 features.default                []
 examples                        examples/basic.rs
 API baseline                    docs/api-baselines/testkit.txt
-IntegrationHarness              src/harness.rs（多步确定性集成 harness）
+IntegrationHarness              src/harness.rs（消费型确定性 scenario runner）
+runner result                   HarnessReport / HarnessRunError / StepOutcome
 ```
 
 ## 验证命令（本仓可复现）
@@ -113,7 +114,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 
 | ID | 条款 | 状态 | 说明 |
 |----|------|------|------|
-| 24.1 | layer=test-support；非 L0 runtime；单 active spec；README/AGENTS 对齐 | PASS | `publish=false`、README/AGENTS、镜像只读 |
+| 24.1 | layer=test-support；非 L0 runtime；单 active spec；README/AGENTS 对齐 | R1 PASS | `publish=false`、README/AGENTS、本仓 active SSOT |
 | 24.2 | 只依赖 kernel；无 feature/宏/FixtureBuilder/provider；ManualClock V2；无真实时间/sleep/unchecked；无 Clone/Default | PASS | Cargo.toml + public_surface + api_compile + 实现 |
 | 24.3 | unit / property / concurrency / compile | PASS | 见 §13 |
 | 24.3 | line ≥95% | PASS | llvm-cov |
@@ -137,8 +138,9 @@ CI 入口（与 kernel 同级 paths 过滤）：
 
 ## 与镜像文档的关系
 
-- `.agents/ssot/testkit/**`：只读镜像；禁止本地改 CLOSED/COMPLETE 叙事冒充同步
-- 实现 SSOT 以 **源码 + 本仓测试/覆盖率/mutants/miri 输出** 为准
+- `.agents/ssot/testkit/spec/spec.md` 是本仓 active SSOT，可随本仓 PR 修改。
+- 历史 complete/campaign/evidence 不与 active spec 做 `cmp`，也不继承 PASS。
+- 当前实现与验证以 **源码 + 本仓测试/覆盖率/mutants/miri 输出** 为准。
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
 - Workspace 总览（members 地图、依赖方向）：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
 

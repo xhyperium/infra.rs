@@ -1,24 +1,24 @@
-# types/canonical — Goal 管线契约
+# types/canonical — 本仓 SSOT 入口
 
-> 实现：`crates/types/canonical`  
-> Spec：[spec/spec.md](spec/spec.md) ≡ dual-mirror · **S1 Approved**（≠ package stable）  
-> Alignment：[plan/alignment-matrix-infra-2026-07-21.md](plan/alignment-matrix-infra-2026-07-21.md)  
-> 状态：agent-safe DTO 表面 **PASS** · package stable **未宣称**
+| 项 | 当前事实 |
+|---|---|
+| 实现 | `crates/types/canonical` |
+| package / lib / version | `canonical` / `canonical` / `0.1.2` |
+| Active Spec | [spec/spec.md](spec/spec.md) |
+| 声明边界 | L2 strict serde JSON committed subset（v1–v1.3） |
 
-## 11 层
+## 当前合同
 
-| 层 | 路径 | 状态 |
-|----|------|------|
-| Goal | [goal/goal.md](goal/goal.md) | agent-safe **PASS**；stable/全 wire OPEN |
-| Spec | [spec/spec.md](spec/spec.md) | S1 Approved |
-| Design | [design/design.md](design/design.md) | 要点有效 |
-| Plan | [plan/plan.md](plan/plan.md) | 战役 + alignment |
-| Tasks | [tasks/tasks.md](tasks/tasks.md) | agent-safe DONE |
-| Prompt | [prompt/prompt.md](prompt/prompt.md) | 入口 |
-| Code | `crates/types/canonical` | 实现 |
-| Test | [test/test.md](test/test.md) | 22 tests PASS |
-| Review | [review/review.md](review/review.md) | **PASS with residual** |
-| Release | [release/release.md](release/release.md) | stable **BLOCKED** |
-| Retrospective | [retrospective/retrospective.md](retrospective/retrospective.md) | 部分填写 |
+- 12 个 committed DTO/枚举按 v1/v1.1/v1.2/v1.3 登记；精确查询见 `WireVersion`。
+- committed 类型拒绝未知/缺失字段与未知枚举，并由 golden/N-1/拒绝样例覆盖。
+- `Envelope<T>` 是运输包装；消费方必须显式验证版本，不自动路由。
+- `ts` 为 Unix epoch 纳秒；无损 ns→ms 使用 `unix_millis_from_ns_exact`。
+- 不宣称 canonical bytes、通用 codec、跨语言协议、package stable 或业务有效性。
 
-硬限制：`OrderId` 类型已删；`ts`=Unix ns；禁止假 Done；dual-mirror 须 cmp。
+## 管线入口
+
+[design](design/design.md) · [test](test/test.md) · [gate](gate/gate.md) ·
+[matrix](matrix/matrix.md) · [wire matrix](plan/wire-commitment-matrix.md) ·
+[residual](plan/residual-open.md)
+
+历史 complete/campaign 文件只作来源，不与 active spec 做 `cmp`，也不继承 PASS。

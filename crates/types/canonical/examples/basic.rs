@@ -5,8 +5,8 @@
 //! ```
 
 use canonical::{
-    CancelOrderRequest, Order, OrderRef, OrderStatus, Side, WireCommitment, ns_from_unix_millis,
-    wire_commitment,
+    CancelOrderRequest, Order, OrderRef, OrderStatus, Side, WireCommitment, WireVersion,
+    committed_wire_version, ns_from_unix_millis, wire_commitment,
 };
 use decimalx::{Decimal, Price, Qty};
 
@@ -23,6 +23,7 @@ fn main() {
     let back: Order = serde_json::from_str(&json).expect("deserialize Order");
     assert_eq!(back, order);
     assert_eq!(wire_commitment("Order"), WireCommitment::CommittedV1);
+    assert_eq!(committed_wire_version("Order"), Some(WireVersion::V1_1));
 
     let cancel = CancelOrderRequest {
         venue: "okx".into(),

@@ -112,7 +112,8 @@ impl std::error::Error for DecimalError {}
 
 impl From<DecimalError> for XError {
     fn from(err: DecimalError) -> Self {
-        XError::invalid(err.to_string())
+        let context = err.to_string();
+        XError::invalid(context).with_source(err)
     }
 }
 
@@ -472,13 +473,24 @@ impl FromStr for Decimal {
             format!("{int_part}{frac_part}")
         };
 
-        let abs_mantissa: i128 = if digits.is_empty() || digits.bytes().all(|b| b == b'0') {
+        let magnitude: u128 = if digits.is_empty() || digits.bytes().all(|b| b == b'0') {
             0
         } else {
-            digits.parse::<i128>().map_err(|_| DecimalError::MantissaOverflow)?
+            digits.parse::<u128>().map_err(|_| DecimalError::MantissaOverflow)?
         };
 
-        let mantissa = if negative && abs_mantissa != 0 { -abs_mantissa } else { abs_mantissa };
+        let mantissa = if negative {
+            const I128_MIN_MAGNITUDE: u128 = i128::MIN.unsigned_abs();
+            if magnitude == I128_MIN_MAGNITUDE {
+                i128::MIN
+            } else {
+                let positive: i128 =
+                    magnitude.try_into().map_err(|_| DecimalError::MantissaOverflow)?;
+                -positive
+            }
+        } else {
+            magnitude.try_into().map_err(|_| DecimalError::MantissaOverflow)?
+        };
 
         Decimal { mantissa, scale }.finish()
     }

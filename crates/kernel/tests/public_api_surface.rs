@@ -131,12 +131,12 @@ fn lifecycle_states_and_shutdown_timeout() {
 
     let (g, s) = ShutdownSignal::new();
     assert!(!s.is_triggered());
-    assert!(!s.wait_timeout(Duration::from_millis(1)));
+    assert!(!s.wait_timeout(Duration::from_millis(1)).unwrap());
     let observer = s.clone();
     g.trigger();
     assert!(s.is_triggered());
     assert!(observer.is_triggered());
-    assert!(s.wait_timeout(Duration::from_millis(50)));
+    assert!(s.wait_timeout(Duration::from_millis(50)).unwrap());
     // wait 在已触发时立即返回
     s.wait();
 }

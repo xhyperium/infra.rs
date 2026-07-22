@@ -1,0 +1,36 @@
+R1 GREEN EVIDENCE
+date: 2026-07-23 Asia/Shanghai
+base: 3cd29a942710c0fb42f3f6bc05e3c31570acad47
+candidate-diff-sha256-before-evidence: 0f7bddd7765971a6da3e0f1720d0fb0adf113d50a6337050f0ab554da08b490b
+rustc: 1.97.0 (2d8144b78 2026-07-07)
+cargo: 1.97.0 (c980f4866 2026-06-30)
+node: v24.14.0
+
+command:
+  cargo fmt --all -- --check &&
+  cargo test -p kernel -p testkit -p decimalx -p canonical --all-targets &&
+  cargo test -p kernel -p testkit -p decimalx -p canonical --doc &&
+  cargo clippy -p kernel -p testkit -p decimalx -p canonical --all-targets --all-features -- -D warnings &&
+  node scripts/quality-gates/check-canonical-align.mjs &&
+  node scripts/quality-gates/check-decimal-no-panicking-ops.mjs &&
+  node scripts/quality-gates/check-workspace-deps.mjs &&
+  node scripts/quality-gates/check-crate-versions.mjs &&
+  node scripts/quality-gates/check-public-api.mjs -p kernel -p testkit -p decimalx -p canonical
+exit: 0
+
+key output:
+  canonical lib: 45 passed
+  decimalx lib: 68 passed
+  decimalx boundary_matrix: 15 passed (includes proptest i128 × scale round-trip)
+  kernel lib: 66 passed
+  testkit lib: 20 passed
+  testkit harness_fail_closed: 6 passed
+  testkit manual_clock_concurrency: 2 passed
+  kernel doctests: 12 passed
+  canonical-align: ALL CHECKS PASSED
+  decimal panicking-ops: OK (102 files scanned, 0 hits)
+  workspace dependencies: PASS
+  crate versions: PASS
+  public API: OK (4 baselines match)
+
+说明：完整 stdout 由执行会话保留；本文件保存可重放命令、退出码、工具链、候选内容指纹与关键计数。

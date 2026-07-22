@@ -7,7 +7,7 @@
 | package | `canonical` |
 | lib | `canonical` |
 | path | `crates/types/canonical` |
-| version | `0.1.0` |
+| version | `0.1.2` |
 | publish | `false`（internal only） |
 | **生产层级** | **L2 committed wire subset**（v1 / v1.1 / v1.2 / v1.3） |
 | 支持矩阵 | Linux x86_64 · MSRV 1.85 |
@@ -52,7 +52,10 @@ cargo run -p canonical --example basic
 ```
 
 ```rust
-use canonical::{Order, OrderStatus, Side, wire_commitment, WireCommitment};
+use canonical::{
+    Order, OrderStatus, Side, WireCommitment, WireVersion, committed_wire_version,
+    wire_commitment,
+};
 use decimalx::{Decimal, Price, Qty};
 
 let o = Order {
@@ -64,6 +67,7 @@ let o = Order {
     status: OrderStatus::Open,
 };
 assert_eq!(wire_commitment("Order"), WireCommitment::CommittedV1);
+assert_eq!(committed_wire_version("Order"), Some(WireVersion::V1_1));
 let _ = serde_json::to_string(&o).unwrap();
 ```
 

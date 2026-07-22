@@ -33,7 +33,8 @@
 |------|------|
 | `ComponentState` | `Created` · `Starting` · `Running` · `Draining` · `Stopped` · `Failed`；`can_transition_to` / `try_transition` |
 | `LifecycleError` | 非法转换：`from` / `to` 字段 |
-| `ShutdownSignal` | `new` → `(ShutdownGuard, ShutdownSignal)`；`is_triggered` / `wait` / `wait_timeout` / `Clone` |
+| `ShutdownSignal` | `new` → `(ShutdownGuard, ShutdownSignal)`；`is_triggered` / `wait` / `wait_timeout -> Result<bool, WaitTimeoutError>` / `Clone` |
+| `WaitTimeoutError` | `DeadlineOverflow`：deadline 无法表示，不得伪装为普通超时 |
 | `ShutdownGuard` | 唯一触发入口：`trigger(self)` |
 
 ### 模块路径

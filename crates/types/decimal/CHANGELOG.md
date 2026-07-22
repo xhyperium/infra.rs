@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-23 — 完整文本往返与错误链
+
+### Fixed
+
+- `Display` 生成的合法 `i128::MIN` 十进制文本现在可由 `FromStr` 精确读回。
+- `DecimalError → XError` 转换保留 `Error::source` 链。
+
 ## [0.1.1] - 2026-07-22 — DEFER close: wire schema v1 + panicking-ops feature
 
 ### Added

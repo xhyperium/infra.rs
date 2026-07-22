@@ -5,10 +5,11 @@ use canonical::{
     CURRENT_PAYLOAD_SCHEMA_VERSION, CancelOrderRequest, ENVELOPE_SCHEMA_VERSION, Envelope,
     InstrumentId, Money, Order, OrderAck, OrderBookSnapshot, OrderRef, OrderStatus,
     PROPOSED_TS_UNIT, Position, PriceLevel, Side, SymbolMeta, TS_UNIT, Tick, Trade, VenueId,
-    WireCommitment, cancel_request_shape_ok, dto_ts_from_unix_millis, is_nonempty_token,
-    is_plausible_instrument_id, is_plausible_venue_slug, ns_from_unix_millis,
-    order_ref_payload_nonempty, proposed_dto_ts_from_unix_millis, proposed_ns_from_unix_millis,
-    proposed_unix_millis_from_ns, unix_millis_from_ns, wire_commitment,
+    WireCommitment, WireVersion, cancel_request_shape_ok, committed_wire_version,
+    dto_ts_from_unix_millis, is_nonempty_token, is_plausible_instrument_id,
+    is_plausible_venue_slug, ns_from_unix_millis, order_ref_payload_nonempty,
+    proposed_dto_ts_from_unix_millis, proposed_ns_from_unix_millis, proposed_unix_millis_from_ns,
+    unix_millis_from_ns, wire_commitment,
 };
 use decimalx::{Currency, Decimal, Price, Qty};
 
@@ -68,6 +69,11 @@ fn shape_and_time_and_wire_surface() {
     }
     assert_eq!(wire_commitment("NotAType"), WireCommitment::Uncommitted);
     assert_eq!(wire_commitment("Money"), WireCommitment::Uncommitted);
+    assert_eq!(committed_wire_version("CancelOrderRequest"), Some(WireVersion::V1));
+    assert_eq!(committed_wire_version("Order"), Some(WireVersion::V1_1));
+    assert_eq!(committed_wire_version("Tick"), Some(WireVersion::V1_2));
+    assert_eq!(committed_wire_version("OrderBookSnapshot"), Some(WireVersion::V1_3));
+    assert_eq!(committed_wire_version("NotAType"), None);
 
     let _vid: VenueId = "binance".into();
     let _iid: InstrumentId = "BTCUSDT".into();

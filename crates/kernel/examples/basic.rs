@@ -29,7 +29,7 @@ fn main() {
     assert!(!signal.is_triggered());
     guard.trigger();
     assert!(signal.is_triggered());
-    assert!(signal.wait_timeout(Duration::from_millis(10)));
+    assert!(signal.wait_timeout(Duration::from_millis(10)).expect("deadline 可表示"));
 
     println!("kernel-consumer: ok now_ns={} shutdown_triggered=true", now.as_unix_nanos());
 }
