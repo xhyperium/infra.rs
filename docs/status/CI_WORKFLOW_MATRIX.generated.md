@@ -1,7 +1,7 @@
 # CI 工作流矩阵（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-docs-status.mjs`
-> **生成日期**：2026-07-21
+> **生成日期**：2026-07-22
 > **源目录**：`.github/workflows/`
 > **勿手改**：本文件由脚本覆盖；叙事性说明见 [CI_STATUS_REPORT.md](CI_STATUS_REPORT.md) / [CONFIG_SUMMARY.md](CONFIG_SUMMARY.md)。
 
@@ -43,7 +43,7 @@
 | `testkit-coverage.yml` | Testkit Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `testkit-miri.yml` | Testkit Miri | schedule, workflow_dispatch | `miri` |
 | `testkit-mutants.yml` | Testkit Mutants | schedule, workflow_dispatch | `mutants` |
-| `validation.yml` | 校验 | pull_request, workflow_dispatch | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness`, `canonical-align`, `decimal-panicking-ops`, `settings-hooks`, `crate-status` |
+| `validation.yml` | 校验 | pull_request, workflow_dispatch | `yaml-lint`, `toml-lint`, `markdown-lint`, `spellcheck`, `link-check`, `harness`, `canonical-align`, `decimal-panicking-ops`, `crate-versions`, `settings-hooks`, `crate-status` |
 | `workflow-security.yml` | Workflow Security | pull_request, workflow_dispatch | `audit` |
 
 ## 统计
@@ -51,7 +51,7 @@
 | 指标 | 值 |
 |------|-----|
 | 工作流文件数 | 36 |
-| Job 总数（解析） | 69 |
+| Job 总数（解析） | 70 |
 
 ## 维护
 
