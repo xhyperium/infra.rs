@@ -39,6 +39,11 @@ fn sensitive_header_names_detected() {
     assert!(is_sensitive_header_name("cookie"));
     assert!(is_sensitive_header_name("X-Api-Key"));
     assert!(is_sensitive_header_name("x-session-token"));
+    // OKX v5 鉴权头必须脱敏
+    assert!(is_sensitive_header_name("OK-ACCESS-KEY"));
+    assert!(is_sensitive_header_name("OK-ACCESS-PASSPHRASE"));
+    assert!(is_sensitive_header_name("OK-ACCESS-SIGN"));
+    assert!(is_sensitive_header_name("ok-access-timestamp"));
     assert!(!is_sensitive_header_name("Accept"));
     assert!(!is_sensitive_header_name("Content-Type"));
 }

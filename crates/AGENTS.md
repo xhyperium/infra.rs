@@ -178,8 +178,8 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 | `resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | L1 重试 + 熔断 + 限流 + 舱壁 + async retry（infra-s9t） |
 | `xhyper-bootstrap`（lib `bootstrap`） | `crates/bootstrap/` | L1 唯一组合根（ADR-016；typed composition） |
 | `xhyper-contracts` | `crates/contracts/` | adapter trait 出口（Exchange/Storage） |
-| `binancex` | `crates/adapters/exchange/binance/` | Binance exchange adapter（scaffold） |
-| `okxx` | `crates/adapters/exchange/okx/` | OKX exchange adapter（scaffold） |
+| `binancex` | `crates/adapters/exchange/binance/` | Binance exchange adapter（生产默认 REST+WS，#210+#214） |
+| `okxx` | `crates/adapters/exchange/okx/` | OKX exchange adapter（生产默认 REST+WS，#210+#214） |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | ClickHouse storage adapter（scaffold） |
 | `kafkax` | `crates/adapters/storage/kafka/` | Kafka storage adapter（scaffold） |
 | `natsx` | `crates/adapters/storage/nats/` | NATS storage adapter（scaffold） |

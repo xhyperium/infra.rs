@@ -27,8 +27,7 @@
 | `okxx` | `crates/adapters/exchange/okx/` | `okxx` | 生产默认：四头鉴权 REST + 业务信封 + 公共 WS 行情解析 + live server_time ignore | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **0.3.1** insert_batch + 有界池 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **0.3.1** offset/at-least-once/应用级 EOS + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.1** JetStream + TLS 策略 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `ossx` | `crates/adapters/storage/oss/` | `ossx` | **生产** `OssClient`（OSS V1 签名）+ live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.1** JetStream + TLS 策略 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) || `ossx` | `crates/adapters/storage/oss/` | `ossx` | **生产** `OssClient`（OSS V1 签名）+ live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **生产** `PostgresPool`/`PgTransaction` + SQLSTATE + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `redisx` | `crates/adapters/storage/redis/` | `redisx` | **生产** `RedisPool`/`RedisClient` + KV + live/bench（默认路径，非仅 `live` feature） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `taosx` | `crates/adapters/storage/taos/` | `taosx` | **生产** `TaosPool` REST（6041）+ live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
@@ -82,7 +81,6 @@
 | （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Venue 业务 live **DEFER** |
 | transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
 | tools | `.agents/ssot/tools/` | `crates/evidence` + `tools/goalctl` + `tools/verifyctl` | evidence + **goalctl/verifyctl 最小生产 CLI 已 member**（#188）；live env 构建器 #191；xtask **未**落地 |
-
 规则：
 
 1. 规格写 COMPLETE / Stable ≠ 本仓可宣称 ship
@@ -193,6 +191,7 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 | 2026-07-21 | PR #98 合入：五 crate 生产就绪快照与验证入口（loom/align 路径）写入总览 |
 | 2026-07-21 | 四包内部 GO：members 表 package 名对齐 Cargo metadata；分层 L1/L2/L4；#159 · tag `v0.3.0-four-crates` |
 | 2026-07-21 | kernel **内部发布已执行**：#163 · `crates/kernel/releases/0.3.0-internal.md` · GH Release；对齐快照更新 |
+| 2026-07-22 | **exchange 生产默认 REST+WS**（#210）+ 错误路径（#214）：binancex/okxx named DEFER 闭合；非 package stable/L5 |
 | 2026-07-21 | **infra-s9t** 闭合（#166–#168 · #172）：L1 P0、redis live KV、contracts L3 子集、exchange `server_time`；总览与分域对齐同步 |
 | 2026-07-21 | 对齐/同步文档刷新 #174；follow-up CLOSED + report partials closeout #175；本文件补引用 |
 | 2026-07-22 | **#178** 独立 `contract-testkit` 落地；members 表补行；Fake 迁出 contracts；SSOT 同步报告纠偏 |

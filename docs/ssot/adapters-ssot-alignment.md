@@ -7,7 +7,6 @@
 | 本仓路径 | `crates/adapters/{exchange,storage}/<name>` |
 | 审计日期 | 2026-07-22 |
 | 结论 | **storage×7 生产默认 + OBJECTIVE DEFER 闭合（`0.3.1`）** + **exchange 生产默认 REST+WS named DEFER 闭合**（binancex/okxx）；live `#[ignore]` + benches；scaffold → `feature = "scaffold"`（storage）；**未**宣称 package stable / L5 代签 / crates.io |
-
 ## 结论摘要
 
 | 问题 | 状态 |
@@ -53,8 +52,7 @@ lib 入口                        adapters: Error/Result；contracts: ExchangeAd
 实现深度                        storage **生产默认 + OBJECTIVE DEFER 闭合** + live/bench；exchange **签名 REST + WS 行情解析**
 标准布局八项                    已齐
 publish                         false（显式）
-version                         storage×7 与 exchange `0.3.1`（独立）
-```
+version                         storage×7 与 exchange `0.3.1`（独立）```
 
 | 镜像路径 | 本仓路径 | package | 本仓状态 |
 |----------|----------|---------|----------|
@@ -67,7 +65,6 @@ version                         storage×7 与 exchange `0.3.1`（独立）
 | `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **`0.3.1`** Pool/Tx + PgRepository + SSL require + resiliencx + live |
 | `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **`0.3.1`** Standalone/Cluster/Sentinel + TLS + resiliencx + live |
 | `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **`0.3.1`** REST + batch write + Native WS 探测 + 有界池 + live |
-
 验证（本仓权威命令）：
 
 ```bash
@@ -100,6 +97,17 @@ cargo test --workspace --all-targets
 # cargo test -p clickhousex --test live_smoke -- --ignored
 # cargo test -p taosx --test live_smoke -- --ignored
 ```
+
+## exchange named DEFER（#210 / #214）
+
+| DEFER 项 | 状态 | 证据 |
+|----------|------|------|
+| binancex 签名 HMAC-SHA256 | **PASS** | `auth::sign_*` 向量 + 签名 REST mock |
+| binancex 下单 place/cancel/query | **PASS** | 签名路径 + 4xx 业务错误映射 |
+| binancex WS 行情 | **PASS（公共最小面）** | bookTicker/trade/depth 解析 + `with_ws` |
+| okxx 签名四头 | **PASS** | `OkxApiKey::sign*` + Debug 脱敏 |
+| okxx 业务协议信封 | **PASS** | `code`/`data` + cancel `sCode` |
+| 全量私有/管理订单 WS、OCO、L5/stable | **OPEN / 非目标** | CHANGELOG + README |
 
 ## 对齐矩阵（本仓证据，非镜像勾选）
 

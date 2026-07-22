@@ -48,7 +48,7 @@
   - `crates/types/decimal` → `xhyper-decimalx`
   - `crates/types/canonical` → `xhyper-canonical`
   - `crates/contracts` → `xhyper-contracts`（adapter trait 出口；#43）
-  - `crates/adapters/**` → 9 个 adapter package（**storage×7 生产默认客户端** + exchange scaffold；#188–#190）
+  - `crates/adapters/**` → 9 个 adapter package（**storage×7 生产默认客户端** + **exchange 生产默认 REST+WS** #210+#214，非 package stable；#188–#190 storage）
   - `tools/goalctl` · `tools/verifyctl` → 最小生产 CLI members（#188）
 - `contract-testkit` **已落地**（`crates/test-support/contracts`）；**infra 其余域**（gate 等）当前仅镜像，未宣称本仓实现
 - **adapters**：镜像已本地化；storage 生产 P0 已落地 + live/bench；**未**宣称 package stable / Cluster·JetStream·EOS 全量

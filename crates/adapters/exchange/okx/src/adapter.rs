@@ -77,6 +77,14 @@ fn check_okx_envelope(body: &[u8]) -> XResult<()> {
     Ok(())
 }
 
+/// 信封解析后：若仍无业务码且 HTTP 非 2xx，映射为 Unavailable。
+fn require_okx_http_ok(status: u16, op: &str) -> XResult<()> {
+    if !(200..300).contains(&status) {
+        return Err(XError::unavailable(format!("{op} http status {status}")));
+    }
+    Ok(())
+}
+
 fn map_okx_state(state: &str) -> OrderStatus {
     match state {
         "live" => OrderStatus::Open,
@@ -320,6 +328,9 @@ impl VenueAdapter for OkxAdapter {
             .to_string();
             let path = "/api/v5/trade/order";
             let resp = self.http_signed("POST", path, Some(Bytes::from(body))).await?;
+            if resp.body.is_empty() {
+                require_okx_http_ok(resp.status, "place_order")?;
+            }
             // place 返回 data[0] 常只有 ordId/clOrdId/sCode；状态取 live 或 sCode
             check_okx_envelope(&resp.body)?;
             let v: serde_json::Value = serde_json::from_slice(&resp.body)
@@ -387,6 +398,9 @@ impl VenueAdapter for OkxAdapter {
             let body = serde_json::Value::Object(body).to_string();
             let path = "/api/v5/trade/cancel-order";
             let resp = self.http_signed("POST", path, Some(Bytes::from(body))).await?;
+            if resp.body.is_empty() {
+                require_okx_http_ok(resp.status, "cancel_order")?;
+            }
             check_okx_envelope(&resp.body)?;
             let v: serde_json::Value = serde_json::from_slice(&resp.body)
                 .map_err(|e| XError::invalid(format!("okx cancel parse: {e}")))?;
@@ -440,6 +454,9 @@ impl VenueAdapter for OkxAdapter {
                 }
             };
             let resp = self.http_signed("GET", &path, None).await?;
+            if resp.body.is_empty() {
+                require_okx_http_ok(resp.status, "query_order")?;
+            }
             let order = Self::parse_order_envelope(&resp.body)?;
             return Ok(map_okx_state(&order.state));
         }
@@ -876,7 +893,8 @@ mod tests {
     }
 
     struct RecordingHttp {
-        responses: std::sync::Mutex<Vec<(String, String, Bytes)>>,
+        /// (method, path_prefix, status, body)
+        responses: std::sync::Mutex<Vec<(String, String, u16, Bytes)>>,
         captured: std::sync::Mutex<Vec<HttpRequest>>,
     }
 
@@ -888,7 +906,15 @@ mod tests {
             }
         }
         fn push(&self, method: &str, path_prefix: &str, body: Bytes) {
-            self.responses.lock().expect("lock").push((method.into(), path_prefix.into(), body));
+            self.push_status(method, path_prefix, 200, body);
+        }
+        fn push_status(&self, method: &str, path_prefix: &str, status: u16, body: Bytes) {
+            self.responses.lock().expect("lock").push((
+                method.into(),
+                path_prefix.into(),
+                status,
+                body,
+            ));
         }
         fn last(&self) -> HttpRequest {
             self.captured.lock().expect("lock").last().cloned().expect("cap")
@@ -901,9 +927,9 @@ mod tests {
             self.captured.lock().expect("lock").push(request.clone());
             let method = request.method.to_ascii_uppercase();
             let path = request.url.split('?').next().unwrap_or(&request.url).to_string();
-            for (m, prefix, body) in self.responses.lock().expect("lock").iter() {
+            for (m, prefix, status, body) in self.responses.lock().expect("lock").iter() {
                 if m.eq_ignore_ascii_case(&method) && path.contains(prefix.as_str()) {
-                    return Ok(HttpResponse { status: 200, body: body.clone() });
+                    return Ok(HttpResponse { status: *status, body: body.clone() });
                 }
             }
             Err(TransportError::ProtocolViolation(format!("miss {method} {}", request.url)))
@@ -1027,6 +1053,41 @@ mod tests {
         );
     }
 
+    #[tokio::test]
+    async fn signed_place_scode_nonzero_is_err() {
+        let http = Arc::new(RecordingHttp::new());
+        http.push(
+            "POST",
+            "/api/v5/trade/order",
+            Bytes::from_static(
+                br#"{"code":"0","msg":"","data":[{"clOrdId":"o1","ordId":"","sCode":"51008","sMsg":"Order failed"}]}"#,
+            ),
+        );
+        let a = OkxAdapter::mainnet().with_http(http).with_api_key(OkxApiKey::new(
+            "k",
+            "secret-key-value",
+            "p",
+        ));
+        VenueAdapter::connect(&a).await.unwrap();
+        let e = VenueAdapter::place_order(&a, &sample_order()).await.expect_err("sCode");
+        assert_eq!(e.kind(), kernel::ErrorKind::Invalid);
+        assert!(format!("{e}").contains("51008") || format!("{e}").contains("sCode"));
+    }
+
+    #[tokio::test]
+    async fn signed_place_empty_body_http_503_is_unavailable() {
+        let http = Arc::new(RecordingHttp::new());
+        http.push_status("POST", "/api/v5/trade/order", 503, Bytes::new());
+        let a = OkxAdapter::mainnet().with_http(http).with_api_key(OkxApiKey::new(
+            "k",
+            "secret-key-value",
+            "p",
+        ));
+        VenueAdapter::connect(&a).await.unwrap();
+        let e = VenueAdapter::place_order(&a, &sample_order()).await.expect_err("503");
+        assert_eq!(e.kind(), kernel::ErrorKind::Unavailable);
+    }
+
     struct FixtureWs {
         frames: std::sync::Mutex<Vec<Bytes>>,
     }
@@ -1084,6 +1145,32 @@ mod tests {
         VenueAdapter::connect(&a).await.unwrap();
         let mut s = VenueAdapter::subscribe_trades(&a, "BTC-USDT").await.unwrap();
         assert!(s.next().await.is_none());
+    }
+
+    #[tokio::test]
+    async fn subscribe_trades_and_book_parse_okx_fixtures() {
+        use futures_util::StreamExt;
+        let trade = Bytes::from_static(
+            br#"{"arg":{"channel":"trades","instId":"ETH-USDT"},"data":[{"instId":"ETH-USDT","px":"2500.5","sz":"0.01","side":"buy","ts":"1700000000456"}]}"#,
+        );
+        let ws_trade = Arc::new(FixtureWs { frames: std::sync::Mutex::new(vec![trade]) });
+        let a = OkxAdapter::mainnet().with_ws(ws_trade);
+        VenueAdapter::connect(&a).await.unwrap();
+        let mut s = VenueAdapter::subscribe_trades(&a, "ETH-USDT").await.unwrap();
+        let t = s.next().await.expect("trade");
+        assert_eq!(t.symbol, "ETH-USDT");
+        assert_eq!(t.price.as_decimal(), "2500.5".parse().unwrap());
+
+        let depth = Bytes::from_static(
+            br#"{"arg":{"channel":"books5","instId":"BTC-USDT"},"data":[{"asks":[["1.1","3","0","1"]],"bids":[["1.0","2","0","1"]],"ts":"1700000000789"}]}"#,
+        );
+        let ws_book = Arc::new(FixtureWs { frames: std::sync::Mutex::new(vec![depth]) });
+        let b = OkxAdapter::mainnet().with_ws(ws_book);
+        VenueAdapter::connect(&b).await.unwrap();
+        let mut s2 = VenueAdapter::subscribe_orderbook(&b, "BTC-USDT").await.unwrap();
+        let book = s2.next().await.expect("book");
+        assert_eq!(book.bids.len(), 1);
+        assert_eq!(book.asks[0].price.as_decimal(), "1.1".parse().unwrap());
     }
 
     #[test]
