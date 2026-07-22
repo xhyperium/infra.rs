@@ -21,6 +21,7 @@
 //!   `.agents/ssot/types/canonical/plan/validation-owners.md`。
 //! - 禁止在本 crate 做业务校验、codec、hash/sign。
 //! - 形状辅助：[`shape`]；时间工具：[`proposed_time`]。
+//! - 版本信封：[`envelope`]（`schema_version` + `payload`；无业务校验）。
 //!
 //! ## Lint
 //!
@@ -31,6 +32,7 @@
 #![deny(unreachable_pub)]
 #![deny(missing_docs)]
 
+pub mod envelope;
 pub mod proposed_time;
 pub mod shape;
 pub mod wire;
@@ -40,6 +42,9 @@ use serde::{Deserialize, Serialize};
 
 // 复用 decimalx 的 Money（ADR-007：唯一定义点在 decimalx，canonical 复用）
 pub use decimalx::Money;
+pub use envelope::{
+    CURRENT_PAYLOAD_SCHEMA_VERSION, ENVELOPE_SCHEMA_VERSION, Envelope, EnvelopeVersionError,
+};
 pub use proposed_time::{
     PROPOSED_TS_UNIT, TS_UNIT, dto_ts_from_unix_millis, ns_from_unix_millis,
     proposed_dto_ts_from_unix_millis, proposed_ns_from_unix_millis, proposed_unix_millis_from_ns,

@@ -15,7 +15,7 @@ pub const fn counting_is_production_metrics() -> bool {
 /// 策略摘要。
 #[must_use]
 pub fn policy_summary() -> &'static str {
-    "tracing-min; counting=test-only; otel=DEFER"
+    "tracing-min; counting=test-only; otel-export-surface=in-process; full-otel-sdk=no"
 }
 
 /// 观测实现级别。
@@ -59,7 +59,7 @@ mod tests {
     fn policy_honesty() {
         assert!(!claims_otel_export_complete());
         assert!(!counting_is_production_metrics());
-        assert!(policy_summary().contains("otel=DEFER"));
+        assert!(policy_summary().contains("otel-export-surface"));
         assert_eq!(tier_tracing(), ObservabilityTier::TracingMin);
         assert_eq!(tier_counting(), ObservabilityTier::CountingTest);
         assert!(!allows_production_observability_claim(tier_tracing()));

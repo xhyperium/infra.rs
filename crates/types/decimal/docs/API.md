@@ -11,6 +11,7 @@
 |------|------|
 | `MAX_SCALE` | `18` |
 | `TECH_MAX_POW10_EXP` | `38` |
+| `WIRE_SCHEMA_VERSION` | `1`（Decimal/Money/Currency JSON shape） |
 | `DecimalLimits` | `MAX_SCALE` / `TECH_MAX_POW10_EXP` 关联常量 |
 
 ### Decimal
@@ -23,8 +24,8 @@
 | `rescale` / `checked_rescale` / `normalize` | 缩位与规范化 |
 | `cmp_value` / `eq_value` | 数值比较 |
 | `FromStr` / `Display` | 文本往返 |
-| `+` / `-` / `*` | panicking 运算符（资金路径禁用） |
-| serde `{mantissa, scale}` | 反序列化强制 `scale ≤ MAX_SCALE` |
+| `+` / `-` / `*` | panicking 运算符；**仅** feature `panicking-ops`（默认关闭；资金路径禁用） |
+| serde `{mantissa, scale}` | wire v1；反序列化强制 `scale ≤ MAX_SCALE` |
 
 ### 舍入与错误
 

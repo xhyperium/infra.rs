@@ -2,11 +2,12 @@
 
 | 字段 | 值 |
 |------|-----|
-| 审计日期 | 2026-07-21 |
+| 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
 | SSOT（只读） | `.agents/ssot/bootstrap/spec/spec.md` ≡ `spec/bootstrap-complete-spec.md`（`cmp` 同构） |
 | 实现路径 | `crates/bootstrap`（package `bootstrap` / lib `bootstrap`） |
 | 权威 | 本文件描述 **本仓** 落地状态；**不**编辑 `.agents/ssot/**` 镜像 |
 | 上游参考 | `xhyper.rs/crates/infra/bootstrap`（可移植源，非本仓 member） |
+| OBJECTIVE | StoreSet + AsyncDrain **PASS**；**≠** 交易栈全量装配 / Agent L5 |
 
 ## 路径映射
 
@@ -32,10 +33,12 @@
 |-----------|------|------|
 | `xhyper-kernel`（Shutdown / ErrorKind） | path `crates/kernel` | **PASS** |
 | `xhyper-contracts`（Instrumentation） | path `crates/contracts`；re-export `Instrumentation` | **PASS**（ADR-005 trait 权威） |
-| 有界 venue/storage 替面 | `BoundedMarketDataSource` / `BoundedKeyValueStore` / …（**非** contracts 同名 trait） | **PASS**（命名收敛，消除静默双平面）/ 完整 async contracts 能力仍 **DEFER** |
+| 有界 venue/storage 替面 | `BoundedMarketDataSource` / `BoundedKeyValueStore` / …（**非** contracts 同名 trait） | **PASS**（命名收敛） |
+| `StoreSet` 适配器接线面 | `src/store_set.rs`；`Bootstrap::with_store_set` | **PASS**（类型化注入；禁止动态 register/resolve） |
+| `AsyncDrain` 关停排空 | `src/drain.rs`；`register_drain` / `AppContext::run_drain` | **PASS**（组合根 drain 所有权；LIFO hooks） |
 | `observex`（`TracingInstrumentation`） | path `crates/observex`；`Bootstrap::new` 默认 | **PASS**（ADR-005 默认实现） |
-| `evidence`（`EvidenceAppender`） | path `crates/evidence`；re-export + `InMemoryEvidenceAppender` | **PASS**（注入/可选/require；内存实现）/ 远程持久化 wire **DEFER** |
-| dev：binance / redisx / canonical / tokio e2e | 无 monorepo adapters | **DEFER**（见非目标）；以 stub trait double + 单元/集成测试替代组合证明 |
+| `evidence`（`EvidenceAppender`） | path `crates/evidence`；re-export + `InMemoryEvidenceAppender` | **PASS**（注入/可选/require；远程见 evidence 对齐） |
+| 真实 exchange 业务装配 e2e | 非本包职责 | **OPEN**（exchange 仍 scaffold；**≠** StoreSet API 缺失） |
 
 ## §3 公开 API
 
@@ -48,6 +51,8 @@
 | `ExecutionContext` | **PASS** | 同上 |
 | `BootstrappedApp` | **PASS** | `into_parts` / `trigger_shutdown` |
 | `ShutdownController` | **PASS** | `trigger` / `has_guard`；drop 不触发 |
+| `StoreSet` | **PASS** | `src/store_set.rs`；KV/Tx/Bus/Repo/Venue 可选句柄 |
+| `AsyncDrain` / `DrainStepResult` | **PASS** | `src/drain.rs`；LIFO 执行 |
 | `BootstrapError` | **PASS** | `src/error.rs` |
 | 无 `Gate` / `Capability` / `register_capability` / 动态 mutation | **PASS** | 静态检查 + 公开导出列表 |
 
@@ -69,11 +74,12 @@
 | 项 | 判定 | 说明 |
 |----|------|------|
 | workspace 非测试 consumer | **PASS（本仓）** | `examples/minimal.rs` 为库外 consumer 路径（非生产 app） |
-| 真实 app 生命周期 / async drain | **DEFER** | SSOT 开放项；本目标非目标 |
-| composition manifest（BOOT-MAN-001） | **DEFER** | 非目标 |
-| 异步组件启动/逆序补偿 | **DEFER** | 非目标 |
-| 生产就绪 / package stable | **未宣称** | SSOT Status：非生产就绪 |
-| contracts 全量 async trait 注入 | **DEFER** | 组合根仅持 `Bounded*` 最小对象安全面 + Instrumentation/Evidence |
+| StoreSet 适配器接线 API | **PASS** | `with_store_set` + `StoreSet::with_*`；**诚实边界**：注入句柄 ≠ 交易所业务协议完成 |
+| AsyncDrain 关停排空 | **PASS** | 进程内 LIFO hooks；**≠** 分布式编排器 |
+| composition manifest（BOOT-MAN-001） | **OPEN** | 非本轮 OBJECTIVE |
+| 异步组件启动/逆序补偿（全量） | **OPEN** | drain 提供 hook 面；完整 async 启动编排非目标 |
+| 生产就绪 / package stable / Agent L5 | **未宣称** | 人签模板未填 |
+| 交易栈端到端装配 | **NO-GO** | exchange 业务仍 scaffold；StoreSet 只能接线已有 trait 实现 |
 
 ## §6 验收命令（本仓）
 
@@ -100,10 +106,18 @@ rg -n 'fn register|fn resolve|pub struct Gate|pub enum Gate' crates/bootstrap/sr
 本地会话证据目录（非 git）：实现者 scratch 下的 `bootstrap-*.log` / `bootstrap-cov.txt`。  
 可复现命令见上文 §6。
 
+## OBJECTIVE 处置（2026-07-22 defer-close）
+
+| 项 | 前状态 | 现状态 | 证据 |
+|----|--------|--------|------|
+| StoreSet / adapter 接线 | DEFER | **PASS** | `crates/bootstrap/src/store_set.rs` · `Bootstrap::with_store_set` |
+| async drain | DEFER | **PASS** | `crates/bootstrap/src/drain.rs` · `register_drain` / `run_drain` |
+
 ## 变更记录
 
 | 日期 | 说明 |
 |------|------|
+| 2026-07-22 | **defer-close**：StoreSet + AsyncDrain PASS；交易装配仍 NO-GO |
 | 2026-07-21 | 生产就绪：`Bounded*` 有界面命名收敛；与 contracts 权威 trait 区分；PR #98 **合入 main** |
 | 2026-07-21 | infra-s9t.4：`require_evidence` 在 `build`/`build_app` 路径 release panic fail-closed；#168 |
 

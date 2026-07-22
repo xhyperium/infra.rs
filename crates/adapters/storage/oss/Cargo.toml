@@ -18,11 +18,11 @@ async-trait = { workspace = true }
 base64 = "0.22"
 bytes = { workspace = true }
 chrono = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.0" }
+contracts = { path = "../../../contracts", version = "0.1.1" }
 hmac = "0.12"
 kernel = { path = "../../../kernel", version = "0.3.0" }
 reqwest = { workspace = true }
-resiliencx = { path = "../../../resiliencx", version = "0.1.0", features = [
+resiliencx = { path = "../../../resiliencx", version = "0.1.1", features = [
   "tokio",
 ] }
 sha1 = "0.10"

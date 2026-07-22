@@ -26,18 +26,21 @@ pub use testkit::{
     ManualClockError,
     ManualClockFault,
     ManualClockSnapshot,
+    IntegrationHarness,
+    StepRecord,
 };
 ```
 
 - 墙钟 / 单调钟独立可控（checked，失败不改状态）
 - wall fault 注入；一致 `snapshot`
 - 无 `Default` / `Clone`；共享请用 `std::sync::Arc`
+- `IntegrationHarness`：基于 ManualClock 的多步确定性测试 harness（非网络 / 非进程）
 
 ## 硬限制
 
 - 不提供通用 mock 框架
-- 不提供 integration harness（真实网络 / 进程）
-- contract trait suite 见独立 `contract-testkit`（`crates/test-support/contracts`；本 crate **仅** ManualClock）
+- 不提供真实网络 / 进程级 integration harness（仅 ManualClock 步进 harness）
+- contract trait suite 见独立 `contract-testkit`（`crates/test-support/contracts`）
 - 生产依赖仅 `kernel`
 
 ## 最小用法

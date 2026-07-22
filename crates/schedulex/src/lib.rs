@@ -1,7 +1,12 @@
-//! schedulex —— L1 任务 ID 登记表（active SSOT：无真实定时器）。
+//! schedulex —— L1 任务 ID 登记表 + 确定性 Job 运行器。
 //!
-//! “登记一个任务 ID”不等于定时触发或执行任务。
-//! 权威规范：`.agents/ssot/schedulex/spec/spec.md`
+//! | 面 | 类型 | 说明 |
+//! |----|------|------|
+//! | 登记表 | [`Scheduler`] | 仅 ID 集合；登记 ≠ 执行 |
+//! | 调度 | [`Schedule`] / [`JobRunner`] | `tick(now_ms)` 确定性触发；无墙钟依赖 |
+//!
+//! cron 仅支持文档化最小子集（见 [`schedule`] 模块）。
+//! 权威规范：`.agents/ssot/schedulex/spec/spec.md`（运行器为 additive 面）。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -9,16 +14,22 @@
 
 use std::collections::HashMap;
 
-mod bulk;
-mod id;
-mod stats;
+pub mod bulk;
+pub mod id;
+pub mod job;
+pub mod runner;
+pub mod schedule;
+pub mod stats;
 pub use bulk::{schedule_checked_many, schedule_filtering};
 pub use id::{MAX_ID_LEN, debug_label, is_debug_label, normalize_task_id, validate_task_id};
+pub use job::{Job, JobFn, JobId, JobMeta};
+pub use runner::{JobRunner, TickResult};
+pub use schedule::{CronParsed, Schedule, cron_matches, parse_cron_expr};
 pub use stats::{
     NO_HARD_CAPACITY, RegistryStats, is_busy, over_soft_threshold, stats, status_line, utilization,
 };
 
-/// 任务 ID 登记错误。
+/// 任务 ID / 调度错误。
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ScheduleError {
@@ -31,6 +42,10 @@ pub enum ScheduleError {
     },
     /// ID 含控制字符。
     IdControlChar,
+    /// 非法调度表达式或参数。
+    InvalidSchedule(String),
+    /// Job 执行失败。
+    JobFailed(String),
 }
 
 impl std::fmt::Display for ScheduleError {
@@ -39,13 +54,15 @@ impl std::fmt::Display for ScheduleError {
             Self::EmptyId => write!(f, "任务 ID 不能为空"),
             Self::IdTooLong { max } => write!(f, "任务 ID 超过最大长度 {max}"),
             Self::IdControlChar => write!(f, "任务 ID 不能包含控制字符"),
+            Self::InvalidSchedule(msg) => write!(f, "非法调度: {msg}"),
+            Self::JobFailed(msg) => write!(f, "任务执行失败: {msg}"),
         }
     }
 }
 
 impl std::error::Error for ScheduleError {}
 
-/// 内存任务 ID 登记表（无时钟 / Job / runtime）。
+/// 内存任务 ID 登记表（与 [`JobRunner`] 独立；无自动联动）。
 #[derive(Debug, Clone)]
 pub struct Scheduler {
     tasks: HashMap<String, ()>,
@@ -231,6 +248,7 @@ mod tests {
         assert!(format!("{}", ScheduleError::EmptyId).contains("不能为空"));
         assert!(format!("{}", ScheduleError::IdTooLong { max: MAX_ID_LEN }).contains("最大长度"));
         assert!(format!("{}", ScheduleError::IdControlChar).contains("控制字符"));
+        assert!(format!("{}", ScheduleError::JobFailed("x".into())).contains("任务执行失败"));
     }
 
     #[test]
@@ -265,5 +283,25 @@ mod tests {
         let empty: [&str; 0] = [];
         s.schedule_many(empty);
         assert_eq!(s.cancel_many(empty), 0);
+    }
+
+    #[test]
+    fn job_runner_once_and_fixed_delay() {
+        use std::sync::{Arc, Mutex};
+        let hits = Arc::new(Mutex::new(0u32));
+        let h = Arc::clone(&hits);
+        let mut r = JobRunner::new();
+        r.add(
+            Job::new("t", move || {
+                *h.lock().unwrap() += 1;
+                Ok(())
+            }),
+            Schedule::once(5),
+        )
+        .unwrap();
+        assert_eq!(r.tick(4).fired, 0);
+        assert_eq!(r.tick(5).fired, 1);
+        assert!(Schedule::cron("bad * *").is_err());
+        assert!(format!("{}", ScheduleError::InvalidSchedule("x".into())).contains("非法调度"));
     }
 }

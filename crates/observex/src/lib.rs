@@ -1,8 +1,9 @@
 //! observex —— L1 tracing/metrics 封装（SPEC 0.1.0 / ADR-005）。
 //!
 //! [`TracingInstrumentation`] 实现 [`contracts::Instrumentation`]。
-//! 另有 [`PrefixedInstrumentation`]、[`CountingInstrumentation`]（本地验证，**非** OTEL）。
-//! **非目标**：OTEL exporter / flush / shutdown。
+//! 另有 [`PrefixedInstrumentation`]、[`CountingInstrumentation`]（本地验证）。
+//! [`export`] 提供 OTEL-**compatible** 进程内导出面（[`TelemetryExporter`] /
+//! [`InMemoryExporter`] / [`ExportingInstrumentation`]），**不是**完整 OpenTelemetry SDK。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -11,9 +12,14 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use contracts::Instrumentation;
 
+pub mod export;
 mod ops;
 mod policy;
 mod surface;
+pub use export::{
+    ExportError, ExportingInstrumentation, InMemoryExporter, MetricEvent, SpanEvent,
+    TelemetryExporter,
+};
 pub use ops::{is_friendly_op, join_op_segments, op_depth, op_leaf, sanitize_op, truncate_op};
 pub use policy::{
     ObservabilityTier, allows_production_observability_claim, claims_otel_export_complete,
@@ -281,7 +287,19 @@ mod tests {
     fn policy_is_honest() {
         assert!(!claims_otel_export_complete());
         assert!(!counting_is_production_metrics());
-        assert!(policy_summary().contains("DEFER"));
+        assert!(policy_summary().contains("otel-export-surface"));
+    }
+
+    #[test]
+    fn exporting_instrumentation_flush_path() {
+        let c = CountingInstrumentation::new();
+        let exp = InMemoryExporter::new();
+        let e = ExportingInstrumentation::new(&c, &exp);
+        e.record_retry("x", 2);
+        assert!(!exp.buffered_spans().is_empty());
+        e.flush().unwrap();
+        assert!(exp.buffered_spans().is_empty());
+        e.shutdown().unwrap();
     }
 
     #[test]

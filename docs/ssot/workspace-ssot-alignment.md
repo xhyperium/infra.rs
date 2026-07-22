@@ -25,9 +25,9 @@
 | `contracts` | `crates/contracts/` | `contracts` | adapter trait 出口；L3 子集（KV+Instr） | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
 | `binancex` | `crates/adapters/exchange/binance/` | `binancex` | 生产默认：HMAC REST 下单/撤/查 + 公共 WS 行情解析 + live server_time ignore | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx/` | `okxx` | 生产默认：四头鉴权 REST + 业务信封 + 公共 WS 行情解析 + live server_time ignore | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **生产** HTTP `ClickHousePool` + live/bench（#188–#190） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **生产** `KafkaPool`/`Producer`/`Consumer` + SASL + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `natsx` | `crates/adapters/storage/nats/` | `natsx` | **生产** `NatsPool` + EventBus + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **0.3.1** insert_batch + 有界池 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **0.3.1** offset/at-least-once/应用级 EOS + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.1** JetStream + TLS 策略 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `ossx` | `crates/adapters/storage/oss/` | `ossx` | **生产** `OssClient`（OSS V1 签名）+ live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **生产** `PostgresPool`/`PgTransaction` + SQLSTATE + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `redisx` | `crates/adapters/storage/redis/` | `redisx` | **生产** `RedisPool`/`RedisClient` + KV + live/bench（默认路径，非仅 `live` feature） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |

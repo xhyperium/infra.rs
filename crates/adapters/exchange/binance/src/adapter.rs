@@ -94,7 +94,9 @@ pub enum Timeframe {
 
 impl Timeframe {
     #[allow(dead_code)] // 预留给 fetch_candles 真 REST 接线
-    fn to_api_str(self) -> &'static str {
+    /// Binance klines interval 字符串。
+    #[must_use]
+    pub fn to_api_str(self) -> &'static str {
         match self {
             Timeframe::M1 => "1m",
             Timeframe::M5 => "5m",
