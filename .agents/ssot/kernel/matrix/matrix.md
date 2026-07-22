@@ -8,7 +8,7 @@
 | Current version | `0.3.1` |
 | Distribution | `publish = false` |
 | Maturity | L1 Internal Ready；L4 仅限已证支持面 |
-| Delivery | 候选实现已落地；待验证与 patch bump |
+| Delivery | 候选实现与 PATCH bump 已落地；`fc201d7` focused PASS；R1 修复候选待重验 |
 | Production certification | 未声明 |
 
 ## 合同矩阵

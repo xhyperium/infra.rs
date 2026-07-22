@@ -4,7 +4,7 @@
 |---|---|
 | 状态 | **current-state 测试合同** |
 | 更新 | 2026-07-23 |
-| 本次 writer | 仅更新文档；未执行测试 |
+| 本轮证据 | fixed SHA `fc201d7` 四域 focused tests/doc/clippy/API 与专项门禁已通过；R1 修复候选须重跑 |
 
 ## 必须覆盖
 

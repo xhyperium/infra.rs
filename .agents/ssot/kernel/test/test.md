@@ -3,7 +3,7 @@
 | 字段 | 当前值 |
 |------|--------|
 | Status | Active contract；本轮结果待 fresh evidence |
-| Package baseline | `kernel 0.3.0` |
+| 变更前 baseline / 当前版本 | `kernel 0.3.0` / `kernel 0.3.1` |
 | Source Spec | `SPEC-KERNEL-002` |
 | Production certification | 未声明 |
 

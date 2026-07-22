@@ -28,6 +28,20 @@ fn successful_run_returns_terminal_report() {
 }
 
 #[test]
+fn empty_scenario_and_report_assert_helpers_are_explicit() {
+    let report = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(10))
+        .run()
+        .expect("空场景应产生空报告");
+
+    report.assert_all_ok(0);
+    report.assert_wall_ns(10);
+    report.assert_monotonic_elapsed(Duration::ZERO);
+
+    let mismatch = std::panic::catch_unwind(|| report.assert_all_ok(1));
+    assert!(mismatch.is_err(), "断言 helper 必须在数量不符时 panic");
+}
+
+#[test]
 fn preexisting_wall_fault_stops_before_step_execution() {
     let clock = testkit::ManualClock::new(Timestamp::from_unix_nanos(7));
     clock.set_wall_fault(ManualClockFault::Overflow).unwrap();
@@ -68,6 +82,22 @@ fn step_error_preserves_source_and_terminal_report() {
     assert_eq!(error.source().expect("保留 source").to_string(), "boom");
     assert_eq!(error.report().records().len(), 1);
     assert_eq!(error.report().records()[0].outcome(), StepOutcome::Failed);
+}
+
+#[test]
+fn step_error_plus_wall_fault_exposes_combined_observation_source() {
+    let error = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(0))
+        .step("业务失败并注入故障", |clock| {
+            clock.set_wall_fault(ManualClockFault::Unavailable).expect("故障注入应成功");
+            Err(io::Error::other("业务失败"))
+        })
+        .run()
+        .expect_err("组合失败必须以观测失败终止");
+
+    assert_eq!(error.kind(), StepOutcome::ObservationFailed);
+    let combined = error.source().expect("必须公开组合观测错误");
+    assert!(combined.to_string().contains("终态观测失败"));
+    assert_eq!(combined.source().expect("必须链接此前业务错误").to_string(), "业务失败");
 }
 
 #[test]

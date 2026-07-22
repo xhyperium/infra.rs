@@ -65,12 +65,12 @@ fn lib_reexports_only_manual_clock_family() {
             && code.contains("ManualClockError")
             && code.contains("ManualClockFault")
             && code.contains("ManualClockSnapshot"),
-        "lib.rs must re-export ManualClock family"
+        "lib.rs 必须重新导出 ManualClock 族"
     );
     for name in
         ["IntegrationHarness", "HarnessReport", "HarnessRunError", "StepOutcome", "StepRecord"]
     {
-        assert!(code.contains(name), "lib.rs must re-export {name}");
+        assert!(code.contains(name), "lib.rs 必须重新导出 {name}");
     }
     for banned in [
         "macro_rules! xlib_test",
@@ -78,19 +78,16 @@ fn lib_reexports_only_manual_clock_family() {
         "struct FixtureBuilder",
         "provider_capability_contract_tests!",
     ] {
-        assert!(
-            !code.contains(banned),
-            "lib.rs code must not contain retired definition `{banned}`"
-        );
+        assert!(!code.contains(banned), "lib.rs 代码不得包含已退役定义 `{banned}`");
     }
     let pub_uses: Vec<&str> =
         code.lines().map(str::trim).filter(|l| l.starts_with("pub use")).collect();
-    assert_eq!(pub_uses.len(), 2, "expected clock + harness pub use lines, got {pub_uses:?}");
-    let clock_line = pub_uses.iter().find(|l| l.contains("clock::")).expect("clock pub use");
+    assert_eq!(pub_uses.len(), 2, "预期 clock + harness 两行公开导出，实际为 {pub_uses:?}");
+    let clock_line = pub_uses.iter().find(|l| l.contains("clock::")).expect("clock 公开导出");
     for name in ["ManualClock", "ManualClockError", "ManualClockFault", "ManualClockSnapshot"] {
-        assert!(clock_line.contains(name), "pub use missing {name}: {clock_line}");
+        assert!(clock_line.contains(name), "公开导出缺少 {name}: {clock_line}");
     }
-    assert!(pub_uses.iter().any(|line| line.contains("harness::")), "missing harness pub use");
+    assert!(pub_uses.iter().any(|line| line.contains("harness::")), "缺少 harness 公开导出");
 }
 
 #[test]

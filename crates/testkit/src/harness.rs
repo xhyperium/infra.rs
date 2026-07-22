@@ -36,6 +36,19 @@ impl StepOutcome {
 }
 
 /// 单步执行记录。
+///
+/// 字段保持私有，消费者必须通过只读 getter 观测记录：
+///
+/// ```compile_fail
+/// use kernel::Timestamp;
+/// use testkit::IntegrationHarness;
+///
+/// let report = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(0))
+///     .step("完成", |_| Ok::<(), std::io::Error>(()))
+///     .run()
+///     .expect("步骤成功");
+/// let _ = &report.records()[0].name;
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StepRecord {
     name: String,
@@ -236,6 +249,25 @@ impl fmt::Debug for PendingStep {
 ///
 /// [`Self::run`] 消耗 builder，因此运行后无法追加步骤或重跑；错误路径同样返回
 /// terminal report，避免 panic/错误后误报成功。
+///
+/// ```compile_fail
+/// use kernel::Timestamp;
+/// use testkit::IntegrationHarness;
+///
+/// let harness = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(0));
+/// let _ = harness.run();
+/// let _ = harness.step("运行后追加", |_| Ok::<(), std::io::Error>(()));
+/// ```
+///
+/// ```compile_fail
+/// use kernel::Timestamp;
+/// use testkit::IntegrationHarness;
+///
+/// let harness = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(0))
+///     .step("失败", |_| Err(std::io::Error::other("失败")));
+/// let _ = harness.run();
+/// let _ = harness.run();
+/// ```
 #[derive(Debug)]
 pub struct IntegrationHarness {
     clock: ManualClock,
@@ -336,12 +368,16 @@ impl IntegrationHarness {
                 }
                 Ok(Err(source)) => {
                     let mut detail = source.to_string();
-                    let (kind, after_snapshot) = match after {
-                        Ok(snapshot) => (StepOutcome::Failed, Some(snapshot)),
+                    let (kind, after_snapshot, source) = match after {
+                        Ok(snapshot) => (StepOutcome::Failed, Some(snapshot), source),
                         Err((snapshot, observation)) => {
                             detail.push_str("；终态观测失败: ");
                             detail.push_str(&observation.to_string());
-                            (StepOutcome::ObservationFailed, snapshot)
+                            let combined: BoxError = Box::new(CombinedObservationError {
+                                observation,
+                                preceding: source,
+                            });
+                            (StepOutcome::ObservationFailed, snapshot, combined)
                         }
                     };
                     records.push(StepRecord {
@@ -403,6 +439,24 @@ impl fmt::Display for WallFaultObservation {
 }
 
 impl std::error::Error for WallFaultObservation {}
+
+#[derive(Debug)]
+struct CombinedObservationError {
+    observation: BoxError,
+    preceding: BoxError,
+}
+
+impl fmt::Display for CombinedObservationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "终态观测失败: {}；此前步骤错误: {}", self.observation, self.preceding)
+    }
+}
+
+impl std::error::Error for CombinedObservationError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(self.preceding.as_ref())
+    }
+}
 
 fn panic_detail(payload: &(dyn std::any::Any + Send)) -> String {
     if let Some(message) = payload.downcast_ref::<&str>() {

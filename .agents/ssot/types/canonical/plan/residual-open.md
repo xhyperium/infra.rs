@@ -2,7 +2,7 @@
 
 | 字段 | 值 |
 |---|---|
-| 基线 | 当前 worktree package `canonical` 0.1.1 |
+| 当前版本 | worktree package `canonical` 0.1.2 |
 | 更新 | 2026-07-23 |
 | 原则 | 仅记录真实剩余项；已闭合的 wire 合同不得继续标成 OPEN |
 
