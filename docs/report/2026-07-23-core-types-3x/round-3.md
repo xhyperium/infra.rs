@@ -47,3 +47,4 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
 - 最终 verifier 随后发现 testkit alignment 的事实摘要仍残留 `prod deps kernel only`；已按 Cargo 与 active spec 校正为 `kernel, thiserror`。该文档改动使 `f26e29c` 不再是最终内容候选，必须重新固定 SHA 与复验。
 - 同轮 Standards 复核还发现 `IntegrationHarness::run` 缺少组织 Rust P1 要求的 `# Errors`；修复扩展到 testkit 全部公开 fallible API，逐项写明 typed error 条件。
 - 最终内容候选 `f62859b` 已重新通过完整机器闭包，见 [`evidence/r3-final-green.txt`](evidence/r3-final-green.txt)；独立双轴与聚合门禁仍待裁决。
+- Spec 复审发现 canonical current-state test 的“本轮证据”仍继承 R1 reviewer GO；已改为最新机器 PASS / REVIEW PENDING，R1/R2 只保留为历史回归输入。

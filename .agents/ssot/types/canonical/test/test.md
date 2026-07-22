@@ -4,7 +4,7 @@
 |---|---|
 | 状态 | **current-state 测试合同** |
 | 更新 | 2026-07-23 |
-| 本轮证据 | R1 fixed gate `e0cc99d` 已独立 GO；R2 增加公开 exact inventory、Envelope/time 负向回归 |
+| 本轮证据 | `f62859b` 机器门禁 PASS；独立终审待裁决。R1/R2 仅作历史回归输入，不继承 GO |
 
 ## 必须覆盖
 
