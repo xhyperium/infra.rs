@@ -12,7 +12,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use contracts::Instrumentation;
 
-mod export;
+pub mod export;
 mod ops;
 mod policy;
 mod surface;
