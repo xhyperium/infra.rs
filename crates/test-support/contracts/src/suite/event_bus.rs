@@ -14,6 +14,10 @@ const C: &str = "EventBus";
 ///
 /// 本函数保留 0.1.1 API，但不是可移植 EventBus conformance；Kafka/NATS 实时订阅
 /// 不得据此被判失败。可移植入口使用 [`assert_event_bus_surface`]。
+///
+/// # Errors
+///
+/// publish/subscribe 失败，或回放消息不满足 profile 时返回 [`ContractFailure`]。
 pub async fn assert_event_bus(bus: &dyn EventBus) -> ContractResult {
     bus.publish("orders", Bytes::from_static(b"o1"))
         .await
@@ -68,6 +72,10 @@ pub async fn assert_event_bus(bus: &dyn EventBus) -> ContractResult {
 /// 可移植 EventBus surface：先 subscribe，再 publish，只验证入口可调用。
 ///
 /// 本函数不 poll，也不承诺投递、回放、顺序、确认、背压、唯一 ID 或投递次数。
+///
+/// # Errors
+///
+/// topic 为空，或 subscribe/publish 调用失败时返回 [`ContractFailure`]。
 pub async fn assert_event_bus_surface(
     bus: &dyn EventBus,
     unique_topic: &str,
@@ -85,6 +93,10 @@ pub async fn assert_event_bus_surface(
 }
 
 /// 使用确定性 fixture 运行 [`assert_event_bus_surface`]。
+///
+/// # Errors
+///
+/// 资源名派生失败或 surface suite 失败时返回 [`ContractFailure`]。
 pub async fn assert_event_bus_with_fixture(
     bus: &dyn EventBus,
     fixture: &FixtureNamespace,

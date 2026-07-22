@@ -399,6 +399,7 @@ pub async fn contract_testkit::assert_pub_sub_smoke(&dyn contracts::PubSub, &con
 pub async fn contract_testkit::assert_pub_sub_surface(&dyn contracts::PubSub, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_repository<T, Id>(&dyn contracts::Repository<T, Id>, T, Id, impl core::ops::function::FnOnce(&mut T), impl core::ops::function::Fn(&T, &T) -> bool) -> contract_testkit::ContractResult where T: core::clone::Clone + core::marker::Send + core::marker::Sync + core::fmt::Debug, Id: core::clone::Clone + core::marker::Send + core::marker::Sync
 pub async fn contract_testkit::assert_time_series_store(&dyn contracts::TimeSeriesStore, &str, canonical::Tick) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_time_series_store_in_window(&dyn contracts::TimeSeriesStore, &str, canonical::Tick, i64, i64) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_time_series_store_with_fixture(&dyn contracts::TimeSeriesStore, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_tx_runner(&dyn contracts::TxRunner) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_venue_time_source(&dyn contracts::VenueTimeSource) -> contract_testkit::ContractResult

@@ -28,6 +28,9 @@ pub use market_data_source::assert_market_data_source;
 pub use object_store::{assert_object_store, assert_object_store_with_fixture};
 pub use pub_sub::{assert_pub_sub_smoke, assert_pub_sub_surface};
 pub use repository::assert_repository;
-pub use time_series_store::{assert_time_series_store, assert_time_series_store_with_fixture};
+pub use time_series_store::{
+    assert_time_series_store, assert_time_series_store_in_window,
+    assert_time_series_store_with_fixture,
+};
 pub use tx::assert_tx_runner;
 pub use venue_time_source::assert_venue_time_source;

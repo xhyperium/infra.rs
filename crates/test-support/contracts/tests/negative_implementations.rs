@@ -35,10 +35,10 @@ impl ObjectStore for CorruptingObjectStore {
 
 #[tokio::test]
 async fn object_store_suite_rejects_corrupted_roundtrip() {
-    let fixture = FixtureNamespace::new("ctk_object_broken").expect("valid fixture");
+    let fixture = FixtureNamespace::new("ctk_object_broken").expect("fixture 应合法");
     let failure = assert_object_store_with_fixture(&CorruptingObjectStore, &fixture)
         .await
-        .expect_err("broken implementation must fail");
+        .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "ObjectStore");
     assert_eq!(failure.case, "roundtrip");
@@ -59,10 +59,10 @@ impl TimeSeriesStore for DroppingTimeSeriesStore {
 
 #[tokio::test]
 async fn time_series_suite_rejects_dropped_write() {
-    let fixture = FixtureNamespace::new("ctk_time_series_broken").expect("valid fixture");
+    let fixture = FixtureNamespace::new("ctk_time_series_broken").expect("fixture 应合法");
     let failure = assert_time_series_store_with_fixture(&DroppingTimeSeriesStore, &fixture)
         .await
-        .expect_err("broken implementation must fail");
+        .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "TimeSeriesStore");
     assert_eq!(failure.case, "read_after_write");
@@ -79,13 +79,13 @@ impl AnalyticsSink for RejectingAnalyticsSink {
 
 #[tokio::test]
 async fn analytics_callable_suite_rejects_sink_error() {
-    let fixture = FixtureNamespace::new("ctk_analytics_broken").expect("valid fixture");
+    let fixture = FixtureNamespace::new("ctk_analytics_broken").expect("fixture 应合法");
     let failure = assert_analytics_sink_callable(&RejectingAnalyticsSink, &fixture)
         .await
-        .expect_err("broken implementation must fail");
+        .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "AnalyticsSink");
-    assert_eq!(failure.case, "sink_callable");
+    assert_eq!(failure.case, "sink");
 }
 
 struct DroppingAnalyticsSink;
@@ -99,11 +99,11 @@ impl AnalyticsSink for DroppingAnalyticsSink {
 
 #[tokio::test]
 async fn analytics_observed_suite_rejects_dropped_event() {
-    let fixture = FixtureNamespace::new("ctk_analytics_dropped").expect("valid fixture");
+    let fixture = FixtureNamespace::new("ctk_analytics_dropped").expect("fixture 应合法");
     let failure =
         assert_analytics_sink_observed(&DroppingAnalyticsSink, &fixture, || Ok(Vec::new()))
             .await
-            .expect_err("silent drop must fail observed suite");
+            .expect_err("静默丢弃必须被 observed suite 拒绝");
 
     assert_eq!(failure.contract, "AnalyticsSink");
     assert_eq!(failure.case, "observed_event_missing");
@@ -124,10 +124,9 @@ impl PubSub for RejectingPubSub {
 
 #[tokio::test]
 async fn pub_sub_smoke_rejects_publish_error() {
-    let fixture = FixtureNamespace::new("ctk_pub_sub_broken").expect("valid fixture");
-    let failure = assert_pub_sub_smoke(&RejectingPubSub, &fixture)
-        .await
-        .expect_err("broken implementation must fail");
+    let fixture = FixtureNamespace::new("ctk_pub_sub_broken").expect("fixture 应合法");
+    let failure =
+        assert_pub_sub_smoke(&RejectingPubSub, &fixture).await.expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "PubSub");
     assert_eq!(failure.case, "publish");
@@ -148,10 +147,10 @@ impl EventBus for RejectingEventBus {
 
 #[tokio::test]
 async fn event_bus_suite_rejects_publish_error_without_delivery_claims() {
-    let fixture = FixtureNamespace::new("ctk_event_bus_broken").expect("valid fixture");
+    let fixture = FixtureNamespace::new("ctk_event_bus_broken").expect("fixture 应合法");
     let failure = assert_event_bus_with_fixture(&RejectingEventBus, &fixture)
         .await
-        .expect_err("broken implementation must fail");
+        .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "EventBus");
     assert_eq!(failure.case, "surface_publish");
@@ -172,10 +171,10 @@ impl contracts::KeyValueStore for DroppingKeyValueStore {
 
 #[tokio::test]
 async fn key_value_suite_rejects_dropped_set() {
-    let fixture = FixtureNamespace::new("ctk_key_value_broken").expect("valid fixture");
+    let fixture = FixtureNamespace::new("ctk_key_value_broken").expect("fixture 应合法");
     let failure = assert_key_value_store_isolated(&DroppingKeyValueStore, &fixture)
         .await
-        .expect_err("broken implementation must fail");
+        .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "KeyValueStore");
     assert_eq!(failure.case, "get_hit");
@@ -207,7 +206,7 @@ impl TxRunner for CommitFailingRunner {
 async fn tx_runner_suite_rejects_commit_failure() {
     let failure = contract_testkit::assert_tx_runner(&CommitFailingRunner)
         .await
-        .expect_err("broken implementation must fail");
+        .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "TxRunner");
     assert_eq!(failure.case, "commit_path");
@@ -242,7 +241,7 @@ async fn repository_suite_rejects_dropped_save() {
         |left, right| left == right,
     )
     .await
-    .expect_err("broken implementation must fail");
+    .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "Repository");
     assert_eq!(failure.case, "find_hit");
@@ -260,12 +259,12 @@ impl Instrumentation for NoopInstrumentation {
 
 #[test]
 fn instrumentation_observed_suite_rejects_noop() {
-    let fixture = FixtureNamespace::new("ctk_instrumentation_broken").expect("valid fixture");
+    let fixture = FixtureNamespace::new("ctk_instrumentation_broken").expect("fixture 应合法");
     let failure =
         contract_testkit::assert_instrumentation_observed(&NoopInstrumentation, &fixture, || {
             Ok(Vec::new())
         })
-        .expect_err("no-op implementation must fail observed suite");
+        .expect_err("空操作实现必须被 observed suite 拒绝");
 
     assert_eq!(failure.contract, "Instrumentation");
     assert_eq!(failure.case, "retry_missing");
@@ -283,7 +282,7 @@ impl MarketDataSource for BrokenMarketDataSource {
         &self,
         _symbol: &str,
     ) -> XResult<BoxStream<'static, OrderBookSnapshot>> {
-        Err(XError::unavailable("orderbook unavailable"))
+        Err(XError::unavailable("订单簿不可用"))
     }
 
     async fn subscribe_trades(&self, _symbol: &str) -> XResult<BoxStream<'static, Trade>> {
@@ -295,7 +294,7 @@ impl MarketDataSource for BrokenMarketDataSource {
 async fn market_data_suite_rejects_orderbook_subscription_error() {
     let failure = contract_testkit::assert_market_data_source(&BrokenMarketDataSource, "BTCUSDT")
         .await
-        .expect_err("broken implementation must fail");
+        .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "MarketDataSource");
     assert_eq!(failure.case, "subscribe_orderbook");
@@ -314,7 +313,7 @@ impl InstrumentCatalog for WrongSymbolCatalog {
 async fn instrument_catalog_suite_rejects_wrong_symbol() {
     let failure = contract_testkit::assert_instrument_catalog(&WrongSymbolCatalog, "BTCUSDT")
         .await
-        .expect_err("broken implementation must fail");
+        .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "InstrumentCatalog");
     assert_eq!(failure.case, "symbol_match");
@@ -346,7 +345,7 @@ async fn execution_venue_suite_rejects_empty_ack_id() {
     let order = contract_testkit::sample_order("order_1", "BTCUSDT");
     let failure = contract_testkit::assert_execution_venue(&EmptyAckExecutionVenue, &order)
         .await
-        .expect_err("broken implementation must fail");
+        .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "ExecutionVenue");
     assert_eq!(failure.case, "ack_id_nonempty");
@@ -361,7 +360,7 @@ impl AccountSource for BalanceFailingAccountSource {
     }
 
     async fn query_balance(&self) -> XResult<Vec<Money>> {
-        Err(XError::unavailable("balance unavailable"))
+        Err(XError::unavailable("余额不可用"))
     }
 }
 
@@ -369,7 +368,7 @@ impl AccountSource for BalanceFailingAccountSource {
 async fn account_source_suite_rejects_balance_error() {
     let failure = contract_testkit::assert_account_source(&BalanceFailingAccountSource)
         .await
-        .expect_err("broken implementation must fail");
+        .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "AccountSource");
     assert_eq!(failure.case, "query_balance");
@@ -380,7 +379,7 @@ struct FailingVenueTimeSource;
 #[async_trait]
 impl VenueTimeSource for FailingVenueTimeSource {
     async fn server_time(&self) -> XResult<i64> {
-        Err(XError::unavailable("venue time unavailable"))
+        Err(XError::unavailable("场所时间不可用"))
     }
 }
 
@@ -388,7 +387,7 @@ impl VenueTimeSource for FailingVenueTimeSource {
 async fn venue_time_suite_rejects_source_error() {
     let failure = contract_testkit::assert_venue_time_source(&FailingVenueTimeSource)
         .await
-        .expect_err("broken implementation must fail");
+        .expect_err("错误实现必须被拒绝");
 
     assert_eq!(failure.contract, "VenueTimeSource");
     assert_eq!(failure.case, "server_time");

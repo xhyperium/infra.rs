@@ -14,6 +14,10 @@ pub struct FixtureNamespace(String);
 
 impl FixtureNamespace {
     /// 校验并构造命名空间。
+    ///
+    /// # Errors
+    ///
+    /// 名称为空、超过 32 字节或不满足可移植标识符规则时返回 [`ContractFailure`]。
     pub fn new(value: impl Into<String>) -> Result<Self, ContractFailure> {
         let value = value.into();
         if value.is_empty() {
@@ -52,6 +56,10 @@ impl FixtureNamespace {
     }
 
     /// 派生一个不超过 63 字节的可移植资源名。
+    ///
+    /// # Errors
+    ///
+    /// 后缀不满足可移植标识符规则或最终资源名超过 63 字节时返回 [`ContractFailure`]。
     pub fn resource(&self, suffix: &str) -> Result<String, ContractFailure> {
         let bytes = suffix.as_bytes();
         if bytes.is_empty()
@@ -84,34 +92,35 @@ mod tests {
 
     #[test]
     fn accepts_portable_namespace_and_derives_isolated_resource() {
-        let fixture = FixtureNamespace::new("ctk_run_42").expect("valid fixture");
+        let fixture = FixtureNamespace::new("ctk_run_42").expect("fixture 应合法");
         assert_eq!(fixture.as_str(), "ctk_run_42");
-        assert_eq!(fixture.resource("object").expect("resource"), "ctk_run_42__object");
+        assert_eq!(fixture.resource("object").expect("资源名应合法"), "ctk_run_42__object");
 
         let boundary = "a".repeat(MAX_NAMESPACE_LEN);
-        assert_eq!(
-            FixtureNamespace::new(&boundary).expect("max length is valid").as_str(),
-            boundary,
-        );
+        assert_eq!(FixtureNamespace::new(&boundary).expect("最大长度应合法").as_str(), boundary,);
     }
 
     #[test]
     fn rejects_empty_long_or_nonportable_namespace() {
         for value in ["", &"a".repeat(MAX_NAMESPACE_LEN + 1), "Upper", "with-dash", "a\n"] {
-            let failure = FixtureNamespace::new(value).expect_err("invalid fixture");
+            let failure = FixtureNamespace::new(value).expect_err("非法 fixture 必须被拒绝");
             assert_eq!(failure.contract, "FixtureNamespace");
         }
     }
 
     #[test]
     fn rejects_nonportable_or_oversized_resource_suffix() {
-        let fixture = FixtureNamespace::new("a".repeat(MAX_NAMESPACE_LEN)).expect("fixture");
+        let fixture = FixtureNamespace::new("a".repeat(MAX_NAMESPACE_LEN)).expect("fixture 应合法");
         for suffix in ["", "Upper", "with-dash"] {
-            let failure = fixture.resource(suffix).expect_err("invalid suffix");
+            let failure = fixture.resource(suffix).expect_err("非法后缀必须被拒绝");
             assert_eq!(failure.contract, "FixtureNamespace");
             assert_eq!(failure.case, "portable_suffix");
         }
-        let failure = fixture.resource(&"a".repeat(MAX_RESOURCE_LEN)).expect_err("too long");
+        let max_suffix_len = MAX_RESOURCE_LEN - MAX_NAMESPACE_LEN - 2;
+        let boundary = fixture.resource(&"a".repeat(max_suffix_len)).expect("63 字节应合法");
+        assert_eq!(boundary.len(), MAX_RESOURCE_LEN);
+        let failure =
+            fixture.resource(&"a".repeat(max_suffix_len + 1)).expect_err("64 字节必须被拒绝");
         assert_eq!(failure.case, "resource_max_len");
     }
 }

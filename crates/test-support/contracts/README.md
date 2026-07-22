@@ -60,7 +60,7 @@ assert_tx_runner(&my_runner).await?;
 | AccountSource | `assert_account_source` |
 | VenueTimeSource | `assert_venue_time_source` |
 | ObjectStore | `assert_object_store` / `assert_object_store_with_fixture` |
-| TimeSeriesStore | `assert_time_series_store` / `assert_time_series_store_with_fixture` |
+| TimeSeriesStore | `assert_time_series_store`（ClosedPoint profile）/ `assert_time_series_store_in_window` / `assert_time_series_store_with_fixture` |
 | AnalyticsSink | `assert_analytics_sink` / `assert_analytics_sink_callable` / `assert_analytics_sink_observed` |
 | PubSub | `assert_pub_sub_surface` / `assert_pub_sub_smoke` |
 

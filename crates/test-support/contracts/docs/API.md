@@ -39,7 +39,8 @@ contract-testkit = { path = "../test-support/contracts", version = "0.1.2" }
 | `assert_instrumentation_observed` | Instrumentation 可观察行为（调用方观察 seam） |
 | `assert_market_data_source` 等 | 拆分 venue 能力 |
 | `assert_object_store` / `assert_object_store_with_fixture` | ObjectStore 精确 payload roundtrip |
-| `assert_time_series_store` / `assert_time_series_store_with_fixture` | TimeSeriesStore 写入点可查询 |
+| `assert_time_series_store` | TimeSeriesStore ClosedPoint 兼容 profile |
+| `assert_time_series_store_in_window` / `assert_time_series_store_with_fixture` | 调用方窗口 / fixture 可移植写入点查询 |
 | `assert_analytics_sink` / `assert_analytics_sink_callable` / `assert_analytics_sink_observed` | AnalyticsSink 核心 / fixture / 可观察包含 |
 | `assert_pub_sub_surface` / `assert_pub_sub_smoke` | PubSub subscribe/publish surface |
 
@@ -66,5 +67,5 @@ assert_key_value_store_isolated(&store, &fixture).await.expect("kv suite");
 - EventBus/PubSub 的可移植 surface 不读取流，不声明交付、重放、顺序或次数；`assert_event_bus` 仅保留 Snapshot/Replay profile 兼容语义。
 - observed suite 的观察函数属于 test-support seam；允许额外事件、重复事件与任意顺序。
 - ObjectStore 不声明覆盖、删除、列表、持久化时长或跨进程一致性。
-- TimeSeriesStore 不声明返回顺序、重复写策略、唯一性或查询端点闭合规则。
+- TimeSeriesStore 可移植窗口入口不声明返回顺序、重复写策略、唯一性或查询端点闭合规则；`assert_time_series_store` 的零宽闭区间行为仅为 0.1.2 兼容 profile。
 - `BackendProfile` 只探测接线所需环境；可用不等于真实后端已经通过合同。
