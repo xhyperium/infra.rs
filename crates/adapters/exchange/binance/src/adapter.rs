@@ -463,13 +463,14 @@ impl VenueAdapter for BinanceAdapter {
                 ("newClientOrderId", &order.id),
             ];
             let resp = self.http_post_signed("/api/v3/order", &params).await?;
+            // 先映射业务错误体：Binance 常见 HTTP 4xx + {"code":-1013,...}
+            check_binance_error(&resp.body)?;
             if resp.status < 200 || resp.status >= 300 {
                 return Err(XError::unavailable(format!(
                     "place_order http status {}",
                     resp.status
                 )));
             }
-            check_binance_error(&resp.body)?;
             let order_resp: OrderResponse = serde_json::from_slice(&resp.body)
                 .map_err(|e| XError::invalid(format!("place_order parse: {e}")))?;
             let status = Self::map_order_status(&order_resp.status);
@@ -515,13 +516,13 @@ impl VenueAdapter for BinanceAdapter {
                 }
             };
             let resp = self.http_delete_signed("/api/v3/order", &params).await?;
+            check_binance_error(&resp.body)?;
             if resp.status < 200 || resp.status >= 300 {
                 return Err(XError::unavailable(format!(
                     "cancel_order http status {}",
                     resp.status
                 )));
             }
-            check_binance_error(&resp.body)?;
             let _cancel: CancelOrderResponse = serde_json::from_slice(&resp.body)
                 .map_err(|e| XError::invalid(format!("cancel_order parse: {e}")))?;
             return Ok(());
@@ -559,13 +560,13 @@ impl VenueAdapter for BinanceAdapter {
                 }
             };
             let resp = self.http_get_signed("/api/v3/order", &params).await?;
+            check_binance_error(&resp.body)?;
             if resp.status < 200 || resp.status >= 300 {
                 return Err(XError::unavailable(format!(
                     "query_order http status {}",
                     resp.status
                 )));
             }
-            check_binance_error(&resp.body)?;
             let order_resp: OrderResponse = serde_json::from_slice(&resp.body)
                 .map_err(|e| XError::invalid(format!("query_order parse: {e}")))?;
             return Ok(Self::map_order_status(&order_resp.status));
@@ -1149,9 +1150,10 @@ mod tests {
         check_binance_error(body).unwrap();
     }
 
-    /// 记录请求并按 method+path 前缀应答的测试驱动（支持 DELETE / 动态 signature query）。
+    /// 记录请求并按 method+path 前缀应答的测试驱动（支持 DELETE / 动态 signature query / 非 2xx）。
     struct RecordingHttp {
-        responses: std::sync::Mutex<Vec<(String, String, Bytes)>>, // method, path_prefix, body
+        /// (method, path_prefix, status, body)
+        responses: std::sync::Mutex<Vec<(String, String, u16, Bytes)>>,
         captured: std::sync::Mutex<Vec<HttpRequest>>,
     }
 
@@ -1163,7 +1165,15 @@ mod tests {
             }
         }
         fn push(&self, method: &str, path_prefix: &str, body: Bytes) {
-            self.responses.lock().expect("lock").push((method.into(), path_prefix.into(), body));
+            self.push_status(method, path_prefix, 200, body);
+        }
+        fn push_status(&self, method: &str, path_prefix: &str, status: u16, body: Bytes) {
+            self.responses.lock().expect("lock").push((
+                method.into(),
+                path_prefix.into(),
+                status,
+                body,
+            ));
         }
         fn last(&self) -> HttpRequest {
             self.captured.lock().expect("lock").last().cloned().expect("captured")
@@ -1178,9 +1188,9 @@ mod tests {
             let url = request.url.clone();
             let path = url.split('?').next().unwrap_or(url.as_str()).to_string();
             let list = self.responses.lock().expect("lock");
-            for (m, prefix, body) in list.iter() {
+            for (m, prefix, status, body) in list.iter() {
                 if m.eq_ignore_ascii_case(&method) && path.contains(prefix.as_str()) {
-                    return Ok(HttpResponse { status: 200, body: body.clone() });
+                    return Ok(HttpResponse { status: *status, body: body.clone() });
                 }
             }
             Err(TransportError::ProtocolViolation(format!("recording mock miss {method} {url}")))
@@ -1275,6 +1285,7 @@ mod tests {
     #[tokio::test]
     async fn signed_binance_error_maps_kind() {
         let http = Arc::new(RecordingHttp::new());
+        // 200 + 业务错误体（历史路径）
         http.push(
             "POST",
             "/api/v3/order",
@@ -1285,6 +1296,51 @@ mod tests {
         VenueAdapter::connect(&a).await.unwrap();
         let e = VenueAdapter::place_order(&a, &sample_order()).await.expect_err("err");
         assert_eq!(e.kind(), kernel::ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn signed_place_http_400_error_json_maps_invalid_not_unavailable() {
+        // 生产真实形态：HTTP 400 + {"code":-1013,...} → ErrorKind::Invalid（非 Unavailable）
+        let http = Arc::new(RecordingHttp::new());
+        http.push_status(
+            "POST",
+            "/api/v3/order",
+            400,
+            Bytes::from_static(br#"{"code":-1013,"msg":"Filter failure: MIN_NOTIONAL"}"#),
+        );
+        let a = BinanceAdapter::mainnet()
+            .with_http(http)
+            .with_api_key(BinanceApiKey::new("k", "secret-key-value"));
+        VenueAdapter::connect(&a).await.unwrap();
+        let e = VenueAdapter::place_order(&a, &sample_order()).await.expect_err("biz err");
+        assert_eq!(
+            e.kind(),
+            kernel::ErrorKind::Invalid,
+            "must map Binance code before HTTP status fallback: {e}"
+        );
+        assert!(format!("{e}").contains("-1013") || format!("{e}").contains("Filter"));
+    }
+
+    #[tokio::test]
+    async fn signed_cancel_http_400_unknown_order_maps_missing() {
+        let http = Arc::new(RecordingHttp::new());
+        http.push_status(
+            "DELETE",
+            "/api/v3/order",
+            400,
+            Bytes::from_static(br#"{"code":-2011,"msg":"Unknown order sent."}"#),
+        );
+        let a = BinanceAdapter::mainnet()
+            .with_http(http)
+            .with_api_key(BinanceApiKey::new("k", "secret-key-value"));
+        VenueAdapter::connect(&a).await.unwrap();
+        let req = CancelOrderRequest {
+            venue: "binance".into(),
+            instrument: "BTCUSDT".into(),
+            id: OrderRef::Client("missing".into()),
+        };
+        let e = a.cancel_order_request(&req).await.expect_err("missing");
+        assert_eq!(e.kind(), kernel::ErrorKind::Missing);
     }
 
     /// 预置帧的 WS mock。

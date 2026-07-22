@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2] — 2026-07-22
+
+### Fixed
+
+- cancel：顶层 `code=0` 时仍校验 `data[0].sCode`（与 place 对齐）
+- 测试：`code=0` + `sCode=51400` 必须 Err
+
+
 ## [0.3.1] — 2026-07-22
 
 ### Added
@@ -11,6 +19,9 @@
 - 签名向量与 mock 内容断言（四头 + 信封错误码）
 
 ### Fixed
+
+- cancel：顶层 `code=0` 时仍校验 `data[0].sCode`（与 place 对齐）
+- 测试：`code=0` + `sCode=51400` 必须 Err
 
 - `OkxApiKey` 时间戳改为 `{unix_seconds}.{millis:03}`（符合 OKX REST 约定）
 - 无凭证路径明确 mock，不再用正文子串冒充协议作为主路径
