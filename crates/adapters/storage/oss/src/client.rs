@@ -540,11 +540,20 @@ impl OssClient {
         if chunks.is_empty() {
             return Err(XError::invalid("multipart 无有效分片"));
         }
+        // 阿里云 OSS multipart 分片上限 10000
+        const MAX_PARTS: usize = 10_000;
+        if chunks.len() > MAX_PARTS {
+            return Err(XError::invalid(format!(
+                "multipart 分片数 {} 超过上限 {MAX_PARTS}；请增大 part_size",
+                chunks.len()
+            )));
+        }
 
         let upload_id = self.initiate_multipart(key).await?;
         let mut completed: Vec<(u32, String)> = Vec::with_capacity(chunks.len());
         for (i, chunk) in chunks.iter().enumerate() {
-            let part_number = (i + 1) as u32;
+            let part_number =
+                u32::try_from(i + 1).map_err(|_| XError::invalid("multipart part_number 溢出"))?;
             // 拷贝 chunk 为 Bytes（分片重试需要所有权）
             let part_data = Bytes::copy_from_slice(chunk);
             match self.upload_part(key, &upload_id, part_number, part_data).await {

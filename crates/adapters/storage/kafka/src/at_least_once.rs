@@ -24,6 +24,8 @@ pub struct AtLeastOnceConsumer {
     topic: String,
     partition: i32,
     pending: Option<KafkaMessage>,
+    /// `drop_pending_unacked` 后为 true；禁止继续 recv/ack。
+    terminated: bool,
 }
 
 impl AtLeastOnceConsumer {
@@ -43,7 +45,7 @@ impl AtLeastOnceConsumer {
             cfg.from_beginning = false;
         }
         let inner = pool.consumer(cfg).await?;
-        Ok(Self { inner, store, topic, partition, pending: None })
+        Ok(Self { inner, store, topic, partition, pending: None, terminated: false })
     }
 
     /// topic。
@@ -68,6 +70,9 @@ impl AtLeastOnceConsumer {
     ///
     /// 若已有 pending 未 ack，返回该 pending（不从 broker 再取）。
     pub async fn recv(&mut self) -> Option<XResult<KafkaMessage>> {
+        if let Err(e) = self.ensure_active() {
+            return Some(Err(e));
+        }
         if let Some(m) = &self.pending {
             return Some(Ok(m.clone()));
         }
@@ -83,6 +88,7 @@ impl AtLeastOnceConsumer {
 
     /// 带超时接收（pending 优先，不计时）。
     pub async fn recv_timeout(&mut self, timeout: Duration) -> XResult<Option<KafkaMessage>> {
+        self.ensure_active()?;
         if let Some(m) = &self.pending {
             return Ok(Some(m.clone()));
         }
@@ -96,12 +102,18 @@ impl AtLeastOnceConsumer {
     }
 
     /// 确认 pending 消息：写入 store（next = offset+1）并清除 pending。
+    ///
+    /// **仅当 commit 成功才清除 pending**；store I/O 失败时 pending 保留，调用方可重试 `ack`。
     pub async fn ack(&mut self) -> XResult<()> {
+        self.ensure_active()?;
         let msg = self
             .pending
-            .take()
-            .ok_or_else(|| XError::conflict("kafkax at-least-once: 无 pending 可 ack"))?;
-        self.store.commit(&msg.topic, msg.partition, msg.offset).await
+            .as_ref()
+            .ok_or_else(|| XError::conflict("kafkax at-least-once: 无 pending 可 ack"))?
+            .clone();
+        self.store.commit(&msg.topic, msg.partition, msg.offset).await?;
+        self.pending = None;
+        Ok(())
     }
 
     /// 显式提交任意 offset（高级；通常用 [`Self::ack`]）。
@@ -119,10 +131,29 @@ impl AtLeastOnceConsumer {
         // pending 保留；调用方再次 ack 或 drop
     }
 
-    /// 丢弃 pending 且 **不** 提交（模拟处理失败后放弃本会话中的持有；
-    /// 重连后会从 last committed 重投）。
+    /// 丢弃 pending 且 **不** 提交。
+    ///
+    /// **会话终止**：随后 `recv`/`ack` 返回 `Cancelled`，避免在未 ack 的情况下继续消费并越过位点。
+    /// 重连后会从 last committed 重投。
     pub fn drop_pending_unacked(&mut self) {
         self.pending = None;
+        self.terminated = true;
+    }
+
+    /// 会话是否已因 `drop_pending_unacked` 终止。
+    #[must_use]
+    pub fn is_terminated(&self) -> bool {
+        self.terminated
+    }
+
+    fn ensure_active(&self) -> XResult<()> {
+        if self.terminated {
+            Err(XError::cancelled(
+                "kafkax at-least-once: 会话已因 drop_pending_unacked 终止；请重连",
+            ))
+        } else {
+            Ok(())
+        }
     }
 }
 

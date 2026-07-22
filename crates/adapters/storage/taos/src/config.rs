@@ -191,8 +191,11 @@ impl TaosConfig {
             cfg.precision = TsPrecision::parse(&v);
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_TAOSX_TRANSPORT") {
-            if let Some(m) = TransportMode::parse(&v) {
-                cfg.transport = m;
+            if !v.trim().is_empty() {
+                match TransportMode::parse(&v) {
+                    Some(m) => cfg.transport = m,
+                    None => cfg.host = format!("__bad_transport__:{v}"),
+                }
             }
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_TAOSX_MAX_IN_FLIGHT") {
@@ -215,6 +218,12 @@ impl TaosConfig {
 
     /// 校验约束。
     pub fn validate(&self) -> XResult<()> {
+        if self.host.starts_with("__bad_transport__:") {
+            return Err(XError::invalid(format!(
+                "taosx: 非法 TRANSPORT ({})",
+                self.host.trim_start_matches("__bad_transport__:")
+            )));
+        }
         if self.max_in_flight < 1 {
             return Err(XError::invalid("max_in_flight 必须 ≥ 1"));
         }

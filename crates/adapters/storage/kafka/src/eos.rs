@@ -56,6 +56,7 @@ impl EosCoordinator {
             commit_offset,
             produce_ok: false,
             committed: false,
+            aborted: false,
         }
     }
 
@@ -112,6 +113,8 @@ pub struct EosSession {
     commit_offset: i64,
     produce_ok: bool,
     committed: bool,
+    /// `rollback` 后为 true；会话终结，不可再 mark/commit。
+    aborted: bool,
 }
 
 impl EosSession {
@@ -133,9 +136,22 @@ impl EosSession {
         self.committed
     }
 
+    /// 是否已 abort。
+    #[must_use]
+    pub fn is_aborted(&self) -> bool {
+        self.aborted
+    }
+
     /// 标记 side-effect produce 成功（调用方在真实 produce Ok 后调用）。
-    pub fn mark_produce_ok(&mut self) {
+    pub fn mark_produce_ok(&mut self) -> XResult<()> {
+        if self.aborted {
+            return Err(XError::conflict("kafkax EOS: 会话已 abort，禁止 mark_produce_ok"));
+        }
+        if self.committed {
+            return Err(XError::conflict("kafkax EOS: 会话已提交，禁止 mark_produce_ok"));
+        }
         self.produce_ok = true;
+        Ok(())
     }
 
     /// 标记 produce 失败并回滚会话意图（清除 produce_ok）。
@@ -143,10 +159,13 @@ impl EosSession {
         self.produce_ok = false;
     }
 
-    /// 尝试 commit：仅当 `produce_ok` 且尚未 committed。
+    /// 尝试 commit：仅当 `produce_ok` 且尚未 committed / abort。
     ///
     /// Fail-closed：produce 未成功 → `Conflict`，store 不变。
     pub async fn try_commit(&mut self) -> XResult<()> {
+        if self.aborted {
+            return Err(XError::conflict("kafkax EOS: 会话已 abort，拒绝 commit"));
+        }
         if self.committed {
             return Err(XError::conflict("kafkax EOS: 会话已提交"));
         }
@@ -158,10 +177,11 @@ impl EosSession {
         Ok(())
     }
 
-    /// 显式回滚：拒绝后续 commit（会话作废）。
+    /// 显式回滚：会话终结，后续 mark/commit 一律拒绝。
     pub fn rollback(&mut self) {
         self.produce_ok = false;
         self.committed = false;
+        self.aborted = true;
     }
 }
 
@@ -207,14 +227,14 @@ mod tests {
         assert!(store.committed("t", 0).await.expect("c").is_none());
 
         // produce ok → commit 成功
-        session.mark_produce_ok();
+        session.mark_produce_ok().expect("mark");
         session.try_commit().await.expect("commit");
         assert!(session.is_committed());
         assert_eq!(store.committed("t", 0).await.expect("c"), Some(4));
 
         // 新会话 + rollback
         let mut s2 = eos.begin("t", 0, 10);
-        s2.mark_produce_ok();
+        s2.mark_produce_ok().expect("mark");
         s2.rollback();
         let e2 = s2.try_commit().await.expect_err("rolled back");
         assert_eq!(e2.kind(), ErrorKind::Conflict);
@@ -227,7 +247,7 @@ mod tests {
         let store = MemoryOffsetStore::new().shared();
         let eos = EosCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
         let mut session = eos.begin("orders", 1, 100);
-        session.mark_produce_ok();
+        session.mark_produce_ok().expect("mark");
         session.mark_produce_failed();
         assert!(!session.produce_ok());
         let e = session.try_commit().await.expect_err("fail closed");

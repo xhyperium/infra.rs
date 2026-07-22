@@ -67,8 +67,8 @@ impl Default for RedisConfig {
 impl fmt::Debug for RedisConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("RedisConfig")
-            .field("addr", &self.addr)
-            .field("nodes", &self.nodes)
+            .field("addr", &redact_seed_url(&self.addr))
+            .field("nodes", &self.nodes.iter().map(|n| redact_seed_url(n)).collect::<Vec<_>>())
             .field("sentinel_master", &self.sentinel_master)
             .field("username", &self.username)
             .field("password", &self.password.as_ref().map(|_| "***"))
@@ -82,6 +82,24 @@ impl fmt::Debug for RedisConfig {
             .field("client_name", &self.client_name)
             .finish()
     }
+}
+
+/// 脱敏可能含凭据的种子 URL（`redis://user:pass@host` → `redis://user:***@host`）。
+fn redact_seed_url(raw: &str) -> String {
+    let s = raw.trim();
+    // scheme://user:password@host...
+    if let Some(scheme_end) = s.find("://") {
+        let rest = &s[scheme_end + 3..];
+        if let Some(at) = rest.rfind('@') {
+            let creds = &rest[..at];
+            let host = &rest[at + 1..];
+            if let Some(colon) = creds.find(':') {
+                let user = &creds[..colon];
+                return format!("{}://{}:***@{}", &s[..scheme_end], user, host);
+            }
+        }
+    }
+    s.to_string()
 }
 
 impl RedisConfig {
@@ -420,6 +438,11 @@ impl RedisConfig {
             RedisMode::Cluster => {
                 if !has_addr && !has_nodes {
                     return Err(XError::invalid("Cluster 模式需要 addr 或 nodes 非空"));
+                }
+                if self.db != 0 {
+                    return Err(XError::invalid(
+                        "Cluster 模式不支持非 0 逻辑库（Redis Cluster 无 SELECT db）",
+                    ));
                 }
                 if has_addr {
                     parse_host_port(&self.addr)?;

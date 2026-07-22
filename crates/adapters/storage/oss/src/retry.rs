@@ -21,6 +21,11 @@ pub fn default_retry_config() -> RetryConfig {
 /// 判断 OSS 错误是否值得重试。
 #[must_use]
 pub fn is_oss_retryable(err: &XError) -> bool {
+    // 鉴权/权限失败不可重试（status_error 将 401/403 映射为 Unavailable）
+    let ctx = err.context().to_ascii_lowercase();
+    if ctx.contains("auth/forbidden") || ctx.contains("unauthorized") || ctx.contains("forbidden") {
+        return false;
+    }
     matches!(err.kind(), ErrorKind::Transient | ErrorKind::Unavailable)
 }
 

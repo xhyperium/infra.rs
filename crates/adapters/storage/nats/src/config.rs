@@ -158,8 +158,15 @@ impl NatsConfig {
         }
         if let Some(v) = env_first(&["FOUNDATIONX_NATS_TLS_POLICY", "FOUNDATIONX_NATSX_TLS_POLICY"])
         {
-            if let Ok(p) = TlsPolicy::parse(&v) {
-                cfg.tls_policy = Some(p);
+            if !v.trim().is_empty() {
+                // 非法策略必须显式失败：写入临时标记，validate 时拒绝
+                match TlsPolicy::parse(&v) {
+                    Ok(p) => cfg.tls_policy = Some(p),
+                    Err(_) => {
+                        cfg.tls_policy = None;
+                        cfg.name = format!("__bad_tls_policy__:{v}");
+                    }
+                }
             }
         }
         if let Some(v) = env_first(&["FOUNDATIONX_NATS_JETSTREAM", "FOUNDATIONX_NATSX_JETSTREAM"]) {
@@ -191,6 +198,12 @@ impl NatsConfig {
 
     /// 校验。
     pub fn validate(&self) -> XResult<()> {
+        if self.name.starts_with("__bad_tls_policy__:") {
+            return Err(XError::invalid(format!(
+                "natsx: 非法 TLS_POLICY ({})",
+                self.name.trim_start_matches("__bad_tls_policy__:")
+            )));
+        }
         if self.url.trim().is_empty() {
             return Err(XError::invalid("natsx: url 不能为空"));
         }
