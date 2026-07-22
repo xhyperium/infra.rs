@@ -8,7 +8,7 @@
 | Current version | `0.3.1` |
 | Distribution | `publish = false` |
 | Maturity | L1 Internal Ready；L4 仅限已证支持面 |
-| Delivery | 候选实现与一次 PATCH bump 已落地；`f26e29c` 全量门禁 PASS；独立复审待裁决 |
+| Delivery | 候选实现与一次 PATCH bump 已落地；`f62859b` 全量门禁 PASS；独立复审待裁决 |
 | Production certification | 未声明 |
 
 ## 合同矩阵

@@ -7,6 +7,7 @@
 | 主干同步候选 | `70d402a9a8b7b796077cba33e30ddf0c069c5e03`（包含 `origin/main 5fe242c`） |
 | 最终校正候选 | `ec2d938a031a659748d638902ea2d85a730335cd` |
 | 终门禁阻断修复候选 | `f26e29cf8f76c6db14be7210e41bd72b04791493` |
+| 最终内容候选 | `f62859b484dc3774a444623d8e2537e0204c4ca8` |
 | 当前状态 | **机器门禁 GREEN；独立双轴复审与最终聚合门禁待裁决** |
 | 轮次目标 | 当前权威、历史战役、Cargo package 真相与生成状态一致 |
 
@@ -45,3 +46,4 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
 - 阻断修复候选 `f26e29c` 的全仓与四域机器门禁已全部退出 0，见 [`evidence/r3-hardening-green.txt`](evidence/r3-hardening-green.txt)；独立复审完成前仍不恢复 GO。
 - 最终 verifier 随后发现 testkit alignment 的事实摘要仍残留 `prod deps kernel only`；已按 Cargo 与 active spec 校正为 `kernel, thiserror`。该文档改动使 `f26e29c` 不再是最终内容候选，必须重新固定 SHA 与复验。
 - 同轮 Standards 复核还发现 `IntegrationHarness::run` 缺少组织 Rust P1 要求的 `# Errors`；修复扩展到 testkit 全部公开 fallible API，逐项写明 typed error 条件。
+- 最终内容候选 `f62859b` 已重新通过完整机器闭包，见 [`evidence/r3-final-green.txt`](evidence/r3-final-green.txt)；独立双轴与聚合门禁仍待裁决。
