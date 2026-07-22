@@ -23,6 +23,8 @@ ship 波次证据：仓库根 [`evidence/testkit/2026-07-14-stable-gates/`](../.
 
 ## 2026-07-23 contract-testkit 维护候选
 
+临时叠加原始摘要：[2026-07-23-contract-testkit-stack.md](./2026-07-23-contract-testkit-stack.md)。该文件不是最终主干 evidence；重放后必须替换/补充最终结果。
+
 候选证据位于源码与可重放命令，不伪造静态 PASS 日志：
 
 ```bash
