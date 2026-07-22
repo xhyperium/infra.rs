@@ -191,15 +191,21 @@ function scaffoldSignal(cratePath, srcFiles) {
     const hasProdMod =
       existsSync(join(ROOT, cratePath, "src", "pool.rs")) ||
       existsSync(join(ROOT, cratePath, "src", "client.rs")) ||
-      existsSync(join(ROOT, cratePath, "src", "live.rs"));
+      existsSync(join(ROOT, cratePath, "src", "live.rs")) ||
+      // exchange 生产默认：鉴权 + 行情解析（非 storage pool 形态）
+      (existsSync(join(ROOT, cratePath, "src", "auth.rs")) &&
+        existsSync(join(ROOT, cratePath, "src", "market.rs")));
     if (!defaultHasScaffold && hasProdMod) {
       return false;
     }
   }
   // 非生产默认：源码头部显式 scaffold 信号，或 adapters 无生产模块
   for (const f of srcFiles.slice(0, 40)) {
+    // 文档/注释中的「非 scaffold」叙述不应触发封顶
     const head = readSafe(f).slice(0, 6000);
-    if (/\bscaffold\b/i.test(head)) return true;
+    if (/\bscaffold\b/i.test(head) && !/非.*scaffold|not.*scaffold|生产默认/i.test(head)) {
+      return true;
+    }
   }
   if (cratePath.startsWith("crates/adapters/")) return true;
   return false;
