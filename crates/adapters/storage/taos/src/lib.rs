@@ -1,7 +1,7 @@
 //! `taosx` — TDengine 时序存储适配器。
 //!
 //! - **默认**：[`TaosPool`] / [`TaosClient`] REST 生产客户端（端口 6041）。
-//! - **Native WS**：[`TransportMode::NativeWs`] + [`native`] 连通性探测。
+//! - **Native WS**：`TransportMode::NativeWs` + native 连通性探测。
 //! - **feature `scaffold`**：`TaosAdapter` 进程内内存实现（**非**生产）。
 //!
 //! 实现 [`contracts::TimeSeriesStore`]（`Tick.ts` 为纳秒 epoch）。

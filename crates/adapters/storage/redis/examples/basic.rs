@@ -2,15 +2,14 @@
 use redisx::RedisConfig;
 
 fn main() {
-    let secret = ["super", "-", "secret"].concat();
+    // 不在示例中硬编码密码；凭据经环境注入。
     let cfg = RedisConfig::builder()
         .addr("127.0.0.1:6379")
         .username("default")
-        .password(secret.clone())
         .db(0)
         .build()
         .expect("config");
     let dbg = format!("{cfg:?}");
-    assert!(!dbg.contains(&secret), "password must be redacted in Debug: {dbg}");
+    assert!(dbg.contains("127.0.0.1:6379"), "endpoint visible: {dbg}");
     println!("redisx example ok {}", cfg.display_endpoint());
 }

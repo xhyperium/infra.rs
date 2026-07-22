@@ -15,7 +15,7 @@
 //!
 //! ## scaffold feature
 //!
-//! 启用 `scaffold` 时额外导出旧内存 [`NatsAdapter`] / [`MockNatsBus`]。
+//! 启用 `scaffold` 时额外导出旧内存 `NatsAdapter` / `MockNatsBus`。
 //!
 //! ## 环境变量
 //!

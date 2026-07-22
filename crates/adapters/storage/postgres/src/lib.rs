@@ -15,7 +15,7 @@
 //!
 //! ## 可选 scaffold
 //!
-//! feature `scaffold`：进程内 [`PostgresAdapter`] / [`ObservingPostgresAdapter`]
+//! feature `scaffold`：进程内 `PostgresAdapter` / `ObservingPostgresAdapter`
 //! （**非**真实 Postgres）。
 //!
 //! ## 安全

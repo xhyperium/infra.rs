@@ -5,12 +5,12 @@
 //! - [`RedisConfig`] / [`RedisConfigBuilder`]：私有字段配置（Standalone / Cluster / Sentinel + TLS）
 //! - [`RedisPool`]：双后端（`ConnectionManager` | `ClusterConnection`）+ Semaphore 背压 + `close`
 //! - [`RedisClient`]：KV 扩展 + [`contracts::KeyValueStore`]
-//! - [`resilience`]：基于 resiliencx 的重试包装
-//! - feature `pubsub`：[`RedisPubSub`] / [`RedisPubSubFacade`]
+//! - resilience：基于 resiliencx 的重试包装
+//! - feature `pubsub`：`RedisPubSub` / `RedisPubSubFacade`
 //!
 //! ## Scaffold（可选）
 //!
-//! feature `scaffold` 下保留旧 [`RedisAdapter`] / [`InMemoryRedis`] / [`MockRedisAdapter`]，
+//! feature `scaffold` 下保留旧 `RedisAdapter` / `InMemoryRedis` / `MockRedisAdapter`，
 //! **禁止**当作生产 Redis。
 //!
 //! ## 兼容

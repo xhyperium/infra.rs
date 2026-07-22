@@ -18,7 +18,7 @@
 //!
 //! ## scaffold feature
 //!
-//! 启用 `scaffold` 时额外导出旧的内存 [`KafkaAdapter`] / [`MockKafkaBus`]。
+//! 启用 `scaffold` 时额外导出旧的内存 `KafkaAdapter` / `MockKafkaBus`。
 //!
 //! ## 环境变量
 //!

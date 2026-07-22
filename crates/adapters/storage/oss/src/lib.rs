@@ -8,7 +8,7 @@
 //!
 //! ## Scaffold
 //!
-//! feature `scaffold` 暴露进程内 [`OssAdapter`]（**非**生产）。
+//! feature `scaffold` 暴露进程内 `OssAdapter`（**非**生产）。
 
 #![forbid(unsafe_code)]
 

@@ -104,7 +104,7 @@ impl AtLeastOnceConsumer {
         self.store.commit(&msg.topic, msg.partition, msg.offset).await
     }
 
-    /// 显式提交任意 offset（高级；通常用 [`ack`]）。
+    /// 显式提交任意 offset（高级；通常用 [`Self::ack`]）。
     pub async fn commit(&self, topic: &str, partition: i32, offset: i64) -> XResult<()> {
         self.store.commit(topic, partition, offset).await
     }
