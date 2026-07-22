@@ -2,8 +2,8 @@
 
 | 字段 | 值 |
 |---|---|
-| Status | 当前 `0.1.0` 实现合同；非生产就绪 |
-| Package / lib | `xhyper-bootstrap` / `bootstrap` |
+| Status | 当前 `0.3.1`：L1 组合根（装配 kernel + contracts + observex + evidence）；**非** 完整应用运行时 |
+| Package / lib | `bootstrap` / `bootstrap`（别名 `xhyper-bootstrap` 仅作废弃兼容标签 / dual-mirror 文件名） |
 | Path | `crates/bootstrap` |
 | Layer | L1 唯一组合根（R3.1） |
 | Authority | 本文件是 active current-state spec |
@@ -23,16 +23,18 @@
 
 非目标：通用 DI/插件框架、配置解析、重试/调度/传输实现、业务状态机、Evidence 核心或 adapter 实现。
 
+bootstrap 仅做启动期依赖装配（kernel + contracts + observex + evidence 等 L1 组合），**不**承担完整应用运行时职责（无业务 app 生命周期编排）。
+
 ## 2. 当前依赖
 
 | 依赖 | 当前用途 |
 |---|---|
-| `xhyper-kernel` | `ShutdownGuard` / `ShutdownSignal`、错误分类 |
-| `xhyper-contracts` | `Instrumentation` 与 5 个细粒度 venue/storage trait object |
-| `xhyper-observex` | 默认 `TracingInstrumentation` |
-| `xhyper-evidence` | 可选/必需模式的 `EvidenceAppender` |
+| `kernel`（别名 `xhyper-kernel` 已废弃） | `ShutdownGuard` / `ShutdownSignal`、错误分类 |
+| `contracts`（别名 `xhyper-contracts` 已废弃） | `Instrumentation` 与 5 个细粒度 venue/storage trait object |
+| `observex`（别名 `xhyper-observex` 已废弃） | 默认 `TracingInstrumentation` |
+| `evidence`（别名 `xhyper-evidence` 已废弃） | 可选/必需模式的 `EvidenceAppender` |
 
-dev-dependencies 含 `xhyper-binance`、`xhyper-redisx`、`xhyper-canonical`、`tokio`、`futures-util`；它们只证明测试装配，不证明生产应用已组装。
+dev-dependencies 含 `binancex`（别名 `xhyper-binance` 已废弃）、`redisx`（别名 `xhyper-redisx` 已废弃）、`canonical`（别名 `xhyper-canonical` 已废弃）、`tokio`、`futures-util`；它们只证明测试装配，不证明生产应用已组装。
 
 ## 3. 当前公开 API
 
@@ -74,7 +76,7 @@ dev-dependencies 含 `xhyper-binance`、`xhyper-redisx`、`xhyper-canonical`、`
 ## 6. 验收
 
 ```bash
-cargo test -p xhyper-bootstrap
+cargo test -p bootstrap
 cargo check -p bootstrap --all-targets
 cargo clippy -p bootstrap --all-targets -- -D warnings
 cargo xtl lint-deps

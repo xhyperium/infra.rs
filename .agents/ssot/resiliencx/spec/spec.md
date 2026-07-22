@@ -2,20 +2,20 @@
 
 | 字段 | 值 |
 |---|---|
-| Status | 当前 `0.1.0` 部分实现合同；仅 retry，非生产完整弹性系统 |
-| Package / lib | `xhyper-resiliencx` / `resiliencx` |
+| Status | 当前 `0.1.1` 部分实现合同；仅 retry，非生产完整弹性系统 |
+| Package / lib | `resiliencx` / `resiliencx`（别名 `xhyper-resiliencx` 仅作废弃兼容标签 / dual-mirror 文件名） |
 | Path | `crates/resiliencx` |
 | Layer | L1 Infra |
 | Authority | 本文件是 active current-state spec |
 | Candidate / Draft | 历史 Draft 能力列表见 §3 OPEN；**不**覆盖本文 |
 | Path alias | 用户 `.agent/ssot/resiliencx` ≡ 本仓 `.agents/ssot/resiliencx` |
-| Verified | 2026-07-21 · Lines Cover 100%（`cargo llvm-cov -p xhyper-resiliencx`） |
+| Verified | 2026-07-21 · Lines Cover 100%（`cargo llvm-cov -p resiliencx`；别名 `xhyper-resiliencx` 已废弃） |
 
 ## 1. 定位与依赖
 
-L1 弹性职责目标为重试/熔断/限流。**当前普通依赖仅 `xhyper-kernel`**。
+L1 弹性职责目标为重试/熔断/限流。**当前普通依赖仅 `kernel`（别名 `xhyper-kernel` 已废弃）**。
 
-可观测性通过本 crate 公开的 [`Instrumentation`] trait 注入（ADR-005）；**禁止**直接依赖 observex。本仓 **无** `xhyper-contracts`：上游 `contracts::Instrumentation` 语义在本 crate 本地复刻，避免 contracts 依赖。
+可观测性通过本 crate 公开的 [`Instrumentation`] trait 注入（ADR-005）；**禁止**直接依赖 observex。本仓 **无** `contracts`（别名 `xhyper-contracts` 已废弃）：上游 `contracts::Instrumentation` 语义在本 crate 本地复刻，避免 contracts 依赖。
 
 当前 workspace 尚无 owner 外的生产 consumer。
 
@@ -73,7 +73,7 @@ crate 名称与 description 不构成这些能力已交付的证据。
 ## 5. 验收
 
 ```bash
-cargo test -p xhyper-resiliencx
+cargo test -p resiliencx（别名 xhyper-resiliencx 已废弃，不可用于 -p）
 cargo check -p resiliencx --all-targets
 cargo clippy -p resiliencx --all-targets -- -D warnings
 cargo fmt -p resiliencx -- --check

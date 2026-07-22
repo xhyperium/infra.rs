@@ -2,11 +2,11 @@
 
 | 字段 | 值 |
 |------|-----|
-| Spec | active configx 0.1.0（`.agents/ssot/configx/spec/spec.md` ≡ `xhyper-configx-complete-spec.md`） |
+| Spec | active configx 0.1.1（`.agents/ssot/configx/spec/spec.md` ≡ `xhyper-configx-complete-spec.md`） |
 | 镜像 | `.agents/ssot/configx/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
-| 本仓实现 | `crates/configx` · package `configx` · lib `configx` · version `0.1.0` |
+| 本仓实现 | `crates/configx` · package `configx` · lib `configx` · version `0.1.1` |
 | 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| 结论 | **active 合同面（§2–§7）无 FAIL**；**多源/热更新/secret 声明层 PASS**；**≠** 远端配置中心 / Agent L5 |
+| 结论 | **active 合同面（§2–§7）无 FAIL**；**多源加载 / 热更新 NOT IMPLEMENTED（诚实边界，仅内存字符串 KV）**；**≠** 远端配置中心 / Agent L5 |
 
 ## 结论摘要
 
@@ -14,8 +14,8 @@
 |------|------|
 | 上游镜像 COMPLETE / 布局对齐 | 描述的是 **goal 管线布局**；**禁止**单独当作本仓实现证明 |
 | 本仓 `crates/configx` | **已落地**并与 active SSOT §2–§6 可移植子集对齐 |
-| 多源加载 / 分层合并 | **PASS**：`source.rs`（Memory/Env/File）+ `layered.rs`（后注册覆盖先注册） |
-| 热更新通知 | **PASS**：`watch.rs` · `ConfigWatch` / `ConfigSubscription`（**进程内**；非分布式配置中心） |
+| 多源加载 / 分层合并 | **NOT IMPLEMENTED（诚实边界）** — 当前仅内存字符串 KV；多源加载/分层合并未实现；禁止宣称配置平台 |
+| 热更新通知 / 热重载 | **NOT IMPLEMENTED（诚实边界）** — 当前无 watcher / 后台热重载；仅内存字符串 KV |
 | secret | **PASS**：`secret.rs` · `SecretString`（Debug 脱敏）+ `set_secret`/`get_secret` |
 | 远端配置中心 / 动态服务发现 | **OPEN（诚实边界）** — **未**实现；禁止宣称配置中心产品 |
 | line/branch cov | 目标 100%（`cargo llvm-cov -p configx`） |
@@ -28,12 +28,12 @@ crates/configx/                 EXISTS
 Cargo.toml members              含 crates/configx
 package name                    configx
 lib name                        configx
-version                         0.1.0
+version                         0.1.1
 publish                         false
-生产依赖                        仅 xhyper-kernel（path）
+生产依赖                        仅 kernel（path crates/kernel）
 features                        default = []
-公开面                          ConfigStore + source/layered/watch/secret
-模块                            lib · source · layered · watch · secret
+公开面                          ConfigStore（内存字符串 KV）
+模块                            lib · source · layered · watch · secret（多源/热更新 NOT IMPLEMENTED）
 ```
 
 验证（本仓权威命令）：
@@ -50,7 +50,7 @@ cargo llvm-cov -p configx --summary-only
 
 - `.agents/ssot/configx/**`：只读镜像；禁止本地改 Done/COMPLETE 叙事冒充同步
 - 实现 SSOT 以 **源码 + 本仓测试输出** 为准
-- 文件名 `xhyper-configx-complete-spec.md` 与 `spec.md` 同构，内容仍是 0.1.0 **最小内存 KV 合同**，不是完整配置平台
+- 文件名 `xhyper-configx-complete-spec.md` 与 `spec.md` 同构，内容仍是 0.1.1 **最小内存 KV 合同**，不是完整配置平台
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
 
 ---
@@ -66,8 +66,8 @@ cargo llvm-cov -p configx --summary-only
 |----|------|----------|------|
 | 2.1 | 路径 `crates/configx`，L1 Infra | `crates/configx/`；根 `Cargo.toml` members | PASS |
 | 2.2 | package `configx` / lib `configx` | `Cargo.toml` `[package]` / `[lib]` | PASS |
-| 2.3 | 版本独立维护；当前 `0.1.0` | `Cargo.toml` `version = "0.1.0"` | PASS |
-| 2.4 | 普通依赖仅 `xhyper-kernel` | `Cargo.toml` `[dependencies]` 唯一 path 依赖 | PASS |
+| 2.3 | 版本独立维护；当前 `0.1.1` | `Cargo.toml` `version = "0.1.1"` | PASS |
+| 2.4 | 普通依赖仅 `kernel` | `Cargo.toml` `[dependencies]` 唯一 path 依赖 | PASS |
 | 2.5 | 不得增加其他 L1 依赖 | 生产 deps 扫描无 observex/其他 L1 | PASS |
 | 2.6 | feature 无；`default = []` | `Cargo.toml` `[features]` | PASS |
 | 2.7 | 未批准 serde/watcher/async runtime | 生产 `Cargo.toml` 无上述依赖 | PASS |

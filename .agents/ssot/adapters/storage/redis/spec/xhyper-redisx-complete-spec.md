@@ -1,6 +1,6 @@
 # redisx 实现规范
 
-状态：当前 `0.1.0` 实现合同（Mock + 真实驱动代码已落地；真实集成测 `#[ignore]`，未达 M3）
+状态：当前 `0.3.2` 实现合同（Mock + 真实驱动代码已落地；真实集成测 `#[ignore]`，未达 M3）。**未宣称 package stable。**
 
 ## 0. 文档定位与裁定边界
 
@@ -22,7 +22,7 @@
 
 | 项目 | 当前事实 |
 | --- | --- |
-| 路径/版本 | `crates/adapters/storage/redis` / `0.1.0` |
+| 路径/版本 | `crates/adapters/storage/redis`（package `redisx`）/ `0.3.2` |
 | 普通依赖 | `kernel`、`contracts`、`async-trait`、`anyhow`、`redis` |
 | dev-dependency | `tokio` |
 | feature | 无（真实驱动始终编译） |

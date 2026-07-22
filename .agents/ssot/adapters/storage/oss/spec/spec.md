@@ -1,6 +1,6 @@
 # ossx 实现规范
 
-> 状态：当前 `0.1.0` 实现合同（Mock + aws-sdk-s3 真实驱动已落地；真测 `#[ignore]`，未达 M3）。
+> 状态：当前 `0.3.1` 实现合同（Mock + aws-sdk-s3 真实驱动已落地；真测 `#[ignore]`，未达 M3）。**未宣称 package stable。**
 > 权威顺序：`CONSTITUTION.md` → `docs/architecture/spec.md` → Approved ADR → 本文 → 代码。
 
 ## 1. 证据边界与范围
@@ -16,7 +16,7 @@
 
 ## 2. 位置、依赖、版本
 
-- 路径：`crates/adapters/storage/oss`；版本 `0.1.0`；无 features（真实驱动始终编译）。
+- 路径：`crates/adapters/storage/oss`（package `ossx`）；版本 `0.3.1`；无 features（真实驱动始终编译）。
 - 普通依赖：`kernel`、`contracts`、`async-trait`、`bytes`、`anyhow`、`tokio`、`aws-config`、`aws-sdk-s3`。
 - 当前依赖符合 R2。crate 独立版本化；每次更新必须恰为 `x.y.z → x.y.(z+1)`。
 

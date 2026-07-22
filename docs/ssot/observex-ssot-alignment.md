@@ -5,6 +5,7 @@
 | 策略 | **B — 本仓移植 observex 最小面 + 进程内 export** |
 | 日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
 | 规范 | `.agents/ssot/observex/spec/spec.md` |
+| 当前版本 | 0.1.1（L1 TracingInstrumentation 最小面；OTEL 进程内 PASS）|
 | package（`cargo -p`） | `observex` · lib `observex`（产品名别名 `xhyper-observex`，不可用于 `-p`） |
 | 契约面 | `contracts` · **Instrumentation** |
 | 跟进 | L3 Instrumentation 真入口（#172）；**export/flush 声明层 PASS**；**≠** 完整 OpenTelemetry SDK |

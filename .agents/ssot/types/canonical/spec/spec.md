@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |---|---|
 | Status | **Approved** 实现合同（S1，2026-07-17）；**≠** package stable / 全 wire Production Ready |
-| Package / lib | `xhyper-canonical` / `canonical` |
+| Package / lib | `canonical` / lib `canonical`（**Cargo 选择器 `-p canonical`**；历史产品名 `xhyper-canonical`，不可用于 `-p`） |
 | Path | `crates/types/canonical` |
 | Layer | Types / 跨层共享纯 DTO |
 | Authority | 本文件是 active current-state spec（与 20260717 Approved 语义对齐） |
@@ -19,7 +19,7 @@
 
 - `[KNOWN] HIGH` ADR-001/007：canonical 只放跨层共享数据形状，不含业务逻辑。
 - `[KNOWN] HIGH` `Money`/`Decimal` 族唯一归属 `decimalx`；canonical 只 `pub use decimalx::Money`。
-- 普通依赖：`xhyper-decimalx`、`serde`；dev-dependency：`serde_json`。
+- 普通依赖：`decimalx`（别名 `xhyper-decimalx` 已废弃）、`serde`；dev-dependency：`serde_json`。
 - 禁止依赖 contracts、domain、adapter、service、app 或 evidence。
 - 非目标：状态机、订单簿 diff、业务校验/授权、I/O、审计、重试、通用 codec、hash/sign/evidence。
 
@@ -107,7 +107,7 @@
 - 无 domain 行为或上层依赖。
 
 ```bash
-cargo test -p xhyper-canonical
+cargo test -p canonical（别名 xhyper-canonical 已废弃，不可用于 -p）
 cargo check -p canonical --all-targets
 cargo clippy -p canonical --all-targets -- -D warnings
 cargo fmt -p canonical -- --check
