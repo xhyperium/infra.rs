@@ -1,9 +1,9 @@
-# evidence-spec.md — SUPERSEDED 指针
+# evidence-spec.md — 历史重定向
 
-> **SSOT 入口**：[`spec/spec.md`](spec/spec.md) ≡ [`spec/xhyper-evidence-complete-spec.md`](spec/xhyper-evidence-complete-spec.md)（SPEC-EVIDENCE-002）
+> **Canonical current-state SSOT**：`.agents/ssot/evidence/spec/spec.md` ≡ `.agents/ssot/evidence/spec/xhyper-evidence-complete-spec.md`。
 >
-> **历史六字段原型正文已归档（未删除）**：[`spec/evidence-spec.superseded.md`](spec/evidence-spec.superseded.md)
+> **历史材料**：本目录保留旧战役 plan/design/review 与 `evidence-spec.superseded.md`；它们不得覆盖 canonical current-state。
 >
-> 与 002 冲突时 **002 优先**。执行计划：[`plan/plan.md`](plan/plan.md)。
+> 与顶层 canonical 冲突时，以顶层 active spec 和本仓 Cargo/source/tests 为准。
 
-布局对齐：`.agents/ssot/kernel/`（见 `.agents/ssot/AGENTS.md` §2）。
+本文件仅兼容历史链接，不是第二个 active spec。

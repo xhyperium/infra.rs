@@ -1,7 +1,8 @@
 //! TDengine REST 生产客户端（默认 6041）+ 批量写入 + 池背压。
 
+use std::fmt::Write as _;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, RwLock};
 
 use async_trait::async_trait;
@@ -11,12 +12,20 @@ use contracts::TimeSeriesStore;
 use decimalx::{Decimal, Price};
 use kernel::{XError, XResult};
 use serde::Deserialize;
-use tokio::sync::{OwnedSemaphorePermit, Semaphore};
+use tokio::sync::{Notify, OwnedSemaphorePermit, Semaphore};
 use tokio::time::timeout;
 use tracing::debug;
 
-use crate::config::{TaosConfig, TransportMode, TsPrecision};
+use crate::config::{
+    HARD_MAX_BATCH_BYTES, HARD_MAX_BATCH_ROWS, TaosConfig, TransportMode, TsPrecision,
+};
 use crate::native;
+
+const CLOSED_BIT: usize = 1usize << (usize::BITS - 1);
+const IN_FLIGHT_MASK: usize = !CLOSED_BIT;
+const INSERT_PREFIX: &str = "INSERT INTO ";
+const MAX_STABLE_NAME_BYTES: usize = 94;
+const MAX_SYMBOL_BYTES: usize = 48;
 
 /// REST 查询结果（精简）。
 #[derive(Debug, Clone)]
@@ -64,8 +73,22 @@ struct PoolInner {
     config: TaosConfig,
     precision: RwLock<TsPrecision>,
     sem: Arc<Semaphore>,
-    in_flight: AtomicUsize,
-    closed: AtomicBool,
+    state: AtomicUsize,
+    drained: Notify,
+}
+
+struct RequestGuard {
+    _permit: OwnedSemaphorePermit,
+    inner: Arc<PoolInner>,
+}
+
+impl Drop for RequestGuard {
+    fn drop(&mut self) {
+        let previous = self.inner.state.fetch_sub(1, Ordering::AcqRel);
+        if previous & IN_FLIGHT_MASK == 1 {
+            self.inner.drained.notify_waiters();
+        }
+    }
 }
 
 /// 工作句柄别名。
@@ -80,27 +103,64 @@ pub fn build_insert_sql_chunks(
     prec: TsPrecision,
     max_rows: usize,
 ) -> XResult<Vec<String>> {
-    validate_ident(table)?;
+    build_insert_sql_chunks_with_limits(table, points, prec, max_rows, HARD_MAX_BATCH_BYTES)
+}
+
+fn build_insert_sql_chunks_with_limits(
+    table: &str,
+    points: &[Tick],
+    prec: TsPrecision,
+    max_rows: usize,
+    max_bytes: usize,
+) -> XResult<Vec<String>> {
+    validate_stable_ident(table)?;
+    if max_rows == 0 || max_rows > HARD_MAX_BATCH_ROWS {
+        return Err(XError::invalid(format!("max_rows 必须为 1..={HARD_MAX_BATCH_ROWS}")));
+    }
+    if max_bytes < INSERT_PREFIX.len() || max_bytes > HARD_MAX_BATCH_BYTES {
+        return Err(XError::invalid(format!(
+            "max_bytes 必须为 {}..={HARD_MAX_BATCH_BYTES}",
+            INSERT_PREFIX.len()
+        )));
+    }
     if points.is_empty() {
         return Ok(Vec::new());
     }
-    let size = max_rows.max(1);
     let mut out = Vec::new();
-    for chunk in points.chunks(size) {
-        let mut sql = String::from("INSERT INTO ");
-        for (i, tick) in chunk.iter().enumerate() {
-            if i > 0 {
-                sql.push(' ');
-            }
-            let sub = subtable_name(table, &tick.symbol)?;
-            let sym = escape_str(&tick.symbol);
-            let ts = prec.from_nanos(tick.ts);
-            let bid = tick.bid.as_decimal().to_string();
-            let ask = tick.ask.as_decimal().to_string();
-            sql.push_str(&format!(
-                "`{sub}` USING `{table}` TAGS ('{sym}') VALUES ({ts},{bid},{ask})"
-            ));
+    let mut sql = String::from(INSERT_PREFIX);
+    let mut rows = 0usize;
+    for tick in points {
+        let sub = subtable_name(table, &tick.symbol)?;
+        let sym = escape_str(&tick.symbol);
+        let ts = prec.from_nanos(tick.ts);
+        let bid = tick.bid.as_decimal().to_string();
+        let ask = tick.ask.as_decimal().to_string();
+        let row = format!("`{sub}` USING `{table}` TAGS ('{sym}') VALUES ({ts},'{bid}','{ask}')");
+        let separator = usize::from(rows > 0);
+        let next_len = sql
+            .len()
+            .checked_add(separator)
+            .and_then(|length| length.checked_add(row.len()))
+            .ok_or_else(|| XError::invalid("批量 SQL 字节数溢出"))?;
+        if rows > 0 && (rows >= max_rows || next_len > max_bytes) {
+            out.push(sql);
+            sql = String::from(INSERT_PREFIX);
+            rows = 0;
         }
+        let row_len = INSERT_PREFIX
+            .len()
+            .checked_add(row.len())
+            .ok_or_else(|| XError::invalid("单行 SQL 字节数溢出"))?;
+        if row_len > max_bytes {
+            return Err(XError::invalid(format!("单行 SQL 超过 batch_max_bytes={max_bytes}")));
+        }
+        if rows > 0 {
+            sql.push(' ');
+        }
+        sql.push_str(&row);
+        rows += 1;
+    }
+    if rows > 0 {
         out.push(sql);
     }
     Ok(out)
@@ -120,6 +180,7 @@ impl TaosPool {
         let http = reqwest::Client::builder()
             .timeout(config.timeout)
             .pool_max_idle_per_host(8)
+            .redirect(reqwest::redirect::Policy::none())
             .build()
             .map_err(|e| XError::internal(format!("taos http client: {e}")))?;
 
@@ -131,8 +192,8 @@ impl TaosPool {
                 config,
                 precision: RwLock::new(initial_precision),
                 sem: Arc::new(Semaphore::new(max_in_flight)),
-                in_flight: AtomicUsize::new(0),
-                closed: AtomicBool::new(false),
+                state: AtomicUsize::new(0),
+                drained: Notify::new(),
             }),
         };
 
@@ -141,14 +202,21 @@ impl TaosPool {
         if !pool.inner.config.database.is_empty() {
             let db = pool.inner.config.database.clone();
             validate_ident(&db)?;
-            let _ = pool
-                .exec_sql_raw(&format!("CREATE DATABASE IF NOT EXISTS `{db}` KEEP 3650"), false)
-                .await;
-            if let Ok(p) = pool.detect_precision().await {
-                if let Ok(mut g) = pool.inner.precision.write() {
-                    *g = p;
+            pool.exec_sql_raw(&format!("CREATE DATABASE IF NOT EXISTS `{db}` KEEP 3650"), false)
+                .await?;
+            let detected = pool.detect_precision().await?;
+            if let Some(configured) = pool.inner.config.precision {
+                if configured != detected {
+                    return Err(XError::invalid(format!(
+                        "taos 配置精度 {configured:?} 与数据库精度 {detected:?} 不一致"
+                    )));
                 }
             }
+            *pool
+                .inner
+                .precision
+                .write()
+                .map_err(|_| XError::invariant("taos 精度状态锁已中毒"))? = detected;
         }
 
         pool.ping().await?;
@@ -167,6 +235,7 @@ impl TaosPool {
         let http = reqwest::Client::builder()
             .timeout(config.timeout)
             .pool_max_idle_per_host(8)
+            .redirect(reqwest::redirect::Policy::none())
             .build()
             .map_err(|e| XError::internal(format!("taos http client: {e}")))?;
         let initial_precision = config.precision.unwrap_or(TsPrecision::Ms);
@@ -177,8 +246,8 @@ impl TaosPool {
                 config,
                 precision: RwLock::new(initial_precision),
                 sem: Arc::new(Semaphore::new(max_in_flight)),
-                in_flight: AtomicUsize::new(0),
-                closed: AtomicBool::new(false),
+                state: AtomicUsize::new(0),
+                drained: Notify::new(),
             }),
         })
     }
@@ -205,15 +274,15 @@ impl TaosPool {
     #[must_use]
     pub fn stats(&self) -> TaosPoolStats {
         TaosPoolStats {
-            in_flight: self.inner.in_flight.load(Ordering::Relaxed),
-            closed: self.inner.closed.load(Ordering::Relaxed),
+            in_flight: self.inner.state.load(Ordering::Acquire) & IN_FLIGHT_MASK,
+            closed: self.inner.state.load(Ordering::Acquire) & CLOSED_BIT != 0,
         }
     }
 
     /// 是否已关闭。
     #[must_use]
     pub fn is_closed(&self) -> bool {
-        self.inner.closed.load(Ordering::Acquire)
+        self.inner.state.load(Ordering::Acquire) & CLOSED_BIT != 0
     }
 
     /// `SELECT SERVER_VERSION()`。
@@ -232,17 +301,17 @@ impl TaosPool {
 
     /// 写入序列前确保超级表存在。
     pub async fn ensure_stable(&self, table: &str) -> XResult<()> {
-        validate_ident(table)?;
+        validate_stable_ident(table)?;
         let sql = format!(
             "CREATE STABLE IF NOT EXISTS `{table}` (\
-               ts TIMESTAMP, bid DOUBLE, ask DOUBLE\
+               ts TIMESTAMP, bid NCHAR(64), ask NCHAR(64)\
              ) TAGS (symbol NCHAR(128))"
         );
         let r = self.exec_sql(&sql).await?;
         if r.code != 0 {
             return Err(map_taos_code(r.code, "ensure_stable 失败"));
         }
-        Ok(())
+        self.verify_decimal_schema(table).await
     }
 
     /// 显式批量写入：按 `max_rows` 分块 INSERT。
@@ -259,13 +328,25 @@ impl TaosPool {
         points: &[Tick],
         max_rows: usize,
     ) -> XResult<()> {
-        validate_ident(table)?;
+        validate_stable_ident(table)?;
         if points.is_empty() {
             return Ok(());
         }
+        if max_rows == 0 || max_rows > self.inner.config.batch_max_rows {
+            return Err(XError::invalid(format!(
+                "max_rows 必须为 1..={}（配置上限）",
+                self.inner.config.batch_max_rows
+            )));
+        }
         self.ensure_stable(table).await?;
         let prec = self.precision();
-        let chunks = build_insert_sql_chunks(table, points, prec, max_rows)?;
+        let chunks = build_insert_sql_chunks_with_limits(
+            table,
+            points,
+            prec,
+            max_rows,
+            self.inner.config.batch_max_bytes,
+        )?;
         for sql in chunks {
             let r = self.exec_sql(&sql).await?;
             if r.code != 0 {
@@ -277,9 +358,28 @@ impl TaosPool {
 
     /// 关闭池。
     pub async fn close(&self) -> XResult<()> {
-        self.inner.closed.store(true, Ordering::SeqCst);
+        self.inner.state.fetch_or(CLOSED_BIT, Ordering::AcqRel);
         self.inner.sem.close();
+        let drain = async {
+            loop {
+                let notified = self.inner.drained.notified();
+                tokio::pin!(notified);
+                notified.as_mut().enable();
+                if self.inner.state.load(Ordering::Acquire) & IN_FLIGHT_MASK == 0 {
+                    return;
+                }
+                notified.await;
+            }
+        };
+        timeout(self.inner.config.close_timeout, drain)
+            .await
+            .map_err(|_| XError::deadline_exceeded("taos close 等待在途请求排空超时"))?;
         Ok(())
+    }
+
+    async fn verify_decimal_schema(&self, table: &str) -> XResult<()> {
+        let result = self.exec_sql(&format!("DESCRIBE `{table}`")).await?;
+        validate_decimal_schema(&result)
     }
 
     async fn detect_precision(&self) -> XResult<TsPrecision> {
@@ -288,27 +388,37 @@ impl TaosPool {
         let sql =
             format!("SELECT `precision` FROM information_schema.ins_databases WHERE name='{db}'");
         let r = self.exec_sql_raw(&sql, false).await?;
-        if let Some(row) = r.rows.first() {
-            if let Some(p) = row.first().and_then(|s| TsPrecision::parse(s)) {
-                return Ok(p);
-            }
-        }
-        Ok(self.precision())
+        r.rows
+            .first()
+            .and_then(|row| row.first())
+            .and_then(|value| TsPrecision::parse(value))
+            .ok_or_else(|| XError::invariant("taos 无法从 information_schema 探测数据库精度"))
     }
 
-    async fn acquire(&self) -> XResult<OwnedSemaphorePermit> {
+    async fn acquire(&self) -> XResult<RequestGuard> {
         self.ensure_open()?;
         let result =
             timeout(self.inner.config.acquire_timeout, self.inner.sem.clone().acquire_owned())
                 .await;
         match result {
-            Ok(Ok(permit)) => {
-                if self.is_closed() {
+            Ok(Ok(permit)) => loop {
+                let state = self.inner.state.load(Ordering::Acquire);
+                if state & CLOSED_BIT != 0 {
                     drop(permit);
                     return Err(XError::unavailable("taos pool 已关闭"));
                 }
-                Ok(permit)
-            }
+                let next = state
+                    .checked_add(1)
+                    .ok_or_else(|| XError::invariant("taos in-flight 计数溢出"))?;
+                if self
+                    .inner
+                    .state
+                    .compare_exchange_weak(state, next, Ordering::AcqRel, Ordering::Acquire)
+                    .is_ok()
+                {
+                    return Ok(RequestGuard { _permit: permit, inner: Arc::clone(&self.inner) });
+                }
+            },
             Ok(Err(_)) => Err(XError::unavailable("taos 背压信号量已关闭")),
             Err(_) => Err(XError::deadline_exceeded(format!(
                 "taos 获取 in-flight 许可超时（max={}）",
@@ -318,11 +428,14 @@ impl TaosPool {
     }
 
     async fn exec_sql_raw(&self, sql: &str, use_db: bool) -> XResult<TaosExecResult> {
-        let _permit = self.acquire().await?;
-        self.inner.in_flight.fetch_add(1, Ordering::SeqCst);
-        let result = self.exec_sql_raw_inner(sql, use_db).await;
-        self.inner.in_flight.fetch_sub(1, Ordering::SeqCst);
-        result
+        if sql.len() > self.inner.config.batch_max_bytes {
+            return Err(XError::invalid(format!(
+                "SQL 请求超过 batch_max_bytes={} 字节",
+                self.inner.config.batch_max_bytes
+            )));
+        }
+        let _guard = self.acquire().await?;
+        self.exec_sql_raw_inner(sql, use_db).await
     }
 
     async fn exec_sql_raw_inner(&self, sql: &str, use_db: bool) -> XResult<TaosExecResult> {
@@ -349,8 +462,7 @@ impl TaosPool {
             })?;
 
         let status = resp.status();
-        let text =
-            resp.text().await.map_err(|e| XError::unavailable(format!("taos 读响应失败: {e}")))?;
+        let text = read_response_limited(resp, cfg.max_response_bytes).await?;
 
         if !status.is_success() {
             return Err(XError::unavailable(format!(
@@ -359,11 +471,18 @@ impl TaosPool {
             )));
         }
 
-        parse_taos_json(&text)
+        let result = parse_taos_json(&text)?;
+        if result.rows.len() > cfg.max_query_rows {
+            return Err(XError::unavailable(format!(
+                "taos SQL 结果超过 max_query_rows={}",
+                cfg.max_query_rows
+            )));
+        }
+        Ok(result)
     }
 
     fn ensure_open(&self) -> XResult<()> {
-        if self.inner.closed.load(Ordering::SeqCst) {
+        if self.is_closed() {
             return Err(XError::unavailable("taos pool 已关闭"));
         }
         Ok(())
@@ -402,6 +521,62 @@ fn parse_taos_json(text: &str) -> XResult<TaosExecResult> {
     Ok(TaosExecResult { code: raw.code, rows, columns, affected_rows })
 }
 
+async fn read_response_limited(
+    mut response: reqwest::Response,
+    max_bytes: usize,
+) -> XResult<String> {
+    if response
+        .content_length()
+        .is_some_and(|length| length > u64::try_from(max_bytes).unwrap_or(u64::MAX))
+    {
+        return Err(XError::unavailable(format!("taos 响应超过 max_response_bytes={max_bytes}")));
+    }
+    let mut body = Vec::new();
+    while let Some(chunk) = response
+        .chunk()
+        .await
+        .map_err(|error| XError::unavailable("taos 读响应失败").with_source(error))?
+    {
+        let next_len = body
+            .len()
+            .checked_add(chunk.len())
+            .ok_or_else(|| XError::unavailable("taos 响应字节数溢出"))?;
+        if next_len > max_bytes {
+            return Err(XError::unavailable(format!(
+                "taos 响应超过 max_response_bytes={max_bytes}"
+            )));
+        }
+        body.extend_from_slice(&chunk);
+    }
+    String::from_utf8(body)
+        .map_err(|error| XError::invalid("taos 响应不是 UTF-8").with_source(error))
+}
+
+fn validate_decimal_schema(result: &TaosExecResult) -> XResult<()> {
+    let mut bid_ok = false;
+    let mut ask_ok = false;
+    for row in &result.rows {
+        if row.len() < 3 {
+            continue;
+        }
+        let field = row[0].trim();
+        let data_type = row[1].trim();
+        let length_ok = row[2].trim().parse::<usize>().is_ok_and(|length| length >= 64);
+        let exact_text = data_type.eq_ignore_ascii_case("NCHAR") && length_ok;
+        if field.eq_ignore_ascii_case("bid") {
+            bid_ok = exact_text;
+        } else if field.eq_ignore_ascii_case("ask") {
+            ask_ok = exact_text;
+        }
+    }
+    if !bid_ok || !ask_ok {
+        return Err(XError::conflict(
+            "TDengine schema 不兼容：bid/ask 必须为 NCHAR(64+)；拒绝 DOUBLE 精度降级",
+        ));
+    }
+    Ok(())
+}
+
 #[async_trait]
 impl TimeSeriesStore for TaosPool {
     async fn write_series(&self, table: &str, points: Vec<Tick>) -> XResult<()> {
@@ -410,15 +585,27 @@ impl TimeSeriesStore for TaosPool {
     }
 
     async fn query_series(&self, table: &str, start: i64, end: i64) -> XResult<Vec<Tick>> {
-        validate_ident(table)?;
+        validate_stable_ident(table)?;
         if start > end {
             return Err(XError::invalid("query_series: start > end"));
+        }
+        if let Err(error) = self.verify_decimal_schema(table).await {
+            if error.kind() == kernel::ErrorKind::Missing {
+                return Ok(Vec::new());
+            }
+            return Err(error);
         }
         let prec = self.precision();
         let start_db = prec.from_nanos(start);
         let end_db = prec.from_nanos(end);
+        let limit = self
+            .inner
+            .config
+            .max_query_rows
+            .checked_add(1)
+            .ok_or_else(|| XError::invariant("max_query_rows 溢出"))?;
         let sql = format!(
-            "SELECT ts, bid, ask, symbol FROM `{table}` WHERE ts >= {start_db} AND ts <= {end_db} ORDER BY ts ASC"
+            "SELECT ts, bid, ask, symbol FROM `{table}` WHERE ts >= {start_db} AND ts <= {end_db} ORDER BY ts ASC LIMIT {limit}"
         );
         let r = match self.exec_sql(&sql).await {
             Ok(r) => r,
@@ -434,6 +621,13 @@ impl TimeSeriesStore for TaosPool {
                 return Err(e);
             }
         };
+
+        if r.rows.len() > self.inner.config.max_query_rows {
+            return Err(XError::unavailable(format!(
+                "taos 查询结果超过 max_query_rows={}",
+                self.inner.config.max_query_rows
+            )));
+        }
 
         let mut out = Vec::with_capacity(r.rows.len());
         for row in r.rows {
@@ -451,23 +645,25 @@ impl TimeSeriesStore for TaosPool {
 }
 
 fn subtable_name(stable: &str, symbol: &str) -> XResult<String> {
-    let mut slug: String = symbol
-        .chars()
-        .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '_' })
-        .collect();
-    if slug.is_empty() {
-        slug = "sym".into();
+    validate_stable_ident(stable)?;
+    if symbol.len() > MAX_SYMBOL_BYTES {
+        return Err(XError::invalid(format!("symbol 超过 {MAX_SYMBOL_BYTES} UTF-8 字节")));
     }
-    if slug.chars().next().is_some_and(|c| c.is_ascii_digit()) {
-        slug.insert(0, 't');
+    let mut encoded = String::with_capacity(symbol.len().saturating_mul(2));
+    for byte in symbol.as_bytes() {
+        write!(&mut encoded, "{byte:02x}").map_err(|_| XError::invariant("symbol 子表编码失败"))?;
     }
-    let max = 180usize.saturating_sub(stable.len());
-    if slug.len() > max {
-        slug.truncate(max.max(8));
-    }
-    let name = format!("{stable}_{slug}");
+    let name = format!("{stable}_s{encoded}");
     validate_ident(&name)?;
     Ok(name)
+}
+
+fn validate_stable_ident(name: &str) -> XResult<()> {
+    validate_ident(name)?;
+    if name.len() > MAX_STABLE_NAME_BYTES {
+        return Err(XError::invalid(format!("stable 名称超过 {MAX_STABLE_NAME_BYTES} 字节")));
+    }
+    Ok(())
 }
 
 fn validate_ident(name: &str) -> XResult<()> {
@@ -538,7 +734,11 @@ fn map_taos_code(code: i32, ctx: &str) -> XError {
 fn truncate(s: &str, max: usize) -> String {
     let mut t = s.trim().replace('\n', " ");
     if t.len() > max {
-        t.truncate(max);
+        let mut boundary = max;
+        while !t.is_char_boundary(boundary) {
+            boundary -= 1;
+        }
+        t.truncate(boundary);
         t.push('…');
     }
     t
@@ -550,6 +750,8 @@ mod tests {
     use std::time::Duration;
 
     use kernel::ErrorKind;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
 
     fn sample_tick(symbol: &str, ts: i64) -> Tick {
         Tick {
@@ -585,8 +787,77 @@ mod tests {
         assert_eq!(chunks.len(), 3); // 2+2+1
         assert!(chunks[0].starts_with("INSERT INTO "));
         assert!(chunks[0].contains("VALUES"));
+        assert!(chunks[0].contains("'1'"));
         // 空
         assert!(build_insert_sql_chunks("ticks", &[], TsPrecision::Ms, 10).unwrap().is_empty());
+    }
+
+    #[test]
+    fn decimal_text_path_preserves_i128_scale_18() {
+        let bid =
+            Decimal::try_new(123_456_789_012_345_678_901_234_567_890_123_456, 18).expect("bid");
+        let ask_mantissa = -123_456_789_012_345_678_901_234_567_890_123_455;
+        let ask = Decimal::try_new(ask_mantissa, 18).expect("ask");
+        let tick =
+            Tick { symbol: "BTC/USDT".into(), bid: Price::new(bid), ask: Price::new(ask), ts: 1 };
+        let sql =
+            build_insert_sql_chunks("ticks", &[tick], TsPrecision::Ns, 1).expect("build").remove(0);
+        assert!(sql.contains(&format!("'{}'", bid)));
+        assert!(sql.contains(&format!("'{}'", ask)));
+        assert_eq!(parse_decimal_cell(&bid.to_string()).expect("parse bid"), bid);
+        assert_eq!(parse_decimal_cell(&ask.to_string()).expect("parse ask"), ask);
+    }
+
+    #[test]
+    fn schema_rejects_double_and_accepts_nchar_64() {
+        let double = TaosExecResult {
+            code: 0,
+            rows: vec![
+                vec!["bid".into(), "DOUBLE".into(), "8".into()],
+                vec!["ask".into(), "DOUBLE".into(), "8".into()],
+            ],
+            columns: Vec::new(),
+            affected_rows: None,
+        };
+        assert_eq!(
+            validate_decimal_schema(&double).expect_err("double must fail").kind(),
+            ErrorKind::Conflict
+        );
+
+        let text = TaosExecResult {
+            code: 0,
+            rows: vec![
+                vec!["bid".into(), "NCHAR".into(), "64".into()],
+                vec!["ask".into(), "NCHAR".into(), "64".into()],
+            ],
+            columns: Vec::new(),
+            affected_rows: None,
+        };
+        validate_decimal_schema(&text).expect("nchar schema");
+    }
+
+    #[test]
+    fn batch_bytes_and_symbol_mapping_are_bounded() {
+        let first = subtable_name("ticks", "BTC/USDT").expect("first");
+        let second = subtable_name("ticks", "BTC_USDT").expect("second");
+        assert_ne!(first, second);
+
+        let tick = sample_tick(&"X".repeat(MAX_SYMBOL_BYTES), 1);
+        let error = build_insert_sql_chunks_with_limits("ticks", &[tick], TsPrecision::Ns, 1, 20)
+            .expect_err("single row exceeds byte cap");
+        assert_eq!(error.kind(), ErrorKind::Invalid);
+
+        assert!(subtable_name("ticks", &"X".repeat(MAX_SYMBOL_BYTES + 1)).is_err());
+        assert!(
+            build_insert_sql_chunks("ticks", &[], TsPrecision::Ns, HARD_MAX_BATCH_ROWS + 1)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn truncate_is_utf8_boundary_safe() {
+        assert_eq!(truncate("中文响应", 2), "…");
+        assert_eq!(truncate("中文响应", 4), "中…");
     }
 
     #[tokio::test]
@@ -654,9 +925,98 @@ mod tests {
         let pool = TaosPool::connect_without_ping(cfg).expect("build");
         // 占住唯一许可
         let permit = pool.acquire().await.expect("first permit");
-        let err = pool.acquire().await.expect_err("second must timeout");
+        let err = match pool.acquire().await {
+            Ok(_) => panic!("second must timeout"),
+            Err(error) => error,
+        };
         assert_eq!(err.kind(), ErrorKind::DeadlineExceeded);
         drop(permit);
+    }
+
+    #[tokio::test]
+    async fn close_deadline_waits_for_in_flight_and_is_repeatable() {
+        let cfg = TaosConfig { close_timeout: Duration::from_millis(20), ..TaosConfig::default() };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        let guard = pool.acquire().await.expect("guard");
+        assert_eq!(pool.stats().in_flight, 1);
+        let error = pool.close().await.expect_err("close must time out while busy");
+        assert_eq!(error.kind(), ErrorKind::DeadlineExceeded);
+        assert!(pool.is_closed());
+        drop(guard);
+        pool.close().await.expect("repeat close drains");
+        assert_eq!(pool.stats().in_flight, 0);
+    }
+
+    #[tokio::test]
+    async fn cancelled_task_releases_in_flight_guard() {
+        let pool = TaosPool::connect_without_ping(TaosConfig::default()).expect("build");
+        let worker = {
+            let pool = pool.clone();
+            tokio::spawn(async move {
+                let _guard = pool.acquire().await.expect("guard");
+                std::future::pending::<()>().await;
+            })
+        };
+        tokio::time::timeout(Duration::from_secs(1), async {
+            while pool.stats().in_flight == 0 {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .expect("worker acquired");
+        worker.abort();
+        let _ = worker.await;
+        assert_eq!(pool.stats().in_flight, 0);
+        pool.close().await.expect("close after cancellation");
+    }
+
+    async fn serve_response(status: &'static str, body: &'static str, chunked: bool) -> u16 {
+        let listener = TcpListener::bind(("127.0.0.1", 0)).await.expect("bind");
+        let port = listener.local_addr().expect("addr").port();
+        tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.expect("accept");
+            let mut request = [0u8; 4096];
+            let _ = stream.read(&mut request).await.expect("read request");
+            let response = if chunked {
+                format!(
+                    "HTTP/1.1 {status}\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n{:x}\r\n{body}\r\n0\r\n\r\n",
+                    body.len()
+                )
+            } else {
+                format!(
+                    "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                )
+            };
+            stream.write_all(response.as_bytes()).await.expect("write response");
+        });
+        port
+    }
+
+    #[tokio::test]
+    async fn response_limit_applies_to_success_and_error_bodies() {
+        for (status, chunked) in [("200 OK", true), ("500 Internal Server Error", false)] {
+            let port = serve_response(status, "中文响应体超过上限", chunked).await;
+            let cfg = TaosConfig {
+                port,
+                max_response_bytes: 8,
+                timeout: Duration::from_secs(1),
+                ..TaosConfig::default()
+            };
+            let pool = TaosPool::connect_without_ping(cfg).expect("build");
+            let error = pool.exec_sql("SELECT 1").await.expect_err("body too large");
+            assert_eq!(error.kind(), ErrorKind::Unavailable);
+        }
+    }
+
+    #[tokio::test]
+    async fn public_exec_sql_cannot_bypass_query_row_limit() {
+        let body = r#"{"code":0,"column_meta":[["value","INT",4]],"data":[[1],[2]],"rows":2}"#;
+        let port = serve_response("200 OK", body, false).await;
+        let cfg = TaosConfig { port, max_query_rows: 1, ..TaosConfig::default() };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        let error = pool.exec_sql("SELECT value").await.expect_err("row cap");
+        assert_eq!(error.kind(), ErrorKind::Unavailable);
     }
 
     #[tokio::test]
@@ -667,5 +1027,23 @@ mod tests {
             Err(e) => e,
         };
         assert_eq!(err.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn public_sql_and_custom_chunk_cannot_bypass_config_limits() {
+        let cfg = TaosConfig {
+            port: 1,
+            batch_max_rows: 1,
+            batch_max_bytes: INSERT_PREFIX.len(),
+            ..TaosConfig::default()
+        };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        let sql_error = pool.exec_sql("SELECT 123456789").await.expect_err("sql byte cap");
+        assert_eq!(sql_error.kind(), ErrorKind::Invalid);
+        let batch_error = pool
+            .write_batch_chunked("ticks", &[sample_tick("BTC", 1)], 2)
+            .await
+            .expect_err("custom row cap");
+        assert_eq!(batch_error.kind(), ErrorKind::Invalid);
     }
 }

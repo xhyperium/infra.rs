@@ -14,7 +14,8 @@
 //!
 //! - [`OffsetCommitStore`] / [`MemoryOffsetStore`] / [`FileOffsetStore`]：offset 持久化
 //! - [`AtLeastOnceConsumer`] / [`KafkaAtLeastOnceBus`]：显式 `ack` 后才推进位点
-//! - [`EosCoordinator`] / [`EosSession`]：produce 成功后才允许 commit（应用级 EOS）
+//! - [`ProduceThenCheckpointCoordinator`] / [`ProduceThenCheckpointSession`]：非原子
+//!   produce-then-checkpoint；checkpoint 失败会形成重复窗口
 //!
 //! ## scaffold feature
 //!
@@ -32,6 +33,7 @@ mod config;
 mod consumer;
 mod eos;
 mod error_map;
+mod lifecycle;
 mod message;
 mod offset;
 mod pool;
@@ -41,7 +43,11 @@ pub use at_least_once::{AtLeastOnceConsumer, KafkaAtLeastOnceBus, resolve_start_
 pub use bus::KafkaEventBus;
 pub use config::{DEFAULT_BROKERS, DEFAULT_SASL_MECHANISM, KafkaConfig};
 pub use consumer::{ConsumerConfig, KafkaConsumer};
-pub use eos::{EosCoordinator, EosSession};
+// 源码兼容期仍需从 crate root 导出旧 `Eos*` 别名；新代码与文档不得使用。
+#[allow(deprecated)]
+pub use eos::{
+    EosCoordinator, EosSession, ProduceThenCheckpointCoordinator, ProduceThenCheckpointSession,
+};
 pub use message::{Delivery, KafkaMessage, encode_bus_id, parse_bus_id};
 pub use offset::{FileOffsetStore, MemoryOffsetStore, OffsetCommitStore};
 pub use pool::{KafkaHealth, KafkaPool, KafkaPoolStats};
@@ -89,7 +95,8 @@ mod public_api_surface {
         let _ = parse_bus_id(&id).expect("id");
 
         let store = MemoryOffsetStore::new().shared();
-        let _eos = EosCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
+        let _coordinator =
+            ProduceThenCheckpointCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
         let _file = FileOffsetStore::new("/tmp/kafkax-offset-surface.tsv");
 
         fn assert_type<T: ?Sized>() {}
@@ -99,8 +106,8 @@ mod public_api_surface {
         assert_type::<KafkaEventBus>();
         assert_type::<AtLeastOnceConsumer>();
         assert_type::<KafkaAtLeastOnceBus>();
-        assert_type::<EosCoordinator>();
-        assert_type::<EosSession>();
+        assert_type::<ProduceThenCheckpointCoordinator>();
+        assert_type::<ProduceThenCheckpointSession>();
         assert_type::<MemoryOffsetStore>();
         assert_type::<FileOffsetStore>();
     }

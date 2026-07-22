@@ -10,8 +10,10 @@
 
 | 域 | SSOT | package | 本仓状态 |
 |----|------|---------|----------|
-| binance | `exchange/binance/` | `binancex` | scaffold + mock HTTP + `server_time` |
-| okx | `exchange/okx/` | `okxx` | scaffold + mock HTTP + `server_time` |
+| binance | `exchange/binance/` | `binancex` | 签名 REST + 公共 WS 解析/注入；交易 **NO-GO** |
+| okx | `exchange/okx/` | `okxx` | 签名 REST + 公共 WS 解析/注入；交易 **NO-GO** |
+
+签名请求与公共行情入口不等于可交易。精度 filters、限流、时钟偏移、私有 WS、重连和受控下单/清理证据仍 OPEN。
 
 ### storage（P0 生产默认路径 · #188–#191）
 
@@ -34,7 +36,7 @@
 
 1. 禁止在 SSOT 树写实现副本（`src/` / `Cargo.toml` / `*.rs`）。
 2. **未**宣称 package stable / Cluster·JetStream·EOS / crates.io。
-3. live 凭据仅进程 env：`scripts/live/build-foundationx-env.mjs`。
+3. live 凭据仅进程 env：`scripts/live/build-foundationx-env.mjs`；除 Redis 外，当前 live 入口没有可复验 CI/留档，不得据此宣称生产证据闭合。
 
 ## 验证
 
@@ -64,4 +66,3 @@ cargo test -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p t
 | ossx | [ossx-ssot-alignment.md](../../docs/ssot/ossx-ssot-alignment.md) |
 | clickhousex | [clickhousex-ssot-alignment.md](../../docs/ssot/clickhousex-ssot-alignment.md) |
 | taosx | [taosx-ssot-alignment.md](../../docs/ssot/taosx-ssot-alignment.md) |
-

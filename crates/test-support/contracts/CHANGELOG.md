@@ -1,9 +1,12 @@
 # Changelog — contract-testkit
 
-## Unreleased
+## 0.1.2 — 2026-07-22
 
 ### Added
 
+- ObjectStore / TimeSeriesStore / AnalyticsSink / PubSub 四个 portable core suite
+- EventBus portable surface 与 snapshot/replay Fake profile 分层
+- OSS / TAOS / ClickHouse / Redis PubSub 真实 adapter ignored target 调用入口
 - 标准七项布局：`docs/` · `benches/` · `examples/` · `review/` · `releases/`
 - `examples/basic.rs`：Fake KV + Tx suite 最小消费者路径
 - `benches/hot_path`：RecordingInstrumentation + FakeKeyValueStore

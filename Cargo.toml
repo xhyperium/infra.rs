@@ -54,6 +54,8 @@ reqwest = { version = "0.12", default-features = false, features = [
 tokio = { version = "1", features = [
   "rt-multi-thread",
   "macros",
+  "io-util",
+  "net",
   "sync",
   "time",
 ] }
@@ -78,6 +80,7 @@ tokio-rustls = { version = "0.26", default-features = false, features = [
   "tls12",
 ] }
 rustls-pki-types = "1"
+rustls-pemfile = "2"
 webpki-roots = "0.26"
 # storage adapters (production drivers)
 tokio-postgres = { version = "0.7", default-features = false, features = [
@@ -91,6 +94,7 @@ rskafka = { version = "0.6", default-features = false, features = [
   "compression-lz4",
   "compression-snappy",
   "compression-zstd",
+  "transport-tls",
 ] }
 async-nats = "0.50"
 clickhouse = { version = "0.13", default-features = false, features = [

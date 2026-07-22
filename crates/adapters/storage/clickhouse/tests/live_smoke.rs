@@ -7,14 +7,14 @@
 
 use bytes::Bytes;
 use clickhousex::{ANALYTICS_TABLE, ClickHouseConfig, ClickHousePool};
-use contracts::AnalyticsSink;
+use contract_testkit::assert_analytics_sink;
 
 fn live_config() -> Option<ClickHouseConfig> {
     let password = std::env::var("FOUNDATIONX_CLICKHOUSEX_PASSWORD").ok()?;
     if password.is_empty() {
         return None;
     }
-    let mut cfg = ClickHouseConfig::from_env();
+    let mut cfg = ClickHouseConfig::from_env().expect("clickhouse 配置");
     if cfg.password.is_empty() {
         cfg.password = password;
     }
@@ -67,7 +67,9 @@ async fn live_create_insert_select() {
     // AnalyticsSink 路径
     pool.ensure_analytics_table().await.expect("analytics ddl");
     let sink_event = format!("sink-{}", std::process::id());
-    pool.sink(&sink_event, Bytes::from_static(b"payload-bytes")).await.expect("sink");
+    assert_analytics_sink(&pool, &sink_event, Bytes::from_static(b"payload-bytes"))
+        .await
+        .expect("可移植 AnalyticsSink suite");
     let check = format!(
         "SELECT payload FROM {ANALYTICS_TABLE} WHERE event = '{}' FORMAT TabSeparated",
         sink_event.replace('\'', "\\'")
@@ -86,4 +88,5 @@ async fn live_ping() {
     };
     let pool = ClickHousePool::connect(cfg).await.expect("connect");
     pool.ping().await.expect("ping");
+    pool.close().await.expect("close");
 }

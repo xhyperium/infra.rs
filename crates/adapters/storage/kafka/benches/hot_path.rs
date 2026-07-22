@@ -20,7 +20,13 @@ async fn main() {
     }
     println!("bench_kafkax_encode_id: iters={} total={:?} acc={acc}", n.max(1000), start.elapsed());
 
-    let cfg = KafkaConfig::from_env();
+    let cfg = match KafkaConfig::from_env() {
+        Ok(cfg) => cfg,
+        Err(error) => {
+            eprintln!("bench_kafkax_produce: skipped (invalid config: {error})");
+            return;
+        }
+    };
     let connect = tokio::time::timeout(Duration::from_secs(3), KafkaPool::connect(cfg));
     let Ok(Ok(pool)) = connect.await else {
         println!("bench_kafkax_produce: skipped (no broker / timeout)");

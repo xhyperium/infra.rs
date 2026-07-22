@@ -1,53 +1,51 @@
-# tools/verifyctl — Goal 管线契约（本仓扩展）
+# tools/verifyctl — 最小验证 CLI（本仓扩展）
 
-> 实现 / 代码唯一位置：`tools/verifyctl`（**本仓尚未创建**）  
-> **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-verifyctl-complete-spec.md](spec/xhyper-verifyctl-complete-spec.md)  
-> **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
-> **布局**：对齐 [`.agents/ssot/kernel/`](../../kernel/)（[AGENTS.md](../../../../AGENTS.md) §2）  
-> **状态**：布局已对齐 kernel · **本仓扩展域**（上游 `tools/` 无 verifyctl）· 战役内容未宣称闭合
+> 实现：`tools/verifyctl`，workspace member `verifyctl` `0.1.0`。
+> Active spec：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-verifyctl-complete-spec.md](spec/xhyper-verifyctl-complete-spec.md)。
+> 当前能力：plan / execute / report 最小闭环。
+> 裁定：**非生产 verifier**，不得把最小 CLI 或布局 COMPLETE 解释为完整验证控制面已闭合。
 
 ## 11 层映射
 
-| 管线层 | 路径 | 状态 |
-|--------|------|------|
-| Goal | [goal/goal.md](goal/goal.md) | 生产级 Goal 正文已入树 · 未宣称 AC 闭合 |
-| Spec | [spec/spec.md](spec/spec.md) | **SSOT 入口** |
-| Design | [design/design.md](design/design.md) | 入口 / 占位 |
-| Plan | [plan/plan.md](plan/plan.md) | 入口 / 占位 |
-| Tasks | [tasks/tasks.md](tasks/tasks.md) | 入口 / 占位 |
-| Prompt | [prompt/prompt.md](prompt/prompt.md) | 入口 / 占位 |
-| **Code** | **`tools/verifyctl`** | 实现不在 `.agents/ssot/`；**本仓无 member** |
-| Test | [test/test.md](test/test.md) | 入口 / 占位 |
-| Review | [review/review.md](review/review.md) | 默认 NOT PASS |
-| Release | [release/release.md](release/release.md) | 默认 BLOCKED |
-| Retrospective | [retrospective/retrospective.md](retrospective/retrospective.md) | 入口 / 占位 |
+| 管线层 | 路径 | 当前状态 |
+|--------|------|----------|
+| Goal | [goal/goal.md](goal/goal.md) | 目标正文；未宣称全部 AC 闭合 |
+| Spec | [spec/spec.md](spec/spec.md) | active 规格入口 |
+| Design | [design/design.md](design/design.md) | 设计入口 |
+| Plan | [plan/plan.md](plan/plan.md) | 计划入口 |
+| Tasks | [tasks/tasks.md](tasks/tasks.md) | 任务入口 |
+| Prompt | [prompt/prompt.md](prompt/prompt.md) | Prompt 入口 |
+| **Code** | **`tools/verifyctl`** | workspace member；实现不在 SSOT 树 |
+| Test | [test/test.md](test/test.md) | 证据入口 |
+| Review | [review/review.md](review/review.md) | 不因实现存在自动 PASS |
+| Release | [release/release.md](release/release.md) | 生产 verifier release 仍 BLOCKED |
+| Retrospective | [retrospective/retrospective.md](retrospective/retrospective.md) | 复盘入口 |
 
-## 横切
+横切制品位于 [matrix/](matrix/)、[gate/](gate/) 与 [evidence/](evidence/)。
 
-| 制品 | 路径 |
-|------|------|
-| Matrix | [matrix/matrix.md](matrix/matrix.md) |
-| Gate | [gate/gate.md](gate/gate.md) |
-| Evidence | [evidence/](evidence/) |
+## 可观察实现
 
-## 硬限制
+- `plan`：由 Goal Contract 和 changed paths 生成 `verification-plan/v1`。
+- `execute`：在指定 cwd 执行计划内检查，生成 `verification-run/v1`。
+- `report`：聚合并可写出 RunResult。
+- package 版本为 `0.1.0`，可选 `with-evidence` feature。
 
-1. 无证据不得宣称 Done / 全闭合 / Spec Approved。
-2. 本树禁止 `src/`、`Cargo.toml`、`*.rs` 实现副本（C-LINT-007）。
-3. 布局迁移 **≠** 实现完成 **≠** package stable。
-4. 双镜像：`spec/spec.md` 与 `spec/xhyper-verifyctl-complete-spec.md` 须 `cmp` 同构。
-5. 全量 `rsync --delete` 上游 `tools/` 会删除本域；同步后须从 git 恢复或重跑本地化步骤。
+## OPEN / 禁止生产声明
+
+- 输入 schema/digest/check 非空的完整 fail-closed 校验；
+- 真正执行 `timeout_secs` 的取消与子进程清理；
+- 远程 runner、签名证据链、完整 V0–V3 矩阵与稳定机器错误契约；
+- evidence-required 模式的追加失败闭锁；
+- package stable、Production Ready 或 Agent L5。
+
+这些 OPEN 项未闭合前，`verifyctl` 只能称为最小 CLI，不能作为生产 verifier 或发布 Gate。
 
 ## 验证
 
 ```bash
+cargo metadata --no-deps --format-version 1 | \
+  jq -e '.packages[] | select(.name == "verifyctl" and .version == "0.1.0")'
+cargo test -p verifyctl --all-targets
 cmp .agents/ssot/tools/verifyctl/spec/spec.md \
-    .agents/ssot/tools/verifyctl/spec/xhyper-verifyctl-complete-spec.md
-test -f .agents/ssot/tools/verifyctl/README.md
-test -f .agents/ssot/tools/verifyctl/goal/goal.md
-test -f .agents/ssot/tools/verifyctl/spec/spec.md
-# 本仓无 crate：以下应失败直至落地
-# cargo metadata --no-deps | jq -e '.packages[] | select(.name=="verifyctl")'
+  .agents/ssot/tools/verifyctl/spec/xhyper-verifyctl-complete-spec.md
 ```
-
-**布局对齐：是 · 战役全闭合：未宣称 · 禁止假 Done。**

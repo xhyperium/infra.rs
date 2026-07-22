@@ -16,14 +16,16 @@
 
 1. workspace member `redisx` 可 `cargo test -p redisx --all-targets`
 2. 生产默认面：`RedisPool / RedisClient / RedisConfig`
-3. 环境注入：`FOUNDATIONX_REDISX_{ADDR,USERNAME,PASSWORD,DB,TLS}`（密钥不入库）
+3. 环境注入：`FOUNDATIONX_REDISX_{ADDR,USERNAME,PASSWORD,DB,TLS,MODE,NODES,SENTINEL_MASTER}`（密钥不入库）
 4. live：`tests/live_kv.rs · tests/live_kv_conformance.rs` 默认 `#[ignore]`，真凭据可绿
 5. bench：`benches/kv_hot_path.rs`（不得挂死 `--all-targets`）
 6. scaffold 仅 `feature = "scaffold"`，禁止当作生产默认
 
-## Not in scope
+## 当前边界
 
-Cluster / Sentinel / Streams full / pubsub 默认关闭
+- Cluster / Sentinel / TLS 命令代码路径存在，但真实拓扑、握手、切换和恢复证据保持 OPEN。
+- Pub/Sub 仅 Standalone；Cluster / Sentinel 失败关闭，重连与必达 NO-GO。
+- 写入默认不自动重试；单命令原子性不消除响应丢失后的结果歧义。
 
 ## 证据指针
 

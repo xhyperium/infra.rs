@@ -11,4 +11,7 @@
 | S-7 | crate docs | PASS | docs/usage·config·operations |
 | S-8 | SSOT 11 层 + landing | PASS | 本树 |
 | S-9 | package stable | OPEN | 未宣称 |
-| S-10 | DEFER 能力 | OPEN | multipart / lifecycle / STS 临时凭证 |
+| S-10 | multipart 基础面 | PASS | XML escaping、part/count、loopback abort/orphan 状态机 |
+| S-11 | 远程传输安全 | PASS | 非 loopback HTTP fail-closed 单测 |
+| S-12 | 资源硬上界 | PASS | object/buffer/error/in-flight + 多片共享总 deadline 单测 |
+| S-13 | lifecycle / STS / 流式 TB 对象 | OPEN | 不在本版本完成声明 |

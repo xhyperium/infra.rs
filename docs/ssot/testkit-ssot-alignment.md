@@ -139,7 +139,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 ## 与镜像文档的关系
 
 - `.agents/ssot/testkit/spec/spec.md` 是本仓 active SSOT，可随本仓 PR 修改。
-- 历史 complete/campaign/evidence 不与 active spec 做 `cmp`，也不继承 PASS。
+- `spec/xhyper-testkit-complete-spec.md` 是 active `spec.md` 的机械镜像，必须逐字同构；其他 dated campaign/evidence 才是历史来源，不继承 PASS。
 - 当前实现与验证以 **源码 + 本仓测试/覆盖率/mutants/miri 输出** 为准。
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
 - Workspace 总览（members 地图、依赖方向）：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)

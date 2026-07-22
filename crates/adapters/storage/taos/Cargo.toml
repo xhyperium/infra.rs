@@ -1,7 +1,7 @@
 [package]
 name = "taosx"
 description = "taos storage adapter (TimeSeriesStore; REST production client)"
-version = "0.3.1"
+version = "0.3.2"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -17,7 +17,7 @@ scaffold = []
 async-trait = { workspace = true }
 canonical = { path = "../../../types/canonical", version = "0.1.2" }
 chrono = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.1" }
+contracts = { path = "../../../contracts", version = "0.1.2" }
 decimalx = { path = "../../../types/decimal", version = "0.1.2" }
 kernel = { path = "../../../kernel", version = "0.3.1" }
 reqwest = { workspace = true }
@@ -28,6 +28,7 @@ tokio-tungstenite = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
+contract-testkit = { path = "../../../test-support/contracts", version = "0.1.2" }
 tokio = { workspace = true }
 
 [[bench]]

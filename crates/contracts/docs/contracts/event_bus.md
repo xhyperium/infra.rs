@@ -27,11 +27,11 @@
 ## idempotency
 
 - 调用方可按 `BusMessage.id` 做消费幂等。
-- 本最小面 **at-most-once**；不保证 redelivery。
+- 本最小面最多表达 **at-most-once**；不保证必达或 redelivery。
 
 ## cancel / timeout
 
-- 流丢弃即停止消费（Fake 为一次性快照流）。
+- 流丢弃即停止本地消费；远端取消时点由实现定义（Fake 为一次性快照流）。
 - 无内建 ack/nack API（见 `MessageAck` 类型预留）。
 
 ## ordering
@@ -60,5 +60,6 @@
 
 ## test entry
 
-- `fake_event_bus_*`、`event_bus_stream_poll_clone_waker`
+- `assert_event_bus_surface` 是不 poll 的 portable surface。
+- `assert_event_bus` 只属于 snapshot/replay Fake profile，不是 Kafka/NATS 通用 conformance。
 - `tests/public_surface.rs`、`tests/conformance_first_batch.rs`

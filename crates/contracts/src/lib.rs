@@ -4,7 +4,7 @@
 //! Fake/Recording 与 per-trait suite 见独立 crate **`contract-testkit`**
 //!（`crates/test-support/contracts`，仅 dev-dep）。
 //! 一旦发布不可修改签名，只能新增（Additive Only）。
-//! 依赖白名单（R4）：kernel + canonical + async-trait/bytes/futures-core。
+//! 依赖白名单（R4）：kernel + canonical + async-trait/bytes/futures-core/thiserror。
 //!
 //! ## Lint
 //!
@@ -37,6 +37,7 @@ use std::time::Duration;
 
 pub mod live;
 mod venue_gate;
+#[allow(deprecated, reason = "根模块必须继续 re-export 兼容符号")]
 pub use live::{
     AckedMessage, LiveContractProfile, LiveHandles, apply_ack, bus_publish, kv_roundtrip,
     kv_set_ttl, repo_roundtrip, run_on_tx_context, tx_kv_set, venue_health, venue_place_and_query,
@@ -107,7 +108,7 @@ pub trait Repository<T, Id>: Send + Sync {
     async fn save(&self, entity: &T) -> XResult<()>;
 }
 
-/// 事务上下文：可显式 commit / rollback。
+/// 事务生命周期上下文：可显式 commit / rollback。
 ///
 /// 合同：
 /// - 业务成功路径应调用 [`TxContext::commit`]（或由编排层在 Ok 后调用）；
@@ -124,10 +125,12 @@ pub trait TxContext: Send {
     async fn rollback(&mut self) -> XResult<()>;
 }
 
-/// 事务运行器（postgresx 等实现）。
+/// 事务生命周期运行器（postgresx 等实现）。
 ///
 /// 生产合同：[`TxRunner::begin_tx`] 返回可测的 [`TxContext`]；
-/// trait **对象安全**（`dyn TxRunner` 可用）。编排示例见 `run_tx_commit_on_ok`。
+/// trait **对象安全**（`dyn TxRunner` 可用）。本接口只证明 begin/commit/rollback
+/// 生命周期被驱动，不向闭包暴露数据库操作句柄，也不证明外部 Repository/KV 操作
+/// 与该事务原子绑定。编排入口见 [`run_tx_lifecycle`]。
 ///
 /// 语义文档：`docs/contracts/tx_runner.md`。
 #[async_trait]
@@ -136,7 +139,73 @@ pub trait TxRunner: Send + Sync {
     async fn begin_tx(&self) -> XResult<Box<dyn TxContext>>;
 }
 
-/// 参考编排：`Ok` → commit，`Err` → rollback（驱动真实 [`TxContext`] 路径）。
+/// 事务生命周期编排错误。
+///
+/// `Commit` 表示提交结果未由本合同证明，调用方不得自动重试或假定已回滚。
+#[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
+pub enum TxRunError {
+    /// 开启事务失败，业务闭包未执行。
+    #[error("开启事务失败: {source}")]
+    Begin {
+        /// 后端返回的原始错误。
+        source: XError,
+    },
+    /// 业务失败且回滚成功。
+    #[error("业务失败，事务已回滚: {source}")]
+    Business {
+        /// 业务返回的原始错误。
+        source: XError,
+    },
+    /// 业务失败且回滚也失败；两个错误均被结构化保留。
+    #[error("业务失败且回滚失败；业务错误: {business}；回滚错误: {rollback}")]
+    BusinessAndRollback {
+        /// 业务返回的原始错误。
+        #[source]
+        business: XError,
+        /// 回滚返回的原始错误。
+        rollback: XError,
+    },
+    /// 提交失败；提交结果可能未知，编排器不会再自动回滚。
+    #[error("提交失败且结果可能未知: {source}")]
+    Commit {
+        /// 后端返回的原始错误。
+        source: XError,
+    },
+}
+
+/// 事务生命周期编排结果。
+pub type TxRunResult<T> = Result<T, TxRunError>;
+
+/// 诚实的事务生命周期编排：`Ok` → commit，`Err` → rollback。
+///
+/// 业务闭包刻意不接收 [`TxContext`]：现有上下文没有数据库操作面，因此该函数只
+/// 证明生命周期顺序，不宣称闭包捕获的 Repository/KV/HTTP 操作具有事务原子性。
+/// Future 被取消或 panic 时只会 drop 上下文；本合同不保证可异步等待 rollback。
+pub async fn run_tx_lifecycle<R, F, Fut>(runner: &dyn TxRunner, f: F) -> TxRunResult<R>
+where
+    F: FnOnce() -> Fut + Send,
+    Fut: std::future::Future<Output = XResult<R>> + Send,
+    R: Send,
+{
+    let mut ctx = runner.begin_tx().await.map_err(|source| TxRunError::Begin { source })?;
+    match f().await {
+        Ok(value) => {
+            ctx.commit().await.map_err(|source| TxRunError::Commit { source })?;
+            Ok(value)
+        }
+        Err(business) => match ctx.rollback().await {
+            Ok(()) => Err(TxRunError::Business { source: business }),
+            Err(rollback) => Err(TxRunError::BusinessAndRollback { business, rollback }),
+        },
+    }
+}
+
+/// 兼容编排：`Ok` → commit，`Err` → rollback。
+///
+/// 此入口保留旧 `XResult` 语义，业务失败时会丢弃 rollback 错误；新代码应使用
+/// [`run_tx_lifecycle`]。传入上下文也不等于任意外部操作已绑定同一事务。
+#[deprecated(note = "请改用 run_tx_lifecycle；旧入口会丢弃 rollback 错误且不证明业务原子性")]
 pub async fn run_tx_commit_on_ok<R, F, Fut>(runner: &dyn TxRunner, f: F) -> XResult<R>
 where
     F: FnOnce(&mut dyn TxContext) -> Fut + Send,
@@ -156,7 +225,9 @@ where
     }
 }
 
-/// 时序数据存储（待新增，ADR-003，taosx 实现，native/rest 双 feature）。
+/// 时序数据存储（taosx 实现）。
+///
+/// 语义文档：`docs/contracts/time_series_store.md`。
 #[async_trait]
 pub trait TimeSeriesStore: Send + Sync {
     /// 写入时间序列点。
@@ -165,7 +236,9 @@ pub trait TimeSeriesStore: Send + Sync {
     async fn query_series(&self, table: &str, start: i64, end: i64) -> XResult<Vec<Tick>>;
 }
 
-/// 对象存储（待新增，ossx 实现）。
+/// 对象存储（ossx 实现）。
+///
+/// 语义文档：`docs/contracts/object_store.md`。
 #[async_trait]
 pub trait ObjectStore: Send + Sync {
     /// 上传对象。
@@ -174,7 +247,9 @@ pub trait ObjectStore: Send + Sync {
     async fn get_object(&self, key: &str) -> XResult<Bytes>;
 }
 
-/// 分析数据汇聚（待新增，clickhousex 实现）。
+/// 分析数据汇聚（clickhousex 实现）。
+///
+/// 语义文档：`docs/contracts/analytics_sink.md`。
 #[async_trait]
 pub trait AnalyticsSink: Send + Sync {
     /// 写入分析事件。
@@ -184,6 +259,7 @@ pub trait AnalyticsSink: Send + Sync {
 /// 发布订阅（可选，redisx 实现）。
 ///
 /// 与 [`EventBus`] 类似，stream 项为 [`BusMessage`]；能力边界：至少 at-most-once。
+/// 语义文档：`docs/contracts/pub_sub.md`。
 #[async_trait]
 pub trait PubSub: Send + Sync {
     /// 发布到 channel。
@@ -339,6 +415,8 @@ mod tests {
     use decimalx::{Decimal, Price, Qty};
     use futures_core::Stream;
     use std::pin::Pin;
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::task::{Context, Poll};
 
     // 注意：本单元测试 **禁止** 依赖 contract-testkit（dev-dep 环会造成
@@ -465,59 +543,197 @@ mod tests {
         assert!(v.place_order(&order).await.is_err());
     }
 
-    #[derive(Default)]
     struct StubTx {
-        committed: bool,
-        rolled_back: bool,
+        commit_fail: bool,
+        rollback_fail: bool,
+        commits: Arc<AtomicUsize>,
+        rollbacks: Arc<AtomicUsize>,
+        drops: Arc<AtomicUsize>,
+    }
+
+    impl Drop for StubTx {
+        fn drop(&mut self) {
+            self.drops.fetch_add(1, Ordering::SeqCst);
+        }
     }
 
     #[async_trait]
     impl TxContext for StubTx {
         async fn commit(&mut self) -> XResult<()> {
-            self.committed = true;
-            self.rolled_back = false;
+            self.commits.fetch_add(1, Ordering::SeqCst);
+            if self.commit_fail {
+                return Err(XError::unavailable("提交响应丢失"));
+            }
             Ok(())
         }
         async fn rollback(&mut self) -> XResult<()> {
-            self.rolled_back = true;
-            self.committed = false;
+            self.rollbacks.fetch_add(1, Ordering::SeqCst);
+            if self.rollback_fail {
+                return Err(XError::transient("回滚连接失败"));
+            }
             Ok(())
         }
     }
 
-    struct StubTxRunner;
+    struct StubTxRunner {
+        begin_fail: bool,
+        commit_fail: bool,
+        rollback_fail: bool,
+        commits: Arc<AtomicUsize>,
+        rollbacks: Arc<AtomicUsize>,
+        drops: Arc<AtomicUsize>,
+    }
+
+    impl StubTxRunner {
+        fn healthy() -> Self {
+            Self {
+                begin_fail: false,
+                commit_fail: false,
+                rollback_fail: false,
+                commits: Arc::new(AtomicUsize::new(0)),
+                rollbacks: Arc::new(AtomicUsize::new(0)),
+                drops: Arc::new(AtomicUsize::new(0)),
+            }
+        }
+    }
+
     #[async_trait]
     impl TxRunner for StubTxRunner {
         async fn begin_tx(&self) -> XResult<Box<dyn TxContext>> {
-            Ok(Box::new(StubTx::default()))
+            if self.begin_fail {
+                return Err(XError::unavailable("开启连接失败"));
+            }
+            Ok(Box::new(StubTx {
+                commit_fail: self.commit_fail,
+                rollback_fail: self.rollback_fail,
+                commits: Arc::clone(&self.commits),
+                rollbacks: Arc::clone(&self.rollbacks),
+                drops: Arc::clone(&self.drops),
+            }))
         }
     }
 
     #[tokio::test]
     async fn tx_runner_commit_path() {
-        let runner = StubTxRunner;
-        let out =
-            run_tx_commit_on_ok(&runner, |_ctx| async move { Ok(42u32) }).await.expect("commit ok");
+        let runner = StubTxRunner::healthy();
+        let out = run_tx_lifecycle(&runner, || async move { Ok(42u32) }).await.expect("提交成功");
         assert_eq!(out, 42);
+        assert_eq!(runner.commits.load(Ordering::SeqCst), 1);
+        assert_eq!(runner.rollbacks.load(Ordering::SeqCst), 0);
     }
 
     #[tokio::test]
     async fn tx_runner_err_triggers_rollback_path() {
-        let runner = StubTxRunner;
-        let err = run_tx_commit_on_ok(&runner, |_ctx| async move {
-            Err::<u32, _>(XError::invalid("业务失败"))
-        })
-        .await
-        .unwrap_err();
-        assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
-        assert!(err.context().contains("业务失败"));
+        let runner = StubTxRunner::healthy();
+        let err =
+            run_tx_lifecycle(&runner, || async move { Err::<u32, _>(XError::invalid("业务失败")) })
+                .await
+                .expect_err("业务失败应回滚");
+        match err {
+            TxRunError::Business { source } => {
+                assert_eq!(source.kind(), kernel::ErrorKind::Invalid);
+                assert!(source.context().contains("业务失败"));
+            }
+            other => panic!("期望 Business，得到 {other:?}"),
+        }
+        assert_eq!(runner.rollbacks.load(Ordering::SeqCst), 1);
     }
 
     #[tokio::test]
     async fn tx_runner_is_object_safe() {
-        let runner: &dyn TxRunner = &StubTxRunner;
+        let concrete = StubTxRunner::healthy();
+        let runner: &dyn TxRunner = &concrete;
         let mut ctx = runner.begin_tx().await.unwrap();
         ctx.commit().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn tx_lifecycle_preserves_begin_and_dual_failure() {
+        let mut begin = StubTxRunner::healthy();
+        begin.begin_fail = true;
+        assert!(matches!(
+            run_tx_lifecycle(&begin, || async { Ok::<_, XError>(()) }).await,
+            Err(TxRunError::Begin { source }) if source.context().contains("开启连接失败")
+        ));
+
+        let mut dual = StubTxRunner::healthy();
+        dual.rollback_fail = true;
+        let err = run_tx_lifecycle(&dual, || async {
+            Err::<(), _>(XError::invalid("业务校验失败"))
+        })
+        .await
+        .expect_err("双失败必须返回错误");
+        assert!(std::error::Error::source(&err).is_some());
+        let display = err.to_string();
+        assert!(display.contains("业务校验失败"));
+        assert!(display.contains("回滚连接失败"));
+        match err {
+            TxRunError::BusinessAndRollback { business, rollback } => {
+                assert_eq!(business.kind(), kernel::ErrorKind::Invalid);
+                assert_eq!(rollback.kind(), kernel::ErrorKind::Transient);
+                assert!(business.context().contains("业务校验失败"));
+                assert!(rollback.context().contains("回滚连接失败"));
+            }
+            other => panic!("期望 BusinessAndRollback，得到 {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn tx_lifecycle_commit_failure_never_rolls_back() {
+        let mut runner = StubTxRunner::healthy();
+        runner.commit_fail = true;
+        let err = run_tx_lifecycle(&runner, || async { Ok::<_, XError>(()) })
+            .await
+            .expect_err("提交失败必须返回错误");
+        assert!(matches!(
+            err,
+            TxRunError::Commit { source } if source.context().contains("提交响应丢失")
+        ));
+        assert_eq!(runner.commits.load(Ordering::SeqCst), 1);
+        assert_eq!(runner.rollbacks.load(Ordering::SeqCst), 0);
+    }
+
+    #[tokio::test]
+    async fn tx_lifecycle_cancellation_only_drops_context() {
+        let runner = StubTxRunner::healthy();
+        let timed = tokio::time::timeout(
+            Duration::from_millis(1),
+            run_tx_lifecycle(&runner, std::future::pending::<XResult<()>>),
+        )
+        .await;
+        assert!(timed.is_err());
+        assert_eq!(runner.commits.load(Ordering::SeqCst), 0);
+        assert_eq!(runner.rollbacks.load(Ordering::SeqCst), 0);
+        assert_eq!(runner.drops.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test]
+    #[allow(deprecated, reason = "验证旧 helper 的兼容错误映射")]
+    async fn legacy_tx_helper_keeps_business_error_on_rollback_failure() {
+        let mut runner = StubTxRunner::healthy();
+        runner.rollback_fail = true;
+        let err = run_tx_commit_on_ok(&runner, |_ctx| async {
+            Err::<(), _>(XError::invalid("旧业务错误"))
+        })
+        .await
+        .expect_err("旧 helper 应返回业务错误");
+        assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+        assert!(err.context().contains("旧业务错误"));
+
+        let mut begin = StubTxRunner::healthy();
+        begin.begin_fail = true;
+        let begin_err = run_tx_commit_on_ok(&begin, |_ctx| async { Ok::<_, XError>(()) })
+            .await
+            .expect_err("begin 错误应原样返回");
+        assert_eq!(begin_err.kind(), kernel::ErrorKind::Unavailable);
+
+        let mut commit = StubTxRunner::healthy();
+        commit.commit_fail = true;
+        let commit_err = run_tx_commit_on_ok(&commit, |_ctx| async { Ok::<_, XError>(()) })
+            .await
+            .expect_err("commit 错误应原样返回");
+        assert_eq!(commit_err.kind(), kernel::ErrorKind::Unavailable);
+        assert_eq!(commit.rollbacks.load(Ordering::SeqCst), 0);
     }
 
     struct OnceMsg(Option<BusMessage>);

@@ -13,7 +13,7 @@
 
 ## SSOT 层级
 
-```
+```text
 源层（可编辑）
 ├── .claude/skills/         ← 技能定义
 ├── CONSTITUTION.md         ← 工程宪章
@@ -24,14 +24,8 @@
     ├── kernel/
     ├── testkit/
     ├── types/
+    ├── evidence/          # canonical evidence current-state 规格
     ├── bootstrap/
-    ├── configx/
-    ├── gate/
-    ├── observex/
-    ├── resiliencx/
-    ├── schedulex/
-    ├── testkitx/
-    ├── transport/
     ├── configx/
     ├── gate/
     ├── observex/
@@ -41,7 +35,7 @@
     ├── transport/
     ├── adapters/           # exchange + storage
     ├── contracts/
-    └── tools/              # evidence / goalctl / xtask / verifyctl
+    └── tools/              # goalctl / xtask / verifyctl；evidence 子目录仅历史入口
 
 投影层（只读派生）
 └── .agents/skills/         ← 从 .claude/skills/ 投影
@@ -80,7 +74,7 @@
 
 ### R6: 本仓域规格树
 
-- `.agents/ssot/{kernel,testkit,types,bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport,adapters,contracts,tools}/` 是 **infra.rs 本仓** 的域规格 SSOT
+- `.agents/ssot/{kernel,testkit,types,evidence,bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport,adapters,contracts,tools}/` 是 **infra.rs 本仓** 的域规格 SSOT
 - 禁止在 SSOT 树内写入 `src/`、`Cargo.toml`、`*.rs` 实现副本
 - 禁止用 SSOT 文档中的 COMPLETE / Stable 叙事冒充 crate 已 ship
 - 路径一律使用 `.agents/ssot/`（禁止旧 monorepo 单数 agent 路径写法）
@@ -92,13 +86,17 @@
 - 本仓是否落地以 `Cargo.toml` workspace members + `crates/` 路径 + 本仓测试为准
 - **testkit**：本仓已落地 `crates/testkit`；`contract-testkit` 已落地 `crates/test-support/contracts`
 - **infra**：按各域对齐文；未在 members 中的域不得宣称落地
+  - **configx**：内存 KV + Memory/Env/File source + 分层合并 + 宿主触发 reload/进程内通知 + `SecretString` 已实现；远端配置中心、自动文件监听和 secret manager 仍 OPEN
+  - **schedulex**：任务 ID 登记表 + 宿主驱动的确定性 `JobRunner::tick` 已实现；非 runtime / 分布式调度平台
 - **adapters 九域**（2026-07-22 · #188–#191）：
   - **storage×7**（redis/postgres/kafka/nats/oss/clickhouse/taos）：**生产默认客户端 P0 已落地** + live `#[ignore]` + benches；scaffold 改 `feature = "scaffold"`
-  - **exchange×2**（binance/okx）：scaffold + mock HTTP + 只读 `server_time`
+  - **exchange×2**（binance/okx）：可观察实现为签名 REST + 公共 WS 解析/注入；该实现入口不等于可交易
+  - 交易执行精度 filters、限流、时钟偏移、私有 WS、重连与受控 live 交易证据仍 OPEN，交易 **NO-GO**
   - **未**宣称 package stable / Cluster·JetStream·EOS 全量 / crates.io
 - **tools**（2026-07-22 · #188–#191）：
-  - `crates/evidence` 最小面已落地
-  - `tools/goalctl` · `tools/verifyctl` **workspace members**（最小生产 CLI）
+  - `crates/evidence` 最小面已落地；current-state spec 唯一入口为 `.agents/ssot/evidence/spec/spec.md`
+  - `.agents/ssot/tools/evidence/` 仅为历史重定向入口，不持有 active spec
+  - `tools/goalctl` · `tools/verifyctl` **workspace members**（最小 CLI；verifyctl 非生产 verifier）
   - `tools/xtask` **未**落地
 - 落地说明：`plan/infra-rs-landing.md`（各域）；draft 快照：`plan/infra-rs-draft-*.md`
 - 审计基线见 `docs/ssot/*-ssot-alignment.md` 与 `docs/ssot/workspace-ssot-alignment.md`
@@ -120,10 +118,11 @@
 | Kernel | `.agents/ssot/kernel/` | L0 规格；实现 `crates/kernel` |
 | Testkit | `.agents/ssot/testkit/` | 规格；实现 `crates/testkit` |
 | Types | `.agents/ssot/types/` | decimal / canonical |
+| Evidence | `.agents/ssot/evidence/` | canonical current-state 规格；实现 `crates/evidence` |
 | Infra | `.agents/ssot/{bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport}/` | bootstrap / configx / gate / … |
 | Adapters | `.agents/ssot/adapters/` | exchange + storage |
 | Contracts | `.agents/ssot/contracts/` | trait 出口规格 |
-| Tools | `.agents/ssot/tools/` | evidence / goalctl / xtask / verifyctl |
+| Tools | `.agents/ssot/tools/` | goalctl / xtask / verifyctl；`tools/evidence` 仅历史重定向 |
 | SSOT 规则 | `.agents/ssot/SSOT.md` | 自引 |
 
 ---
@@ -132,6 +131,7 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v2.2.0 | 2026-07-22 | 唯一化顶层 evidence current-state 入口；冻结 24 package 与 configx/schedulex/exchange 当前边界 |
 | v2.1.0 | 2026-07-21 | **展平 SSOT 结构**：移除 `infra/` 子目录；bootstrap/configx/gate/observex/resiliencx/schedulex/testkitx/transport 直接位于 `.agents/ssot/` 根 |
 | v2.0.0 | 2026-07-21 | **彻底本仓化**：`.agents/ssot` 不再表述为外仓镜像；清除外仓路径字面量；R6/R7/清单重写 |
 | v1.6.0 | 2026-07-21 | 本仓化 tools SSOT（evidence/goalctl/xtask/verifyctl） |

@@ -8,7 +8,7 @@
 //! cargo test -p postgresx --test live_postgres -- --ignored --nocapture
 //! ```
 
-use postgresx::{PostgresConfig, PostgresPool, TxState};
+use postgresx::{PostgresConfig, PostgresPool, TxStatus};
 use std::sync::Arc;
 
 fn live_config() -> PostgresConfig {
@@ -63,8 +63,8 @@ async fn live_transaction_rollback() {
 
     // 使用真实（非 TEMP）表会污染 schema；这里用 TEMP + 显式 rollback 验证状态机
     let conn = pool.acquire().await.expect("acquire");
-    let tx = conn.begin().await.expect("begin");
-    assert_eq!(tx.state(), TxState::Active);
+    let mut tx = conn.begin().await.expect("begin");
+    assert_eq!(tx.status(), TxStatus::Active);
 
     tx.execute("CREATE TEMP TABLE postgresx_live_rb (id int PRIMARY KEY, body text)", &[])
         .await
@@ -109,22 +109,26 @@ async fn live_with_transaction_business_err_rolls_back() {
 #[tokio::test]
 #[ignore = "requires live Postgres; run with --ignored when available"]
 async fn live_tx_runner_boundary() {
-    use contracts::run_tx_commit_on_ok;
+    use contracts::run_tx_lifecycle;
 
     let pool = Arc::new(PostgresPool::connect(&live_config()).await.expect("connect"));
     let runner = postgresx::PgTxRunner::new(Arc::clone(&pool));
 
-    let v = run_tx_commit_on_ok(&runner, |_ctx| async move { Ok::<_, kernel::XError>(7u8) })
+    let v = run_tx_lifecycle(&runner, || async move { Ok::<_, kernel::XError>(7u8) })
         .await
         .expect("commit path");
     assert_eq!(v, 7);
 
-    let err = run_tx_commit_on_ok(&runner, |_ctx| async move {
+    let err = run_tx_lifecycle(&runner, || async move {
         Err::<(), _>(kernel::XError::invalid("rollback path"))
     })
     .await
     .expect_err("rollback path");
-    assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+    assert!(matches!(
+        err,
+        contracts::TxRunError::Business { source }
+            if source.kind() == kernel::ErrorKind::Invalid
+    ));
 
     pool.close();
 }

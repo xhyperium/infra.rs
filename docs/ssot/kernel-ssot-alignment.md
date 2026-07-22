@@ -65,7 +65,7 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 ## 与历史文档的关系
 
 - `.agents/ssot/kernel/spec/spec.md` 是本仓 active SSOT，可随本仓 PR 修改。
-- `xhyper-kernel-complete-spec.md` 与 `evidence/2026-07-14/**` 是历史来源，不与 active spec 做 `cmp`，也不继承 PASS。
+- `spec/xhyper-kernel-complete-spec.md` 是 active `spec.md` 的机械镜像，必须逐字同构；`evidence/2026-07-14/**` 与 dated campaign 才是历史来源，不继承 PASS。
 - 当前实现与验证证据以本仓源码、测试输出和最终 SHA 为准。
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
 

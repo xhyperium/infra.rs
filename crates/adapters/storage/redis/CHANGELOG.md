@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.3] — 2026-07-23
+
+### Changed
+
+- PubSub 复用 pool 安全配置，非 Standalone 拓扑 fail-closed。
+- 读取可按预算重试，结果不明写入默认只尝试一次；seed URL 全路径脱敏。
+- 版本 PATCH 0.3.2 → 0.3.3。
+
 ## [0.3.1] — 2026-07-22
 
 ### Added

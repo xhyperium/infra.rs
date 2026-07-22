@@ -6,8 +6,8 @@
 | 实现路径 | `crates/adapters/storage/taos` |
 | 生产默认面 | TaosPool REST :6041 |
 | scaffold | `feature = "scaffold"`（可选 mock） |
-| live | `tests/live_smoke.rs`（默认 `#[ignore]`） |
-| 凭据 | `FOUNDATIONX_*` via `scripts/live/build-foundationx-env.mjs` |
+| live | `scripts/taos-live-conformance.mjs` → 固定 digest 隔离 TDengine + ignored test |
+| 凭据 | 隔离容器每次生成临时随机密码且不输出；外部服务仅 `FOUNDATIONX_*`，禁止入库 |
 | PR | #188 · #189 · #190 · #191 |
 | 对齐 | [docs/ssot/adapters-ssot-alignment.md](../../../../../docs/ssot/adapters-ssot-alignment.md) |
 | package stable | **未宣称** |
@@ -15,15 +15,13 @@
 ## 硬限制
 
 1. 本文件描述 **infra.rs 本仓 P0 生产入口**，不是 monorepo 战役 COMPLETE。
-2. Cluster / JetStream / EOS / multipart 等 **DEFER**。
+2. Native SQL / FFI / WS auth / HA / 自动幂等重试 **NO-GO**。
 3. 无 live 证据不得宣称“全后端 Production Ready”。
 
 ## 验证
 
 ```bash
 cargo test -p taosx --all-targets
-# live:
-# node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
-# set -a; source /tmp/foundationx-live.env; set +a
-# cargo test -p taosx -- --ignored
+# 隔离 live（非 prod）：
+# node scripts/taos-live-conformance.mjs
 ```

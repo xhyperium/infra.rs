@@ -1,138 +1,117 @@
-> **历史实现快照（2026-07-17，非当前权威）**：本文件保留旧战役内容，不再作为 active spec，也不要求与当前实现逐字 `cmp`。当前权威是 [spec.md](spec.md)，入口见 [../README.md](../README.md)。
-
 # `canonical` 当前实现规范
 
 | 字段 | 值 |
 |---|---|
-| Status | **Approved** 实现合同（S1，2026-07-17）；**≠** package stable / 全 wire Production Ready |
-| Package / lib | `canonical` / lib `canonical`（**Cargo 选择器 `-p canonical`**；历史产品名 `xhyper-canonical`，不可用于 `-p`） |
+| 状态 | **Approved current-state**（2026-07-23） |
+| Package / lib / version | `canonical` / `canonical` / `0.1.2`（Cargo 选择器：`-p canonical`） |
 | Path | `crates/types/canonical` |
-| Layer | Types / 跨层共享纯 DTO |
-| Authority | 本文件是 active current-state spec（与 20260717 Approved 语义对齐） |
-| Complete Spec | [SPEC-TYPES-CANONICAL-002](../20260717/canonical-complete-spec.md)（Approved；≠ package stable） |
-| Goal | [GOAL-TYPES-CANONICAL-002](../20260717/canonical-complete-goal.md) |
-| Plan | [plan/plan.md](../plan/plan.md) · [alignment-matrix-infra-2026-07-21.md](../plan/alignment-matrix-infra-2026-07-21.md) · [todo.md](../todo.md) |
-| Residual | [plan/residual-open.md](../plan/residual-open.md) |
-| Dual mirror | 本文件 ≡ [xhyper-canonical-complete-spec.md](./canonical-complete-spec.md)（须 `cmp`） |
+| 层级 | **L2 committed wire subset**：strict serde JSON DTO shape（v1 / v1.1 / v1.2 / v1.3） |
+| 发布边界 | `publish = false`；**不是** package stable / crates.io Production Ready |
+| Active authority | 本文件 + [Wire Commitment Matrix](../plan/wire-commitment-matrix.md) |
+| 历史裁决 | [SPEC-TYPES-CANONICAL-002](../20260717/xhyper-canonical-complete-spec.md) · [GOAL-TYPES-CANONICAL-002](../20260717/xhyper-canonical-complete-goal.md) |
+| Residual | [residual-open.md](../plan/residual-open.md) |
 
-> `[KNOWN]` 为当前代码或 Approved 裁决直接证据。API、serde attributes/fixtures 变化会使相应结论失效。
+> 本文件描述当前 crate 已实现并承诺的边界。20260717 文档保留历史裁决语境，但不覆盖本文件登记的 current-state 实现事实。
 
-## 1. 定位与依赖
+## 1. 定位与明确非目标
 
-- `[KNOWN] HIGH` ADR-001/007：canonical 只放跨层共享数据形状，不含业务逻辑。
-- `[KNOWN] HIGH` `Money`/`Decimal` 族唯一归属 `decimalx`；canonical 只 `pub use decimalx::Money`。
-- 普通依赖：`decimalx`（别名 `xhyper-decimalx` 已废弃）、`serde`；dev-dependency：`serde_json`。
-- 禁止依赖 contracts、domain、adapter、service、app 或 evidence。
-- 非目标：状态机、订单簿 diff、业务校验/授权、I/O、审计、重试、通用 codec、hash/sign/evidence。
+- `canonical` 只提供跨层共享纯 DTO、轻量形状/时间辅助与运输包装；不包含业务状态机、I/O、授权、风控、重试或审计。
+- `Money` / `Decimal` / `Price` / `Qty` 的唯一数值定义点是 `decimalx`；本 crate 仅 `pub use decimalx::Money`。
+- 生产依赖仅 `decimalx` 与 `serde`；不得反向依赖 contracts、domain、adapter、service、app、kernel 或 evidence。
+- 本 crate 的 committed wire 只承诺受测的 **serde JSON DTO shape**：字段名、枚举表示、必填字段、未知字段/variant 拒绝及嵌套 decimal shape。
+- **不承诺** canonical bytes、确定性字节编码、通用 codec、schema registry、hash/sign/evidence、任意格式转换或跨语言协议。
+- L2 committed subset **不等于** 整个 package stable，也不等于所有消费者、所有大版本或所有语言的兼容保证。
 
-## 2. 当前公开 API
+## 2. 当前公开数据面
 
 ### 2.1 标识与取消
 
-| 类型 | 当前形状 |
+| 类型 | 形状与语义 |
 |---|---|
-| ~~`OrderId`~~ | **类型已删除**（2026-07-17）；`Order`/`OrderAck`.id 为 wire `String` |
-| `VenueId` | `String` alias；adapter 入口用 `shape::is_plausible_venue_slug` |
-| `InstrumentId` | `String` alias；`shape::is_plausible_instrument_id`；不做跨所归一 |
-| `OrderRef` | `Client(String)` / `Exchange(String)` |
+| `VenueId` | `String` alias；adapter 入口可用 `shape::is_plausible_venue_slug` |
+| `InstrumentId` | `String` alias；不做跨 venue 归一化 |
+| `OrderRef` | externally tagged JSON enum：`Client(String)` / `Exchange(String)` |
 | `CancelOrderRequest` | `venue`, `instrument`, `id: OrderRef` |
+| `OrderId` | **不存在**；`Order.id` / `OrderAck.id` 为 wire `String` |
 
-### 2.2 枚举与 DTO
+### 2.2 DTO 与枚举
 
-| 类型 | 当前形状 |
-|---|---|
-| `OrderStatus` | Pending/Open/PartiallyFilled/Filled/Cancelled/Rejected |
-| `Side` | Buy/Sell |
-| `Order` | id/symbol/side/price/qty/status（`id: String`） |
-| `OrderAck` | id/status/ts（`id: String`；`ts` = Unix **ns**） |
-| `Position` | symbol/qty/entry_price |
-| `Tick` | symbol/bid/ask/ts（ns） |
-| `PriceLevel` | price/qty |
-| `OrderBookSnapshot` | symbol/bids/asks/ts（ns） |
-| `Trade` | symbol/price/qty/ts（ns） |
-| `SymbolMeta` | symbol/base/quote/tick_size/min_qty |
+| 类型 | 字段 / variants | Committed wire |
+|---|---|---|
+| `OrderStatus` | Pending / Open / PartiallyFilled / Filled / Cancelled / Rejected | v1 |
+| `Side` | Buy / Sell | v1 |
+| `OrderAck` | id / status / ts | v1（legacy shape） |
+| `Order` | id / symbol / side / price / qty / status | v1.1 |
+| `Tick` | symbol / bid / ask / ts | v1.2 |
+| `Trade` | symbol / price / qty / ts | v1.2 |
+| `Position` | symbol / qty / entry_price | v1.3 |
+| `PriceLevel` | price / qty | v1.3 |
+| `OrderBookSnapshot` | symbol / bids / asks / ts | v1.3 |
+| `SymbolMeta` | symbol / base / quote / tick_size / min_qty | v1.3 |
 
-另：`pub use decimalx::Money`。所有字段公开；无业务方法、I/O、全局状态。辅助模块：`shape`、`proposed_time`。
+`OrderBookSnapshot` 仅为快照形状，不承诺排序、合并、diff 或增量更新语义。完整 wire 清单、证据和限制见 [wire-commitment-matrix.md](../plan/wire-commitment-matrix.md)。
 
-## 3. 已批准语义边界
+## 3. Wire 查询与兼容面
 
-### CAN-BND / CAN-NUM / CAN-LAYER — `APPROVED`
+- `WireVersion` 精确表示 `V1` / `V1_1` / `V1_2` / `V1_3`。
+- `committed_wire_version(type_name)` 返回类型所属的精确 committed 版本；未知类型及 `Money` 不属于本 crate 清单。
+- `WireCommitment` / `wire_commitment(type_name)` 保留兼容：任一已承诺版本仍粗粒度返回 `CommittedV1`，未知项返回 `Uncommitted`。不得用该兼容查询推断精确版本。
+- `COMMITTED_WIRE_V1{,_1,_2,_3}` 是四个显式类型名清单；新增、删除或迁移 committed 类型必须同步实现、golden、测试、CHANGELOG 与本 SSOT。
 
-- 纯 DTO；`OrderBookSnapshot` 无 diff/merge/排序状态机。
-- 金额/价格/数量来自 `decimalx`；禁止 f32/f64 金融字段。
-- 不反向依赖 contracts/domain/adapter。
+## 4. Strict serde JSON 合同
 
-### CAN-ID-001 — `APPROVED`（2026-07-17）
+- 所有 committed DTO/enum 都 derive serde 并标注 `deny_unknown_fields`。
+- 结构体 JSON object 拒绝未知字段与缺失必填字段；没有隐式 default。
+- `OrderRef` 使用 externally tagged enum；`OrderStatus` / `Side` 使用 Rust variant 名对应的 JSON 字符串；未知 variant 反序列化失败。
+- `Decimal` / `Price` / `Qty` 的 JSON shape 与合法 scale 由 `decimalx` 约束；非法 scale 的拒绝测试属于 committed 证据。
+- v1–v1.3 各 committed 表示均有文件 golden 或穷举 inline golden；已登记 legacy/N-1 向量的结构 DTO 保持可读。首次冻结批次的 `*_legacy.json` 与当前字段集相同，只证明该历史向量仍可读取；它不是通用 migration reader 或跨大版本兼容声明。
 
-- 新接口优先 `OrderRef` / `CancelOrderRequest`。
-- `OrderId` **类型已删**；id 字段为 `String`。
-- Venue/Instrument 保持 alias；形状由 `shape::*` 在 adapter 入口校验。
-- newtype 二期：见 residual OPEN-ID-002（DEFERRED）。
+## 5. 时间合同
 
-### CAN-TIME-001 — `APPROVED`（2026-07-17）
+- `OrderAck` / `Tick` / `Trade` / `OrderBookSnapshot` 的 `ts: i64` 是 Unix epoch **纳秒**。
+- `ns_from_unix_millis` / `dto_ts_from_unix_millis` 对 ms→ns 使用 checked multiplication，溢出返回 `None`。
+- `unix_millis_from_ns` 是兼容保留的**向 0 截断**转换；调用者不得把结果视为无损。
+- `unix_millis_from_ns_exact` 只在纳秒值可被 `1_000_000` 整除时返回毫秒，否则返回 `None`；需要无损语义时必须使用该入口。
+- canonical 与 kernel 仅共享时间刻度，不建立 crate 依赖。
 
-- DTO `ts: i64` = Unix epoch **纳秒**（与 `kernel::Timestamp` 同刻度）。
-- canonical **不**依赖 kernel；交易所 ms → DTO 经 `ns_from_unix_millis` / `dto_ts_from_unix_millis`。
+## 6. `Envelope<T>` 边界
 
-### CAN-WIRE-001 — 部分 candidate
+- `Envelope<T>` 是运输包装，JSON 字段固定为 `schema_version` + `payload`；外层拒绝未知字段。
+- `ENVELOPE_SCHEMA_VERSION` 描述包装形状；`CURRENT_PAYLOAD_SCHEMA_VERSION` 是 payload 的默认起点。两者当前数值均为 `1`，语义相互独立。
+- `wrap` / `wrap_current` 只包装数据；serde 反序列化只校验字段形状与类型。
+- 消费方在使用 payload 前必须显式调用 `validate_version(expected)` 或 `into_payload_if_version(expected)`。Envelope **不自动路由、不协商版本、不选择 DTO decoder，也不证明 payload 的业务有效性**。
+- `Envelope<T>` 不属于 v1–v1.3 DTO committed 清单，不把本 crate 扩展为通用 envelope/codec 框架。
 
-- Committed-candidate：`CancelOrderRequest`、`OrderRef`（fixtures + 单测）。
-- Committed-legacy：`OrderAck` JSON shape。
-- 其余 DTO：**Uncommitted**（仅 serde RT）。
-- 未知字段 / 全量跨版本 golden：OPEN（residual OPEN-WIRE-*）。
+## 7. Golden、N-1 与验证要求
 
-### CAN-VALID-001 — 原则 `APPROVED`
+证据目录：
 
-- 本 crate 不做业务校验；owner 表见 [validation-owners.md](../plan/validation-owners.md)。
+- `fixtures/market/canonical/v1/`：cancel / OrderRef / legacy OrderAck；
+- `fixtures/market/canonical/v1.1/`：Order；
+- `fixtures/market/canonical/v1.2/`：Tick / Trade；
+- `fixtures/market/canonical/v1.3/`：Position / PriceLevel / OrderBookSnapshot / SymbolMeta；
+- `fixtures/market/order_cancel_okx.json` 与 `fixtures/market/order_ack_legacy.json`：既有 consumer 基线。
 
-### CAN-CODEC-001 — `REJECTED`
+测试必须覆盖：
 
-- 禁止 Canonical Encoding Core / schema registry / hash-sign-evidence 进本 crate。
-
-## 4. Serde 与 fixtures
-
-- 本地 DTO/枚举 derive serde（默认字段/variant shape）。
-- 固定 wire 证据：
-  - `fixtures/market/order_cancel_okx.json`（cancel 双向）；
-  - `fixtures/market/order_ack_legacy.json`；
-  - `fixtures/market/canonical/v1/*`（cancel / OrderRef / legacy ack）。
-
-## 5. 测试与门禁
-
-必须覆盖：
-
-- 各公开 DTO/枚举构造 + serde round-trip；
-- 全部 `OrderStatus` / `OrderRef` variants；
-- cancel / legacy ack / v1 golden 双向；
+- committed 清单与精确 `WireVersion` 映射，以及 coarse `WireCommitment` 兼容行为；
+- 所有公开 DTO/enum serde round-trip 与所有 variants；
+- 双向 golden，以及有登记的 N-1/legacy 历史向量；
+- 未知字段、未知 variant、缺字段与非法 decimal scale 拒绝；
 - `Money` 与 `decimalx::Money` 类型同一；
-- 时间 ms↔ns 与 venue shape 正反例；
-- 无 domain 行为或上层依赖。
+- ms→ns 溢出、ns→ms 截断与 exact 转换的整除/非整除边界；
+- Envelope round-trip、缺/未知字段、显式版本成功与不匹配。
 
 ```bash
-cargo test -p canonical（别名 xhyper-canonical 已废弃，不可用于 -p）
+cargo test -p canonical -p decimalx
 cargo check -p canonical --all-targets
 cargo clippy -p canonical --all-targets -- -D warnings
 cargo fmt -p canonical -- --check
+node scripts/quality-gates/check-canonical-align.mjs
 ```
 
-## 6. 仍 OPEN / HUMAN / DEFER（不得假装 DONE）
+## 8. 版本与剩余边界
 
-| 项 | 标签 | 指针 |
-|----|------|------|
-| package stable / crates.io | HUMAN_ONLY / DEFER S2 | residual DEFER-STABLE |
-| 全 DTO 跨版本 wire 冻结 | OPEN / DEFER | OPEN-WIRE-002 |
-| unknown-field deny 策略 | OPEN | OPEN-WIRE-001 |
-| OrderRef newtype 二期 | DEFER | OPEN-ID-002 |
-| types/core·protocol 大搬迁 | DEFER | OPEN-LAYOUT-001 |
-| 移除 serde | DEFER | OPEN-SERDE-001 |
-| 非主路径全量 consumer 迁移 | DEFER | DEFER-M3-REST |
-
-## 7. 追溯
-
-- Complete Spec：[20260717/canonical-complete-spec.md](../20260717/canonical-complete-spec.md)
-- Alignment：[plan/alignment-matrix-infra-2026-07-21.md](../plan/alignment-matrix-infra-2026-07-21.md)
-- Residual：[plan/residual-open.md](../plan/residual-open.md)
-- Production：[plan/production-upgrade.md](../plan/production-upgrade.md)
-- 实现：`crates/types/canonical/{Cargo.toml,src/**}`
-- 依赖：`crates/types/decimal`
-- Fixtures：`fixtures/market/**`
+- 当前交付版本为 `0.1.2`；相对 `0.1.1` 的 wire/time 查询行为仅执行一次 PATCH bump，并同步 Cargo/CHANGELOG/发布证据。
+- package stable / 发布仍为 HUMAN_ONLY；newtype、布局搬迁、serde 移除与非主路径 consumer 迁移仍为 deferred。
+- v1–v1.3 committed 清单、strict unknown-field 策略和 golden/N-1 已不再是 OPEN。后续若提出破坏性 wire 变化，必须新建版本化迁移决策，不得回退成含混的“全 DTO wire OPEN”。

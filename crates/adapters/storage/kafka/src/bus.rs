@@ -8,19 +8,42 @@
 //!
 //! 可靠消费请使用 [`crate::KafkaConsumer`]。
 
+use std::pin::Pin;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::task::{Context, Poll};
 
 use async_trait::async_trait;
 use bytes::Bytes;
 use contracts::{BusMessage, EventBus};
-use futures_core::stream::BoxStream;
-use futures_util::stream;
+use futures_core::{Stream, stream::BoxStream};
 use kernel::XResult;
 use tokio::sync::mpsc;
 
 use crate::consumer::ConsumerConfig;
+use crate::lifecycle::{send_or_shutdown, wait_for_shutdown};
 use crate::message::encode_bus_id;
 use crate::pool::KafkaPool;
+
+const EVENT_BUS_BUFFER_CAPACITY: usize = 256;
+
+struct BusSubscription {
+    rx: mpsc::Receiver<BusMessage>,
+    task: tokio::task::JoinHandle<()>,
+}
+
+impl Stream for BusSubscription {
+    type Item = BusMessage;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        self.rx.poll_recv(cx)
+    }
+}
+
+impl Drop for BusSubscription {
+    fn drop(&mut self) {
+        self.task.abort();
+    }
+}
 
 /// EventBus facade，持有 [`KafkaPool`]。
 #[derive(Clone)]
@@ -72,14 +95,23 @@ impl EventBus for KafkaEventBus {
         let mut cfg = ConsumerConfig::subscribe(topic, group);
         cfg.from_beginning = false;
         let mut consumer = self.pool.consumer(cfg).await?;
-        let (tx, rx) = mpsc::channel::<BusMessage>(256);
-        tokio::spawn(async move {
-            while let Some(item) = consumer.recv().await {
+        let (tx, rx) = mpsc::channel::<BusMessage>(EVENT_BUS_BUFFER_CAPACITY);
+        let mut shutdown = self.pool.shutdown_receiver();
+        let task = tokio::spawn(async move {
+            loop {
+                let item = tokio::select! {
+                    biased;
+                    () = wait_for_shutdown(&mut shutdown) => break,
+                    item = consumer.recv() => item,
+                };
+                let Some(item) = item else {
+                    break;
+                };
                 match item {
                     Ok(m) => {
                         let id = encode_bus_id(&m.topic, m.partition, m.offset);
                         let bus = BusMessage { id, payload: m.payload };
-                        if tx.send(bus).await.is_err() {
+                        if !send_or_shutdown(&tx, bus, &mut shutdown).await {
                             break;
                         }
                     }
@@ -87,7 +119,16 @@ impl EventBus for KafkaEventBus {
                 }
             }
         });
-        let s = stream::unfold(rx, |mut rx| async move { rx.recv().await.map(|m| (m, rx)) });
-        Ok(Box::pin(s))
+        Ok(Box::pin(BusSubscription { rx, task }))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn event_bus_buffer_is_intentionally_bounded() {
+        assert_eq!(EVENT_BUS_BUFFER_CAPACITY, 256);
     }
 }

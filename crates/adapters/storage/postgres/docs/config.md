@@ -13,6 +13,8 @@
 | `FOUNDATIONX_POSTGRESX_SSLMODE` | `disable` / `prefer` / `require` | 否（默认 `disable`） |
 | `FOUNDATIONX_POSTGRESX_MAX_POOL_SIZE` | 池上限，默认 `16` | 否 |
 | `FOUNDATIONX_POSTGRESX_APPLICATION_NAME` | `application_name` | 否 |
+| `FOUNDATIONX_POSTGRESX_ACQUIRE_TIMEOUT_MS` | 池等待截止时间，默认 `5000` | 否 |
+| `FOUNDATIONX_POSTGRESX_OPERATION_TIMEOUT_MS` | SQL/事务截止时间，默认 `10000` | 否 |
 
 加载入口：`PostgresConfig::from_env()`。
 
@@ -33,18 +35,18 @@ export FOUNDATIONX_POSTGRESX_SSLMODE=disable
 export DATABASE_URL='postgres://app:***@127.0.0.1:5432/app?sslmode=disable'
 ```
 
-## TLS 限制（当前构建）
+## TLS 策略
 
-- 驱动：`tokio-postgres` + `NoTls` + `deadpool-postgres`
-- `sslmode=disable`：支持
-- `sslmode=prefer`：降级为 NoTls（文档诚实声明）
-- `sslmode=require`（及 verify-*）：`connect` 返回 `ErrorKind::Invalid`，需后续 TLS feature
+- loopback / Unix socket 可显式 `disable`；`prefer` 也只允许本机
+- 远程地址必须 `require`，否则连接前 `Invalid`
+- `require` 使用 rustls + webpki roots；本版不支持自定义 CA / mTLS
 
 ## 安全
 
 - **禁止**把密码、完整 `DATABASE_URL` 写入 git / 日志
 - `PostgresConfig` 的 `Debug` 对 password / URL 脱敏
 - 生产密钥走环境或 secret provider，不进配置仓库
+- `operation_timeout` 同时下发 PostgreSQL `statement_timeout`；客户端 deadline 仍是最终边界
 
 ## 代码构建
 

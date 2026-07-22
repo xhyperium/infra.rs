@@ -1,7 +1,7 @@
 [package]
 name = "redisx"
 description = "production Redis client (KeyValueStore + optional PubSub; scaffold behind feature)"
-version = "0.3.2"
+version = "0.3.3"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -21,7 +21,7 @@ async-trait = { workspace = true }
 bytes = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.1" }
+contracts = { path = "../../../contracts", version = "0.1.2" }
 kernel = { path = "../../../kernel", version = "0.3.1" }
 redis = { workspace = true }
 resiliencx = { path = "../../../resiliencx", version = "0.1.1", features = [
@@ -30,6 +30,7 @@ resiliencx = { path = "../../../resiliencx", version = "0.1.1", features = [
 tokio = { workspace = true, features = ["sync", "time", "macros", "rt"] }
 
 [dev-dependencies]
+contract-testkit = { path = "../../../test-support/contracts", version = "0.1.2" }
 tokio = { workspace = true, features = [
   "rt-multi-thread",
   "macros",

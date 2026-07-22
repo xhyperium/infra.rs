@@ -1,10 +1,15 @@
-//! 错误映射（字符串启发式；rskafka 错误类型不统一暴露 SQLSTATE 类）。
+//! 错误映射（驱动文本仅用于分类；公开上下文不回显驱动原文）。
+
+use std::error::Error;
 
 use kernel::{ErrorKind, XError};
 
-/// 将驱动错误字符串映射为 [`XError`]。
+/// 将驱动错误映射为 [`XError`]，并保留真实 source。
 #[must_use]
-pub fn map_kafka_err(context: &str, err: impl std::fmt::Display) -> XError {
+pub fn map_kafka_err<E>(context: &str, err: E) -> XError
+where
+    E: Error + Send + Sync + 'static,
+{
     let s = err.to_string().to_ascii_lowercase();
     let kind = if s.contains("timeout") || s.contains("timed out") {
         ErrorKind::DeadlineExceeded
@@ -19,12 +24,21 @@ pub fn map_kafka_err(context: &str, err: impl std::fmt::Display) -> XError {
     } else {
         ErrorKind::Unavailable
     };
+    let summary = match kind {
+        ErrorKind::DeadlineExceeded => "驱动请求超时",
+        ErrorKind::Cancelled => "驱动请求已取消",
+        ErrorKind::Invalid => "驱动拒绝请求",
+        ErrorKind::Transient => "驱动报告可重试故障",
+        _ => "驱动不可用",
+    };
     match kind {
-        ErrorKind::DeadlineExceeded => XError::deadline_exceeded(format!("{context}: {err}")),
-        ErrorKind::Cancelled => XError::cancelled(format!("{context}: {err}")),
-        ErrorKind::Invalid => XError::invalid(format!("{context}: {err}")),
-        ErrorKind::Transient => XError::transient(format!("{context}: {err}")),
-        _ => XError::unavailable(format!("{context}: {err}")),
+        ErrorKind::DeadlineExceeded => {
+            XError::deadline_exceeded(format!("{context}: {summary}")).with_source(err)
+        }
+        ErrorKind::Cancelled => XError::cancelled(format!("{context}: {summary}")).with_source(err),
+        ErrorKind::Invalid => XError::invalid(format!("{context}: {summary}")).with_source(err),
+        ErrorKind::Transient => XError::transient(format!("{context}: {summary}")).with_source(err),
+        _ => XError::unavailable(format!("{context}: {summary}")).with_source(err),
     }
 }
 
@@ -34,19 +48,29 @@ mod tests {
 
     #[test]
     fn maps_timeout_to_deadline() {
-        let e = map_kafka_err("prod", "request timed out");
+        let e = map_kafka_err("prod", std::io::Error::other("request timed out"));
         assert_eq!(e.kind(), ErrorKind::DeadlineExceeded);
     }
 
     #[test]
     fn maps_auth_to_unavailable() {
-        let e = map_kafka_err("conn", "SASL authentication failed");
+        let e = map_kafka_err("conn", std::io::Error::other("SASL authentication failed"));
         assert_eq!(e.kind(), ErrorKind::Unavailable);
     }
 
     #[test]
     fn maps_unknown_topic_to_invalid() {
-        let e = map_kafka_err("pub", "Unknown topic or partition");
+        let e = map_kafka_err("pub", std::io::Error::other("Unknown topic or partition"));
         assert_eq!(e.kind(), ErrorKind::Invalid);
+    }
+
+    #[test]
+    fn public_context_is_sanitized_and_real_source_is_preserved() {
+        let error =
+            map_kafka_err("kafkax connect", std::io::Error::other("SASL authentication failed"));
+        assert_eq!(error.kind(), ErrorKind::Unavailable);
+        assert!(!error.context().contains("authentication failed"));
+        let source = std::error::Error::source(&error).expect("保留真实 source");
+        assert!(source.downcast_ref::<std::io::Error>().is_some());
     }
 }

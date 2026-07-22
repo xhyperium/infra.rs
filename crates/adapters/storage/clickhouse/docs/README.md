@@ -9,6 +9,6 @@
 
 ## 生产默认面
 
-ClickHousePool HTTP AnalyticsSink
+ClickHousePool HTTP(S) AnalyticsSink
 
 密钥仅 `FOUNDATIONX_*` 环境变量；默认 `cargo test` 离线绿灯；live 测试 `#[ignore]`。

@@ -81,7 +81,7 @@
 - Contracts：`KeyValueStore`、`EventBus`、`Repository`、`TxRunner`、Venue capability traits 和 `contract-testkit` 均存在；`LiveContractProfile` 是能力声明/辅助编排，不是实际环境证明。
 - Storage：redis/postgres/kafka/nats/oss/clickhouse/taos 都有生产默认客户端或协议面及 ignored live 测试；本轮没有 broker/database/object-store live 运行证据。
 - Exchange：Binance/OKX 已有 REST+WS、签名和 mock HTTP/WS fixture 路径，但只有公共 server-time live 入口；没有私有下单、撤单、账户、私有 WS 和重连的真实证据。
-- Tools：goalctl 的 doctor/validate/compile 和 verifyctl 的 plan/execute/report 可运行；它们是最小生产 CLI，不是完整 goal/evidence 审计平台。
+- Tools：goalctl 的 doctor/validate/compile 和 verifyctl 的 plan/execute/report 可运行；二者是最小 CLI，verifyctl **非生产 verifier**，也不是完整 goal/evidence 审计平台。
 
 ## 5. 发现明细
 

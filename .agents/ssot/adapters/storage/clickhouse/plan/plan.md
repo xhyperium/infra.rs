@@ -8,6 +8,7 @@
 | 2 | docs usage/config/operations + pool 单测 + benches | #189 |
 | 3 | bench 超时有界 + 公共 API 单测缺口 | #190 |
 | 4 | live env 构建器 + SSOT landing/draft 入库 | #191 · #193 |
+| 5 | 0.3.2 HTTPS/PEM CA、远程明文拒绝、端口别名与错误正文脱敏 | 本轮离线收敛 |
 
 ## 本文件角色
 
@@ -17,4 +18,5 @@
 ## 下一可选波次（OPEN）
 
 - native 9000 protocol / cluster / ReplicatedMergeTree 运维面
+- 真实 ClickHouse TLS/auth/deadline/并发证据
 - package stable / crates.io 发布流程

@@ -8,13 +8,14 @@
 //! - `FOUNDATIONX_OSSX_REGION`（可选）
 //!
 //! ```bash
-//! source scripts/live/export-foundationx-env.sh /path/to/oss.env
-//! cargo test -p ossx --test live_object_store -- --ignored --nocapture
+//! scripts/live/export-foundationx-env.sh --env dev -- \
+//!   cargo test -p ossx --test live_object_store -- --ignored
 //! ```
 //!
 //! 网络/鉴权失败时**如实** `Err`，不 mock 通过。
 
 use bytes::Bytes;
+use contract_testkit::assert_object_store;
 use contracts::ObjectStore;
 use ossx::OssClient;
 
@@ -38,18 +39,15 @@ async fn live_put_get_delete_under_infra_draft() {
 
     // ObjectStore trait 面
     let store: &dyn ObjectStore = &client;
-    if let Err(e) = store.put_object(&key, payload.clone()).await {
-        panic!("put_object failed (auth/network/config): {e}");
-    }
-    let got = match store.get_object(&key).await {
-        Ok(b) => b,
-        Err(e) => panic!("get_object failed: {e}"),
-    };
-    assert_eq!(got, payload, "round-trip bytes mismatch");
+    let suite_result = assert_object_store(store, &key, payload.clone()).await;
+    let get_result = store.get_object(&key).await;
 
-    // 客户端扩展：delete 清理
-    if let Err(e) = client.delete_object(&key).await {
-        panic!("delete_object cleanup failed: {e}");
-    }
+    // 无论 suite/get 成败都先执行清理，避免失败路径遗留计费对象。
+    let cleanup_result = client.delete_object(&key).await;
     client.close();
+
+    suite_result.expect("可移植 ObjectStore suite");
+    let got = get_result.expect("get_object failed");
+    assert_eq!(got, payload, "round-trip bytes mismatch");
+    cleanup_result.expect("delete_object cleanup failed");
 }

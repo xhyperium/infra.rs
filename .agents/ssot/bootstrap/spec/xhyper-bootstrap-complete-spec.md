@@ -2,92 +2,66 @@
 
 | 字段 | 值 |
 |---|---|
-| Status | 当前 `0.3.1`：L1 组合根（装配 kernel + contracts + observex + evidence）；**非** 完整应用运行时 |
-| Package / lib | `bootstrap` / `bootstrap`（别名 `xhyper-bootstrap` 仅作废弃兼容标签 / dual-mirror 文件名） |
+| Status | 当前 `0.3.2`：L1 唯一组合根；正式 storage contracts 注入已落地；**非**完整应用运行时 |
+| Package / lib | `bootstrap` / `bootstrap`（`xhyper-bootstrap` 仅为历史标签） |
 | Path | `crates/bootstrap` |
-| Layer | L1 唯一组合根（R3.1） |
+| Layer | L1 唯一组合根（R3.1 / ADR-016） |
 | Authority | 本文件是 active current-state spec |
-| Candidate | [SPEC-INFRA-BOOTSTRAP-002](../../../draft/bootstrap-complete-spec.md)（Draft，非权威，不覆盖本文） |
-| Implementation snapshot | `b0934baa`（2026-07-15） |
-| Document commit | `e0b98df4` |
-| Verified at | `e0b98df4`（相关实现路径未变化） |
+| Verified at | 2026-07-22 第 4 轮可复现实验 |
 
-> `[KNOWN]` 表示 Cargo、源码或 Accepted ADR 直接证明；`[INFERRED]` 表示由这些证据收窄出的结论。共同失败条件：相关权威或实现发生变化。
+> “已落地”只覆盖本文列出的组合合同，不等于交易栈、跨资源事务、全量生命周期或 package stable。
 
-## 1. 定位与已批准边界
+## 1. 定位与边界
 
-- `[KNOWN] HIGH` ADR-016 已裁定 `bootstrap` 为唯一组合根；runtime `gate` crate 已退役删除。
-- `[KNOWN] HIGH` 运行时依赖通过 typed `PlatformContext`、`AppContext` 和 bounded contexts 暴露。
-- `[KNOWN] HIGH` 禁止字符串、`Any`、`TypeId` Service Locator；禁止通用 `register` / `resolve` API。
-- `[KNOWN] HIGH` bootstrap 可按 R3.1 依赖其他 L1 完成装配，但不得跨层重导出具体 adapter 类型。
+- ADR-016 裁定 `bootstrap` 为唯一组合根；runtime `gate` 已退役。
+- 依赖通过 typed `PlatformContext`、`AppContext`、bounded contexts 与固定槽位集合暴露。
+- 禁止字符串、`Any`、`TypeId` Service Locator；禁止通用 `register` / `resolve`。
+- 不重导出具体 adapter 类型，也不在生产依赖中绑定 Redis、NATS 等实现。
 
-非目标：通用 DI/插件框架、配置解析、重试/调度/传输实现、业务状态机、Evidence 核心或 adapter 实现。
+非目标：通用 DI/插件框架、配置解析、重试/调度/传输实现、业务状态机、跨资源事务协调、泛型全局 Repository 注册、完整异步组件启动编排。
 
-bootstrap 仅做启动期依赖装配（kernel + contracts + observex + evidence 等 L1 组合），**不**承担完整应用运行时职责（无业务 app 生命周期编排）。
+## 2. 依赖与注入面
 
-## 2. 当前依赖
-
-| 依赖 | 当前用途 |
+| 依赖 / 类型 | 当前用途 |
 |---|---|
-| `kernel`（别名 `xhyper-kernel` 已废弃） | `ShutdownGuard` / `ShutdownSignal`、错误分类 |
-| `contracts`（别名 `xhyper-contracts` 已废弃） | `Instrumentation` 与 5 个细粒度 venue/storage trait object |
-| `observex`（别名 `xhyper-observex` 已废弃） | 默认 `TracingInstrumentation` |
-| `evidence`（别名 `xhyper-evidence` 已废弃） | 可选/必需模式的 `EvidenceAppender` |
+| `kernel` | shutdown 与统一错误语义 |
+| `contracts` | `Instrumentation`、`KeyValueStore`、`EventBus` 等正式契约 |
+| `observex` | 默认 `TracingInstrumentation` |
+| `evidence` | 可选或必需的 `EvidenceAppender` |
+| `ContractStoreSet` | 固定可选槽位：`Arc<dyn KeyValueStore>`、`Arc<dyn EventBus>` |
+| `StoreSet` / `Bounded*` | 兼容的本地有界句柄面，继续保留 |
 
-dev-dependencies 含 `binancex`（别名 `xhyper-binance` 已废弃）、`redisx`（别名 `xhyper-redisx` 已废弃）、`canonical`（别名 `xhyper-canonical` 已废弃）、`tokio`、`futures-util`；它们只证明测试装配，不证明生产应用已组装。
+Redis/NATS 仅为 dev-dependency，用于组合实验；这不把具体 adapter 引入 bootstrap 的生产依赖。
 
-## 3. 当前公开 API
+## 3. 公开合同
 
-| 类型 | 当前职责 |
-|---|---|
-| `Bootstrap` | instrumentation/evidence/shutdown builder |
-| `PlatformContext` | instrumentation、shutdown signal、可选 evidence |
-| `AppContext` | 已构建只读上下文及兼容窄访问器 |
-| `MarketDataContext` | market source、catalog、KV、platform |
-| `ExecutionContext` | execution venue、account、venue time、platform |
-| `BootstrappedApp` | `AppContext` + shutdown owner |
-| `ShutdownController` | 消费自身触发 shutdown guard |
-| `BootstrapError` | missing/invalid/unavailable 组合错误 |
+- `Bootstrap::with_contract_store_set` 注入正式 storage trait objects。
+- `PlatformContext::contract_store_set` 与 `AppContext::contract_store_set` 只读访问固定集合。
+- `ContractStoreSet` 提供 typed `with_*`、借用访问器与 `Arc` clone 访问器；没有运行时注册表。
+- `StoreSet`、`MarketDataContext`、`ExecutionContext` 兼容面保持可用。
+- `AsyncDrain` 以 LIFO 执行显式注册的关停 hook；不等于分布式编排器。
+- `require_evidence` 在 debug/release 的 infallible build 路径均 fail-closed；可恢复调用使用 `try_build*`。
 
-当前没有 `Gate`、`Capability`、`register_capability`、`AppContext::gate` 或动态 mutation API。
+## 4. 可复验证据
 
-## 4. 当前构建与错误语义
-
-| 路径 | 返回 | 当前校验 |
-|---|---|---|
-| `build` | `AppContext` | 仅 `debug_assert!(validate)` |
-| `try_build` | `Result<AppContext, BootstrapError>` | 强制校验 |
-| `build_app` | `BootstrappedApp` | 间接走 `build` |
-| `try_build_app` | `Result<BootstrappedApp, BootstrapError>` | 强制校验 |
-
-`require_evidence()` 只在 `try_build*` 路径保证 fail closed；release 下 infallible 路径可绕过该前置条件。这是当前兼容事实与已知差距，不是批准的长期安全合同。
-
-错误映射：missing dependency → `ErrorKind::Missing`；invalid configuration → `Invalid`；dependency unavailable → `Unavailable`。
-
-## 5. 当前成熟度与开放项
-
-- `[KNOWN] HIGH` workspace 非测试 Rust 消费方尚未使用 bootstrap；当前证据限于 14 个单元测试与 4 个 e2e 测试。
-- `[KNOWN] HIGH` bounded contexts 已验证 typed trait object 组合，但没有真实 app 生命周期证据。
-- `[KNOWN] HIGH` 当前没有通用组件启动/逆序补偿、composition manifest 或异步 drain/stop 合同。
-- `[INFERRED] HIGH` 上述候选能力若触及跨层 trait/模块布局，必须先走批准流程；详情见 Candidate Draft。
-
-反例条件：发现非测试 app/service 消费方会推翻“仅测试消费”；所有 public build 路径在 release 强制校验会推翻 require-evidence 差距。
-
-## 6. 验收
+固定摘要 Redis 与 NATS 容器实验通过：真实 `RedisClient` / `NatsEventBus` 注入
+`ContractStoreSet`，测试只从 `AppContext` 的正式 trait 访问器取得依赖并完成 KV set/get 与
+NATS subscribe/publish。该实验明确不证明跨资源原子事务。
 
 ```bash
-cargo test -p bootstrap
-cargo check -p bootstrap --all-targets
+cargo test -p bootstrap --all-targets
 cargo clippy -p bootstrap --all-targets -- -D warnings
-cargo xtl lint-deps
-cargo xtl no-new-gate
-cargo fmt -- --check
+node scripts/storage-composition-conformance.mjs
+cmp .agents/ssot/bootstrap/spec/spec.md \
+  .agents/ssot/bootstrap/spec/xhyper-bootstrap-complete-spec.md
 ```
 
-通过条件：本文 API/依赖与源码一致；无 runtime gate/Service Locator 回流；R3/R3.1 通过。测试绿色不等于真实应用或生产生命周期闭合。
+## 5. NO-GO / OPEN
 
-## 7. 追溯
+- 具体 adapter 的生产装配策略与凭据生命周期：由应用组合根调用方负责。
+- 跨资源事务、通用 Repository 槽位、动态 Service Locator：明确不提供。
+- composition manifest、全量异步启动与逆序补偿、交易栈端到端：OPEN。
+- package stable / Agent L5：未宣称。
 
-- [ADR-016](../../../../docs/architecture/adr/016-bootstrap-sole-composition-root.md)
-- [PLAN-GATE-RETIRE-001](../gate/plan/xhyper-gate-retirement-complete-plan.md)
-- `crates/bootstrap/{Cargo.toml,src/,tests/e2e.rs}`
+追溯：`crates/bootstrap/{src,tests/storage_composition_e2e.rs}`、
+`scripts/storage-composition-conformance.mjs`、`docs/ssot/bootstrap-ssot-alignment.md`。

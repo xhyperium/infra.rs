@@ -19,7 +19,7 @@ bytes = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
 canonical = { path = "../../../types/canonical", version = "0.1.2" }
-contracts = { path = "../../../contracts", version = "0.1.1" }
+contracts = { path = "../../../contracts", version = "0.1.2" }
 decimalx = { path = "../../../types/decimal", version = "0.1.2" }
 hex = { workspace = true }
 hmac = { workspace = true }

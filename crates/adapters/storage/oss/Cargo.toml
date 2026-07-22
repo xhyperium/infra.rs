@@ -1,7 +1,7 @@
 [package]
 name = "ossx"
 description = "Aliyun OSS ObjectStore adapter (reqwest + OSS V1 signing)"
-version = "0.3.1"
+version = "0.3.2"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -18,7 +18,7 @@ async-trait = { workspace = true }
 base64 = { workspace = true }
 bytes = { workspace = true }
 chrono = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.1" }
+contracts = { path = "../../../contracts", version = "0.1.2" }
 hmac = { workspace = true }
 kernel = { path = "../../../kernel", version = "0.3.1" }
 reqwest = { workspace = true }
@@ -31,8 +31,9 @@ tokio = { workspace = true }
 url = { workspace = true }
 
 [dev-dependencies]
-tokio = { workspace = true }
+contract-testkit = { path = "../../../test-support/contracts", version = "0.1.2" }
 criterion = { workspace = true }
+tokio = { workspace = true }
 
 [[bench]]
 name = "put_get"

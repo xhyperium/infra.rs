@@ -17,26 +17,26 @@ fn unique_payload() -> String {
 }
 
 #[tokio::test]
-#[ignore = "requires live NATS; run with --ignored when server available"]
+#[ignore = "需要可用 NATS；请在服务端就绪后使用 --ignored 运行"]
 async fn live_pub_sub_content() {
-    let cfg = NatsConfig::from_env();
-    let pool = NatsPool::connect(cfg).await.expect("connect");
-    let health = pool.health().await.expect("health");
-    assert!(health.ready, "not ready: {}", health.detail);
+    let cfg = NatsConfig::from_env().expect("NATS 环境配置合法");
+    let pool = NatsPool::connect(cfg).await.expect("连接 NATS");
+    let health = pool.health().await.expect("读取健康状态");
+    assert!(health.ready, "服务端未就绪：{}", health.detail);
 
     let subject = format!("infra.draft.natsx.{}", std::process::id());
     let payload = unique_payload();
 
-    let mut sub = pool.subscribe(&subject).await.expect("subscribe");
+    let mut sub = pool.subscribe(&subject).await.expect("订阅主题");
     // 订阅注册后短暂等待
     tokio::time::sleep(Duration::from_millis(200)).await;
 
-    pool.publish(&subject, Bytes::from(payload.clone())).await.expect("publish");
+    pool.publish(&subject, Bytes::from(payload.clone())).await.expect("发布消息");
 
     let msg = tokio::time::timeout(Duration::from_secs(10), sub.recv())
         .await
-        .expect("timeout waiting message")
-        .expect("subscription closed");
+        .expect("等待消息超时")
+        .expect("订阅已关闭");
     assert_eq!(msg.payload.as_ref(), payload.as_bytes());
     assert_eq!(msg.subject, subject);
 
@@ -44,21 +44,21 @@ async fn live_pub_sub_content() {
 }
 
 #[tokio::test]
-#[ignore = "requires live NATS; EventBus facade"]
+#[ignore = "需要可用 NATS；验证 EventBus facade"]
 async fn live_event_bus_roundtrip() {
-    let pool = NatsPool::connect_from_env().await.expect("connect");
+    let pool = NatsPool::connect_from_env().await.expect("连接 NATS");
     let bus = NatsEventBus::new(pool.clone());
     let subject = format!("infra.draft.natsx.eb.{}", std::process::id());
     let payload = unique_payload();
 
-    let mut stream = bus.subscribe(&subject).await.expect("sub");
+    let mut stream = bus.subscribe(&subject).await.expect("订阅主题");
     tokio::time::sleep(Duration::from_millis(200)).await;
-    bus.publish(&subject, Bytes::from(payload.clone())).await.expect("pub");
+    bus.publish(&subject, Bytes::from(payload.clone())).await.expect("发布消息");
 
     let m = tokio::time::timeout(Duration::from_secs(10), stream.next())
         .await
-        .expect("timeout")
-        .expect("msg");
+        .expect("等待消息超时")
+        .expect("消息不存在");
     assert_eq!(m.payload.as_ref(), payload.as_bytes());
     assert!(m.id.contains(&subject), "id={}", m.id);
 

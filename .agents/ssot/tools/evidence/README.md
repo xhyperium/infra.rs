@@ -1,55 +1,25 @@
-<!-- infra.rs tools SSOT -->
-> **本仓 SSOT**：`.agents/ssot/tools/evidence/`  
-> 实现：`crates/evidence`（`xhyper-evidence`）最小面已落地。  
-> 文档 COMPLETE **≠** 本仓 ship。对齐：[docs/ssot/evidence-ssot-alignment.md](../../../../docs/ssot/evidence-ssot-alignment.md) · [docs/ssot/tools-ssot-alignment.md](../../../../docs/ssot/tools-ssot-alignment.md)
+# tools/evidence — 历史重定向入口
 
-# tools/evidence — Goal 管线契约
+> **状态**：历史重定向；本目录不再持有 active current-state spec。
+> **canonical SSOT**：`.agents/ssot/evidence/spec/spec.md`，镜像为
+> `.agents/ssot/evidence/spec/xhyper-evidence-complete-spec.md`。
+> **实现**：`crates/evidence`（package `evidence` 0.1.1）。
 
-> 实现 / 代码唯一位置：`crates/evidence`  
-> **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-evidence-complete-spec.md](spec/xhyper-evidence-complete-spec.md)  
-> **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
-> **布局**：对齐 [`.agents/ssot/kernel/`](../../kernel/)（[AGENTS.md](../../../../AGENTS.md) §2）  
-> **状态**：布局已对齐 kernel · 战役内容未宣称闭合
+PR #233 已将 evidence 的 active 规格迁移到顶层 `.agents/ssot/evidence/`。保留本入口仅用于兼容历史链接和战役材料；这里的 goal/plan/review/release 等文件只可作为历史上下文，不能覆盖 canonical current-state 规格，也不能单独证明 ship、package stable 或合规产品就绪。
 
-## 11 层映射
+权威落地边界见：
 
-| 管线层 | 路径 | 状态 |
-|--------|------|------|
-| Goal | [goal/goal.md](goal/goal.md) | 入口存在 · 未宣称 AC 闭合 |
-| Spec | [spec/spec.md](spec/spec.md) | **SSOT 入口**（布局迁移） |
-| Design | [design/design.md](design/design.md) | 入口 / 占位 |
-| Plan | [plan/plan.md](plan/plan.md) | 入口；战役文件可并列于 plan/ |
-| Tasks | [tasks/tasks.md](tasks/tasks.md) | 入口 / 占位 |
-| Prompt | [prompt/prompt.md](prompt/prompt.md) | 入口 / 占位 |
-| **Code** | **`crates/evidence`** | 实现不在 `.agents/ssot/` |
-| Test | [test/test.md](test/test.md) | 入口 / 占位 |
-| Review | [review/review.md](review/review.md) | 默认 NOT PASS |
-| Release | [release/release.md](release/release.md) | 默认 BLOCKED |
-| Retrospective | [retrospective/retrospective.md](retrospective/retrospective.md) | 入口 / 占位 |
+- `.agents/ssot/evidence/spec/spec.md`
+- `docs/ssot/evidence-ssot-alignment.md`
+- `docs/ssot/tools-ssot-alignment.md`
 
-## 横切
-
-| 制品 | 路径 |
-|------|------|
-| Matrix | [matrix/matrix.md](matrix/matrix.md) |
-| Gate | [gate/gate.md](gate/gate.md) |
-| Evidence | [evidence/](evidence/) |
-
-## 硬限制
-
-1. 无证据不得宣称 Done / 全闭合 / 5/5 / Spec Approved（除非既有战役文件已证明）。
-2. 本树禁止 `src/`、`Cargo.toml`、`*.rs` 实现副本（C-LINT-007）。
-3. 布局迁移 **≠** 实现完成 **≠** package stable。
-4. 双镜像：`spec/spec.md` 与 `spec/xhyper-evidence-complete-spec.md` 须 `cmp` 同构。
-
-## 验证
+验证：
 
 ```bash
-cmp .agents/ssot/tools/evidence/spec/spec.md \
-    .agents/ssot/tools/evidence/spec/xhyper-evidence-complete-spec.md
-# 结构：README + 11 层目录 + evidence/ 横切
-test -f .agents/ssot/tools/evidence/README.md
-test -f .agents/ssot/tools/evidence/spec/spec.md
+test -f .agents/ssot/evidence/spec/spec.md
+cmp .agents/ssot/evidence/spec/spec.md \
+  .agents/ssot/evidence/spec/xhyper-evidence-complete-spec.md
+node scripts/quality-gates/check-ssot-current-state.mjs
 ```
 
-**布局对齐：是 · 战役全闭合：未宣称 · 禁止假 Done。**
+禁止在本目录重新建立第二份 active spec；迁移期引用应直接改指 canonical 路径。

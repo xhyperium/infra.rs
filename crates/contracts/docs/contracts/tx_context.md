@@ -9,12 +9,12 @@
 ## ownership
 
 - 由 [`TxRunner::begin_tx`](./tx_runner.md) 产出 `Box<dyn TxContext>`；调用方独占可变借用直至 commit/rollback。
-- 终结后不得再用于业务写。
+- 当前 trait 不暴露业务写方法；终结后不得再使用上下文。
 
 ## success
 
-- `commit` → `Ok(())`：变更对后续读可见（实现定义隔离级别）。
-- `rollback` → `Ok(())`：丢弃未提交变更。
+- `commit` → `Ok(())`：后端确认生命周期提交完成；具体业务可见性不由本 trait 证明。
+- `rollback` → `Ok(())`：后端确认生命周期回滚完成。
 
 ## failure / XError kinds
 
@@ -33,16 +33,17 @@
 ## cancel / timeout
 
 - 无独立 cancel API；事务边界由编排层控制。
-- 超时：实现可 `rollback` 后返回 `DeadlineExceeded`。
+- Future 取消/panic 时通用合同只保证 drop context，不保证可等待异步 rollback。
 
 ## ordering
 
-- 单上下文内操作顺序即提交顺序；跨事务顺序由存储隔离级别决定。
+- 本 trait 没有业务操作面；跨事务顺序由具体存储实现定义。
 
 ## resource release
 
-- 必须 `commit` 或 `rollback` 释放后端事务句柄。
-- 参考编排 `run_tx_commit_on_ok`：Ok→commit，Err→rollback（rollback 错误被吞并保留业务 Err）。
+- 正常路径必须 `commit` 或 `rollback` 释放后端事务句柄。
+- 推荐 `run_tx_lifecycle`：结构化保留业务+rollback 双失败；commit 失败不自动 rollback。
+- deprecated `run_tx_commit_on_ok` 只保留兼容，会丢弃 rollback 错误。
 
 ## not-found
 
@@ -54,7 +55,7 @@
 
 ## object-safety
 
-- 是（`dyn TxContext`，但 `&mut self` 方法）。
+- 是（`dyn TxContext`，`Send` + `&mut self`；不要求 `Sync`）。
 
 ## fake entry
 
@@ -63,4 +64,4 @@
 ## test entry
 
 - `fakes::tests::fake_tx_context_*` / `recording_tx_runner_commit_and_rollback`
-- `run_tx_commit_on_ok_*`（lib 单测 + `tests/conformance_first_batch.rs`）
+- `run_tx_lifecycle_*`（四类错误、取消/drop、对象安全）

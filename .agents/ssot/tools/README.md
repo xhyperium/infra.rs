@@ -8,10 +8,10 @@
 
 | 子域 | SSOT 路径 | 本仓实现路径 | 本仓状态 |
 |------|----------|--------------|----------|
-| `evidence` | `.agents/ssot/tools/evidence/` | `crates/evidence` | **最小面已落地**；见 [evidence-ssot-alignment](../../../docs/ssot/evidence-ssot-alignment.md) |
+| `evidence` | `.agents/ssot/evidence/`（canonical） | `crates/evidence` | 最小面已落地；`tools/evidence` 仅历史重定向 |
 | `goalctl` | `.agents/ssot/tools/goalctl/` | `tools/goalctl` | **workspace member**（#188）；最小 Goal→Contract CLI；[landing](goalctl/plan/infra-rs-landing.md) |
 | `xtask` | `.agents/ssot/tools/xtask/` | `tools/xtask`（期望） | **未落地**；`cargo xtask` alias 可忽略 |
-| `verifyctl` | `.agents/ssot/tools/verifyctl/` | `tools/verifyctl` | **workspace member**（#188）；最小 plan/execute/report；[landing](verifyctl/plan/infra-rs-landing.md) |
+| `verifyctl` | `.agents/ssot/tools/verifyctl/` | `tools/verifyctl` | **workspace member**（#188）；最小 plan/execute/report，**非生产 verifier**；[landing](verifyctl/plan/infra-rs-landing.md) |
 
 ### draft 入库（只读快照）
 
@@ -40,12 +40,14 @@ test -f .agents/ssot/tools/xtask/README.md
 test -f .agents/ssot/tools/verifyctl/README.md
 test -f .agents/ssot/tools/goalctl/plan/infra-rs-landing.md
 test -f .agents/ssot/tools/verifyctl/plan/infra-rs-draft-spec.md
-test -f .agents/ssot/tools/evidence/spec/spec.md
+test -f .agents/ssot/evidence/spec/spec.md
+cmp .agents/ssot/evidence/spec/spec.md \
+  .agents/ssot/evidence/spec/xhyper-evidence-complete-spec.md
 cargo test -p evidence -p goalctl -p verifyctl --all-targets
 cargo run -p goalctl -- doctor
 ```
 
-**布局对齐：是 · 最小生产 CLI：goalctl/verifyctl 已 member · 禁止假 Done。**
+**布局对齐：是 · 最小 CLI：goalctl/verifyctl 已 member · verifyctl 非生产 verifier · 禁止假 Done。**
 
 ## 对齐
 

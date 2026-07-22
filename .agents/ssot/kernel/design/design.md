@@ -10,7 +10,9 @@
 | Maturity | L1 Internal Ready；L4 仅限已证支持面 |
 | Production certification | 未声明 |
 
-本设计解释当前实现边界与关键取舍。规范定义“必须是什么”，源码与测试提供可执行事实，gate 只记录与当前 commit 绑定的新鲜验证结果。
+本设计解释当前实现边界与关键取舍。`spec.md` 定义必须满足的契约；本设计说明边界与取舍；源码和测试提供可执行事实。gate 只记录与当前 commit 绑定的新鲜验证结果。
+
+仓库位置：`evidence` crate 的 `path: crates/evidence`，其 current-state spec 位于 `.agents/ssot/evidence/`；`tools/evidence` 不是当前路径。
 
 ## 1. 总体结构
 
@@ -118,6 +120,8 @@ pub fn wait_timeout(
 `Ok(true)`、`Ok(false)` 和 `Err(DeadlineOverflow)` 是三个不可合并的结果。下游必须显式处理错误，不得使用 `unwrap_or(false)` 再次抹平语义。
 
 ## 6. 被拒绝的方案
+
+公开面以 `docs/api-baselines/kernel.txt` 与 `scripts/quality-gates/check-public-api.mjs` 做棘轮；并发协议由 `kernel-loom.yml` 持续验证。`archgate` 与 `.architecture/**` 对本仓为 OOS，不能作为本仓门禁或证据来源。
 
 | 方案 | 拒绝原因 |
 |------|----------|

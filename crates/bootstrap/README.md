@@ -1,6 +1,6 @@
-# bootstrap（crate 名 `xhyper-bootstrap`）
+# bootstrap（package / lib 均为 `bootstrap`）
 
-L1 **唯一组合根**（R3.1 豁免 / ADR-016）：启动期把 instrumentation、关停信号、可选 evidence 组装成 typed 只读上下文。
+L1 **唯一组合根**（R3.1 豁免 / ADR-016）：启动期把 instrumentation、关停信号、可选 evidence 与固定正式 storage contracts 组装成 typed 只读上下文。
 
 库名（`lib`）为 `bootstrap`。  
 契约 SSOT：`.agents/ssot/bootstrap/spec/spec.md`。  
@@ -13,6 +13,7 @@ L1 **唯一组合根**（R3.1 豁免 / ADR-016）：启动期把 instrumentation
 3. **`BootstrappedApp` + `ShutdownController`** — 关停所有权（单次触发）  
 4. **`MarketDataContext` / `ExecutionContext`** — 有界服务上下文  
 5. **`BootstrapError`** — Missing / Invalid / Unavailable → `kernel::ErrorKind`
+6. **`ContractStoreSet`** — 正式 `KeyValueStore` / `EventBus` 固定槽位；无动态注册
 
 ## ADR-005 注入链
 
@@ -27,7 +28,7 @@ L1 **唯一组合根**（R3.1 豁免 / ADR-016）：启动期把 instrumentation
 
 - 通用 DI / 插件框架、配置解析、重试/调度/传输实现  
 - runtime `gate` / 字符串 `register`/`resolve`  
-- 完整 evidence wire 协议与完整 async venue trait（仍 DEFER，以 `traits` 最小对象安全替面保留组合语义）
+- 跨资源事务、泛型 Repository 注册、完整应用启动编排
 
 ## 最小用法
 
@@ -57,12 +58,14 @@ fn main() {
 ```bash
 cargo test -p bootstrap --all-targets
 cargo clippy -p bootstrap --all-targets -- -D warnings
+node scripts/storage-composition-conformance.mjs
 cargo llvm-cov -p bootstrap --all-targets --fail-under-lines 100 --summary-only
 ```
 
 ## 关停与 drain 合同（infra-s9t.5）
 
 1. `Bootstrap::build_app` 给出 `ShutdownController`（触发）与 `AppContext.shutdown_signal`（观察）。
-2. **本 crate 不编排** 连接/任务 drain：应用须在收到信号后自行：停收新请求 → 排空 in-flight → 关闭依赖（倒序）。
-3. 可用 `ShutdownSignal::wait` / `wait_timeout` 阻塞观察；async runtime 须自适配（kernel 无 tokio）。
-4. `require_evidence`：release 下 `build`/`build_app` 在未注入时 **fail-closed（panic）**；可恢复路径用 `try_build` / `try_build_app`。
+2. `register_drain` 可登记同步 `FnOnce() -> XResult<()>` hook，`run_drain` 按 LIFO 执行；异步资源须由应用包装或先行终结。
+3. 该 hook 面不负责完整异步启动、分布式编排或自动发现依赖；应用仍须定义停收、排空和关闭顺序。
+4. 可用 `ShutdownSignal::wait` / `wait_timeout` 阻塞观察；async runtime 须自适配（kernel 无 tokio）。
+5. `require_evidence`：release 下 `build`/`build_app` 在未注入时 **fail-closed（panic）**；可恢复路径用 `try_build` / `try_build_app`。

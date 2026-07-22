@@ -21,4 +21,4 @@
 [matrix](matrix/matrix.md) · [wire matrix](plan/wire-commitment-matrix.md) ·
 [residual](plan/residual-open.md)
 
-历史 complete/campaign 文件只作来源，不与 active spec 做 `cmp`，也不继承 PASS。
+同目录 `spec/xhyper-canonical-complete-spec.md` 是 active spec 的机械镜像，必须逐字同构；`20260717/` 与其他 campaign 文件才是历史来源，不继承 PASS。

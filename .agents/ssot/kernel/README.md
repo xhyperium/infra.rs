@@ -24,7 +24,7 @@
 - 仅 `error` / `clock` / `lifecycle`，默认 feature 为空，生产依赖仅 `thiserror`。
 - `ClockDomain` 与进程共享单调 origin 是当前批准语义；跨 domain 比较返回 `None`。
 - `wait_timeout` 的不可表示 deadline 返回 typed error，不得伪装普通超时。
-- 历史 complete spec、crates.io 记录或旧 evidence 不与 active spec 做 `cmp`，也不能证明当前提交。
+- 同目录 `spec/xhyper-kernel-complete-spec.md` 是 active spec 的机械镜像，必须逐字同构；dated campaign、crates.io 记录与旧 evidence 才是历史来源，不能证明当前提交。
 
 ## 验证
 

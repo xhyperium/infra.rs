@@ -24,12 +24,14 @@
 #![deny(missing_docs)]
 
 mod bounded;
+mod contract_store_set;
 mod drain;
 mod error;
 mod store_set;
 pub mod traits;
 
 pub use bounded::{ExecutionContext, MarketDataContext};
+pub use contract_store_set::ContractStoreSet;
 pub use drain::{AsyncDrain, DrainStepResult};
 pub use error::{BootstrapError, into_xresult};
 pub use observex::TracingInstrumentation;
@@ -57,6 +59,7 @@ pub struct PlatformContext {
     shutdown_signal: ShutdownSignal,
     evidence: Option<Arc<dyn EvidenceAppenderTrait>>,
     store_set: StoreSet,
+    contract_store_set: ContractStoreSet,
 }
 
 impl PlatformContext {
@@ -78,6 +81,11 @@ impl PlatformContext {
     /// 已接线的适配器集合。
     pub fn store_set(&self) -> &StoreSet {
         &self.store_set
+    }
+
+    /// 已接线的正式 storage contracts。
+    pub fn contract_store_set(&self) -> &ContractStoreSet {
+        &self.contract_store_set
     }
 }
 
@@ -133,6 +141,7 @@ pub struct Bootstrap {
     shutdown_guard: Option<ShutdownGuard>,
     shutdown_signal: ShutdownSignal,
     store_set: StoreSet,
+    contract_store_set: ContractStoreSet,
     drain: AsyncDrain,
 }
 
@@ -149,6 +158,7 @@ impl Bootstrap {
             shutdown_guard: Some(guard),
             shutdown_signal: signal,
             store_set: StoreSet::new(),
+            contract_store_set: ContractStoreSet::new(),
             drain: AsyncDrain::new(),
         }
     }
@@ -174,6 +184,12 @@ impl Bootstrap {
     /// 注入完整 [`StoreSet`]（替换既有接线）。
     pub fn with_store_set(mut self, store_set: StoreSet) -> Self {
         self.store_set = store_set;
+        self
+    }
+
+    /// 注入正式 [`ContractStoreSet`]（替换既有正式 contract 接线）。
+    pub fn with_contract_store_set(mut self, store_set: ContractStoreSet) -> Self {
+        self.contract_store_set = store_set;
         self
     }
 
@@ -212,6 +228,7 @@ impl Bootstrap {
                 shutdown_signal: self.shutdown_signal.clone(),
                 evidence: self.evidence.clone(),
                 store_set: self.store_set.clone(),
+                contract_store_set: self.contract_store_set.clone(),
             },
             instrumentation: self.instrumentation,
             shutdown_signal: self.shutdown_signal,
@@ -294,6 +311,11 @@ impl AppContext {
     /// 适配器 StoreSet。
     pub fn store_set(&self) -> &StoreSet {
         self.platform.store_set()
+    }
+
+    /// 正式 storage contracts。
+    pub fn contract_store_set(&self) -> &ContractStoreSet {
+        self.platform.contract_store_set()
     }
 
     /// 关停排空编排器。

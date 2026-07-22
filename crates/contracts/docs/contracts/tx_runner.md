@@ -29,7 +29,7 @@
 
 ## cancel / timeout
 
-- `begin_tx` 可被 Future 取消；已开启事务由调用方负责 rollback。
+- `begin_tx` 可被 Future 取消；work Future 取消后通用 helper 只 drop context，不保证异步 rollback。
 
 ## ordering
 
@@ -38,7 +38,8 @@
 ## resource release
 
 - 调用方必须终结每个 `TxContext`。
-- 推荐 `run_tx_commit_on_ok(&dyn TxRunner, …)`。
+- 推荐 `run_tx_lifecycle(&dyn TxRunner, …)`；它只驱动生命周期，不证明闭包捕获的外部操作原子绑定。
+- `run_tx_commit_on_ok`、`tx_kv_set`、`run_on_tx_context` 仅为 deprecated 兼容入口。
 
 ## not-found
 
@@ -58,5 +59,5 @@
 
 ## test entry
 
-- `tx_runner_is_object_safe`、`recording_tx_runner_commit_and_rollback`
+- `tx_runner_is_object_safe`、`tx_lifecycle_*`
 - `tests/conformance_first_batch.rs` / `tests/public_surface.rs`

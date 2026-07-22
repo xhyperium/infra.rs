@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **storage 七域生产边界加固**：ClickHouse/Kafka/NATS/OSS/Postgres/Redis/TAOS
+  同步 active SSOT，补齐 fail-closed 配置、deadline/取消、资源上界、错误脱敏与受控 live；
+  Cluster/HA、native EOS、STS、Native SQL 等未验证能力继续保持 NO-GO。
+- **contracts 事务与 conformance 合同**：新增结构化 `TxRunError` / `run_tx_lifecycle`，明确现有 `TxContext` 仅为非原子生命周期面；`LiveHandles` 对无句柄 capability fail-closed；补齐四个 Batch-2 portable suite 并接入真实 adapter ignored targets（仅编译证据，live 未运行）
+- **SSOT current-state 治理**：冻结 Cargo metadata 的 24 个 package 名称/路径；唯一化顶层 evidence active spec；纠正 goalctl/verifyctl、configx、schedulex 与 exchange 陈旧声明；新增 fail-closed 门禁、隔离负向测试和 CI（签名 REST/公共 WS 不解除交易 NO-GO）
 - **工程宪章 v1.5.0 拆分**：正文 SSOT 迁至 `docs/constitution/` 分章（`01`–`08`）；根 `CONSTITUTION.md` 改为兼容索引；更新 AGENTS/CLAUDE/governance 引用与 `constitution.yml` 路径触发
 
 ### Added
@@ -31,7 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `scripts/check.mjs` 增加 docs status matrix 新鲜度检查
 - `docs/status/README.md` / `docs/README.md` 收录自动生成矩阵
 - **Agent 入口索引同步**：`AGENTS.md` / `CLAUDE.md` 补齐 workspace members（evidence / observex / transport 等）与完整 `docs/ssot/*` 域链接，与分类后的文档树一致
-
 
 - **`docs/` 严格分类**：根目录不再平铺内容文件；按职责拆为
   - `docs/governance/` — 版本、worktree、语言约定、ASD-STE100、量化规范
@@ -133,4 +137,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.3.0]: https://github.com/xhyperium/infra.rs/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/xhyperium/infra.rs/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/xhyperium/infra.rs/releases/tag/v0.1.0
-- E2E complete flow test

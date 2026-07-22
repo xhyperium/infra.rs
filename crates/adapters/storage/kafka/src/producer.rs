@@ -1,14 +1,13 @@
 //! Kafka 生产者：等待 broker 确认。
 
-use std::collections::BTreeMap;
-use std::time::Duration;
-
 use bytes::Bytes;
 use chrono::Utc;
 use kernel::{XError, XResult};
 use rskafka::record::Record;
+use std::collections::BTreeMap;
 
 use crate::error_map::map_kafka_err;
+use crate::lifecycle::wait_for_shutdown;
 use crate::message::Delivery;
 use crate::pool::KafkaPool;
 
@@ -36,18 +35,25 @@ impl KafkaProducer {
             return Err(XError::invalid("kafkax: topic 不能为空"));
         }
         let client = self.pool.partition_client(topic, partition).await?;
+        let _operation = self.pool.start_operation()?;
+        let mut shutdown = self.pool.shutdown_receiver();
         let record = Record {
             key: None,
             value: Some(payload.to_vec()),
             headers: BTreeMap::new(),
             timestamp: Utc::now(),
         };
-        match tokio::time::timeout(
-            self.pool.config().delivery_timeout.max(Duration::from_secs(1)),
-            client.produce(vec![record], KafkaPool::compression()),
-        )
-        .await
-        {
+        match tokio::select! {
+            biased;
+            () = wait_for_shutdown(&mut shutdown) => {
+                self.pool.record_publish_err();
+                return Err(XError::cancelled("kafkax produce 因 pool 关闭而取消"));
+            }
+            result = tokio::time::timeout(
+                self.pool.config().delivery_timeout,
+                client.produce(vec![record], KafkaPool::compression()),
+            ) => result,
+        } {
             Ok(Ok(offsets)) => {
                 let offset = offsets.first().copied().unwrap_or(0);
                 self.pool.record_publish_ok();
@@ -57,9 +63,9 @@ impl KafkaProducer {
                 self.pool.record_publish_err();
                 Err(map_kafka_err("kafkax produce", e))
             }
-            Err(_) => {
+            Err(error) => {
                 self.pool.record_publish_err();
-                Err(XError::deadline_exceeded("kafkax produce timeout"))
+                Err(XError::deadline_exceeded("kafkax produce 超时").with_source(error))
             }
         }
     }

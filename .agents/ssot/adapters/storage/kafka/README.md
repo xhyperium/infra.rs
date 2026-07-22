@@ -11,7 +11,7 @@
 - 落地说明：[plan/infra-rs-landing.md](plan/infra-rs-landing.md)
 - draft SPEC_GOAL 快照：[plan/infra-rs-draft-spec-goal.md](plan/infra-rs-draft-spec-goal.md)
 - 对齐：[docs/ssot/adapters-ssot-alignment.md](../../../../docs/ssot/adapters-ssot-alignment.md)
-- **状态**：生产默认客户端 **P0 已落地**；package stable **未宣称**
+- **状态**：AMO 与单 owner 应用 ALO 有单节点 broker 固定摘要；TLS/CA/SASL-PLAIN 有隔离 harness 与固定摘要；group/rebalance/自动重连/native EOS **NO-GO**；package stable **未宣称**
 
 ## 11 层映射
 

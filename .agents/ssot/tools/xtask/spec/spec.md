@@ -55,7 +55,7 @@
 
 | Layer | 路径前缀 | 语义 |
 |---|---|---|
-| `Kernel` | `crates/kernel/`、`crates/infra/gate/`、`tools/evidence/`、`crates/testkit/` | L0 根与测试/证据边界 |
+| `Kernel` | `crates/kernel/`、`crates/evidence/`、`crates/testkit/` | L0 根与测试/证据边界；gate 为 OOS |
 | `Types` | `crates/types/` | 跨层共享 DTO |
 | `Contract` | `crates/contracts/` | 契约层 trait 出口 |
 | `Infra` | `crates/infra/`（不含 gate） | L1 基础设施 |
@@ -73,7 +73,7 @@
 **证据（spec §3）：** 按 `manifest_path` 前缀判定。
 
 - 路径含 `/tools/xtask/` 或以 `/tools/xtask/Cargo.toml` 结尾 → `XTask`；
-- 路径含 `/crates/kernel/`、`/crates/infra/gate/`、`/tools/evidence/` 或 `/crates/testkit/` → `Kernel`；
+- 路径含 `/crates/kernel/`、`/crates/evidence/` 或 `/crates/testkit/` → `Kernel`；
 - 以此类推；
 - 路径兜底失败时，按 crate 名识别 `xtask` / `xlibgate` / `xlib_harness` / `xlib_evidence` / `quant`；
 - 均不匹配 → `Unknown`。
@@ -132,7 +132,7 @@ normal 依赖不在 `allowed_targets(from)` 内 → 违规。
 ### 4.8 R6 — `check_r6`：禁止跨层 `pub use` 具体实现
 
 **证据（现状）**：`lint_deps.rs::check_r6` 已实现 R6 的源码级检查：递归扫描每个非
-`Types`/`Legacy` 层 crate 的 `src/` 目录，逐行匹配以 `pub use ` 开头、紧跟
+`Types`/`Legacy` 层 crate 的 `src/` 目录，逐行匹配以 `pub use` 加空格开头、紧跟
 `crate_name::` 的语句；若 `crate_name` 解析到 `Infra`/`Storage`/`Exchange` 层且与当前
 crate 不同层，判定为 R6 违规。`/types/` 层与 `Legacy`（`stdio`/`quant`，ADR-008 过渡期）豁免。
 

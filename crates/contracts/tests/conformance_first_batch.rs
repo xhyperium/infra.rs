@@ -5,7 +5,7 @@ use contract_testkit::{
     RecordingTxRunner, assert_event_bus, assert_instrumentation, assert_key_value_store,
     assert_repository, assert_tx_runner,
 };
-use contracts::run_tx_commit_on_ok;
+use contracts::run_tx_lifecycle;
 use kernel::XError;
 
 #[tokio::test]
@@ -39,7 +39,7 @@ async fn tx_runner_and_context_commit_rollback_paths() {
     assert_tx_runner(&FakeTxRunner).await.expect("fake tx suite");
 
     let runner = RecordingTxRunner::new();
-    let n = run_tx_commit_on_ok(&runner, |_ctx| async move { Ok::<_, XError>(11u32) })
+    let n = run_tx_lifecycle(&runner, || async move { Ok::<_, XError>(11u32) })
         .await
         .expect("commit path");
     assert_eq!(n, 11);
@@ -47,10 +47,9 @@ async fn tx_runner_and_context_commit_rollback_paths() {
     assert!(!*runner.rolled_back.lock().expect("lock"));
 
     let runner = RecordingTxRunner::new();
-    let _ = run_tx_commit_on_ok(&runner, |_ctx| async move {
-        Err::<(), _>(XError::invalid("业务校验失败"))
-    })
-    .await;
+    let _ =
+        run_tx_lifecycle(&runner, || async move { Err::<(), _>(XError::invalid("业务校验失败")) })
+            .await;
     assert!(*runner.rolled_back.lock().expect("lock"), "失败路径必须 rollback");
     assert!(!*runner.committed.lock().expect("lock"));
 }

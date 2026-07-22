@@ -1,69 +1,93 @@
 # natsx 实现规范
 
-状态：当前 `0.3.1` 实现合同（Mock + async-nats 真实驱动已落地；真测 `#[ignore]`，未达 M3）。**未宣称 package stable。**
+状态：当前 `0.3.2` 实现合同（`async-nats 0.50` 默认真实路径；Core 与 JetStream 语义分层）。**未宣称 package stable。**
 
-## 0. 权威、职责与非目标
+## 0. 权威、职责与范围
 
-权威顺序：Constitution → XLib spec → 已批准 ADR → 本文 → 代码。**Evidence** 为直接事实，
-**Inference** 为不新增架构的最低要求，**Unknown** 必须评审。
+裁定顺序为 Constitution → 组织 Rust 规范 → 本文 → 代码与可复验证据。规格中的“完成”不等于 workspace Production Ready。
 
-`natsx` 位于 `crates/adapters/storage/nats`，实现 `contracts::EventBus`：
-- `MockNatsBus`：与 kafkax mock 独立的内存总线；
-- `NatsEventBus`：基于 `async-nats` 的真实驱动（始终编译，非 feature 门控）。
+`natsx` 位于 `crates/adapters/storage/nats`。默认构建包含真实 Core NATS pool/EventBus 和 JetStream 包装；旧内存实现仅在 `scaffold` feature 下导出。
 
-非目标：在本版承诺 JetStream 管理 API、queue group 运维合同、ack、持久化/重放或 request/reply，
-或把 ignored 真测当作 CI 生产证据。
+## 1. 交付语义矩阵
 
-## 1. Cargo、API 与版本
+| 入口 | 当前语义 | 确认所有权 | 明确非目标 |
+|---|---|---|---|
+| `NatsEventBus` / `contracts::EventBus` | Core NATS at-most-once、仅实时订阅 | 无 ack/重放 | 不得称持久或 ALO |
+| `JetStream::publish` | 等待 JetStream publish ack | 发布端等待服务端确认 | 跨账户/Cluster 运维合同 |
+| `JetStreamConsumer` | durable pull、显式 ack、有限 fetch | 每次 `JetStreamDelivery` 由调用方终结 | 自动业务重试、自动 DLQ、exactly-once |
 
-版本 `0.3.1`（package `natsx`）。
+Core NATS 与 JetStream 是两个独立合同。Core 发布发生在订阅建立前时不会回放；需要持久消费的调用方必须显式选择 JetStream。
 
-| 项目 | 当前事实 |
-| --- | --- |
-| 普通依赖 | `kernel`、`contracts`、`async-trait`、`bytes`、`futures-core`、`futures-util`、`async-nats`、`anyhow` |
-| features | 无 |
-| dev-dependency | `tokio` |
+## 2. JetStream consumer 合同
 
-依赖符合 R2。版本更新仅允许 `x.y.z → x.y.(z+1)`。
+`JetStreamConsumerConfig` 是 additive 新类型，不给旧公开 `PullConsumerConfig` 追加字段。配置固定 `AckPolicy::Explicit`，并要求：
 
-### 1.1 MockNatsBus
+- `ack_wait > 0`；
+- `max_deliver > 0`；
+- `max_ack_pending > 0`；
+- `command_timeout > 0`，用于约束 ack/nak/progress/term 等 broker 指令；
+- durable name 合法，filter subject 若存在则非空。
 
-`MockNatsBus` 为 `Debug + Default`，`new()` 创建空 `RwLock<HashMap<String, Vec<Bytes>>>`。
-`publish(subject, payload)` 按 subject 追加；`subscribe(subject)` 返回订阅时缓冲消息的克隆、
-有限快照流：保序，缺失 subject 为空，**后续发布不可见**。锁中毒会 panic。
+`JetStreamConsumer::next_timeout` 同时设置服务端 fetch expiry 与客户端外层超时。服务端有限批次正常到期为 `Ok(None)`；broker/协议错误保留 source 并返回 `Unavailable`；服务端未在 expiry 后结束则返回 `DeadlineExceeded`。
 
-### 1.2 NatsEventBus
+`JetStreamDelivery` 复制并公开稳定元数据：stream、consumer、stream sequence、consumer sequence、delivery attempts、pending。底层 raw message 私有，`Debug` 只输出 subject、payload 长度和元数据，不输出 payload。
 
-- `NatsEventBus::new(url: &str) -> XResult<Self>`：异步 `async_nats::connect`。
-- `publish` / `subscribe`：subject 转为 owned `String`（async-nats 对 `'static` 的要求）。
-- `subscribe` 返回的 `Subscriber` 为 owned Stream，直接 `.map(|msg| msg.payload).boxed()`。
-- 错误统一映射为 `XError::Transient` 等。
+终结操作：
 
-## 2. 差距、并发与信任边界
+- `ack(self)`：发送普通确认；
+- `double_ack(self)`：等待服务端确认；
+- `nak(self, delay)`：请求立即或延迟重投；
+- `progress(&self)`：延长处理窗口；
+- `term(self)`：停止该消息继续重投。
 
-- **证据**：`async-nats` 依赖与真实实现已存在。
-- **证据**：`nats_publish_and_subscribe` 为 `#[ignore]`；Core NATS 不回放历史，测试先 subscribe 再 publish；
-  **不得**当作 CI 默认通过或 M3 生产证据。
-- **未知**：Core NATS 与 JetStream 选择、TLS/认证生产合同、subject 规则、queue/durable consumer、
-  ack、重投、背压、交付保证、连接恢复和关闭。
-- **未知**：通用 `Envelope`/收发拆分仍需 contracts 评审。
-- subject/payload 是不可信输入；生产实现须限制名称与大小，并避免泄漏凭据或消息内容。
+`term` 与 `max_deliver` 都不等于 DLQ：库不会自动把 payload 发布到隔离 subject。conformance 只对约定的 DLQ 探针作负向检查；其他业务路由由应用显式实现并验证。
 
-## 3. 测试、验收与追溯
+## 3. 安全与运维边界
 
-Mock 内联测试覆盖发布/订阅、缺失 subject、快照边界、subject 隔离和 trait object。
-真实测试 `#[ignore]`。运行：
+- loopback 可显式使用 `Disable` / `Prefer`；远程地址必须 `Require`，显式远程明文或 Prefer 在连接前 fail-closed。
+- URL userinfo 被拒绝，凭据只从独立环境字段注入并在 `Debug` 中脱敏。
+- request/flush/publish/subscribe/ping/close 与 JetStream admin/publish/ack 均有内部 deadline。
+- subscription/client channel capacity、有限 `max_reconnects` 与 reconnect 最大退避均显式配置；连接、断开与 slow-consumer 事件进入 stats。
+- 本版不承诺 NKey 全量、JetStream KV/ObjectStore、跨账户、Cluster/HA、queue group 运维或自动 DLQ。
+- 固定入口与有限重连预算内，`async-nats` 会重建连接并重新注册原 Core subscription；断线窗口消息仍可能丢失且不会回放。
+- `max_reconnects` 耗尽后连接 handler 退出并关闭命令通道；调用方收到 `Unavailable` 时必须重建 client，本 crate 不承诺无限自愈。
+- `get_pull_consumer` 保留为底层高级逃生口；普通调用方使用稳定 `consumer` 包装面。
 
-```text
-cargo test -p natsx
-cargo test -p natsx -- --ignored   # 需 NATS；非 CI 默认
+## 4. 验证与证据
+
+离线门禁：
+
+```bash
+cargo test -p natsx --all-targets
 cargo clippy -p natsx --all-targets -- -D warnings
-cargo fmt -- --check
-cargo run -p xtask -- lint-deps
 ```
 
-验收要求：当前快照语义与代码一致；不得把 mock 描述为完整 NATS；不把 ignored 真测宣称为生产就绪；
-新 JetStream/API 先评审；依赖与精确 patch 版本规则通过门禁。
+可复现 broker conformance：
 
-追溯：XLib spec §§2 R2/R6、4.3、4.5、5；
-`crates/adapters/storage/nats/{Cargo.toml,src/lib.rs,README.md}`。
+```bash
+node scripts/broker-conformance.mjs
+```
+
+NATS 场景必须证明：
+
+1. Core NATS 不回放订阅前消息；
+2. 本地有界 subscription 转发超时计入 slow-consumer stats；
+3. JetStream 连接重建后按相同 stream sequence 重投，double ack 后停止；
+4. `nak` 触发重投，`progress` 延长 ack wait；
+5. `max_ack_pending=1` 在未 ack 时背压、ack 后恢复；
+6. `max_deliver` 与 `term` 停止重投且 DLQ 探针无消息；
+7. 唯一 stream/subject/durable、cargo 外层硬超时、日志与清理。
+
+同客户端重连实验：
+
+```bash
+node scripts/nats-reconnect-conformance.mjs
+```
+
+脚本保持固定镜像、动态 host 端口与容器 ingress 不变，只重启容器内 broker 进程，默认连续
+三轮验证同一 client 的发布、原 Core subscription 与连接统计恢复。受控外部环境仍可运行
+`tests/live_event_bus.rs`，但单节点 PASS 不得升级为断线窗口无丢失、无限自愈、
+Cluster/HA/TLS/exactly-once 结论。
+
+追溯：`crates/adapters/storage/nats/{Cargo.toml,src,tests/broker_conformance.rs,tests/reconnect_conformance.rs}`、
+`scripts/nats-reconnect-conformance.mjs`、`docs/ssot/natsx-ssot-alignment.md`。

@@ -102,7 +102,7 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 | adapters 九 package | `crates/adapters/**` | 见 STATUS.md |
 
 > `docs/` / 暂无集成测试时的 `tests/` / 暂无基准时的 `benches/` 以 `.gitkeep` 占位。单元测试仍在 `src/` 内 `#[cfg(test)]`。  
-> adapters 多为 scaffold；标准七项齐全 **≠** 业务实现 / Production Ready。见 [docs/ssot/adapters-ssot-alignment.md](../docs/ssot/adapters-ssot-alignment.md) 与 STATUS.md 成熟度列。
+> adapters 默认路径为真实客户端，旧内存实现仅在 `scaffold` feature；标准七项齐全与真实客户端存在仍 **≠** Production Ready。见 [docs/ssot/adapters-ssot-alignment.md](../docs/ssot/adapters-ssot-alignment.md)。
 
 ---
 
@@ -176,15 +176,15 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 | `decimalx`（lib `decimalx`） | `crates/types/decimal/` | 十进制数值 / Money（ADR-006/007） |
 | `canonical`（lib `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
 | `resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | L1 重试 + 熔断 + 限流 + 舱壁 + async retry（infra-s9t） |
-| `xhyper-bootstrap`（lib `bootstrap`） | `crates/bootstrap/` | L1 唯一组合根（ADR-016；typed composition） |
+| `bootstrap` | `crates/bootstrap/` | L1 唯一组合根；正式 KV/EventBus typed composition |
 | `xhyper-contracts` | `crates/contracts/` | adapter trait 出口（Exchange/Storage） |
 | `binancex` | `crates/adapters/exchange/binance/` | Binance exchange adapter（生产默认 REST+WS，#210+#214） |
 | `okxx` | `crates/adapters/exchange/okx/` | OKX exchange adapter（生产默认 REST+WS，#210+#214） |
-| `clickhousex` | `crates/adapters/storage/clickhouse/` | ClickHouse storage adapter（scaffold） |
-| `kafkax` | `crates/adapters/storage/kafka/` | Kafka storage adapter（scaffold） |
-| `natsx` | `crates/adapters/storage/nats/` | NATS storage adapter（scaffold） |
+| `clickhousex` | `crates/adapters/storage/clickhouse/` | 默认 HTTP(S) 客户端；scaffold 可选 |
+| `kafkax` | `crates/adapters/storage/kafka/` | 默认 rskafka 客户端；scaffold 可选 |
+| `natsx` | `crates/adapters/storage/nats/` | 默认 async-nats Core/JetStream；自动恢复 NO-GO |
 | `ossx` | `crates/adapters/storage/oss/` | OSS storage adapter（scaffold） |
-| `postgresx` | `crates/adapters/storage/postgres/` | Postgres storage adapter（scaffold） |
+| `postgresx` | `crates/adapters/storage/postgres/` | 默认 deadpool/tokio-postgres 客户端；scaffold 可选 |
 | `redisx` | `crates/adapters/storage/redis/` | Redis storage adapter（scaffold） |
 | `taosx` | `crates/adapters/storage/taos/` | TDengine storage adapter（scaffold） |
 

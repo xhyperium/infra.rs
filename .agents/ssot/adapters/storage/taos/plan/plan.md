@@ -8,6 +8,7 @@
 | 2 | docs usage/config/operations + pool 单测 + benches | #189 |
 | 3 | bench 超时有界 + 公共 API 单测缺口 | #190 |
 | 4 | live env 构建器 + SSOT landing/draft 入库 | #191 · #193 |
+| 5 | TLS/auth、Decimal NCHAR、资源与 close 硬上界；同步真实 REST/WS 边界 | infra-2d9.3.7 |
 
 ## 本文件角色
 
@@ -16,5 +17,6 @@
 
 ## 下一可选波次（OPEN）
 
-- native WS / 全超表治理 / 集群
+- Native SQL / WS 认证长会话 / 全超表治理 / HA 集群
+- 自动幂等重试与部分批次失败后的重复写裁定
 - package stable / crates.io 发布流程

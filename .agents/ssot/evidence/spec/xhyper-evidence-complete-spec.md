@@ -7,9 +7,9 @@
 | Path | `crates/evidence` |
 | Layer | L1 Infra |
 | Authority | 本文件是 active current-state spec |
-| Implementation snapshot | `b0934baa`（2026-07-15） |
-| Document commit | `e0b98df4` |
-| Verified at | `e0b98df4`（相关实现路径未变化） |
+| Implementation snapshot | `1b80898e0425cf7dc0f787c0f663154c24c8bb37`（本轮审计起点 `origin/main`） |
+| Document state | 当前分支候选；合并后以 PR merge SHA 追溯文档版本 |
+| Verified at | 2026-07-22；`cargo test -p evidence --all-targets` 与 current-state 门禁 |
 
 ## 1. 定位与边界
 

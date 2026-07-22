@@ -1,89 +1,108 @@
 #!/usr/bin/env bash
-# 从本地 secrets/env 文件加载 FOUNDATIONX_*（不打印值、不嵌入密钥）。
-#
-# 用法:
-#   source scripts/live/export-foundationx-env.sh /path/to/file.env
-#   source scripts/live/export-foundationx-env.sh /path/to/secrets/dir
-#   scripts/live/export-foundationx-env.sh --list   # 仅打印所需变量名
-#
-# 文件格式（.env.example 风格）:
-#   KEY=VALUE
-#   # 注释行忽略
-#   KEY="quoted value"
-#
-# ---- 常用变量清单（本脚本不提供默认 secret）----
-# Redis:
-#   FOUNDATIONX_REDIS_URL / REDIS_URL
-# OSS (ossx):
-#   FOUNDATIONX_OSSX_ENDPOINT=https://oss-ap-northeast-1.aliyuncs.com
-#   FOUNDATIONX_OSSX_BUCKET=
-#   FOUNDATIONX_OSSX_ACCESS_KEY_ID=
-#   FOUNDATIONX_OSSX_ACCESS_KEY_SECRET=
-#   FOUNDATIONX_OSSX_REGION=ap-northeast-1
-# Postgres / 其他 adapter: 以各 crate README 为准
-#
+# 为单个 live 子进程注入 dev FOUNDATIONX_*；不修改调用者 shell 环境。
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
+  echo "错误: 禁止 source；请直接执行本脚本并传入子进程命令" >&2
+  return 2
+fi
+
 set -euo pipefail
 
-if [[ "${1:-}" == "--list" || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+usage() {
   cat <<'EOF'
-Required / known FOUNDATIONX_* keys (values must come from your secret store):
+用法:
+  scripts/live/export-foundationx-env.sh --env dev [选项] -- <command> [args...]
 
-  FOUNDATIONX_OSSX_ENDPOINT
-  FOUNDATIONX_OSSX_BUCKET
-  FOUNDATIONX_OSSX_ACCESS_KEY_ID
-  FOUNDATIONX_OSSX_ACCESS_KEY_SECRET
-  FOUNDATIONX_OSSX_REGION          # optional
+选项:
+  --secrets-dir <dir>  dev.md 所在目录
+  --nats-conf <path>   可选的 dev NATS 配置文件；默认不读取宿主配置
 
-  FOUNDATIONX_REDIS_URL            # or REDIS_URL
-  FOUNDATIONX_POSTGRES_URL
-  FOUNDATIONX_KAFKA_BROKERS
-  FOUNDATIONX_NATS_URL
-  FOUNDATIONX_CLICKHOUSE_URL
-
-Usage:
-  source scripts/live/export-foundationx-env.sh /path/to/file.env
-  source scripts/live/export-foundationx-env.sh /path/to/dir
+示例:
+  scripts/live/export-foundationx-env.sh --env dev -- \
+    cargo test -p redisx --test live_kv -- --ignored
 EOF
-  return 0 2>/dev/null || exit 0
-fi
-
-if [[ $# -lt 1 ]]; then
-  echo "usage: source $0 <env-file-or-dir> | $0 --list" >&2
-  return 2 2>/dev/null || exit 2
-fi
-
-target=$1
-load_file() {
-  local f=$1
-  [[ -f "$f" ]] || return 0
-  # 仅接受 KEY=VALUE 行；跳过注释
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    [[ "$line" =~ ^[[:space:]]*# ]] && continue
-    [[ "$line" =~ ^[[:space:]]*$ ]] && continue
-    if [[ "$line" =~ ^([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]]; then
-      key="${BASH_REMATCH[1]}"
-      val="${BASH_REMATCH[2]}"
-      # 去引号
-      val="${val%\"}"; val="${val#\"}"
-      val="${val%\'}"; val="${val#\'}"
-      export "$key=$val"
-    fi
-  done < "$f"
-  echo "loaded env keys from $(basename "$f")" >&2
 }
 
-if [[ -d "$target" ]]; then
-  for f in "$target"/*.env "$target"/*; do
-    [[ -f "$f" ]] || continue
-    case "$f" in
-      *.env|*.md) load_file "$f" ;;
-    esac
-  done
-else
-  load_file "$target"
+env_name="dev"
+secrets_dir=""
+nats_conf=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --env)
+      [[ $# -ge 2 ]] || { echo "错误: --env 缺少参数" >&2; exit 2; }
+      env_name=$2
+      shift 2
+      ;;
+    --secrets-dir)
+      [[ $# -ge 2 ]] || { echo "错误: --secrets-dir 缺少参数" >&2; exit 2; }
+      secrets_dir=$2
+      shift 2
+      ;;
+    --nats-conf)
+      [[ $# -ge 2 ]] || { echo "错误: --nats-conf 缺少参数" >&2; exit 2; }
+      nats_conf=$2
+      shift 2
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "错误: 未知参数: $1" >&2
+      exit 2
+      ;;
+  esac
+done
+
+if [[ "$env_name" != "dev" ]]; then
+  echo "错误: 仅允许读取 dev 凭据；其他环境已拒绝" >&2
+  exit 2
+fi
+if [[ $# -eq 0 ]]; then
+  echo "错误: -- 后必须提供子进程命令" >&2
+  exit 2
 fi
 
-# 从 ZoneCNH secrets/env/*.md 生成 .env（推荐 live 测试入口）:
-#   node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
-#   set -a; source /tmp/foundationx-live.env; set +a
-#   cargo test -p redisx --test live_kv -- --ignored
+umask 077
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+tmp_dir=""
+env_file=""
+
+cleanup() {
+  local status=$?
+  trap - EXIT HUP INT TERM
+  if [[ -n "$env_file" ]]; then
+    rm -f -- "$env_file"
+  fi
+  if [[ -n "$tmp_dir" ]]; then
+    rmdir -- "$tmp_dir" 2>/dev/null || true
+  fi
+  return "$status"
+}
+
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+tmp_root=${TMPDIR:-/tmp}
+tmp_dir=$(mktemp -d "${tmp_root%/}/foundationx-live.XXXXXXXXXX")
+env_file="$tmp_dir/foundationx.env"
+
+builder_args=(--env "$env_name" --out "$env_file")
+if [[ -n "$secrets_dir" ]]; then
+  builder_args+=(--secrets-dir "$secrets_dir")
+fi
+if [[ -n "$nats_conf" ]]; then
+  builder_args+=(--nats-conf "$nats_conf")
+fi
+
+node "$script_dir/build-foundationx-env.mjs" "${builder_args[@]}"
+set +e
+node "$script_dir/run-foundationx-command.mjs" --env-file "$env_file" -- "$@"
+status=$?
+set -e
+exit "$status"

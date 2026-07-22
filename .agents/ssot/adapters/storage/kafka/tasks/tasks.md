@@ -12,5 +12,6 @@
 
 ## OPEN / DEFER
 
-- [ ] EOS / transactional producer / schema registry / group coordinator 强依赖路径
+- [x] deadline / 有界背压 / close 取消与等待 / 脱敏错误边界（离线失败测试）
+- [ ] EOS / transactional producer / schema registry / group coordinator / 自动重连强依赖路径
 - [ ] package stable 证据包（若 Lead 启动）
