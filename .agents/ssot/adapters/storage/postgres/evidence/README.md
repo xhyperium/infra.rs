@@ -1,7 +1,16 @@
-# adapters/storage/postgres — Evidence（横切）
+# adapters/storage/postgres — Evidence
 
-> 模块战役证据落盘处（≠ `crates/evidence` 生产库）。  
-> 当前：**无战役 evidence 归档**（布局迁移创建）。  
-> 有验证输出时按 `YYYY-MM-DD/` 建日目录，并维护 `residual-open.*`。
+> 模块战役证据落盘处（≠ `crates/evidence` 生产库）。
 
-参见 `.agents/ssot/kernel/evidence/` 与 `.agents/ssot/AGENTS.md` §2.5。
+## 本仓证据索引
+
+| 类型 | 位置 |
+|------|------|
+| 单元/集成（离线） | `cargo test -p postgresx --all-targets` 日志 |
+| live | `crates/adapters/storage/postgres/tests/live_postgres.rs` 等 |
+| bench | `crates/adapters/storage/postgres/benches/query_hot_path.rs` |
+| landing | [../plan/infra-rs-landing.md](../plan/infra-rs-landing.md) |
+| draft | [../plan/infra-rs-draft-spec-goal.md](../plan/infra-rs-draft-spec-goal.md) |
+| 对齐 | `docs/ssot/postgresx-ssot-alignment.md` |
+
+有新的验证输出时按 `YYYY-MM-DD/` 建日目录归档。

@@ -1,7 +1,10 @@
-# adapters/storage/clickhouse — Prompt
+# adapters/storage/clickhouse — Prompt 约束
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 下一刀 Context Package 待填充。
+实现 / 修改 `clickhousex` 时：
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+1. 只改 scope 内 `crates/adapters/storage/clickhouse` 与对应对齐/SSOT 文档
+2. 默认路径必须可生产使用；scaffold 不得成为默认
+3. 密钥仅 env；禁止提交 secrets
+4. 新增 live 测试必须 `#[ignore]`，默认 CI 离线绿
+5. 完成前：`cargo test -p clickhousex --all-targets` + fmt/clippy
+6. 宣称完成必须附当前会话测试输出
