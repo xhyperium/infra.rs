@@ -9,6 +9,14 @@
 - **本仓关系**：宪章 [§4.0](./docs/constitution/04-code-standards.md#40-rust-全局编码规范强制上位) 采纳上位标准；项目细则可**加严**、**不可削弱** 组织 P0
 - 提交前：`cargo fmt` + `clippy -D warnings` + `test`（与完整版 / §5 门禁一致）
 
+## 依赖集中管理（强制）
+
+- 所有第三方依赖统一在根 `Cargo.toml` 的 `[workspace.dependencies]` 声明；成员 crate 的 `[dependencies]` / `[dev-dependencies]` / `[build-dependencies]` 及 `target.*.dependencies` 中第三方依赖必须 `{ workspace = true }` 引用，禁止内联 `version`。
+- intra-workspace（path）依赖保持 `{ path = "../x", version = "..." }` 约定（允许内联 version）。
+- 新增第三方依赖：先在根 `[workspace.dependencies]` 加一项，再在 crate 用 `{ workspace = true }`。
+- 严格执行：CI 门禁 `node scripts/quality-gates/check-workspace-deps.mjs` 自动拦截内联版本；本地可先跑该脚本自检。
+- 参考上位标准《Rust 编码规范》依赖管理条款。
+
 ## 语言与编码（强制）
 
 - **组织上位**：[language.md](https://github.com/xhyperium/.github/blob/main/rulesets/language.md) — **人类可读文本强制简体中文**
@@ -131,6 +139,7 @@ cargo clippy --workspace --all-features --all-targets -- -D warnings
 cargo deny check
 node scripts/quality-gates/check.mjs
 node scripts/quality-gates/check-crate-versions.mjs
+node scripts/quality-gates/check-workspace-deps.mjs
 ```
 
 - **target-dir**：`.cargo/target/`
@@ -215,6 +224,7 @@ node scripts/quality-gates/check-crate-versions.mjs
 - [ ] `cargo test --workspace` 通过
 - [ ] 文档已更新（API doc / CHANGELOG / CONSTITUTION）
 - [ ] 关联 beads 状态已更新
+- [ ] `node scripts/quality-gates/check-workspace-deps.mjs` 通过（依赖集中管理门禁）
 - [ ] 提交信息遵循 Conventional Commits（模板：`git config commit.template .gitmessage`）
 
 ### 委托与接力

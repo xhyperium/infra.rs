@@ -135,6 +135,20 @@ jobs:
       - name: 校验 crates 独立 version + path 依赖对齐
         run: node scripts/quality-gates/check-crate-versions.mjs
 
+  workspace-deps:
+    name: 依赖集中管理门禁
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: 校验依赖集中管理（禁止内联第三方版本）
+        run: node scripts/quality-gates/check-workspace-deps.mjs
+      - name: L1 单元测试
+        run: node scripts/quality-gates/check-workspace-deps.test.mjs
+
   settings-hooks:
     name: settings hooks 门禁
     runs-on: ubuntu-latest
