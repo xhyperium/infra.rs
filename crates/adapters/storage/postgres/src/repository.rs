@@ -129,7 +129,7 @@ mod tests {
             .port(1)
             .database("x")
             .user("x")
-            .password("x")
+            .password(String::new())
             .sslmode(SslMode::Disable)
             .connect_timeout(Duration::from_millis(200))
             .build()
