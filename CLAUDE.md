@@ -82,6 +82,7 @@ cd .worktrees/feat/<id>-<slug>
 - **保守编辑**：优先小步修改现有文件
 - **SSOT**：技能以 `.claude/skills/` 为准
 - **Rust 质量门禁**：提交前 `fmt` + `clippy -D warnings` + `test`
+- **Crate 独立版本**：`crates/` 禁止 `version.workspace = true`；每次交付更新该 crate 的 PATCH +1（`x.y.z+1`）；见 `docs/governance/VERSIONING.md`，工具 `node scripts/version/crate-bump.mjs <name>`
 - 禁止无上下文的 `unwrap()`；库代码优先 `thiserror`，应用侧可用 `anyhow`
 - 日志用 `tracing`，不用 `println!`（示例/bin 除外）
 

@@ -28,6 +28,7 @@ members = [
 ]
 
 [workspace.package]
+# 项目/编排版本（CHANGELOG）；crates/** 禁止 version.workspace = true，须独立 version（见 docs/governance/VERSIONING.md R-C1）
 version = "0.3.0"
 edition = "2024"
 license = "MIT"
