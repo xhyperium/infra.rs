@@ -6,6 +6,8 @@
 //! - `PASSWORD`
 //! - `TLS` — `1`/`true`/`yes` 开启 TLS 布尔开关
 //! - `TLS_POLICY` — `disable` / `prefer` / `require`
+//! - `OPERATION_TIMEOUT_MS`、`SUBSCRIPTION_CAPACITY`、`CLIENT_CAPACITY`
+//! - `MAX_RECONNECTS`、`RECONNECT_MAX_DELAY_MS`
 //!
 //! **默认值面向本地/草稿联调**；生产必须通过环境注入。`Debug` 脱敏密码。
 //!
@@ -28,9 +30,9 @@ pub const DEFAULT_URL: &str = "nats://127.0.0.1:4222";
 /// TLS 策略。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum TlsPolicy {
-    /// 强制禁用 TLS（即使远端 URL 也不要求）。
+    /// 强制禁用 TLS；仅允许 loopback 地址。
     Disable,
-    /// 优先 TLS；明文亦可（典型：本机联调）。
+    /// 优先 TLS、允许明文；仅允许 loopback 地址。
     #[default]
     Prefer,
     /// 必须 TLS；连接层 `require_tls(true)`。
@@ -78,6 +80,8 @@ pub struct NatsConfig {
     pub password: Option<String>,
     /// 连接超时。
     pub connect_timeout: Duration,
+    /// Core NATS / JetStream 管理操作截止时间。
+    pub operation_timeout: Duration,
     /// 客户端名。
     pub name: String,
     /// 遗留 TLS 布尔开关（`true` 等价于 Require，除非 `tls_policy` 已显式设置）。
@@ -86,6 +90,16 @@ pub struct NatsConfig {
     pub tls_policy: Option<TlsPolicy>,
     /// 是否期望使用 JetStream API（文档/校验标志；不影响 Core NATS 连接）。
     pub jetstream: bool,
+    /// 驱动每订阅缓冲和本 crate 转发缓冲上限。
+    pub subscription_capacity: usize,
+    /// 驱动命令发送队列容量。
+    pub client_capacity: usize,
+    /// 连续重连最大尝试次数；必须有限且大于零。
+    pub max_reconnects: usize,
+    /// 单次重连退避上限。
+    pub reconnect_max_delay: Duration,
+    /// 是否忽略服务端发现的地址，仅重连显式 URL（固定 ingress/端口映射场景）。
+    pub ignore_discovered_servers: bool,
 }
 
 impl Default for NatsConfig {
@@ -96,10 +110,16 @@ impl Default for NatsConfig {
             user: None,
             password: None,
             connect_timeout: Duration::from_secs(5),
+            operation_timeout: Duration::from_secs(5),
             name: "natsx".to_string(),
             tls: false,
             tls_policy: None,
             jetstream: false,
+            subscription_capacity: 256,
+            client_capacity: 256,
+            max_reconnects: 60,
+            reconnect_max_delay: Duration::from_secs(5),
+            ignore_discovered_servers: false,
         }
     }
 }
@@ -107,23 +127,42 @@ impl Default for NatsConfig {
 impl fmt::Debug for NatsConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("NatsConfig")
-            .field("url", &self.url)
+            .field("url", &redact_url(&self.url))
             .field("user", &self.user)
             .field("password", &self.password.as_ref().map(|_| "***"))
             .field("connect_timeout", &self.connect_timeout)
+            .field("operation_timeout", &self.operation_timeout)
             .field("name", &self.name)
             .field("tls", &self.tls)
             .field("tls_policy", &self.tls_policy)
             .field("jetstream", &self.jetstream)
+            .field("subscription_capacity", &self.subscription_capacity)
+            .field("client_capacity", &self.client_capacity)
+            .field("max_reconnects", &self.max_reconnects)
+            .field("reconnect_max_delay", &self.reconnect_max_delay)
+            .field("ignore_discovered_servers", &self.ignore_discovered_servers)
             .finish()
     }
+}
+
+fn redact_url(raw: &str) -> String {
+    let Ok(mut parsed) = url::Url::parse(raw) else {
+        return "<invalid-url>".to_string();
+    };
+    if !parsed.username().is_empty() {
+        let _ = parsed.set_username("***");
+    }
+    if parsed.password().is_some() {
+        let _ = parsed.set_password(Some("***"));
+    }
+    parsed.to_string()
 }
 
 impl NatsConfig {
     /// 从环境变量加载。
     ///
     /// 优先级：`FOUNDATIONX_NATS_*` > `FOUNDATIONX_NATSX_*`。
-    pub fn from_env() -> Self {
+    pub fn from_env() -> XResult<Self> {
         let mut cfg = Self::default();
         if let Some(v) = env_first(&["FOUNDATIONX_NATS_URL", "FOUNDATIONX_NATSX_URL"]) {
             if !v.trim().is_empty() {
@@ -154,25 +193,42 @@ impl NatsConfig {
             }
         }
         if let Some(v) = env_first(&["FOUNDATIONX_NATS_TLS", "FOUNDATIONX_NATSX_TLS"]) {
-            cfg.tls = parse_bool(&v);
+            cfg.tls = parse_bool(&v, "FOUNDATIONX_NATS_TLS")?;
         }
         if let Some(v) = env_first(&["FOUNDATIONX_NATS_TLS_POLICY", "FOUNDATIONX_NATSX_TLS_POLICY"])
         {
             if !v.trim().is_empty() {
-                // 非法策略必须显式失败：写入临时标记，validate 时拒绝
-                match TlsPolicy::parse(&v) {
-                    Ok(p) => cfg.tls_policy = Some(p),
-                    Err(_) => {
-                        cfg.tls_policy = None;
-                        cfg.name = format!("__bad_tls_policy__:{v}");
-                    }
-                }
+                cfg.tls_policy = Some(TlsPolicy::parse(&v)?);
             }
         }
         if let Some(v) = env_first(&["FOUNDATIONX_NATS_JETSTREAM", "FOUNDATIONX_NATSX_JETSTREAM"]) {
-            cfg.jetstream = parse_bool(&v);
+            cfg.jetstream = parse_bool(&v, "FOUNDATIONX_NATS_JETSTREAM")?;
         }
-        cfg
+        apply_usize_env(
+            &mut cfg.subscription_capacity,
+            &["FOUNDATIONX_NATS_SUBSCRIPTION_CAPACITY", "FOUNDATIONX_NATSX_SUBSCRIPTION_CAPACITY"],
+        )?;
+        apply_usize_env(
+            &mut cfg.client_capacity,
+            &["FOUNDATIONX_NATS_CLIENT_CAPACITY", "FOUNDATIONX_NATSX_CLIENT_CAPACITY"],
+        )?;
+        apply_usize_env(
+            &mut cfg.max_reconnects,
+            &["FOUNDATIONX_NATS_MAX_RECONNECTS", "FOUNDATIONX_NATSX_MAX_RECONNECTS"],
+        )?;
+        apply_duration_ms_env(
+            &mut cfg.operation_timeout,
+            &["FOUNDATIONX_NATS_OPERATION_TIMEOUT_MS", "FOUNDATIONX_NATSX_OPERATION_TIMEOUT_MS"],
+        )?;
+        apply_duration_ms_env(
+            &mut cfg.reconnect_max_delay,
+            &[
+                "FOUNDATIONX_NATS_RECONNECT_MAX_DELAY_MS",
+                "FOUNDATIONX_NATSX_RECONNECT_MAX_DELAY_MS",
+            ],
+        )?;
+        cfg.validate()?;
+        Ok(cfg)
     }
 
     /// 生效的 TLS 策略（显式 > tls 布尔 > host 自动）。
@@ -198,14 +254,15 @@ impl NatsConfig {
 
     /// 校验。
     pub fn validate(&self) -> XResult<()> {
-        if self.name.starts_with("__bad_tls_policy__:") {
-            return Err(XError::invalid(format!(
-                "natsx: 非法 TLS_POLICY ({})",
-                self.name.trim_start_matches("__bad_tls_policy__:")
-            )));
-        }
         if self.url.trim().is_empty() {
             return Err(XError::invalid("natsx: url 不能为空"));
+        }
+        let parsed = url::Url::parse(self.url.trim())
+            .map_err(|error| XError::invalid(format!("natsx: URL 非法: {error}")))?;
+        if !parsed.username().is_empty() || parsed.password().is_some() {
+            return Err(XError::invalid(
+                "natsx: URL 禁止内嵌 userinfo；请使用独立 user/password 字段",
+            ));
         }
         match (&self.user, &self.password) {
             (Some(u), Some(p)) if !u.is_empty() && !p.is_empty() => {}
@@ -214,16 +271,21 @@ impl NatsConfig {
                 return Err(XError::invalid("natsx: user/password 必须同时提供或同时缺省"));
             }
         }
-        // Require 且 URL 非 TLS scheme：允许，但 connect 时会 require_tls(true)。
-        // 若调用方显式 Disable 却给了 tls://，仅告警级——仍允许（由驱动处理）。
         let policy = self.effective_tls_policy();
-        if policy == TlsPolicy::Require && !self.url_implies_tls() && !url_is_loopback(&self.url) {
-            // 非 loopback + Require + 明文 scheme：合法，连接层强制 TLS
-            // 此处不 fail；文档约定由 ConnectOptions.require_tls 保证
+        if !url_is_loopback(&self.url) && policy != TlsPolicy::Require {
+            return Err(XError::invalid("natsx: 远程服务必须使用 require TLS 策略"));
         }
-        if let Some(explicit) = self.tls_policy {
-            // 重新 parse 以保持 API 可测；此处 no-op 校验
-            let _ = explicit;
+        if self.connect_timeout.is_zero()
+            || self.operation_timeout.is_zero()
+            || self.reconnect_max_delay.is_zero()
+        {
+            return Err(XError::invalid("natsx: timeout 必须大于零"));
+        }
+        if self.subscription_capacity == 0 || self.client_capacity == 0 {
+            return Err(XError::invalid("natsx: capacity 必须大于零"));
+        }
+        if self.max_reconnects == 0 {
+            return Err(XError::invalid("natsx: max_reconnects 必须为有限正数"));
         }
         Ok(())
     }
@@ -233,10 +295,7 @@ impl NatsConfig {
 #[must_use]
 pub fn url_is_loopback(url: &str) -> bool {
     let host = extract_host(url);
-    matches!(
-        host.to_ascii_lowercase().as_str(),
-        "127.0.0.1" | "localhost" | "::1" | "[::1]" | "0.0.0.0"
-    )
+    matches!(host.to_ascii_lowercase().as_str(), "127.0.0.1" | "localhost" | "::1" | "[::1]")
 }
 
 fn extract_host(url: &str) -> String {
@@ -264,8 +323,31 @@ fn env_first(keys: &[&str]) -> Option<String> {
     None
 }
 
-fn parse_bool(s: &str) -> bool {
-    matches!(s.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on")
+fn apply_usize_env(target: &mut usize, keys: &[&str]) -> XResult<()> {
+    if let Some(value) = env_first(keys) {
+        *target = value
+            .parse::<usize>()
+            .map_err(|error| XError::invalid(format!("{} 非法: {error}", keys[0])))?;
+    }
+    Ok(())
+}
+
+fn apply_duration_ms_env(target: &mut Duration, keys: &[&str]) -> XResult<()> {
+    if let Some(value) = env_first(keys) {
+        *target = value
+            .parse::<u64>()
+            .map(Duration::from_millis)
+            .map_err(|error| XError::invalid(format!("{} 非法: {error}", keys[0])))?;
+    }
+    Ok(())
+}
+
+fn parse_bool(value: &str, name: &str) -> XResult<bool> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "1" | "true" | "yes" | "on" => Ok(true),
+        "0" | "false" | "no" | "off" => Ok(false),
+        _ => Err(XError::invalid(format!("{name} 非法: {value}"))),
+    }
 }
 
 #[cfg(test)]
@@ -289,6 +371,7 @@ mod tests {
     #[test]
     fn debug_redacts_password() {
         let c = NatsConfig {
+            url: "nats://embedded-user:embedded-secret@localhost:4222".into(),
             password: Some("super-secret-pass".into()),
             user: Some("u".into()),
             ..NatsConfig::default()
@@ -296,6 +379,8 @@ mod tests {
         let s = format!("{c:?}");
         assert!(s.contains("***"));
         assert!(!s.contains("super-secret-pass"));
+        assert!(!s.contains("embedded-user"));
+        assert!(!s.contains("embedded-secret"));
     }
 
     #[test]
@@ -313,6 +398,10 @@ mod tests {
             ..NatsConfig::default()
         };
         assert_eq!(remote_explicit_disable.effective_tls_policy(), TlsPolicy::Disable);
+        assert_eq!(
+            remote_explicit_disable.validate().expect_err("远程明文必须失败").kind(),
+            kernel::ErrorKind::Invalid
+        );
 
         let tls_bool =
             NatsConfig { url: "nats://127.0.0.1:4222".into(), tls: true, ..NatsConfig::default() };
@@ -331,13 +420,17 @@ mod tests {
         assert!(!remote.url_implies_tls());
         assert!(remote.effective_tls_policy().require_tls());
 
-        // Prefer 不强制
+        // 远程 Prefer 不强制 TLS，配置层必须拒绝
         let prefer = NatsConfig {
             url: "nats://broker.example.com:4222".into(),
             tls_policy: Some(TlsPolicy::Prefer),
             ..NatsConfig::default()
         };
         assert!(!prefer.effective_tls_policy().require_tls());
+        assert_eq!(
+            prefer.validate().expect_err("远程 Prefer 必须失败").kind(),
+            kernel::ErrorKind::Invalid
+        );
     }
 
     #[test]
@@ -355,5 +448,30 @@ mod tests {
         assert!(url_is_loopback("nats://[::1]:4222"));
         assert!(!url_is_loopback("nats://10.0.0.5:4222"));
         assert!(!url_is_loopback("tls://nats.prod.internal:4222"));
+        assert!(!url_is_loopback("nats://0.0.0.0:4222"));
+    }
+
+    #[test]
+    fn rejects_url_userinfo_and_unbounded_resources() {
+        let userinfo =
+            NatsConfig { url: "nats://user:secret@127.0.0.1:4222".into(), ..NatsConfig::default() };
+        let debug = format!("{userinfo:?}");
+        assert!(!debug.contains("secret"));
+        assert_eq!(
+            userinfo.validate().expect_err("userinfo 必须拒绝").kind(),
+            kernel::ErrorKind::Invalid
+        );
+
+        for invalid in [
+            NatsConfig { operation_timeout: Duration::ZERO, ..NatsConfig::default() },
+            NatsConfig { subscription_capacity: 0, ..NatsConfig::default() },
+            NatsConfig { client_capacity: 0, ..NatsConfig::default() },
+            NatsConfig { max_reconnects: 0, ..NatsConfig::default() },
+        ] {
+            assert_eq!(
+                invalid.validate().expect_err("无界配置必须拒绝").kind(),
+                kernel::ErrorKind::Invalid
+            );
+        }
     }
 }

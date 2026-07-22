@@ -63,7 +63,7 @@ async fn live_transaction_rollback() {
 
     // 使用真实（非 TEMP）表会污染 schema；这里用 TEMP + 显式 rollback 验证状态机
     let conn = pool.acquire().await.expect("acquire");
-    let tx = conn.begin().await.expect("begin");
+    let mut tx = conn.begin().await.expect("begin");
     assert_eq!(tx.state(), TxState::Active);
 
     tx.execute("CREATE TEMP TABLE postgresx_live_rb (id int PRIMARY KEY, body text)", &[])

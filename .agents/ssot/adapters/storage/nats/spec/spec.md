@@ -44,8 +44,12 @@ Core NATS 与 JetStream 是两个独立合同。Core 发布发生在订阅建立
 
 ## 3. 安全与运维边界
 
-- loopback 默认 `TlsPolicy::Prefer`，非 loopback 默认 `Require`；凭据只从环境注入并在 `Debug` 中脱敏。
+- loopback 可显式使用 `Disable` / `Prefer`；远程地址必须 `Require`，显式远程明文或 Prefer 在连接前 fail-closed。
+- URL userinfo 被拒绝，凭据只从独立环境字段注入并在 `Debug` 中脱敏。
+- request/flush/publish/subscribe/ping/close 与 JetStream admin/publish/ack 均有内部 deadline。
+- subscription/client channel capacity、有限 `max_reconnects` 与 reconnect 最大退避均显式配置；连接、断开与 slow-consumer 事件进入 stats。
 - 本版不承诺 NKey 全量、JetStream KV/ObjectStore、跨账户、Cluster/HA、queue group 运维或自动 DLQ。
+- 固定入口容器重启后，同一 `async-nats` client 的命令通道连续三次实验均关闭；因此同连接自动恢复与原订阅恢复明确 **NO-GO**（`infra-2d9.3.1`）。
 - 单节点容器 conformance 不能作为上述能力证据。
 - `get_pull_consumer` 保留为底层高级逃生口；普通调用方使用稳定 `consumer` 包装面。
 
@@ -67,12 +71,22 @@ node scripts/broker-conformance.mjs
 NATS 场景必须证明：
 
 1. Core NATS 不回放订阅前消息；
-2. JetStream 连接重建后按相同 stream sequence 重投，double ack 后停止；
-3. `nak` 触发重投，`progress` 延长 ack wait；
-4. `max_ack_pending=1` 在未 ack 时背压、ack 后恢复；
-5. `max_deliver` 与 `term` 停止重投且 DLQ 探针无消息；
-6. 唯一 stream/subject/durable、cargo 外层硬超时、日志与清理。
+2. 本地有界 subscription 转发超时计入 slow-consumer stats；
+3. JetStream 连接重建后按相同 stream sequence 重投，double ack 后停止；
+4. `nak` 触发重投，`progress` 延长 ack wait；
+5. `max_ack_pending=1` 在未 ack 时背压、ack 后恢复；
+6. `max_deliver` 与 `term` 停止重投且 DLQ 探针无消息；
+7. 唯一 stream/subject/durable、cargo 外层硬超时、日志与清理。
 
-受控外部环境仍可运行 `tests/live_event_bus.rs`，但 ignored 或单节点 PASS 不得升级为 Cluster/HA/TLS/exactly-once 结论。
+失败重现实验：
 
-追溯：`crates/adapters/storage/nats/{Cargo.toml,src,tests/broker_conformance.rs}`、`docs/ssot/natsx-ssot-alignment.md`。
+```bash
+# 当前预期返回非零；用于 infra-2d9.3.1，不是绿色发布门禁
+node scripts/nats-reconnect-conformance.mjs
+```
+
+受控外部环境仍可运行 `tests/live_event_bus.rs`，但 ignored 或单节点 PASS 不得升级为
+同连接自动恢复、Cluster/HA/TLS/exactly-once 结论。
+
+追溯：`crates/adapters/storage/nats/{Cargo.toml,src,tests/broker_conformance.rs,tests/reconnect_conformance.rs}`、
+`scripts/nats-reconnect-conformance.mjs`、`docs/ssot/natsx-ssot-alignment.md`。

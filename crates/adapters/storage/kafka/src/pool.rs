@@ -60,16 +60,21 @@ impl KafkaPool {
             .filter(|s| !s.is_empty())
             .collect();
         let mut builder = ClientBuilder::new(brokers).client_id(config.client_id.clone());
+        if config.tls {
+            builder = builder.tls_config(build_tls_config(config.tls_ca_file.clone()).await?);
+        }
         if let (Some(u), Some(p)) = (&config.sasl_username, &config.sasl_password) {
             builder =
                 builder.sasl_config(SaslConfig::Plain(Credentials::new(u.clone(), p.clone())));
         } else if config.sasl_mechanism.is_some() {
             return Err(XError::invalid("kafkax: SASL 机制已设但缺少 username/password"));
         }
-        let client = builder
-            .build()
+        let client = tokio::time::timeout(config.connect_timeout, builder.build())
             .await
-            .map_err(|e| XError::unavailable(format!("kafkax connect: {e}")))?;
+            .map_err(|error| XError::deadline_exceeded("kafkax connect 超时").with_source(error))?
+            .map_err(|error| {
+                XError::unavailable(format!("kafkax connect: {error}")).with_source(error)
+            })?;
         Ok(Self {
             inner: Arc::new(PoolInner {
                 config,
@@ -83,7 +88,7 @@ impl KafkaPool {
 
     /// 从环境变量连接。
     pub async fn connect_from_env() -> XResult<Self> {
-        Self::connect(KafkaConfig::from_env()).await
+        Self::connect(KafkaConfig::from_env()?).await
     }
 
     /// 配置。
@@ -113,11 +118,19 @@ impl KafkaPool {
     /// 健康：列出 topics。
     pub async fn health(&self) -> XResult<KafkaHealth> {
         self.ensure_open()?;
-        match self.inner.client.list_topics().await {
-            Ok(topics) => {
+        match tokio::time::timeout(
+            self.inner.config.operation_timeout,
+            self.inner.client.list_topics(),
+        )
+        .await
+        {
+            Err(error) => {
+                Err(XError::deadline_exceeded("kafkax list_topics 超时").with_source(error))
+            }
+            Ok(Ok(topics)) => {
                 Ok(KafkaHealth { ready: true, detail: format!("topics={}", topics.len()) })
             }
-            Err(e) => Ok(KafkaHealth { ready: false, detail: format!("list_topics: {e}") }),
+            Ok(Err(e)) => Ok(KafkaHealth { ready: false, detail: format!("list_topics: {e}") }),
         }
     }
 
@@ -144,9 +157,17 @@ impl KafkaPool {
             .client
             .controller_client()
             .map_err(|e| XError::unavailable(format!("kafkax controller: {e}")))?;
-        match ctrl.create_topic(topic, partitions, replication, 5_000).await {
-            Ok(()) => Ok(()),
-            Err(e) => {
+        match tokio::time::timeout(
+            self.inner.config.operation_timeout,
+            ctrl.create_topic(topic, partitions, replication, 5_000),
+        )
+        .await
+        {
+            Err(error) => {
+                Err(XError::deadline_exceeded("kafkax create_topic 超时").with_source(error))
+            }
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(e)) => {
                 let s = e.to_string().to_ascii_lowercase();
                 if s.contains("exist") || s.contains("already") || s.contains("topic_already") {
                     Ok(())
@@ -185,16 +206,56 @@ impl KafkaPool {
         partition: i32,
     ) -> XResult<rskafka::client::partition::PartitionClient> {
         self.ensure_open()?;
-        self.inner
-            .client
-            .partition_client(topic, partition, UnknownTopicHandling::Retry)
-            .await
-            .map_err(|e| XError::unavailable(format!("kafkax partition_client: {e}")))
+        tokio::time::timeout(
+            self.inner.config.operation_timeout,
+            self.inner.client.partition_client(topic, partition, UnknownTopicHandling::Retry),
+        )
+        .await
+        .map_err(|error| {
+            XError::deadline_exceeded("kafkax partition_client 超时").with_source(error)
+        })?
+        .map_err(|error| {
+            XError::unavailable(format!("kafkax partition_client: {error}")).with_source(error)
+        })
     }
 
     pub(crate) fn compression() -> Compression {
         Compression::NoCompression
     }
+}
+
+async fn build_tls_config(
+    ca_file: Option<std::path::PathBuf>,
+) -> XResult<Arc<rustls::ClientConfig>> {
+    tokio::task::spawn_blocking(move || {
+        let _ = rustls::crypto::ring::default_provider().install_default();
+        let mut roots =
+            rustls::RootCertStore::from_iter(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
+        if let Some(path) = ca_file {
+            let file = std::fs::File::open(&path).map_err(|error| {
+                XError::invalid(format!("kafkax: 无法读取 TLS CA `{}`", path.display()))
+                    .with_source(error)
+            })?;
+            let mut reader = std::io::BufReader::new(file);
+            let certificates =
+                rustls_pemfile::certs(&mut reader).collect::<Result<Vec<_>, _>>().map_err(
+                    |error| XError::invalid("kafkax: TLS CA PEM 解析失败").with_source(error),
+                )?;
+            if certificates.is_empty() {
+                return Err(XError::invalid("kafkax: TLS CA 文件中没有证书"));
+            }
+            for certificate in certificates {
+                roots.add(certificate).map_err(|error| {
+                    XError::invalid("kafkax: TLS CA 证书无效").with_source(error)
+                })?;
+            }
+        }
+        let tls =
+            rustls::ClientConfig::builder().with_root_certificates(roots).with_no_client_auth();
+        Ok(Arc::new(tls))
+    })
+    .await
+    .map_err(|error| XError::internal("kafkax: TLS 配置任务失败").with_source(error))?
 }
 
 #[cfg(test)]
@@ -208,6 +269,7 @@ mod tests {
         let cfg = KafkaConfig {
             brokers: "127.0.0.1:1".into(),
             delivery_timeout: Duration::from_millis(300),
+            connect_timeout: Duration::from_millis(300),
             ..KafkaConfig::default()
         };
         let res = tokio::time::timeout(Duration::from_secs(2), KafkaPool::connect(cfg)).await;
@@ -223,9 +285,7 @@ mod tests {
                 );
             }
             Ok(Ok(_)) => panic!("must fail"),
-            Err(_) => {
-                // outer timeout: connect path still exercised
-            }
+            Err(_) => panic!("KafkaPool::connect 必须受内部截止时间约束"),
         }
     }
 

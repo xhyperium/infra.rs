@@ -6,6 +6,18 @@
 
 ---
 
+## [0.3.2] — 2026-07-22
+
+### 新增
+
+- `ContractStoreSet`：正式 `contracts::KeyValueStore` / `EventBus` 固定 typed 槽位
+- `Bootstrap::with_contract_store_set` 与 `PlatformContext` / `AppContext` 只读访问器
+- 固定摘要 Redis/NATS 真实组合实验；依赖仅存在于 dev-dependencies
+
+### 边界
+
+- 不提供通用 Service Locator、泛型 Repository 注册或跨资源事务
+
 ## [Unreleased]
 
 ### Added
@@ -29,7 +41,7 @@
   - `MarketDataContext` / `ExecutionContext`
   - `BootstrapError` → `kernel::ErrorKind`（Missing / Invalid / Unavailable）
   - 四条 build 路径：`build` / `try_build` / `build_app` / `try_build_app`
-  - `require_evidence` fail-closed（仅 `try_*` 强制）
+  - `require_evidence` 在 debug/release 的全部 build 路径 fail-closed；`try_*` 返回可恢复错误
 - 可移植 `traits` 替面：`EvidenceAppender`、六个有界上下文能力 trait、`NoopInstrumentation`
 - 示例 `examples/minimal.rs`；集成测试 `tests/public_api.rs`
 - 本仓对齐文档：`docs/ssot/bootstrap-ssot-alignment.md`

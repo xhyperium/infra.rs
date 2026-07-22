@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.2] — 2026-07-22
+
+### Added
+
+- reqwest/rustls HTTPS 与可选 PEM CA；远程 HTTP 在配置阶段 fail-closed
+- 严格环境变量解析和 TLS/timeout 校验
+- 临时 CA/证书的本地 TLS 协议实验，覆盖受信 CA 成功与错误 CA fail-closed
+
+### Boundaries
+
+- 实验只证明客户端 HTTPS/CA，不声明真实 ClickHouse 集群 TLS、复制或 HA
+
 ## [0.3.1] — 2026-07-22
 
 ### Added

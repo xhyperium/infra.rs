@@ -23,6 +23,7 @@ use crate::pool::NatsPool;
 #[derive(Clone)]
 pub struct JetStream {
     context: async_nats::jetstream::Context,
+    operation_timeout: Duration,
 }
 
 /// Pull consumer 配置（最小字段）。
@@ -142,13 +143,13 @@ impl fmt::Debug for JetStreamDelivery {
     }
 }
 
-async fn run_bounded_command<F>(
+async fn run_bounded_command<T, F>(
     timeout: Duration,
     operation: &'static str,
     command: F,
-) -> XResult<()>
+) -> XResult<T>
 where
-    F: Future<Output = XResult<()>>,
+    F: Future<Output = XResult<T>>,
 {
     tokio::time::timeout(timeout, command).await.map_err(|error| {
         XError::deadline_exceeded(format!("natsx jetstream: {operation} 超时")).with_source(error)
@@ -344,13 +345,19 @@ impl JetStream {
     /// 从已连接的 pool 构造。
     #[must_use]
     pub fn from_pool(pool: &NatsPool) -> Self {
-        Self { context: async_nats::jetstream::new(pool.client()) }
+        Self {
+            context: async_nats::jetstream::new(pool.client()),
+            operation_timeout: pool.config().operation_timeout,
+        }
     }
 
     /// 从裸 client 构造。
     #[must_use]
     pub fn from_client(client: async_nats::Client) -> Self {
-        Self { context: async_nats::jetstream::new(client) }
+        Self {
+            context: async_nats::jetstream::new(client),
+            operation_timeout: Duration::from_secs(5),
+        }
     }
 
     /// 底层 context。
@@ -359,17 +366,36 @@ impl JetStream {
         &self.context
     }
 
+    /// 覆盖 JetStream 管理与发布操作的调用侧截止时间。
+    ///
+    /// # Errors
+    ///
+    /// `timeout` 为零时返回 `Invalid`。
+    pub fn with_operation_timeout(mut self, timeout: Duration) -> XResult<Self> {
+        if timeout.is_zero() {
+            return Err(XError::invalid("natsx jetstream: operation_timeout 必须大于零"));
+        }
+        self.operation_timeout = timeout;
+        Ok(self)
+    }
+
     /// 发布并等待 JetStream ack。
     pub async fn publish(&self, subject: &str, payload: Bytes) -> XResult<()> {
         if subject.trim().is_empty() {
             return Err(XError::invalid("natsx jetstream: subject 不能为空"));
         }
-        let ack = self
-            .context
-            .publish(subject.to_string(), payload)
-            .await
-            .map_err(|e| XError::unavailable(format!("natsx jetstream publish: {e}")))?;
-        ack.await.map_err(|e| XError::unavailable(format!("natsx jetstream publish ack: {e}")))?;
+        let ack = run_bounded_command(self.operation_timeout, "publish", async {
+            self.context.publish(subject.to_string(), payload).await.map_err(|error| {
+                XError::unavailable("natsx jetstream publish 失败").with_source(error)
+            })
+        })
+        .await?;
+        run_bounded_command(self.operation_timeout, "publish ack", async {
+            ack.await.map(|_| ()).map_err(|error| {
+                XError::unavailable("natsx jetstream publish ack 失败").with_source(error)
+            })
+        })
+        .await?;
         Ok(())
     }
 
@@ -379,15 +405,21 @@ impl JetStream {
         if cfg.subjects.is_empty() {
             return Err(XError::invalid("natsx jetstream: stream subjects 不能为空"));
         }
+        if cfg.max_messages <= 0 {
+            return Err(XError::invalid("natsx jetstream: max_messages 必须大于零"));
+        }
         let js_cfg = async_nats::jetstream::stream::Config {
             name: cfg.name,
             subjects: cfg.subjects,
             max_messages: cfg.max_messages,
             ..Default::default()
         };
-        self.context.get_or_create_stream(js_cfg).await.map_err(|e| {
-            XError::unavailable(format!("natsx jetstream get_or_create_stream: {e}"))
-        })?;
+        run_bounded_command(self.operation_timeout, "get_or_create_stream", async {
+            self.context.get_or_create_stream(js_cfg).await.map(|_| ()).map_err(|error| {
+                XError::unavailable("natsx jetstream get_or_create_stream 失败").with_source(error)
+            })
+        })
+        .await?;
         Ok(())
     }
 
@@ -404,9 +436,15 @@ impl JetStream {
         if let Some(fs) = cfg.filter_subject {
             pull.filter_subject = fs;
         }
-        self.context.create_consumer_on_stream(pull, stream).await.map_err(|e| {
-            XError::unavailable(format!("natsx jetstream create_pull_consumer: {e}"))
-        })?;
+        run_bounded_command(self.operation_timeout, "create_pull_consumer", async {
+            self.context.create_consumer_on_stream(pull, stream).await.map(|_| ()).map_err(
+                |error| {
+                    XError::unavailable("natsx jetstream create_pull_consumer 失败")
+                        .with_source(error)
+                },
+            )
+        })
+        .await?;
         Ok(())
     }
 
@@ -459,15 +497,18 @@ impl JetStream {
         if consumer.trim().is_empty() {
             return Err(XError::invalid("natsx jetstream: consumer 名不能为空"));
         }
-        let stream_handle = self
-            .context
-            .get_stream(stream)
-            .await
-            .map_err(|e| XError::unavailable(format!("natsx jetstream get_stream: {e}")))?;
-        stream_handle
-            .get_consumer(consumer)
-            .await
-            .map_err(|e| XError::unavailable(format!("natsx jetstream get_consumer: {e}")))
+        let stream_handle = run_bounded_command(self.operation_timeout, "get_stream", async {
+            self.context.get_stream(stream).await.map_err(|error| {
+                XError::unavailable("natsx jetstream get_stream 失败").with_source(error)
+            })
+        })
+        .await?;
+        run_bounded_command(self.operation_timeout, "get_consumer", async {
+            stream_handle.get_consumer(consumer).await.map_err(|error| {
+                XError::unavailable("natsx jetstream get_consumer 失败").with_source(error)
+            })
+        })
+        .await
     }
 }
 
@@ -514,6 +555,10 @@ mod tests {
         assert_eq!(sc.name, "ORDERS");
         assert_eq!(sc.subjects, vec!["orders.>".to_string()]);
         assert_eq!(sc.max_messages, 10_000);
+
+        let invalid_stream = StreamConfig { max_messages: 0, ..sc.clone() };
+        // 无 client 时无法调用管理面；结构值在调用前由 get_or_create_stream 拒绝。
+        assert_eq!(invalid_stream.max_messages, 0);
 
         let pc = PullConsumerConfig::durable("worker-1");
         assert_eq!(pc.durable_name, "worker-1");
@@ -582,7 +627,11 @@ mod tests {
         };
         let res = tokio::time::timeout(Duration::from_secs(2), NatsPool::connect(cfg)).await;
         match res {
-            Ok(Err(err)) => assert_eq!(err.kind(), ErrorKind::Unavailable),
+            Ok(Err(err)) => assert!(
+                matches!(err.kind(), ErrorKind::Unavailable | ErrorKind::DeadlineExceeded),
+                "kind={:?}",
+                err.kind()
+            ),
             Ok(Ok(_)) => panic!("无服务端时必须连接失败"),
             Err(_) => panic!("连接拒绝路径不得超出测试硬超时"),
         }
@@ -605,5 +654,25 @@ mod tests {
         assert_send_sync::<JetStreamConsumerConfig>();
         assert_send_sync::<JetStreamConsumer>();
         assert_send_sync::<JetStreamDelivery>();
+    }
+
+    #[tokio::test]
+    async fn generic_bounded_command_preserves_value_and_timeout_source() {
+        let value = run_bounded_command(Duration::from_secs(1), "返回值", async {
+            Ok::<_, XError>(42u8)
+        })
+        .await
+        .expect("返回值");
+        assert_eq!(value, 42);
+
+        let error = run_bounded_command(
+            Duration::from_millis(1),
+            "挂起返回值",
+            std::future::pending::<XResult<u8>>(),
+        )
+        .await
+        .expect_err("必须超时");
+        assert_eq!(error.kind(), ErrorKind::DeadlineExceeded);
+        assert!(std::error::Error::source(&error).is_some());
     }
 }

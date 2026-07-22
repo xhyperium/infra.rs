@@ -1,64 +1,60 @@
-# clickhousex 实现规范
+# `clickhousex` 当前实现规范
 
-> 状态：当前 `0.3.1` 实现合同（Mock + clickhouse HTTP 真实驱动已落地；真测 `#[ignore]`，未达 M3）。**未宣称 package stable。**
-> 权威顺序为 `CONSTITUTION.md` → canonical spec → Approved ADR → 本文 → 代码。
+状态：当前 `0.3.2` 实现合同（reqwest HTTP(S) 默认真实路径；`AnalyticsSink`、批量写与有界池）。
+**未宣称 package stable。**
 
-## 1. 证据边界与范围
+## 0. 权威与范围
 
-- **Evidence**：`crates/adapters/storage/clickhouse/{Cargo.toml,src/lib.rs}` 提供：
-  - `MockAnalyticsSink`：内存有序缓冲 + `snapshot`；
-  - `ClickhouseSink`：基于 `clickhouse` crate 的 HTTP 客户端真实实现。
-- **Inference**：生产表 schema、批量/背压、交付语义仍可收紧，但不否定现有代码事实。
-- **Unknown**：exactly-once、批量 flush API、认证/TLS 生产合同未裁定。
+`clickhousex` 位于 `crates/adapters/storage/clickhouse`。默认导出
+`ClickHouseConfig`、`ClickHousePool`、`ClickHouseClient`；内存实现仅在
+`scaffold` feature 下导出。
 
-目的：约束当前分析事件 sink。非目标：把 ignored 真测当作 CI 已通过的生产证据；不在本 crate
-承担 DDL 治理或查询 DSL。
+非目标：原生 9000 协议、DDL/migration 所有权、Cluster/ReplicatedMergeTree 运维、
+跨节点 exactly-once 或查询 DSL。
 
-## 2. 位置、依赖、版本
+## 1. 公开合同
 
-路径 `crates/adapters/storage/clickhouse`（package `clickhousex`），版本 `0.3.1`，无 features。
-普通依赖：`kernel`、`contracts`、`async-trait`、`bytes`、`clickhouse`、`anyhow`；
-dev 依赖 `tokio`。符合 R2。独立版本每次仅允许 `x.y.z → x.y.(z+1)`。
+| 入口 | 当前合同 |
+|---|---|
+| `ClickHouseConfig` | 严格 env 解析、HTTP(S)、认证、数据库、连接/请求/获取截止时间、池容量 |
+| `ClickHousePool` | Semaphore 约束 in-flight；close 后拒绝新请求；stats 可观察 |
+| `ClickHouseClient` | ping、文本/行查询、JSONEachRow、分块批量写 |
+| `AnalyticsSink` | 将 event/payload 写入调用方管理的表 |
 
-## 3. 当前公开 API 与行为
+`insert_batch` 按 `max_rows_per_chunk` 有界分块；表名等结构化 SQL 标识符必须通过现有校验，
+业务值经 HTTP body/参数路径传递。
 
-### 3.1 MockAnalyticsSink
+## 2. 安全与 HTTPS
 
-- `new() -> Self`；`snapshot() -> Vec<(String, Bytes)>` 克隆当前序列（**不属于** trait，仅测试断言）。
-- `AnalyticsSink::sink(&str, Bytes)`：追加 `(event, payload)` 并保序；允许空 payload 和重复 event。
+- loopback 可显式使用 HTTP；远程 HTTP 在配置校验阶段 fail-closed。
+- HTTPS 使用 rustls 根证书；`tls_ca_file` 可追加 PEM CA，文件读取与解析在
+  `spawn_blocking` 中执行。
+- CA 文件仅在 TLS 模式允许；空 CA、非法 PEM、错误 CA 或主机名校验失败均返回带 source 的错误。
+- 密码和完整 URL 不进入 Debug / 错误上下文。
+- 连接、请求和池获取均有非零截止时间。
 
-### 3.2 ClickhouseSink
+## 3. 可复验证据
 
-- `new(url, database)`：`clickhouse::Client::default().with_url().with_database()`。
-- `client()`：暴露内部客户端（DDL/查询等高级用法）。
-- `sink`：`INSERT INTO analytics (event, payload) VALUES (?, ?)`；payload 以 UTF-8 lossy 写入
-  `String` 列（非 UTF-8 替换为 U+FFFD）。
-- 假定表 schema 为 `analytics(event String, payload String)`，调用方负责建表。
+本地 TLS HTTP 协议实验使用临时 CA 与带 localhost SAN 的服务端证书，证明：
 
-## 4. 错误、并发、生命周期与信任边界
+1. 受信 CA + 正确主机名能完成 HTTPS `SELECT 1`；
+2. 错误 CA 在握手阶段 fail-closed 且保留 source；
+3. 临时私钥与证书总会清理。
 
-Mock 使用 `RwLock<Vec<_>>`；锁中毒会 panic。真实路径错误映射为 `XError::Transient` 等。
-输入不验证且 mock 无容量上限。生产须裁定背压/内存、事件名与 payload schema、敏感数据、认证/TLS。
-
-**证据**：真实测试均 `#[ignore = "需要 ClickHouse 服务（设置 CLICKHOUSE_URL/CLICKHOUSE_DB）"]`；
-**不得**当作 CI 默认通过或 M3 生产证据。
-
-## 5. 测试与验收
-
-Mock 单元测试覆盖单次写入、顺序、重复事件、空 payload、trait object。
-真实测试 `#[ignore]`。运行：
+该实验验证客户端 HTTPS/CA 传输合同，**不**证明真实 ClickHouse 集群、复制或故障切换。
 
 ```bash
-cargo test -p clickhousex
-cargo test -p clickhousex -- --ignored   # 需 ClickHouse；非 CI 默认
-cargo check -p clickhousex --all-targets
+cargo test -p clickhousex --all-targets
 cargo clippy -p clickhousex --all-targets -- -D warnings
+node scripts/clickhouse-https-conformance.mjs
+cmp .agents/ssot/adapters/storage/clickhouse/spec/spec.md \
+  .agents/ssot/adapters/storage/clickhouse/spec/xhyper-clickhousex-complete-spec.md
 ```
 
-验收要求当前 API/行为匹配、依赖合规、默认检查通过；Unknown 与 ignored 真测不构成生产授权。
+## 4. OPEN / NO-GO
 
-## 6. 可追溯性与开放决策
+真实 ClickHouse TLS 集群 live、mTLS、证书热轮换、native 9000、Cluster/HA、
+DDL/schema 治理、exactly-once 与 package stable 未承诺。
 
-追溯 `docs/architecture/spec.md` §2 R2、§4.3 `AnalyticsSink`、§4.5.1、§5、§8。
-`crates/adapters/storage/clickhouse/{Cargo.toml,src/lib.rs,README.md}`。
-开放决策：批量/flush、交付语义、认证/TLS、二进制 payload 列类型。
+追溯：`crates/adapters/storage/clickhouse/{src,tests/https_conformance.rs}`、
+`scripts/clickhouse-https-conformance.mjs`、`docs/ssot/clickhousex-ssot-alignment.md`。

@@ -16,7 +16,7 @@ fn unique_suffix() -> String {
 }
 
 async fn live_pool() -> NatsPool {
-    NatsPool::connect(NatsConfig::from_env()).await.expect("连接 NATS")
+    NatsPool::connect(NatsConfig::from_env().expect("NATS 环境配置合法")).await.expect("连接 NATS")
 }
 
 #[tokio::test]
@@ -36,6 +36,31 @@ async fn core_nats_does_not_replay_messages_published_before_subscribe() {
         .expect("等待订阅后消息")
         .expect("订阅保持打开");
     assert_eq!(observed.payload, Bytes::from_static(b"after-subscribe"));
+    pool.close().await.expect("关闭 NATS pool");
+}
+
+#[tokio::test]
+#[ignore = "需要隔离 NATS；请通过 scripts/broker-conformance.mjs 运行"]
+async fn bounded_subscription_reports_local_slow_consumer() {
+    let mut config = NatsConfig::from_env().expect("NATS 环境配置合法");
+    config.subscription_capacity = 1;
+    config.operation_timeout = Duration::from_millis(100);
+    let pool = NatsPool::connect(config).await.expect("连接 NATS");
+    let subject = format!("infra.conformance.slow-consumer.{}", unique_suffix());
+    let _subscription = pool.subscribe(&subject).await.expect("建立不消费的订阅");
+
+    for sequence in 0..8u32 {
+        pool.publish(&subject, Bytes::copy_from_slice(&sequence.to_be_bytes()))
+            .await
+            .expect("发布慢消费者样本");
+    }
+    for _ in 0..50 {
+        if pool.stats().slow_consumers >= 1 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    assert!(pool.stats().slow_consumers >= 1, "本地有界转发超时必须可观察");
     pool.close().await.expect("关闭 NATS pool");
 }
 

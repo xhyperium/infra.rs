@@ -5,11 +5,13 @@
 //! - `SASL_MECHANISM` — 如 `PLAIN`；空串关闭 SASL
 //! - `SASL_USERNAME` / `SASL_PASSWORD` — SASL 凭据
 //! - `TLS` — `1`/`true`/`yes` 开启 TLS（`SASL_SSL` 或 `SSL`）
+//! - `CONNECT_TIMEOUT_MS` / `OPERATION_TIMEOUT_MS` — 连接与元数据操作截止时间
 //!
 //! **默认值面向本地/草稿联调**，生产环境务必通过环境变量注入凭据；
 //! 本类型的 `Debug` 会脱敏密码。
 
 use std::fmt;
+use std::path::PathBuf;
 use std::time::Duration;
 
 use kernel::{XError, XResult};
@@ -34,8 +36,14 @@ pub struct KafkaConfig {
     pub sasl_password: Option<String>,
     /// 是否启用 TLS。
     pub tls: bool,
+    /// 可选 PEM CA 文件；未设置时使用公开 webpki roots。
+    pub tls_ca_file: Option<PathBuf>,
     /// 投递等待超时。
     pub delivery_timeout: Duration,
+    /// 建连截止时间。
+    pub connect_timeout: Duration,
+    /// 元数据、分区客户端和管理操作截止时间。
+    pub operation_timeout: Duration,
     /// EventBus::subscribe 使用的默认消费组前缀。
     pub event_bus_group_prefix: String,
 }
@@ -50,7 +58,10 @@ impl Default for KafkaConfig {
             sasl_username: None,
             sasl_password: None,
             tls: false,
+            tls_ca_file: None,
             delivery_timeout: Duration::from_secs(30),
+            connect_timeout: Duration::from_secs(10),
+            operation_timeout: Duration::from_secs(10),
             event_bus_group_prefix: "kafkax-eventbus".to_string(),
         }
     }
@@ -59,13 +70,16 @@ impl Default for KafkaConfig {
 impl fmt::Debug for KafkaConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("KafkaConfig")
-            .field("brokers", &self.brokers)
+            .field("brokers", &redact_brokers(&self.brokers))
             .field("client_id", &self.client_id)
             .field("sasl_mechanism", &self.sasl_mechanism)
             .field("sasl_username", &self.sasl_username)
             .field("sasl_password", &self.sasl_password.as_ref().map(|_| "***"))
             .field("tls", &self.tls)
+            .field("tls_ca_file", &self.tls_ca_file)
             .field("delivery_timeout", &self.delivery_timeout)
+            .field("connect_timeout", &self.connect_timeout)
+            .field("operation_timeout", &self.operation_timeout)
             .field("event_bus_group_prefix", &self.event_bus_group_prefix)
             .finish()
     }
@@ -73,7 +87,7 @@ impl fmt::Debug for KafkaConfig {
 
 impl KafkaConfig {
     /// 从环境变量加载，缺省回落 [`KafkaConfig::default`]。
-    pub fn from_env() -> Self {
+    pub fn from_env() -> XResult<Self> {
         let mut cfg = Self::default();
         if let Ok(v) = std::env::var("FOUNDATIONX_KAFKAX_BROKERS") {
             if !v.trim().is_empty() {
@@ -97,35 +111,71 @@ impl KafkaConfig {
             cfg.sasl_password = Some(v);
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_KAFKAX_TLS") {
-            cfg.tls = parse_bool(&v);
+            cfg.tls = parse_bool(&v, "FOUNDATIONX_KAFKAX_TLS")?;
+        }
+        if let Ok(value) = std::env::var("FOUNDATIONX_KAFKAX_TLS_CA_FILE") {
+            if !value.trim().is_empty() {
+                cfg.tls_ca_file = Some(PathBuf::from(value));
+            }
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_KAFKAX_CLIENT_ID") {
             if !v.trim().is_empty() {
                 cfg.client_id = v;
             }
         }
-        cfg
+        if let Ok(v) = std::env::var("FOUNDATIONX_KAFKAX_CONNECT_TIMEOUT_MS") {
+            cfg.connect_timeout = Duration::from_millis(v.parse::<u64>().map_err(|error| {
+                XError::invalid(format!("FOUNDATIONX_KAFKAX_CONNECT_TIMEOUT_MS 非法: {error}"))
+            })?);
+        }
+        if let Ok(v) = std::env::var("FOUNDATIONX_KAFKAX_OPERATION_TIMEOUT_MS") {
+            cfg.operation_timeout = Duration::from_millis(v.parse::<u64>().map_err(|error| {
+                XError::invalid(format!("FOUNDATIONX_KAFKAX_OPERATION_TIMEOUT_MS 非法: {error}"))
+            })?);
+        }
+        cfg.validate()?;
+        Ok(cfg)
     }
 
     /// 校验配置完整性。
     ///
     /// # Errors
     ///
-    /// broker 为空、请求当前未实现的 TLS，或 SASL 凭据不完整时返回 `Invalid`。
+    /// broker/截止时间非法、远程明文、未知 SASL 机制或凭据不完整时返回 `Invalid`。
     pub fn validate(&self) -> XResult<()> {
         if self.brokers.trim().is_empty() {
             return Err(XError::invalid("kafkax: brokers 不能为空"));
         }
-        if self.tls {
-            return Err(XError::invalid("kafkax: 当前 rskafka 构建未接入 TLS，拒绝静默降级为明文"));
+        if self.delivery_timeout.is_zero()
+            || self.connect_timeout.is_zero()
+            || self.operation_timeout.is_zero()
+        {
+            return Err(XError::invalid("kafkax: timeout 必须大于零"));
         }
-        if self.sasl_mechanism.is_some() {
+        if self.tls_ca_file.is_some() && !self.tls {
+            return Err(XError::invalid("kafkax: 配置 TLS_CA_FILE 时必须启用 TLS"));
+        }
+        let brokers = self.brokers.split(',').map(str::trim).filter(|broker| !broker.is_empty());
+        for broker in brokers {
+            let host = broker_host(broker)?;
+            if !self.tls && !host_is_loopback(&host) {
+                return Err(XError::invalid(format!("kafkax: 远程 broker `{host}` 必须启用 TLS")));
+            }
+        }
+        if let Some(mechanism) = &self.sasl_mechanism {
+            if !mechanism.eq_ignore_ascii_case(DEFAULT_SASL_MECHANISM) {
+                return Err(XError::invalid(format!(
+                    "kafkax: 当前仅支持 SASL/PLAIN，拒绝机制 `{mechanism}`"
+                )));
+            }
             if self.sasl_username.as_ref().map(|s| s.is_empty()).unwrap_or(true) {
                 return Err(XError::invalid("kafkax: 已启用 SASL 但缺少 username"));
             }
             if self.sasl_password.as_ref().map(|s| s.is_empty()).unwrap_or(true) {
                 return Err(XError::invalid("kafkax: 已启用 SASL 但缺少 password"));
             }
+        } else if self.sasl_username.is_some() || self.sasl_password.is_some() {
+            return Err(XError::invalid("kafkax: 提供了 SASL 凭据但未启用 PLAIN 机制"));
         }
         Ok(())
     }
@@ -141,8 +191,41 @@ impl KafkaConfig {
     }
 }
 
-fn parse_bool(s: &str) -> bool {
-    matches!(s.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on")
+fn broker_host(broker: &str) -> XResult<String> {
+    let candidate =
+        if broker.contains("://") { broker.to_string() } else { format!("kafka://{broker}") };
+    let parsed = url::Url::parse(&candidate)
+        .map_err(|error| XError::invalid(format!("kafkax: broker 地址非法: {error}")))?;
+    if !parsed.username().is_empty() || parsed.password().is_some() {
+        return Err(XError::invalid("kafkax: broker 地址禁止内嵌 userinfo"));
+    }
+    parsed
+        .host_str()
+        .filter(|host| !host.is_empty())
+        .map(str::to_owned)
+        .ok_or_else(|| XError::invalid("kafkax: broker 缺少 host"))
+}
+
+fn redact_brokers(brokers: &str) -> String {
+    brokers
+        .split(',')
+        .map(|broker| if broker.contains('@') { "<redacted-userinfo>" } else { broker.trim() })
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+fn host_is_loopback(host: &str) -> bool {
+    let host = host.strip_prefix('[').and_then(|value| value.strip_suffix(']')).unwrap_or(host);
+    host.eq_ignore_ascii_case("localhost")
+        || host.parse::<std::net::IpAddr>().is_ok_and(|ip| ip.is_loopback())
+}
+
+fn parse_bool(value: &str, name: &str) -> XResult<bool> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "1" | "true" | "yes" | "on" => Ok(true),
+        "0" | "false" | "no" | "off" => Ok(false),
+        _ => Err(XError::invalid(format!("{name} 非法: {value}"))),
+    }
 }
 
 #[cfg(test)]
@@ -163,6 +246,7 @@ mod tests {
     #[test]
     fn debug_redacts_password() {
         let c = KafkaConfig {
+            brokers: "kafka://embedded:secret@localhost:9092".into(),
             sasl_mechanism: Some(DEFAULT_SASL_MECHANISM.into()),
             sasl_username: Some("admin".into()),
             sasl_password: Some("super-secret-kafka".into()),
@@ -171,6 +255,8 @@ mod tests {
         let s = format!("{c:?}");
         assert!(s.contains("***"));
         assert!(!s.contains("super-secret-kafka"));
+        assert!(!s.contains("embedded"));
+        assert!(!s.contains("secret@"));
     }
 
     #[test]
@@ -188,10 +274,61 @@ mod tests {
     }
 
     #[test]
-    fn tls_fails_closed_until_transport_is_implemented() {
-        let cfg = KafkaConfig { tls: true, ..KafkaConfig::default() };
-        let error = cfg.validate().expect_err("不得静默忽略 TLS");
+    fn tls_allows_remote_and_plaintext_rejects_remote() {
+        let tls = KafkaConfig {
+            brokers: "broker.example.com:9093".into(),
+            tls: true,
+            ..KafkaConfig::default()
+        };
+        tls.validate().expect("远程 TLS 配置应通过");
+
+        let plain =
+            KafkaConfig { brokers: "broker.example.com:9092".into(), ..KafkaConfig::default() };
+        let error = plain.validate().expect_err("远程明文必须 fail-closed");
         assert_eq!(error.kind(), kernel::ErrorKind::Invalid);
-        assert!(error.context().contains("未接入 TLS"));
+        assert!(error.context().contains("必须启用 TLS"));
+    }
+
+    #[test]
+    fn only_plain_sasl_is_accepted_and_half_credentials_fail() {
+        let unknown = KafkaConfig {
+            sasl_mechanism: Some("SCRAM-SHA-256".into()),
+            sasl_username: Some("user".into()),
+            sasl_password: Some("secret".into()),
+            ..KafkaConfig::default()
+        };
+        assert_eq!(
+            unknown.validate().expect_err("未知机制必须失败").kind(),
+            kernel::ErrorKind::Invalid
+        );
+
+        let credentials_without_mechanism = KafkaConfig {
+            sasl_username: Some("user".into()),
+            sasl_password: Some("secret".into()),
+            ..KafkaConfig::default()
+        };
+        assert_eq!(
+            credentials_without_mechanism.validate().expect_err("凭据不得静默忽略").kind(),
+            kernel::ErrorKind::Invalid
+        );
+    }
+
+    #[test]
+    fn ca_file_requires_tls() {
+        let config =
+            KafkaConfig { tls_ca_file: Some("/tmp/kafka-ca.pem".into()), ..KafkaConfig::default() };
+        assert_eq!(
+            config.validate().expect_err("CA 不得用于明文").kind(),
+            kernel::ErrorKind::Invalid
+        );
+    }
+
+    #[test]
+    fn rejects_zero_deadlines_and_accepts_ipv6_loopback() {
+        let zero = KafkaConfig { connect_timeout: Duration::ZERO, ..KafkaConfig::default() };
+        assert_eq!(zero.validate().expect_err("零超时必须失败").kind(), kernel::ErrorKind::Invalid);
+
+        let ipv6 = KafkaConfig { brokers: "[::1]:9092".into(), ..KafkaConfig::default() };
+        ipv6.validate().expect("IPv6 loopback 明文可用于本机实验");
     }
 }

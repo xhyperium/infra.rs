@@ -19,7 +19,7 @@ fn unique_payload() -> String {
 #[tokio::test]
 #[ignore = "需要可用 NATS；请在服务端就绪后使用 --ignored 运行"]
 async fn live_pub_sub_content() {
-    let cfg = NatsConfig::from_env();
+    let cfg = NatsConfig::from_env().expect("NATS 环境配置合法");
     let pool = NatsPool::connect(cfg).await.expect("连接 NATS");
     let health = pool.health().await.expect("读取健康状态");
     assert!(health.ready, "服务端未就绪：{}", health.detail);

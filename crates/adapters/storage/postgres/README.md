@@ -6,6 +6,7 @@ Postgres 存储适配：**生产连接池 / 参数化 SQL 为默认导出**。
 |----|------|
 | 生产默认 | `PostgresConfig` + `PostgresPool` + `PgConnection` / `PgTransaction` |
 | contracts | `PgTxRunner`（真实 BEGIN/COMMIT/ROLLBACK **边界**；SQL 请用 `with_transaction`） |
+| deadline | pool acquire 与 SQL/事务终结内部有界；调用侧超时丢弃连接 |
 | scaffold | feature `scaffold`：`PostgresAdapter` / `ObservingPostgresAdapter`（内存，非生产） |
 
 ## 快速开始
@@ -37,6 +38,7 @@ pool.close();
 cargo test -p postgresx
 cargo test -p postgresx --features scaffold
 cargo test -p postgresx --test live_postgres -- --ignored
+node scripts/postgres-deadline-conformance.mjs
 cargo bench -p postgresx --bench query_hot_path
 ```
 

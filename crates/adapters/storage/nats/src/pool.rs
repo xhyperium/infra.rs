@@ -21,6 +21,12 @@ pub struct NatsPoolStats {
     pub publish_failed: u64,
     /// 是否已关闭。
     pub closed: bool,
+    /// 建连事件数（含首次连接）。
+    pub connected: u64,
+    /// 断线事件数。
+    pub disconnected: u64,
+    /// 驱动报告的慢消费者事件数。
+    pub slow_consumers: u64,
 }
 
 /// 健康结果。
@@ -76,6 +82,9 @@ struct PoolInner {
     publish_failed: AtomicU64,
     closed: AtomicBool,
     sub_seq: AtomicU64,
+    connected: Arc<AtomicU64>,
+    disconnected: Arc<AtomicU64>,
+    slow_consumers: Arc<AtomicU64>,
 }
 
 impl NatsPool {
@@ -85,22 +94,66 @@ impl NatsPool {
     pub async fn connect(config: NatsConfig) -> XResult<Self> {
         config.validate()?;
         let policy = config.effective_tls_policy();
+        let connected = Arc::new(AtomicU64::new(0));
+        let disconnected = Arc::new(AtomicU64::new(0));
+        let slow_consumers = Arc::new(AtomicU64::new(0));
+        let event_connected = Arc::clone(&connected);
+        let event_disconnected = Arc::clone(&disconnected);
+        let event_slow_consumers = Arc::clone(&slow_consumers);
+        let reconnect_max_delay = config.reconnect_max_delay;
         let mut opts = async_nats::ConnectOptions::new()
             .name(config.name.clone())
             .connection_timeout(config.connect_timeout)
-            .require_tls(policy.require_tls());
+            .require_tls(policy.require_tls())
+            .request_timeout(Some(config.operation_timeout))
+            .subscription_capacity(config.subscription_capacity)
+            .client_capacity(config.client_capacity)
+            .max_reconnects(Some(config.max_reconnects))
+            .reconnect_delay_callback(move |attempt| {
+                let factor = 1u32.checked_shl(attempt.min(16) as u32).unwrap_or(u32::MAX);
+                Duration::from_millis(100).saturating_mul(factor).min(reconnect_max_delay)
+            })
+            .event_callback(move |event| {
+                let connected = Arc::clone(&event_connected);
+                let disconnected = Arc::clone(&event_disconnected);
+                let slow_consumers = Arc::clone(&event_slow_consumers);
+                async move {
+                    match event {
+                        async_nats::Event::Connected => {
+                            connected.fetch_add(1, Ordering::Relaxed);
+                        }
+                        async_nats::Event::Disconnected => {
+                            disconnected.fetch_add(1, Ordering::Relaxed);
+                        }
+                        async_nats::Event::SlowConsumer(_) => {
+                            slow_consumers.fetch_add(1, Ordering::Relaxed);
+                        }
+                        _ => {}
+                    }
+                }
+            });
+        if config.ignore_discovered_servers {
+            opts = opts.ignore_discovered_servers().retain_servers_order();
+        }
         if let (Some(u), Some(p)) = (&config.user, &config.password) {
             opts = opts.user_and_password(u.clone(), p.clone());
         }
-        let client = opts
-            .connect(config.url.as_str())
-            .await
-            .map_err(|e| XError::unavailable(format!("natsx connect: {e}")).with_source(e))?;
+        let client =
+            tokio::time::timeout(config.connect_timeout, opts.connect(config.url.as_str()))
+                .await
+                .map_err(|error| {
+                    XError::deadline_exceeded("natsx connect 超时").with_source(error)
+                })?
+                .map_err(|e| XError::unavailable(format!("natsx connect: {e}")).with_source(e))?;
+        // async-nats 的 Connected 事件用于重连；首次 connect 成功由本层显式计数。
+        connected.fetch_add(1, Ordering::Relaxed);
 
         // 连通性：flush 一次
-        client
-            .flush()
+        tokio::time::timeout(config.operation_timeout, client.flush())
             .await
+            .map_err(|error| {
+                XError::deadline_exceeded("natsx initial flush 超时").with_source(error)
+            })?
             .map_err(|e| XError::unavailable(format!("natsx flush: {e}")).with_source(e))?;
 
         Ok(Self {
@@ -111,13 +164,16 @@ impl NatsPool {
                 publish_failed: AtomicU64::new(0),
                 closed: AtomicBool::new(false),
                 sub_seq: AtomicU64::new(0),
+                connected,
+                disconnected,
+                slow_consumers,
             }),
         })
     }
 
     /// 从环境变量连接。
     pub async fn connect_from_env() -> XResult<Self> {
-        Self::connect(NatsConfig::from_env()).await
+        Self::connect(NatsConfig::from_env()?).await
     }
 
     /// 配置。
@@ -138,18 +194,42 @@ impl NatsPool {
         if subject.is_empty() {
             return Err(XError::invalid("natsx: subject 不能为空"));
         }
-        match self.inner.client.publish(subject.to_string(), payload).await {
-            Ok(()) => {
+        match tokio::time::timeout(
+            self.inner.config.operation_timeout,
+            self.inner.client.publish(subject.to_string(), payload),
+        )
+        .await
+        {
+            Err(error) => {
+                self.inner.publish_failed.fetch_add(1, Ordering::Relaxed);
+                Err(XError::deadline_exceeded("natsx publish 超时").with_source(error))
+            }
+            Ok(Ok(())) => {
                 // 尽量 flush，使调用方在返回时消息已离开客户端缓冲
-                if let Err(e) = self.inner.client.flush().await {
-                    self.inner.publish_failed.fetch_add(1, Ordering::Relaxed);
-                    return Err(XError::unavailable(format!("natsx flush after publish: {e}"))
-                        .with_source(e));
+                match tokio::time::timeout(
+                    self.inner.config.operation_timeout,
+                    self.inner.client.flush(),
+                )
+                .await
+                {
+                    Err(error) => {
+                        self.inner.publish_failed.fetch_add(1, Ordering::Relaxed);
+                        return Err(XError::deadline_exceeded("natsx publish flush 超时")
+                            .with_source(error));
+                    }
+                    Ok(Err(error)) => {
+                        self.inner.publish_failed.fetch_add(1, Ordering::Relaxed);
+                        return Err(XError::unavailable(format!(
+                            "natsx flush after publish: {error}"
+                        ))
+                        .with_source(error));
+                    }
+                    Ok(Ok(())) => {}
                 }
                 self.inner.published.fetch_add(1, Ordering::Relaxed);
                 Ok(())
             }
-            Err(e) => {
+            Ok(Err(e)) => {
                 self.inner.publish_failed.fetch_add(1, Ordering::Relaxed);
                 Err(XError::unavailable(format!("natsx publish: {e}")).with_source(e))
             }
@@ -162,16 +242,19 @@ impl NatsPool {
         if subject.is_empty() {
             return Err(XError::invalid("natsx: subject 不能为空"));
         }
-        let mut sub = self
-            .inner
-            .client
-            .subscribe(subject.to_string())
-            .await
-            .map_err(|e| XError::unavailable(format!("natsx subscribe: {e}")).with_source(e))?;
+        let mut sub = tokio::time::timeout(
+            self.inner.config.operation_timeout,
+            self.inner.client.subscribe(subject.to_string()),
+        )
+        .await
+        .map_err(|error| XError::deadline_exceeded("natsx subscribe 超时").with_source(error))?
+        .map_err(|e| XError::unavailable(format!("natsx subscribe: {e}")).with_source(e))?;
 
-        let (tx, rx) = mpsc::channel(256);
+        let (tx, rx) = mpsc::channel(self.inner.config.subscription_capacity);
         let seq_base = self.inner.sub_seq.fetch_add(1, Ordering::Relaxed) << 32;
         let counter = Arc::new(AtomicU64::new(0));
+        let slow_consumers = Arc::clone(&self.inner.slow_consumers);
+        let operation_timeout = self.inner.config.operation_timeout;
         tokio::spawn(async move {
             while let Some(msg) = sub.next().await {
                 let n = counter.fetch_add(1, Ordering::Relaxed);
@@ -180,8 +263,13 @@ impl NatsPool {
                     payload: msg.payload,
                     seq: seq_base | n,
                 };
-                if tx.send(out).await.is_err() {
-                    break;
+                match tokio::time::timeout(operation_timeout, tx.send(out)).await {
+                    Ok(Ok(())) => {}
+                    Ok(Err(_)) => break,
+                    Err(_) => {
+                        slow_consumers.fetch_add(1, Ordering::Relaxed);
+                        break;
+                    }
                 }
             }
         });
@@ -192,10 +280,9 @@ impl NatsPool {
     pub async fn ping(&self) -> XResult<Duration> {
         self.ensure_open()?;
         let start = std::time::Instant::now();
-        self.inner
-            .client
-            .flush()
+        tokio::time::timeout(self.inner.config.operation_timeout, self.inner.client.flush())
             .await
+            .map_err(|error| XError::deadline_exceeded("natsx ping/flush 超时").with_source(error))?
             .map_err(|e| XError::unavailable(format!("natsx ping/flush: {e}")).with_source(e))?;
         Ok(start.elapsed())
     }
@@ -215,6 +302,9 @@ impl NatsPool {
             published: self.inner.published.load(Ordering::Relaxed),
             publish_failed: self.inner.publish_failed.load(Ordering::Relaxed),
             closed: self.inner.closed.load(Ordering::Relaxed),
+            connected: self.inner.connected.load(Ordering::Relaxed),
+            disconnected: self.inner.disconnected.load(Ordering::Relaxed),
+            slow_consumers: self.inner.slow_consumers.load(Ordering::Relaxed),
         }
     }
 
@@ -222,8 +312,12 @@ impl NatsPool {
     pub async fn close(&self) -> XResult<()> {
         self.inner.closed.store(true, Ordering::SeqCst);
         // async-nats Client 无显式 close；flush 后丢弃引用
-        let _ = self.inner.client.flush().await;
-        Ok(())
+        tokio::time::timeout(self.inner.config.operation_timeout, self.inner.client.flush())
+            .await
+            .map_err(|error| {
+                XError::deadline_exceeded("natsx close flush 超时").with_source(error)
+            })?
+            .map_err(|error| XError::unavailable("natsx close flush 失败").with_source(error))
     }
 
     fn ensure_open(&self) -> XResult<()> {
@@ -252,9 +346,13 @@ mod tests {
         };
         let res = tokio::time::timeout(Duration::from_secs(2), NatsPool::connect(cfg)).await;
         match res {
-            Ok(Err(err)) => assert_eq!(err.kind(), ErrorKind::Unavailable),
+            Ok(Err(err)) => assert!(
+                matches!(err.kind(), ErrorKind::Unavailable | ErrorKind::DeadlineExceeded),
+                "kind={:?}",
+                err.kind()
+            ),
             Ok(Ok(_)) => panic!("must fail"),
-            Err(_) => {}
+            Err(_) => panic!("NatsPool::connect 必须受内部截止时间约束"),
         }
     }
 
@@ -271,9 +369,13 @@ mod tests {
         assert!(cfg.effective_tls_policy().require_tls());
         let res = tokio::time::timeout(Duration::from_secs(2), NatsPool::connect(cfg)).await;
         match res {
-            Ok(Err(err)) => assert_eq!(err.kind(), ErrorKind::Unavailable),
+            Ok(Err(err)) => assert!(
+                matches!(err.kind(), ErrorKind::Unavailable | ErrorKind::DeadlineExceeded),
+                "kind={:?}",
+                err.kind()
+            ),
             Ok(Ok(_)) => panic!("must fail without TLS endpoint"),
-            Err(_) => {}
+            Err(_) => panic!("NatsPool::connect 必须受内部截止时间约束"),
         }
     }
 
@@ -293,7 +395,14 @@ mod tests {
         assert!(!health.ready);
         assert!(health.detail.contains("offline"));
 
-        let stats = NatsPoolStats { published: 1, publish_failed: 0, closed: false };
+        let stats = NatsPoolStats {
+            published: 1,
+            publish_failed: 0,
+            closed: false,
+            connected: 1,
+            disconnected: 0,
+            slow_consumers: 0,
+        };
         assert_eq!(stats.published, 1);
         assert!(!stats.closed);
         let _default = NatsPoolStats::default();

@@ -9,9 +9,13 @@
 ## 安全
 
 - 密码 / AccessKey **不得**写入源码、日志、Debug 明文
-- 生产应启用 TLS（dev 可明文，须在 ops 文档标明风险）
+- 远程地址必须 `TLS=true`；HTTP 仅允许 loopback
+- `TLS_CA_FILE` 可追加 PEM CA；CA 仅在 TLS 模式允许
+- 无效布尔值、端口、容量与零 deadline 均返回 `Invalid`
 - 凭据轮换：更新 secret provider / 环境变量后重启进程
 
 ## 校验
 
 非法配置在 `connect` 前 fail-fast（`ErrorKind::Invalid`）。
+
+HTTPS 客户端证据：`node scripts/clickhouse-https-conformance.mjs`。该实验不是集群 live。

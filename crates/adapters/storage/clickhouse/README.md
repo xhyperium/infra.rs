@@ -15,10 +15,14 @@ ClickHouse 分析汇聚适配器 — `contracts::AnalyticsSink`。
 |------|------|
 | `HOST` | `127.0.0.1` |
 | `HTTP_PORT` | `8123` |
+| `TLS` | `false`；远程主机必须为 `true` |
+| `TLS_CA_FILE` | 可选 PEM CA |
 | `USER` | `default` |
 | `PASSWORD` | 空（**勿**提交密钥） |
 | `DATABASE` | `default` |
 | `TIMEOUT_MS` | `10000` |
+| `MAX_IDLE_PER_HOST` / `MAX_IN_FLIGHT` | `8` / `64` |
+| `ACQUIRE_TIMEOUT_MS` | `5000` |
 
 ## 最小用法
 
@@ -28,7 +32,7 @@ use clickhousex::{ClickHouseConfig, ClickHousePool};
 use contracts::AnalyticsSink;
 
 # async fn demo() -> kernel::XResult<()> {
-let mut cfg = ClickHouseConfig::from_env();
+let mut cfg = ClickHouseConfig::from_env()?;
 // cfg.password = std::env::var("FOUNDATIONX_CLICKHOUSEX_PASSWORD").unwrap_or_default();
 let pool = ClickHousePool::connect(cfg).await?;
 pool.ping().await?;
@@ -48,6 +52,7 @@ cargo test -p clickhousex --features scaffold
 # live（需本机 ClickHouse + 密码）
 export FOUNDATIONX_CLICKHOUSEX_PASSWORD='***'
 cargo test -p clickhousex --test live_smoke -- --ignored --nocapture
+node scripts/clickhouse-https-conformance.mjs
 ```
 
 ## Bench

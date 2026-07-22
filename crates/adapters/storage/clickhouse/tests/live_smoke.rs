@@ -14,7 +14,7 @@ fn live_config() -> Option<ClickHouseConfig> {
     if password.is_empty() {
         return None;
     }
-    let mut cfg = ClickHouseConfig::from_env();
+    let mut cfg = ClickHouseConfig::from_env().expect("clickhouse 配置");
     if cfg.password.is_empty() {
         cfg.password = password;
     }

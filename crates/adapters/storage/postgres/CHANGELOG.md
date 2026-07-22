@@ -1,5 +1,18 @@
 # Changelog — postgresx
 
+## [0.3.2] — 2026-07-22
+
+### Added
+
+- 独立 `acquire_timeout` 与 `operation_timeout`；deadpool wait/create/recycle 以及 SQL/事务终结均有界
+- 服务端 `statement_timeout` 与调用侧 deadline；超时连接从池中丢弃
+- 固定摘要 PostgreSQL 17 的池饱和、慢查询超时与恢复实验
+
+### Security
+
+- 远程 `sslmode=disable/prefer` fail-closed；仅 `require` 可连接远程主机
+- SQL / 事务错误保留 source；COMMIT 超时明确为结果未知
+
 ## [0.3.1] — 2026-07-22
 
 ### Added

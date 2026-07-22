@@ -12,13 +12,17 @@
 | connect 失败 | 检查 FOUNDATIONX_NATS_* 与网络/认证 |
 | DeadlineExceeded | 调高 timeout；查下游慢查询/背压 |
 | Unavailable | 下游重启/鉴权；观察重连日志 |
+| broker 重启后 channel closed | 同客户端恢复当前 NO-GO；重建应用级 client，跟踪 `infra-2d9.3.1` |
+| slow consumer 增长 | 检查 subscription capacity、消费延迟与丢失语义 |
 
 ## 升级 / 回滚
 
-1. 发布前跑 `cargo test -p natsx` 与 live（如可达）
+1. 发布前跑 `cargo test -p natsx` 与 `node scripts/broker-conformance.mjs`
 2. 升级：先滚动 canary 实例，观察错误率与延迟
 3. 回滚：回退至上一 crate 版本；配置 schema 保持向后兼容（仅新增字段）
 
 ## 关闭
 
-调用 `close(deadline)`：拒绝新请求并排空 in-flight。
+调用 `close()`：在内部 deadline 内 flush，随后标记 closed；不承诺排空应用仍持有的全部业务消息。
+
+连接/断开/slow-consumer stats 仅用于观测，不构成自动恢复证明。

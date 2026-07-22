@@ -24,7 +24,9 @@ fn unique_suffix() -> String {
 }
 
 async fn live_pool() -> KafkaPool {
-    KafkaPool::connect(KafkaConfig::from_env()).await.expect("连接 Kafka")
+    KafkaPool::connect(KafkaConfig::from_env().expect("Kafka 环境配置合法"))
+        .await
+        .expect("连接 Kafka")
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]

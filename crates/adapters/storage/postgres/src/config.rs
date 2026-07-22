@@ -8,6 +8,7 @@
 //! - `FOUNDATIONX_POSTGRESX_PASSWORD`
 //! - `FOUNDATIONX_POSTGRESX_SSLMODE`（`disable` / `prefer` / `require`）
 //! - 可选：`FOUNDATIONX_POSTGRESX_MAX_POOL_SIZE`、`FOUNDATIONX_POSTGRESX_APPLICATION_NAME`
+//! - `FOUNDATIONX_POSTGRESX_ACQUIRE_TIMEOUT_MS` / `OPERATION_TIMEOUT_MS`
 
 use std::env;
 use std::fmt;
@@ -81,6 +82,10 @@ pub struct PostgresConfig {
     pub application_name: Option<String>,
     /// 连接超时（可选）。
     pub connect_timeout: Option<Duration>,
+    /// 等待池连接的截止时间。
+    pub acquire_timeout: Duration,
+    /// SQL 与事务终结操作的调用侧截止时间；同时下发为服务端 `statement_timeout`。
+    pub operation_timeout: Duration,
     /// 若从 `DATABASE_URL` 加载，保留原始 URL（密码仍脱敏输出）。
     pub database_url: Option<String>,
 }
@@ -97,6 +102,8 @@ impl fmt::Debug for PostgresConfig {
             .field("max_pool_size", &self.max_pool_size)
             .field("application_name", &self.application_name)
             .field("connect_timeout", &self.connect_timeout)
+            .field("acquire_timeout", &self.acquire_timeout)
+            .field("operation_timeout", &self.operation_timeout)
             .field("database_url", &self.database_url.as_ref().map(|_| "<redacted>"))
             .finish()
     }
@@ -130,6 +137,10 @@ impl PostgresConfig {
         let application_name = env::var("FOUNDATIONX_POSTGRESX_APPLICATION_NAME")
             .ok()
             .filter(|s| !s.trim().is_empty());
+        let acquire_timeout =
+            env_duration_ms("FOUNDATIONX_POSTGRESX_ACQUIRE_TIMEOUT_MS", Duration::from_secs(5))?;
+        let operation_timeout =
+            env_duration_ms("FOUNDATIONX_POSTGRESX_OPERATION_TIMEOUT_MS", Duration::from_secs(10))?;
 
         Ok(Self {
             host,
@@ -141,6 +152,8 @@ impl PostgresConfig {
             max_pool_size,
             application_name,
             connect_timeout: Some(Duration::from_secs(10)),
+            acquire_timeout,
+            operation_timeout,
             database_url: None,
         })
     }
@@ -186,6 +199,10 @@ impl PostgresConfig {
             .ok()
             .filter(|s| !s.trim().is_empty())
             .or_else(|| pg.get_application_name().map(str::to_owned));
+        let acquire_timeout =
+            env_duration_ms("FOUNDATIONX_POSTGRESX_ACQUIRE_TIMEOUT_MS", Duration::from_secs(5))?;
+        let operation_timeout =
+            env_duration_ms("FOUNDATIONX_POSTGRESX_OPERATION_TIMEOUT_MS", Duration::from_secs(10))?;
 
         Ok(Self {
             host,
@@ -197,6 +214,8 @@ impl PostgresConfig {
             max_pool_size,
             application_name,
             connect_timeout: pg.get_connect_timeout().copied().or(Some(Duration::from_secs(10))),
+            acquire_timeout,
+            operation_timeout,
             database_url: Some(url.to_string()),
         })
     }
@@ -232,7 +251,17 @@ impl PostgresConfig {
         if let Some(timeout) = self.connect_timeout {
             cfg.connect_timeout = Some(timeout);
         }
-        cfg.pool = Some(deadpool_postgres::PoolConfig::new(self.max_pool_size));
+        cfg.options = Some(format!("-c statement_timeout={}", self.operation_timeout.as_millis()));
+        cfg.manager = Some(deadpool_postgres::ManagerConfig {
+            recycling_method: deadpool_postgres::RecyclingMethod::Verified,
+        });
+        let mut pool = deadpool_postgres::PoolConfig::new(self.max_pool_size);
+        pool.timeouts = deadpool_postgres::Timeouts {
+            wait: Some(self.acquire_timeout),
+            create: self.connect_timeout,
+            recycle: Some(self.acquire_timeout),
+        };
+        cfg.pool = Some(pool);
         cfg
     }
 
@@ -253,8 +282,39 @@ impl PostgresConfig {
         if self.max_pool_size == 0 {
             return Err(XError::invalid("PostgresConfig.max_pool_size 不能为 0"));
         }
+        if self.connect_timeout.is_some_and(|timeout| timeout.is_zero())
+            || self.acquire_timeout.is_zero()
+            || self.operation_timeout.is_zero()
+        {
+            return Err(XError::invalid("PostgresConfig timeout 必须大于零"));
+        }
+        if self.sslmode != SslMode::Require && self.has_remote_host()? {
+            return Err(XError::invalid(
+                "远程 PostgreSQL 必须使用 sslmode=require；disable/prefer 仅允许本机",
+            ));
+        }
         Ok(())
     }
+
+    fn has_remote_host(&self) -> XResult<bool> {
+        if let Some(url) = &self.database_url {
+            let parsed: tokio_postgres::Config = url
+                .parse()
+                .map_err(|error| XError::invalid(format!("DATABASE_URL 解析失败: {error}")))?;
+            return Ok(parsed.get_hosts().iter().any(|host| match host {
+                tokio_postgres::config::Host::Tcp(host) => !host_is_loopback(host),
+                #[cfg(unix)]
+                tokio_postgres::config::Host::Unix(_) => false,
+            }));
+        }
+        Ok(!self.host.starts_with('/') && !host_is_loopback(&self.host))
+    }
+}
+
+fn host_is_loopback(host: &str) -> bool {
+    let host = host.strip_prefix('[').and_then(|value| value.strip_suffix(']')).unwrap_or(host);
+    host.eq_ignore_ascii_case("localhost")
+        || host.parse::<std::net::IpAddr>().is_ok_and(|ip| ip.is_loopback())
 }
 
 /// [`PostgresConfig`] 构建器。
@@ -269,6 +329,8 @@ pub struct PostgresConfigBuilder {
     max_pool_size: Option<usize>,
     application_name: Option<String>,
     connect_timeout: Option<Duration>,
+    acquire_timeout: Option<Duration>,
+    operation_timeout: Option<Duration>,
 }
 
 impl PostgresConfigBuilder {
@@ -335,6 +397,20 @@ impl PostgresConfigBuilder {
         self
     }
 
+    /// 等待池连接的截止时间。
+    #[must_use]
+    pub fn acquire_timeout(mut self, timeout: Duration) -> Self {
+        self.acquire_timeout = Some(timeout);
+        self
+    }
+
+    /// SQL 与事务终结操作的截止时间。
+    #[must_use]
+    pub fn operation_timeout(mut self, timeout: Duration) -> Self {
+        self.operation_timeout = Some(timeout);
+        self
+    }
+
     /// 完成构建并校验。
     pub fn build(self) -> XResult<PostgresConfig> {
         let cfg = PostgresConfig {
@@ -349,6 +425,8 @@ impl PostgresConfigBuilder {
             max_pool_size: self.max_pool_size.unwrap_or(DEFAULT_MAX_POOL_SIZE),
             application_name: self.application_name,
             connect_timeout: self.connect_timeout.or(Some(Duration::from_secs(10))),
+            acquire_timeout: self.acquire_timeout.unwrap_or(Duration::from_secs(5)),
+            operation_timeout: self.operation_timeout.unwrap_or(Duration::from_secs(10)),
             database_url: None,
         };
         cfg.validate()?;
@@ -378,6 +456,17 @@ fn env_usize(key: &str, default: usize) -> XResult<usize> {
         Ok(v) => {
             v.parse::<usize>().map_err(|e| XError::invalid(format!("{key} 不是合法 usize: {e}")))
         }
+        Err(_) => Ok(default),
+    }
+}
+
+fn env_duration_ms(key: &str, default: Duration) -> XResult<Duration> {
+    match env::var(key) {
+        Ok(value) if value.trim().is_empty() => Ok(default),
+        Ok(value) => value
+            .parse::<u64>()
+            .map(Duration::from_millis)
+            .map_err(|error| XError::invalid(format!("{key} 不是合法毫秒数: {error}"))),
         Err(_) => Ok(default),
     }
 }
@@ -421,6 +510,54 @@ mod tests {
         assert_eq!(SslMode::parse("disable").unwrap(), SslMode::Disable);
         assert_eq!(SslMode::parse("REQUIRE").unwrap(), SslMode::Require);
         assert!(SslMode::parse("wat").is_err());
+    }
+
+    #[test]
+    fn remote_plaintext_and_prefer_fail_closed() {
+        for mode in [SslMode::Disable, SslMode::Prefer] {
+            let error = PostgresConfig::builder()
+                .host("db.example.com")
+                .database("db")
+                .user("user")
+                .sslmode(mode)
+                .build()
+                .expect_err("远程非 require 必须失败");
+            assert_eq!(error.kind(), kernel::ErrorKind::Invalid);
+        }
+
+        PostgresConfig::builder()
+            .host("db.example.com")
+            .database("db")
+            .user("user")
+            .sslmode(SslMode::Require)
+            .build()
+            .expect("远程 require 应通过");
+    }
+
+    #[test]
+    fn rejects_zero_timeouts() {
+        for result in [
+            PostgresConfig::builder()
+                .host("127.0.0.1")
+                .database("db")
+                .user("user")
+                .connect_timeout(Duration::ZERO)
+                .build(),
+            PostgresConfig::builder()
+                .host("127.0.0.1")
+                .database("db")
+                .user("user")
+                .acquire_timeout(Duration::ZERO)
+                .build(),
+            PostgresConfig::builder()
+                .host("127.0.0.1")
+                .database("db")
+                .user("user")
+                .operation_timeout(Duration::ZERO)
+                .build(),
+        ] {
+            assert_eq!(result.expect_err("零 timeout 必须失败").kind(), kernel::ErrorKind::Invalid);
+        }
     }
 
     #[test]

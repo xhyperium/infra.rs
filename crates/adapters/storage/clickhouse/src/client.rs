@@ -82,11 +82,11 @@ impl ClickHousePool {
     /// 使用配置建立 HTTP 客户端并 `ping`。
     pub async fn connect(config: ClickHouseConfig) -> XResult<Self> {
         config.validate()?;
-        let http = reqwest::Client::builder()
-            .timeout(config.timeout)
-            .pool_max_idle_per_host(config.max_idle_per_host)
-            .build()
-            .map_err(|e| XError::internal(format!("clickhouse http client: {e}")))?;
+        let build_config = config.clone();
+        let http =
+            tokio::task::spawn_blocking(move || build_http_client(&build_config)).await.map_err(
+                |error| XError::internal("clickhouse HTTP 客户端构建任务失败").with_source(error),
+            )??;
         let max_in_flight = config.max_in_flight;
         let pool = Self {
             inner: Arc::new(PoolInner {
@@ -103,18 +103,14 @@ impl ClickHousePool {
 
     /// 从环境变量连接。
     pub async fn connect_from_env() -> XResult<Self> {
-        Self::connect(ClickHouseConfig::from_env()).await
+        Self::connect(ClickHouseConfig::from_env()?).await
     }
 
     /// 仅测试：跳过 ping，便于离线验证 close / stats / acquire。
     #[cfg(test)]
     pub(crate) fn connect_without_ping(config: ClickHouseConfig) -> XResult<Self> {
         config.validate()?;
-        let http = reqwest::Client::builder()
-            .timeout(config.timeout)
-            .pool_max_idle_per_host(config.max_idle_per_host)
-            .build()
-            .map_err(|e| XError::internal(format!("clickhouse http client: {e}")))?;
+        let http = build_http_client(&config)?;
         let max_in_flight = config.max_in_flight;
         Ok(Self {
             inner: Arc::new(PoolInner {
@@ -311,9 +307,9 @@ impl ClickHousePool {
             .await
             .map_err(|e| {
                 if e.is_timeout() {
-                    XError::deadline_exceeded(format!("clickhouse 超时: {e}"))
+                    XError::deadline_exceeded("clickhouse 请求超时").with_source(e)
                 } else {
-                    XError::unavailable(format!("clickhouse 请求失败: {e}"))
+                    XError::unavailable("clickhouse 请求失败").with_source(e)
                 }
             })?;
 
@@ -321,7 +317,7 @@ impl ClickHousePool {
         let text = resp
             .text()
             .await
-            .map_err(|e| XError::unavailable(format!("clickhouse 读响应失败: {e}")))?;
+            .map_err(|e| XError::unavailable("clickhouse 读响应失败").with_source(e))?;
 
         if !status.is_success() {
             return Err(map_http_error(status, &text));
@@ -329,6 +325,25 @@ impl ClickHousePool {
         // ClickHouse 在 200 时也可能把异常写在 body（少见）；保留原文给调用方。
         Ok(text)
     }
+}
+
+fn build_http_client(config: &ClickHouseConfig) -> XResult<reqwest::Client> {
+    let mut builder = reqwest::Client::builder()
+        .timeout(config.timeout)
+        .pool_max_idle_per_host(config.max_idle_per_host);
+    if let Some(path) = &config.tls_ca_file {
+        let pem = std::fs::read(path).map_err(|error| {
+            XError::invalid(format!("clickhouse 无法读取 TLS CA `{}`", path.display()))
+                .with_source(error)
+        })?;
+        let certificate = reqwest::Certificate::from_pem(&pem).map_err(|error| {
+            XError::invalid("clickhouse TLS CA 不是合法 PEM").with_source(error)
+        })?;
+        builder = builder.add_root_certificate(certificate);
+    }
+    builder
+        .build()
+        .map_err(|error| XError::internal("clickhouse HTTP 客户端构建失败").with_source(error))
 }
 
 #[async_trait]

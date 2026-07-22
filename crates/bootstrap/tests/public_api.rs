@@ -1,10 +1,14 @@
 //! 公开 API 集成测试：从 crate 外部驱动 shipped 路径。
 
+use async_trait::async_trait;
 use bootstrap::{
-    Bootstrap, BootstrapError, EvidenceAppender, EvidenceError, ExecutionContext,
+    Bootstrap, BootstrapError, ContractStoreSet, EvidenceAppender, EvidenceError, ExecutionContext,
     InMemoryEvidenceAppender, Instrumentation, MarketDataContext, NoopInstrumentation,
     TracingInstrumentation, into_xresult,
 };
+use bytes::Bytes;
+use contracts::{EventBus, KeyValueStore};
+use futures_core::stream::BoxStream;
 use kernel::ErrorKind;
 use std::sync::{Arc, Mutex};
 
@@ -29,6 +33,38 @@ impl EvidenceAppender for ProbeAppender {
 }
 
 struct Cap(&'static str);
+
+struct ContractProbe;
+
+#[async_trait]
+impl KeyValueStore for ContractProbe {
+    async fn get(&self, _key: &str) -> kernel::XResult<Option<Vec<u8>>> {
+        Ok(Some(b"contract".to_vec()))
+    }
+
+    async fn set(
+        &self,
+        _key: &str,
+        _val: Vec<u8>,
+        _ttl: Option<std::time::Duration>,
+    ) -> kernel::XResult<()> {
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl EventBus for ContractProbe {
+    async fn publish(&self, _topic: &str, _payload: Bytes) -> kernel::XResult<()> {
+        Ok(())
+    }
+
+    async fn subscribe(
+        &self,
+        _topic: &str,
+    ) -> kernel::XResult<BoxStream<'static, contracts::BusMessage>> {
+        Ok(Box::pin(futures_util::stream::empty()))
+    }
+}
 
 impl bootstrap::BoundedMarketDataSource for Cap {
     fn label(&self) -> &str {
@@ -171,4 +207,19 @@ fn no_service_locator_surface() {
     let _ = app.context().platform().instrumentation();
     let _ = app.context().platform().evidence();
     assert!(app.into_parts().1.has_guard());
+}
+
+#[tokio::test]
+async fn formal_contract_store_set_is_callable_from_app_context() {
+    let probe = Arc::new(ContractProbe);
+    let contracts = ContractStoreSet::new()
+        .with_kv(Arc::clone(&probe) as Arc<dyn KeyValueStore>)
+        .with_event_bus(probe as Arc<dyn EventBus>);
+    let ctx = Bootstrap::new().with_contract_store_set(contracts).try_build().expect("build");
+
+    let stores = ctx.contract_store_set();
+    stores.kv().expect("kv").set("key", b"contract".to_vec(), None).await.expect("set");
+    assert_eq!(stores.kv().expect("kv").get("key").await.expect("get"), Some(b"contract".to_vec()));
+    stores.event_bus().expect("bus").publish("topic", Bytes::new()).await.expect("publish");
+    assert_eq!(stores.wired_count(), 2);
 }

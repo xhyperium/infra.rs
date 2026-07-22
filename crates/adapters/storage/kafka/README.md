@@ -19,7 +19,7 @@ use kafkax::{KafkaConfig, KafkaPool};
 use bytes::Bytes;
 
 # async fn demo() {
-let pool = KafkaPool::connect(KafkaConfig::from_env()).await?;
+let pool = KafkaPool::connect(KafkaConfig::from_env()?).await?;
 let d = pool.producer().publish("topic", Bytes::from_static(b"hi")).await?;
 assert!(d.offset >= 0);
 pool.close(std::time::Duration::from_secs(3)).await?;
@@ -34,9 +34,13 @@ pool.close(std::time::Duration::from_secs(3)).await?;
 | 变量 | 说明 |
 |------|------|
 | `BROKERS` | bootstrap，默认 `127.0.0.1:9092` |
-| `SASL_MECHANISM` | 如 `PLAIN`；空则关闭 SASL |
+| `SASL_MECHANISM` | 仅 `PLAIN`；空则关闭 SASL |
 | `SASL_USERNAME` / `SASL_PASSWORD` | SASL 凭据 |
-| `TLS` | 当前未接入；`true` 会 fail-closed，禁止静默明文降级 |
+| `TLS` | 启用 rustls transport；远程 broker 必须为 `true` |
+| `TLS_CA_FILE` | 可选 PEM CA；未设置时使用 webpki roots |
+| `CONNECT_TIMEOUT_MS` / `OPERATION_TIMEOUT_MS` | 内部连接与控制面 deadline |
+| `CLIENT_ID` | 客户端标识，默认 `kafkax` |
 
-可复现的单节点 broker 语义测试：`node scripts/broker-conformance.mjs`。该结果不证明
-group/rebalance/HA/TLS/native EOS。
+可复现语义测试：`node scripts/broker-conformance.mjs`；
+TLS/SASL：`node scripts/kafka-tls-sasl-conformance.mjs`。这些结果不证明
+group/rebalance/HA/native EOS。

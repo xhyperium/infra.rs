@@ -1,6 +1,7 @@
 //! ClickHouse 连接配置（环境变量 + 默认值）。
 
 use std::fmt;
+use std::path::PathBuf;
 use std::time::Duration;
 
 use kernel::{XError, XResult};
@@ -23,6 +24,10 @@ pub struct ClickHouseConfig {
     pub host: String,
     /// HTTP 端口（默认 8123）。
     pub http_port: u16,
+    /// 是否使用 HTTPS（远程地址必须为 `true`）。
+    pub tls: bool,
+    /// 可选 PEM CA 文件；未设置时使用 reqwest/rustls 的公开可信根。
+    pub tls_ca_file: Option<PathBuf>,
     /// 用户名。
     pub user: String,
     /// 密码（`Debug` 脱敏）。
@@ -44,6 +49,8 @@ impl fmt::Debug for ClickHouseConfig {
         f.debug_struct("ClickHouseConfig")
             .field("host", &self.host)
             .field("http_port", &self.http_port)
+            .field("tls", &self.tls)
+            .field("tls_ca_file", &self.tls_ca_file)
             .field("user", &self.user)
             .field("password", &"***")
             .field("database", &self.database)
@@ -60,6 +67,8 @@ impl Default for ClickHouseConfig {
         Self {
             host: "127.0.0.1".into(),
             http_port: 8123,
+            tls: false,
+            tls_ca_file: None,
             user: "default".into(),
             password: String::new(),
             database: "default".into(),
@@ -73,8 +82,7 @@ impl Default for ClickHouseConfig {
 
 impl ClickHouseConfig {
     /// 从环境变量加载；未设置项使用 [`Default`]。
-    #[must_use]
-    pub fn from_env() -> Self {
+    pub fn from_env() -> XResult<Self> {
         let mut cfg = Self::default();
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_HOST") {
             if !v.is_empty() {
@@ -82,8 +90,16 @@ impl ClickHouseConfig {
             }
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT") {
-            if let Ok(p) = v.parse() {
-                cfg.http_port = p;
+            cfg.http_port = v.parse().map_err(|error| {
+                XError::invalid(format!("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT 非法: {error}"))
+            })?;
+        }
+        if let Ok(value) = std::env::var("FOUNDATIONX_CLICKHOUSEX_TLS") {
+            cfg.tls = parse_bool(&value)?;
+        }
+        if let Ok(value) = std::env::var("FOUNDATIONX_CLICKHOUSEX_TLS_CA_FILE") {
+            if !value.trim().is_empty() {
+                cfg.tls_ca_file = Some(PathBuf::from(value));
             }
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_USER") {
@@ -100,26 +116,27 @@ impl ClickHouseConfig {
             }
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_TIMEOUT_MS") {
-            if let Ok(ms) = v.parse::<u64>() {
-                cfg.timeout = Duration::from_millis(ms.max(1));
-            }
+            cfg.timeout = Duration::from_millis(v.parse::<u64>().map_err(|error| {
+                XError::invalid(format!("FOUNDATIONX_CLICKHOUSEX_TIMEOUT_MS 非法: {error}"))
+            })?);
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_MAX_IDLE_PER_HOST") {
-            if let Ok(n) = v.parse::<usize>() {
-                cfg.max_idle_per_host = n;
-            }
+            cfg.max_idle_per_host = v.parse::<usize>().map_err(|error| {
+                XError::invalid(format!("FOUNDATIONX_CLICKHOUSEX_MAX_IDLE_PER_HOST 非法: {error}"))
+            })?;
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_MAX_IN_FLIGHT") {
-            if let Ok(n) = v.parse::<usize>() {
-                cfg.max_in_flight = n;
-            }
+            cfg.max_in_flight = v.parse::<usize>().map_err(|error| {
+                XError::invalid(format!("FOUNDATIONX_CLICKHOUSEX_MAX_IN_FLIGHT 非法: {error}"))
+            })?;
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_ACQUIRE_TIMEOUT_MS") {
-            if let Ok(ms) = v.parse::<u64>() {
-                cfg.acquire_timeout = Duration::from_millis(ms.max(1));
-            }
+            cfg.acquire_timeout = Duration::from_millis(v.parse::<u64>().map_err(|error| {
+                XError::invalid(format!("FOUNDATIONX_CLICKHOUSEX_ACQUIRE_TIMEOUT_MS 非法: {error}"))
+            })?);
         }
-        cfg
+        cfg.validate()?;
+        Ok(cfg)
     }
 
     /// 校验约束（`max_in_flight ≥ 1`）。
@@ -127,13 +144,40 @@ impl ClickHouseConfig {
         if self.max_in_flight < 1 {
             return Err(XError::invalid("max_in_flight 必须 ≥ 1"));
         }
+        if self.timeout.is_zero() || self.acquire_timeout.is_zero() {
+            return Err(XError::invalid("clickhouse timeout 必须大于零"));
+        }
+        if self.host.trim().is_empty() || self.http_port == 0 {
+            return Err(XError::invalid("clickhouse host/port 非法"));
+        }
+        if !self.tls && !host_is_loopback(&self.host) {
+            return Err(XError::invalid("远程 ClickHouse 必须使用 HTTPS"));
+        }
+        if self.tls_ca_file.is_some() && !self.tls {
+            return Err(XError::invalid("配置 TLS_CA_FILE 时必须启用 TLS"));
+        }
         Ok(())
     }
 
-    /// HTTP 基址：`http://host:port`。
+    /// HTTP(S) 基址。
     #[must_use]
     pub fn base_url(&self) -> String {
-        format!("http://{}:{}", self.host, self.http_port)
+        let scheme = if self.tls { "https" } else { "http" };
+        format!("{scheme}://{}:{}", self.host, self.http_port)
+    }
+}
+
+fn host_is_loopback(host: &str) -> bool {
+    let host = host.strip_prefix('[').and_then(|value| value.strip_suffix(']')).unwrap_or(host);
+    host.eq_ignore_ascii_case("localhost")
+        || host.parse::<std::net::IpAddr>().is_ok_and(|ip| ip.is_loopback())
+}
+
+fn parse_bool(value: &str) -> XResult<bool> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "1" | "true" | "yes" | "on" => Ok(true),
+        "0" | "false" | "no" | "off" => Ok(false),
+        _ => Err(XError::invalid(format!("FOUNDATIONX_CLICKHOUSEX_TLS 非法: {value}"))),
     }
 }
 
@@ -167,5 +211,41 @@ mod tests {
         let c = ClickHouseConfig { max_in_flight: 0, ..Default::default() };
         let err = c.validate().expect_err("must fail");
         assert!(format!("{err}").contains("max_in_flight"));
+    }
+
+    #[test]
+    fn remote_http_fails_closed_and_https_is_selected() {
+        let plain =
+            ClickHouseConfig { host: "clickhouse.example.com".into(), ..Default::default() };
+        assert_eq!(
+            plain.validate().expect_err("远程 HTTP 必须失败").kind(),
+            kernel::ErrorKind::Invalid
+        );
+
+        let tls = ClickHouseConfig {
+            host: "clickhouse.example.com".into(),
+            http_port: 8443,
+            tls: true,
+            ..Default::default()
+        };
+        tls.validate().expect("远程 HTTPS 应通过");
+        assert_eq!(tls.base_url(), "https://clickhouse.example.com:8443");
+    }
+
+    #[test]
+    fn ca_file_requires_tls_and_zero_deadlines_fail() {
+        let ca_without_tls =
+            ClickHouseConfig { tls_ca_file: Some("/tmp/ca.pem".into()), ..Default::default() };
+        assert_eq!(
+            ca_without_tls.validate().expect_err("CA 不得用于明文").kind(),
+            kernel::ErrorKind::Invalid
+        );
+        assert_eq!(
+            ClickHouseConfig { timeout: Duration::ZERO, ..Default::default() }
+                .validate()
+                .expect_err("零 timeout 必须失败")
+                .kind(),
+            kernel::ErrorKind::Invalid
+        );
     }
 }

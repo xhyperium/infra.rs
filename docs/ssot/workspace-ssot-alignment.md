@@ -16,7 +16,7 @@
 | `contract-testkit` | `crates/test-support/contracts/` | `contract_testkit` | T0 Fake + per-trait suite（仅 dev-dep）· #178 | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) · [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
 | `configx` | `crates/configx/` | `configx` | L1 本地多源：`MemorySource`/Env/File + 分层 + 宿主 reload/通知 + secret 脱敏 | [configx-ssot-alignment.md](./configx-ssot-alignment.md) |
 | `schedulex` | `crates/schedulex/` | `schedulex` | L1 ID 登记 + 宿主驱动确定性 `JobRunner::tick` | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) |
-| `bootstrap` | `crates/bootstrap/` | `bootstrap` | L1 唯一组合根（ADR-016） | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) |
+| `bootstrap` | `crates/bootstrap/` | `bootstrap` | **0.3.2** L1 唯一组合根；正式 KV/EventBus 注入 E2E | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) |
 | `evidence` | `crates/evidence/` | `evidence` | L1 审计证据追加面 | [evidence-ssot-alignment.md](./evidence-ssot-alignment.md) |
 | `observex` | `crates/observex/` | `observex` | L1 TracingInstrumentation（L3 Instr 入口） | [observex-ssot-alignment.md](./observex-ssot-alignment.md) |
 | `resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试（含 async）+ 熔断 + 限流 + 舱壁 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
@@ -25,11 +25,11 @@
 | `contracts` | `crates/contracts/` | `contracts` | adapter trait 出口；L3 子集（KV+Instr） | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
 | `binancex` | `crates/adapters/exchange/binance/` | `binancex` | HMAC 签名 REST + 公共 WS 解析/注入；仅 server_time live，**交易 NO-GO** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx/` | `okxx` | 四头签名 REST + 公共 WS 解析/注入；仅 server_time live，**交易 NO-GO** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **0.3.1** insert_batch + 有界池 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **0.3.2** AMO + 单 owner ALO + 非原子 produce/checkpoint；native EOS NO-GO | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.2** Core AMO + JetStream durable pull/显式确认 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **0.3.2** HTTP(S)+PEM CA+insert_batch+有界池；真实集群 TLS OPEN | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **0.3.2** AMO/ALO + TLS/CA/PLAIN；group/native EOS NO-GO | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.2** Core/JetStream；同客户端重启恢复 NO-GO | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `ossx` | `crates/adapters/storage/oss/` | `ossx` | **0.3.1** ObjectStore + multipart + retry + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **0.3.2** Pool/Tx + PgRepository + SSL require + resiliencx + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **0.3.2** Pool/Tx/Repository + TLS + deadline/连接隔离实验证据 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `redisx` | `crates/adapters/storage/redis/` | `redisx` | **0.3.2** Cluster/Sentinel/TLS + resiliencx + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `taosx` | `crates/adapters/storage/taos/` | `taosx` | **0.3.1** batch write + Native WS 探测 + 有界池 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `goalctl` | `tools/goalctl/` | `goalctl` | 最小 Goal→Contract CLI（doctor/validate/compile）· #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
@@ -74,7 +74,7 @@
 | schedulex | `.agents/ssot/schedulex/` | `crates/schedulex` | ID 登记 + 宿主驱动确定性 `JobRunner::tick` 已落地；非 runtime/分布式 scheduler |
 | types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；decimal **L1**；canonical **L2** committed v1–v1.3；package stable **OPEN** |
 | configx | `.agents/ssot/configx/` | `crates/configx` | **0.1.1**：`MemorySource`/`EnvSource`/`FileSource`、分层、宿主 reload/通知与 `SecretString` 已落地；远端/自动 watcher/secret manager OPEN |
-| bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根已落地**；`Bounded*` + Instrumentation/Evidence；`require_evidence` **release fail-closed**（#168）；全量 async contracts **DEFER** |
+| bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根已落地**；`ContractStoreSet` 正式 KV/EventBus + 兼容 `Bounded*`；固定 Redis/NATS E2E PASS；跨资源事务 DEFER |
 | resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
 | observex | `.agents/ssot/observex/` | `crates/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
 | infra 其余域 | `.agents/ssot/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
@@ -122,6 +122,12 @@ cargo check -p contracts -p binancex -p okxx -p redisx -p kafkax \
   -p natsx -p postgresx -p taosx -p ossx -p clickhousex
 cargo test -p contracts -p binancex -p okxx \
   -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p taosx --all-targets
+node scripts/storage-composition-conformance.mjs
+node scripts/kafka-tls-sasl-conformance.mjs
+node scripts/postgres-deadline-conformance.mjs
+node scripts/clickhouse-https-conformance.mjs
+# NATS 同客户端重启恢复当前 NO-GO；复现脚本预期非零：
+# node scripts/nats-reconnect-conformance.mjs
 # optional live（需本机服务；默认 ignore；凭据经 FOUNDATIONX_* 注入，禁止入库）
 # node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
 # set -a; source /tmp/foundationx-live.env; set +a
@@ -157,7 +163,7 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 | `decimalx` | **L1 Internal Ready**（四包 GO 内） | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `canonical` | **L2 committed wire subset**（v1–v1.3；四包 GO 内） | 同上 |
 | `contracts` | **部分就绪**：L3 子集（KV+Instr）；非 first-batch 全绿 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) · [L3_FIRST_BATCH_STATUS](../../crates/contracts/docs/L3_FIRST_BATCH_STATUS.md) |
-| storage×7（redis…taos） | 默认客户端入口存在；live 入口存在，但除 Redis 外当前无可复验 CI/留档，安全与投递闭环 OPEN；≠ Production Ready / package stable | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) · [draft-gap-matrix.md](./draft-gap-matrix.md) |
+| storage×7（redis…taos） | 默认客户端入口存在；Redis live、Kafka TLS/PLAIN、Postgres deadline、ClickHouse HTTPS 客户端有固定 runner；NATS 同客户端恢复 NO-GO；≠ Production Ready / package stable | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) · [draft-gap-matrix.md](./draft-gap-matrix.md) |
 | `goalctl` / `verifyctl` | **最小 CLI member**（#188）；verifyctl 的生产 verifier 条件仍 OPEN | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | L1 平台（bootstrap/resiliencx/transport/…） | **P0 阻断已收敛**（`infra-s9t`）；≠ 各包 Production Ready | [七包双栏](../report/2026-07-21/seven-l1-contracts-dual-bar-readiness.md) · [prod-consume-surface](../plans/artifacts/prod-consume-surface.md) |
 
@@ -204,6 +210,7 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 | 2026-07-22 | 七包双栏 STATUS 结构 100%（configx/evidence/observex/resiliencx/schedulex/transportx/contracts）；≠ workspace Production Ready / L5 |
 | 2026-07-22 | **#188–#191** draft 生产落地：storage×7 默认客户端 + live/bench；goalctl/verifyctl member；`build-foundationx-env.mjs`；members 表与验证入口同步 |
 | 2026-07-22 | 第 1 轮冻结 24 package/current-state：evidence canonical 顶层；configx/schedulex additive 面；exchange 交易 NO-GO |
+| 2026-07-22 | 第 4 轮：bootstrap 正式 KV/EventBus 组合、Kafka TLS/PLAIN、Postgres deadline/隔离、ClickHouse HTTPS 客户端证据；NATS 自动恢复 NO-GO |
 
 ## 七包双栏（2026-07-22）
 

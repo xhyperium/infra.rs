@@ -10,7 +10,10 @@
 
 - 将主能力诚实命名为 `ProduceThenCheckpointCoordinator` / `Session`；旧 `Eos*` 仅保留弃用别名
 - Memory/File checkpoint 改为单调提交，拒绝 offset 溢出；文件落盘补齐文件与父目录 `sync_all`
-- TLS 配置在当前未实现的传输上 fail-closed，禁止静默明文降级
+- TLS 接入 rskafka rustls transport；支持 webpki roots 与可选 PEM CA
+- 远程明文、未知 SASL 机制与不完整凭据在连接前 fail-closed；SASL 仅支持 PLAIN
+- connect/metadata/topic/partition client 增加内部 deadline
+- 固定摘要 SASL_SSL 实验覆盖成功路径、错误 CA 与错误密码
 
 ## [0.3.1] — 2026-07-22
 

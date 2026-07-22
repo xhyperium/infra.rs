@@ -9,9 +9,14 @@
 ## 安全
 
 - 密码 / AccessKey **不得**写入源码、日志、Debug 明文
-- 生产应启用 TLS（dev 可明文，须在 ops 文档标明风险）
+- 远程地址必须 `TLS_POLICY=require`；disable/prefer 仅允许 loopback
+- URL userinfo 被拒绝；用户名与密码使用独立环境字段
+- `OPERATION_TIMEOUT_MS`、`SUBSCRIPTION_CAPACITY`、`CLIENT_CAPACITY`、
+  `MAX_RECONNECTS`、`RECONNECT_MAX_DELAY_MS` 必须为非零有界值
 - 凭据轮换：更新 secret provider / 环境变量后重启进程
 
 ## 校验
 
 非法配置在 `connect` 前 fail-fast（`ErrorKind::Invalid`）。
+
+有限 reconnect 配置只表达资源上限；同客户端重启恢复尚未通过真实实验。

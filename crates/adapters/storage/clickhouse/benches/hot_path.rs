@@ -11,7 +11,13 @@ fn iters() -> u32 {
 #[tokio::main]
 async fn main() {
     let n = iters();
-    let cfg = ClickHouseConfig::from_env();
+    let cfg = match ClickHouseConfig::from_env() {
+        Ok(cfg) => cfg,
+        Err(error) => {
+            eprintln!("跳过 clickhouse hot_path：配置无效（{error}）");
+            return;
+        }
+    };
     let connect = tokio::time::timeout(Duration::from_secs(3), ClickHousePool::connect(cfg));
     let Ok(Ok(pool)) = connect.await else {
         println!("bench_clickhousex_select1: skipped (no clickhouse / timeout)");

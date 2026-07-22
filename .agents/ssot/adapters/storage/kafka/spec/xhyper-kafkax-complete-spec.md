@@ -31,8 +31,10 @@
 
 ## 3. 安全与运维边界
 
-- SASL/PLAIN 可由环境变量注入；密码 `Debug` 脱敏。
-- 当前 `rskafka` 构建未接入 TLS；`tls = true` 必须 fail-closed，禁止静默明文降级。
+- TLS 已接入 `rskafka` rustls transport；使用 webpki roots，并可通过 PEM `tls_ca_file` 追加 CA。
+- SASL 仅批准 PLAIN；机制、用户名或密码不完整时在连接前 `Invalid` fail-closed，密码 `Debug` 脱敏。
+- 远程 broker 必须 TLS；明文只允许 loopback，禁止 `tls=false` 静默连接远程地址。
+- connect、metadata、topic 创建与 partition client 获取均有内部非零 deadline。
 - topic/partition 生命周期由部署方管理；库的测试仅创建唯一单分区 topic。
 - consumer fetch 错误会结束当前流；本版不承诺自动重连、rebalance、poison/DLQ、schema registry、HA 或 multi-owner。
 - 单节点容器测试不能作为上述能力的证据。
@@ -44,6 +46,7 @@
 ```bash
 cargo test -p kafkax --all-targets
 cargo clippy -p kafkax --all-targets -- -D warnings
+node scripts/kafka-tls-sasl-conformance.mjs
 ```
 
 可复现 broker conformance：
@@ -60,6 +63,10 @@ Kafka 场景必须证明：
 4. produce 成功但 checkpoint 失败后重试可产生重复；
 5. 唯一 topic、cargo 外层硬超时、日志与容器清理。
 
-受控外部环境仍可运行 `tests/live_event_bus.rs`，但 ignored 或单节点 PASS 不得升级为 group/rebalance/TLS/HA/native EOS 结论。
+固定摘要 Kafka 的 SASL_SSL 实验已证明：受信 CA + PLAIN 凭据可发布，错误 CA 与错误密码
+均 fail-closed。该证据只覆盖 TLS/CA/SASL-PLAIN，不得升级为 group/rebalance/HA/native EOS 结论。
 
-追溯：`crates/adapters/storage/kafka/{Cargo.toml,src,tests/broker_conformance.rs}`、`docs/ssot/kafkax-ssot-alignment.md`。
+受控外部环境仍可运行 `tests/live_event_bus.rs`；ignored 或单节点 PASS 不得升级为未列出的能力结论。
+
+追溯：`crates/adapters/storage/kafka/{Cargo.toml,src,tests/broker_conformance.rs,tests/tls_sasl_conformance.rs}`、
+`scripts/kafka-tls-sasl-conformance.mjs`、`docs/ssot/kafkax-ssot-alignment.md`。

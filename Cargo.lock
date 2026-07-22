@@ -246,12 +246,19 @@ dependencies = [
 
 [[package]]
 name = "bootstrap"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
+ "async-trait",
+ "bytes",
  "contracts",
  "evidence",
+ "futures-core",
+ "futures-util",
  "kernel",
+ "natsx",
  "observex",
+ "redisx",
+ "tokio",
 ]
 
 [[package]]
@@ -405,7 +412,7 @@ checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 
 [[package]]
 name = "clickhousex"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -413,9 +420,12 @@ dependencies = [
  "contracts",
  "kernel",
  "reqwest",
+ "rustls",
+ "rustls-pemfile",
  "serde",
  "serde_json",
  "tokio",
+ "tokio-rustls",
  "tracing",
  "url",
 ]
@@ -1414,8 +1424,12 @@ dependencies = [
  "futures-util",
  "kernel",
  "rskafka",
+ "rustls",
+ "rustls-pemfile",
  "tokio",
  "tracing",
+ "url",
+ "webpki-roots 0.26.11",
 ]
 
 [[package]]
@@ -1580,6 +1594,7 @@ dependencies = [
  "kernel",
  "tokio",
  "tracing",
+ "url",
 ]
 
 [[package]]
@@ -2334,9 +2349,11 @@ dependencies = [
  "parking_lot",
  "rand 0.8.7",
  "rsasl",
+ "rustls",
  "snap",
  "thiserror 1.0.69",
  "tokio",
+ "tokio-rustls",
  "tracing",
  "zstd",
 ]
@@ -2375,6 +2392,7 @@ version = "0.23.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c54fcab019b409d04215d3a17cb438fd7fbf192ee61461f20f4fe18704bc138"
 dependencies = [
+ "log",
  "once_cell",
  "ring",
  "rustls-pki-types",

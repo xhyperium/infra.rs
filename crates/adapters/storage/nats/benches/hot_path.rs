@@ -12,7 +12,13 @@ fn iters() -> u32 {
 #[tokio::main]
 async fn main() {
     let n = iters();
-    let cfg = NatsConfig::from_env();
+    let cfg = match NatsConfig::from_env() {
+        Ok(cfg) => cfg,
+        Err(error) => {
+            eprintln!("bench_natsx_publish: skipped (invalid config: {error})");
+            return;
+        }
+    };
     let connect = tokio::time::timeout(Duration::from_secs(3), NatsPool::connect(cfg));
     let Ok(Ok(pool)) = connect.await else {
         println!("bench_natsx_publish: skipped (no nats / timeout)");

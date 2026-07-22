@@ -13,6 +13,16 @@
 
 - `JetStreamDelivery::Debug` 不输出 payload 或底层消息
 - `term` 与 `max_deliver` 明确不冒充自动 DLQ
+- 远程 Disable/Prefer、URL userinfo 与零 deadline/capacity/reconnect 配置 fail-closed
+
+### 变更
+
+- Core 与 JetStream 操作增加内部 deadline；subscription/client capacity 与有限 reconnect 可配置
+- stats 增加 connected/disconnected/slow-consumer 事件
+
+### 已知问题
+
+- 同客户端跨 broker 重启恢复连续三次实验失败（命令通道关闭）；保持 NO-GO，跟踪 `infra-2d9.3.1`
 
 ## [0.3.1] — 2026-07-22
 

@@ -39,6 +39,8 @@ pub struct PostgresPool {
     inner: deadpool_postgres::Pool,
     closed: Arc<AtomicBool>,
     config_summary: Arc<String>,
+    acquire_timeout: std::time::Duration,
+    operation_timeout: std::time::Duration,
 }
 
 impl std::fmt::Debug for PostgresPool {
@@ -81,6 +83,8 @@ impl PostgresPool {
                 config.sslmode.as_str(),
                 config.max_pool_size
             )),
+            acquire_timeout: config.acquire_timeout,
+            operation_timeout: config.operation_timeout,
         };
 
         // 冒烟：借一条连接跑 SELECT 1
@@ -105,25 +109,28 @@ impl PostgresPool {
     /// 借出连接。
     pub async fn acquire(&self) -> XResult<PgConnection> {
         self.ensure_open()?;
-        let client = self.inner.get().await.map_err(map_pool_error)?;
-        Ok(PgConnection::new(client))
+        let client = tokio::time::timeout(self.acquire_timeout, self.inner.get())
+            .await
+            .map_err(|error| XError::deadline_exceeded("Postgres acquire 超时").with_source(error))?
+            .map_err(map_pool_error)?;
+        Ok(PgConnection::new(client, self.operation_timeout))
     }
 
     /// 参数化 `EXECUTE`（短借连接）。
     pub async fn execute(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<u64> {
-        let conn = self.acquire().await?;
+        let mut conn = self.acquire().await?;
         conn.execute(sql, params).await
     }
 
     /// 参数化查询，恰好一行。
     pub async fn query_one(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<Row> {
-        let conn = self.acquire().await?;
+        let mut conn = self.acquire().await?;
         conn.query_one(sql, params).await
     }
 
     /// 参数化查询，0..N 行。
     pub async fn query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<Vec<Row>> {
-        let conn = self.acquire().await?;
+        let mut conn = self.acquire().await?;
         conn.query(sql, params).await
     }
 
@@ -133,7 +140,7 @@ impl PostgresPool {
         sql: &str,
         params: &[&(dyn ToSql + Sync)],
     ) -> XResult<Option<Row>> {
-        let conn = self.acquire().await?;
+        let mut conn = self.acquire().await?;
         conn.query_opt(sql, params).await
     }
 
@@ -151,11 +158,11 @@ impl PostgresPool {
     /// ```
     pub async fn with_transaction<F, T>(&self, f: F) -> XResult<T>
     where
-        F: for<'a> AsyncFnOnce(&'a PgTransaction) -> XResult<T>,
+        F: for<'a> AsyncFnOnce(&'a mut PgTransaction) -> XResult<T>,
     {
         let conn = self.acquire().await?;
-        let tx = conn.begin().await?;
-        match f(&tx).await {
+        let mut tx = conn.begin().await?;
+        match f(&mut tx).await {
             Ok(value) => {
                 tx.commit().await?;
                 Ok(value)
@@ -181,11 +188,8 @@ impl PostgresPool {
     /// 健康检查：`SELECT 1`。
     pub async fn health(&self) -> XResult<()> {
         self.ensure_open()?;
-        let conn = self.acquire().await?;
-        let row = conn
-            .query_one("SELECT 1", &[])
-            .await
-            .map_err(|e| XError::unavailable(format!("health 检查失败: {e}")))?;
+        let mut conn = self.acquire().await?;
+        let row = conn.query_one("SELECT 1", &[]).await?;
         let v: i32 = row.try_get(0).map_err(map_tokio_error)?;
         if v != 1 {
             return Err(XError::unavailable(format!("health 检查异常结果: {v}")));

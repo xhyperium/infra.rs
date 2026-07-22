@@ -20,7 +20,7 @@ fn unique_suffix() -> String {
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 #[ignore = "需要可用 Kafka；请在 broker 就绪后使用 --ignored 运行"]
 async fn live_publish_consume_content() {
-    let cfg = KafkaConfig::from_env();
+    let cfg = KafkaConfig::from_env().expect("Kafka 环境配置合法");
     let pool = KafkaPool::connect(cfg).await.expect("连接 Kafka");
 
     let topic = format!("infra-draft-kafkax-{}", unique_suffix());
