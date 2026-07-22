@@ -2,13 +2,13 @@
 
 | Domain | Draft DoD P0 | Current | Target this wave | Deferred (not stable) |
 |--------|--------------|---------|------------------|------------------------|
-| redisx | Pool+KV+timeout+live | production RedisPool default | **done** + live 真凭据验 | Cluster/Sentinel/Streams full |
-| postgresx | Pool+query+tx | production PostgresPool | **done** + live 真凭据验 | COPY/migrations/TLS require |
-| kafkax | Producer+EventBus | production KafkaPool | **done** + live + 有界 bench | EOS/tx, group if coordinator down |
-| natsx | Core EventBus | production NatsPool | **done** + live + 有界 bench | JetStream full |
-| ossx | ObjectStore | production OssClient | **done** + live 真凭据验 | multipart |
-| clickhousex | Analytics | production HTTP client | **done** + live + 有界 bench | native protocol |
-| taosx | TimeSeries | production REST | **done** + live（6041）+ 有界 bench | native WS full |
+| redisx | Pool+KV+timeout+live | production RedisPool + Cluster/Sentinel/TLS/resiliencx | **done** DEFER closed | Streams full |
+| postgresx | Pool+query+tx | production PostgresPool + PgRepository + SSL require + resiliencx | **done** DEFER closed | COPY/migrations |
+| kafkax | Producer+EventBus | production KafkaPool + ALO + offset + 应用级 EOS | **done** DEFER closed | schema registry / broker tx |
+| natsx | Core EventBus | production NatsPool + JetStream + TLS policy | **done** DEFER closed | NKey / JS KV full |
+| ossx | ObjectStore | production OssClient + multipart + retry | **done** DEFER closed | lifecycle/STS |
+| clickhousex | Analytics | production HTTP + insert_batch + 有界池 | **done** DEFER closed | native/cluster |
+| taosx | TimeSeries | production REST + batch + Native WS 探测 + 有界池 | **done** DEFER closed | full WS SQL session |
 | goalctl | Goal→Contract | tools/goalctl member | **done** | full authority plane |
 | verifyctl | plan+execute | tools/verifyctl member | **done** | full V0–V3 matrix |
 
@@ -16,8 +16,7 @@
 
 | 项 | 位置 / 命令 |
 |----|-------------|
-| PR | #188 · #189 · #190 · #191 |
 | 对齐总览 | [workspace-ssot-alignment.md](./workspace-ssot-alignment.md) |
 | adapters | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| tools | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | live env | `scripts/live/build-foundationx-env.mjs` |
+| offline | `cargo test -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p taosx --all-targets` |

@@ -6,7 +6,7 @@
 | 镜像 | `.agents/ssot/adapters/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 本仓路径 | `crates/adapters/{exchange,storage}/<name>` |
 | 审计日期 | 2026-07-22 |
-| 结论 | **7 个 storage 默认生产客户端已落地**（#188–#190）+ **exchange 生产默认 REST+WS 路径已闭合 named DEFER**（binancex/okxx：HMAC/四头签名、place/cancel/query 协议解析、公共 WS 行情解析 + mock 内容断言 + `#[ignore]` live server_time）；scaffold 改 `feature = "scaffold"`（storage）；**未**宣称 package stable / L5 代签 / Cluster·JetStream·EOS 全量 / crates.io |
+| 结论 | **storage×7 生产默认 + OBJECTIVE DEFER 闭合（`0.3.1`）** + **exchange 生产默认 REST+WS named DEFER 闭合**（binancex/okxx）；live `#[ignore]` + benches；scaffold → `feature = "scaffold"`（storage）；**未**宣称 package stable / L5 代签 / crates.io |
 
 ## 结论摘要
 
@@ -14,7 +14,7 @@
 |------|------|
 | 上游镜像 COMPLETE / Spec Approved 叙事 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
 | 镜像同步 | **完整**：与 `xhyper.rs/.agent/SSOT/adapters/` `diff -rq` = 0（144 文件 / 1.1M） |
-| 本仓 adapter crates | **storage 生产默认路径已落地**（见下表）；scaffold → `feature = "scaffold"`；**exchange 生产默认**：签名 REST + 业务协议解析 + 可注入 `WsConnector` 行情帧解析；Cluster / Sentinel / JetStream / EOS / multipart / 全量管理订单 WS **DEFER** |
+| 本仓 adapter crates | **storage OBJECTIVE DEFER 已闭合** + **exchange 生产默认**（签名 REST + WS 行情解析）；COPY/migrations/schema-registry/全量管理订单 WS 等 **非 OBJECTIVE** 仍 OPEN |
 | `crates/AGENTS.md` 标准八项布局 | **已齐**（README / AGENTS / CHANGELOG / examples / docs / tests / benches） |
 | `publish = false` | **已**在 adapter + contracts `Cargo.toml` 显式关闭 |
 | package stable / crates.io | **未**宣称 |
@@ -50,23 +50,23 @@ Cargo.toml members              含 crates/contracts + 9 个 crates/adapters/**
 package 命名                    xhyper-contracts；binancex / okxx / redisx / …（adapter 无 xhyper- 前缀）
 lib 入口                        adapters: Error/Result；contracts: ExchangeAdapter/StorageAdapter
 生产依赖                        adapters: thiserror；contracts: serde + thiserror
-实现深度                        storage **生产默认客户端** + live/bench；exchange **签名 REST + WS 行情解析**（非 package stable）；Cluster/JetStream 等 DEFER
+实现深度                        storage **生产默认 + OBJECTIVE DEFER 闭合** + live/bench；exchange **签名 REST + WS 行情解析**
 标准布局八项                    已齐
 publish                         false（显式）
-version                         各 crate 独立（binancex/okxx 0.3.1）
+version                         storage×7 与 exchange `0.3.1`（独立）
 ```
 
 | 镜像路径 | 本仓路径 | package | 本仓状态 |
 |----------|----------|---------|----------|
-| `.agents/ssot/adapters/exchange/binance` | `crates/adapters/exchange/binance` | `binancex` | **生产默认 REST+WS**：HMAC-SHA256 + place/cancel/query 签名路径 + `bookTicker`/`trade`/`depth` 解析；无凭证明确 mock；`#[ignore]` live server_time |
-| `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | **生产默认 REST+WS**：四头鉴权 + `code`/`data` 信封 + place/cancel/query；`tickers`/`trades`/`books5` 解析；无凭证明确 mock；`#[ignore]` live server_time |
-| `.agents/ssot/adapters/storage/clickhouse` | `crates/adapters/storage/clickhouse` | `clickhousex` | **生产 `ClickHousePool` HTTP** + `AnalyticsSink` + `FOUNDATIONX_CLICKHOUSEX_*` + live；scaffold feature |
-| `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **生产 `KafkaPool`/`Producer`/`Consumer`** + `EventBus`（at-most-once）+ SASL + live；scaffold feature |
-| `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **生产 `NatsPool`** + `EventBus` + `FOUNDATIONX_NATS_*` + live；scaffold feature |
-| `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | **生产 `OssClient`（OSS V1 签名）** + `FOUNDATIONX_OSSX_*` + live；scaffold feature；multipart **DEFER** |
-| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **生产 `PostgresPool`/`PgTransaction`** + SQLSTATE 映射 + `FOUNDATIONX_POSTGRESX_*` + live；scaffold feature |
-| `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **生产 `RedisPool`/`RedisClient`** + `KeyValueStore` + `FOUNDATIONX_REDISX_*` + live/bench；scaffold feature |
-| `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **生产 `TaosPool` REST** + `TimeSeriesStore` + `FOUNDATIONX_TAOSX_*` + live；scaffold feature |
+| `.agents/ssot/adapters/exchange/binance` | `crates/adapters/exchange/binance` | `binancex` | **生产默认 REST+WS**：HMAC-SHA256 + place/cancel/query + 行情解析；`#[ignore]` live server_time |
+| `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | **生产默认 REST+WS**：四头鉴权 + place/cancel/query + 行情解析；`#[ignore]` live server_time |
+| `.agents/ssot/adapters/storage/clickhouse` | `crates/adapters/storage/clickhouse` | `clickhousex` | **`0.3.1`** HTTP + `insert_batch` + 有界池 + live |
+| `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **`0.3.1`** Pool/EventBus + offset/at-least-once/应用级 EOS + live |
+| `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **`0.3.1`** Core + JetStream + TLS 默认策略 + live |
+| `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | **`0.3.1`** ObjectStore + multipart + resiliencx retry + live |
+| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **`0.3.1`** Pool/Tx + PgRepository + SSL require + resiliencx + live |
+| `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **`0.3.1`** Standalone/Cluster/Sentinel + TLS + resiliencx + live |
+| `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **`0.3.1`** REST + batch write + Native WS 探测 + 有界池 + live |
 
 验证（本仓权威命令）：
 

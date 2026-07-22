@@ -10,7 +10,10 @@
 mod client;
 mod config;
 
-pub use client::{ANALYTICS_TABLE, ClickHouseClient, ClickHousePool};
+pub use client::{
+    ANALYTICS_TABLE, BatchInsertOptions, ClickHouseClient, ClickHousePool, ClickHousePoolStats,
+    chunk_ranges,
+};
 pub use config::ClickHouseConfig;
 
 #[cfg(feature = "scaffold")]
@@ -27,9 +30,14 @@ mod public_api_surface {
     fn default_exports_named() {
         assert!(!ANALYTICS_TABLE.is_empty());
         let _cfg = ClickHouseConfig::default();
+        let _ = BatchInsertOptions::default();
+        let ranges = chunk_ranges(5, 2);
+        assert_eq!(ranges.len(), 3);
         fn assert_type<T: ?Sized>() {}
         assert_type::<ClickHouseClient>();
         assert_type::<ClickHousePool>();
         assert_type::<ClickHouseConfig>();
+        assert_type::<ClickHousePoolStats>();
+        assert_type::<BatchInsertOptions>();
     }
 }

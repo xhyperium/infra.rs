@@ -1,7 +1,7 @@
 [package]
 name = "ossx"
 description = "Aliyun OSS ObjectStore adapter (reqwest + OSS V1 signing)"
-version = "0.3.0"
+version = "0.3.1"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -22,8 +22,10 @@ contracts = { path = "../../../contracts", version = "0.1.0" }
 hmac = "0.12"
 kernel = { path = "../../../kernel", version = "0.3.0" }
 reqwest = { workspace = true }
+resiliencx = { path = "../../../resiliencx", version = "0.1.0", features = ["tokio"] }
 sha1 = "0.10"
 thiserror = { workspace = true }
+tokio = { workspace = true }
 url = { workspace = true }
 
 [dev-dependencies]

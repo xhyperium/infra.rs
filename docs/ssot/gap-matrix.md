@@ -1,22 +1,21 @@
 # Gap Matrix — .cargo/draft → infra.rs (2026-07-22)
 
-> **权威快照**：P0 目标状态以 [draft-gap-matrix.md](./draft-gap-matrix.md) 为准（#188–#191 后 **done**）。  
-> 本文件保留「历史规划列」便于对照；**Current = 落地后现状**。
+> **权威快照**：storage×7 OBJECTIVE DEFER 已闭合（生产默认就绪）。  
+> package stable / crates.io **仍未**宣称。
 
-| Domain | Draft DoD P0 | Current（main @ #191） | Deferred (not stable) |
-|--------|--------------|------------------------|------------------------|
-| redisx | Pool+KV+timeout+live | **done** — `RedisPool`/`RedisClient` 默认生产 + `FOUNDATIONX_REDISX_*` + live/bench | Cluster/Sentinel/Streams full |
-| postgresx | Pool+query+tx+TLS | **done** — `PostgresPool`/`PgTransaction` + SQLSTATE + live/bench | COPY/migrations/read-replica |
-| kafkax | Producer pool + EventBus | **done** — `KafkaPool`/`Producer`/`Consumer` + SASL + live/bench（有界） | EOS/tx producer, schema registry |
-| natsx | Core NATS EventBus | **done** — `NatsPool` + EventBus + live/bench（有界） | JetStream full surface |
-| ossx | ObjectStore put/get | **done** — `OssClient` OSS V1 + live/bench | multipart/lifecycle |
-| clickhousex | Analytics insert+select | **done** — HTTP `ClickHousePool` + live/bench（有界） | native protocol, cluster |
-| taosx | TimeSeries write+query | **done** — REST `TaosPool`（6041）+ live/bench（有界） | native WS full |
-| goalctl | Goal→Contract digest | **done** — `tools/goalctl` member CLI | full multi-module authority plane |
-| verifyctl | plan+execute+run-result | **done** — `tools/verifyctl` member CLI | full V0–V3 gate matrix |
-| verification | cargo verify + evidence | **done（最小）** — verifyctl + evidence 自验证路径 | archgate OOS |
+| Domain | Draft DoD P0 | Current | Deferred (not OBJECTIVE / not stable) |
+|--------|--------------|---------|----------------------------------------|
+| redisx | Pool+KV+timeout+live | **done** + Cluster/Sentinel/TLS/resiliencx (`0.3.1`) | Streams full / pubsub 默认关 / package stable |
+| postgresx | Pool+query+tx+TLS | **done** + prod Repository + SSL require + resiliencx (`0.3.1`) | COPY / migrations / read-replica |
+| kafkax | Producer pool + EventBus | **done** + offset commit + ALO + 应用级 EOS (`0.3.1`) | schema registry / broker 事务协议 |
+| natsx | Core NATS EventBus | **done** + JetStream 薄封装 + TLS 默认策略 (`0.3.1`) | NKey / JetStream KV·Object 全量 |
+| ossx | ObjectStore put/get | **done** + multipart + resiliencx retry (`0.3.1`) | lifecycle / STS |
+| clickhousex | Analytics insert+select | **done** + insert_batch + 有界池 (`0.3.1`) | native 9000 / cluster 运维 |
+| taosx | TimeSeries write+query | **done** + batch write + Native WS 探测 + 有界池 (`0.3.1`) | 完整 WS SQL 会话 / 超表治理 |
+| goalctl | Goal→Contract digest | **done** | full multi-module authority plane |
+| verifyctl | plan+execute+run-result | **done** | full V0–V3 gate matrix |
 
-Freeze: P0 production default path per domain; scaffold behind `scaffold` feature; no secrets in git.
+Freeze: production-default path per domain; scaffold behind `scaffold` feature; no secrets in git; **no** package-stable claim.
 
 ## Live 入口
 
@@ -30,7 +29,6 @@ cargo test -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p t
 
 | PR | 说明 |
 |----|------|
-| #188 | storage 生产客户端 + goalctl/verifyctl members |
-| #189 | evidence-grade docs / pool unit tests / core benches |
-| #190 | bench 超时 + 公共 API 单测缺口 |
-| #191 | `build-foundationx-env.mjs` live 凭据导出 |
+| #188–#191 | storage 生产客户端 + live 凭据 |
+| #195 | storage×7 SSOT layers |
+| （本 PR） | storage×7 OBJECTIVE DEFER 闭合 → `0.3.1` |

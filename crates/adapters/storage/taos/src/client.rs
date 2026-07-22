@@ -1,7 +1,7 @@
-//! TDengine REST 生产客户端（默认 6041）。
+//! TDengine REST 生产客户端（默认 6041）+ 批量写入 + 池背压。
 
 use std::str::FromStr;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, RwLock};
 
 use async_trait::async_trait;
@@ -11,9 +11,12 @@ use contracts::TimeSeriesStore;
 use decimalx::{Decimal, Price};
 use kernel::{XError, XResult};
 use serde::Deserialize;
+use tokio::sync::{OwnedSemaphorePermit, Semaphore};
+use tokio::time::timeout;
 use tracing::debug;
 
-use crate::config::{TaosConfig, TsPrecision};
+use crate::config::{TaosConfig, TransportMode, TsPrecision};
+use crate::native;
 
 /// REST 查询结果（精简）。
 #[derive(Debug, Clone)]
@@ -26,6 +29,15 @@ pub struct TaosExecResult {
     pub columns: Vec<String>,
     /// 受影响行数（写路径可能有）。
     pub affected_rows: Option<i64>,
+}
+
+/// 池运行时快照。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TaosPoolStats {
+    /// 正在执行的请求数。
+    pub in_flight: usize,
+    /// 是否已关闭。
+    pub closed: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -51,15 +63,60 @@ struct PoolInner {
     http: reqwest::Client,
     config: TaosConfig,
     precision: RwLock<TsPrecision>,
+    sem: Arc<Semaphore>,
+    in_flight: AtomicUsize,
     closed: AtomicBool,
 }
 
 /// 工作句柄别名。
 pub type TaosClient = TaosPool;
 
+/// 构建分块 INSERT SQL（纯函数；单测驱动 chunk 尺寸）。
+///
+/// 每个 chunk 生成一条 `INSERT INTO ...` 多子表语句。
+pub fn build_insert_sql_chunks(
+    table: &str,
+    points: &[Tick],
+    prec: TsPrecision,
+    max_rows: usize,
+) -> XResult<Vec<String>> {
+    validate_ident(table)?;
+    if points.is_empty() {
+        return Ok(Vec::new());
+    }
+    let size = max_rows.max(1);
+    let mut out = Vec::new();
+    for chunk in points.chunks(size) {
+        let mut sql = String::from("INSERT INTO ");
+        for (i, tick) in chunk.iter().enumerate() {
+            if i > 0 {
+                sql.push(' ');
+            }
+            let sub = subtable_name(table, &tick.symbol)?;
+            let sym = escape_str(&tick.symbol);
+            let ts = prec.from_nanos(tick.ts);
+            let bid = tick.bid.as_decimal().to_string();
+            let ask = tick.ask.as_decimal().to_string();
+            sql.push_str(&format!(
+                "`{sub}` USING `{table}` TAGS ('{sym}') VALUES ({ts},{bid},{ask})"
+            ));
+        }
+        out.push(sql);
+    }
+    Ok(out)
+}
+
 impl TaosPool {
     /// 连接：构建 HTTP 客户端、可选建库、探测精度、ping。
+    ///
+    /// `TransportMode::NativeWs` 时先做一次原生 WS 握手探测（失败即返回）。
     pub async fn connect(config: TaosConfig) -> XResult<Self> {
+        config.validate()?;
+
+        if config.transport == TransportMode::NativeWs {
+            native::connect_native_ws(&config).await?;
+        }
+
         let http = reqwest::Client::builder()
             .timeout(config.timeout)
             .pool_max_idle_per_host(8)
@@ -67,16 +124,20 @@ impl TaosPool {
             .map_err(|e| XError::internal(format!("taos http client: {e}")))?;
 
         let initial_precision = config.precision.unwrap_or(TsPrecision::Ms);
+        let max_in_flight = config.max_in_flight;
         let pool = Self {
             inner: Arc::new(PoolInner {
                 http,
                 config,
                 precision: RwLock::new(initial_precision),
+                sem: Arc::new(Semaphore::new(max_in_flight)),
+                in_flight: AtomicUsize::new(0),
                 closed: AtomicBool::new(false),
             }),
         };
 
-        // 确保 database 存在（失败时留给后续 SQL 暴露权限问题）
+        // REST 路径：确保 database + 精度探测 + ping
+        // NativeWs 探测已完成；仍用 REST 做 SQL（本阶段 WS 仅作连通性 lane）
         if !pool.inner.config.database.is_empty() {
             let db = pool.inner.config.database.clone();
             validate_ident(&db)?;
@@ -99,6 +160,29 @@ impl TaosPool {
         Self::connect(TaosConfig::from_env()).await
     }
 
+    /// 仅测试：跳过 ping / native 探测。
+    #[cfg(test)]
+    pub(crate) fn connect_without_ping(config: TaosConfig) -> XResult<Self> {
+        config.validate()?;
+        let http = reqwest::Client::builder()
+            .timeout(config.timeout)
+            .pool_max_idle_per_host(8)
+            .build()
+            .map_err(|e| XError::internal(format!("taos http client: {e}")))?;
+        let initial_precision = config.precision.unwrap_or(TsPrecision::Ms);
+        let max_in_flight = config.max_in_flight;
+        Ok(Self {
+            inner: Arc::new(PoolInner {
+                http,
+                config,
+                precision: RwLock::new(initial_precision),
+                sem: Arc::new(Semaphore::new(max_in_flight)),
+                in_flight: AtomicUsize::new(0),
+                closed: AtomicBool::new(false),
+            }),
+        })
+    }
+
     /// 工作客户端。
     #[must_use]
     pub fn client(&self) -> TaosClient {
@@ -115,6 +199,21 @@ impl TaosPool {
     #[must_use]
     pub fn precision(&self) -> TsPrecision {
         self.inner.precision.read().map(|g| *g).unwrap_or(TsPrecision::Ms)
+    }
+
+    /// 池统计。
+    #[must_use]
+    pub fn stats(&self) -> TaosPoolStats {
+        TaosPoolStats {
+            in_flight: self.inner.in_flight.load(Ordering::Relaxed),
+            closed: self.inner.closed.load(Ordering::Relaxed),
+        }
+    }
+
+    /// 是否已关闭。
+    #[must_use]
+    pub fn is_closed(&self) -> bool {
+        self.inner.closed.load(Ordering::Acquire)
     }
 
     /// `SELECT SERVER_VERSION()`。
@@ -146,9 +245,40 @@ impl TaosPool {
         Ok(())
     }
 
+    /// 显式批量写入：按 `max_rows` 分块 INSERT。
+    ///
+    /// 空 `points` → `Ok(())`。
+    pub async fn write_batch(&self, table: &str, points: &[Tick]) -> XResult<()> {
+        self.write_batch_chunked(table, points, self.inner.config.batch_max_rows).await
+    }
+
+    /// 带自定义 chunk 大小的批量写入。
+    pub async fn write_batch_chunked(
+        &self,
+        table: &str,
+        points: &[Tick],
+        max_rows: usize,
+    ) -> XResult<()> {
+        validate_ident(table)?;
+        if points.is_empty() {
+            return Ok(());
+        }
+        self.ensure_stable(table).await?;
+        let prec = self.precision();
+        let chunks = build_insert_sql_chunks(table, points, prec, max_rows)?;
+        for sql in chunks {
+            let r = self.exec_sql(&sql).await?;
+            if r.code != 0 {
+                return Err(map_taos_code(r.code, "write_batch 失败"));
+            }
+        }
+        Ok(())
+    }
+
     /// 关闭池。
     pub async fn close(&self) -> XResult<()> {
         self.inner.closed.store(true, Ordering::SeqCst);
+        self.inner.sem.close();
         Ok(())
     }
 
@@ -166,8 +296,36 @@ impl TaosPool {
         Ok(self.precision())
     }
 
-    async fn exec_sql_raw(&self, sql: &str, use_db: bool) -> XResult<TaosExecResult> {
+    async fn acquire(&self) -> XResult<OwnedSemaphorePermit> {
         self.ensure_open()?;
+        let result =
+            timeout(self.inner.config.acquire_timeout, self.inner.sem.clone().acquire_owned())
+                .await;
+        match result {
+            Ok(Ok(permit)) => {
+                if self.is_closed() {
+                    drop(permit);
+                    return Err(XError::unavailable("taos pool 已关闭"));
+                }
+                Ok(permit)
+            }
+            Ok(Err(_)) => Err(XError::unavailable("taos 背压信号量已关闭")),
+            Err(_) => Err(XError::deadline_exceeded(format!(
+                "taos 获取 in-flight 许可超时（max={}）",
+                self.inner.config.max_in_flight
+            ))),
+        }
+    }
+
+    async fn exec_sql_raw(&self, sql: &str, use_db: bool) -> XResult<TaosExecResult> {
+        let _permit = self.acquire().await?;
+        self.inner.in_flight.fetch_add(1, Ordering::SeqCst);
+        let result = self.exec_sql_raw_inner(sql, use_db).await;
+        self.inner.in_flight.fetch_sub(1, Ordering::SeqCst);
+        result
+    }
+
+    async fn exec_sql_raw_inner(&self, sql: &str, use_db: bool) -> XResult<TaosExecResult> {
         let cfg = &self.inner.config;
         let url = if use_db { cfg.rest_sql_db_url() } else { cfg.rest_sql_url() };
 
@@ -247,30 +405,8 @@ fn parse_taos_json(text: &str) -> XResult<TaosExecResult> {
 #[async_trait]
 impl TimeSeriesStore for TaosPool {
     async fn write_series(&self, table: &str, points: Vec<Tick>) -> XResult<()> {
-        validate_ident(table)?;
-        if points.is_empty() {
-            return Ok(());
-        }
-        self.ensure_stable(table).await?;
-        let prec = self.precision();
-
-        // 多表批量 INSERT
-        let mut sql = String::from("INSERT INTO ");
-        for (i, tick) in points.iter().enumerate() {
-            if i > 0 {
-                sql.push(' ');
-            }
-            let sub = subtable_name(table, &tick.symbol)?;
-            let sym = escape_str(&tick.symbol);
-            let ts = prec.from_nanos(tick.ts);
-            let bid = tick.bid.as_decimal().to_string();
-            let ask = tick.ask.as_decimal().to_string();
-            sql.push_str(&format!(
-                "`{sub}` USING `{table}` TAGS ('{sym}') VALUES ({ts},{bid},{ask})"
-            ));
-        }
-        let _ = self.exec_sql(&sql).await?;
-        Ok(())
+        // 委托显式批量 API
+        self.write_batch(table, &points).await
     }
 
     async fn query_series(&self, table: &str, start: i64, end: i64) -> XResult<Vec<Tick>> {
@@ -415,6 +551,15 @@ mod tests {
 
     use kernel::ErrorKind;
 
+    fn sample_tick(symbol: &str, ts: i64) -> Tick {
+        Tick {
+            symbol: symbol.into(),
+            bid: Price::new(Decimal::from_str("1.0").unwrap()),
+            ask: Price::new(Decimal::from_str("1.1").unwrap()),
+            ts,
+        }
+    }
+
     #[test]
     fn subtable_sanitizes() {
         let n = subtable_name("ticks", "BTC/USDT").unwrap();
@@ -433,12 +578,24 @@ mod tests {
         assert!(ns > 0);
     }
 
+    #[test]
+    fn insert_sql_chunks() {
+        let points: Vec<Tick> = (0..5).map(|i| sample_tick("BTC", i * 1_000_000)).collect();
+        let chunks = build_insert_sql_chunks("ticks", &points, TsPrecision::Ms, 2).unwrap();
+        assert_eq!(chunks.len(), 3); // 2+2+1
+        assert!(chunks[0].starts_with("INSERT INTO "));
+        assert!(chunks[0].contains("VALUES"));
+        // 空
+        assert!(build_insert_sql_chunks("ticks", &[], TsPrecision::Ms, 10).unwrap().is_empty());
+    }
+
     #[tokio::test]
     async fn connect_refused_fails() {
         let cfg = TaosConfig {
             host: "127.0.0.1".into(),
             port: 1,
             timeout: Duration::from_millis(300),
+            acquire_timeout: Duration::from_millis(300),
             ..TaosConfig::default()
         };
         match TaosPool::connect(cfg).await {
@@ -464,5 +621,51 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[tokio::test]
+    async fn closed_pool_rejects() {
+        let cfg = TaosConfig {
+            host: "127.0.0.1".into(),
+            port: 1,
+            max_in_flight: 2,
+            acquire_timeout: Duration::from_millis(100),
+            timeout: Duration::from_millis(100),
+            ..TaosConfig::default()
+        };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        assert_eq!(pool.stats().in_flight, 0);
+        pool.close().await.expect("close");
+        assert!(pool.stats().closed);
+        let err = pool.exec_sql("SELECT 1").await.expect_err("closed");
+        assert_eq!(err.kind(), ErrorKind::Unavailable);
+    }
+
+    #[tokio::test]
+    async fn acquire_timeout_when_saturated() {
+        let cfg = TaosConfig {
+            host: "127.0.0.1".into(),
+            port: 1,
+            max_in_flight: 1,
+            acquire_timeout: Duration::from_millis(50),
+            timeout: Duration::from_millis(200),
+            ..TaosConfig::default()
+        };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        // 占住唯一许可
+        let permit = pool.acquire().await.expect("first permit");
+        let err = pool.acquire().await.expect_err("second must timeout");
+        assert_eq!(err.kind(), ErrorKind::DeadlineExceeded);
+        drop(permit);
+    }
+
+    #[tokio::test]
+    async fn rejects_zero_max_in_flight() {
+        let cfg = TaosConfig { max_in_flight: 0, ..TaosConfig::default() };
+        let err = match TaosPool::connect(cfg).await {
+            Ok(_) => panic!("must reject zero max_in_flight"),
+            Err(e) => e,
+        };
+        assert_eq!(err.kind(), ErrorKind::Invalid);
     }
 }

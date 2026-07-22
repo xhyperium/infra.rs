@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.1] — 2026-07-22
+
+### Added
+
+- `insert_batch(table, rows, BatchInsertOptions { max_rows_per_chunk })` 分块插入
+- 纯函数 `chunk_ranges`（可测 chunk 尺寸）
+- 池强化：`max_idle_per_host` / `max_in_flight`（默认 64）/ `acquire_timeout`
+- `ClickHousePoolStats { in_flight, closed }`；关闭后拒绝新请求
+- `ClickHouseConfig::validate`：`max_in_flight ≥ 1`
+
+### Changed
+
+- 版本 PATCH 0.3.0 → 0.3.1
+- `connect` 使用配置的 `pool_max_idle_per_host`；请求经 Semaphore 背压
+
 ## [Unreleased]
 
 ### Added

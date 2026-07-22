@@ -8,6 +8,9 @@
 //!   `with_transaction` / `health` / `stats` / `close`
 //! - [`PgConnection`] / [`PgTransaction`]（[`TxState`]）
 //! - [`PgTxRunner`]：`contracts::TxRunner` 边界适配（**不**传 SQL 句柄，见模块文档）
+//! - [`PgRepository`] / [`PgRecord`]：生产 `contracts::Repository`
+//! - [`MakeRustlsConnect`]：`SslMode::Prefer` / `Require` 的 rustls TLS
+//! - [`with_retry_sync`] / [`with_retry_async`]：resiliencx 重试
 //! - SQLSTATE → [`kernel::ErrorKind`] 映射：[`error_kind_from_sqlstate`]
 //!
 //! ## 可选 scaffold
@@ -26,7 +29,10 @@ mod config;
 mod conn;
 mod error;
 mod pool;
+mod repository;
+mod resilience;
 mod runner;
+mod tls;
 mod tx;
 
 #[cfg(feature = "scaffold")]
@@ -40,7 +46,10 @@ pub use config::{
 pub use conn::PgConnection;
 pub use error::{error_kind_from_sqlstate, map_pool_error, map_tokio_error, xerror_from_sqlstate};
 pub use pool::{PoolStats, PostgresPool};
+pub use repository::{PgRecord, PgRepository};
+pub use resilience::{PgRetryConfig, with_retry_async, with_retry_async_no_wait, with_retry_sync};
 pub use runner::PgTxRunner;
+pub use tls::{MakeRustlsConnect, build_client_config};
 pub use tx::{PgTransaction, TxState};
 
 #[cfg(feature = "scaffold")]
@@ -64,6 +73,9 @@ mod unit_smoke {
         assert_send_sync::<PgTxRunner>();
         assert_send_sync::<PoolStats>();
         assert_send_sync::<SslMode>();
+        assert_send_sync::<PgRepository>();
+        assert_send_sync::<PgRecord>();
+        assert_send_sync::<MakeRustlsConnect>();
     }
 
     /// 默认 feature crate-root 导出均被单元测试点名。
@@ -72,16 +84,28 @@ mod unit_smoke {
         assert_eq!(DEFAULT_PORT, 5432);
         assert_eq!(DEFAULT_MAX_POOL_SIZE, 16);
         let _ = SslMode::Disable.as_str();
+        let _ = SslMode::Prefer.as_str();
+        let _ = SslMode::Require.as_str();
 
         fn assert_type<T: ?Sized>() {}
         assert_type::<PgConnection>();
         assert_type::<PgTransaction>();
         assert_type::<Row>();
         assert_type::<dyn ToSql>();
+        assert_type::<PgRepository>();
+        assert_type::<PgRecord>();
         let _ = map_pool_error;
         let _ = map_tokio_error;
         let _ = error_kind_from_sqlstate;
         let err = xerror_from_sqlstate("42P01", "missing");
         assert_eq!(err.kind(), kernel::ErrorKind::Missing);
+
+        let tls = MakeRustlsConnect::with_webpki_roots().expect("tls");
+        let _ = format!("{tls:?}");
+        let _ = build_client_config().expect("cfg");
+
+        let cfg = PgRetryConfig::fixed(1, 0);
+        let v = with_retry_sync(&cfg, "surface", || Ok(1_i32)).expect("retry");
+        assert_eq!(v, 1);
     }
 }

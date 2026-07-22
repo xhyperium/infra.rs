@@ -80,11 +80,15 @@ struct PoolInner {
 
 impl NatsPool {
     /// 连接 NATS。
+    ///
+    /// TLS：按 [`NatsConfig::effective_tls_policy`] 设置 `require_tls`。
     pub async fn connect(config: NatsConfig) -> XResult<Self> {
         config.validate()?;
+        let policy = config.effective_tls_policy();
         let mut opts = async_nats::ConnectOptions::new()
             .name(config.name.clone())
-            .connection_timeout(config.connect_timeout);
+            .connection_timeout(config.connect_timeout)
+            .require_tls(policy.require_tls());
         if let (Some(u), Some(p)) = (&config.user, &config.password) {
             opts = opts.user_and_password(u.clone(), p.clone());
         }
@@ -243,14 +247,32 @@ mod tests {
         let cfg = NatsConfig {
             url: "nats://127.0.0.1:1".into(),
             connect_timeout: Duration::from_millis(300),
-            user: None,
-            password: None,
             name: "natsx-test".into(),
+            ..NatsConfig::default()
         };
         let res = tokio::time::timeout(Duration::from_secs(2), NatsPool::connect(cfg)).await;
         match res {
             Ok(Err(err)) => assert_eq!(err.kind(), ErrorKind::Unavailable),
             Ok(Ok(_)) => panic!("must fail"),
+            Err(_) => {}
+        }
+    }
+
+    #[tokio::test]
+    async fn require_tls_on_plain_remote_fails_closed() {
+        // 非 loopback + Require + 明文 nats:// → require_tls(true)，无 TLS 服务时连接失败
+        let cfg = NatsConfig {
+            url: "nats://203.0.113.10:4222".into(), // TEST-NET-3，不应有真实监听
+            connect_timeout: Duration::from_millis(300),
+            tls_policy: Some(crate::config::TlsPolicy::Require),
+            name: "natsx-tls-test".into(),
+            ..NatsConfig::default()
+        };
+        assert!(cfg.effective_tls_policy().require_tls());
+        let res = tokio::time::timeout(Duration::from_secs(2), NatsPool::connect(cfg)).await;
+        match res {
+            Ok(Err(err)) => assert_eq!(err.kind(), ErrorKind::Unavailable),
+            Ok(Ok(_)) => panic!("must fail without TLS endpoint"),
             Err(_) => {}
         }
     }

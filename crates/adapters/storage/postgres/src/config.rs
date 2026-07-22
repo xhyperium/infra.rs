@@ -21,15 +21,18 @@ pub const DEFAULT_MAX_POOL_SIZE: usize = 16;
 /// 默认端口。
 pub const DEFAULT_PORT: u16 = 5432;
 
-/// TLS / SSL 模式（本构建以 `NoTls` 为主；`require` 会明确失败）。
+/// TLS / SSL 模式。
+///
+/// - [`SslMode::Disable`]：`NoTls`
+/// - [`SslMode::Prefer`] / [`SslMode::Require`]：rustls（webpki-roots）
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum SslMode {
     /// 不使用 TLS。
     #[default]
     Disable,
-    /// 优先 TLS；当前构建回退为 Disable 并在 connect 时记录限制。
+    /// 优先 TLS（协商失败时可回退明文，由 tokio-postgres 处理）。
     Prefer,
-    /// 要求 TLS；当前构建无 TLS 驱动，connect 返回 Invalid。
+    /// 要求 TLS（证书校验）。
     Require,
 }
 

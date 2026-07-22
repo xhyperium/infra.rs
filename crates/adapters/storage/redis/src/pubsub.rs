@@ -41,15 +41,14 @@ impl RedisPubSub {
         Self::connect_with_config(cfg, endpoint_display, channels).await
     }
 
-    /// 使用显式配置连接。
+    /// 使用显式配置连接（Standalone 路径；支持 TLS）。
+    ///
+    /// Cluster / Sentinel 下 PubSub 仍走 `to_connection_info` 解析的单节点/主节点信息。
     pub async fn connect_with_config(
         cfg: RedisConfig,
         endpoint_display: String,
         channels: impl IntoIterator<Item = String>,
     ) -> XResult<Self> {
-        if cfg.tls() {
-            return Err(XError::invalid("PubSub TLS 在当前构建不可用"));
-        }
         let info = cfg.to_connection_info()?;
         let client = redis::Client::open(info)
             .map_err(|e| XError::unavailable(format!("redis pubsub client: {e}")))?;

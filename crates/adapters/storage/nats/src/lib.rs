@@ -1,10 +1,17 @@
-//! `natsx` — 生产级 NATS 适配（`async-nats` Core NATS）。
+//! `natsx` — 生产级 NATS 适配（`async-nats` Core NATS + JetStream 薄封装）。
 //!
 //! ## 默认入口
 //!
-//! - [`NatsConfig`] / [`NatsConfig::from_env`]
+//! - [`NatsConfig`] / [`NatsConfig::from_env`] / [`TlsPolicy`]
 //! - [`NatsPool`]：`connect` / `publish` / `subscribe` / `ping` / `health` / `close`
 //! - [`NatsEventBus`]：[`contracts::EventBus`]（**at-most-once**）
+//! - [`JetStream`]：`publish` / `get_or_create_stream` / `create_pull_consumer`
+//!
+//! ## TLS 默认策略
+//!
+//! - loopback → [`TlsPolicy::Prefer`]（允许明文）
+//! - 非 loopback → [`TlsPolicy::Require`]（`ConnectOptions::require_tls(true)`）
+//! - 环境：`FOUNDATIONX_NATS_TLS` / `FOUNDATIONX_NATS_TLS_POLICY`
 //!
 //! ## scaffold feature
 //!
@@ -12,16 +19,20 @@
 //!
 //! ## 环境变量
 //!
-//! `FOUNDATIONX_NATS_{URL,USER,PASSWORD}` 或 `FOUNDATIONX_NATSX_*`。
+//! `FOUNDATIONX_NATS_{URL,USER,PASSWORD,TLS,TLS_POLICY,JETSTREAM}` 或 `FOUNDATIONX_NATSX_*`。
 
 #![forbid(unsafe_code)]
 
 mod bus;
 mod config;
+mod jetstream;
 mod pool;
 
 pub use bus::NatsEventBus;
-pub use config::{DEFAULT_URL, NatsConfig};
+pub use config::{DEFAULT_URL, NatsConfig, TlsPolicy, url_is_loopback};
+pub use jetstream::{
+    JetStream, PullConsumerConfig, StreamConfig, validate_consumer_name, validate_stream_name,
+};
 pub use pool::{NatsHealth, NatsMessage, NatsPool, NatsPoolStats, NatsSubscription};
 
 #[cfg(feature = "scaffold")]
@@ -32,3 +43,24 @@ mod mock;
 pub use adapter::NatsAdapter;
 #[cfg(feature = "scaffold")]
 pub use mock::MockNatsBus;
+
+#[cfg(test)]
+mod public_api_surface {
+    use super::*;
+
+    #[test]
+    fn default_exports_named() {
+        assert!(!DEFAULT_URL.is_empty());
+        let cfg = NatsConfig::default();
+        assert_eq!(cfg.effective_tls_policy(), TlsPolicy::Prefer);
+        assert!(validate_stream_name("EVENTS").is_ok());
+        let _sc = StreamConfig::new("S", "s.>");
+        let _pc = PullConsumerConfig::durable("d");
+        fn assert_type<T: ?Sized>() {}
+        assert_type::<NatsPool>();
+        assert_type::<NatsEventBus>();
+        assert_type::<JetStream>();
+        assert_type::<TlsPolicy>();
+        assert!(url_is_loopback("nats://127.0.0.1:4222"));
+    }
+}

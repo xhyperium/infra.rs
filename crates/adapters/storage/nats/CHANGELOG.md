@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.1] — 2026-07-22
+
+### Added
+
+- JetStream 薄封装：`JetStream` / `StreamConfig` / `PullConsumerConfig` / `validate_stream_name`
+- TLS 策略：`TlsPolicy { Disable, Prefer, Require }` + `NatsConfig::{tls,tls_policy,jetstream}`
+- 默认 TLS：loopback → Prefer；非 loopback → Require（`require_tls(true)`）
+- 环境变量：`FOUNDATIONX_NATS_{TLS,TLS_POLICY,JETSTREAM}`（兼容 `FOUNDATIONX_NATSX_*`）
+
 ## [Unreleased]
 
 ### Added
