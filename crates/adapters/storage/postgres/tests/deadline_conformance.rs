@@ -4,7 +4,7 @@ use std::error::Error;
 use std::time::{Duration, Instant};
 
 use kernel::{ErrorKind, XError};
-use postgresx::{PostgresConfig, PostgresPool, SslMode, TxState};
+use postgresx::{PostgresConfig, PostgresPool, SslMode, TxStatus};
 
 fn required(name: &str) -> String {
     std::env::var(name).unwrap_or_else(|_| panic!("缺少环境变量 {name}"))
@@ -28,6 +28,7 @@ async fn pool_and_query_deadlines_fail_closed_then_recover() {
         .build()
         .expect("本机测试配置合法");
     let pool = PostgresPool::connect(&config).await.expect("连接 PostgreSQL");
+    let observer = PostgresPool::connect(&config).await.expect("连接独立观察池");
 
     let held = pool.acquire().await.expect("占用唯一连接");
     let started = Instant::now();
@@ -87,7 +88,7 @@ async fn pool_and_query_deadlines_fail_closed_then_recover() {
     )
     .await;
     assert!(outer_tx.is_err(), "外层 deadline 必须取消事务查询 future");
-    assert_eq!(transaction.state(), TxState::Failed, "取消后事务必须进入失败态");
+    assert_eq!(transaction.status(), TxStatus::Failed, "取消后事务必须进入失败态");
     assert!(!transaction.is_active(), "取消后的事务不得继续接受 SQL");
     assert_eq!(pool.stats().size, 0, "事务取消连接必须永久移出池");
     assert_eq!(pool.stats().available, 0, "事务取消连接不得重新变为可用");
@@ -99,7 +100,7 @@ async fn pool_and_query_deadlines_fail_closed_then_recover() {
     // 不能让后续 COMMIT 把服务端 ROLLBACK 的 CommandComplete 误报成提交成功。
     let mut failed_transaction = pool.begin().await.expect("开启语句失败测试事务");
     failed_transaction.query_one("SELECT 1 / 0", &[]).await.expect_err("除零必须使事务失败");
-    assert_eq!(failed_transaction.state(), TxState::Failed);
+    assert_eq!(failed_transaction.status(), TxStatus::Failed);
     failed_transaction.rollback().await.expect("失败事务仍允许显式回滚");
     let recovered = pool.query_one("SELECT 1", &[]).await.expect("显式回滚后连接可复用");
     assert_eq!(recovered.get::<_, i32>(0), 1);
@@ -126,5 +127,56 @@ async fn pool_and_query_deadlines_fail_closed_then_recover() {
     assert_eq!(pool.stats().size, 0, "双错误路径不得把未知连接归池");
     let recovered = pool.query_one("SELECT 1", &[]).await.expect("双错误后新建连接");
     assert_eq!(recovered.get::<_, i32>(0), 1);
+
+    // 显式 task abort 必须触发 guard Drop，而不是把正在执行的 Object 归池。
+    let mut aborted_connection = pool.acquire().await.expect("获取 abort 测试连接");
+    aborted_connection.execute("SET statement_timeout = 0", &[]).await.expect("关闭服务端超时");
+    let task =
+        tokio::spawn(async move { aborted_connection.query_one("SELECT pg_sleep(2)", &[]).await });
+    tokio::time::timeout(Duration::from_secs(1), async {
+        loop {
+            let active = observer
+                .query_one(
+                    "SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE state = 'active' AND query = 'SELECT pg_sleep(2)')",
+                    &[],
+                )
+                .await
+                .expect("观察 pg_stat_activity");
+            if active.get::<_, bool>(0) {
+                break;
+            }
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("必须观察到慢查询已进入服务端");
+    task.abort();
+    let join_error = task.await.expect_err("abort 后任务必须以取消结束");
+    assert!(join_error.is_cancelled(), "JoinError 必须标记 cancelled");
+    assert_eq!(pool.stats().size, 0, "task abort 必须永久移出正在执行的连接");
+    assert_eq!(pool.stats().available, 0, "task abort 连接不得重新可借");
+    let recovered = pool.query_one("SELECT 1", &[]).await.expect("task abort 后新建连接");
+    assert_eq!(recovered.get::<_, i32>(0), 1);
+
+    // deprecated raw client 访问会立即标记连接污染，Drop 时必须脱池。
+    #[allow(deprecated)]
+    {
+        let raw_connection = pool.acquire().await.expect("获取 legacy client 连接");
+        let _ = raw_connection.client().expect("legacy client 仍保留一个迁移周期");
+        drop(raw_connection);
+    }
+    assert_eq!(pool.stats().size, 0, "暴露 raw client 的连接必须永久移出池");
+    let recovered = pool.query_one("SELECT 1", &[]).await.expect("raw client 隔离后新建连接");
+    assert_eq!(recovered.get::<_, i32>(0), 1);
+
+    // deprecated raw pool 仅保留源码兼容，返回关闭的隔离池，绝不暴露正式池。
+    #[allow(deprecated)]
+    {
+        let error = pool.inner().get().await.expect_err("legacy raw pool 必须 fail-closed");
+        assert!(matches!(error, deadpool_postgres::PoolError::Closed));
+    }
+    let clean = pool.query_one("SELECT 1", &[]).await.expect("legacy 隔离池不影响正式池");
+    assert_eq!(clean.get::<_, i32>(0), 1);
+    observer.close();
     pool.close();
 }

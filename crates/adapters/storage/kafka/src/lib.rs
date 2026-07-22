@@ -33,6 +33,7 @@ mod config;
 mod consumer;
 mod eos;
 mod error_map;
+mod lifecycle;
 mod message;
 mod offset;
 mod pool;

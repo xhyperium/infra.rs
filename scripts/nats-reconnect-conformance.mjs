@@ -41,6 +41,12 @@ const timeoutSeconds = boundedInteger(
   1,
   1_800,
 );
+const runs = boundedInteger(
+  process.env.NATS_RECONNECT_TEST_RUNS ?? "3",
+  "NATS_RECONNECT_TEST_RUNS",
+  1,
+  20,
+);
 const runId = process.env.RUN_ID ?? `infra-nats-reconnect-${process.env.USER ?? "agent"}-${process.pid}`;
 const container = `${runId}-nats`;
 let failed = false;
@@ -96,7 +102,19 @@ function startContainer() {
       `infra.nats_reconnect.run_id=${runId}`,
       "--publish",
       "127.0.0.1:0:4222",
+      "--entrypoint",
+      "/bin/sh",
       "nats@sha256:b83efabe3e7def1e0a4a31ec6e078999bb17c80363f881df35edc70fcb6bb927",
+      "-c",
+      [
+        "while :; do",
+        "nats-server --config /etc/nats/nats-server.conf &",
+        "child=$!;",
+        "printf '%s\\n' \"$child\" > /tmp/nats-server.pid;",
+        "wait \"$child\";",
+        "sleep 1;",
+        "done",
+      ].join(" "),
     ],
     { capture: true, timeoutMs: 120_000 },
   );
@@ -194,8 +212,11 @@ function cleanup() {
 try {
   const port = startContainer();
   await waitForPort(port);
-  runConformance(port);
-  log("NATS 重连与慢消费者 conformance 已通过");
+  for (let iteration = 1; iteration <= runs; iteration += 1) {
+    log(`NATS 重连 conformance 轮次：${iteration}/${runs}`);
+    runConformance(port);
+  }
+  log(`NATS 重连与慢消费者 conformance 已连续通过 ${runs} 轮`);
 } catch (error) {
   failed = true;
   logError(error instanceof Error ? error.message : String(error));

@@ -128,18 +128,10 @@ node scripts/postgres-deadline-conformance.mjs
 node scripts/clickhouse-https-conformance.mjs
 # NATS 同客户端重启恢复当前 NO-GO；复现脚本预期非零：
 # node scripts/nats-reconnect-conformance.mjs
-# optional live（需本机服务；默认 ignore；凭据经 FOUNDATIONX_* 注入，禁止入库）
-# node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
-# set -a; source /tmp/foundationx-live.env; set +a
-# cargo test -p redisx --test live_kv -- --ignored
-# cargo test -p redisx --test live_kv_conformance -- --ignored
-# cargo test -p postgresx --test live_postgres -- --ignored
-# cargo test -p kafkax --test live_event_bus -- --ignored
-# cargo test -p natsx --test live_event_bus -- --ignored
-# cargo test -p ossx --test live_object_store -- --ignored
-# cargo test -p clickhousex --test live_smoke -- --ignored
-# cargo test -p taosx --test live_smoke -- --ignored
-# cargo test -p binancex -p okxx --test live_server_time -- --ignored
+# optional live（仅 dev；默认 ignore；凭据仅注入子进程，临时文件自动清理）
+# scripts/live/export-foundationx-env.sh --env dev -- \
+#   cargo test -p redisx -p postgresx -p kafkax -p natsx \
+#     -p ossx -p clickhousex -p taosx -- --ignored
 
 # evidence canonical + tools 历史重定向
 test -f .agents/ssot/evidence/spec/spec.md

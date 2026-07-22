@@ -12,5 +12,10 @@
 
 ## OPEN / DEFER
 
-- [ ] native WS / 全超表治理 / 集群
+- [x] REST SQL / WS reachability 真实边界与远程 TLS/auth fail-closed
+- [x] Decimal NCHAR(64+) 无损路径、存量 DOUBLE schema fail-closed
+- [x] response/batch/query/in-flight/close 硬上界与离线测试
+- [x] 固定 digest 隔离 live conformance 入口
+- [ ] Native SQL / WS 认证长会话 / 全超表治理 / HA 集群
+- [ ] 自动幂等重试与部分批次失败后的重复写语义
 - [ ] package stable 证据包（若 Lead 启动）

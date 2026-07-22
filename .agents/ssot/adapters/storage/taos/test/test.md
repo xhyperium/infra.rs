@@ -5,20 +5,23 @@
 ```bash
 cargo test -p taosx --all-targets
 cargo clippy -p taosx --all-targets -- -D warnings
+cmp .agents/ssot/adapters/storage/taos/spec/spec.md \
+  .agents/ssot/adapters/storage/taos/spec/xhyper-taosx-complete-spec.md
 ```
 
-覆盖期望：config 校验/脱敏、pool close、error map、消息/ID 编解码（若有）、公共 API 引用。
+覆盖期望：远程明文/空认证拒绝、strict host、Decimal NCHAR schema、响应与 batch bytes、
+query rows、in-flight RAII、close deadline/重复 close、WS deadline、公共 API 引用。
 
 ## Live（可选 · 真凭据）
 
 ```bash
-node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
-set -a; source /tmp/foundationx-live.env; set +a
-cargo test -p taosx -- --ignored --nocapture
+node scripts/taos-live-conformance.mjs
 ```
 
 - live 文件：`tests/live_smoke.rs`
-- 端口提示：6041 REST（非 6030 native）
+- 固定镜像 digest、动态 loopback 6041、全局 timeout 与 finally cleanup；不使用 prod
+- 覆盖 scale=18、大 mantissa、正负 Decimal 的 REST 写查完全相等
+- Native SQL / WS auth / HA 未覆盖，保持 NO-GO
 
 ## Bench
 

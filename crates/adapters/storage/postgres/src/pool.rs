@@ -10,7 +10,9 @@ use tokio_postgres::types::ToSql;
 
 use crate::config::{PostgresConfig, SslMode};
 use crate::conn::PgConnection;
-use crate::error::{map_create_pool_error, map_pool_error, map_tokio_error};
+use crate::error::{
+    TransactionRollbackFailure, map_create_pool_error, map_pool_error, map_tokio_error,
+};
 use crate::tls::MakeRustlsConnect;
 use crate::tx::PgTransaction;
 
@@ -37,6 +39,7 @@ pub struct PoolStats {
 #[derive(Clone)]
 pub struct PostgresPool {
     inner: deadpool_postgres::Pool,
+    legacy_inner: deadpool_postgres::Pool,
     closed: Arc<AtomicBool>,
     config_summary: Arc<String>,
     acquire_timeout: std::time::Duration,
@@ -59,20 +62,36 @@ impl PostgresPool {
         config.validate()?;
 
         let dp_cfg = config.to_deadpool_config();
-        let pool = match config.sslmode {
-            SslMode::Disable => dp_cfg
-                .create_pool(Some(deadpool_postgres::Runtime::Tokio1), NoTls)
-                .map_err(map_create_pool_error)?,
+        let (pool, legacy_inner) = match config.sslmode {
+            SslMode::Disable => (
+                dp_cfg
+                    .clone()
+                    .create_pool(Some(deadpool_postgres::Runtime::Tokio1), NoTls)
+                    .map_err(map_create_pool_error)?,
+                dp_cfg
+                    .create_pool(Some(deadpool_postgres::Runtime::Tokio1), NoTls)
+                    .map_err(map_create_pool_error)?,
+            ),
             SslMode::Prefer | SslMode::Require => {
                 let tls = MakeRustlsConnect::with_webpki_roots()?;
-                dp_cfg
-                    .create_pool(Some(deadpool_postgres::Runtime::Tokio1), tls)
-                    .map_err(map_create_pool_error)?
+                (
+                    dp_cfg
+                        .clone()
+                        .create_pool(Some(deadpool_postgres::Runtime::Tokio1), tls.clone())
+                        .map_err(map_create_pool_error)?,
+                    dp_cfg
+                        .create_pool(Some(deadpool_postgres::Runtime::Tokio1), tls)
+                        .map_err(map_create_pool_error)?,
+                )
             }
         };
+        // 旧 inner() 只保留源码兼容，永不暴露正式池。关闭的隔离池保证所有旧 I/O
+        // 明确 fail-closed，不允许绕过 deadline、回收策略或连接污染防护。
+        legacy_inner.close();
 
         let this = Self {
             inner: pool,
+            legacy_inner,
             closed: Arc::new(AtomicBool::new(false)),
             config_summary: Arc::new(format!(
                 "{}:{}/{} user={} sslmode={} pool={}",
@@ -219,10 +238,23 @@ impl PostgresPool {
     pub fn summary(&self) -> &str {
         &self.config_summary
     }
+
+    /// 底层 deadpool 池的迁移兼容面。
+    ///
+    /// 返回独立且已关闭的隔离池；任何 `get` 都明确返回 `PoolError::Closed`，绝不暴露
+    /// 正式池。该方法仅保证一个迁移周期内旧调用点仍可编译，请迁移到 [`Self::acquire`]
+    /// 或参数化短借方法。
+    #[deprecated(note = "请使用 PostgresPool::acquire 与受 deadline 保护的 SQL API")]
+    // 兼容方法故意不返回同名正式池；关闭的隔离池是该迁移面的 fail-closed 合同。
+    #[allow(clippy::misnamed_getters)]
+    #[must_use]
+    pub fn inner(&self) -> &deadpool_postgres::Pool {
+        &self.legacy_inner
+    }
 }
 
 fn with_rollback_failure(original: XError, rollback: XError) -> XError {
-    let context = format!("{}；此外 rollback 失败: {rollback}", original.context());
+    let context = format!("{}；此外 rollback 失败", original.context());
     let wrapped = match original.kind() {
         ErrorKind::Invalid => XError::invalid(context),
         ErrorKind::Missing => XError::missing(context),
@@ -238,15 +270,18 @@ fn with_rollback_failure(original: XError, rollback: XError) -> XError {
         ErrorKind::Internal => XError::internal(context),
         _ => XError::internal(context),
     };
-    wrapped.with_source(original)
+    wrapped.with_source(TransactionRollbackFailure::new(original, rollback))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::config::PostgresConfig;
+    use crate::error::TransactionRollbackFailure;
     use crate::tls::MakeRustlsConnect;
     use kernel::ErrorKind;
+    use std::error::Error;
+    use std::io;
     use std::time::Duration;
 
     #[test]
@@ -262,6 +297,24 @@ mod tests {
         assert_eq!(cfg.sslmode, SslMode::Require);
         let tls = MakeRustlsConnect::with_webpki_roots().expect("tls");
         let _ = tls;
+    }
+
+    #[test]
+    fn rollback_wrapper_preserves_kind_and_downcastable_branches() {
+        let original = XError::deadline_exceeded("业务超时")
+            .with_source(io::Error::new(io::ErrorKind::TimedOut, "业务 source"));
+        let rollback = XError::unavailable("回滚断连")
+            .with_source(io::Error::new(io::ErrorKind::ConnectionReset, "回滚 source"));
+        let wrapped = with_rollback_failure(original, rollback);
+
+        assert_eq!(wrapped.kind(), ErrorKind::DeadlineExceeded);
+        let composite = Error::source(&wrapped)
+            .and_then(|source| source.downcast_ref::<TransactionRollbackFailure>())
+            .expect("外层 source 必须可 downcast 为结构化双失败");
+        assert_eq!(composite.original().kind(), ErrorKind::DeadlineExceeded);
+        assert_eq!(composite.rollback().kind(), ErrorKind::Unavailable);
+        assert!(Error::source(composite.original()).is_some());
+        assert!(Error::source(composite.rollback()).is_some());
     }
 
     #[tokio::test]

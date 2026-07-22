@@ -1,7 +1,7 @@
 //! 事务句柄与状态机。
 //!
-//! 状态：[`TxState::Active`] → [`TxState::Committed`] / [`TxState::RolledBack`] /
-//! [`TxState::Failed`]。
+//! 状态：[`TxStatus::Active`] → [`TxStatus::Committed`] / [`TxStatus::RolledBack`] /
+//! [`TxStatus::Failed`]。
 //! `Drop` 时若仍为 Active，会把连接永久移出池并关闭 session，由 PostgreSQL 回滚事务。
 
 use std::time::Duration;
@@ -14,10 +14,27 @@ use tokio_postgres::types::ToSql;
 use crate::conn::PooledObjectGuard;
 use crate::error::map_tokio_error;
 
-/// 事务生命周期状态。
+/// 旧三态事务生命周期视图。
+///
+/// 为保持一个 deprecation 周期的源码兼容，本枚举不新增 variant。新代码必须使用
+/// [`TxStatus`]；deprecated [`PgTransaction::state`] 会把 rollback-only `Failed` 折叠为
+/// `Active`（事务尚未终结），不得据此判断是否可继续执行 SQL。
+#[deprecated(note = "请使用非穷尽 TxStatus；TxState 仅保留一个迁移周期")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TxState {
     /// 已 `BEGIN`，尚未终结。
+    Active,
+    /// 已成功 `COMMIT`。
+    Committed,
+    /// 已成功 `ROLLBACK`。
+    RolledBack,
+}
+
+/// 准确、可演进的事务状态。
+#[non_exhaustive]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TxStatus {
+    /// 已 `BEGIN` 且仍可执行 SQL。
     Active,
     /// 已成功 `COMMIT`。
     Committed,
@@ -35,7 +52,7 @@ pub enum TxState {
 /// - 终结后再次 `commit`/`rollback` 返回 [`ErrorKind::Invariant`](kernel::ErrorKind::Invariant)。
 pub struct PgTransaction {
     client: Option<Object>,
-    state: TxState,
+    state: TxStatus,
     operation_timeout: Duration,
 }
 
@@ -54,19 +71,34 @@ impl PgTransaction {
             }
         }
         let client = guard.release()?;
-        Ok(Self { client: Some(client), state: TxState::Active, operation_timeout })
+        Ok(Self { client: Some(client), state: TxStatus::Active, operation_timeout })
     }
 
-    /// 当前状态。
+    /// 旧三态兼容视图。
+    ///
+    /// `Failed` 会折叠为 `Active`，因为旧枚举无法表达 rollback-only。请迁移到
+    /// [`Self::status`]；是否仍可执行 SQL 应使用 [`Self::is_active`]。
+    #[deprecated(note = "请使用 PgTransaction::status 获取准确 Failed 状态")]
+    #[allow(deprecated)] // 返回旧三态是该兼容方法的唯一职责
     #[must_use]
     pub fn state(&self) -> TxState {
+        match self.state {
+            TxStatus::Active | TxStatus::Failed => TxState::Active,
+            TxStatus::Committed => TxState::Committed,
+            TxStatus::RolledBack => TxState::RolledBack,
+        }
+    }
+
+    /// 当前准确状态。
+    #[must_use]
+    pub fn status(&self) -> TxStatus {
         self.state
     }
 
     /// 是否仍可执行 SQL。
     #[must_use]
     pub fn is_active(&self) -> bool {
-        self.state == TxState::Active
+        self.state == TxStatus::Active
     }
 
     fn take_guard(&mut self) -> XResult<PooledObjectGuard> {
@@ -82,28 +114,28 @@ impl PgTransaction {
             .ok_or_else(|| XError::invariant("事务连接已释放"))?;
         // 先进入失败态，再把连接交给可被取消的 await。只有操作明确完成且连接
         // 恢复到事务句柄后才回到 Active；future drop/任务 abort 会保留 Failed。
-        self.state = TxState::Failed;
+        self.state = TxStatus::Failed;
         Ok(guard)
     }
 
     fn ensure_active(&self) -> XResult<()> {
         match self.state {
-            TxState::Active => Ok(()),
-            TxState::Committed => Err(XError::invariant("事务已 COMMIT，禁止再操作".to_string())),
-            TxState::RolledBack => {
+            TxStatus::Active => Ok(()),
+            TxStatus::Committed => Err(XError::invariant("事务已 COMMIT，禁止再操作".to_string())),
+            TxStatus::RolledBack => {
                 Err(XError::invariant("事务已 ROLLBACK，禁止再操作".to_string()))
             }
-            TxState::Failed => Err(XError::invariant("事务已失败，仅允许在连接可用时 ROLLBACK")),
+            TxStatus::Failed => Err(XError::invariant("事务已失败，仅允许在连接可用时 ROLLBACK")),
         }
     }
 
     fn ensure_rollbackable(&self) -> XResult<()> {
         match self.state {
-            TxState::Active | TxState::Failed => Ok(()),
-            TxState::Committed => {
+            TxStatus::Active | TxStatus::Failed => Ok(()),
+            TxStatus::Committed => {
                 Err(XError::invariant("事务已 COMMIT，禁止再 ROLLBACK".to_string()))
             }
-            TxState::RolledBack => {
+            TxStatus::RolledBack => {
                 Err(XError::invariant("事务已 ROLLBACK，禁止重复操作".to_string()))
             }
         }
@@ -117,7 +149,7 @@ impl PgTransaction {
         {
             Ok(Ok(affected)) => {
                 self.client = Some(guard.release()?);
-                self.state = TxState::Active;
+                self.state = TxStatus::Active;
                 Ok(affected)
             }
             Ok(Err(error)) => {
@@ -137,7 +169,7 @@ impl PgTransaction {
         {
             Ok(Ok(row)) => {
                 self.client = Some(guard.release()?);
-                self.state = TxState::Active;
+                self.state = TxStatus::Active;
                 Ok(row)
             }
             Ok(Err(error)) => {
@@ -158,7 +190,7 @@ impl PgTransaction {
         {
             Ok(Ok(rows)) => {
                 self.client = Some(guard.release()?);
-                self.state = TxState::Active;
+                self.state = TxStatus::Active;
                 Ok(rows)
             }
             Ok(Err(error)) => {
@@ -182,7 +214,7 @@ impl PgTransaction {
         {
             Ok(Ok(row)) => {
                 self.client = Some(guard.release()?);
-                self.state = TxState::Active;
+                self.state = TxStatus::Active;
                 Ok(row)
             }
             Ok(Err(error)) => {
@@ -204,7 +236,7 @@ impl PgTransaction {
             .await
         {
             Ok(Ok(())) => {
-                self.state = TxState::Committed;
+                self.state = TxStatus::Committed;
                 drop(guard.release()?);
                 Ok(())
             }
@@ -230,7 +262,7 @@ impl PgTransaction {
         .await
         {
             Ok(Ok(())) => {
-                self.state = TxState::RolledBack;
+                self.state = TxStatus::RolledBack;
                 drop(guard.release()?);
                 Ok(())
             }
@@ -260,8 +292,10 @@ mod tests {
     use super::*;
 
     #[test]
+    #[allow(deprecated)]
     fn tx_state_copy() {
         assert_eq!(TxState::Active, TxState::Active);
         assert_ne!(TxState::Active, TxState::Committed);
+        assert_eq!(TxStatus::Failed, TxStatus::Failed);
     }
 }

@@ -2,6 +2,7 @@
 
 use deadpool_postgres::Object;
 use kernel::{XError, XResult};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use tokio_postgres::Row;
 use tokio_postgres::types::ToSql;
@@ -13,6 +14,7 @@ use crate::tx::PgTransaction;
 pub struct PgConnection {
     pub(crate) client: Option<Object>,
     pub(crate) operation_timeout: Duration,
+    raw_exposed: AtomicBool,
 }
 
 /// 池对象取消守卫。
@@ -48,7 +50,7 @@ impl Drop for PooledObjectGuard {
 impl PgConnection {
     /// 包装 deadpool 对象。
     pub(crate) fn new(client: Object, operation_timeout: Duration) -> Self {
-        Self { client: Some(client), operation_timeout }
+        Self { client: Some(client), operation_timeout, raw_exposed: AtomicBool::new(false) }
     }
 
     fn take_guard(&mut self) -> XResult<PooledObjectGuard> {
@@ -133,8 +135,42 @@ impl PgConnection {
 
     /// 开启事务，消费本连接。
     pub async fn begin(mut self) -> XResult<PgTransaction> {
+        if self.raw_exposed.load(Ordering::Acquire) {
+            return Err(XError::unavailable(
+                "连接曾通过 deprecated 原始 client API 暴露；已隔离，禁止开启事务",
+            ));
+        }
         let client =
             self.client.take().ok_or_else(|| XError::unavailable("Postgres 连接已丢弃"))?;
         PgTransaction::begin(client, self.operation_timeout).await
+    }
+
+    /// 访问底层 client 的迁移兼容面。
+    ///
+    /// 调用后连接会被标记为污染并在 Drop 时永久移出池；调用方仍须自行约束原始操作
+    /// deadline。请迁移到本类型的参数化 SQL API。
+    #[deprecated(note = "请使用 PgConnection 的参数化 SQL API；原始 client 会强制脱池")]
+    pub fn client(&self) -> XResult<&Object> {
+        self.raw_exposed.store(true, Ordering::Release);
+        self.client.as_ref().ok_or_else(|| XError::unavailable("Postgres 连接已丢弃"))
+    }
+
+    /// 可变访问底层 client 的迁移兼容面。
+    ///
+    /// 调用后连接会被标记为污染并在 Drop 时永久移出池。
+    #[deprecated(note = "请使用 PgConnection 的参数化 SQL API；原始 client 会强制脱池")]
+    pub fn client_mut(&mut self) -> XResult<&mut Object> {
+        self.raw_exposed.store(true, Ordering::Release);
+        self.client.as_mut().ok_or_else(|| XError::unavailable("Postgres 连接已丢弃"))
+    }
+}
+
+impl Drop for PgConnection {
+    fn drop(&mut self) {
+        if self.raw_exposed.load(Ordering::Acquire)
+            && let Some(client) = self.client.take()
+        {
+            drop(Object::take(client));
+        }
     }
 }

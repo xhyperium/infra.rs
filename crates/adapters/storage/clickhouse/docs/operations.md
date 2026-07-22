@@ -14,6 +14,9 @@
 | Unavailable | 下游重启/鉴权；观察重连日志 |
 | TLS/CA 握手失败 | 核对 SAN、信任链与 CA 文件；禁止降级远程 HTTP |
 
+服务端错误正文可能含原始 SQL、payload 或认证细节。`clickhousex` 只读取最多
+4096 字节用于解析固定数字错误码，并在对外错误中省略正文；排障应使用服务端的脱敏日志。
+
 ## 升级 / 回滚
 
 1. 发布前跑 `cargo test -p clickhousex` 与 HTTPS conformance；真实 live 视环境运行

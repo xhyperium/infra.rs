@@ -12,6 +12,13 @@
 - draft SPEC_GOAL 快照：[plan/infra-rs-draft-spec-goal.md](plan/infra-rs-draft-spec-goal.md)
 - 对齐：[docs/ssot/adapters-ssot-alignment.md](../../../../docs/ssot/adapters-ssot-alignment.md)
 - **状态**：生产默认客户端 **P0 已落地**；package stable **未宣称**
+- **拓扑证据**：Cluster / Sentinel / TLS 代码路径存在，真实 live 均 **OPEN**
+- **Pub/Sub**：Standalone only；同源 ACL/TLS/deadline，其他拓扑失败关闭
+- **重试**：只读自动预算重试；写入默认单次，原子性与结果歧义有代码合同
+
+> Code 阶段的当前状态以 `spec/`、`matrix/` 与本仓 alignment 为准。既有
+> `review/`、`release/`、`retrospective/` 是早期阶段制品，本 Task 不改写，也不得用其旧快照
+> 覆盖当前 OPEN/NO-GO 裁定。
 
 ## 11 层映射
 

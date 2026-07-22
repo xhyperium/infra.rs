@@ -7,7 +7,7 @@
 | 实现 | `crates/adapters/storage/nats` |
 | 审计日期 | 2026-07-22 |
 | version | `0.3.2` |
-| 结论 | **Core AMO 与 JetStream durable pull 有 broker 证据**；同客户端重启恢复连续三次失败，明确 **NO-GO**；未宣称 package stable |
+| 结论 | **Core AMO、预算内同客户端重连与 JetStream durable pull 有 broker 证据**；未宣称 package stable |
 
 ## 语义矩阵
 
@@ -20,7 +20,7 @@
 | MaxDeliver/Term | 有条件 PASS | 停止重投；**不等于自动 DLQ** |
 | 内部 deadline / capacity | PASS | Core 与 JetStream 命令有界；client/subscription capacity 与有限 reconnect 显式配置 |
 | 连接事件 stats | PASS | connected/disconnected/slow-consumer 可观察 |
-| 同客户端 broker 重启恢复 | **NO-GO** | 命令通道关闭，30 秒内持续 Unavailable；`infra-2d9.3.1` |
+| 同客户端 broker 重启恢复 | 有条件 PASS | 固定入口、有限预算内恢复发布与原 Core subscription；断线窗口无回放 |
 | Cluster/HA/跨账户/KV/ObjectStore | NO-GO | 无对应系统证据 |
 
 ## 验证
@@ -29,11 +29,14 @@
 cargo test -p natsx --all-targets
 cargo clippy -p natsx --all-targets -- -D warnings
 node scripts/broker-conformance.mjs
+node scripts/nats-reconnect-conformance.mjs
 ```
 
-broker conformance 已覆盖：Core 无回放、本地有界转发 slow-consumer 观测、JetStream 连接重建后的重投与 double ack、nak/progress、`max_ack_pending` 背压恢复、`max_deliver`/`term` 与 DLQ 探针负向边界。单节点容器结果不证明同客户端自动恢复、Cluster/HA 或自动 DLQ。
+broker conformance 已覆盖：Core 无回放、本地有界转发 slow-consumer 观测、JetStream 连接重建后的重投与 double ack、nak/progress、`max_ack_pending` 背压恢复、`max_deliver`/`term` 与 DLQ 探针负向边界。
 
-`node scripts/nats-reconnect-conformance.mjs` 是当前返回非零的缺陷重现实验，不是绿色发布门禁。
+reconnect conformance 使用固定镜像与动态 host 端口，保持容器/ingress 不变并连续三轮重启
+容器内 broker 进程，证明同一 client 恢复发布、原 Core subscription 与连接事件统计。它不证明
+断线窗口无丢失、超过 `max_reconnects` 后自愈、Cluster/HA 或 JetStream 持久语义。
 
 ## 相关
 

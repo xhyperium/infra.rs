@@ -6,6 +6,7 @@
 cargo fmt --all -- --check
 cargo clippy -p natsx --all-targets -- -D warnings
 cargo test -p natsx --all-targets
+node scripts/nats-reconnect-conformance.mjs
 ```
 
 ## Live 门禁（可选）

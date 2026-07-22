@@ -1,62 +1,81 @@
 # ossx 实现规范
 
-> 状态：当前 `0.3.1` 实现合同（Mock + aws-sdk-s3 真实驱动已落地；真测 `#[ignore]`，未达 M3）。**未宣称 package stable。**
-> 权威顺序：`CONSTITUTION.md` → `docs/architecture/spec.md` → Approved ADR → 本文 → 代码。
+> 状态：当前 `0.3.2` 实现合同。默认路径为 reqwest + OSS V1 真实客户端；live 测试仍
+> `#[ignore]`，**未宣称 package stable**。
 
-## 1. 证据边界与范围
+## 1. 范围与证据边界
 
-- **Evidence**：`crates/adapters/storage/oss/{Cargo.toml,src/lib.rs}` 提供：
-  - `MockObjectStore`：内存 `HashMap` + `RwLock`；
-  - `S3ObjectStore`：基于 `aws-sdk-s3` / `aws-config` 的真实驱动。
-- **Inference**：生产部署仍须裁定 endpoint/凭证/重试与对象大小限制；代码存在 ≠ M3 生产证据。
-- **Unknown**：分片上传、版本控制、加密、预签名 URL 策略尚未裁定。
+- `OssClient` 实现 `contracts::ObjectStore`，并提供 delete 与 multipart 扩展。
+- `OssAdapter` 仅在 `scaffold` feature 下提供进程内测试替身。
+- 代码和离线测试存在不等于目标云生产证据；live 未运行时不得宣称 Aliyun OSS 全面就绪。
+- lifecycle、STS 临时凭证与 package stable 证据保持 **OPEN**。
 
-目的：记录当前 object-store 适配器行为及生产化缺口。范围仅含 `ObjectStore` 实现。
-非目标：把 ignored 真测当作 CI 已通过的生产证据。
+## 2. 配置与传输安全
 
-## 2. 位置、依赖、版本
+- 必填：`FOUNDATIONX_OSSX_{ENDPOINT,BUCKET,ACCESS_KEY_ID,ACCESS_KEY_SECRET}`；region 可选。
+- 远程 endpoint 仅允许 HTTPS；HTTP 只允许 loopback 开发端点。
+- endpoint 禁止 userinfo、path、query、fragment；bucket 仅允许小写字母、数字和连字符。
+- `Debug` 对 AccessKeyId 局部脱敏、对 AccessKeySecret 完全脱敏。
+- timeout、deadline、并发和字节限制可通过 builder 或 `FOUNDATIONX_OSSX_*` 资源变量配置；
+  零值、超硬上界和非法 Unicode/数字均 fail-closed。
 
-- 路径：`crates/adapters/storage/oss`（package `ossx`）；版本 `0.3.1`；无 features（真实驱动始终编译）。
-- 普通依赖：`kernel`、`contracts`、`async-trait`、`bytes`、`anyhow`、`tokio`、`aws-config`、`aws-sdk-s3`。
-- 当前依赖符合 R2。crate 独立版本化；每次更新必须恰为 `x.y.z → x.y.(z+1)`。
+## 3. 资源硬上界
 
-## 3. 当前公开 API 与行为
+| 维度 | 默认值 | 配置硬上界 |
+|------|--------|------------|
+| in-flight 请求 | 64 | 1024 |
+| 对象大小 | 512 MiB | 5 GiB（当前 Bytes API 还受缓冲上限约束） |
+| 单次内存缓冲 | 512 MiB | 512 MiB |
+| 错误响应体 | 64 KiB | 1 MiB |
+| multipart part | 调用方显式设置 | 512 MiB；非末片至少 100 KiB |
+| multipart part 数 | — | 10000 |
+| retry attempts | 3 | 10 |
+| object key | — | 1023 UTF-8 字节 |
 
-### 3.1 MockObjectStore
+响应体按 chunk 读取并在追加前检查上限；未知或虚假 `Content-Length` 不得绕过限制。所有网络
+请求先获取 Semaphore 许可，排队受 acquire timeout 约束。
 
-- `pub fn new() -> Self`；`Debug + Default`。
-- `put_object` 写入或覆盖；`get_object` 克隆返回；缺失键返回 `XError::not_found(...)`。
-- 数据仅在进程内，实例间不共享；无网络、持久化、鉴权、列表、删除或 TTL。
+## 4. deadline 与重试
 
-### 3.2 S3ObjectStore
+- 单请求 timeout 与含全部尝试/退避的 operation deadline 分离；deadline 到期返回
+  `DeadlineExceeded`，不继续放大重试。
+- `put_object_multipart` 的 initiate、全部 part 与 complete 共享同一个剩余 operation deadline，
+  禁止每片重新获得完整预算。
+- GET、同 key/同 body PUT、DELETE、UploadPart 与 Abort 可在有界预算内重试。
+- Initiate 与 Complete 遇到响应不确定时可能产生 orphan 或“已完成但响应丢失”；因此外围只
+  发起一次尝试，禁止自动重放。
+- 401/403、Invalid、Missing、Cancelled 与最终 DeadlineExceeded 不自动重试。
 
-- `new(bucket)`：`aws_config` 默认链路加载配置并创建 S3 client。
-- `new_with_client(client, bucket)`：注入自定义 client（region / endpoint / 凭证）。
-- `put_object` / `get_object`：SDK 错误统一映射为 `XError::Transient` 等。
+## 5. multipart 完整性、取消与 orphan
 
-## 4. 错误、并发、生命周期与信任边界
+- `part_number` 必须在 `1..=10000`；Complete parts 非空、无重复，并按序写入 XML。
+- ETag 先校验长度/控制字符，再进行 XML text escaping；UploadId 有长度与字符边界，拒绝实体
+  注入形式。
+- 高层上传任一 part/complete 失败时必须尝试 abort。abort 也失败时返回 `Conflict`，错误上下文
+  明确包含 `orphan_risk=true`，不得静默吞掉。
+- `close()` 关闭 Semaphore，等待者与后续操作得到 `Cancelled`。
+- 高层 multipart 在获得 UploadId 后建立 RAII guard；future 被 drop 时同步写入有界进程内 orphan
+  registry。调用方可从 `multipart_orphan_audits()` 取回 key/UploadId，调用 `abort_multipart()`
+  补偿；成功后记录自动移除。详细记录硬上限 1024，key 硬上限 1023 字节，溢出计数单独
+  可见，Debug 不输出标识。
+- 在服务端成功但客户端尚未取得 UploadId 的极端响应丢失场景只能返回 unknown risk；进程
+  崩溃后的清理仍依赖服务端 lifecycle，因此 lifecycle 能力保持 OPEN。
 
-Mock 内部 `RwLock`；锁中毒时 `unwrap()` 会 panic。真实路径生命周期随 client/实例。
-键和值未经验证；生产边界必须裁定凭据保密、路径/租户隔离、大小限制、传输加密。
-重试/连接治理应委托既有基础设施，不在本 crate 重造。
-
-**证据**：`s3_put_and_get` / `s3_get_missing_*` 均 `#[ignore]`；**不得**当作 CI 默认通过或 M3 证据。
-
-## 5. 测试、验收与开放决策
-
-Mock 单元测试覆盖 put/get、缺失、覆盖、键隔离和 trait object。真实测试 `#[ignore]`。命令：
+## 6. 测试与验收
 
 ```bash
-cargo test -p ossx
-cargo test -p ossx -- --ignored   # 需 AWS 凭证 + bucket；非 CI 默认
-cargo check -p ossx --all-targets
+cargo test -p ossx --all-targets
 cargo clippy -p ossx --all-targets -- -D warnings
+cargo fmt --all --check
+cmp .agents/ssot/adapters/storage/oss/spec/spec.md \
+    .agents/ssot/adapters/storage/oss/spec/xhyper-ossx-complete-spec.md
 ```
 
-验收标准：API/行为与第 3 节一致；依赖通过 R2；默认测试与 clippy 通过；生产能力不得由
-Inference/Unknown 或 ignored 真测冒充。
+live 仅在人工提供真凭据时运行：
 
-## 6. 可追溯性
+```bash
+cargo test -p ossx --test live_object_store -- --ignored --nocapture
+```
 
-- `docs/architecture/spec.md` §2 R2、§4.3 `ObjectStore`、§4.5.1、§5、§8。
-- `crates/adapters/storage/oss/{Cargo.toml,src/lib.rs,README.md}`。
+默认 CI 不读取凭据、不访问生产环境。STS、lifecycle、流式 TB 对象、checksum 与 package stable
+不属于本版本完成声明。

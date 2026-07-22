@@ -14,6 +14,6 @@
 # 单元（离线）
 cargo test -p taosx
 
-# live（需真实 TDengine + 已 export 环境变量）
-cargo test -p taosx -- --ignored --nocapture
+# 隔离 live（固定 digest、动态 loopback；不使用 prod）
+node scripts/taos-live-conformance.mjs
 ```

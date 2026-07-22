@@ -6,6 +6,9 @@
 
 配置通过 `FOUNDATIONX_OSSX_*` 环境变量注入；**禁止**把密钥写入仓库。
 
+生产远程 endpoint 仅允许 HTTPS。对象、缓冲、错误体、in-flight、multipart part/count 与重试
+预算均有硬上界；需要大于 512 MiB 的逻辑对象时，当前 Bytes API 不适合作为流式上传面。
+
 详见同目录 `config.md` 与 `operations.md`。
 
 ## 测试

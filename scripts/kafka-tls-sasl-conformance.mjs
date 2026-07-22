@@ -38,6 +38,14 @@ function logError(message) {
   writeAll(process.stderr.fd, message);
 }
 
+function redactSensitive(message) {
+  let redacted = String(message ?? "");
+  for (const value of [password, keystorePassword]) {
+    if (value) redacted = redacted.split(value).join("<redacted>");
+  }
+  return redacted;
+}
+
 const timeoutSeconds = boundedInteger(
   process.env.KAFKA_TLS_TEST_TIMEOUT_SECONDS ?? "180",
   "KAFKA_TLS_TEST_TIMEOUT_SECONDS",
@@ -85,7 +93,7 @@ function run(command, args, options = {}) {
     throw new Error(`执行 ${command} 失败`, { cause: result.error });
   }
   if (result.status !== 0) {
-    const detail = options.capture ? `\n${result.stderr || result.stdout}` : "";
+    const detail = options.capture ? `\n${redactSensitive(result.stderr || result.stdout)}` : "";
     throw new Error(`${command} 退出码 ${result.status}${detail}`);
   }
   return result.stdout?.trim() ?? "";
@@ -307,8 +315,13 @@ function cleanup() {
   }
   cleaned = true;
   if (failed) {
-    logError("Kafka TLS+SASL conformance 失败，输出容器日志后清理");
-    spawnSync("docker", ["logs", container], { stdio: "inherit", timeout: 30_000 });
+    logError("Kafka TLS+SASL conformance 失败，输出脱敏容器日志后清理");
+    const logs = spawnSync("docker", ["logs", "--tail", "200", container], {
+      encoding: "utf8",
+      stdio: "pipe",
+      timeout: 30_000,
+    });
+    logError(redactSensitive(`${logs.stdout ?? ""}${logs.stderr ?? ""}`));
   }
   log(`清理容器与临时证书：${container}`);
   const removal = spawnSync("docker", ["rm", "-f", container], {

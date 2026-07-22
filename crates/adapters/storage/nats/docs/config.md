@@ -19,4 +19,5 @@
 
 非法配置在 `connect` 前 fail-fast（`ErrorKind::Invalid`）。
 
-有限 reconnect 配置只表达资源上限；同客户端重启恢复尚未通过真实实验。
+有限 reconnect 配置同时表达恢复窗口与资源上限：固定入口在预算内恢复已通过真实 broker
+实验；超过 `MAX_RECONNECTS` 后驱动关闭命令通道，调用方必须重建 client。

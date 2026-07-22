@@ -20,9 +20,9 @@ Freeze: production-default path per domain; scaffold behind `scaffold` feature; 
 ## Live 入口
 
 ```bash
-node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
-set -a; source /tmp/foundationx-live.env; set +a
-cargo test -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p taosx -- --ignored
+scripts/live/export-foundationx-env.sh --env dev -- \
+  cargo test -p redisx -p postgresx -p kafkax -p natsx \
+    -p ossx -p clickhousex -p taosx -- --ignored
 ```
 
 ## 相关 PR

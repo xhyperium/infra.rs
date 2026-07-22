@@ -7,7 +7,12 @@ cargo test -p ossx --all-targets
 cargo clippy -p ossx --all-targets -- -D warnings
 ```
 
-覆盖期望：config 校验/脱敏、pool close、error map、消息/ID 编解码（若有）、公共 API 引用。
+覆盖期望：HTTPS fail-closed、配置脱敏/硬上界、Semaphore acquire/close、chunked body
+限额、retry deadline、multipart XML/part/count/abort/orphan、公共 API 引用。
+loopback HTTP 状态机必须覆盖 initiate 成功后取消 → registry 记录 → 显式 abort 清理，以及多片
+共享单一总 deadline；仅测 helper 不足以算 PASS。
+
+禁止把 ignored live 当默认 PASS；默认测试不得读取凭据或访问生产环境。
 
 ## Live（可选 · 真凭据）
 

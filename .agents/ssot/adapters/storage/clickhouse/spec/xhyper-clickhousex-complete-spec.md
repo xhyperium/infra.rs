@@ -16,7 +16,7 @@
 
 | 入口 | 当前合同 |
 |---|---|
-| `ClickHouseConfig` | 严格 env 解析、HTTP(S)、认证、数据库、连接/请求/获取截止时间、池容量 |
+| `ClickHouseConfig` | 严格 env 解析、HTTP(S)、认证、数据库、连接/请求/获取截止时间、池容量；`HTTP_PORT` 优先并兼容 `PORT` |
 | `ClickHousePool` | Semaphore 约束 in-flight；close 后拒绝新请求；stats 可观察 |
 | `ClickHouseClient` | ping、文本/行查询、JSONEachRow、分块批量写 |
 | `AnalyticsSink` | 将 event/payload 写入调用方管理的表 |
@@ -31,6 +31,9 @@
   `spawn_blocking` 中执行。
 - CA 文件仅在 TLS 模式允许；空 CA、非法 PEM、错误 CA 或主机名校验失败均返回带 source 的错误。
 - 密码和完整 URL 不进入 Debug / 错误上下文。
+- `HTTP_PORT` 与兼容别名 `PORT` 双设不同值时拒绝启动，避免端口配置漂移。
+- 非成功 HTTP 响应最多读取 4096 字节前缀用于数字错误码分类；对外错误只保留
+  HTTP 状态和可选 `server_code`，不回显 SQL、payload 或认证正文。
 - 连接、请求和池获取均有非零截止时间。
 
 ## 3. 可复验证据
@@ -40,6 +43,7 @@
 1. 受信 CA + 正确主机名能完成 HTTPS `SELECT 1`；
 2. 错误 CA 在握手阶段 fail-closed 且保留 source；
 3. 临时私钥与证书总会清理。
+4. loopback 失败服务证明 SQL/payload/认证正文与异常 ping 正文不会进入错误。
 
 该实验验证客户端 HTTPS/CA 传输合同，**不**证明真实 ClickHouse 集群、复制或故障切换。
 
@@ -53,8 +57,8 @@ cmp .agents/ssot/adapters/storage/clickhouse/spec/spec.md \
 
 ## 4. OPEN / NO-GO
 
-真实 ClickHouse TLS 集群 live、mTLS、证书热轮换、native 9000、Cluster/HA、
-DDL/schema 治理、exactly-once 与 package stable 未承诺。
+真实 ClickHouse TLS/auth/deadline/并发 live、mTLS、证书热轮换、native 9000、
+Cluster/HA、DDL/schema 治理、exactly-once 与 package stable 未承诺。
 
-追溯：`crates/adapters/storage/clickhouse/{src,tests/https_conformance.rs}`、
+追溯：`crates/adapters/storage/clickhouse/{src,tests/https_conformance.rs,tests/security_failures.rs}`、
 `scripts/clickhouse-https-conformance.mjs`、`docs/ssot/clickhousex-ssot-alignment.md`。

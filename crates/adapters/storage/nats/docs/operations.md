@@ -12,7 +12,8 @@
 | connect 失败 | 检查 FOUNDATIONX_NATS_* 与网络/认证 |
 | DeadlineExceeded | 调高 timeout；查下游慢查询/背压 |
 | Unavailable | 下游重启/鉴权；观察重连日志 |
-| broker 重启后 channel closed | 同客户端恢复当前 NO-GO；重建应用级 client，跟踪 `infra-2d9.3.1` |
+| broker 短时重启 | 固定入口与重连预算内自动恢复；观察 connected/disconnected 增量 |
+| broker 长时不可用后 channel closed | 已耗尽 `max_reconnects`；重建应用级 client，并检查入口可达性与重连预算 |
 | slow consumer 增长 | 检查 subscription capacity、消费延迟与丢失语义 |
 
 ## 升级 / 回滚
@@ -25,4 +26,6 @@
 
 调用 `close()`：在内部 deadline 内 flush，随后标记 closed；不承诺排空应用仍持有的全部业务消息。
 
-连接/断开/slow-consumer stats 仅用于观测，不构成自动恢复证明。
+`node scripts/nats-reconnect-conformance.mjs` 保持容器与动态 host ingress 不变，只重启容器内
+broker 进程，连续验证同一 client 的连接与原 Core subscription 恢复。该结果不证明断线窗口
+无消息丢失，也不证明 Cluster/HA、JetStream 持久投递或超过有限重连预算后的自动自愈。

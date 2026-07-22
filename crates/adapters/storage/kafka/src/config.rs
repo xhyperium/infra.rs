@@ -73,7 +73,7 @@ impl fmt::Debug for KafkaConfig {
             .field("brokers", &redact_brokers(&self.brokers))
             .field("client_id", &self.client_id)
             .field("sasl_mechanism", &self.sasl_mechanism)
-            .field("sasl_username", &self.sasl_username)
+            .field("sasl_username", &self.sasl_username.as_ref().map(|_| "***"))
             .field("sasl_password", &self.sasl_password.as_ref().map(|_| "***"))
             .field("tls", &self.tls)
             .field("tls_ca_file", &self.tls_ca_file)
@@ -155,7 +155,11 @@ impl KafkaConfig {
         if self.tls_ca_file.is_some() && !self.tls {
             return Err(XError::invalid("kafkax: 配置 TLS_CA_FILE 时必须启用 TLS"));
         }
-        let brokers = self.brokers.split(',').map(str::trim).filter(|broker| !broker.is_empty());
+        let brokers: Vec<&str> =
+            self.brokers.split(',').map(str::trim).filter(|broker| !broker.is_empty()).collect();
+        if brokers.is_empty() {
+            return Err(XError::invalid("kafkax: brokers 至少包含一个有效地址"));
+        }
         for broker in brokers {
             let host = broker_host(broker)?;
             if !self.tls && !host_is_loopback(&host) {
@@ -176,6 +180,9 @@ impl KafkaConfig {
             }
         } else if self.sasl_username.is_some() || self.sasl_password.is_some() {
             return Err(XError::invalid("kafkax: 提供了 SASL 凭据但未启用 PLAIN 机制"));
+        }
+        if self.client_id.trim().is_empty() {
+            return Err(XError::invalid("kafkax: client_id 不能为空"));
         }
         Ok(())
     }
@@ -244,7 +251,7 @@ mod tests {
     }
 
     #[test]
-    fn debug_redacts_password() {
+    fn debug_redacts_credentials() {
         let c = KafkaConfig {
             brokers: "kafka://embedded:secret@localhost:9092".into(),
             sasl_mechanism: Some(DEFAULT_SASL_MECHANISM.into()),
@@ -255,6 +262,7 @@ mod tests {
         let s = format!("{c:?}");
         assert!(s.contains("***"));
         assert!(!s.contains("super-secret-kafka"));
+        assert!(!s.contains("admin"));
         assert!(!s.contains("embedded"));
         assert!(!s.contains("secret@"));
     }
@@ -330,5 +338,16 @@ mod tests {
 
         let ipv6 = KafkaConfig { brokers: "[::1]:9092".into(), ..KafkaConfig::default() };
         ipv6.validate().expect("IPv6 loopback 明文可用于本机实验");
+    }
+
+    #[test]
+    fn rejects_separator_only_brokers_and_empty_client_id() {
+        let separators = KafkaConfig { brokers: " , , ".into(), ..KafkaConfig::default() };
+        let broker_error = separators.validate().expect_err("空 broker 列表必须失败");
+        assert_eq!(broker_error.kind(), kernel::ErrorKind::Invalid);
+
+        let empty_client = KafkaConfig { client_id: "  ".into(), ..KafkaConfig::default() };
+        let client_error = empty_client.validate().expect_err("空 client_id 必须失败");
+        assert_eq!(client_error.kind(), kernel::ErrorKind::Invalid);
     }
 }

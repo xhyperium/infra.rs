@@ -30,8 +30,9 @@ pub use config::{RedisConfig, RedisConfigBuilder, RedisMode};
 pub use error_map::{map_redis_error, map_redis_result};
 pub use pool::{RedisPool, RedisPoolStats};
 pub use resilience::{
-    RedisRetryConfig, with_budget, with_budget_async, with_budget_async_noop, with_budget_noop,
-    with_retry_async, with_retry_async_no_wait, with_retry_sync,
+    RedisAtomicity, RedisOperation, RedisRetryConfig, RedisRetrySafety, with_budget,
+    with_budget_async, with_budget_async_noop, with_budget_noop, with_retry_async,
+    with_retry_async_no_wait, with_retry_sync,
 };
 
 /// 兼容旧名称：真实 Redis KV 客户端。
@@ -74,6 +75,11 @@ mod public_api_surface {
         assert_type::<RedisConfig>();
         assert_type::<RedisConfigBuilder>();
         assert_type::<RedisPoolStats>();
+        assert_type::<RedisOperation>();
+        assert_type::<RedisRetrySafety>();
+        assert_type::<RedisAtomicity>();
+        assert!(RedisOperation::Get.allows_automatic_retry());
+        assert!(!RedisOperation::Set.allows_automatic_retry());
         let _ = map_redis_error;
         let cfg = RedisRetryConfig::fixed(1, 0);
         let v = with_retry_sync(&cfg, "surface", || Ok(1_i32)).expect("retry");

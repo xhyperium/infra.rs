@@ -1,23 +1,26 @@
 //! 生产 `OssClient`：reqwest + OSS V1 签名 + multipart + resiliencx 重试。
 
+use std::collections::{HashSet, VecDeque};
 use std::fmt;
-use std::sync::Arc;
-use std::time::Duration;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use bytes::Bytes;
+use bytes::{Bytes, BytesMut};
 use chrono::Utc;
 use contracts::ObjectStore;
-use kernel::{XError, XResult};
+use kernel::{ErrorKind, XError, XResult};
 use reqwest::header::{
     AUTHORIZATION, CONTENT_TYPE, DATE, ETAG, HeaderMap, HeaderName, HeaderValue,
 };
 use reqwest::{Client, Method, StatusCode};
 use resiliencx::RetryConfig;
+use tokio::sync::{OwnedSemaphorePermit, Semaphore};
+use tokio::time::{Instant, timeout};
 use url::Url;
 
 use crate::config::OssConfig;
-use crate::retry::{default_retry_config, with_retry_default};
+use crate::retry::{MAX_RETRY_ATTEMPTS, default_retry_config, with_retry_deadline};
 use crate::sign::{
     authorization_header, canonicalized_resource, canonicalized_resource_with_subresources,
     sign_v1, split_parts,
@@ -34,8 +37,95 @@ struct Inner {
     config: OssConfig,
     /// 虚拟主机：`https://{bucket}.{endpoint_host}`
     base: Url,
-    closed: std::sync::atomic::AtomicBool,
+    closed: AtomicBool,
     retry: RetryConfig,
+    permits: Arc<Semaphore>,
+    orphan_audits: Mutex<VecDeque<MultipartOrphanAudit>>,
+    orphan_audit_overflow: AtomicU64,
+}
+
+/// 阿里云 OSS multipart 最小非末片大小（100 KiB）。
+pub const MIN_MULTIPART_PART_BYTES: usize = 100 * 1024;
+/// 阿里云 OSS 对象 key 的 UTF-8 字节硬上界。
+pub const MAX_OBJECT_KEY_BYTES: usize = 1_023;
+/// 阿里云 OSS multipart 最大分片数。
+pub const MAX_MULTIPART_PARTS: usize = 10_000;
+/// 本客户端允许的最大单片大小（512 MiB），受内存缓冲硬上界约束。
+pub const MAX_MULTIPART_PART_BYTES: usize = 512 * 1024 * 1024;
+const MAX_UPLOAD_ID_BYTES: usize = 2 * 1024;
+const MAX_ETAG_BYTES: usize = 1024;
+/// 进程内保留的 multipart orphan 审计记录硬上界。
+pub const ORPHAN_AUDIT_CAPACITY: usize = 1_024;
+
+/// multipart future 被取消或清理失败后留下的补偿记录。
+///
+/// UploadId 不是凭据，但仍属于运维敏感标识；调用方只应将其交给受控清理流程，禁止写入
+/// 公共日志或低基数指标标签。
+#[derive(Clone, PartialEq, Eq)]
+pub struct MultipartOrphanAudit {
+    key: String,
+    upload_id: String,
+}
+
+impl fmt::Debug for MultipartOrphanAudit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("MultipartOrphanAudit")
+            .field("key", &"<redacted>")
+            .field("upload_id", &"<redacted>")
+            .finish()
+    }
+}
+
+impl MultipartOrphanAudit {
+    /// 待清理对象 key；仅交给受控补偿流程。
+    #[must_use]
+    pub fn key(&self) -> &str {
+        &self.key
+    }
+
+    /// 待清理 UploadId；仅交给 [`OssClient::abort_multipart`]。
+    #[must_use]
+    pub fn upload_id(&self) -> &str {
+        &self.upload_id
+    }
+}
+
+struct MultipartAuditGuard {
+    inner: Arc<Inner>,
+    audit: Option<MultipartOrphanAudit>,
+}
+
+impl MultipartAuditGuard {
+    fn new(client: &OssClient, key: &str, upload_id: &str) -> Self {
+        Self {
+            inner: Arc::clone(&client.inner),
+            audit: Some(MultipartOrphanAudit {
+                key: key.to_owned(),
+                upload_id: upload_id.to_owned(),
+            }),
+        }
+    }
+
+    fn disarm(&mut self) {
+        self.audit = None;
+    }
+}
+
+impl Drop for MultipartAuditGuard {
+    fn drop(&mut self) {
+        let Some(audit) = self.audit.take() else {
+            return;
+        };
+        let mut audits = match self.inner.orphan_audits.lock() {
+            Ok(audits) => audits,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        if audits.len() < ORPHAN_AUDIT_CAPACITY {
+            audits.push_back(audit);
+        } else {
+            self.inner.orphan_audit_overflow.fetch_add(1, Ordering::Relaxed);
+        }
+    }
 }
 
 impl fmt::Debug for OssClient {
@@ -43,8 +133,9 @@ impl fmt::Debug for OssClient {
         f.debug_struct("OssClient")
             .field("config", &self.inner.config)
             .field("base", &self.inner.base.as_str())
-            .field("closed", &self.inner.closed.load(std::sync::atomic::Ordering::Relaxed))
+            .field("closed", &self.inner.closed.load(Ordering::Relaxed))
             .field("retry_max_attempts", &self.inner.retry.max_attempts)
+            .field("available_permits", &self.inner.permits.available_permits())
             .finish()
     }
 }
@@ -58,19 +149,29 @@ impl OssClient {
     /// 用自定义重试配置建立客户端。
     pub fn connect_with_retry(config: OssConfig, retry: RetryConfig) -> XResult<Self> {
         config.validate()?;
+        if retry.max_attempts == 0 || retry.max_attempts > MAX_RETRY_ATTEMPTS {
+            return Err(XError::invalid(format!(
+                "oss retry max_attempts 必须在 1..={MAX_RETRY_ATTEMPTS} 范围内"
+            )));
+        }
         let http = Client::builder()
-            .timeout(Duration::from_secs(30))
+            .timeout(config.request_timeout)
+            .pool_max_idle_per_host(config.max_in_flight)
             .user_agent(concat!("ossx/", env!("CARGO_PKG_VERSION")))
             .build()
             .map_err(|e| XError::unavailable(format!("http client: {e}")))?;
         let base = virtual_host_base(&config.endpoint, &config.bucket)?;
+        let permits = Arc::new(Semaphore::new(config.max_in_flight));
         Ok(Self {
             inner: Arc::new(Inner {
                 http,
                 config,
                 base,
-                closed: std::sync::atomic::AtomicBool::new(false),
+                closed: AtomicBool::new(false),
                 retry,
+                permits,
+                orphan_audits: Mutex::new(VecDeque::new()),
+                orphan_audit_overflow: AtomicU64::new(0),
             }),
         })
     }
@@ -92,25 +193,81 @@ impl OssClient {
         self.inner.retry
     }
 
+    /// 返回当前进程已发现的 multipart orphan 候选快照。
+    ///
+    /// 记录在成功补偿前不会自动删除；调用方可据此执行受控 `abort_multipart`。
+    #[must_use]
+    pub fn multipart_orphan_audits(&self) -> Vec<MultipartOrphanAudit> {
+        let audits = match self.inner.orphan_audits.lock() {
+            Ok(audits) => audits,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        audits.iter().cloned().collect()
+    }
+
+    /// 审计队列达到硬上界后未能保存详细记录的累计数。
+    #[must_use]
+    pub fn orphan_audit_overflow_count(&self) -> u64 {
+        self.inner.orphan_audit_overflow.load(Ordering::Relaxed)
+    }
+
     /// 标记关闭（HTTP 连接池随 drop 释放；幂等）。
     pub fn close(&self) {
-        self.inner.closed.store(true, std::sync::atomic::Ordering::Relaxed);
+        self.inner.closed.store(true, Ordering::SeqCst);
+        self.inner.permits.close();
     }
 
     fn ensure_open(&self) -> XResult<()> {
-        if self.inner.closed.load(std::sync::atomic::Ordering::Relaxed) {
-            return Err(XError::unavailable("oss client closed"));
+        if self.inner.closed.load(Ordering::SeqCst) {
+            return Err(XError::cancelled("oss client 已关闭"));
+        }
+        Ok(())
+    }
+
+    async fn acquire(&self) -> XResult<OwnedSemaphorePermit> {
+        self.ensure_open()?;
+        match timeout(self.inner.config.acquire_timeout, self.inner.permits.clone().acquire_owned())
+            .await
+        {
+            Ok(Ok(permit)) => {
+                if self.inner.closed.load(Ordering::SeqCst) {
+                    drop(permit);
+                    return Err(XError::cancelled("oss client 已关闭"));
+                }
+                Ok(permit)
+            }
+            Ok(Err(_)) => Err(XError::cancelled("oss in-flight 信号量已关闭")),
+            Err(_) => Err(XError::deadline_exceeded(format!(
+                "oss 获取 in-flight 许可超时（max={}）",
+                self.inner.config.max_in_flight
+            ))),
+        }
+    }
+
+    fn validate_object_size(&self, size: usize) -> XResult<()> {
+        if size > self.inner.config.max_object_bytes {
+            return Err(XError::invalid(format!(
+                "oss 对象大小 {size} 超过上限 {}",
+                self.inner.config.max_object_bytes
+            )));
+        }
+        if size > self.inner.config.max_buffer_bytes {
+            return Err(XError::invalid(format!(
+                "oss 缓冲大小 {size} 超过上限 {}",
+                self.inner.config.max_buffer_bytes
+            )));
         }
         Ok(())
     }
 
     /// 上传对象（含重试）。
     pub async fn put_object(&self, key: &str, data: Bytes) -> XResult<()> {
+        self.validate_object_size(data.len())?;
         let key = key.to_string();
         let data = data;
         let this = self.clone();
         let retry = self.inner.retry;
-        with_retry_default(&retry, "put_object", move || {
+        with_retry_deadline(&retry, "put_object", self.inner.config.operation_deadline, move || {
             let this = this.clone();
             let key = key.clone();
             let data = data.clone();
@@ -120,7 +277,7 @@ impl OssClient {
     }
 
     async fn put_object_once(&self, key: &str, data: Bytes) -> XResult<()> {
-        self.ensure_open()?;
+        let _permit = self.acquire().await?;
         let key = normalize_key(key)?;
         let content_type = "application/octet-stream";
         let date = gmt_now();
@@ -147,12 +304,19 @@ impl OssClient {
             .http
             .request(Method::PUT, url)
             .headers(headers)
-            .body(data.to_vec())
+            .body(data)
             .send()
             .await
             .map_err(|e| map_network("PUT", &e))?;
 
-        map_status("PUT", key.as_str(), resp.status(), resp).await?;
+        map_status(
+            "PUT",
+            key.as_str(),
+            resp.status(),
+            resp,
+            self.inner.config.max_error_body_bytes,
+        )
+        .await?;
         Ok(())
     }
 
@@ -161,7 +325,7 @@ impl OssClient {
         let key = key.to_string();
         let this = self.clone();
         let retry = self.inner.retry;
-        with_retry_default(&retry, "get_object", move || {
+        with_retry_deadline(&retry, "get_object", self.inner.config.operation_deadline, move || {
             let this = this.clone();
             let key = key.clone();
             async move { this.get_object_once(&key).await }
@@ -170,7 +334,7 @@ impl OssClient {
     }
 
     async fn get_object_once(&self, key: &str) -> XResult<Bytes> {
-        self.ensure_open()?;
+        let _permit = self.acquire().await?;
         let key = normalize_key(key)?;
         let date = gmt_now();
         let resource = canonicalized_resource(&self.inner.config.bucket, &key);
@@ -197,12 +361,13 @@ impl OssClient {
             return Err(XError::missing(format!("object not found: {key}")));
         }
         if !status.is_success() {
-            let body = resp.text().await.unwrap_or_default();
-            return Err(status_error("GET", &key, status, &body));
+            let body =
+                read_limited_body(resp, self.inner.config.max_error_body_bytes, "GET error body")
+                    .await?;
+            return Err(status_error("GET", &key, status, &String::from_utf8_lossy(&body)));
         }
-        let bytes =
-            resp.bytes().await.map_err(|e| XError::transient(format!("oss GET body: {e}")))?;
-        Ok(bytes)
+        let limit = self.inner.config.max_object_bytes.min(self.inner.config.max_buffer_bytes);
+        read_limited_body(resp, limit, "GET object body").await
     }
 
     /// 删除对象（幂等：不存在亦视为成功；含重试）。
@@ -210,16 +375,21 @@ impl OssClient {
         let key = key.to_string();
         let this = self.clone();
         let retry = self.inner.retry;
-        with_retry_default(&retry, "delete_object", move || {
-            let this = this.clone();
-            let key = key.clone();
-            async move { this.delete_object_once(&key).await }
-        })
+        with_retry_deadline(
+            &retry,
+            "delete_object",
+            self.inner.config.operation_deadline,
+            move || {
+                let this = this.clone();
+                let key = key.clone();
+                async move { this.delete_object_once(&key).await }
+            },
+        )
         .await
     }
 
     async fn delete_object_once(&self, key: &str) -> XResult<()> {
-        self.ensure_open()?;
+        let _permit = self.acquire().await?;
         let key = normalize_key(key)?;
         let date = gmt_now();
         let resource = canonicalized_resource(&self.inner.config.bucket, &key);
@@ -249,18 +419,29 @@ impl OssClient {
         {
             return Ok(());
         }
-        let body = resp.text().await.unwrap_or_default();
-        Err(status_error("DELETE", &key, status, &body))
+        let body =
+            read_limited_body(resp, self.inner.config.max_error_body_bytes, "DELETE error body")
+                .await?;
+        Err(status_error("DELETE", &key, status, &String::from_utf8_lossy(&body)))
     }
 
     // ── Multipart ──────────────────────────────────────────────────────────
 
     /// 初始化分片上传，返回 `upload_id`（含重试）。
     pub async fn initiate_multipart(&self, key: &str) -> XResult<String> {
+        self.initiate_multipart_with_deadline(key, self.inner.config.operation_deadline).await
+    }
+
+    async fn initiate_multipart_with_deadline(
+        &self,
+        key: &str,
+        deadline: std::time::Duration,
+    ) -> XResult<String> {
         let key = key.to_string();
         let this = self.clone();
-        let retry = self.inner.retry;
-        with_retry_default(&retry, "initiate_multipart", move || {
+        // 响应若在服务端成功后丢失，重试会制造不可关联的 orphan。
+        let retry = RetryConfig::fixed(1, 0);
+        with_retry_deadline(&retry, "initiate_multipart", deadline, move || {
             let this = this.clone();
             let key = key.clone();
             async move { this.initiate_multipart_once(&key).await }
@@ -269,7 +450,7 @@ impl OssClient {
     }
 
     async fn initiate_multipart_once(&self, key: &str) -> XResult<String> {
-        self.ensure_open()?;
+        let _permit = self.acquire().await?;
         let key = normalize_key(key)?;
         let date = gmt_now();
         let resource = canonicalized_resource_with_subresources(
@@ -298,12 +479,19 @@ impl OssClient {
             .map_err(|e| map_network("InitiateMultipart", &e))?;
 
         let status = resp.status();
-        let body = resp.text().await.unwrap_or_default();
+        let body = read_limited_body(
+            resp,
+            self.inner.config.max_error_body_bytes,
+            "InitiateMultipart XML",
+        )
+        .await?;
+        let body = String::from_utf8(body.to_vec()).map_err(|error| {
+            XError::invalid("InitiateMultipart XML 非 UTF-8").with_source(error)
+        })?;
         if !status.is_success() {
             return Err(status_error("InitiateMultipart", &key, status, &body));
         }
         parse_upload_id(&body)
-            .ok_or_else(|| XError::internal(format!("InitiateMultipart 缺 UploadId: {body}")))
     }
 
     /// 上传单个分片，返回 ETag（含重试）。
@@ -314,14 +502,37 @@ impl OssClient {
         part_number: u32,
         data: Bytes,
     ) -> XResult<String> {
-        if part_number == 0 {
-            return Err(XError::invalid("part_number 必须 ≥ 1"));
+        self.upload_part_with_deadline(
+            key,
+            upload_id,
+            part_number,
+            data,
+            self.inner.config.operation_deadline,
+        )
+        .await
+    }
+
+    async fn upload_part_with_deadline(
+        &self,
+        key: &str,
+        upload_id: &str,
+        part_number: u32,
+        data: Bytes,
+        deadline: std::time::Duration,
+    ) -> XResult<String> {
+        validate_part_number(part_number)?;
+        validate_upload_id(upload_id)?;
+        self.validate_object_size(data.len())?;
+        if data.is_empty() || data.len() > MAX_MULTIPART_PART_BYTES {
+            return Err(XError::invalid(format!(
+                "multipart 分片大小必须在 1..={MAX_MULTIPART_PART_BYTES} 范围内"
+            )));
         }
         let key = key.to_string();
         let upload_id = upload_id.to_string();
         let this = self.clone();
         let retry = self.inner.retry;
-        with_retry_default(&retry, "upload_part", move || {
+        with_retry_deadline(&retry, "upload_part", deadline, move || {
             let this = this.clone();
             let key = key.clone();
             let upload_id = upload_id.clone();
@@ -338,7 +549,7 @@ impl OssClient {
         part_number: u32,
         data: Bytes,
     ) -> XResult<String> {
-        self.ensure_open()?;
+        let _permit = self.acquire().await?;
         let key = normalize_key(key)?;
         let pn = part_number.to_string();
         let date = gmt_now();
@@ -372,22 +583,28 @@ impl OssClient {
             .http
             .request(Method::PUT, url)
             .headers(headers)
-            .body(data.to_vec())
+            .body(data)
             .send()
             .await
             .map_err(|e| map_network("UploadPart", &e))?;
 
         let status = resp.status();
         if !status.is_success() {
-            let body = resp.text().await.unwrap_or_default();
-            return Err(status_error("UploadPart", &key, status, &body));
+            let body = read_limited_body(
+                resp,
+                self.inner.config.max_error_body_bytes,
+                "UploadPart error body",
+            )
+            .await?;
+            return Err(status_error("UploadPart", &key, status, &String::from_utf8_lossy(&body)));
         }
         let etag = resp
             .headers()
             .get(ETAG)
             .and_then(|v| v.to_str().ok())
-            .map(|s| s.to_string())
+            .map(str::to_owned)
             .ok_or_else(|| XError::internal("UploadPart 响应缺 ETag"))?;
+        validate_etag(&etag)?;
         Ok(etag)
     }
 
@@ -400,14 +617,30 @@ impl OssClient {
         upload_id: &str,
         parts: Vec<(u32, String)>,
     ) -> XResult<()> {
-        if parts.is_empty() {
-            return Err(XError::invalid("complete_multipart 需要至少一个 part"));
-        }
+        self.complete_multipart_with_deadline(
+            key,
+            upload_id,
+            parts,
+            self.inner.config.operation_deadline,
+        )
+        .await
+    }
+
+    async fn complete_multipart_with_deadline(
+        &self,
+        key: &str,
+        upload_id: &str,
+        parts: Vec<(u32, String)>,
+        deadline: std::time::Duration,
+    ) -> XResult<()> {
+        validate_upload_id(upload_id)?;
+        validate_complete_parts(&parts)?;
         let key = key.to_string();
         let upload_id = upload_id.to_string();
         let this = self.clone();
-        let retry = self.inner.retry;
-        with_retry_default(&retry, "complete_multipart", move || {
+        // 响应不确定时自动重放会掩盖“对象已完成但响应丢失”的状态。
+        let retry = RetryConfig::fixed(1, 0);
+        with_retry_deadline(&retry, "complete_multipart", deadline, move || {
             let this = this.clone();
             let key = key.clone();
             let upload_id = upload_id.clone();
@@ -423,10 +656,10 @@ impl OssClient {
         upload_id: &str,
         mut parts: Vec<(u32, String)>,
     ) -> XResult<()> {
-        self.ensure_open()?;
+        let _permit = self.acquire().await?;
         let key = normalize_key(key)?;
         parts.sort_by_key(|(n, _)| *n);
-        let body = build_complete_xml(&parts);
+        let body = build_complete_xml(&parts)?;
         let date = gmt_now();
         let content_type = "application/xml";
         let resource = canonicalized_resource_with_subresources(
@@ -463,17 +696,40 @@ impl OssClient {
             .await
             .map_err(|e| map_network("CompleteMultipart", &e))?;
 
-        map_status("CompleteMultipart", key.as_str(), resp.status(), resp).await?;
+        map_status(
+            "CompleteMultipart",
+            key.as_str(),
+            resp.status(),
+            resp,
+            self.inner.config.max_error_body_bytes,
+        )
+        .await?;
         Ok(())
     }
 
     /// 中止分片上传（含重试；幂等）。
     pub async fn abort_multipart(&self, key: &str, upload_id: &str) -> XResult<()> {
+        let result = self
+            .abort_multipart_with_deadline(key, upload_id, self.inner.config.operation_deadline)
+            .await;
+        if result.is_ok() {
+            self.remove_orphan_audit(key, upload_id);
+        }
+        result
+    }
+
+    async fn abort_multipart_with_deadline(
+        &self,
+        key: &str,
+        upload_id: &str,
+        deadline: std::time::Duration,
+    ) -> XResult<()> {
+        validate_upload_id(upload_id)?;
         let key = key.to_string();
         let upload_id = upload_id.to_string();
         let this = self.clone();
         let retry = self.inner.retry;
-        with_retry_default(&retry, "abort_multipart", move || {
+        with_retry_deadline(&retry, "abort_multipart", deadline, move || {
             let this = this.clone();
             let key = key.clone();
             let upload_id = upload_id.clone();
@@ -483,7 +739,7 @@ impl OssClient {
     }
 
     async fn abort_multipart_once(&self, key: &str, upload_id: &str) -> XResult<()> {
-        self.ensure_open()?;
+        let _permit = self.acquire().await?;
         let key = normalize_key(key)?;
         let date = gmt_now();
         let resource = canonicalized_resource_with_subresources(
@@ -518,57 +774,148 @@ impl OssClient {
         {
             return Ok(());
         }
-        let body = resp.text().await.unwrap_or_default();
-        Err(status_error("AbortMultipart", &key, status, &body))
+        let body = read_limited_body(
+            resp,
+            self.inner.config.max_error_body_bytes,
+            "AbortMultipart error body",
+        )
+        .await?;
+        Err(status_error("AbortMultipart", &key, status, &String::from_utf8_lossy(&body)))
     }
 
     /// 高层：按 `part_size` 切分并完成 multipart 上传。
     ///
     /// - 数据为空 → `Invalid`
-    /// - 单片（`data.len() <= part_size` 或 `part_size == 0`）仍走 multipart 路径
-    /// - 任一分片失败时尝试 `abort_multipart`（失败忽略）
+    /// - 单片（`data.len() <= part_size`）仍走 multipart 路径
+    /// - 任一分片失败时尝试 `abort_multipart`
+    /// - abort 失败会返回带 `orphan_risk=true` 的 `Conflict`，禁止静默丢失孤儿风险
+    ///
+    /// 整个状态机共享一个 operation deadline。调用方 drop future 时同步写入有界 orphan 审计
+    /// 注册表，可通过 [`Self::multipart_orphan_audits`] 取得 key/UploadId 后显式补偿。注册表不替代
+    /// 服务端 lifecycle；STS 与 lifecycle 仍为 OPEN。
     pub async fn put_object_multipart(
         &self,
         key: &str,
         data: Bytes,
         part_size: usize,
     ) -> XResult<()> {
-        if data.is_empty() {
-            return Err(XError::invalid("multipart 数据不能为空"));
-        }
-        let chunks = split_parts(&data, part_size);
-        if chunks.is_empty() {
-            return Err(XError::invalid("multipart 无有效分片"));
-        }
-        // 阿里云 OSS multipart 分片上限 10000
-        const MAX_PARTS: usize = 10_000;
-        if chunks.len() > MAX_PARTS {
+        let started = Instant::now();
+        let total_deadline = self.inner.config.operation_deadline;
+        self.validate_object_size(data.len())?;
+        let part_count = validate_multipart_plan(data.len(), part_size)?;
+        if part_size > self.inner.config.max_buffer_bytes {
             return Err(XError::invalid(format!(
-                "multipart 分片数 {} 超过上限 {MAX_PARTS}；请增大 part_size",
-                chunks.len()
+                "multipart part_size {part_size} 超过缓冲上限 {}",
+                self.inner.config.max_buffer_bytes
             )));
         }
+        let chunks = split_parts(&data, part_size);
+        debug_assert_eq!(chunks.len(), part_count);
 
-        let upload_id = self.initiate_multipart(key).await?;
+        let initiate_deadline = remaining_deadline(started, total_deadline, "multipart initiate")?;
+        let upload_id = self
+            .initiate_multipart_with_deadline(key, initiate_deadline)
+            .await
+            .map_err(mark_unknown_initiate_orphan_risk)?;
+        let mut audit_guard = MultipartAuditGuard::new(self, key, &upload_id);
         let mut completed: Vec<(u32, String)> = Vec::with_capacity(chunks.len());
         for (i, chunk) in chunks.iter().enumerate() {
             let part_number =
                 u32::try_from(i + 1).map_err(|_| XError::invalid("multipart part_number 溢出"))?;
             // 拷贝 chunk 为 Bytes（分片重试需要所有权）
             let part_data = Bytes::copy_from_slice(chunk);
-            match self.upload_part(key, &upload_id, part_number, part_data).await {
+            let remaining = match remaining_deadline(started, total_deadline, "multipart upload") {
+                Ok(value) => value,
+                Err(error) => {
+                    return Err(self
+                        .cleanup_multipart_failure(
+                            key,
+                            &upload_id,
+                            error,
+                            started,
+                            total_deadline,
+                            &mut audit_guard,
+                        )
+                        .await);
+                }
+            };
+            match self
+                .upload_part_with_deadline(key, &upload_id, part_number, part_data, remaining)
+                .await
+            {
                 Ok(etag) => completed.push((part_number, etag)),
-                Err(e) => {
-                    let _ = self.abort_multipart(key, &upload_id).await;
-                    return Err(e);
+                Err(error) => {
+                    return Err(self
+                        .cleanup_multipart_failure(
+                            key,
+                            &upload_id,
+                            error,
+                            started,
+                            total_deadline,
+                            &mut audit_guard,
+                        )
+                        .await);
                 }
             }
         }
-        if let Err(e) = self.complete_multipart(key, &upload_id, completed).await {
-            let _ = self.abort_multipart(key, &upload_id).await;
-            return Err(e);
+        let remaining = match remaining_deadline(started, total_deadline, "multipart complete") {
+            Ok(value) => value,
+            Err(error) => {
+                return Err(self
+                    .cleanup_multipart_failure(
+                        key,
+                        &upload_id,
+                        error,
+                        started,
+                        total_deadline,
+                        &mut audit_guard,
+                    )
+                    .await);
+            }
+        };
+        if let Err(error) =
+            self.complete_multipart_with_deadline(key, &upload_id, completed, remaining).await
+        {
+            return Err(self
+                .cleanup_multipart_failure(
+                    key,
+                    &upload_id,
+                    error,
+                    started,
+                    total_deadline,
+                    &mut audit_guard,
+                )
+                .await);
         }
+        audit_guard.disarm();
         Ok(())
+    }
+
+    async fn cleanup_multipart_failure(
+        &self,
+        key: &str,
+        upload_id: &str,
+        primary: XError,
+        started: Instant,
+        total_deadline: std::time::Duration,
+        audit_guard: &mut MultipartAuditGuard,
+    ) -> XError {
+        let Ok(remaining) = remaining_deadline(started, total_deadline, "multipart abort") else {
+            return mark_known_orphan_risk(primary, upload_id);
+        };
+        let abort = self.abort_multipart_with_deadline(key, upload_id, remaining).await;
+        if abort.is_ok() {
+            audit_guard.disarm();
+        }
+        merge_abort_result(primary, abort, upload_id)
+    }
+
+    fn remove_orphan_audit(&self, key: &str, upload_id: &str) {
+        let mut audits = match self.inner.orphan_audits.lock() {
+            Ok(audits) => audits,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        audits.retain(|audit| audit.key != key || audit.upload_id != upload_id);
     }
 }
 
@@ -584,12 +931,13 @@ impl ObjectStore for OssClient {
 }
 
 fn virtual_host_base(endpoint: &str, bucket: &str) -> XResult<Url> {
-    let ep = Url::parse(endpoint.trim_end_matches('/'))
+    let mut ep = Url::parse(endpoint.trim_end_matches('/'))
         .map_err(|e| XError::invalid(format!("bad endpoint URL: {e}")))?;
     let host = ep.host_str().ok_or_else(|| XError::invalid("endpoint missing host"))?;
-    let scheme = ep.scheme();
-    let vh = format!("{scheme}://{bucket}.{host}");
-    Url::parse(&vh).map_err(|e| XError::invalid(format!("virtual host URL: {e}")))
+    let virtual_host = format!("{bucket}.{host}");
+    ep.set_host(Some(&virtual_host)).map_err(|_| XError::invalid("virtual host URL 非法"))?;
+    ep.set_path("/");
+    Ok(ep)
 }
 
 fn object_url(base: &Url, key: &str) -> XResult<Url> {
@@ -616,6 +964,9 @@ fn normalize_key(key: &str) -> XResult<String> {
     if k.contains("..") {
         return Err(XError::invalid("object key must not contain '..'"));
     }
+    if k.len() > MAX_OBJECT_KEY_BYTES {
+        return Err(XError::invalid(format!("object key 超过 {MAX_OBJECT_KEY_BYTES} 字节上限")));
+    }
     Ok(k.to_string())
 }
 
@@ -632,12 +983,48 @@ async fn map_status(
     key: &str,
     status: StatusCode,
     resp: reqwest::Response,
+    max_error_body_bytes: usize,
 ) -> XResult<()> {
     if status.is_success() {
         return Ok(());
     }
-    let body = resp.text().await.unwrap_or_default();
-    Err(status_error(op, key, status, &body))
+    let body = read_limited_body(resp, max_error_body_bytes, "OSS error body").await?;
+    Err(status_error(op, key, status, &String::from_utf8_lossy(&body)))
+}
+
+async fn read_limited_body(
+    mut response: reqwest::Response,
+    limit: usize,
+    label: &str,
+) -> XResult<Bytes> {
+    if let Some(length) = response.content_length() {
+        let length = usize::try_from(length)
+            .map_err(|_| XError::invalid(format!("{label} Content-Length 超出平台范围")))?;
+        if length > limit {
+            return Err(XError::invalid(format!("{label} 大小 {length} 超过上限 {limit}")));
+        }
+    }
+    let mut body = BytesMut::with_capacity(limit.min(8 * 1024));
+    while let Some(chunk) = response
+        .chunk()
+        .await
+        .map_err(|error| XError::transient(format!("oss {label} 读取失败: {error}")))?
+    {
+        append_limited(&mut body, &chunk, limit, label)?;
+    }
+    Ok(body.freeze())
+}
+
+fn append_limited(body: &mut BytesMut, chunk: &[u8], limit: usize, label: &str) -> XResult<()> {
+    let next_len = body
+        .len()
+        .checked_add(chunk.len())
+        .ok_or_else(|| XError::invalid(format!("{label} 大小溢出")))?;
+    if next_len > limit {
+        return Err(XError::invalid(format!("{label} 流式读取超过上限 {limit}")));
+    }
+    body.extend_from_slice(chunk);
+    Ok(())
 }
 
 fn map_network(op: &str, err: &reqwest::Error) -> XError {
@@ -672,25 +1059,163 @@ fn status_error(op: &str, key: &str, status: StatusCode, body: &str) -> XError {
     XError::unavailable(format!("oss {op} failed status={status} key={key} body={snippet}"))
 }
 
-/// 从 InitiateMultipartUploadResult XML 中提取 UploadId（轻量解析，无额外依赖）。
-fn parse_upload_id(xml: &str) -> Option<String> {
+/// 从 InitiateMultipartUploadResult XML 中提取并校验 UploadId。
+fn parse_upload_id(xml: &str) -> XResult<String> {
     const OPEN: &str = "<UploadId>";
     const CLOSE: &str = "</UploadId>";
-    let start = xml.find(OPEN)? + OPEN.len();
-    let end = xml[start..].find(CLOSE)? + start;
+    let start = xml
+        .find(OPEN)
+        .map(|index| index + OPEN.len())
+        .ok_or_else(|| XError::internal("InitiateMultipart 响应缺 UploadId"))?;
+    let end = xml[start..]
+        .find(CLOSE)
+        .map(|index| index + start)
+        .ok_or_else(|| XError::internal("InitiateMultipart UploadId 未闭合"))?;
     let id = xml[start..end].trim();
-    if id.is_empty() { None } else { Some(id.to_string()) }
+    validate_upload_id(id)?;
+    Ok(id.to_owned())
 }
 
 /// 构造 CompleteMultipartUpload XML。
-fn build_complete_xml(parts: &[(u32, String)]) -> String {
+fn build_complete_xml(parts: &[(u32, String)]) -> XResult<String> {
+    validate_complete_parts(parts)?;
     let mut xml = String::from("<CompleteMultipartUpload>");
     for (n, etag) in parts {
-        // ETag 可能已带引号；Complete 请求要求保留原值
-        xml.push_str(&format!("<Part><PartNumber>{n}</PartNumber><ETag>{etag}</ETag></Part>"));
+        xml.push_str("<Part><PartNumber>");
+        xml.push_str(&n.to_string());
+        xml.push_str("</PartNumber><ETag>");
+        xml.push_str(&escape_xml_text(etag));
+        xml.push_str("</ETag></Part>");
     }
     xml.push_str("</CompleteMultipartUpload>");
-    xml
+    Ok(xml)
+}
+
+fn escape_xml_text(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        match character {
+            '&' => escaped.push_str("&amp;"),
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            '\"' => escaped.push_str("&quot;"),
+            '\'' => escaped.push_str("&apos;"),
+            _ => escaped.push(character),
+        }
+    }
+    escaped
+}
+
+fn validate_upload_id(upload_id: &str) -> XResult<()> {
+    if upload_id.is_empty()
+        || upload_id.len() > MAX_UPLOAD_ID_BYTES
+        || upload_id.chars().any(|character| {
+            character.is_control() || matches!(character, '<' | '>' | '&' | '\"' | '\'')
+        })
+    {
+        return Err(XError::invalid("multipart upload_id 非法或超过上限"));
+    }
+    Ok(())
+}
+
+fn validate_etag(etag: &str) -> XResult<()> {
+    if etag.is_empty() || etag.len() > MAX_ETAG_BYTES || etag.chars().any(char::is_control) {
+        return Err(XError::invalid("multipart ETag 非法或超过上限"));
+    }
+    Ok(())
+}
+
+fn validate_part_number(part_number: u32) -> XResult<()> {
+    let max = u32::try_from(MAX_MULTIPART_PARTS)
+        .map_err(|error| XError::internal("multipart part 上限转换失败").with_source(error))?;
+    if part_number == 0 || part_number > max {
+        return Err(XError::invalid(format!("part_number 必须在 1..={max} 范围内")));
+    }
+    Ok(())
+}
+
+fn validate_complete_parts(parts: &[(u32, String)]) -> XResult<()> {
+    if parts.is_empty() || parts.len() > MAX_MULTIPART_PARTS {
+        return Err(XError::invalid(format!(
+            "complete_multipart part 数必须在 1..={MAX_MULTIPART_PARTS} 范围内"
+        )));
+    }
+    let mut seen = HashSet::with_capacity(parts.len());
+    for (part_number, etag) in parts {
+        validate_part_number(*part_number)?;
+        validate_etag(etag)?;
+        if !seen.insert(*part_number) {
+            return Err(XError::invalid(format!(
+                "complete_multipart 含重复 part_number={part_number}"
+            )));
+        }
+    }
+    Ok(())
+}
+
+fn validate_multipart_plan(object_size: usize, part_size: usize) -> XResult<usize> {
+    if object_size == 0 {
+        return Err(XError::invalid("multipart 数据不能为空"));
+    }
+    if part_size == 0 || part_size > MAX_MULTIPART_PART_BYTES {
+        return Err(XError::invalid(format!(
+            "multipart part_size 必须在 1..={MAX_MULTIPART_PART_BYTES} 范围内"
+        )));
+    }
+    if object_size > part_size && part_size < MIN_MULTIPART_PART_BYTES {
+        return Err(XError::invalid(format!(
+            "multipart 非末片不得小于 {MIN_MULTIPART_PART_BYTES} 字节"
+        )));
+    }
+    let part_count = object_size.div_ceil(part_size);
+    if part_count > MAX_MULTIPART_PARTS {
+        return Err(XError::invalid(format!(
+            "multipart 分片数 {part_count} 超过上限 {MAX_MULTIPART_PARTS}"
+        )));
+    }
+    Ok(part_count)
+}
+
+fn remaining_deadline(
+    started: Instant,
+    total: std::time::Duration,
+    op: &str,
+) -> XResult<std::time::Duration> {
+    total.checked_sub(started.elapsed()).filter(|remaining| !remaining.is_zero()).ok_or_else(|| {
+        XError::deadline_exceeded(format!(
+            "oss {op} 超过 multipart 总 deadline {}ms",
+            total.as_millis()
+        ))
+    })
+}
+
+fn mark_unknown_initiate_orphan_risk(error: XError) -> XError {
+    if matches!(error.kind(), ErrorKind::Transient | ErrorKind::DeadlineExceeded) {
+        return XError::conflict(format!(
+            "multipart orphan_risk=true upload_id=unknown; initiate={error}"
+        ));
+    }
+    error
+}
+
+fn mark_known_orphan_risk(primary: XError, upload_id: &str) -> XError {
+    let context = format!(
+        "multipart orphan_risk=true upload_id={upload_id}; cleanup deadline exhausted; primary={primary}"
+    );
+    match primary.kind() {
+        ErrorKind::DeadlineExceeded => XError::deadline_exceeded(context),
+        ErrorKind::Cancelled => XError::cancelled(context),
+        _ => XError::conflict(context),
+    }
+}
+
+fn merge_abort_result(primary: XError, abort: XResult<()>, upload_id: &str) -> XError {
+    match abort {
+        Ok(()) => primary,
+        Err(abort_error) => XError::conflict(format!(
+            "multipart orphan_risk=true upload_id={upload_id}; primary={primary}; abort={abort_error}"
+        )),
+    }
 }
 
 /// 可选：自定义头（保留扩展位；当前未使用）。
@@ -705,6 +1230,65 @@ fn insert_header(map: &mut HeaderMap, name: &str, value: &str) -> XResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::{TcpListener, TcpStream};
+    use tokio::sync::oneshot;
+
+    async fn read_http_request(stream: &mut TcpStream) -> Vec<u8> {
+        let mut request = Vec::new();
+        let mut buffer = [0u8; 1024];
+        let mut expected_len = None;
+        loop {
+            let read = stream.read(&mut buffer).await.expect("read request");
+            assert!(read > 0, "request closed before complete");
+            request.extend_from_slice(&buffer[..read]);
+            if expected_len.is_none()
+                && let Some(header_end) =
+                    request.windows(4).position(|window| window == b"\r\n\r\n")
+            {
+                let headers = String::from_utf8_lossy(&request[..header_end]);
+                let content_length = headers
+                    .lines()
+                    .find_map(|line| {
+                        line.to_ascii_lowercase()
+                            .strip_prefix("content-length:")
+                            .and_then(|value| value.trim().parse::<usize>().ok())
+                    })
+                    .unwrap_or(0);
+                expected_len = Some(header_end + 4 + content_length);
+            }
+            if expected_len.is_some_and(|length| request.len() >= length) {
+                return request;
+            }
+        }
+    }
+
+    async fn write_response(stream: &mut TcpStream, status: &str, headers: &str, body: &str) {
+        let response = format!(
+            "HTTP/1.1 {status}\r\nConnection: close\r\nContent-Length: {}\r\n{headers}\r\n{body}",
+            body.len()
+        );
+        stream.write_all(response.as_bytes()).await.expect("write response");
+    }
+
+    async fn loopback_client(
+        request_timeout: Duration,
+        operation_deadline: Duration,
+    ) -> (TcpListener, OssClient) {
+        let listener = TcpListener::bind("[::1]:0").await.expect("bind loopback");
+        let port = listener.local_addr().expect("local address").port();
+        let config = OssConfig::builder()
+            .endpoint(format!("http://localhost:{port}"))
+            .bucket("bucket")
+            .access_key_id("id")
+            .access_key_secret("sec")
+            .request_timeout(request_timeout)
+            .operation_deadline(operation_deadline)
+            .build()
+            .expect("config");
+        (listener, OssClient::connect(config).expect("client"))
+    }
 
     #[test]
     fn virtual_host_builds() {
@@ -723,6 +1307,8 @@ mod tests {
     fn reject_empty_key() {
         assert!(normalize_key("").is_err());
         assert!(normalize_key("  /  ").is_err());
+        assert!(normalize_key(&"x".repeat(MAX_OBJECT_KEY_BYTES)).is_ok());
+        assert!(normalize_key(&"x".repeat(MAX_OBJECT_KEY_BYTES + 1)).is_err());
     }
 
     #[test]
@@ -733,28 +1319,239 @@ mod tests {
   <Key>k</Key>
   <UploadId>0004B9894A22E5B1888A1E29F8236E2D</UploadId>
 </InitiateMultipartUploadResult>"#;
-        assert_eq!(parse_upload_id(xml).as_deref(), Some("0004B9894A22E5B1888A1E29F8236E2D"));
-        assert!(parse_upload_id("<root/>").is_none());
+        assert_eq!(parse_upload_id(xml).expect("upload id"), "0004B9894A22E5B1888A1E29F8236E2D");
+        assert!(parse_upload_id("<root/>").is_err());
+        assert!(parse_upload_id("<UploadId>&xxe;</UploadId>").is_err());
     }
 
     #[test]
     fn complete_xml_orders_parts() {
-        let xml = build_complete_xml(&[(1, "\"etag1\"".into()), (2, "\"etag2\"".into())]);
+        let xml = build_complete_xml(&[(1, "\"etag1\"".into()), (2, "\"etag2\"".into())])
+            .expect("complete XML");
         assert!(xml.contains("<PartNumber>1</PartNumber>"));
-        assert!(xml.contains("<ETag>\"etag1\"</ETag>"));
+        assert!(xml.contains("<ETag>&quot;etag1&quot;</ETag>"));
         assert!(xml.starts_with("<CompleteMultipartUpload>"));
         assert!(xml.ends_with("</CompleteMultipartUpload>"));
     }
 
     #[test]
+    fn complete_xml_escapes_etag_and_rejects_duplicate_parts() {
+        let xml = build_complete_xml(&[(1, "\"a&<b>\"".into())]).expect("合法 ETag");
+        assert!(xml.contains("&amp;"));
+        assert!(xml.contains("&lt;"));
+        assert!(xml.contains("&gt;"));
+        assert!(!xml.contains("<ETag>\"a&<b>\"</ETag>"));
+
+        let error = build_complete_xml(&[(1, "a".into()), (1, "b".into())])
+            .expect_err("重复 part_number 必须被拒绝");
+        assert!(error.context().contains("重复"));
+    }
+
+    #[test]
+    fn multipart_plan_enforces_part_size_and_count() {
+        assert!(validate_multipart_plan(MIN_MULTIPART_PART_BYTES + 1, 0).is_err());
+        assert!(validate_multipart_plan(MIN_MULTIPART_PART_BYTES + 1, 1).is_err());
+        assert!(validate_multipart_plan(1, 1).is_ok());
+        let oversized = (MAX_MULTIPART_PARTS + 1) * MIN_MULTIPART_PART_BYTES;
+        assert!(validate_multipart_plan(oversized, MIN_MULTIPART_PART_BYTES).is_err());
+    }
+
+    #[test]
+    fn chunked_body_buffer_stops_at_hard_limit() {
+        let mut body = BytesMut::new();
+        append_limited(&mut body, b"abcd", 5, "error body").expect("first chunk");
+        let error = append_limited(&mut body, b"ef", 5, "error body")
+            .expect_err("chunked body 必须在追加前拒绝超限");
+        assert!(error.context().contains("上限 5"));
+        assert_eq!(&body[..], b"abcd");
+    }
+
+    #[test]
+    fn abort_failure_marks_orphan_risk() {
+        let primary = XError::transient("upload failed");
+        let abort = Err(XError::transient("abort failed"));
+        let error = merge_abort_result(primary, abort, "upload-123");
+        assert_eq!(error.kind(), kernel::ErrorKind::Conflict);
+        assert!(error.context().contains("orphan_risk=true"));
+        assert!(error.context().contains("upload-123"));
+    }
+
+    #[test]
     fn connect_validates_config() {
-        let err = OssClient::connect(OssConfig {
-            endpoint: String::new(),
-            bucket: "b".into(),
-            access_key_id: "id".into(),
-            access_key_secret: "sec".into(),
-            region: "r".into(),
-        });
+        let err = OssConfig::builder()
+            .endpoint("")
+            .bucket("b")
+            .access_key_id("id")
+            .access_key_secret("sec")
+            .region("r")
+            .build();
         assert!(err.is_err());
+    }
+
+    #[tokio::test]
+    async fn acquire_is_bounded_by_concurrency_and_timeout() {
+        let config = OssConfig::builder()
+            .endpoint("https://oss.example.com")
+            .bucket("bucket")
+            .access_key_id("id")
+            .access_key_secret("sec")
+            .max_in_flight(1)
+            .acquire_timeout(Duration::from_millis(5))
+            .build()
+            .expect("config");
+        let client = OssClient::connect(config).expect("client");
+        let permit = client.acquire().await.expect("first permit");
+        let error = client.acquire().await.expect_err("second permit must time out");
+        assert_eq!(error.kind(), kernel::ErrorKind::DeadlineExceeded);
+        drop(permit);
+        let _permit = client.acquire().await.expect("permit released");
+    }
+
+    #[tokio::test]
+    async fn close_is_a_cancelled_boundary() {
+        let config = OssConfig::builder()
+            .endpoint("https://oss.example.com")
+            .bucket("bucket")
+            .access_key_id("id")
+            .access_key_secret("sec")
+            .build()
+            .expect("config");
+        let client = OssClient::connect(config).expect("client");
+        client.close();
+        let error = client.acquire().await.expect_err("closed client must reject acquire");
+        assert_eq!(error.kind(), kernel::ErrorKind::Cancelled);
+    }
+
+    #[test]
+    fn orphan_registry_capacity_and_overflow_are_bounded() {
+        let config = OssConfig::builder()
+            .endpoint("https://oss.example.com")
+            .bucket("bucket")
+            .access_key_id("id")
+            .access_key_secret("sec")
+            .build()
+            .expect("config");
+        let client = OssClient::connect(config).expect("client");
+        for index in 0..=ORPHAN_AUDIT_CAPACITY {
+            drop(MultipartAuditGuard::new(&client, "object", &format!("upload-{index}")));
+        }
+        assert_eq!(client.multipart_orphan_audits().len(), ORPHAN_AUDIT_CAPACITY);
+        assert_eq!(client.orphan_audit_overflow_count(), 1);
+    }
+
+    #[tokio::test]
+    async fn chunked_error_body_is_bounded_over_real_http() {
+        let listener = TcpListener::bind("[::1]:0").await.expect("bind loopback");
+        let port = listener.local_addr().expect("local address").port();
+        let config = OssConfig::builder()
+            .endpoint(format!("http://localhost:{port}"))
+            .bucket("bucket")
+            .access_key_id("id")
+            .access_key_secret("sec")
+            .max_error_body_bytes(5)
+            .build()
+            .expect("config");
+        let client = OssClient::connect(config).expect("client");
+        let server = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.expect("accept GET");
+            let _ = read_http_request(&mut stream).await;
+            stream
+                .write_all(
+                    b"HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\nTransfer-Encoding: chunked\r\n\r\n4\r\nabcd\r\n2\r\nef\r\n0\r\n\r\n",
+                )
+                .await
+                .expect("write chunked error");
+        });
+
+        let error = client.get_object("object").await.expect_err("body must exceed cap");
+        assert_eq!(error.kind(), kernel::ErrorKind::Invalid);
+        assert!(error.context().contains("上限 5"));
+        server.await.expect("server");
+    }
+
+    #[tokio::test]
+    async fn cancelling_after_initiate_records_recoverable_upload_id() {
+        let (listener, client) =
+            loopback_client(Duration::from_secs(5), Duration::from_secs(5)).await;
+        let (part_started_tx, part_started_rx) = oneshot::channel();
+        let (allow_cleanup_tx, allow_cleanup_rx) = oneshot::channel();
+        let server = tokio::spawn(async move {
+            let (mut initiate, _) = listener.accept().await.expect("accept initiate");
+            let request = read_http_request(&mut initiate).await;
+            assert!(String::from_utf8_lossy(&request).starts_with("POST /object?uploads HTTP/1.1"));
+            let body = "<InitiateMultipartUploadResult><UploadId>recoverable-123</UploadId></InitiateMultipartUploadResult>";
+            write_response(&mut initiate, "200 OK", "Content-Type: application/xml\r\n", body)
+                .await;
+
+            let (mut part, _) = listener.accept().await.expect("accept part");
+            let request = read_http_request(&mut part).await;
+            assert!(String::from_utf8_lossy(&request).starts_with("PUT /object?"));
+            let _ = part_started_tx.send(());
+            let _ = allow_cleanup_rx.await;
+            drop(part);
+
+            let (mut abort, _) = listener.accept().await.expect("accept abort");
+            let request = read_http_request(&mut abort).await;
+            let request = String::from_utf8_lossy(&request);
+            assert!(request.starts_with("DELETE /object?"));
+            assert!(request.contains("uploadId=recoverable-123"));
+            write_response(&mut abort, "204 No Content", "", "").await;
+        });
+
+        let task_client = client.clone();
+        let upload = tokio::spawn(async move {
+            task_client.put_object_multipart("object", Bytes::from_static(b"x"), 1).await
+        });
+        part_started_rx.await.expect("part started");
+        upload.abort();
+        let join_error = upload.await.expect_err("upload task must be cancelled");
+        assert!(join_error.is_cancelled());
+
+        let audits = client.multipart_orphan_audits();
+        assert_eq!(audits.len(), 1);
+        assert_eq!(audits[0].key(), "object");
+        assert_eq!(audits[0].upload_id(), "recoverable-123");
+        assert!(!format!("{:?}", audits[0]).contains("recoverable-123"));
+        assert_eq!(client.orphan_audit_overflow_count(), 0);
+        let _ = allow_cleanup_tx.send(());
+        client
+            .abort_multipart(audits[0].key(), audits[0].upload_id())
+            .await
+            .expect("audit record must support compensating abort");
+        assert!(client.multipart_orphan_audits().is_empty());
+        server.await.expect("server");
+    }
+
+    #[tokio::test]
+    async fn multipart_uses_one_total_deadline_across_parts() {
+        let total_deadline = Duration::from_millis(100);
+        let (listener, client) = loopback_client(Duration::from_millis(80), total_deadline).await;
+        let server = tokio::spawn(async move {
+            let (mut initiate, _) = listener.accept().await.expect("accept initiate");
+            let _ = read_http_request(&mut initiate).await;
+            let body = "<InitiateMultipartUploadResult><UploadId>deadline-123</UploadId></InitiateMultipartUploadResult>";
+            write_response(&mut initiate, "200 OK", "Content-Type: application/xml\r\n", body)
+                .await;
+
+            let (mut first_part, _) = listener.accept().await.expect("accept first part");
+            let _ = read_http_request(&mut first_part).await;
+            tokio::time::sleep(Duration::from_millis(60)).await;
+            write_response(&mut first_part, "200 OK", "ETag: etag-1\r\n", "").await;
+
+            let (mut second_part, _) = listener.accept().await.expect("accept second part");
+            let _ = read_http_request(&mut second_part).await;
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        });
+
+        let data = Bytes::from(vec![b'x'; MIN_MULTIPART_PART_BYTES + 1]);
+        let started = Instant::now();
+        let error = client
+            .put_object_multipart("object", data, MIN_MULTIPART_PART_BYTES)
+            .await
+            .expect_err("whole multipart must respect one deadline");
+        assert!(started.elapsed() < Duration::from_millis(300));
+        assert!(error.context().contains("orphan_risk=true"));
+        assert_eq!(client.multipart_orphan_audits().len(), 1);
+        server.abort();
     }
 }

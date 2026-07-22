@@ -4,8 +4,9 @@
 
 ```bash
 cargo fmt --all -- --check
-cargo clippy -p redisx --all-targets -- -D warnings
-cargo test -p redisx --all-targets
+cargo clippy -p redisx --all-targets --features pubsub -- -D warnings
+cargo test -p redisx --all-targets --features pubsub
+node scripts/quality-gates/check-workspace-deps.mjs
 ```
 
 ## Live 门禁（可选）
@@ -22,3 +23,6 @@ cargo test -p redisx -- --ignored
 - 硬编码密钥
 - live 测试去掉 `#[ignore]` 导致 CI 依赖外网/本机服务
 - 无证据宣称 package stable
+- Pub/Sub 从环境变量重建配置或把 Cluster/Sentinel 静默降级为 Standalone
+- 对写操作默认自动重试，或把命令原子误写为“超时即未执行”
+- 无真实拓扑证据把 Cluster / Sentinel / TLS 标为 live PASS

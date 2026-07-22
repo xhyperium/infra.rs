@@ -5,6 +5,7 @@
 
 use std::any::Any;
 use std::future::Future;
+use std::time::Duration;
 
 use kernel::{ErrorKind, XError, XResult};
 use resiliencx::{
@@ -12,10 +13,13 @@ use resiliencx::{
     retry_async, retry_downcast, retry_ok,
 };
 
-/// 默认重试：3 次尝试、无退避（离线单测友好；生产可覆盖）。
+/// 重试次数硬上界，防止错误配置制造无界放大。
+pub const MAX_RETRY_ATTEMPTS: u32 = 10;
+
+/// 默认重试：3 次尝试、固定 100ms 退避；生产可覆盖。
 #[must_use]
 pub fn default_retry_config() -> RetryConfig {
-    RetryConfig::fixed(3, 0)
+    RetryConfig::fixed(3, 100)
 }
 
 /// 判断 OSS 错误是否值得重试。
@@ -53,6 +57,7 @@ where
     Fut: Future<Output = XResult<T>> + Send,
     T: Any + Send + 'static,
 {
+    validate_retry_config(config)?;
     let no_wait = NoWait;
     let tokio_wait = TokioSleepWait;
     let wait: &dyn AsyncWait =
@@ -72,6 +77,42 @@ where
     retry_downcast(boxed)
 }
 
+/// 在单一 deadline 内执行完整重试过程。
+///
+/// deadline 到期会丢弃当前尝试 future，并返回不可自动重试的
+/// [`ErrorKind::DeadlineExceeded`]，从而避免每次尝试各自耗尽请求超时后继续放大。
+pub async fn with_retry_deadline<F, Fut, T>(
+    config: &RetryConfig,
+    op: &str,
+    deadline: Duration,
+    f: F,
+) -> XResult<T>
+where
+    F: FnMut() -> Fut,
+    Fut: Future<Output = XResult<T>> + Send,
+    T: Any + Send + 'static,
+{
+    if deadline.is_zero() {
+        return Err(XError::invalid("oss retry deadline 必须大于零"));
+    }
+    match tokio::time::timeout(deadline, with_retry_default(config, op, f)).await {
+        Ok(result) => result,
+        Err(_) => Err(XError::deadline_exceeded(format!(
+            "oss {op} 超过总 deadline {}ms",
+            deadline.as_millis()
+        ))),
+    }
+}
+
+fn validate_retry_config(config: &RetryConfig) -> XResult<()> {
+    if config.max_attempts == 0 || config.max_attempts > MAX_RETRY_ATTEMPTS {
+        return Err(XError::invalid(format!(
+            "oss retry max_attempts 必须在 1..={MAX_RETRY_ATTEMPTS} 范围内"
+        )));
+    }
+    Ok(())
+}
+
 /// 便捷：使用 [`NoopInstrumentation`]。
 pub async fn with_retry_default<F, Fut, T>(config: &RetryConfig, op: &str, f: F) -> XResult<T>
 where
@@ -86,6 +127,7 @@ where
 mod tests {
     use super::*;
     use std::sync::atomic::{AtomicU32, Ordering};
+    use std::time::Duration;
 
     #[test]
     fn retryable_kinds() {
@@ -154,5 +196,31 @@ mod tests {
         .expect_err("must exhaust");
         assert!(err.is_retryable() || err.kind() == ErrorKind::Transient);
         assert_eq!(attempts.load(Ordering::SeqCst), 3);
+    }
+
+    #[tokio::test]
+    async fn retry_deadline_bounds_the_whole_operation() {
+        let attempts = AtomicU32::new(0);
+        let cfg = RetryConfig::fixed(5, 0);
+        let error = with_retry_deadline(&cfg, "slow_op", Duration::from_millis(10), || {
+            attempts.fetch_add(1, Ordering::SeqCst);
+            async {
+                tokio::time::sleep(Duration::from_millis(100)).await;
+                Err::<(), _>(XError::transient("slow"))
+            }
+        })
+        .await
+        .expect_err("deadline 必须终止整个重试过程");
+        assert_eq!(error.kind(), ErrorKind::DeadlineExceeded);
+        assert_eq!(attempts.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test]
+    async fn excessive_retry_attempts_fail_closed() {
+        let cfg = RetryConfig::fixed(MAX_RETRY_ATTEMPTS + 1, 0);
+        let error = with_retry_default(&cfg, "too_many", || async { Ok::<_, XError>(()) })
+            .await
+            .expect_err("重试次数必须有硬上界");
+        assert_eq!(error.kind(), ErrorKind::Invalid);
     }
 }

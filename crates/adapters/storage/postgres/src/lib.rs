@@ -6,7 +6,7 @@
 //!   `FOUNDATIONX_POSTGRESX_*` 环境变量
 //! - [`PostgresPool`]：`connect` / `acquire` / `execute` / `query` / `query_one` /
 //!   `with_transaction` / `health` / `stats` / `close`
-//! - [`PgConnection`] / [`PgTransaction`]（[`TxState`]）
+//! - [`PgConnection`] / [`PgTransaction`]（准确状态 [`TxStatus`]；旧 [`TxState`] 迁移兼容）
 //! - [`PgTxRunner`]：`contracts::TxRunner` 边界适配（**不**传 SQL 句柄，见模块文档）
 //! - [`PgRepository`] / [`PgRecord`]：生产 `contracts::Repository`
 //! - [`MakeRustlsConnect`]：`SslMode::Prefer` / `Require` 的 rustls TLS
@@ -44,7 +44,10 @@ pub use config::{
     DEFAULT_MAX_POOL_SIZE, DEFAULT_PORT, PostgresConfig, PostgresConfigBuilder, SslMode,
 };
 pub use conn::PgConnection;
-pub use error::{error_kind_from_sqlstate, map_pool_error, map_tokio_error, xerror_from_sqlstate};
+pub use error::{
+    TransactionRollbackFailure, error_kind_from_sqlstate, map_pool_error, map_tokio_error,
+    xerror_from_sqlstate,
+};
 pub use pool::{PoolStats, PostgresPool};
 pub use repository::{PgRecord, PgRepository};
 pub use resilience::{
@@ -53,7 +56,8 @@ pub use resilience::{
 };
 pub use runner::PgTxRunner;
 pub use tls::{MakeRustlsConnect, build_client_config};
-pub use tx::{PgTransaction, TxState};
+#[allow(deprecated)] // crate root 保留旧三态一个迁移周期
+pub use tx::{PgTransaction, TxState, TxStatus};
 
 #[cfg(feature = "scaffold")]
 pub use adapter::{PostgresAdapter, Record};
@@ -110,5 +114,20 @@ mod unit_smoke {
         let cfg = PgRetryConfig::fixed(1, 0);
         let v = with_retry_sync(&cfg, "surface", || Ok(1_i32)).expect("retry");
         assert_eq!(v, 1);
+    }
+
+    #[test]
+    #[allow(deprecated)]
+    fn legacy_raw_accessors_remain_for_one_deprecation_cycle() {
+        let _ = PgConnection::client;
+        let _ = PgConnection::client_mut;
+        let _ = PostgresPool::inner;
+        let cfg = PostgresConfig::builder()
+            .host("127.0.0.1")
+            .database("db")
+            .user("user")
+            .build()
+            .expect("合法配置");
+        assert!(cfg.database_url.is_none());
     }
 }

@@ -35,6 +35,11 @@
 
 ## [Unreleased]
 
+### 修复
+
+- 修正首次 `Connected` 事件的重复计数
+- 重连 conformance 保持动态 host ingress 不变，连续验证 broker 进程重启后的发布与原 Core subscription 恢复
+
 ### 新增
 
 - 生产默认：`NatsPool` / `NatsEventBus`（`async-nats` Core NATS）

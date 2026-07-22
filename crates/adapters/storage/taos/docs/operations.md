@@ -21,4 +21,11 @@
 
 ## 关闭
 
-调用 `close(deadline)`：拒绝新请求并排空 in-flight。
+调用 `close()`：原子拒绝新请求，并在 `CLOSE_TIMEOUT_MS` 内等待 RAII in-flight 排空；
+超时返回 `DeadlineExceeded`，池保持 closed，重复 `close()` 可继续等待。
+
+## 数据兼容
+
+- bid/ask 必须为 `NCHAR(64+)`；检测到旧 `DOUBLE` stable 时拒绝写查，需由受控迁移处理
+- 单次响应、SQL/batch、query rows 与并发均有配置上限和不可突破的编译期硬上限
+- 多 chunk 写入不做内部重试；部分成功后的整批幂等重试尚无证据，保持 NO-GO

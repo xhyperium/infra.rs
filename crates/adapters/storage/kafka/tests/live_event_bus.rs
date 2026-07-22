@@ -17,6 +17,16 @@ fn unique_suffix() -> String {
     format!("{}-{}", std::process::id(), ts)
 }
 
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[ignore = "需要可用 Kafka；只读验证认证、连接与集群健康"]
+async fn live_cluster_health() {
+    let cfg = KafkaConfig::from_env().expect("Kafka 环境配置合法");
+    let pool = KafkaPool::connect(cfg).await.expect("连接 Kafka");
+    let health = pool.health().await.expect("读取健康状态");
+    assert!(health.ready, "集群未就绪：{}", health.detail);
+    pool.close(Duration::from_secs(3)).await.expect("关闭 Kafka pool");
+}
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 #[ignore = "需要可用 Kafka；请在 broker 就绪后使用 --ignored 运行"]
 async fn live_publish_consume_content() {

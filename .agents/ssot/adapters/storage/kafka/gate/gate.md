@@ -21,4 +21,5 @@ cargo test -p kafkax -- --ignored
 - 默认路径退化为仅 scaffold
 - 硬编码密钥
 - live 测试去掉 `#[ignore]` 导致 CI 依赖外网/本机服务
+- 无界 channel、close 后继续接受 broker I/O、公开错误/Debug 回显凭据
 - 无证据宣称 package stable

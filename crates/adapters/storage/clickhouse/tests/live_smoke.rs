@@ -88,4 +88,5 @@ async fn live_ping() {
     };
     let pool = ClickHousePool::connect(cfg).await.expect("connect");
     pool.ping().await.expect("ping");
+    pool.close().await.expect("close");
 }

@@ -32,9 +32,12 @@
 ## 3. 安全与运维边界
 
 - TLS 已接入 `rskafka` rustls transport；使用 webpki roots，并可通过 PEM `tls_ca_file` 追加 CA。
-- SASL 仅批准 PLAIN；机制、用户名或密码不完整时在连接前 `Invalid` fail-closed，密码 `Debug` 脱敏。
+- SASL 仅批准 PLAIN；机制、用户名或密码不完整时在连接前 `Invalid` fail-closed，用户名与密码均在 `Debug` 脱敏。
 - 远程 broker 必须 TLS；明文只允许 loopback，禁止 `tls=false` 静默连接远程地址。
-- connect、metadata、topic 创建与 partition client 获取均有内部非零 deadline。
+- connect deadline 覆盖 CA 装载与驱动建连；metadata、topic 创建、partition client 获取与 produce 均有内部非零 deadline，delivery timeout 不得被静默放大。
+- consumer 与 EventBus 分别使用固定容量有界队列；队列满时等待下游形成背压，close 信号优先打断发送等待。
+- `close(deadline)` 先拒绝新操作，再取消在途 broker I/O 与后台消费任务并等待守卫释放；超时返回 `DeadlineExceeded` 且 pool 保持关闭。
+- 驱动原文只参与 `ErrorKind` 分类，不进入公开错误 context/source；诊断摘要必须稳定且脱敏。
 - topic/partition 生命周期由部署方管理；库的测试仅创建唯一单分区 topic。
 - consumer fetch 错误会结束当前流；本版不承诺自动重连、rebalance、poison/DLQ、schema registry、HA 或 multi-owner。
 - 单节点容器测试不能作为上述能力的证据。
@@ -46,13 +49,13 @@
 ```bash
 cargo test -p kafkax --all-targets
 cargo clippy -p kafkax --all-targets -- -D warnings
-node scripts/kafka-tls-sasl-conformance.mjs
 ```
 
-可复现 broker conformance：
+可复现隔离 broker conformance（非默认 CI）：
 
 ```bash
-node scripts/broker-conformance.mjs
+node scripts/kafka-broker-conformance.mjs
+node scripts/kafka-tls-sasl-conformance.mjs
 ```
 
 Kafka 场景必须证明：
@@ -65,6 +68,7 @@ Kafka 场景必须证明：
 
 固定摘要 Kafka 的 SASL_SSL 实验已证明：受信 CA + PLAIN 凭据可发布，错误 CA 与错误密码
 均 fail-closed。该证据只覆盖 TLS/CA/SASL-PLAIN，不得升级为 group/rebalance/HA/native EOS 结论。
+当前会话未运行 harness 时不得新增当前 PASS 或伪造输出；失败日志必须先脱敏再展示。
 
 受控外部环境仍可运行 `tests/live_event_bus.rs`；ignored 或单节点 PASS 不得升级为未列出的能力结论。
 

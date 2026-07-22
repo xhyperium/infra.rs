@@ -9,6 +9,109 @@ use resiliencx::{
     retry_ok,
 };
 
+/// Redis 命令的重试副作用分类。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum RedisRetrySafety {
+    /// 只读命令；可在 Transient 失败后自动重试。
+    ReadOnly,
+    /// 写命令的响应可能丢失；重试可能重复副作用，只能由调用方显式选择。
+    AmbiguousWrite,
+    /// 自动重试会破坏合同（例如 Pub/Sub 可能重复投递）。
+    NeverAutomatic,
+}
+
+/// Redis 命令的原子性边界。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum RedisAtomicity {
+    /// 单条 Redis 命令；服务端执行原子，但客户端超时不代表命令未生效。
+    SingleCommand,
+    /// 多 key 单条命令；仅在 Standalone 或 Cluster 同一 hash slot 内成立。
+    MultiKeySingleSlot,
+    /// 无可靠投递或事务原子性保证。
+    None,
+}
+
+/// 当前公开操作，用于查询可测试的重试与原子性合同。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum RedisOperation {
+    /// GET。
+    Get,
+    /// SET / PSETEX。
+    Set,
+    /// DEL。
+    Delete,
+    /// EXISTS。
+    Exists,
+    /// PEXPIRE。
+    Expire,
+    /// PTTL。
+    Ttl,
+    /// MGET。
+    Mget,
+    /// MSET。
+    Mset,
+    /// PUBLISH。
+    Publish,
+}
+
+impl RedisOperation {
+    /// 该操作的自动重试安全分类。
+    #[must_use]
+    pub const fn retry_safety(self) -> RedisRetrySafety {
+        match self {
+            Self::Get | Self::Exists | Self::Ttl | Self::Mget => RedisRetrySafety::ReadOnly,
+            Self::Set | Self::Delete | Self::Expire | Self::Mset => {
+                RedisRetrySafety::AmbiguousWrite
+            }
+            Self::Publish => RedisRetrySafety::NeverAutomatic,
+        }
+    }
+
+    /// 该操作的 Redis 服务端原子性边界。
+    #[must_use]
+    pub const fn atomicity(self) -> RedisAtomicity {
+        match self {
+            Self::Mget | Self::Mset => RedisAtomicity::MultiKeySingleSlot,
+            Self::Publish => RedisAtomicity::None,
+            Self::Get | Self::Set | Self::Delete | Self::Exists | Self::Expire | Self::Ttl => {
+                RedisAtomicity::SingleCommand
+            }
+        }
+    }
+
+    /// 是否允许客户端在配置预算后自动重试。
+    #[must_use]
+    pub const fn allows_automatic_retry(self) -> bool {
+        matches!(self.retry_safety(), RedisRetrySafety::ReadOnly)
+    }
+}
+
+/// 按 [`RedisOperation`] 合同执行一次或自动预算重试。
+///
+/// 生产客户端的所有默认操作都经过此分派；只有 [`RedisRetrySafety::ReadOnly`] 能进入
+/// budget 重试环，写入和 publish 即使配置了 budget 也只调用一次。
+pub(crate) async fn with_automatic_budget<F, Fut, T>(
+    operation: RedisOperation,
+    budget: Option<&RetryBudget>,
+    max_attempts: u32,
+    op: &str,
+    mut f: F,
+) -> XResult<T>
+where
+    F: FnMut() -> Fut,
+    Fut: Future<Output = XResult<T>>,
+{
+    if operation.allows_automatic_retry() {
+        if let Some(budget) = budget {
+            return with_budget_async_noop(budget, max_attempts, op, f).await;
+        }
+    }
+    f().await
+}
+
 /// 带预算的同步重试包装。
 pub fn with_budget<F, T>(
     budget: &RetryBudget,
@@ -188,6 +291,85 @@ mod tests {
         .await
         .unwrap_err();
         assert!(matches!(err.kind(), ErrorKind::Unavailable | ErrorKind::Transient));
+    }
+
+    #[tokio::test]
+    async fn non_retryable_failure_is_attempted_once() {
+        let budget = RetryBudget::new(4);
+        let attempts = AtomicU32::new(0);
+        let err = with_budget_async_noop(&budget, 5, "redis.get", || {
+            attempts.fetch_add(1, Ordering::SeqCst);
+            async { Err::<(), _>(XError::invalid("bad request")) }
+        })
+        .await
+        .expect_err("invalid must not retry");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        assert_eq!(attempts.load(Ordering::SeqCst), 1);
+        assert_eq!(budget.remaining(), 4);
+    }
+
+    #[tokio::test]
+    async fn production_dispatch_attempts_ambiguous_write_once() {
+        let budget = RetryBudget::new(4);
+        let attempts = AtomicU32::new(0);
+        let err = with_automatic_budget(RedisOperation::Set, Some(&budget), 5, "redis.set", || {
+            attempts.fetch_add(1, Ordering::SeqCst);
+            async { Err::<(), _>(XError::transient("response lost")) }
+        })
+        .await
+        .expect_err("ambiguous write must not retry automatically");
+        assert_eq!(err.kind(), ErrorKind::Transient);
+        assert_eq!(attempts.load(Ordering::SeqCst), 1);
+        assert_eq!(budget.remaining(), 4);
+    }
+
+    #[tokio::test]
+    async fn production_dispatch_retries_read_with_budget() {
+        let budget = RetryBudget::new(2);
+        let attempts = AtomicU32::new(0);
+        let value = with_automatic_budget(
+            RedisOperation::Get,
+            Some(&budget),
+            3,
+            "redis.get",
+            || {
+                let attempt = attempts.fetch_add(1, Ordering::SeqCst) + 1;
+                async move {
+                    if attempt == 1 { Err(XError::transient("retry")) } else { Ok(attempt) }
+                }
+            },
+        )
+        .await
+        .expect("read retries");
+        assert_eq!(value, 2);
+        assert_eq!(attempts.load(Ordering::SeqCst), 2);
+        assert_eq!(budget.remaining(), 1);
+    }
+
+    #[test]
+    fn operation_contract_forbids_automatic_write_retry() {
+        for operation in [
+            RedisOperation::Set,
+            RedisOperation::Delete,
+            RedisOperation::Expire,
+            RedisOperation::Mset,
+            RedisOperation::Publish,
+        ] {
+            assert!(!operation.allows_automatic_retry(), "operation={operation:?}");
+        }
+        assert_eq!(RedisOperation::Set.atomicity(), RedisAtomicity::SingleCommand);
+        assert_eq!(RedisOperation::Mset.atomicity(), RedisAtomicity::MultiKeySingleSlot);
+        assert_eq!(RedisOperation::Publish.atomicity(), RedisAtomicity::None);
+    }
+
+    #[test]
+    fn operation_contract_allows_read_retry() {
+        for operation in
+            [RedisOperation::Get, RedisOperation::Exists, RedisOperation::Ttl, RedisOperation::Mget]
+        {
+            assert!(operation.allows_automatic_retry(), "operation={operation:?}");
+            assert_eq!(operation.retry_safety(), RedisRetrySafety::ReadOnly);
+        }
     }
 
     #[test]

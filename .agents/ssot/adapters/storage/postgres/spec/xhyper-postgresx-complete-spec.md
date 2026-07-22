@@ -17,7 +17,7 @@
 | `PostgresConfig` | env / `DATABASE_URL`、池容量、连接/获取/操作截止时间、SSL 策略 |
 | `PostgresPool` | connect/acquire/参数化 SQL/事务/health/stats/close |
 | `PgConnection` | 参数化 SQL；客户端超时时丢弃连接，不把未知状态连接归池 |
-| `PgTransaction` | BEGIN/SQL/COMMIT/ROLLBACK 全部有界；终结超时视为结果未知并丢弃连接 |
+| `PgTransaction` | BEGIN/SQL/COMMIT/ROLLBACK 全部有界；非穷尽 `TxStatus`；终结超时视为结果未知并丢弃连接 |
 | `PgRepository` | 固定表 `infra_pg_records` 的生产 Repository |
 | `PgTxRunner` | 正式 `contracts::TxRunner` 事务边界；业务 SQL 使用 `with_transaction` |
 
@@ -28,15 +28,21 @@
 - 所有业务值使用 `$1..$N` 参数；禁止拼接不可信输入。
 - loopback / Unix socket 可显式 `sslmode=disable`；远程主机的 `disable` 或 `prefer` 在连接前
   返回 `Invalid`，仅 `require` 可用。
-- `DATABASE_URL` 只在入口解析；建池从同一组已校验字段重建配置，禁止 TLS 策略/执行漂移。
+- `DATABASE_URL` 仅接受 `postgres://` / `postgresql://`；query allowlist 只有
+  `sslmode`、`application_name`、`connect_timeout`。keyword DSN 以及其他认证/会话参数
+  均 fail-closed；deprecated raw URL 与其显式结构化字段必须一致。
+- 建池从同一组已校验字段重建配置，禁止 TLS、认证、会话策略与执行漂移。
 - `Require` 使用 rustls + webpki roots；本版未提供自定义企业 CA / 客户端证书。
-- deadpool 的 wait/create/recycle 均有界且 recycle 使用 `Verified`。
+- deadpool 的 wait/create/recycle 均有界且 recycle 使用 `Clean`，兼容 raw pool 返回的
+  session 状态也必须清理或丢弃。
 - `acquire_timeout` 独立约束池等待；`operation_timeout` 同时作为调用侧 deadline 和服务端
   `statement_timeout`。
 - RAII 取消守卫覆盖内部/外层 deadline、future drop 与 task abort；未知状态连接永久移出池。
-- 事务进入可取消 await 前先转为 `TxState::Failed`，仅在连接安全恢复后回到 Active；
-  不公开底层 deadpool 池或原始连接逃逸口。
+- 事务进入可取消 await 前先转为 `TxStatus::Failed`，仅在连接安全恢复后回到 Active；
+  旧三态 `TxState` 与 raw client/pool 保留一个 deprecation 周期，后者通过强制脱池与
+  返回关闭的独立隔离池 fail-closed，正式路径不依赖逃逸口。
 - 服务端语句错误保持 rollback-only `Failed`；只允许显式回滚，禁止继续 SQL 或 COMMIT。
+- 业务+rollback 双失败通过 `TransactionRollbackFailure` 结构化保留两个错误分支。
 - SQL / COMMIT / ROLLBACK 超时保留 error source；COMMIT 超时不得宣称成功或失败。
 - Active transaction 被 Drop 时关闭已分离 session，由 PostgreSQL 回滚，不启动无监督任务。
 - 密码与完整 DSN 不写入 Debug、日志或仓库。

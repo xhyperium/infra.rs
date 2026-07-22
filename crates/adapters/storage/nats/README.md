@@ -46,7 +46,8 @@ bus.publish("events.demo", Bytes::from_static(b"p")).await?;
 - `BusMessage.id` = `{subject}/{session_seq}`（跨重连不可去重）
 - 非 JetStream → 非 durable；持久消费必须显式选择 `JetStreamConsumer`
 - JetStream 的 `term` / `max_deliver` 不等于自动 DLQ
-- 同客户端 broker 重启恢复当前 **NO-GO**（`infra-2d9.3.1`）；不得把有限重连配置描述为已验证恢复
+- 固定入口与有限重连预算内，驱动会重建连接并恢复原 Core subscription；断线窗口消息仍可能丢失且不会回放
+- 超过 `max_reconnects` 后驱动会关闭命令通道；调用方收到 `Unavailable` 时必须重建 client
 
 ## 测试
 
@@ -56,7 +57,7 @@ cargo test -p natsx --features scaffold
 cargo test -p natsx --test live_event_bus -- --ignored
 cargo bench -p natsx --bench hot_path -- --quick
 node scripts/broker-conformance.mjs
-# 缺陷复现，当前预期非零：
+# 固定镜像、动态端口，同一 client 连续三轮 broker 重启恢复：
 node scripts/nats-reconnect-conformance.mjs
 ```
 

@@ -6,7 +6,7 @@
 | 标题 | Aliyun OSS ObjectStore |
 | 实现 | `crates/adapters/storage/oss` |
 | 战役 | draft SPEC_GOAL → 本仓生产默认路径 |
-| 状态 | **P0 生产入口已落地**（#188–#191）；package stable **未宣称** |
+| 状态 | **P0 安全与资源上界已落地**（infra-2d9.3.4）；package stable **未宣称** |
 
 ## Outcome
 
@@ -20,10 +20,12 @@
 4. live：`tests/live_object_store.rs` 默认 `#[ignore]`，真凭据可绿
 5. bench：`benches/put_get.rs`（不得挂死 `--all-targets`）
 6. scaffold 仅 `feature = "scaffold"`，禁止当作生产默认
+7. 远程明文 fail-closed；对象/缓冲/错误体/in-flight/retry 均有硬上界
+8. multipart ETag XML、part size/count、取消/abort/orphan 语义有离线测试
 
 ## Not in scope
 
-multipart / lifecycle / STS 临时凭证
+lifecycle / STS 临时凭证 / 流式 TB 对象 / package stable 证据包
 
 ## 证据指针
 

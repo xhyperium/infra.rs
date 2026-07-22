@@ -19,7 +19,7 @@
 | evidence 权威 | `.agents/ssot/evidence/spec/spec.md` → `crates/evidence`；不在 tools 树维护第二份 active spec |
 | 本仓 crate 落地 | `crates/evidence`；`tools/goalctl`；`tools/verifyctl` |
 | `tools/xtask` | **未** member · **未**宣称 ship |
-| live 凭据工具 | `scripts/live/build-foundationx-env.mjs`（#191）+ `export-foundationx-env.sh` |
+| live 凭据工具 | `build-foundationx-env.mjs` 独占创建 0600 文件；`export-foundationx-env.sh` 仅为 dev 子进程注入并自动清理 |
 
 ## 目录
 

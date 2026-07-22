@@ -6,7 +6,9 @@ use std::process::Command;
 use std::time::{Duration, Instant};
 
 use bytes::Bytes;
-use natsx::{NatsConfig, NatsPool};
+use contracts::EventBus;
+use futures_util::StreamExt;
+use natsx::{NatsConfig, NatsEventBus, NatsPool};
 
 fn required_env(name: &str) -> String {
     std::env::var(name).unwrap_or_else(|_| panic!("缺少测试环境变量 {name}"))
@@ -41,11 +43,15 @@ async fn reconnect_restores_subscription_and_slow_consumer_is_observable() {
         ..NatsConfig::default()
     };
     let pool = NatsPool::connect(config).await.expect("连接隔离 NATS");
+    wait_until(Duration::from_secs(5), || pool.stats().connected >= 1).await;
+    let connected_before_restart = pool.stats().connected;
+    assert_eq!(connected_before_restart, 1, "首次连接事件不得重复计数");
+    let bus = NatsEventBus::new(pool.clone());
     let subject = format!("infra.reconnect.{}", std::process::id());
-    let mut subscription = pool.subscribe(&subject).await.expect("订阅");
-    pool.publish(&subject, Bytes::from_static(b"before")).await.expect("重启前发布");
+    let mut subscription = bus.subscribe(&subject).await.expect("订阅");
+    bus.publish(&subject, Bytes::from_static(b"before")).await.expect("重启前发布");
     assert_eq!(
-        tokio::time::timeout(Duration::from_secs(5), subscription.recv())
+        tokio::time::timeout(Duration::from_secs(5), subscription.next())
             .await
             .expect("重启前接收不得超时")
             .expect("重启前消息")
@@ -55,7 +61,17 @@ async fn reconnect_restores_subscription_and_slow_consumer_is_observable() {
 
     let restart = tokio::task::spawn_blocking(move || {
         Command::new("timeout")
-            .args(["--signal=TERM", "--kill-after=5s", "30s", "docker", "restart", &container])
+            .args([
+                "--signal=TERM",
+                "--kill-after=5s",
+                "30s",
+                "docker",
+                "exec",
+                &container,
+                "/bin/sh",
+                "-c",
+                "kill -TERM \"$(cat /tmp/nats-server.pid)\"",
+            ])
             .output()
     });
     let output = tokio::time::timeout(Duration::from_secs(35), restart)
@@ -71,13 +87,13 @@ async fn reconnect_restores_subscription_and_slow_consumer_is_observable() {
 
     wait_until(Duration::from_secs(30), || {
         let stats = pool.stats();
-        stats.disconnected >= 1 && stats.connected >= 2
+        stats.disconnected >= 1 && stats.connected > connected_before_restart
     })
     .await;
 
     let publish_start = Instant::now();
     loop {
-        match pool.publish(&subject, Bytes::from_static(b"after")).await {
+        match bus.publish(&subject, Bytes::from_static(b"after")).await {
             Ok(()) => break,
             Err(_) if publish_start.elapsed() < Duration::from_secs(30) => {
                 tokio::time::sleep(Duration::from_millis(200)).await;
@@ -86,7 +102,7 @@ async fn reconnect_restores_subscription_and_slow_consumer_is_observable() {
         }
     }
     assert_eq!(
-        tokio::time::timeout(Duration::from_secs(10), subscription.recv())
+        tokio::time::timeout(Duration::from_secs(10), subscription.next())
             .await
             .expect("重连后接收不得超时")
             .expect("重连后订阅应恢复")
@@ -106,7 +122,7 @@ async fn reconnect_restores_subscription_and_slow_consumer_is_observable() {
 
     let stats = pool.stats();
     assert!(stats.disconnected >= 1);
-    assert!(stats.connected >= 2);
+    assert!(stats.connected > connected_before_restart);
     assert!(stats.slow_consumers >= 1);
     pool.close().await.expect("关闭 NATS pool");
 }

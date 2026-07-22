@@ -8,7 +8,7 @@
 //! cargo test -p postgresx --test live_postgres -- --ignored --nocapture
 //! ```
 
-use postgresx::{PostgresConfig, PostgresPool, TxState};
+use postgresx::{PostgresConfig, PostgresPool, TxStatus};
 use std::sync::Arc;
 
 fn live_config() -> PostgresConfig {
@@ -64,7 +64,7 @@ async fn live_transaction_rollback() {
     // 使用真实（非 TEMP）表会污染 schema；这里用 TEMP + 显式 rollback 验证状态机
     let conn = pool.acquire().await.expect("acquire");
     let mut tx = conn.begin().await.expect("begin");
-    assert_eq!(tx.state(), TxState::Active);
+    assert_eq!(tx.status(), TxStatus::Active);
 
     tx.execute("CREATE TEMP TABLE postgresx_live_rb (id int PRIMARY KEY, body text)", &[])
         .await

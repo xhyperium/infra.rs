@@ -86,9 +86,16 @@ pub struct PostgresConfig {
     pub acquire_timeout: Duration,
     /// SQL 与事务终结操作的调用侧截止时间；同时下发为服务端 `statement_timeout`。
     pub operation_timeout: Duration,
+    /// 原始 `DATABASE_URL` 兼容字段；建池不直接消费此字段。
+    ///
+    /// 仅用于一个迁移周期的源码兼容。调用方修改后，`validate` 会核对其与结构化字段
+    /// 完全一致，并拒绝未实现参数；请改用 [`Self::from_database_url`] 构造后只读消费。
+    #[deprecated(note = "请使用 PostgresConfig::from_database_url；原始 URL 不再作为执行配置")]
+    pub database_url: Option<String>,
 }
 
 impl fmt::Debug for PostgresConfig {
+    #[allow(deprecated)] // 兼容字段仅以固定脱敏占位输出
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("PostgresConfig")
             .field("host", &self.host)
@@ -102,6 +109,7 @@ impl fmt::Debug for PostgresConfig {
             .field("connect_timeout", &self.connect_timeout)
             .field("acquire_timeout", &self.acquire_timeout)
             .field("operation_timeout", &self.operation_timeout)
+            .field("database_url", &self.database_url.as_ref().map(|_| "<redacted>"))
             .finish()
     }
 }
@@ -119,6 +127,7 @@ impl PostgresConfig {
     }
 
     /// 仅从 `FOUNDATIONX_POSTGRESX_*` 加载（忽略 `DATABASE_URL`）。
+    #[allow(deprecated)] // 构造一个迁移周期内保留的空兼容字段
     pub fn from_foundationx_env() -> XResult<Self> {
         let host = env_required("FOUNDATIONX_POSTGRESX_HOST")?;
         let port = env_port("FOUNDATIONX_POSTGRESX_PORT", DEFAULT_PORT)?;
@@ -151,11 +160,15 @@ impl PostgresConfig {
             connect_timeout: Some(Duration::from_secs(10)),
             acquire_timeout,
             operation_timeout,
+            database_url: None,
         })
     }
 
     /// 从 `postgres://` / `postgresql://` URL 解析。
+    #[allow(deprecated)] // 权威构造器负责同步填充迁移兼容字段
     pub fn from_database_url(url: &str) -> XResult<Self> {
+        let url = url.trim();
+        validate_database_url_query(url)?;
         let pg: tokio_postgres::Config = url
             .parse()
             .map_err(|error| XError::invalid("DATABASE_URL 解析失败").with_source(error))?;
@@ -196,10 +209,12 @@ impl PostgresConfig {
 
         let max_pool_size =
             env_usize("FOUNDATIONX_POSTGRESX_MAX_POOL_SIZE", DEFAULT_MAX_POOL_SIZE)?;
-        let application_name = env::var("FOUNDATIONX_POSTGRESX_APPLICATION_NAME")
-            .ok()
-            .filter(|s| !s.trim().is_empty())
-            .or_else(|| pg.get_application_name().map(str::to_owned));
+        // URL 中的显式约束优先；只有 URL 未指定时才允许环境变量补充。
+        let application_name = pg.get_application_name().map(str::to_owned).or_else(|| {
+            env::var("FOUNDATIONX_POSTGRESX_APPLICATION_NAME")
+                .ok()
+                .filter(|value| !value.trim().is_empty())
+        });
         let acquire_timeout =
             env_duration_ms("FOUNDATIONX_POSTGRESX_ACQUIRE_TIMEOUT_MS", Duration::from_secs(5))?;
         let operation_timeout =
@@ -217,6 +232,7 @@ impl PostgresConfig {
             connect_timeout: pg.get_connect_timeout().copied().or(Some(Duration::from_secs(10))),
             acquire_timeout,
             operation_timeout,
+            database_url: Some(url.to_string()),
         })
     }
 
@@ -251,7 +267,9 @@ impl PostgresConfig {
         }
         cfg.options = Some(format!("-c statement_timeout={}", self.operation_timeout.as_millis()));
         cfg.manager = Some(deadpool_postgres::ManagerConfig {
-            recycling_method: deadpool_postgres::RecyclingMethod::Verified,
+            // Clean 会拒绝/丢弃仍处于事务中的旧兼容 raw-pool 对象，并清理 session 状态。
+            // recycle timeout 继续保证 busy raw object 不会无限阻塞获取路径。
+            recycling_method: deadpool_postgres::RecyclingMethod::Clean,
         });
         let mut pool = deadpool_postgres::PoolConfig::new(self.max_pool_size);
         pool.timeouts = deadpool_postgres::Timeouts {
@@ -291,12 +309,85 @@ impl PostgresConfig {
                 "远程 PostgreSQL 必须使用 sslmode=require；disable/prefer 仅允许本机",
             ));
         }
+        self.validate_database_url_consistency()?;
         Ok(())
     }
 
     fn has_remote_host(&self) -> XResult<bool> {
         Ok(!self.host.starts_with('/') && !host_is_loopback(&self.host))
     }
+
+    #[allow(deprecated)]
+    fn validate_database_url_consistency(&self) -> XResult<()> {
+        let Some(url) = &self.database_url else {
+            return Ok(());
+        };
+        validate_database_url_query(url)?;
+        let parsed: tokio_postgres::Config = url
+            .parse()
+            .map_err(|error| XError::invalid("DATABASE_URL 解析失败").with_source(error))?;
+        if parsed.get_hosts().len() > 1 {
+            return Err(XError::invalid("DATABASE_URL 暂不支持多 host"));
+        }
+        let parsed_host = parsed
+            .get_hosts()
+            .first()
+            .map(|host| match host {
+                tokio_postgres::config::Host::Tcp(host) => host.clone(),
+                #[cfg(unix)]
+                tokio_postgres::config::Host::Unix(path) => path.display().to_string(),
+            })
+            .unwrap_or_else(|| "127.0.0.1".to_string());
+        let parsed_port = parsed.get_ports().first().copied().unwrap_or(DEFAULT_PORT);
+        let parsed_database = parsed.get_dbname().unwrap_or_default();
+        let parsed_user = parsed.get_user().unwrap_or_default();
+        let parsed_password =
+            parsed.get_password().map(|value| String::from_utf8_lossy(value)).unwrap_or_default();
+        let parsed_sslmode = match parsed.get_ssl_mode() {
+            tokio_postgres::config::SslMode::Disable => SslMode::Disable,
+            tokio_postgres::config::SslMode::Prefer => SslMode::Prefer,
+            tokio_postgres::config::SslMode::Require => SslMode::Require,
+            _ => SslMode::Prefer,
+        };
+        let application_name_matches = parsed
+            .get_application_name()
+            .is_none_or(|value| self.application_name.as_deref() == Some(value));
+        let connect_timeout_matches =
+            parsed.get_connect_timeout().is_none_or(|value| self.connect_timeout == Some(*value));
+        if parsed_host != self.host
+            || parsed_port != self.port
+            || parsed_database != self.database
+            || parsed_user != self.user
+            || parsed_password != self.password
+            || parsed_sslmode != self.sslmode
+            || !application_name_matches
+            || !connect_timeout_matches
+        {
+            return Err(XError::invalid("DATABASE_URL 与结构化连接字段不一致；禁止双配置漂移"));
+        }
+        Ok(())
+    }
+}
+
+fn validate_database_url_query(url: &str) -> XResult<()> {
+    if !(url.starts_with("postgres://") || url.starts_with("postgresql://")) {
+        return Err(XError::invalid(
+            "DATABASE_URL 仅接受 postgres:// 或 postgresql:// URL；禁止 keyword DSN",
+        ));
+    }
+    let Some((_, query_and_fragment)) = url.split_once('?') else {
+        return Ok(());
+    };
+    let query = query_and_fragment.split('#').next().unwrap_or_default();
+    for pair in query.split('&').filter(|pair| !pair.is_empty()) {
+        let key = pair.split_once('=').map_or(pair, |(key, _)| key);
+        if !matches!(key, "sslmode" | "application_name" | "connect_timeout") {
+            return Err(XError::invalid(format!(
+                "DATABASE_URL 参数 `{key}` 未实现；禁止静默忽略认证或会话约束"
+            )));
+        }
+    }
+    Ok(())
 }
 
 fn host_is_loopback(host: &str) -> bool {
@@ -400,6 +491,7 @@ impl PostgresConfigBuilder {
     }
 
     /// 完成构建并校验。
+    #[allow(deprecated)] // Builder 构造一个迁移周期内保留的空兼容字段
     pub fn build(self) -> XResult<PostgresConfig> {
         let cfg = PostgresConfig {
             host: self.host.ok_or_else(|| XError::invalid("PostgresConfigBuilder: 缺少 host"))?,
@@ -415,6 +507,7 @@ impl PostgresConfigBuilder {
             connect_timeout: self.connect_timeout.or(Some(Duration::from_secs(10))),
             acquire_timeout: self.acquire_timeout.unwrap_or(Duration::from_secs(5)),
             operation_timeout: self.operation_timeout.unwrap_or(Duration::from_secs(10)),
+            database_url: None,
         };
         cfg.validate()?;
         Ok(cfg)
@@ -571,16 +664,49 @@ mod tests {
 
     #[test]
     fn database_url_cannot_bypass_mutated_tls_policy() {
+        #[allow(deprecated)]
         let mut cfg = PostgresConfig::from_database_url(
             "postgres://alice:secret@db.example.com:5432/market?sslmode=disable",
         )
         .expect("url 可解析，连接前再执行远程策略校验");
         cfg.sslmode = SslMode::Require;
-        cfg.validate().expect("远程 require 应通过");
+        let error = cfg.validate().expect_err("URL 与结构化 TLS 字段漂移必须 fail-closed");
+        assert_eq!(error.kind(), kernel::ErrorKind::Invalid);
+    }
 
-        let deadpool = cfg.to_deadpool_config();
-        assert!(deadpool.url.is_none(), "不得保留可与字段漂移的原始 URL");
-        assert_eq!(deadpool.host.as_deref(), Some("db.example.com"));
-        assert_eq!(deadpool.ssl_mode, Some(deadpool_postgres::SslMode::Require));
+    #[test]
+    fn database_url_rejects_unimplemented_security_and_session_parameters() {
+        for url in [
+            "postgres://alice:secret@db.example.com/market?sslmode=require&channel_binding=require",
+            "postgres://alice:secret@db.example.com/market?sslmode=require&target_session_attrs=read-write",
+            "postgres://alice:secret@db.example.com/market?sslmode=require&options=-c%20role%3Dadmin",
+        ] {
+            let error = PostgresConfig::from_database_url(url)
+                .expect_err("未传播的 URL 参数必须 fail-closed");
+            assert_eq!(error.kind(), kernel::ErrorKind::Invalid);
+        }
+    }
+
+    #[test]
+    fn database_url_rejects_keyword_dsn_and_allowed_field_drift() {
+        let keyword = PostgresConfig::from_database_url(
+            "host=127.0.0.1 user=alice dbname=market sslmode=disable channel_binding=require",
+        )
+        .expect_err("keyword DSN 不得绕过 URL 参数 allowlist");
+        assert_eq!(keyword.kind(), kernel::ErrorKind::Invalid);
+
+        let mut application = PostgresConfig::from_database_url(
+            "postgres://alice:secret@127.0.0.1/market?sslmode=disable&application_name=expected",
+        )
+        .expect("显式 application_name 可解析");
+        application.application_name = Some("drifted".to_string());
+        assert!(application.validate().is_err(), "application_name 漂移必须失败");
+
+        let mut timeout = PostgresConfig::from_database_url(
+            "postgres://alice:secret@127.0.0.1/market?sslmode=disable&connect_timeout=7",
+        )
+        .expect("显式 connect_timeout 可解析");
+        timeout.connect_timeout = Some(Duration::from_secs(8));
+        assert!(timeout.validate().is_err(), "connect_timeout 漂移必须失败");
     }
 }

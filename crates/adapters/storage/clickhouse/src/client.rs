@@ -18,6 +18,8 @@ use crate::config::ClickHouseConfig;
 /// 默认 analytics sink 表名。
 pub const ANALYTICS_TABLE: &str = "analytics_events";
 
+const ERROR_RESPONSE_CAPTURE_LIMIT: usize = 4096;
+
 /// 批量插入选项。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BatchInsertOptions {
@@ -154,7 +156,7 @@ impl ClickHousePool {
     pub async fn ping(&self) -> XResult<()> {
         let body = self.query_text("SELECT 1").await?;
         if body.trim() != "1" {
-            return Err(XError::unavailable(format!("clickhouse ping 异常响应: {}", body.trim())));
+            return Err(XError::unavailable("clickhouse ping 响应不符合协议（响应正文已省略）"));
         }
         Ok(())
     }
@@ -314,14 +316,14 @@ impl ClickHousePool {
             })?;
 
         let status = resp.status();
+        if !status.is_success() {
+            let error_prefix = read_error_prefix(resp).await?;
+            return Err(map_http_error(status, &error_prefix));
+        }
         let text = resp
             .text()
             .await
-            .map_err(|e| XError::unavailable("clickhouse 读响应失败").with_source(e))?;
-
-        if !status.is_success() {
-            return Err(map_http_error(status, &text));
-        }
+            .map_err(|error| XError::unavailable("clickhouse 读响应失败").with_source(error))?;
         // ClickHouse 在 200 时也可能把异常写在 body（少见）；保留原文给调用方。
         Ok(text)
     }
@@ -378,31 +380,61 @@ fn validate_ident(name: &str) -> XResult<()> {
     Ok(())
 }
 
-fn map_http_error(status: StatusCode, body: &str) -> XError {
-    let snippet = truncate(body, 512);
+fn map_http_error(status: StatusCode, body: &[u8]) -> XError {
+    let server_code = clickhouse_server_code(body);
+    let context = safe_http_error_context(status, server_code);
     if status == StatusCode::NOT_FOUND {
-        return XError::missing(format!("clickhouse: {snippet}"));
+        return XError::missing(context);
     }
     if status == StatusCode::UNAUTHORIZED || status == StatusCode::FORBIDDEN {
-        return XError::unavailable(format!("clickhouse 认证/授权失败: {snippet}"));
+        return XError::unavailable(format!("clickhouse 认证/授权失败；{context}"));
     }
     if status.is_server_error() {
-        return XError::transient(format!("clickhouse {status}: {snippet}"));
+        return XError::transient(context);
     }
-    // 4xx 多半是 SQL/参数问题
-    if snippet.contains("UNKNOWN_TABLE") || snippet.contains("doesn't exist") {
-        return XError::missing(snippet);
+    match server_code {
+        // UNKNOWN_TABLE / UNKNOWN_DATABASE
+        Some(60 | 81) => XError::missing(context),
+        // TABLE_ALREADY_EXISTS
+        Some(57) => XError::conflict(context),
+        // 其余 4xx 多半是 SQL 或参数问题；响应正文始终不进入错误。
+        _ => XError::invalid(context),
     }
-    XError::invalid(format!("clickhouse {status}: {snippet}"))
 }
 
-fn truncate(s: &str, max: usize) -> String {
-    let mut t = s.trim().replace('\n', " ");
-    if t.len() > max {
-        t.truncate(max);
-        t.push('…');
+async fn read_error_prefix(mut response: reqwest::Response) -> XResult<Vec<u8>> {
+    let mut prefix = Vec::with_capacity(ERROR_RESPONSE_CAPTURE_LIMIT);
+    while prefix.len() < ERROR_RESPONSE_CAPTURE_LIMIT {
+        let Some(chunk) = response
+            .chunk()
+            .await
+            .map_err(|error| XError::unavailable("clickhouse 读错误响应失败").with_source(error))?
+        else {
+            break;
+        };
+        let remaining = ERROR_RESPONSE_CAPTURE_LIMIT - prefix.len();
+        prefix.extend_from_slice(&chunk[..chunk.len().min(remaining)]);
+        if chunk.len() >= remaining {
+            break;
+        }
     }
-    t
+    Ok(prefix)
+}
+
+fn clickhouse_server_code(body: &[u8]) -> Option<u32> {
+    let body = std::str::from_utf8(body).ok()?.trim_start();
+    let rest = body.strip_prefix("Code:")?.trim_start();
+    let digits = rest.chars().take_while(char::is_ascii_digit).collect::<String>();
+    if digits.is_empty() { None } else { digits.parse().ok() }
+}
+
+fn safe_http_error_context(status: StatusCode, server_code: Option<u32>) -> String {
+    match server_code {
+        Some(code) => {
+            format!("clickhouse HTTP {status}（server_code={code}，响应正文已省略）")
+        }
+        None => format!("clickhouse HTTP {status}（响应正文已省略）"),
+    }
 }
 
 #[cfg(test)]
@@ -435,6 +467,27 @@ mod tests {
     fn batch_options_default() {
         let o = BatchInsertOptions::default();
         assert_eq!(o.max_rows_per_chunk, 1000);
+    }
+
+    #[test]
+    fn http_error_mapping_uses_code_without_echoing_response() {
+        let secret = "SELECT private_column; payload=secret-value";
+        let body = format!("Code: 60. DB::Exception: UNKNOWN_TABLE; {secret}");
+        let error = map_http_error(StatusCode::BAD_REQUEST, body.as_bytes());
+        assert_eq!(error.kind(), ErrorKind::Missing);
+        assert!(error.context().contains("server_code=60"));
+        assert!(!error.to_string().contains(secret));
+
+        let auth = map_http_error(StatusCode::UNAUTHORIZED, secret.as_bytes());
+        assert_eq!(auth.kind(), ErrorKind::Unavailable);
+        assert!(!auth.to_string().contains(secret));
+    }
+
+    #[test]
+    fn server_code_parser_is_bounded_to_the_prefix() {
+        assert_eq!(clickhouse_server_code(b"Code: 81. DB::Exception"), Some(81));
+        assert_eq!(clickhouse_server_code(b"not a ClickHouse exception"), None);
+        assert_eq!(clickhouse_server_code(&[0xff, 0xfe]), None);
     }
 
     #[tokio::test]

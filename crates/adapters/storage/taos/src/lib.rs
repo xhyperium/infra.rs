@@ -13,7 +13,10 @@ mod config;
 mod native;
 
 pub use client::{TaosClient, TaosExecResult, TaosPool, TaosPoolStats, build_insert_sql_chunks};
-pub use config::{TaosConfig, TransportMode, TsPrecision};
+pub use config::{
+    HARD_MAX_BATCH_BYTES, HARD_MAX_BATCH_ROWS, HARD_MAX_CLOSE_TIMEOUT, HARD_MAX_IN_FLIGHT,
+    HARD_MAX_QUERY_ROWS, HARD_MAX_RESPONSE_BYTES, TaosConfig, TransportMode, TsPrecision,
+};
 pub use native::{build_native_ws_url, connect_native_ws, validate_mode};
 
 #[cfg(feature = "scaffold")]

@@ -1756,7 +1756,7 @@ checksum = "7c87def4c32ab89d880effc9e097653c8da5d6ef28e6b539d313baaacfbafcbe"
 
 [[package]]
 name = "ossx"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "async-trait",
  "base64",
@@ -2201,7 +2201,7 @@ dependencies = [
 
 [[package]]
 name = "redisx"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "async-trait",
  "bytes",
@@ -2843,7 +2843,7 @@ dependencies = [
 
 [[package]]
 name = "taosx"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "async-trait",
  "canonical",

@@ -10,7 +10,12 @@
 - [x] SSOT landing + draft 快照
 - [x] docs/ssot/redisx-ssot-alignment.md
 
-## OPEN / DEFER
+## infra-2d9.3.6 当前交付
 
-- [ ] Cluster / Sentinel / Streams full / pubsub 默认关闭
-- [ ] package stable 证据包（若 Lead 启动）
+| 项目 | 状态 |
+|------|------|
+| Pub/Sub 同源配置与失败关闭测试 | 实现 |
+| 重试副作用/原子性代码合同与失败测试 | 实现 |
+| active SSOT / crate 文档统一 | 实现 |
+| Cluster / Sentinel / TLS 真实 live | OPEN（未运行） |
+| package stable 证据包 | OPEN |

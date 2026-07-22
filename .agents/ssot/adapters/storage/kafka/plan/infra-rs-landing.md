@@ -15,14 +15,15 @@
 ## 硬限制
 
 1. 本文件描述 **infra.rs 本仓 P0 生产入口**，不是 monorepo 战役 COMPLETE。
-2. TLS / group / rebalance / multi-owner fencing / native EOS / DLQ 为 **NO-GO**。
+2. TLS/CA 与 SASL/PLAIN 已接入；SCRAM/OAuth/mTLS、group、rebalance、自动重连、multi-owner fencing、native EOS、DLQ 为 **NO-GO**。
 3. 无 live 证据不得宣称“全后端 Production Ready”。
 
 ## 验证
 
 ```bash
 cargo test -p kafkax --all-targets
-node scripts/broker-conformance.mjs
+node scripts/kafka-broker-conformance.mjs
+node scripts/kafka-tls-sasl-conformance.mjs
 # live:
 # node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
 # set -a; source /tmp/foundationx-live.env; set +a

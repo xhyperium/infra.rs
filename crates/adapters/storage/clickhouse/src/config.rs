@@ -10,7 +10,7 @@ use kernel::{XError, XResult};
 ///
 /// 环境变量前缀：`FOUNDATIONX_CLICKHOUSEX_`
 /// - `HOST`（默认 `127.0.0.1`）
-/// - `HTTP_PORT`（默认 `8123`）
+/// - `HTTP_PORT`（默认 `8123`；兼容别名 `PORT`）
 /// - `USER`（默认 `default`）
 /// - `PASSWORD`（默认空；**不**写入仓库）
 /// - `DATABASE`（默认 `default`）
@@ -89,11 +89,11 @@ impl ClickHouseConfig {
                 cfg.host = v;
             }
         }
-        if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT") {
-            cfg.http_port = v.parse().map_err(|error| {
-                XError::invalid("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT 非法").with_source(error)
-            })?;
-        }
+        cfg.http_port = resolve_http_port(
+            std::env::var("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT").ok().as_deref(),
+            std::env::var("FOUNDATIONX_CLICKHOUSEX_PORT").ok().as_deref(),
+            cfg.http_port,
+        )?;
         if let Ok(value) = std::env::var("FOUNDATIONX_CLICKHOUSEX_TLS") {
             cfg.tls = parse_bool(&value)?;
         }
@@ -174,6 +174,33 @@ fn host_is_loopback(host: &str) -> bool {
         || host.parse::<std::net::IpAddr>().is_ok_and(|ip| ip.is_loopback())
 }
 
+fn resolve_http_port(
+    http_port: Option<&str>,
+    port_alias: Option<&str>,
+    default: u16,
+) -> XResult<u16> {
+    let http_port = parse_optional_port("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT", http_port)?;
+    let port_alias = parse_optional_port("FOUNDATIONX_CLICKHOUSEX_PORT", port_alias)?;
+    match (http_port, port_alias) {
+        (Some(primary), Some(alias)) if primary != alias => Err(XError::invalid(
+            "FOUNDATIONX_CLICKHOUSEX_HTTP_PORT 与 FOUNDATIONX_CLICKHOUSEX_PORT 冲突",
+        )),
+        (Some(primary), _) => Ok(primary),
+        (None, Some(alias)) => Ok(alias),
+        (None, None) => Ok(default),
+    }
+}
+
+fn parse_optional_port(name: &'static str, value: Option<&str>) -> XResult<Option<u16>> {
+    value
+        .map(|value| {
+            value
+                .parse::<u16>()
+                .map_err(|error| XError::invalid(format!("{name} 非法")).with_source(error))
+        })
+        .transpose()
+}
+
 fn parse_bool(value: &str) -> XResult<bool> {
     match value.trim().to_ascii_lowercase().as_str() {
         "1" | "true" | "yes" | "on" => Ok(true),
@@ -248,5 +275,26 @@ mod tests {
                 .kind(),
             kernel::ErrorKind::Invalid
         );
+    }
+
+    #[test]
+    fn port_alias_is_supported_and_conflicts_fail_closed() {
+        assert_eq!(resolve_http_port(None, None, 8123).expect("使用默认端口"), 8123);
+        assert_eq!(resolve_http_port(None, Some("8443"), 8123).expect("兼容 PORT"), 8443);
+        assert_eq!(resolve_http_port(Some("9440"), Some("9440"), 8123).expect("相同别名值"), 9440);
+
+        let conflict =
+            resolve_http_port(Some("8123"), Some("8443"), 8123).expect_err("冲突必须拒绝");
+        assert_eq!(conflict.kind(), kernel::ErrorKind::Invalid);
+        assert!(conflict.context().contains("冲突"));
+    }
+
+    #[test]
+    fn invalid_port_alias_preserves_source_without_echoing_value() {
+        let error = resolve_http_port(None, Some("secret-not-a-port"), 8123)
+            .expect_err("非法 PORT 必须拒绝");
+        assert_eq!(error.kind(), kernel::ErrorKind::Invalid);
+        assert!(std::error::Error::source(&error).is_some());
+        assert!(!error.to_string().contains("secret-not-a-port"));
     }
 }

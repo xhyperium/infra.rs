@@ -15,7 +15,7 @@
 cargo test -p kafkax
 
 # 可复现单节点 broker 语义
-node scripts/broker-conformance.mjs
+node scripts/kafka-broker-conformance.mjs
 
 # live（需真实 Kafka + 已 export 环境变量）
 cargo test -p kafkax -- --ignored --nocapture

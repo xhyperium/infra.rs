@@ -10,6 +10,10 @@
 - [`ProduceThenCheckpointCoordinator`](src/eos.rs)：非原子 produce/checkpoint，存在重复窗口
 - feature `scaffold`：旧内存 `KafkaAdapter` / `MockKafkaBus`
 
+`KafkaPool::close(deadline)` 会先拒绝新操作，再取消 broker I/O 与后台消费任务，并在
+deadline 内等待在途操作释放。consumer/EventBus 使用固定容量队列；慢消费者通过等待
+施加背压，关闭信号可打断等待。该行为不是自动重连或 consumer group 能力。
+
 详见 [docs/usage.md](docs/usage.md) · [docs/config.md](docs/config.md) · [docs/operations.md](docs/operations.md)。
 
 ## 快速开始
@@ -41,6 +45,6 @@ pool.close(std::time::Duration::from_secs(3)).await?;
 | `CONNECT_TIMEOUT_MS` / `OPERATION_TIMEOUT_MS` | 内部连接与控制面 deadline |
 | `CLIENT_ID` | 客户端标识，默认 `kafkax` |
 
-可复现语义测试：`node scripts/broker-conformance.mjs`；
+可复现语义测试：`node scripts/kafka-broker-conformance.mjs`；
 TLS/SASL：`node scripts/kafka-tls-sasl-conformance.mjs`。这些结果不证明
 group/rebalance/HA/native EOS。

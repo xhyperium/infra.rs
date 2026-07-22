@@ -146,9 +146,6 @@ impl NatsPool {
                     XError::deadline_exceeded("natsx connect 超时").with_source(error)
                 })?
                 .map_err(|e| XError::unavailable(format!("natsx connect: {e}")).with_source(e))?;
-        // async-nats 的 Connected 事件用于重连；首次 connect 成功由本层显式计数。
-        connected.fetch_add(1, Ordering::Relaxed);
-
         // 连通性：flush 一次
         tokio::time::timeout(config.operation_timeout, client.flush())
             .await

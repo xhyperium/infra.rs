@@ -87,16 +87,10 @@ node scripts/kafka-tls-sasl-conformance.mjs
 node scripts/postgres-deadline-conformance.mjs
 node scripts/clickhouse-https-conformance.mjs
 
-# live（默认 ignore；凭据见 scripts/live/build-foundationx-env.mjs）
-# node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
-# set -a; source /tmp/foundationx-live.env; set +a
-# cargo test -p redisx --test live_kv -- --ignored
-# cargo test -p postgresx --test live_postgres -- --ignored
-# cargo test -p kafkax --test live_event_bus -- --ignored
-# cargo test -p natsx --test live_event_bus -- --ignored
-# cargo test -p ossx --test live_object_store -- --ignored
-# cargo test -p clickhousex --test live_smoke -- --ignored
-# cargo test -p taosx --test live_smoke -- --ignored
+# live（仅 dev；默认 ignore；安全 runner 在子进程退出后清理临时文件）
+# scripts/live/export-foundationx-env.sh --env dev -- \
+#   cargo test -p redisx -p postgresx -p kafkax -p natsx \
+#     -p ossx -p clickhousex -p taosx -- --ignored
 ```
 
 ## exchange named DEFER（#210 / #214）
@@ -189,15 +183,9 @@ adapters/*  →  contracts / kernel（+ 外部 SDK：redis/tokio-postgres/rskafk
 | package stable / 全业务 Production Ready | **OPEN** | 禁止宣称 |
 
 ```bash
-node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
-set -a; source /tmp/foundationx-live.env; set +a
-cargo test -p redisx --test live_kv -- --ignored --nocapture
-cargo test -p postgresx --test live_postgres -- --ignored --nocapture
-cargo test -p kafkax --test live_event_bus -- --ignored --nocapture
-cargo test -p natsx --test live_event_bus -- --ignored --nocapture
-cargo test -p ossx --test live_object_store -- --ignored --nocapture
-cargo test -p clickhousex --test live_smoke -- --ignored --nocapture
-cargo test -p taosx --test live_smoke -- --ignored --nocapture
+scripts/live/export-foundationx-env.sh --env dev -- \
+  cargo test -p redisx -p postgresx -p kafkax -p natsx \
+    -p ossx -p clickhousex -p taosx -- --ignored
 ```
 
 ## 跟进（历史 · 2026-07-21 / PR #98 · asa.5 · s9t）

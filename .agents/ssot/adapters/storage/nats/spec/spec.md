@@ -49,8 +49,8 @@ Core NATS 与 JetStream 是两个独立合同。Core 发布发生在订阅建立
 - request/flush/publish/subscribe/ping/close 与 JetStream admin/publish/ack 均有内部 deadline。
 - subscription/client channel capacity、有限 `max_reconnects` 与 reconnect 最大退避均显式配置；连接、断开与 slow-consumer 事件进入 stats。
 - 本版不承诺 NKey 全量、JetStream KV/ObjectStore、跨账户、Cluster/HA、queue group 运维或自动 DLQ。
-- 固定入口容器重启后，同一 `async-nats` client 的命令通道连续三次实验均关闭；因此同连接自动恢复与原订阅恢复明确 **NO-GO**（`infra-2d9.3.1`）。
-- 单节点容器 conformance 不能作为上述能力证据。
+- 固定入口与有限重连预算内，`async-nats` 会重建连接并重新注册原 Core subscription；断线窗口消息仍可能丢失且不会回放。
+- `max_reconnects` 耗尽后连接 handler 退出并关闭命令通道；调用方收到 `Unavailable` 时必须重建 client，本 crate 不承诺无限自愈。
 - `get_pull_consumer` 保留为底层高级逃生口；普通调用方使用稳定 `consumer` 包装面。
 
 ## 4. 验证与证据
@@ -78,15 +78,16 @@ NATS 场景必须证明：
 6. `max_deliver` 与 `term` 停止重投且 DLQ 探针无消息；
 7. 唯一 stream/subject/durable、cargo 外层硬超时、日志与清理。
 
-失败重现实验：
+同客户端重连实验：
 
 ```bash
-# 当前预期返回非零；用于 infra-2d9.3.1，不是绿色发布门禁
 node scripts/nats-reconnect-conformance.mjs
 ```
 
-受控外部环境仍可运行 `tests/live_event_bus.rs`，但 ignored 或单节点 PASS 不得升级为
-同连接自动恢复、Cluster/HA/TLS/exactly-once 结论。
+脚本保持固定镜像、动态 host 端口与容器 ingress 不变，只重启容器内 broker 进程，默认连续
+三轮验证同一 client 的发布、原 Core subscription 与连接统计恢复。受控外部环境仍可运行
+`tests/live_event_bus.rs`，但单节点 PASS 不得升级为断线窗口无丢失、无限自愈、
+Cluster/HA/TLS/exactly-once 结论。
 
 追溯：`crates/adapters/storage/nats/{Cargo.toml,src,tests/broker_conformance.rs,tests/reconnect_conformance.rs}`、
 `scripts/nats-reconnect-conformance.mjs`、`docs/ssot/natsx-ssot-alignment.md`。

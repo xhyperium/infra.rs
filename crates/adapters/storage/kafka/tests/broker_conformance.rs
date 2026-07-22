@@ -30,7 +30,7 @@ async fn live_pool() -> KafkaPool {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-#[ignore = "需要隔离 Kafka；请通过 scripts/broker-conformance.mjs 运行"]
+#[ignore = "需要隔离 Kafka；请通过 scripts/kafka-broker-conformance.mjs 运行"]
 async fn event_bus_does_not_replay_messages_published_before_subscribe() {
     let pool = live_pool().await;
     let topic = format!("infra-conformance-amo-{}", unique_suffix());
@@ -55,7 +55,7 @@ async fn event_bus_does_not_replay_messages_published_before_subscribe() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-#[ignore = "需要隔离 Kafka；请通过 scripts/broker-conformance.mjs 运行"]
+#[ignore = "需要隔离 Kafka；请通过 scripts/kafka-broker-conformance.mjs 运行"]
 async fn unacked_restarts_same_offset_and_acked_advances() {
     let pool = live_pool().await;
     let topic = format!("infra-conformance-checkpoint-{}", unique_suffix());
@@ -148,7 +148,7 @@ impl OffsetCommitStore for FailFirstCommitStore {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-#[ignore = "需要隔离 Kafka；请通过 scripts/broker-conformance.mjs 运行"]
+#[ignore = "需要隔离 Kafka；请通过 scripts/kafka-broker-conformance.mjs 运行"]
 async fn successful_produce_then_failed_checkpoint_has_duplicate_window() {
     let pool = live_pool().await;
     let topic = format!("infra-conformance-duplicate-{}", unique_suffix());
