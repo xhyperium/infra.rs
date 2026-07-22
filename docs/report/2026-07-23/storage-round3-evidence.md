@@ -6,12 +6,14 @@
 | 对比基线 | `origin/main` = `3cd29a942710c0fb42f3f6bc05e3c31570acad47` |
 | 实现提交 | `435774f`（`feat(storage): 三轮加固七类存储适配器`） |
 | 审查修复候选 | `1729f0a5585dfd634a83e5aa37982ebb744e3afd`（含 Standards/Spec 首轮阻断修复） |
+| NATS 监督修复 | `b4ce23ca2db2c11c61f75e783a8f14a80efa409b`（保留并等待 `JoinHandle`，panic fail-closed） |
+| 固定测试候选 | `bbcc191f0cce9e1344f9cdbf70808167dd6fc7ea`（仅比 NATS 修复多生成式 `STATUS.md` 刷新） |
 | 配置来源 | `/home/workspace/ZoneCNH/sre/secrets/env/dev.md`；仅由安全 runner 读取 |
 | 禁止范围 | 未读取或运行 `prod.md`；未在日志、命令行或仓库写入凭据值 |
 
 ## 全局门禁
 
-以下命令均在候选 `1729f0a5585dfd634a83e5aa37982ebb744e3afd` 上重新执行，退出码均为 0；
+以下命令均在固定候选 `bbcc191f0cce9e1344f9cdbf70808167dd6fc7ea` 上重新执行，退出码均为 0；
 原始摘要与输出哈希见同目录的 `storage-round3-raw-gates.md`：
 
 - `cargo fmt --all --check`
