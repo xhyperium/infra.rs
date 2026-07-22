@@ -39,4 +39,3 @@ workspace = true
 [[bench]]
 name = "hot_path"
 harness = false
-
