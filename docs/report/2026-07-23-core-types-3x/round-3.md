@@ -3,8 +3,9 @@
 | 字段 | 值 |
 |---|---|
 | 输入 HEAD | `cc93223161880fbeb41fe770e7785a89f8dadf72`（R2 evidence） |
-| 内容候选 | `387a1dc550341767a24a1548dd9ae47b2c8b84ee` |
-| 当前状态 | **GATES PASS / INDEPENDENT REVIEW PENDING** |
+| 初始内容候选 | `387a1dc550341767a24a1548dd9ae47b2c8b84ee` |
+| 主干同步候选 | `70d402a9a8b7b796077cba33e30ddf0c069c5e03`（包含 `origin/main 5fe242c`） |
+| 当前状态 | **POST-MAIN-SYNC GATES PASS / INDEPENDENT REVIEW PENDING** |
 | 轮次目标 | 当前权威、历史战役、Cargo package 真相与生成状态一致 |
 
 ## 基线 RED
@@ -27,6 +28,8 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
 4. 独立 reviewer 审查 `origin/main...B` 全量差异并给出 GO。
 
 内容候选上的机器门禁已闭合；独立 review 与 evidence-only diff 复核完成前，本轮仍不写 GO，也不把 R1/R2 PASS 继承给最终候选。GREEN 命令和结果见 [`evidence/r3-green.txt`](evidence/r3-green.txt)。
+
+主干在初次终审后推进到 `5fe242c`。为保留既有三轮 Git object 与指纹，本分支以 merge commit 同步主干；冲突按“主干 storage/contracts 新版本 + 本分支四域版本”合并，kernel 设计保留 current-state 权威并吸收 `crates/evidence` 路径与新门禁约束。`70d402a` 上重新执行完整闭包，结果见 [`evidence/r3-main-sync-green.txt`](evidence/r3-main-sync-green.txt)。此前绑定 `6dbaa6f` 的 R3 GO 已按 failure conditions 失效，必须对新候选重新终审。
 
 ## 独立审查与 residual
 
