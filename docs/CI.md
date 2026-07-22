@@ -144,3 +144,32 @@ node scripts/self-test.mjs --hooks --lint-only
 | `clippy -D warnings` 失败 | quality | 代码静态警告 | 修复 clippy 警告 |
 | self-test 语法失败 | self-test | 脚本缺少 shebang/语法错误 | 修复脚本 |
 | `All settings commands pass` 未出现 | validation | errors in settings | 检查 settings.json 格式 |
+
+---
+
+## 编码治理总表（四仓库）
+
+| 仓库 | 编码修复 | 钩子 | CI 门禁 | 测试 | U+FFFD | 状态 |
+|------|---------|------|---------|------|--------|------|
+| `macro_data.rs` | ✅ | ✅ | ✅ | ✅ 154 | 0 | 完成 |
+| `market_data.rs` | ✅ | ✅ | ✅ | ✅ | 7 | 完成 |
+| `infra.rs` | ✅ | ✅ | ✅ | ✅ | 271 | 完成 |
+| `standard_template.rs` | ✅ | ✅ | ✅ | ✅ | 0 | 完成 |
+
+### 防护体系组成
+
+| 层级 | 工具 | 时机 | 阻断 |
+|------|------|------|------|
+| Pre-Tool 钩子 | `encoding-check.mjs` | Write/Edit 前 | ✅ |
+| Post-Tool 巡检 | `encoding-batch-check.mjs` | Write/Edit 后 | ❌ |
+| CI 门禁（编码） | `validation.yml` L1 | PR 时 | ✅ |
+| CI 门禁（U+FFFD） | `validation.yml` L2 | PR 时 | ❌ 警告 |
+| 修复脚本 | `fix-encoding.mjs --fix` | 按需 | — |
+
+### 新增仓库部署步骤
+
+1. 复制文件：`scripts/fix-encoding.mjs` + `.claude/hooks/encoding-*` + `scripts/quality-gates/check-encoding-*`
+2. 注册钩子：`.claude/settings.json` → PreToolUse + PostToolUse
+3. 添加 CI 门禁：`.github/workflows/validation.yml` → `utf8-encoding` 作业
+4. 修复编码：`python3` GBK 解码 + U+FFFD 移除
+5. 验证：`node scripts/fix-encoding.mjs --check` + 5 个测试文件
