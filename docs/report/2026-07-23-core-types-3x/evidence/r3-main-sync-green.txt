@@ -3,6 +3,9 @@ R3 主干同步候选通过证据
 最新主干：5fe242cefc873117d024f0d09f8ad5cbf449d2ec
 已验证合并候选：70d402a9a8b7b796077cba33e30ddf0c069c5e03
 origin/main...candidate 差异 SHA-256：5a305472203b5f96772b97868a0bb1d6b1a4671fc926e906202e6d2b5de45cfe
+rustc：1.97.0 (2d8144b78 2026-07-07)
+cargo：1.97.0 (c980f4866 2026-06-30)
+node：v24.14.0
 
 固定条件：
   git rev-parse HEAD == 70d402a9a8b7b796077cba33e30ddf0c069c5e03
@@ -43,3 +46,5 @@ origin/main...candidate 差异 SHA-256：5a305472203b5f96772b97868a0bb1d6b1a4671
   固定范围 git diff --check：PASS
 
 观察到的非阻断既有警告仍为 basic example 产物文件名碰撞与 cargo-deny skip 配置；未由本轮新增。
+
+完整 stdout 未入库，执行会话也不是持久仓库证据；本文件保存固定 SHA、可复算 diff 指纹、可重放命令、退出码、工具链和关键输出摘要。任何无法由这些输入重放的会话内容均不作为完成声明依据。
