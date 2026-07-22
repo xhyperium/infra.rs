@@ -125,3 +125,4 @@ CI 门禁     node scripts/docs/gen-crate-status.mjs --check
 - [docs/ssot/workspace-ssot-alignment.md](docs/ssot/workspace-ssot-alignment.md) — 镜像 vs 落地
 - [docs/status/](docs/status/) — CI 状态快照
 - [docs/plans/2026-07-21-core-crates-production-readiness.md](docs/plans/2026-07-21-core-crates-production-readiness.md) — 生产就绪计划（人签字）
+
