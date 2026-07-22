@@ -268,6 +268,16 @@ impl fmt::Debug for PendingStep {
 /// let _ = harness.run();
 /// let _ = harness.run();
 /// ```
+///
+/// ```compile_fail
+/// use kernel::Timestamp;
+/// use testkit::IntegrationHarness;
+///
+/// let harness = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(0))
+///     .step("成功", |_| Ok::<(), std::io::Error>(()));
+/// let _ = harness.run();
+/// let _ = harness.run();
+/// ```
 #[derive(Debug)]
 pub struct IntegrationHarness {
     clock: ManualClock,
@@ -465,5 +475,52 @@ fn panic_detail(payload: &(dyn std::any::Any + Send)) -> String {
         message.clone()
     } else {
         "步骤发生非字符串 panic".to_owned()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::error::Error;
+    use std::io;
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    #[test]
+    fn snapshot_synchronization_before_step_is_terminal() {
+        let clock = ManualClock::new(Timestamp::from_unix_nanos(0));
+        clock.poison_state_for_test();
+        let executed = Arc::new(AtomicBool::new(false));
+        let marker = Arc::clone(&executed);
+
+        let error = IntegrationHarness::new(clock)
+            .step("不得执行", move |_| {
+                marker.store(true, Ordering::SeqCst);
+                Ok::<(), io::Error>(())
+            })
+            .run()
+            .expect_err("step 前快照同步失败必须终止");
+
+        assert!(!executed.load(Ordering::SeqCst));
+        assert_eq!(error.kind(), StepOutcome::ObservationFailed);
+        assert!(error.report().records()[0].before_snapshot().is_none());
+        assert!(error.source().is_some());
+    }
+
+    #[test]
+    fn snapshot_synchronization_after_step_is_terminal() {
+        let error = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(0))
+            .step("毒化状态锁", |clock| {
+                clock.poison_state_for_test();
+                Ok::<(), io::Error>(())
+            })
+            .run()
+            .expect_err("step 后快照同步失败必须终止");
+
+        assert_eq!(error.kind(), StepOutcome::ObservationFailed);
+        let record = &error.report().records()[0];
+        assert!(record.before_snapshot().is_some());
+        assert!(record.after_snapshot().is_none());
+        assert!(error.source().is_some());
     }
 }

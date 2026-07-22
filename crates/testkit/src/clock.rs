@@ -218,6 +218,15 @@ impl ManualClock {
             wall_fault: g.wall_fault,
         })
     }
+
+    #[cfg(test)]
+    pub(crate) fn poison_state_for_test(&self) {
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _guard = self.state.lock().expect("测试毒化前必须取得状态锁");
+            panic!("测试专用 ManualClock 状态锁毒化");
+        }));
+        assert!(result.is_err(), "测试专用毒化必须捕获内部 panic");
+    }
 }
 
 impl Clock for ManualClock {

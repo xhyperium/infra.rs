@@ -3,7 +3,8 @@ date: 2026-07-23 Asia/Shanghai
 base: 3cd29a942710c0fb42f3f6bc05e3c31570acad47
 fixed-candidate: fc201d7dd8b63b3eb16c2d9e49ac95a03fd6f283
 verified-repair-candidate: 6e4e5999e708e126a9b511cbeedaa0176abc5408
-candidate-diff-sha256-before-evidence: 0f7bddd7765971a6da3e0f1720d0fb0adf113d50a6337050f0ab554da08b490b
+verified-repair-diff-command: git diff 3cd29a942710c0fb42f3f6bc05e3c31570acad47..6e4e5999e708e126a9b511cbeedaa0176abc5408 | sha256sum
+verified-repair-diff-sha256: 6c414160b2b339f5d752f3a570ce4ed7bb8c71eebb59498978b228bd3341e060
 rustc: 1.97.0 (2d8144b78 2026-07-07)
 cargo: 1.97.0 (c980f4866 2026-06-30)
 node: v24.14.0
@@ -25,10 +26,10 @@ key output:
   decimalx lib: 68 passed
   decimalx boundary_matrix: 15 passed (includes proptest i128 × scale round-trip)
   kernel lib: 66 passed
-  testkit lib: 20 passed
+  testkit lib: 22 passed (includes 2 runner snapshot synchronization cases)
   testkit harness_fail_closed: 8 passed
   testkit manual_clock_concurrency: 2 passed
-  testkit doctests: 3 compile-fail passed
+  testkit doctests: 4 compile-fail passed
   kernel doctests: 12 passed
   canonical-align: ALL CHECKS PASSED
   decimal panicking-ops: OK (102 files scanned, 0 hits)
