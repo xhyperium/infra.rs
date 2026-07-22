@@ -159,7 +159,9 @@ adapters/*  →  contracts / kernel（+ 外部 SDK：redis/tokio-postgres/rskafk
 
 ## 未做（follow-up / OPEN）
 
-1. Cluster / Sentinel / Streams / JetStream / EOS / multipart / native protocol — **DEFER**（非 P0）
+> **OBJECTIVE 说明（#211）**：原 storage×7 DEFER 行（Cluster / Sentinel / TLS / resiliencx / Repository / SSL require / offset / at-least-once / 应用级 EOS / JetStream / TLS 默认 / multipart / retry / batch insert / pool / native 探测）**已闭合**，见各包 `*-ssot-alignment.md` 与 `draft-gap-matrix.md`。下列仅剩 **非 OBJECTIVE** 项。
+
+1. Redis Streams full / Kafka schema registry / broker 事务协议 EOS / JetStream KV full / CH native 9000 / taos full WS SQL session — **非 OBJECTIVE 残留**（生产默认路径已有替代面）
 2. adapters 全量实现 contracts trait 的业务深度（当前生产客户端 + 部分 trait 绑定）
 3. contracts：`Ticker` 等金额字段迁离 `f64`（改 decimalx / canonical）
 4. package stable / crates.io — **禁止**宣称
