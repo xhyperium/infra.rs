@@ -19,7 +19,7 @@
 | LCOV 行 100% | **PASS** | `cov-gate-100.mjs -p resiliencx` |
 | async wait | **PASS**（#167） | `retry_async` + `AsyncWait`；feature `tokio` → `TokioSleepWait` |
 | budget | **PASS** | `src/budget.rs` · 重试/调用预算 |
-| adapter 接线（redis/pg） | **PASS** | `crates/adapters/storage/redis/src/resilience.rs` · `postgres/src/resilience.rs` |
+| adapter 接线（redis/pg） | **PASS** | 生产入口：`RedisClient::get/set` + `PostgresPool::execute/query*` 可选 `with_retry_budget`；显式 `*_with_budget` 始终经 `with_budget_async`；helpers 在 `resilience.rs` |
 | 全 9 adapters 统一接线 / package stable | **OPEN** | 本轮关闭 redis+pg 最小 wire；其余 adapter 按需跟进 |
 | Agent L5 | **未填** | — |
 
@@ -28,7 +28,7 @@
 | 项 | 前状态 | 现状态 | 证据 |
 |----|--------|--------|------|
 | budget | DEFER | **PASS** | `crates/resiliencx/src/budget.rs` |
-| 接入 adapters | DEFER | **PASS（redisx + postgresx）** | `redis/src/resilience.rs` · `postgres/src/resilience.rs` |
+| 接入 adapters | DEFER | **PASS（redisx + postgresx 生产 I/O）** | `client.rs`/`pool.rs` 入口 + `resilience.rs` async budget；测 `get_set_with_budget_*` / `execute_with_budget_*` |
 
 ## 熔断合同（本仓）
 
@@ -76,3 +76,4 @@ cargo tree -p resiliencx -i observex  # 须无匹配
 | 日期 | 说明 |
 |------|------|
 | 2026-07-22 | **defer-close**：budget + redis/pg resilience wire PASS |
+| 2026-07-22 | **skeptic-fix**：budget 从 helper 升到 redis/pg 生产 `get/set/execute/query` 入口 |

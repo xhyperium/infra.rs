@@ -1880,7 +1880,7 @@ dependencies = [
 
 [[package]]
 name = "postgresx"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "async-trait",
  "contracts",
@@ -2147,7 +2147,7 @@ dependencies = [
 
 [[package]]
 name = "redisx"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3133,7 +3133,7 @@ dependencies = [
 
 [[package]]
 name = "transportx"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bytes",

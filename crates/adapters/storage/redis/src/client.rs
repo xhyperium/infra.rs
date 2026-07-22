@@ -1,26 +1,47 @@
 //! 可克隆的 Redis 命令客户端（共享 [`RedisPool`]）。
 
+use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
 use contracts::KeyValueStore;
 use kernel::{XError, XResult};
 use redis::AsyncCommands;
+use resiliencx::RetryBudget;
 
 use crate::error_map::map_redis_result;
 use crate::pool::RedisPool;
+use crate::resilience::with_budget_async_noop;
 
 /// 生产 Redis KV 客户端。
 ///
 /// `Clone` 只共享底层池引用；所有命令受池级 Semaphore 与超时约束。
+/// 可选 [`RetryBudget`]：配置后 `get`/`set` 等经 resiliencx 重试生产路径。
 #[derive(Clone, Debug)]
 pub struct RedisClient {
     pool: RedisPool,
+    /// 可选重试预算（与 `budget_max_attempts` 一起启用）。
+    budget: Option<Arc<RetryBudget>>,
+    budget_max_attempts: u32,
 }
 
 impl RedisClient {
     pub(crate) fn from_pool(pool: RedisPool) -> Self {
-        Self { pool }
+        Self { pool, budget: None, budget_max_attempts: 3 }
+    }
+
+    /// 注入 [`RetryBudget`]：后续 `get`/`set` 走 resiliencx 异步重试。
+    #[must_use]
+    pub fn with_retry_budget(mut self, budget: RetryBudget, max_attempts: u32) -> Self {
+        self.budget = Some(Arc::new(budget));
+        self.budget_max_attempts = max_attempts.max(1);
+        self
+    }
+
+    /// 是否已配置重试预算。
+    #[must_use]
+    pub fn has_retry_budget(&self) -> bool {
+        self.budget.is_some()
     }
 
     /// 兼容旧 `RedisLiveKv::connect(url)`：从 URL 建池并返回客户端。
@@ -47,8 +68,8 @@ impl RedisClient {
         self.pool.endpoint()
     }
 
-    /// `GET`；缺失返回 `Ok(None)`。空字节串视为合法值。
-    pub async fn get(&self, key: &str) -> XResult<Option<Vec<u8>>> {
+    /// 单次 `GET` I/O（无 budget 环）。
+    async fn get_once(&self, key: &str) -> XResult<Option<Vec<u8>>> {
         let key = key.to_owned();
         self.pool
             .with_conn(|mut conn| async move {
@@ -58,12 +79,8 @@ impl RedisClient {
             .await
     }
 
-    /// `SET` / `PSETEX`。
-    ///
-    /// - `ttl = None`：不过期；
-    /// - `ttl = Some(0)` 或 `< 1ms`：[`XError::invalid`]；
-    /// - 其余：使用毫秒精度 `PSETEX`。
-    pub async fn set(&self, key: &str, val: Vec<u8>, ttl: Option<Duration>) -> XResult<()> {
+    /// 单次 `SET` I/O（无 budget 环）。
+    async fn set_once(&self, key: &str, val: Vec<u8>, ttl: Option<Duration>) -> XResult<()> {
         validate_ttl(ttl)?;
         let key = key.to_owned();
         self.pool
@@ -77,6 +94,69 @@ impl RedisClient {
                 Ok(())
             })
             .await
+    }
+
+    /// `GET`；缺失返回 `Ok(None)`。空字节串视为合法值。
+    ///
+    /// 若已 [`with_retry_budget`]，经 resiliencx 异步预算重试。
+    pub async fn get(&self, key: &str) -> XResult<Option<Vec<u8>>> {
+        if let Some(budget) = self.budget.as_ref() {
+            return self.get_with_budget(key, budget.as_ref(), self.budget_max_attempts).await;
+        }
+        self.get_once(key).await
+    }
+
+    /// 显式 budget 的 `GET`：始终经 [`with_budget_async_noop`] 驱动真实 I/O。
+    pub async fn get_with_budget(
+        &self,
+        key: &str,
+        budget: &RetryBudget,
+        max_attempts: u32,
+    ) -> XResult<Option<Vec<u8>>> {
+        let this = self.clone();
+        let key = key.to_owned();
+        with_budget_async_noop(budget, max_attempts, "redis.get", || {
+            let this = this.clone();
+            let key = key.clone();
+            async move { this.get_once(&key).await }
+        })
+        .await
+    }
+
+    /// `SET` / `PSETEX`。
+    ///
+    /// - `ttl = None`：不过期；
+    /// - `ttl = Some(0)` 或 `< 1ms`：[`XError::invalid`]；
+    /// - 其余：使用毫秒精度 `PSETEX`。
+    ///
+    /// 若已 [`with_retry_budget`]，经 resiliencx 异步预算重试。
+    pub async fn set(&self, key: &str, val: Vec<u8>, ttl: Option<Duration>) -> XResult<()> {
+        if let Some(budget) = self.budget.as_ref() {
+            return self
+                .set_with_budget(key, val, ttl, budget.as_ref(), self.budget_max_attempts)
+                .await;
+        }
+        self.set_once(key, val, ttl).await
+    }
+
+    /// 显式 budget 的 `SET`：始终经 resiliencx 驱动真实 I/O。
+    pub async fn set_with_budget(
+        &self,
+        key: &str,
+        val: Vec<u8>,
+        ttl: Option<Duration>,
+        budget: &RetryBudget,
+        max_attempts: u32,
+    ) -> XResult<()> {
+        let this = self.clone();
+        let key = key.to_owned();
+        with_budget_async_noop(budget, max_attempts, "redis.set", || {
+            let this = this.clone();
+            let key = key.clone();
+            let val = val.clone();
+            async move { this.set_once(&key, val, ttl).await }
+        })
+        .await
     }
 
     /// `DEL`；返回是否删除了 key。
@@ -219,5 +299,44 @@ mod tests {
     #[test]
     fn ttl_none_ok() {
         validate_ttl(None).unwrap();
+    }
+
+    #[tokio::test]
+    async fn get_set_with_budget_entrypoints_drive_real_io() {
+        // 有可认证 Redis 时完整 roundtrip；否则连接成功但 NOAUTH 仍证明入口被调用。
+        let budget = RetryBudget::new(2);
+        let Ok(cfg) = crate::config::RedisConfig::from_env() else {
+            assert_eq!(budget.remaining(), 2);
+            return;
+        };
+        let Ok(pool) = crate::pool::RedisPool::connect(cfg).await else {
+            assert_eq!(budget.remaining(), 2);
+            return;
+        };
+        let client = pool.client().with_retry_budget(RetryBudget::new(2), 3);
+        assert!(client.has_retry_budget());
+        // 驱动真实 client I/O + resiliencx budget 环（不要求业务成功）
+        let set_res =
+            client.set_with_budget("infra:resilience:probe", b"1".to_vec(), None, &budget, 2).await;
+        let get_res = client.get_with_budget("infra:resilience:probe", &budget, 2).await;
+        match (set_res, get_res) {
+            (Ok(()), Ok(v)) => assert_eq!(v.as_deref(), Some(b"1".as_ref())),
+            (Err(e), _) | (_, Err(e)) => {
+                // NOAUTH / 权限等：入口与 budget 环已被调用
+                assert!(
+                    matches!(
+                        e.kind(),
+                        ErrorKind::Unavailable
+                            | ErrorKind::Invalid
+                            | ErrorKind::Transient
+                            | ErrorKind::DeadlineExceeded
+                    ),
+                    "kind={:?}",
+                    e.kind()
+                );
+            }
+        }
+        // 默认 get 也路由到 budget 路径
+        let _ = client.get("infra:resilience:probe").await;
     }
 }

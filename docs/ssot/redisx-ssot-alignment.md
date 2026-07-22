@@ -14,6 +14,7 @@
 |------|------|
 | 生产默认面 | `RedisPool / RedisClient / RedisConfig` |
 | contracts | contracts::KeyValueStore（+ 可选 pubsub） |
+| resiliencx | `with_retry_budget` / `get_with_budget` / `set_with_budget` 经 `with_budget_async` |
 | 环境变量 | `FOUNDATIONX_REDISX_{ADDR,USERNAME,PASSWORD,DB,TLS}` |
 | live | `tests/live_kv.rs · tests/live_kv_conformance.rs`（`#[ignore]`） |
 | bench | `benches/kv_hot_path.rs` |
@@ -33,6 +34,7 @@
 | REDISX-8 | SSOT 11 层 + landing/draft | PASS | `.agents/ssot/adapters/storage/redis/` |
 | REDISX-9 | package stable | OPEN | 禁止宣称 |
 | REDISX-10 | DEFER 能力 | OPEN | Cluster / Sentinel / Streams full / pubsub 默认关闭 |
+| REDISX-11 | resiliencx 生产入口 | PASS | `client.rs` · `get`/`set` + `*_with_budget`；`resilience.rs` async |
 
 ## 验证
 

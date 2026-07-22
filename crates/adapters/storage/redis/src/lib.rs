@@ -28,7 +28,7 @@ pub use client::RedisClient;
 pub use config::{RedisConfig, RedisConfigBuilder, RedisMode};
 pub use error_map::{map_redis_error, map_redis_result};
 pub use pool::{RedisPool, RedisPoolStats};
-pub use resilience::{with_budget, with_budget_noop};
+pub use resilience::{with_budget, with_budget_async, with_budget_async_noop, with_budget_noop};
 
 /// 兼容旧名称：真实 Redis KV 客户端。
 pub type RedisLiveKv = RedisClient;
