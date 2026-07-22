@@ -33,7 +33,7 @@ Cargo.toml members              含 crates/testkit
 package name                    testkit
 lib name                        testkit
 publish                         false
-prod deps                       kernel only
+prod deps                       kernel, thiserror
 dev deps                        proptest, static_assertions
 features.default                []
 examples                        examples/basic.rs
