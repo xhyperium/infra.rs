@@ -9,7 +9,8 @@
 | 宪章合规性（全部） | **强制** | `scripts/quality-gates/check-constitution.mjs` | `constitution.yml` / `make check` |
 | UTF-8 / 无 `U+FFFD`（§4.5） | **强制** | 编码完整性 | `constitution.yml`（已包含） |
 | Git Main First（§6.0） | **强制** | 主干唯一、PR 收敛 | 分支保护 + 宪章脚本条款检查 |
-| ASD-STE100（§4.6） | **强制** | 英文技术文档受控语言 | 审查清单 + `docs/governance/ASD-STE100.md` |
+| 语言政策（§4.5 + 组织 language.md） | **强制** | 人类可读文本中文；UTF-8 | 宪章脚本 + 审查 |
+| 英文 STE（§4.6） | **可选** | 仅书面豁免的英文交付 | 审查清单 + `docs/governance/ASD-STE100.md` |
 | 模块自验证（§5.2） | **强制** | 脚本 + 钩子语法与逻辑完整 | `self-test.yml` / `node scripts/self-test.mjs` |
 | 覆盖率 >= 80% | **推荐** | 代码覆盖 | `ci-rust.yml` |
 | `cargo-llvm-cov` | **推荐** | 覆盖率统计 | `ci-rust.yml` |

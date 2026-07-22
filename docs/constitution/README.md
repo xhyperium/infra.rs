@@ -4,7 +4,7 @@
 
 仓库根 [`CONSTITUTION.md`](../../CONSTITUTION.md) 为**兼容索引**（指向本目录）；修订宪章时改本目录分章文件，并同步根索引与本 README。
 
-**当前版本**：v1.6.0（见 [八、修订](./08-amendments.md#83-版本)）
+**当前版本**：v1.8.0（见 [八、修订](./08-amendments.md#83-版本)）
 
 ## 章节索引
 
@@ -13,7 +13,7 @@
 | 一 | [01-mission.md](./01-mission.md) | 使命 |
 | 二 | [02-values.md](./02-values.md) | 核心价值观（安全 / 可观测 / 可验证 / 自动化 / 简单） |
 | 三 | [03-architecture.md](./03-architecture.md) | 架构原则（模块边界 / 接口 / 类型驱动 / 错误处理） |
-| 四 | [04-code-standards.md](./04-code-standards.md) | 代码标准（§4.0 全局 Rust 完整版 / 格式 / Lint / 命名 / 测试 / 语言编码 / STE / ESM） |
+| 四 | [04-code-standards.md](./04-code-standards.md) | 代码标准（§4.0 组织 Rust v2.1.1 / 中文强制 / STE 可选 / ESM） |
 | 五 | [05-quality-gates.md](./05-quality-gates.md) | 质量门禁 |
 | 六 | [06-governance.md](./06-governance.md) | 治理（Git Main First / 变更流程 / 版本 / 所有权） |
 | 七 | [07-ai-agents.md](./07-ai-agents.md) | AI 代理章程 |
@@ -24,8 +24,8 @@
 | 条款 | 链接 |
 |------|------|
 | §4.0 Rust 全局编码规范 | [04-code-standards.md §4.0](./04-code-standards.md#40-rust-全局编码规范强制上位) |
-| §4.5 语言与编码 | [04-code-standards.md §4.5](./04-code-standards.md#45-语言与编码强制) |
-| §4.6 ASD-STE100 | [04-code-standards.md §4.6](./04-code-standards.md#46-文档标准asd-ste100强制) |
+| §4.5 语言与编码（强制中文） | [04-code-standards.md §4.5](./04-code-standards.md#45-语言与编码强制) |
+| §4.6 英文 / STE（可选） | [04-code-standards.md §4.6](./04-code-standards.md#46-英文技术文档与-asd-ste100可选加严) |
 | §4.8 ESM 脚本 | [04-code-standards.md §4.8](./04-code-standards.md#48-脚本语言ecmascript-module强制) |
 | §5 质量门禁 | [05-quality-gates.md](./05-quality-gates.md) |
 | §6.0 Git Main First | [06-governance.md §6.0](./06-governance.md#60-git-main-first强制) |
@@ -55,8 +55,9 @@
 | [VERSIONING.md](../governance/VERSIONING.md) | §6.2 / 版本策略 |
 | [worktree-policy.md](../governance/worktree-policy.md) | §6.0.5 |
 | [编码与语言约定.md](../governance/编码与语言约定.md) | §4.5 |
-| [ASD-STE100.md](../governance/ASD-STE100.md) | §4.6 |
+| [ASD-STE100.md](../governance/ASD-STE100.md) | §4.6（英文可选加严） |
 | [quant-dev-spec.md](../governance/quant-dev-spec.md) | 领域扩展（§3.3） |
-| 组织 [Rust 编码规范完整版 v2.0](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md) | §4.0 上位全局标准（`xhyperium/.github` → `rulesets/rust/`） |
+| 组织 [language.md 强制中文](https://github.com/xhyperium/.github/blob/main/rulesets/language.md) | §4.5 上位语言政策 |
+| 组织 [Rust 编码规范完整版 v2.1.1](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md) | §4.0 上位全局标准 |
 
 上级索引：[docs/README.md](../README.md)。
