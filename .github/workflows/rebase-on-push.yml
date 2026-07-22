@@ -1,0 +1,159 @@
+name: push 时自动 Rebase
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  rebase-open-prs:
+    name: Rebase open PRs onto main
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout 仓库
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 配置 Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: 查找并 rebase 开放 PR
+        id: rebase-all
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -o pipefail
+
+          echo "## 自动 Rebase 报告" >> "$GITHUB_STEP_SUMMARY"
+          echo "触发提交: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          git fetch origin main
+
+          success_count=0
+          conflict_count=0
+          skip_count=0
+          results_json='['
+
+          # 列出同仓库开放 PR（排除 fork）
+          OWNER="${{ github.repository_owner }}"
+          pr_list=$(gh pr list \
+            --state open \
+            --base main \
+            --json number,headRefName,headRepositoryOwner \
+            --jq ".[] | select(.headRepositoryOwner.login == \"${OWNER}\") | \"\\(.number)|\\(.headRefName)\"")
+
+          if [ -z "$pr_list" ]; then
+            echo "没有需要 rebase 的同仓库开放 PR。" >> "$GITHUB_STEP_SUMMARY"
+            echo "results=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          first=true
+          while IFS='|' read -r pr_number head_branch; do
+            echo "---" >> "$GITHUB_STEP_SUMMARY"
+            echo "### PR #${pr_number} (\`${head_branch}\`)" >> "$GITHUB_STEP_SUMMARY"
+
+            if ! git fetch origin "${head_branch}" 2>/dev/null; then
+              echo "- 状态：跳过（无法获取分支）" >> "$GITHUB_STEP_SUMMARY"
+              skip_count=$((skip_count + 1))
+              continue
+            fi
+
+            if git checkout -b "ci-rebase-${pr_number}" "origin/${head_branch}" 2>/dev/null && \
+               git rebase origin/main 2>/dev/null; then
+              echo "- 状态：成功" >> "$GITHUB_STEP_SUMMARY"
+              if git push --force-with-lease origin "ci-rebase-${pr_number}:${head_branch}" 2>/dev/null; then
+                echo "  (已推送)" >> "$GITHUB_STEP_SUMMARY"
+                status="pushed"
+              else
+                echo "  (rebase 成功但推送失败)" >> "$GITHUB_STEP_SUMMARY"
+                status="rebased-no-push"
+              fi
+              git checkout main 2>/dev/null
+              git branch -D "ci-rebase-${pr_number}" 2>/dev/null || true
+              success_count=$((success_count + 1))
+            else
+              git rebase --abort 2>/dev/null || true
+              git checkout main 2>/dev/null
+              git branch -D "ci-rebase-${pr_number}" 2>/dev/null || true
+              echo "- 状态：冲突，需手动解决" >> "$GITHUB_STEP_SUMMARY"
+              status="conflict"
+              conflict_count=$((conflict_count + 1))
+            fi
+
+            # 构建结果 JSON
+            [ "$first" = true ] && first=false || results_json+=','
+            results_json+="{\"number\":${pr_number},\"branch\":\"${head_branch}\",\"status\":\"${status}\"}"
+          done <<< "$pr_list"
+
+          results_json+=']'
+          echo "results=${results_json}" >> "$GITHUB_OUTPUT"
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 统计 | 数量 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 成功 | ${success_count} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 冲突 | ${conflict_count} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 跳过 | ${skip_count} |" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 发布 PR 评论
+        if: always() && steps.rebase-all.outputs.results != '[]'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const results = JSON.parse('${{ steps.rebase-all.outputs.results }}');
+
+            for (const pr of results) {
+              const emoji = pr.status === 'pushed' ? '✅' :
+                            pr.status === 'rebased-no-push' ? '⚠️' : '❌';
+
+              let statusText;
+              switch (pr.status) {
+                case 'pushed':
+                  statusText = 'rebase 成功并已推送';
+                  break;
+                case 'rebased-no-push':
+                  statusText = 'rebase 成功但推送失败';
+                  break;
+                case 'conflict':
+                  statusText = 'rebase 冲突，请手动解决';
+                  break;
+                default:
+                  statusText = pr.status;
+              }
+
+              const body = `${emoji} **自动 Rebase：\`${pr.branch}\` ← \`main\`**
+
+              | 项目 | 值 |
+              |------|-----|
+              | PR | #${pr.number} |
+              | 分支 | \`${pr.branch}\` |
+              | 目标 | \`main\` |
+              | 触发 | push \`${{ github.sha }}\` |
+              | 结果 | ${statusText} |
+              ${pr.status === 'conflict' ? '| 操作 | \`git fetch origin main && git rebase origin/main\` |' : ''}`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body
+              });
+            }
