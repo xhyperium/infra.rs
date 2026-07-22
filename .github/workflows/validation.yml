@@ -207,4 +207,3 @@ jobs:
           done < <(find . -type f -not -path './.git/*' -not -path './node_modules/*' -not -path './.cargo/*' -not -path './target/*' -not -name '*.png' -not -name '*.jpg' -not -name '*.ico' -not -name '*.svg' -not -name '*.woff*' -not -name '*.lock' -print0)
           [ "$bad" -gt 0 ] && echo "❌ $bad 个非 UTF-8 文件" && exit 1
           echo "✅ UTF-8 / ASCII"
-
