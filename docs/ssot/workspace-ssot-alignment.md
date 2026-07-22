@@ -23,8 +23,8 @@
 | `decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money · **L1** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO · **L2 wire 子集** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `contracts` | `crates/contracts/` | `contracts` | adapter trait 出口；L3 子集（KV+Instr） | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
-| `binancex` | `crates/adapters/exchange/binance/` | `binancex` | exchange scaffold + mock HTTP + `server_time` 解析 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `okxx` | `crates/adapters/exchange/okx/` | `okxx` | exchange scaffold + mock HTTP + `server_time` 解析 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `binancex` | `crates/adapters/exchange/binance/` | `binancex` | 生产默认：HMAC REST 下单/撤/查 + 公共 WS 行情解析 + live server_time ignore | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `okxx` | `crates/adapters/exchange/okx/` | `okxx` | 生产默认：四头鉴权 REST + 业务信封 + 公共 WS 行情解析 + live server_time ignore | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **生产** HTTP `ClickHousePool` + live/bench（#188–#190） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **生产** `KafkaPool`/`Producer`/`Consumer` + SASL + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `natsx` | `crates/adapters/storage/nats/` | `natsx` | **生产** `NatsPool` + EventBus + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
@@ -57,7 +57,7 @@
 └─────────┘
 
   adapters/storage/* ── 生产客户端（redis/pg/kafka/nats/oss/ch/taos）+ scaffold feature 可选
-  adapters/exchange/* ── scaffold + mock HTTP + server_time
+  adapters/exchange/* ── 生产默认 REST 签名 + WS 行情解析（非 package stable）
   contracts ── serde + thiserror + decimalx（trait 出口；#43）
   contract-testkit ── contracts（**仅 dev-dep**；Fake/suite；禁止 production graph）
   tools/goalctl · tools/verifyctl ── 最小生产 CLI（#188）
@@ -78,7 +78,7 @@
 | resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
 | observex | `.agents/ssot/observex/` | `crates/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
 | infra 其余域 | `.agents/ssot/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
-| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **storage 7 库生产默认客户端** + live `#[ignore]`（ZoneCNH 真凭据已验）+ benches（#188–#190）；exchange 只读 server_time；**非** package stable / Cluster·JetStream·EOS 全量 |
+| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **storage 7 库生产默认客户端** + live/bench（#188–#190）；**exchange binancex/okxx 生产默认 REST+WS**（签名/协议/行情；非 package stable）；Cluster·JetStream·EOS / 全量管理订单 WS **OPEN** |
 | （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Venue 业务 live **DEFER** |
 | transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
 | tools | `.agents/ssot/tools/` | `crates/evidence` + `tools/goalctl` + `tools/verifyctl` | evidence + **goalctl/verifyctl 最小生产 CLI 已 member**（#188）；live env 构建器 #191；xtask **未**落地 |

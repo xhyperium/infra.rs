@@ -1,24 +1,25 @@
 # okxx
 
-okx exchange adapter scaffold。
+OKX exchange adapter — **生产默认 REST+WS 协议路径**（对标 storage P0，**非** package stable / L5）。
 
 实现 `contracts::VenueAdapter` + MarketDataSource / ExecutionVenue / AccountSource / InstrumentCatalog / VenueTimeSource。
 
-**非真实 HTTP**；不宣称 package stable。
+## 行为分层
 
-## 生产误用警示（infra-s9t.14）
+| 注入 | 行为 |
+|------|------|
+| 默认（无 http / key / ws） | 进程内明确 mock：`place`→`Open`（非 Filled）；行情空流 |
+| `with_http` + `with_api_key` | 四头鉴权 REST + `code`/`data` 信封：place / cancel / query / balance |
+| `with_ws` | 公共行情：`tickers` / `trades` / `books5` 订阅帧 + 推送解析 |
+| `#[ignore]` live | 仅公共 `server_time` |
 
-**默认实现是进程内 scaffold/mock，不是生产客户端。**
+- `publish = false`；禁止宣称 crates.io / package stable / L5 代签
+- 私有账户 WS、统一账户全量端点等仍 **OPEN**
+- `demo()` 与 mainnet 同 host；模拟盘头 `x-simulated-trading` **未**默认注入（勿当已可 demo 交易）
 
-- 禁止把 `*Adapter` 类型名当成已对接真实 Binance/Postgres/Redis/…
-- 真实入口须有显式 feature（如 redisx `live`）与文档/CI 证据
-- 详见 `docs/plans/artifacts/prod-consume-surface.md`
-
-## Live 只读 server_time（infra-s9t.13）
+## Live 只读 server_time
 
 ```bash
 cargo test -p okxx --test live_server_time -- --ignored --nocapture
+cargo test -p okxx --all-targets
 ```
-
-注入真实 `ReqwestHttpDriver` + 公共 REST 时间接口；默认 CI 离线绿（`#[ignore]`）。
-可选 workflow `Exchange Live Readonly` 仅 `workflow_dispatch`（Binance 等同理，不阻断 PR）。
