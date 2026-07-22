@@ -1,9 +1,9 @@
 R2 通过证据
 日期：2026-07-23 Asia/Shanghai
 输入 HEAD：e0cc99d716638663cd605da749cc1988026528d9
-已验证最终候选：a46eb7ec452ecc8cefd496e38e28dc2295cdc333
-差异命令：git diff e0cc99d716638663cd605da749cc1988026528d9..a46eb7ec452ecc8cefd496e38e28dc2295cdc333 | sha256sum
-差异 SHA-256：9dba03cddab3370cbb15f8c84a86297c85b8a099ded090bb5e1a54fcf7a23815
+已验证最终候选：6c8da41ca0b9105b8e7fa9312fcceee793775b63
+差异命令：git diff e0cc99d716638663cd605da749cc1988026528d9..6c8da41ca0b9105b8e7fa9312fcceee793775b63 | sha256sum
+差异 SHA-256：4c5388b1ee9de64b72690f8a9dda9b8f813af922bf6f57fa112016f2c9e150be
 rustc：1.97.0 (2d8144b78 2026-07-07)
 cargo：1.97.0 (c980f4866 2026-06-30)
 node：v24.14.0
@@ -20,7 +20,7 @@ node：v24.14.0
   node scripts/quality-gates/check-workspace-deps.mjs &&
   node scripts/quality-gates/check-crate-versions.mjs &&
   node scripts/quality-gates/check-public-api.mjs --require-tool -p kernel -p testkit -p decimalx -p canonical &&
-  git diff --check e0cc99d716638663cd605da749cc1988026528d9..<最终候选>
+  git diff --check e0cc99d716638663cd605da749cc1988026528d9..6c8da41ca0b9105b8e7fa9312fcceee793775b63
 退出码：0
 
 关键工具输出：
@@ -39,5 +39,6 @@ node：v24.14.0
   workspace dependencies：PASS
   crate versions：PASS
   public API：OK (4 baselines match)
+  固定范围 git diff --check：PASS
 
 英文内容均为命令、API 名或工具原始输出，不是人工英文正文。
