@@ -8,13 +8,26 @@ use std::time::Duration;
 const C: &str = "KeyValueStore";
 
 /// 断言实现满足最小 KV 合同：miss → set → hit。
-pub async fn assert_key_value_store(
+pub async fn assert_key_value_store(store: &dyn KeyValueStore) -> ContractResult {
+    assert_key_value_store_keys(store, "missing", "k").await
+}
+
+/// 使用确定性 fixture 隔离 miss/hit key 后运行最小 KV 合同。
+pub async fn assert_key_value_store_isolated(
     store: &dyn KeyValueStore,
     fixture: &FixtureNamespace,
 ) -> ContractResult {
-    let missing_key = fixture.resource("key_value_missing");
-    let hit_key = fixture.resource("key_value_hit");
-    match store.get(&missing_key).await {
+    let missing_key = fixture.resource("key_value_missing")?;
+    let hit_key = fixture.resource("key_value_hit")?;
+    assert_key_value_store_keys(store, &missing_key, &hit_key).await
+}
+
+async fn assert_key_value_store_keys(
+    store: &dyn KeyValueStore,
+    missing_key: &str,
+    hit_key: &str,
+) -> ContractResult {
+    match store.get(missing_key).await {
         Ok(None) => {}
         Ok(Some(_)) => {
             return Err(crate::failure::ContractFailure::new(
@@ -33,12 +46,12 @@ pub async fn assert_key_value_store(
     }
 
     store
-        .set(&hit_key, b"hello".to_vec(), Some(Duration::from_secs(30)))
+        .set(hit_key, b"hello".to_vec(), Some(Duration::from_secs(30)))
         .await
         .map_err(|e| crate::failure::ContractFailure::new(C, "set", format!("set 失败: {e}")))?;
 
     let v = store
-        .get(&hit_key)
+        .get(hit_key)
         .await
         .map_err(|e| crate::failure::ContractFailure::new(C, "get_hit", format!("get 失败: {e}")))?
         .ok_or_else(|| crate::failure::ContractFailure::new(C, "get_hit", "期望 Some"))?;

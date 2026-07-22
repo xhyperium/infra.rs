@@ -39,9 +39,12 @@ pub use fakes::{
 };
 pub use fixture::FixtureNamespace;
 pub use suite::{
-    assert_account_source, assert_analytics_sink_callable, assert_analytics_sink_observed,
-    assert_event_bus, assert_execution_venue, assert_instrument_catalog, assert_instrumentation,
-    assert_instrumentation_observed, assert_key_value_store, assert_market_data_source,
-    assert_object_store, assert_pub_sub_smoke, assert_repository, assert_time_series_store,
+    assert_account_source, assert_analytics_sink, assert_analytics_sink_callable,
+    assert_analytics_sink_observed, assert_event_bus, assert_event_bus_surface,
+    assert_event_bus_with_fixture, assert_execution_venue, assert_instrument_catalog,
+    assert_instrumentation, assert_instrumentation_observed, assert_key_value_store,
+    assert_key_value_store_isolated, assert_market_data_source, assert_object_store,
+    assert_object_store_with_fixture, assert_pub_sub_smoke, assert_pub_sub_surface,
+    assert_repository, assert_time_series_store, assert_time_series_store_with_fixture,
     assert_tx_runner, assert_venue_time_source,
 };

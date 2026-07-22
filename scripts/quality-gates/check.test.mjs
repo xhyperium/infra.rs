@@ -51,6 +51,7 @@ try {
 }
 
 // ── help / usage subprocess ──
+let healthOutput = "";
 try {
   const out = execFileSync("node", [srcPath], {
     timeout: 30000,
@@ -58,12 +59,14 @@ try {
     encoding: "utf8",
     cwd: join(__dirname, ".."),
   });
+  healthOutput = out;
   ok(out.includes("infra.rs") || out.includes("Harness") || out.includes("Health") || out.includes("PASS") || out.includes("FAIL"),
      "check.mjs runs and produces output");
   ok(!out.includes("SyntaxError") && !out.includes("ReferenceError"),
      "check.mjs output has no syntax/runtime errors");
 } catch (e) {
   const err = String(e.stderr || e.stdout || e.message || "");
+  healthOutput = err;
   ok(err.includes("infra.rs") || err.includes("PASS") || err.includes("FAIL") || err.includes("Harness") || err.includes("Health"),
      "check.mjs exit with meaningful output");
 }
@@ -79,7 +82,10 @@ ok(src.includes("const run ="), "run function declared");
 ok(src.includes("CLAUDE.md 存在"), "checks for CLAUDE.md");
 ok(src.includes("AGENTS.md 存在"), "checks for AGENTS.md");
 ok(src.includes("Beads"), "checks for Beads");
-ok(src.includes("check-test-support-graph.mjs"), "checks test-support production graph");
+ok(
+  healthOutput.includes("PASS: test-support 生产依赖图门禁"),
+  "runs test-support production graph gate",
+);
 ok(src.includes("git rev-parse"), "git branch detection present");
 ok(src.includes("process.exit(0)"), "success exit present");
 ok(src.includes("process.exit(1)"), "failure exit present");

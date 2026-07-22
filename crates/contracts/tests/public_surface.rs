@@ -2,7 +2,7 @@
 
 use bytes::Bytes;
 use contract_testkit::{
-    FakeEventBus, FakeKeyValueStore, FakeRepository, FakeTxRunner, FixtureNamespace, InstrEvent,
+    FakeEventBus, FakeKeyValueStore, FakeRepository, FakeTxRunner, InstrEvent,
     RecordingInstrumentation, assert_event_bus, assert_key_value_store,
 };
 use contracts::{
@@ -38,8 +38,7 @@ async fn contract_testkit_tx_and_bus_are_runnable() {
     assert_eq!(n, 7);
 
     let bus = FakeEventBus::new();
-    let fixture = FixtureNamespace::new("ctk_contracts_public_bus").expect("valid fixture");
-    assert_event_bus(&bus, &fixture).await.expect("bus");
+    assert_event_bus(&bus).await.expect("bus");
     assert_eq!(MessageAck::Ack, MessageAck::Ack);
     let _ = BusMessage { id: "1".into(), payload: Bytes::from_static(b"x") };
 }
@@ -53,8 +52,7 @@ fn trait_surface_object_safe_bounds() {
 #[tokio::test]
 async fn fake_key_value_store_public_surface() {
     let store = FakeKeyValueStore::new();
-    let fixture = FixtureNamespace::new("ctk_contracts_public_key_value").expect("valid fixture");
-    assert_key_value_store(&store, &fixture).await.expect("kv");
+    assert_key_value_store(&store).await.expect("kv");
     assert_eq!(store.len().expect("len"), 1);
     assert!(!store.is_empty().expect("empty"));
     let _ = Duration::from_secs(1);

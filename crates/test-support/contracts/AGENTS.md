@@ -16,7 +16,7 @@
 - 允许依赖：`contracts` / `kernel` / `canonical` / `decimalx` / `async-trait` / `bytes` / `futures-*` / `tokio`
 - `default = []`；禁止 feature 把本 crate 泄漏进 normal graph
 - 禁止真实网络 / Docker / 凭据
-- 资源型 suite 必须接收 `FixtureNamespace`，不得隐式生成随机/时间命名
+- 资源型 suite 必须接收调用方唯一标识，或由 `FixtureNamespace` additive wrapper 派生；不得隐式生成随机/时间命名
 - smoke / observed suite 必须写清非承诺项；Fake 行为不得外推为生产 trait 保证
 - 验证：`cargo test -p contract-testkit --all-targets` · `cargo test -p contract-testkit --test negative_implementations` · `cargo clippy -p contract-testkit --all-targets -- -D warnings`
 

@@ -8,8 +8,7 @@
 //! - 本示例仅进程内 Fake，**不是** 真实后端 / L3 live 入口。
 
 use contract_testkit::{
-    FakeKeyValueStore, FakeTxRunner, FixtureNamespace, RecordingTxRunner, assert_key_value_store,
-    assert_tx_runner,
+    FakeKeyValueStore, FakeTxRunner, RecordingTxRunner, assert_key_value_store, assert_tx_runner,
 };
 use contracts::{KeyValueStore, run_tx_lifecycle};
 
@@ -18,8 +17,7 @@ async fn main() {
     let kv = FakeKeyValueStore::new();
     kv.set("k", b"v".to_vec(), None).await.expect("set");
     assert_eq!(kv.get("k").await.expect("get").as_deref(), Some(b"v".as_slice()));
-    let fixture = FixtureNamespace::new("ctk_example_key_value").expect("valid fixture");
-    assert_key_value_store(&kv, &fixture).await.expect("kv suite");
+    assert_key_value_store(&kv).await.expect("kv suite");
     println!("contract_testkit_example: kv_ok");
 
     assert_tx_runner(&FakeTxRunner).await.expect("tx suite");

@@ -319,6 +319,7 @@ pub struct contract_testkit::FixtureNamespace(_)
 impl contract_testkit::FixtureNamespace
 pub fn contract_testkit::FixtureNamespace::as_str(&self) -> &str
 pub fn contract_testkit::FixtureNamespace::new(impl core::convert::Into<alloc::string::String>) -> core::result::Result<Self, contract_testkit::ContractFailure>
+pub fn contract_testkit::FixtureNamespace::resource(&self, &str) -> core::result::Result<alloc::string::String, contract_testkit::ContractFailure>
 impl core::clone::Clone for contract_testkit::FixtureNamespace
 pub fn contract_testkit::FixtureNamespace::clone(&self) -> contract_testkit::FixtureNamespace
 impl core::cmp::Eq for contract_testkit::FixtureNamespace
@@ -379,19 +380,26 @@ impl core::marker::UnsafeUnpin for contract_testkit::RecordingTxRunner
 impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::RecordingTxRunner
 impl core::panic::unwind_safe::UnwindSafe for contract_testkit::RecordingTxRunner
 pub async fn contract_testkit::assert_account_source(&dyn contracts::AccountSource) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_analytics_sink(&dyn contracts::AnalyticsSink, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_analytics_sink_callable(&dyn contracts::AnalyticsSink, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_analytics_sink_observed<F>(&dyn contracts::AnalyticsSink, &contract_testkit::FixtureNamespace, F) -> contract_testkit::ContractResult where F: core::ops::function::FnOnce() -> kernel::error::XResult<alloc::vec::Vec<(alloc::string::String, bytes::bytes::Bytes)>>
-pub async fn contract_testkit::assert_event_bus(&dyn contracts::EventBus, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_event_bus(&dyn contracts::EventBus) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_event_bus_surface(&dyn contracts::EventBus, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_event_bus_with_fixture(&dyn contracts::EventBus, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_execution_venue(&dyn contracts::ExecutionVenue, &canonical::Order) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_instrument_catalog(&dyn contracts::InstrumentCatalog, &str) -> contract_testkit::ContractResult
 pub fn contract_testkit::assert_instrumentation(&dyn contracts::Instrumentation) -> contract_testkit::ContractResult
 pub fn contract_testkit::assert_instrumentation_observed<F>(&dyn contracts::Instrumentation, &contract_testkit::FixtureNamespace, F) -> contract_testkit::ContractResult where F: core::ops::function::FnOnce() -> kernel::error::XResult<alloc::vec::Vec<contract_testkit::InstrEvent>>
-pub async fn contract_testkit::assert_key_value_store(&dyn contracts::KeyValueStore, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_key_value_store(&dyn contracts::KeyValueStore) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_key_value_store_isolated(&dyn contracts::KeyValueStore, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_market_data_source(&dyn contracts::MarketDataSource, &str) -> contract_testkit::ContractResult
-pub async fn contract_testkit::assert_object_store(&dyn contracts::ObjectStore, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_object_store(&dyn contracts::ObjectStore, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_object_store_with_fixture(&dyn contracts::ObjectStore, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_pub_sub_smoke(&dyn contracts::PubSub, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_pub_sub_surface(&dyn contracts::PubSub, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_repository<T, Id>(&dyn contracts::Repository<T, Id>, T, Id, impl core::ops::function::FnOnce(&mut T), impl core::ops::function::Fn(&T, &T) -> bool) -> contract_testkit::ContractResult where T: core::clone::Clone + core::marker::Send + core::marker::Sync + core::fmt::Debug, Id: core::clone::Clone + core::marker::Send + core::marker::Sync
-pub async fn contract_testkit::assert_time_series_store(&dyn contracts::TimeSeriesStore, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_time_series_store(&dyn contracts::TimeSeriesStore, &str, canonical::Tick) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_time_series_store_with_fixture(&dyn contracts::TimeSeriesStore, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_tx_runner(&dyn contracts::TxRunner) -> contract_testkit::ContractResult
 pub async fn contract_testkit::assert_venue_time_source(&dyn contracts::VenueTimeSource) -> contract_testkit::ContractResult
 pub fn contract_testkit::classify_backends(&[contract_testkit::BackendProfile]) -> (alloc::vec::Vec<alloc::string::String>, alloc::vec::Vec<alloc::string::String>)

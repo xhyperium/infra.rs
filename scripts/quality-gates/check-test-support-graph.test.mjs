@@ -137,6 +137,22 @@ test("test-support inventory 缺包必须 fail closed", () => {
   assert.equal(result.findings[0].codes[0], "TESTKIT-GRAPH-CONFIG");
 });
 
+test("metadata 缺少 resolve 必须 fail closed", () => {
+  const incomplete = metadata("dev");
+  incomplete.resolve = null;
+  const result = inspectTestSupportGraph(incomplete, incomplete);
+  assert.equal(result.ok, false);
+  assert.ok(result.findings.some((finding) => finding.codes.includes("TESTKIT-GRAPH-CONFIG")));
+});
+
+test("workspace member 缺少 resolve node 必须 fail closed", () => {
+  const incomplete = metadata("dev");
+  incomplete.resolve.nodes = incomplete.resolve.nodes.filter((node) => node.id !== APP);
+  const result = inspectTestSupportGraph(incomplete, incomplete);
+  assert.equal(result.ok, false);
+  assert.ok(result.findings.some((finding) => finding.codes.includes("TESTKIT-GRAPH-CONFIG")));
+});
+
 test("真实仓库 CLI 输出结构化 PASS", () => {
   const script = fileURLToPath(new URL("./check-test-support-graph.mjs", import.meta.url));
   const result = spawnSync(process.execPath, [script, "--json"], {
@@ -148,4 +164,18 @@ test("真实仓库 CLI 输出结构化 PASS", () => {
   const output = JSON.parse(result.stdout);
   assert.equal(output.ok, true);
   assert.deepEqual(output.findings, []);
+});
+
+test("cargo metadata 失败时 --json 仍输出结构化 FAIL", () => {
+  const script = fileURLToPath(new URL("./check-test-support-graph.mjs", import.meta.url));
+  const result = spawnSync(process.execPath, [script, "--json"], {
+    cwd: fileURLToPath(new URL("../..", import.meta.url)),
+    encoding: "utf8",
+    env: { ...process.env, PATH: "" },
+    timeout: 60_000,
+  });
+  assert.equal(result.status, 1);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.ok, false);
+  assert.ok(output.findings[0].codes.includes("TESTKIT-GRAPH-EXEC"));
 });

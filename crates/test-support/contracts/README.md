@@ -34,12 +34,13 @@ use contract_testkit::{
 
 ```rust
 use contract_testkit::{
-    FixtureNamespace, assert_event_bus, assert_key_value_store, assert_tx_runner,
+    FixtureNamespace, assert_event_bus_with_fixture, assert_key_value_store_isolated,
+    assert_tx_runner,
 };
 
 let fixture = FixtureNamespace::new("adapter_contract")?;
-assert_key_value_store(&my_kv, &fixture).await?;
-assert_event_bus(&my_bus, &fixture).await?;
+assert_key_value_store_isolated(&my_kv, &fixture).await?;
+assert_event_bus_with_fixture(&my_bus, &fixture).await?;
 assert_tx_runner(&my_runner).await?;
 ```
 
@@ -47,8 +48,8 @@ assert_tx_runner(&my_runner).await?;
 
 | suite | 函数 |
 |-------|------|
-| KeyValueStore | `assert_key_value_store` |
-| EventBus | `assert_event_bus` |
+| KeyValueStore | `assert_key_value_store`（0.1.1 兼容）/ `assert_key_value_store_isolated` |
+| EventBus | `assert_event_bus`（Snapshot/Replay profile）/ `assert_event_bus_surface` / `assert_event_bus_with_fixture` |
 | TxRunner | `assert_tx_runner` |
 | Repository | `assert_repository` |
 | Instrumentation | `assert_instrumentation` |
@@ -58,14 +59,14 @@ assert_tx_runner(&my_runner).await?;
 | ExecutionVenue | `assert_execution_venue` |
 | AccountSource | `assert_account_source` |
 | VenueTimeSource | `assert_venue_time_source` |
-| ObjectStore | `assert_object_store` |
-| TimeSeriesStore | `assert_time_series_store` |
-| AnalyticsSink | `assert_analytics_sink_callable` / `assert_analytics_sink_observed` |
-| PubSub | `assert_pub_sub_smoke` |
+| ObjectStore | `assert_object_store` / `assert_object_store_with_fixture` |
+| TimeSeriesStore | `assert_time_series_store` / `assert_time_series_store_with_fixture` |
+| AnalyticsSink | `assert_analytics_sink` / `assert_analytics_sink_callable` / `assert_analytics_sink_observed` |
+| PubSub | `assert_pub_sub_surface` / `assert_pub_sub_smoke` |
 
 `FixtureNamespace` 为需要资源名的 suite 提供显式、确定且可并行隔离的命名空间；不读取时间、随机数或环境变量。
 
-`EventBus` / `PubSub` 仅验证 subscribe/publish 可成功调用，不承诺必达、重放、顺序、确认、背压或投递次数。`AnalyticsSink` 与 `Instrumentation` 的 observed suite 依赖调用方提供观察函数，只按包含关系验证；它们不扩展生产 trait 合同，也不证明真实 exporter 或持久化后端 readiness。
+可移植的 `assert_event_bus_surface` / `assert_event_bus_with_fixture` 与 PubSub surface/smoke 仅验证 subscribe/publish 可成功调用，不承诺必达、重放、顺序、确认、背压或投递次数。0.1.1 兼容入口 `assert_event_bus` 明确属于 Snapshot/Replay profile，不能用于判定实时 adapter。`AnalyticsSink` 与 `Instrumentation` 的 observed suite 依赖调用方提供观察函数，只按包含关系验证；它们不扩展生产 trait 合同，也不证明真实 exporter 或持久化后端 readiness。
 
 ## 硬限制
 

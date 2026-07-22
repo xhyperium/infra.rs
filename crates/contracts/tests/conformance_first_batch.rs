@@ -11,8 +11,7 @@ use kernel::XError;
 #[tokio::test]
 async fn key_value_store_trait_get_set() {
     let store = FakeKeyValueStore::new();
-    let fixture = FixtureNamespace::new("ctk_contracts_key_value").expect("valid fixture");
-    assert_key_value_store(&store, &fixture).await.expect("kv suite");
+    assert_key_value_store(&store).await.expect("kv suite");
     assert_eq!(store.len().expect("len"), 1);
 }
 
@@ -58,8 +57,7 @@ async fn tx_runner_and_context_commit_rollback_paths() {
 #[tokio::test]
 async fn event_bus_publish_subscribe_ids() {
     let bus = FakeEventBus::new();
-    let fixture = FixtureNamespace::new("ctk_contracts_event_bus").expect("valid fixture");
-    assert_event_bus(&bus, &fixture).await.expect("bus suite");
+    assert_event_bus(&bus).await.expect("bus suite");
 }
 
 #[test]

@@ -3,6 +3,7 @@
 use crate::failure::ContractFailure;
 
 const MAX_NAMESPACE_LEN: usize = 32;
+const MAX_RESOURCE_LEN: usize = 63;
 
 /// 跨后端可复用的确定性 fixture 前缀。
 ///
@@ -29,10 +30,11 @@ impl FixtureNamespace {
                 format!("fixture 命名空间长度不得超过 {MAX_NAMESPACE_LEN}"),
             ));
         }
-        let mut chars = value.chars();
-        let first = chars.next().expect("nonempty checked");
-        if !first.is_ascii_lowercase()
-            || chars.any(|ch| !(ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '_'))
+        let bytes = value.as_bytes();
+        if !bytes[0].is_ascii_lowercase()
+            || bytes[1..]
+                .iter()
+                .any(|byte| !(byte.is_ascii_lowercase() || byte.is_ascii_digit() || *byte == b'_'))
         {
             return Err(ContractFailure::new(
                 "FixtureNamespace",
@@ -49,8 +51,30 @@ impl FixtureNamespace {
         &self.0
     }
 
-    pub(crate) fn resource(&self, suffix: &str) -> String {
-        format!("{}__{suffix}", self.0)
+    /// 派生一个不超过 63 字节的可移植资源名。
+    pub fn resource(&self, suffix: &str) -> Result<String, ContractFailure> {
+        let bytes = suffix.as_bytes();
+        if bytes.is_empty()
+            || !bytes[0].is_ascii_lowercase()
+            || !bytes[1..]
+                .iter()
+                .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || *byte == b'_')
+        {
+            return Err(ContractFailure::new(
+                "FixtureNamespace",
+                "portable_suffix",
+                "fixture 资源后缀必须以 ASCII 小写字母开头，且仅含小写字母、数字、下划线",
+            ));
+        }
+        let resource = format!("{}__{suffix}", self.0);
+        if resource.len() > MAX_RESOURCE_LEN {
+            return Err(ContractFailure::new(
+                "FixtureNamespace",
+                "resource_max_len",
+                format!("fixture 资源名长度不得超过 {MAX_RESOURCE_LEN}"),
+            ));
+        }
+        Ok(resource)
     }
 }
 
@@ -62,7 +86,7 @@ mod tests {
     fn accepts_portable_namespace_and_derives_isolated_resource() {
         let fixture = FixtureNamespace::new("ctk_run_42").expect("valid fixture");
         assert_eq!(fixture.as_str(), "ctk_run_42");
-        assert_eq!(fixture.resource("object"), "ctk_run_42__object");
+        assert_eq!(fixture.resource("object").expect("resource"), "ctk_run_42__object");
 
         let boundary = "a".repeat(MAX_NAMESPACE_LEN);
         assert_eq!(
@@ -77,5 +101,17 @@ mod tests {
             let failure = FixtureNamespace::new(value).expect_err("invalid fixture");
             assert_eq!(failure.contract, "FixtureNamespace");
         }
+    }
+
+    #[test]
+    fn rejects_nonportable_or_oversized_resource_suffix() {
+        let fixture = FixtureNamespace::new("a".repeat(MAX_NAMESPACE_LEN)).expect("fixture");
+        for suffix in ["", "Upper", "with-dash"] {
+            let failure = fixture.resource(suffix).expect_err("invalid suffix");
+            assert_eq!(failure.contract, "FixtureNamespace");
+            assert_eq!(failure.case, "portable_suffix");
+        }
+        let failure = fixture.resource(&"a".repeat(MAX_RESOURCE_LEN)).expect_err("too long");
+        assert_eq!(failure.case, "resource_max_len");
     }
 }

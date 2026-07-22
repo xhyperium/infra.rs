@@ -29,7 +29,7 @@ pub fn assert_instrumentation_observed<F>(
 where
     F: FnOnce() -> kernel::XResult<Vec<InstrEvent>>,
 {
-    let op = fixture.resource("instrumentation_op");
+    let op = fixture.resource("instrumentation_op")?;
     instr.record_retry(&op, 1);
     instr.record_circuit_open(&op);
     instr.record_circuit_close(&op);
