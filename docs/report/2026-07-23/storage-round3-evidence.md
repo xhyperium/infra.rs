@@ -7,13 +7,15 @@
 | 实现提交 | `435774f`（`feat(storage): 三轮加固七类存储适配器`） |
 | 审查修复候选 | `1729f0a5585dfd634a83e5aa37982ebb744e3afd`（含 Standards/Spec 首轮阻断修复） |
 | NATS 监督修复 | `b4ce23ca2db2c11c61f75e783a8f14a80efa409b`（保留并等待 `JoinHandle`，panic fail-closed） |
-| 固定测试候选 | `bbcc191f0cce9e1344f9cdbf70808167dd6fc7ea`（仅比 NATS 修复多生成式 `STATUS.md` 刷新） |
+| 首轮固定测试候选 | `bbcc191f0cce9e1344f9cdbf70808167dd6fc7ea`（仅比 NATS 修复多生成式 `STATUS.md` 刷新） |
+| CI 门禁修复 | `50743dc387d78c5bf8be72cef7528218eefa2ca7`（Decimal 误报、文档结构、Markdown/CSpell） |
+| 最终固定测试候选 | `50743dc387d78c5bf8be72cef7528218eefa2ca7` |
 | 配置来源 | `/home/workspace/ZoneCNH/sre/secrets/env/dev.md`；仅由安全 runner 读取 |
 | 禁止范围 | 未读取或运行 `prod.md`；未在日志、命令行或仓库写入凭据值 |
 
 ## 全局门禁
 
-以下命令均在固定候选 `bbcc191f0cce9e1344f9cdbf70808167dd6fc7ea` 上重新执行，退出码均为 0；
+以下命令均在最终固定候选 `50743dc387d78c5bf8be72cef7528218eefa2ca7` 上重新执行，退出码均为 0；
 原始摘要与输出哈希见同目录的 `storage-round3-raw-gates.md`：
 
 - `cargo fmt --all --check`
@@ -25,6 +27,10 @@
 - `node scripts/quality-gates/check-crate-versions.mjs`
 - `node scripts/quality-gates/check-workspace-deps.mjs`
 - `node --test scripts/live/build-foundationx-env.test.mjs`（7/7）
+- `node scripts/quality-gates/check-decimal-no-panicking-ops.mjs`（104 文件，0 命中）
+- `python3 scripts/standards/check-fences.py`（24/24）
+- `npx --yes markdownlint-cli2@0.23.1 ...`（0 issue）
+- `npx --yes cspell@10.0.1 ...`（0 issue）
 
 ## 七域 live / conformance
 
