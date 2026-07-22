@@ -9,6 +9,7 @@ name: Constitution
 on:
   pull_request:
     branches: [main, develop]
+  merge_group:
   workflow_dispatch:
 
 concurrency:
