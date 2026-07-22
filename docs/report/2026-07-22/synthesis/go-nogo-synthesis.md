@@ -22,7 +22,7 @@
 | **内部库语义消费（进程内）** | **有条件 GO** | kernel · decimalx · canonical · testkit · L1 声明面加厚 |
 | **L3 first-batch 全绿** | **NO** | KV + Instrumentation + live helpers；非全 trait |
 | **Storage 生产默认客户端** | **有条件 GO（L1 工程）** | #188–#190；≠ package stable / L5 |
-| **Exchange 可交易** | **NO-GO** | 仅 scaffold + 公共 server_time |
+| **Exchange 可交易** | **NO-GO** | 签名 REST + 公共 WS 入口存在；交易安全与受控 live 证据未闭合 |
 
 **Agent 禁止代签 L5。** 人签模板：`docs/governance/prod-signoff-TEMPLATE.md`。
 
@@ -56,8 +56,8 @@
 | `transportx` | L1 | 33/35 | I/O+TLS/池/代理 | 低–中 | 有条件 GO | tls/pool/proxy **PASS** |
 | `contracts` | contracts | 33/35 | L3 子集+live | 中（扩面） | helpers GO / first-batch 全绿 **NO** | live.rs **PASS** |
 | `contract-testkit` | T0 | 32/35 | Fake+Batch-2 | 低 | 有条件 GO（仅 dev） | batch2 + BackendProfile **PASS** |
-| `binancex` | adapter | 24/35 | scaffold + server_time | 极高 | **NO-GO 交易** | 签名/下单/WS 行情 |
-| `okxx` | adapter | 24/35 | scaffold + server_time | 极高 | **NO-GO 交易** | 签名/业务协议 |
+| `binancex` | adapter | 24/35 | 签名 REST + 公共 WS | 极高 | **NO-GO 交易** | 精度/限流/时钟/私有 WS/重连/live 交易 |
+| `okxx` | adapter | 24/35 | 签名 REST + 公共 WS | 极高 | **NO-GO 交易** | 精度/账户模式/私有 WS/重连/demo 交易 |
 | `redisx` | adapter | 33/35 | L1 + L3-KV + resilience | 中 | 有条件 GO（KV） | Cluster/Sentinel; TLS 强制 |
 | `postgresx` | adapter | 33/35 | L1 池+Tx + resilience | 中 | 有条件 GO（SQL） | prod Repository; SSL require-only |
 | `kafkax` | adapter | 31/35 | L1 AMO EventBus | 高 | 有条件 / EOS NO | offset commit; at-least-once; EOS |

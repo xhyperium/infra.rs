@@ -1,39 +1,52 @@
-# okx 交易所适配器规范
+# okx 交易所适配器当前实现规范
 
-> 状态：当前 `0.3.3` 生产默认 REST+WS 实现（mock + 四头签名 REST + WS 行情；`#[ignore]` 真测）。**未宣称 package stable。**权威顺序为 `CONSTITUTION.md` → canonical spec → Approved ADR → 本文 → 代码。
+> 状态：`okxx` `0.3.3` 已有签名 REST + 公共 WS 解析/注入的默认实现入口；**交易 NO-GO**，未宣称 package stable 或可真实交易。
 
-## 1. 边界、范围与证据
+## 1. 权威与定位
 
-- **Evidence**：`crates/adapters/exchange/okx` 的 `MockOkxAdapter` 实现 `VenueAdapter` 全部 13 方法且无网络 IO。
-- **Inference**：真实实现应保留 contracts DTO 边界并隐藏于同一 trait 后。
-- **Unknown**：OKX 认证/账户模式、限频、重连、时间同步、订单簿恢复、错误码、配置、benchmark 与 `mock` feature 未裁定。
+- 路径 / package：`crates/adapters/exchange/okx` / `okxx`。
+- 实现 `contracts::VenueAdapter` 及 execution/market/instrument/account/time 能力 trait。
+- 生产依赖包含 contracts/canonical/decimalx/kernel/transportx 和签名/序列化库；`publish = false`。
+- 当前源码与测试是可观察实现证据；历史 mock/COMPLETE 叙事不能覆盖本文边界。
 
-目的：记录当前 OKX mock；非目标：批准真实下单、网络协议或生产可用性。
+## 2. 可观察实现
 
-## 2. 位置、依赖、版本
+| 能力 | 当前事实 |
+|------|----------|
+| 适配器 | `OkxAdapter::{mainnet,demo,new}`；显式注入 `HttpDriver`、`OkxApiKey`、`WsConnector` |
+| 认证 | Base64(HMAC-SHA256) 与 API key/sign/timestamp/passphrase 四头；Debug 脱敏 |
+| REST | server time；签名 place/cancel/query；账户/余额与 instrument 请求面；`code/data`、`sCode` 错误映射 |
+| 公共 WS | tickers/trades/books 订阅消息、fixture 解析与 connector 注入 |
+| DTO | decimalx/canonical/contracts 类型；订单状态与行情报文解析 |
+| 测试 | 签名向量、请求 path/header/body、业务错误、公共行情 fixture；live 仅受控 `server_time` ignore 入口 |
 
-路径 `crates/adapters/exchange/okx`（package `okxx`），版本 `0.3.3`，无 features。依赖为 `xlib_standard`、`contracts`、`canonical`、`decimalx`、`async-trait`、`futures-core`、`futures-util`；dev 为 `tokio`。符合 R2.1，当前 mock 不需要 L1；缺 canonical spec 要求的 `mock` feature。独立版本每次必须恰为 `x.y.z → x.y.(z+1)`。
+未注入 HTTP/凭据/WS 时，部分 trait 表面会成功返回内存占位或空流。该行为是已知 fail-open 风险：能力不可用时尚未统一 fail-closed，调用方不能据此判定订阅健康或交易能力可用。
 
-## 3. 当前 API 与行为
+## 3. 已实现不等于可交易
 
-`pub struct MockOkxAdapter`（unit struct，`Debug + Default`）及 `new()`。connect/disconnect/cancel 成功；place_order 回显 id、`Pending`、`ts=0`；query_order 为 `Pending`；仓位/余额为空；三种订阅是立即结束的空 stream；server_time 为 0；symbol_info 回显 symbol，base/quote 为空且 tick/min_qty 为零；venue_id 为 `"okx"`。无状态、无网络、无真实账户/订单语义。
+签名 REST 和公共 WS 只能证明协议入口、离线请求形状与解析面存在。当前证据没有闭合真实资金交易链路、账户模式差异、订单生命周期连续性或故障恢复，因此不能把“默认实现”写成 Production Ready。
 
-## 4. 错误、并发、生命周期与信任
+## 4. OPEN / 交易 NO-GO
 
-当前不返回错误，实例无可变状态；订阅立即结束。生产边界必须裁定凭据/签名/TLS、输入与账户模式校验、限频、重连/取消、时钟偏差、服务错误到 `XError` 的映射，以及 ADR-004 的 snapshot/delta 恢复；禁止依赖 domain 类型或泄漏敏感服务响应。
+以下交易安全条件仍 OPEN：
 
-## 5. 测试与验收
+- 根据 instruments tickSz/lotSz/minSz 等 filters 做价格/数量 **精度**量化与下单前拒绝；
+- 全局/端点/订单维度**限流**、服务节流 backoff 与预算；
+- server time **时钟**偏移测量、签名时间戳校准与过期策略；
+- 账户/订单**私有 WS**、登录/订阅生命周期、断线**重连**、重订阅、去重与 gap 恢复；
+- cash/cross/isolated 等账户模式、posSide/tdMode 校验、client order id 幂等与未知结果对账；
+- 仅 demo 的受控 live 下单/查询/撤单证据、金额上限、人工开关与零遗留订单证明。
+- 缺少 HTTP/凭据/WS 能力时统一返回可分类错误，而不是成功占位或空流。
 
-现有 11 个测试覆盖 13 方法的 mock 结果与 trait object。运行：
+这些条件未闭合前维持**交易 NO-GO**。公共 WS 行情解析不得代替私有订单流或连续性证据。
+
+## 5. 验证
 
 ```bash
-cargo test -p okxx
-cargo check -p okxx --all-targets
+cmp .agents/ssot/adapters/exchange/okx/spec/spec.md \
+  .agents/ssot/adapters/exchange/okx/spec/xhyper-okx-complete-spec.md
+cargo test -p okxx --all-targets
 cargo clippy -p okxx --all-targets -- -D warnings
 ```
 
-缺失：真实报文 fixture/重放、认证/账户模式、限频与断线恢复、订单簿一致性、热路径 benchmark、mock feature。验收要求第 3 节行为、R2.1、测试/clippy 通过且生产 Unknown 保持显式。
-
-## 6. 开放决策与追溯
-
-追溯 canonical spec §2 R2.1/R6、§4.3、§4.5.2、§5、§8；ADR-001、ADR-004、ADR-007。共享文档已明确当前 OKX 仅为 mock，且 `mock` feature/benchmark 尚缺。
+验收只覆盖当前签名 REST、公共 WS 和错误映射声明；不得据此解除交易 NO-GO。

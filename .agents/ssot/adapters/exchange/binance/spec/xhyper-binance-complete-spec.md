@@ -1,39 +1,53 @@
-# binance 交易所适配器规范
+# binance 交易所适配器当前实现规范
 
-> 状态：当前 `0.3.2` 生产默认 REST+WS 实现（mock + 签名 REST + WS 行情；`#[ignore]` 真测）。**未宣称 package stable。**权威顺序为 `CONSTITUTION.md` → canonical spec → Approved ADR → 本文 → 代码。
+> 状态：`binancex` `0.3.2` 已有签名 REST + 公共 WS 解析/注入的默认实现入口；**交易 NO-GO**，未宣称 package stable 或可真实交易。
 
-## 1. 边界、范围与证据
+## 1. 权威与定位
 
-- **Evidence**：`crates/adapters/exchange/binance` 的 `MockBinanceAdapter` 实现 `VenueAdapter` 全部 13 方法，且不执行网络 IO。
-- **Inference**：真实 REST/WebSocket 实现应隐藏在同一 trait 后并按 ADR-008 从 quant 迁移，而非复制两套权威实现。
-- **Unknown**：认证、限频、重连、时间同步、订单簿恢复、错误码、配置、benchmark 与 `mock` feature 未裁定。
+- 路径 / package：`crates/adapters/exchange/binance` / `binancex`。
+- 实现 `contracts::VenueAdapter` 及 execution/market/instrument/account/time 能力 trait。
+- 生产依赖包含 contracts/canonical/decimalx/kernel/transportx 和签名/序列化库；`publish = false`。
+- 当前源码与测试是可观察实现证据；历史 mock/COMPLETE 叙事不能覆盖本文边界。
 
-目的：记录当前 Binance mock。非目标：批准真实下单、报文解析、网络依赖或迁移完成状态。
+## 2. 可观察实现
 
-## 2. 位置、依赖、版本
+| 能力 | 当前事实 |
+|------|----------|
+| 适配器 | `BinanceAdapter::{mainnet,testnet,new}`；显式注入 `HttpDriver`、`BinanceApiKey`、`WsConnector` |
+| 认证 | HMAC-SHA256 query 签名、API key header；Debug 不暴露 secret |
+| REST | server time；签名 place/cancel/query；账户/余额与 instrument 请求面；服务错误映射 |
+| 公共 WS | bookTicker/trade/depth URL、fixture 解析与 connector 注入 |
+| DTO | decimalx/canonical/contracts 类型；订单状态与行情报文解析 |
+| 测试 | 签名向量、请求路径/header、4xx 业务错误、公共行情 fixture；live 仅受控 `server_time` ignore 入口 |
 
-路径 `crates/adapters/exchange/binance`（package `binancex`），版本 `0.3.2`，无 features。依赖：`xlib_standard`、`contracts`、`canonical`、`decimalx`、`async-trait`、`futures-core`、`futures-util`；dev 为 `tokio`。符合 R2.1，当前无需 L1；缺 canonical spec 要求的 `mock` feature。独立版本更新必须恰为 `x.y.z → x.y.(z+1)`。
+未注入 HTTP/凭据/WS 时，部分 trait 表面会成功返回内存占位或空流。该行为是已知 fail-open 风险：能力不可用时尚未统一 fail-closed，调用方不能据此判定订阅健康或交易能力可用。
 
-## 3. 当前 API 与精确行为
+## 3. 已实现不等于可交易
 
-`pub struct MockBinanceAdapter`（unit struct，`Debug + Default`）及 `new()`。`VenueAdapter` 行为：connect/disconnect/cancel 成功；place_order 回显 id、`Pending`、`ts=0`；query_order 为 `Pending`；仓位/余额为空；三种订阅返回立即结束的空 stream；server_time 为 0；symbol_info 回显 symbol，其 base/quote 为空、tick/min_qty 为零；venue_id 为 `"binance"`。无状态、无网络、无真实撮合语义。
+签名 REST 和公共 WS 只能证明协议入口、离线请求形状与解析面存在。当前证据没有闭合真实资金交易链路、订单生命周期连续性或故障恢复，因此不能把“默认实现”写成 Production Ready。
 
-## 4. 错误、并发、生命周期与信任
+## 4. OPEN / 交易 NO-GO
 
-当前方法均不产生 `XError`，实例无可变状态且可 `Send + Sync` 使用；订阅 stream 创建后即结束。生产实现必须裁定密钥隔离、签名、TLS、输入校验、限频、重连/取消、时间偏差、服务错误映射及订单簿 snapshot/delta 恢复；不得依赖 domain 类型。ADR-004 的 order-book 策略在真实流实现前仍是架构约束，不由本 mock 补全。
+以下交易安全条件仍 OPEN：
 
-## 5. 测试与验收
+- 根据 exchangeInfo filters 做价格/数量/stepSize/minQty/minNotional **精度**量化与下单前拒绝；
+- canonical percent-encoding、query 参数排序/重复键语义与最终 signature 输入保持逐字节一致；
+- 全局/端点/订单维度**限流**、429/418 backoff 与预算；
+- server time **时钟**偏移测量、recvWindow 策略与签名前校准；
+- 账户/订单**私有 WS**、listen-key 生命周期、断线**重连**、重订阅、去重与 gap 恢复；
+- client order id 幂等、未知提交结果对账、部分成交/撤单竞态和失败清理；
+- 仅 testnet 的受控 live 下单/查询/撤单证据、金额上限、人工开关与零遗留订单证明。
+- 缺少 HTTP/凭据/WS 能力时统一返回可分类错误，而不是成功占位或空流。
 
-现有 11 个测试覆盖 13 方法的 mock 结果及 trait object。运行：
+这些条件未闭合前维持**交易 NO-GO**。公共 WS 行情解析不得代替私有订单流或连续性证据。
+
+## 5. 验证
 
 ```bash
-cargo test -p binancex
-cargo check -p binancex --all-targets
+cmp .agents/ssot/adapters/exchange/binance/spec/spec.md \
+  .agents/ssot/adapters/exchange/binance/spec/xhyper-binance-complete-spec.md
+cargo test -p binancex --all-targets
 cargo clippy -p binancex --all-targets -- -D warnings
 ```
 
-缺失：真实报文 fixture/重放、认证错误、限频重试、断线恢复、订单簿一致性、热路径 benchmark、mock feature。验收要求第 3 节行为、R2.1、测试/clippy 均通过，且不得宣称生产就绪。
-
-## 6. 开放决策与追溯
-
-追溯 canonical spec §2 R2.1/R6、§4.3 `VenueAdapter`、§4.5.2、§5、§8；ADR-001、ADR-004、ADR-007、ADR-008。共享文档已明确当前 exchange crate 是 mock 且 `mock` feature/benchmark 尚缺；quant Binance 实现的迁移完成条件仍按 ADR-008 评审。
+验收只覆盖当前签名 REST、公共 WS 和错误映射声明；不得据此解除交易 NO-GO。

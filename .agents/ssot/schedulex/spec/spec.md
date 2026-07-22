@@ -1,73 +1,53 @@
-# `schedulex` 当前实现规范
+# schedulex 当前实现规范
 
-| 字段 | 值 |
-|---|---|
-| Status | 当前 `0.1.1`：任务 ID 登记表（active SSOT registry）+ 确定性 tick 驱动 JobRunner（additive 面）；**非** 完整调度器/执行器 |
-| Package / lib | `schedulex` / `schedulex`（别名 `xhyper-schedulex` 仅作废弃兼容标签 / dual-mirror 文件名） |
-| Path | `crates/schedulex` |
-| Layer | L1 Infra |
-| Authority | 本文件是 active current-state spec |
-| Candidate | [SPEC-INFRA-SCHEDULEX-002](../../../draft/schedulex-complete-spec.md)（Draft，非权威，不覆盖本文） |
-| Implementation snapshot | `b0934baa`（2026-07-15） |
-| Document commit | `e0b98df4` |
-| Verified at | `e0b98df4`（相关实现路径未变化） |
+状态：`schedulex` `0.1.1` active current-state 合同；任务 ID 登记 + 宿主驱动的确定性 `JobRunner::tick` 已实现，**非 runtime 或分布式调度产品**。
 
-## 1. 定位与依赖
+## 1. 权威与定位
 
-本 crate 是 L1 任务 ID 登记表（**active SSOT registry**：单一任务 ID 真源），并附带确定性、进程内 `tick(now_ms)` 驱动的 `JobRunner` additive 面（最小 cron 子集）。**登记 ≠ 自动执行**：`Scheduler`（登记表）与 `JobRunner`（执行器）相互独立，无自动联动。明确边界：**非** 完整作业调度器 / 执行器——无 async runtime、无分布式 lease、无墙钟 daemon、无生产调度平台。当前 crate 为 std-only、无任何生产依赖；workspace 无 owner 外的生产消费者。
+- Package / lib / path：`schedulex` / `schedulex` / `crates/schedulex`。
+- std-only，无生产依赖；`default = []`；`publish = false`。
+- `Scheduler` 和 `JobRunner` 是两个独立表面；登记任务 ID 不会自动创建或运行 Job。
 
-## 2. 当前公开 API
+## 2. 可观察实现
 
-`Scheduler` 内部为 `HashMap<String, ()>`（任务 ID 登记表）：
+| 表面 | 当前行为 |
+|------|----------|
+| `Scheduler` | 任务 ID 登记、校验/规范化、批量操作、cancel、查询与集合运算 |
+| `Job` / `JobId` / `JobMeta` | 进程内闭包 Job 描述与元数据 |
+| `Schedule::Once` | 在显式时间达到阈值后执行一次 |
+| `Schedule::FixedDelay` | 按显式毫秒输入推进下一次执行 |
+| `Schedule::Cron` | 受限 cron 子集；不是完整 cron 方言 |
+| `JobRunner` | add/cancel/remove/query；`tick(now_ms)` 同步执行到期 Job 并返回 `TickResult` |
 
-| API | 当前行为 |
-|---|---|
-| `new/default` | 创建空登记表 |
-| `schedule(id)` / `schedule_checked` / `schedule_normalized` / `try_schedule` / `schedule_many` | 登记任务 ID；重复 ID 幂等覆盖 |
-| `cancel(id)` / `cancel_many` | 删除并返回此前是否存在 |
-| `list()` / `contains` / `len` / `is_empty` | 查询登记表 |
-| `intersection_ids` / `difference_ids` / `union_ids` / `retain` / `clear` | 集合运算 |
+`JobRunner::tick` 的时间由宿主驱动。crate 不读取隐式墙钟，不创建线程、timer、daemon 或 async task。
 
-`additive 面`（与登记表独立，无自动联动）：
+## 3. 行为与错误边界
 
-| 类型 | 当前行为 |
-|---|---|
-| `JobRunner` | `add(Job, Schedule)` + `tick(now_ms) -> TickResult`；确定性、进程内、无墙钟 |
-| `Schedule` | `once` / `fixed_delay` / `cron`（最小子集；非完整 cron 方言） |
-| `Job` / `JobFn` / `JobId` / `JobMeta` | 闭包式一次性 job 描述 |
+1. `Scheduler::schedule` 对重复 ID 幂等覆盖；checked/normalized API 拒绝非法 ID。
+2. `JobRunner::add` 拒绝重复 Job ID；cancel 停用，remove 删除。
+3. `tick(now_ms)` 只处理调用时已到期的 active Job；执行错误记录在结果中，不升级为调度平台级重试保证。
+4. Once/FixedDelay/cron 子集的语义只对当前进程、当前 runner 实例和宿主提供的时间成立。
 
-“登记一个任务 ID”**不等于**定时触发或执行任务；`JobRunner::tick` 由宿主显式驱动。
+## 4. OPEN 与禁止声明
 
-## 3. 未实现能力
+以下不在当前实现/证据范围：
 
-- 分布式调度 / 跨进程 lease / fencing；
-- 墙钟后台 daemon（仅显式 `tick(now_ms)`，无自动触发）；
-- async runtime / tokio 集成；
-- 持久化恢复 / misfire 产品矩阵；
-- 完整 cron 方言 / 时区产品；
-- 把 `Scheduler`（登记表）与 `JobRunner`（执行器）混为一谈，或宣称 package stable / Agent L5。
+- async runtime/tokio 集成、后台墙钟 daemon 与自动触发；
+- 分布式调度、跨进程 lease/fencing、leader election；
+- 持久化恢复、misfire 产品矩阵、重试编排、可观测控制面；
+- 完整 cron 方言、时区/DST 产品合同；
+- package stable、Production Ready 或 Agent L5。
 
-候选单进程/分布式分级方案见 Candidate Draft；未批准前不属于 active API。
+不得把 `Scheduler` 写成执行器，也不得把宿主驱动的同步 `JobRunner::tick` 写成生产分布式 scheduler。
 
-## 4. 当前测试
-
-5 个测试覆盖：登记/list、取消、取消 missing、Default 空、重复登记幂等。
-
-反例条件：owner 外出现 consumer，或源码/Cargo 出现 timer、Clock、Job/Run、runtime/persistence/shutdown 时，“仅登记”结论失效。
-
-## 5. 验收
+## 5. 验证与验收
 
 ```bash
-cargo test -p schedulex
-cargo check -p schedulex --all-targets
+cmp .agents/ssot/schedulex/spec/spec.md \
+  .agents/ssot/schedulex/spec/xhyper-schedulex-complete-spec.md
+cargo test -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
-cargo xtl lint-deps
-cargo fmt -- --check
+cargo fmt --all --check
 ```
 
-通过条件：API/依赖与源码一致；不把 registry 冒充 production scheduler。
-
-## 6. 追溯
-
-- `docs/architecture/spec.md` §4.4
-- `crates/schedulex/{Cargo.toml,src/lib.rs}`
+通过条件：登记面与 runner additive 面均不被写窄；runtime/分布式能力仍明确 OPEN。

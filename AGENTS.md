@@ -36,19 +36,20 @@
 
 ## 域规格 SSOT 与本仓落地
 
-- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 **infra.rs 本仓域规格 SSOT**（见 `.agents/ssot/SSOT.md` R6；历史可自 `xhyper.rs` 同步，但**不是**只读镜像）
-  - `infra/` 下含 bootstrap / configx / gate / observex / resiliencx / schedulex / testkitx / transport
+- `.agents/ssot/{kernel,testkit,types,evidence,bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport,adapters,contracts,tools}/` 是 **infra.rs 本仓域规格 SSOT**（见 `.agents/ssot/SSOT.md` R6；历史可自外部规格仓同步，但**不是**只读镜像）
+  - infra 域已展平为 bootstrap / configx / gate / observex / resiliencx / schedulex / testkitx / transport
   - `adapters/` 下含 exchange（binance/okx）与 storage（clickhouse/kafka/nats/oss/postgres/redis/taos）
-  - `tools/` 下含 evidence / goalctl / xtask（+ 本仓扩展 `verifyctl`）
-  - **保留 `adapters/`、`tools/` 层级**（勿展平到 `.agents/ssot/` 根；`infra/` 已展平）
+  - `.agents/ssot/evidence/` 是 evidence current-state canonical；`.agents/ssot/tools/evidence/` 仅历史重定向
+  - `tools/` 下含 goalctl / xtask（+ 本仓扩展 `verifyctl`）
+  - **保留 `adapters/`、`tools/` 层级**（勿展平到 `.agents/ssot/` 根）
 - **规格写 COMPLETE / Stable ≠ 本仓已有对应实现**；必须以 `crates/` + `cargo metadata` 为准
 - **archgate / `.architecture`：OOS**（PR #164）— 本仓明确不移植
 - **当前 workspace members**（无 `infra-core`）：
   - `crates/kernel` → `xhyper-kernel`（L0）
   - `crates/testkit` → `testkit`（core ManualClock；仅 dev-dep）
   - `crates/test-support/contracts` → `contract-testkit`（Fake + suite；仅 dev-dep）
-  - `crates/configx` → `xhyper-configx`（L1 内存字符串 KV；非多源热更新）
-  - `crates/schedulex` → `xhyper-schedulex`（L1 任务 ID 登记表；active SSOT registry only）
+  - `crates/configx` → `configx`（L1 本地 Memory/Env/File source + 分层 + 宿主 reload/通知 + secret 脱敏；非远端配置中心）
+  - `crates/schedulex` → `schedulex`（L1 任务 ID 登记 + 宿主驱动确定性 `JobRunner::tick`；非 runtime/分布式 scheduler）
   - `crates/bootstrap` → `xhyper-bootstrap`（L1 组合根；已注入 contracts/observex/evidence）
   - `crates/evidence` → `xhyper-evidence`（L1 审计证据追加面）
   - `crates/observex` → `xhyper-observex`（L1 TracingInstrumentation 最小面）
@@ -57,10 +58,10 @@
   - `crates/types/decimal` → `xhyper-decimalx`
   - `crates/types/canonical` → `xhyper-canonical`
   - `crates/contracts` → `xhyper-contracts`（adapter trait 出口；#43）
-  - `crates/adapters/**` → 9 个 adapter package（**storage×7 生产默认客户端** + **exchange 生产默认 REST+WS** #210+#214，非 package stable；#188–#190 storage）
-  - `tools/goalctl` · `tools/verifyctl` → 最小生产 CLI members（#188）
+  - `crates/adapters/**` → 9 个 adapter package（storage×7 默认客户端入口；exchange 签名 REST + 公共 WS 解析/注入，交易 **NO-GO**；均非 package stable）
+  - `tools/goalctl` · `tools/verifyctl` → 最小 CLI members（#188；verifyctl 非生产 verifier）
 - `contract-testkit` **已落地**（`crates/test-support/contracts`）；**infra 其余域**（gate 等）当前仅镜像，未宣称本仓实现
-- **adapters**：镜像已本地化；storage 生产 P0 已落地 + live/bench；**未**宣称 package stable / Cluster·JetStream·EOS 全量
+- **adapters**：镜像已本地化；storage 默认客户端与 live/bench 入口已落地，但除 Redis 外 live 证据未形成可复验 CI/留档；**未**宣称生产证据闭合、package stable / Cluster·JetStream·EOS 全量
 - **tools**：evidence + goalctl + verifyctl 已 member；xtask **未**宣称落地
 - `.agents/ssot/**` 变更走 **worktree + PR**；从外仓同步用删除感知 rsync（见 `docs/ssot/SSOT_SYNC_OPS.md`），**禁止**用上游覆盖冲掉本仓 OOS/落地裁定
 - 对齐审计总览：[docs/ssot/workspace-ssot-alignment.md](./docs/ssot/workspace-ssot-alignment.md)

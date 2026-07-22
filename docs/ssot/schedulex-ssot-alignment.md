@@ -5,7 +5,7 @@
 | 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
 | Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ `spec/xhyper-schedulex-complete-spec.md` |
 | 本仓 crate | `crates/schedulex` · package `schedulex` · lib `schedulex` · **v0.1.1** |
-| 合同范围 | **任务 ID 登记表（active SSOT registry）** + **进程内 tick 驱动 JobRunner**（additive 面；**≠** 完整调度器/执行器） |
+| 合同范围 | 任务 ID 登记表 + 进程内、宿主驱动的确定性 `JobRunner::tick`；非 runtime/分布式调度产品 |
 
 ## 合同矩阵
 
@@ -18,7 +18,7 @@
 | `cancel(id)` | 删除并返回此前是否存在 | `remove(...).is_some()` | ✅ |
 | `list()` | 当前 ID；顺序未承诺 | `keys().cloned().collect()` | ✅ |
 | Job / Schedule / JobRunner | 审查 OBJECTIVE 关闭项 | `job.rs` / `schedule.rs` / `runner.rs` | **PASS** |
-| `JobRunner::tick(now_ms)` | 确定性 tick | 显式时间输入；无墙钟 daemon | **PASS** |
+| `JobRunner::tick(now_ms)` | 宿主驱动的确定性 tick | 显式时间输入；无墙钟 daemon | **PASS** |
 | Once / FixedDelay / cron 子集 | tick 驱动 | `Schedule::{once,fixed_delay,cron}` | **PASS**（**≠** 完整 cron 方言 / 分布式 lease） |
 | async runtime / 持久化 / 分布式 | 非目标 | 无 | 诚实边界 OPEN |
 
@@ -34,6 +34,7 @@
 - 后台墙钟线程自动触发（本仓为 **显式 `tick(now_ms)`**）
 - 完整 cron 方言 / 时区产品
 - 把 `Scheduler`（登记表）与 `JobRunner`（执行器）混为一谈的误读
+- runtime / 分布式调度产品与 package stable 声明
 
 ## 生产误用红线
 
@@ -78,3 +79,4 @@ cargo llvm-cov -p schedulex --fail-under-lines 100 --summary-only
 |------|------|
 | 2026-07-22 | **defer-close**：Job/Schedule/JobRunner tick 面 PASS；分布式仍 OPEN |
 | 2026-07-22 | 对齐 Cargo 真相：版本 `0.1.1`；明确 JobRunner/TASK 面为 active SSOT 任务 ID 登记表，**非** 完整调度器/执行器；`xhyper-schedulex` 仅废弃别名 |
+| 2026-07-22 | 冻结宿主驱动的确定性 `JobRunner::tick` additive 面；runtime/分布式调度仍 OPEN |

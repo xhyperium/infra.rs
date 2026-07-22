@@ -30,15 +30,19 @@ matrix/ gate/ evidence/   + README.md
 | `{bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport}/` | infra 面（gate 等可仅规格） |
 | `adapters/{exchange,storage}/…` | 九 adapter 域（保留 `adapters/` 层级） |
 | `contracts/` | trait 出口规格 |
-| `tools/{evidence,goalctl,xtask,verifyctl}/` | 工具域（保留 `tools/` 层级） |
+| `evidence/` | evidence canonical current-state 规格；实现位于 `crates/evidence` |
+| `tools/{goalctl,xtask,verifyctl}/` | 工具域（保留 `tools/` 层级） |
+| `tools/evidence/` | 历史重定向入口；不得创建第二份 active spec |
 
 ## 4. 落地状态速查（2026-07-22）
 
 | 域 | 本仓状态（摘要） |
 |----|------------------|
-| storage×7 | 生产默认客户端 P0 + live/bench（#188–#190） |
-| exchange×2 | scaffold + server_time |
-| evidence / goalctl / verifyctl | members 已落地 |
+| storage×7 | 默认客户端入口存在；Redis live CI 可复验，其余 live/安全/投递证据仍 OPEN |
+| exchange×2 | 签名 REST + 公共 WS 解析/注入已实现；交易证据未闭合，**NO-GO** |
+| evidence / goalctl / verifyctl | members 已落地；均按各自声明面验收，verifyctl 非生产 verifier |
+| configx | source/layered/watch/secret 已实现；非远端配置中心/自动文件监听/secret manager |
+| schedulex | 宿主驱动确定性 `JobRunner::tick`；非 runtime/分布式 scheduler |
 | xtask / gate | 规格可有；crate **未**宣称落地 |
 
 权威细节：`docs/ssot/workspace-ssot-alignment.md`。
@@ -55,6 +59,7 @@ matrix/ gate/ evidence/   + README.md
 ```bash
 test -f .agents/ssot/SSOT.md
 test -f .agents/ssot/AGENTS.md
+test -f .agents/ssot/evidence/spec/spec.md
 test -f .agents/ssot/adapters/README.md
 test -f .agents/ssot/tools/README.md
 # 叶域 11 层
