@@ -67,6 +67,7 @@ pub struct MockAnalyticsSink {
 #### B.1 TaosPool（taosx）— 1 天
 
 当前 TaosPool 是直接 REST 客户端。需要添加：
+
 - 可配置最大连接数的连接池
 - 健康检查（`SELECT 1`）
 - REST 客户端连接复用
@@ -129,6 +130,7 @@ pub struct JetStreamBus {
 **目标：** 集成 `resiliencx` 重试/断路器到全部 7 个适配器。
 
 每个适配器添加 RetryConfig，配置如下：
+
 - 最大重试：3
 - 退避：指数型（1s、2s、4s）
 - 断路器：连续 5 次失败 → 打开 30 秒
@@ -187,22 +189,25 @@ impl PostgresPool {
 ### 阶段 I：打磨（P2，2-3 天）
 
 #### I.1 测试覆盖 — 1 天
+
 - 每个适配器从 1 个扩展到 3+ 集成测试
 - 增加连接失败测试
 - postgresx 增加事务边界测试
 
 #### I.2 文档 — 0.5 天
+
 - 每个适配器迁移指南
 - 配置参考完整性
 - 增加量化交易使用示例
 
 #### I.3 Scaffold 清理 — 0.5 天
+
 - 验证所有 scaffold 均在 feature gate 后
 - 移除泄漏到生产路径的 scaffold 模块
 
 ## 3. 依赖图
 
-```
+```text
 阶段 A (Mock) ───────────────────────────────┐
 阶段 B (Pool) ───────────────────────────────┤
 阶段 C (JetStream) ─────────────────────────┤  均独立（可并行）

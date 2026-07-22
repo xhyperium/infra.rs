@@ -227,7 +227,7 @@
 
 ### 5.1 行情数据链路
 
-```
+```text
 Exchange → kafkax/natsx (EventBus) → taosx (TimeSeriesStore) → postgresx (Repository)
                                                                     ↓
                           redisx (KeyValueStore ← cache)      clickhousex (AnalyticsSink)
@@ -263,18 +263,18 @@ Exchange → kafkax/natsx (EventBus) → taosx (TimeSeriesStore) → postgresx (
 
 ### P1 — 生产加固（稳定生产需要）
 
-5. **集成 resiliencx 重试**：全部 7 个适配器
-6. **TLS 强制**：postgresx, redisx, kafkax, natsx
-7. **Consumer offset 管理**：kafkax
-8. **错误类型化**：taosx, ossx, clickhousex
-9. **Repository trait 进入生产**：postgresx（或记录为有意不实现）
+1. **集成 resiliencx 重试**：全部 7 个适配器
+2. **TLS 强制**：postgresx, redisx, kafkax, natsx
+3. **Consumer offset 管理**：kafkax
+4. **错误类型化**：taosx, ossx, clickhousex
+5. **Repository trait 进入生产**：postgresx（或记录为有意不实现）
 
 ### P2 — 生产优化（可维护性改进）
 
-10. 扩展测试覆盖面（每个适配器 3+ 集成测试）
-11. 分离 scaffold 模块与生产代码
-12. OSS 上传统计跟踪
-13. 文档扩展（API 文档、迁移指南）
+1. 扩展测试覆盖面（每个适配器 3+ 集成测试）
+2. 分离 scaffold 模块与生产代码
+3. OSS 上传统计跟踪
+4. 文档扩展（API 文档、迁移指南）
 
 ## 7. 工作量估算
 

@@ -28,5 +28,9 @@ serde_json = { workspace = true }
 [dev-dependencies]
 tokio = { workspace = true }
 
+[[bench]]
+name = "hot_path"
+harness = false
+
 [lints]
 workspace = true

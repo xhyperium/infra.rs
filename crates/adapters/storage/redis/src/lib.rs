@@ -40,3 +40,32 @@ pub use pubsub::{RedisPubSub, RedisPubSubFacade};
 mod scaffold;
 #[cfg(feature = "scaffold")]
 pub use scaffold::{InMemoryRedis, MockRedisAdapter, RedisAdapter};
+
+#[cfg(test)]
+mod public_api_surface {
+    use super::*;
+
+    /// 默认 feature crate-root 导出均被单元测试点名。
+    #[test]
+    fn default_exports_named() {
+        let builder: RedisConfigBuilder = RedisConfig::builder();
+        let cfg: RedisConfig = builder.build().expect("cfg");
+        let _dbg = format!("{cfg:?}");
+        let _mode = RedisMode::Standalone;
+
+        let ok: kernel::XResult<i32> = map_redis_result(Ok(7));
+        assert_eq!(ok.unwrap(), 7);
+
+        let stats = RedisPoolStats { open: 0, in_flight: 0, waiters: 0 };
+        assert_eq!(stats.open, 0);
+
+        fn assert_type<T: ?Sized>() {}
+        assert_type::<RedisClient>();
+        assert_type::<RedisPool>();
+        assert_type::<RedisLiveKv>();
+        assert_type::<RedisConfig>();
+        assert_type::<RedisConfigBuilder>();
+        assert_type::<RedisPoolStats>();
+        let _ = map_redis_error;
+    }
+}

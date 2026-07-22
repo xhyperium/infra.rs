@@ -41,3 +41,42 @@ mod mock;
 pub use adapter::KafkaAdapter;
 #[cfg(feature = "scaffold")]
 pub use mock::MockKafkaBus;
+
+#[cfg(test)]
+mod public_api_surface {
+    use super::*;
+    use bytes::Bytes;
+
+    /// 默认 feature crate-root 导出均被单元测试点名。
+    #[test]
+    fn default_exports_named() {
+        assert!(!DEFAULT_BROKERS.is_empty());
+        assert!(!DEFAULT_SASL_MECHANISM.is_empty());
+        let _cfg = KafkaConfig::default();
+        let _consumer_cfg = ConsumerConfig::subscribe("t", "g");
+
+        let delivery = Delivery { partition: 0, offset: 1 };
+        assert_eq!(delivery.offset, 1);
+        let msg = KafkaMessage {
+            topic: "t".into(),
+            partition: 0,
+            offset: 1,
+            payload: Bytes::from_static(b"x"),
+            key: None,
+        };
+        assert_eq!(msg.topic, "t");
+        let health = KafkaHealth { ready: false, detail: "offline".into() };
+        assert!(!health.ready);
+        let stats = KafkaPoolStats { published: 0, publish_failed: 0, closed: false };
+        assert!(!stats.closed);
+
+        let id = encode_bus_id("t", 0, 1);
+        let _ = parse_bus_id(&id).expect("id");
+
+        fn assert_type<T: ?Sized>() {}
+        assert_type::<KafkaPool>();
+        assert_type::<KafkaProducer>();
+        assert_type::<KafkaConsumer>();
+        assert_type::<KafkaEventBus>();
+    }
+}

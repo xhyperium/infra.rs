@@ -20,7 +20,9 @@ use kernel::{XError, XResult};
 use transportx::{HttpDriver, HttpRequest, HttpResponse, TransportError};
 
 /// 解析 OKX `/api/v5/public/time` JSON：`data[0].ts` 毫秒字符串。
-pub(crate) fn parse_okx_server_time(body: &[u8]) -> XResult<i64> {
+///
+/// 离线可调用（bench / 单元测试）；不发起网络。
+pub fn parse_okx_server_time(body: &[u8]) -> XResult<i64> {
     let v: serde_json::Value = serde_json::from_slice(body)
         .map_err(|e| XError::invalid(format!("server_time json: {e}")))?;
     let ts = v

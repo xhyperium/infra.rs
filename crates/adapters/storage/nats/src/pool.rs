@@ -235,6 +235,7 @@ impl NatsPool {
 mod tests {
     use super::*;
     use crate::config::NatsConfig;
+    use futures_util::StreamExt;
     use kernel::ErrorKind;
 
     #[tokio::test]
@@ -252,5 +253,51 @@ mod tests {
             Ok(Ok(_)) => panic!("must fail"),
             Err(_) => {}
         }
+    }
+
+    /// 离线构造公共消息/健康/统计类型（不依赖 NATS 进程）。
+    #[test]
+    fn offline_message_health_stats_types() {
+        let msg = NatsMessage {
+            subject: "infra.test".into(),
+            payload: Bytes::from_static(b"payload"),
+            seq: 42,
+        };
+        assert_eq!(msg.subject, "infra.test");
+        assert_eq!(msg.seq, 42);
+        assert_eq!(msg.payload.as_ref(), b"payload");
+
+        let health = NatsHealth { ready: false, detail: "offline".into() };
+        assert!(!health.ready);
+        assert!(health.detail.contains("offline"));
+
+        let stats = NatsPoolStats { published: 1, publish_failed: 0, closed: false };
+        assert_eq!(stats.published, 1);
+        assert!(!stats.closed);
+        let _default = NatsPoolStats::default();
+    }
+
+    /// `NatsSubscription::recv` / `into_stream` 离线路径。
+    #[tokio::test]
+    async fn subscription_recv_and_into_stream() {
+        let (tx, rx) = mpsc::channel(2);
+        let mut sub = NatsSubscription { rx };
+        tx.send(NatsMessage { subject: "s1".into(), payload: Bytes::from_static(b"a"), seq: 1 })
+            .await
+            .expect("send");
+        let got = sub.recv().await.expect("recv");
+        assert_eq!(got.seq, 1);
+        assert_eq!(got.subject, "s1");
+
+        let (tx2, rx2) = mpsc::channel(1);
+        let sub2 = NatsSubscription { rx: rx2 };
+        tx2.send(NatsMessage { subject: "s2".into(), payload: Bytes::from_static(b"b"), seq: 2 })
+            .await
+            .expect("send");
+        drop(tx2);
+        let mut stream = Box::pin(sub2.into_stream());
+        let next = stream.next().await.expect("stream item");
+        assert_eq!(next.seq, 2);
+        assert!(stream.next().await.is_none());
     }
 }

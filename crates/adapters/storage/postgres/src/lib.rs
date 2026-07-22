@@ -60,7 +60,28 @@ mod unit_smoke {
         fn assert_send_sync<T: Send + Sync>() {}
         assert_send_sync::<PostgresPool>();
         assert_send_sync::<PostgresConfig>();
+        assert_send_sync::<PostgresConfigBuilder>();
         assert_send_sync::<PgTxRunner>();
         assert_send_sync::<PoolStats>();
+        assert_send_sync::<SslMode>();
+    }
+
+    /// 默认 feature crate-root 导出均被单元测试点名。
+    #[test]
+    fn default_exports_named() {
+        assert_eq!(DEFAULT_PORT, 5432);
+        assert_eq!(DEFAULT_MAX_POOL_SIZE, 16);
+        let _ = SslMode::Disable.as_str();
+
+        fn assert_type<T: ?Sized>() {}
+        assert_type::<PgConnection>();
+        assert_type::<PgTransaction>();
+        assert_type::<Row>();
+        assert_type::<dyn ToSql>();
+        let _ = map_pool_error;
+        let _ = map_tokio_error;
+        let _ = error_kind_from_sqlstate;
+        let err = xerror_from_sqlstate("42P01", "missing");
+        assert_eq!(err.kind(), kernel::ErrorKind::Missing);
     }
 }

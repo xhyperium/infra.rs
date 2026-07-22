@@ -17,3 +17,27 @@ pub use config::{TaosConfig, TsPrecision};
 mod adapter;
 #[cfg(feature = "scaffold")]
 pub use adapter::TaosAdapter;
+
+#[cfg(test)]
+mod public_api_surface {
+    use super::*;
+
+    /// 默认 feature crate-root 导出均被单元测试点名。
+    #[test]
+    fn default_exports_named() {
+        let _cfg = TaosConfig::default();
+        let _ = TsPrecision::Ms;
+        let result = TaosExecResult {
+            code: 0,
+            rows: vec![vec!["1".into()]],
+            columns: vec!["n".into()],
+            affected_rows: Some(1),
+        };
+        assert_eq!(result.code, 0);
+        fn assert_type<T: ?Sized>() {}
+        assert_type::<TaosClient>();
+        assert_type::<TaosPool>();
+        assert_type::<TaosConfig>();
+        assert_type::<TaosExecResult>();
+    }
+}
