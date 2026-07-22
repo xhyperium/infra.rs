@@ -63,6 +63,10 @@ proptest! {
 fn decimal_error_conversion_preserves_source_chain() {
     let error: kernel::XError = DecimalError::DivisionByZero.into();
     let source = error.source().expect("DecimalError 必须保留为 XError source");
+    assert!(
+        source.downcast_ref::<DecimalError>().is_some(),
+        "source 必须保留 DecimalError 类型身份"
+    );
     assert_eq!(source.to_string(), "十进制除零");
 }
 

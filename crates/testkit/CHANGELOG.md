@@ -10,6 +10,7 @@
 
 - `IntegrationHarness` 改为消费型 builder；`run(self)` 返回 terminal `HarnessReport`。
 - 步骤错误保留 `Error::source`，panic 转为 terminal `HarnessRunError`，后续步骤不再执行。
+- 使用 workspace `thiserror` 统一 crate 专用错误派生；补齐公开 getter/报告所有权与确定性并发重叠回归。
 - `StepRecord` 字段私有化并提供 step 前后 snapshot getter；缺失快照使用 `Option`，禁止 epoch 0 哨兵。
 - step 前后 snapshot 失败或 wall fault 形成 terminal `ObservationFailed`，不得记录为成功。
 

@@ -5,7 +5,7 @@
 | Active Spec | [SPEC-TESTKIT-002](../spec/spec.md) |
 | package / current version | `testkit` / `0.1.3` |
 | 身份 | T0 测试支持平面；L1 确定性测试原语；非 production runtime |
-| 当前 Gate | **GO / R3 GATES PASS / INDEPENDENT REVIEW GO** |
+| 当前 Gate | **NO-GO；阻断修复 focused PASS，新固定候选待全量复验** |
 
 ## 1. 能力矩阵
 
@@ -50,4 +50,5 @@
 
 - `R-CLK-DOMAIN-EXHAUSTION`：OPEN；保持 process-lifetime 边界，禁止回绕后继续宣称唯一。
 - `R-EXTERNAL-HARNESS`：OOS；不与 crate 内 `IntegrationHarness` 混同。
-- typed runner、fail-closed 测试和 PATCH bump：IMPLEMENTED；`70d402a` 全仓门禁 PASS，独立双轴终审 GO。
+- typed runner、`thiserror` 错误、fail-closed/并发/公开方法测试和 PATCH bump：IMPLEMENTED；前一
+  `c27b7ce` 裁决已失效，新固定候选待全仓门禁与独立终审。

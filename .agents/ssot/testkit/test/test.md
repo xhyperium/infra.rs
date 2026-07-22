@@ -4,7 +4,7 @@
 |---|---|
 | Source Spec | [SPEC-TESTKIT-002](../spec/spec.md) |
 | 当前 package 版本 | `0.1.3` |
-| 本轮状态 | **R3 GATES PASS / INDEPENDENT REVIEW GO** |
+| 本轮状态 | **阻断修复 focused PASS；新固定候选全量门禁待运行** |
 | 适用范围 | T0/L1 test-support；非 production runtime |
 
 本文列出实现必须通过的测试，不记录未经本轮执行的 PASS。旧 PR、tag、release evidence 与历史 coverage 只能作回归线索，不能替代当前候选的新鲜结果。
@@ -45,7 +45,7 @@
 
 | ID | 检查 | 通过条件 |
 |---|---|---|
-| BND-01 | Cargo normal dependency | 仅 `kernel`；第三方依赖由 workspace 集中管理 |
+| BND-01 | Cargo normal dependency | 仅 `kernel` + workspace `thiserror`；其他第三方依赖不得进入生产图 |
 | BND-02 | feature | `default = []`；无 async/network/I/O feature |
 | BND-03 | 消费图 | `testkit` 与 `contract-testkit` 的生产 normal dependents 为零 |
 | BND-04 | 源树扫描 | 无真实时间、sleep、网络、文件、环境、进程、容器能力 |

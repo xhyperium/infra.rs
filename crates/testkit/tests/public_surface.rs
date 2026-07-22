@@ -132,7 +132,7 @@ fn source_tree_has_no_retired_macros_or_fixture_builder() {
 }
 
 #[test]
-fn cargo_toml_production_deps_only_kernel() {
+fn cargo_toml_production_deps_are_kernel_and_thiserror() {
     let deps_section = CARGO_TOML
         .split("[dependencies]")
         .nth(1)
@@ -148,7 +148,15 @@ fn cargo_toml_production_deps_only_kernel() {
         .filter(|k| !k.is_empty())
         .collect();
     prod_deps.sort_unstable();
-    assert_eq!(prod_deps, vec!["kernel"], "production deps must be only kernel, got {prod_deps:?}");
+    assert_eq!(
+        prod_deps,
+        vec!["kernel", "thiserror"],
+        "生产依赖只能是 kernel 与错误派生依赖 thiserror，实际为 {prod_deps:?}"
+    );
+    assert!(
+        HARNESS_RS.contains("thiserror::Error") && CLOCK_RS.contains("thiserror::Error"),
+        "crate 专用错误必须由 thiserror 定义"
+    );
     assert!(
         CARGO_TOML.contains("publish = false"),
         "testkit must remain publish=false (test-support plane)"

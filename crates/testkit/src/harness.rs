@@ -162,11 +162,14 @@ impl HarnessReport {
 ///
 /// 错误始终保留 terminal [`HarnessReport`]；步骤或快照错误可通过
 /// [`std::error::Error::source`] 继续访问。
+#[derive(thiserror::Error)]
+#[error("测试步骤 {step} {}: {detail}", .kind.display_zh())]
 pub struct HarnessRunError {
     step: String,
     kind: StepOutcome,
     detail: String,
     report: Box<HarnessReport>,
+    #[source]
     source: Option<BoxError>,
 }
 
@@ -216,21 +219,6 @@ impl fmt::Debug for HarnessRunError {
             .field("report", &self.report)
             .field("source", &self.source.as_ref().map(|_| "..."))
             .finish()
-    }
-}
-
-impl fmt::Display for HarnessRunError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "测试步骤 {} {}: {}", self.step, self.kind.display_zh(), self.detail)
-    }
-}
-
-impl std::error::Error for HarnessRunError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self.source.as_ref() {
-            Some(source) => Some(source.as_ref()),
-            None => None,
-        }
     }
 }
 
@@ -439,33 +427,16 @@ fn observe_snapshot(
     Ok(snapshot)
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("手动时钟墙钟存在故障注入: {0:?}")]
 struct WallFaultObservation(ManualClockFault);
 
-impl fmt::Display for WallFaultObservation {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "手动时钟墙钟存在故障注入: {:?}", self.0)
-    }
-}
-
-impl std::error::Error for WallFaultObservation {}
-
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("终态观测失败: {observation}；此前步骤错误: {preceding}")]
 struct CombinedObservationError {
     observation: BoxError,
+    #[source]
     preceding: BoxError,
-}
-
-impl fmt::Display for CombinedObservationError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "终态观测失败: {}；此前步骤错误: {}", self.observation, self.preceding)
-    }
-}
-
-impl std::error::Error for CombinedObservationError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        Some(self.preceding.as_ref())
-    }
 }
 
 fn panic_detail(payload: &(dyn std::any::Any + Send)) -> String {
@@ -522,5 +493,44 @@ mod tests {
         assert!(record.before_snapshot().is_some());
         assert!(record.after_snapshot().is_none());
         assert!(error.source().is_some());
+    }
+
+    #[test]
+    fn public_record_and_error_getters_preserve_terminal_state() {
+        let error = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(3))
+            .step("失败步骤", |_| Err(io::Error::other("单元错误")))
+            .run()
+            .expect_err("步骤必须失败");
+
+        assert_eq!(error.step(), "失败步骤");
+        assert_eq!(error.kind(), StepOutcome::Failed);
+        assert_eq!(error.detail(), "单元错误");
+        let record = &error.report().records()[0];
+        assert_eq!(record.name(), "失败步骤");
+        assert_eq!(record.detail(), Some("单元错误"));
+        assert_eq!(record.outcome(), StepOutcome::Failed);
+        assert!(record.before_snapshot().is_some());
+        assert!(record.after_snapshot().is_some());
+        assert_eq!(record.wall_after_ns(), Some(3));
+        assert_eq!(record.wall_fault_after(), None);
+
+        let report = error.into_report();
+        assert_eq!(report.clock().snapshot().expect("报告时钟").wall().as_unix_nanos(), 3);
+        assert_eq!(report.records().len(), 1);
+    }
+
+    #[test]
+    fn public_success_helpers_cover_complete_harness_surface() {
+        let report = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(5))
+            .step_advance_wall("推进墙钟", Duration::from_nanos(2))
+            .step_advance_monotonic("推进单调钟", Duration::from_nanos(3))
+            .run()
+            .expect("公开成功路径必须完成");
+
+        report.assert_all_ok(2);
+        report.assert_wall_ns(7);
+        report.assert_monotonic_elapsed(Duration::from_nanos(3));
+        assert_eq!(report.records()[0].name(), "推进墙钟");
+        assert_eq!(report.records()[1].name(), "推进单调钟");
     }
 }

@@ -8,7 +8,7 @@
 | Current version | `0.3.1` |
 | Distribution | `publish = false` |
 | Maturity | L1 Internal Ready；L4 仅限已证支持面 |
-| Delivery | 候选实现与一次 PATCH bump 已落地；R1/R2 focused PASS；R3 声明收敛候选待固定 SHA 重验 |
+| Delivery | 候选实现与一次 PATCH bump 已落地；终门禁阻断修复完成 focused 验证；新固定 SHA 待全量重验 |
 | Production certification | 未声明 |
 
 ## 合同矩阵

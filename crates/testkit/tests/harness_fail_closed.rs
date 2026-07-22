@@ -79,9 +79,13 @@ fn step_error_preserves_source_and_terminal_report() {
     assert!(!later_executed.load(Ordering::SeqCst));
     assert_eq!(error.kind(), StepOutcome::Failed);
     assert_eq!(error.step(), "失败步骤");
+    assert_eq!(error.detail(), "boom");
     assert_eq!(error.source().expect("保留 source").to_string(), "boom");
     assert_eq!(error.report().records().len(), 1);
-    assert_eq!(error.report().records()[0].outcome(), StepOutcome::Failed);
+    let record = &error.report().records()[0];
+    assert_eq!(record.name(), "失败步骤");
+    assert_eq!(record.detail(), Some("boom"));
+    assert_eq!(record.outcome(), StepOutcome::Failed);
 }
 
 #[test]
@@ -113,15 +117,34 @@ fn non_text_panic_payload_is_classified_without_secondary_panic() {
 
 #[test]
 fn panic_is_captured_as_terminal_failure() {
+    let later_executed = Arc::new(AtomicBool::new(false));
+    let marker = Arc::clone(&later_executed);
     let error = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(0))
         .step("崩溃步骤", |_| -> Result<(), io::Error> { panic!("boom") })
+        .step("不得执行", move |_| {
+            marker.store(true, Ordering::SeqCst);
+            Ok::<(), io::Error>(())
+        })
         .run()
         .expect_err("panic 不得在后续重跑中变成成功");
 
+    assert!(!later_executed.load(Ordering::SeqCst));
     assert_eq!(error.kind(), StepOutcome::Panicked);
     assert_eq!(error.report().records()[0].outcome(), StepOutcome::Panicked);
     assert!(error.to_string().contains("发生 panic"));
     assert!(!error.to_string().contains("Panicked"));
+}
+
+#[test]
+fn terminal_error_can_transfer_report_ownership() {
+    let error = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(0))
+        .step("失败步骤", |_| Err(io::Error::other("失败")))
+        .run()
+        .expect_err("步骤必须失败");
+
+    let report = error.into_report();
+    assert_eq!(report.records().len(), 1);
+    assert_eq!(report.records()[0].name(), "失败步骤");
 }
 
 #[test]

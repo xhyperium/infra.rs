@@ -2880,6 +2880,7 @@ dependencies = [
  "kernel",
  "proptest",
  "static_assertions",
+ "thiserror 2.0.19",
 ]
 
 [[package]]

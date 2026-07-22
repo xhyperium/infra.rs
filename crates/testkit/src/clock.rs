@@ -5,7 +5,6 @@
 //! - 一致快照与 fault 注入在同一 `Mutex` 临界区线性化
 //! - **无** `Default` / `Clone`；共享请使用 [`std::sync::Arc`]
 
-use std::fmt;
 use std::sync::{Mutex, MutexGuard};
 use std::time::Duration;
 
@@ -35,36 +34,21 @@ impl ManualClockFault {
 
 /// 控制路径失败（不通过 [`Clock::now`] 返回）。
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 pub enum ManualClockError {
     /// 墙钟 checked 加减溢出。
+    #[error("手动时钟墙钟时间溢出")]
     WallOverflow,
     /// 单调钟推进溢出。
+    #[error("手动时钟单调流逝溢出")]
     MonotonicOverflow,
     /// 试图将单调钟回拨或 set 到更小值。
+    #[error("手动时钟单调流逝回退")]
     MonotonicRegression,
     /// 状态锁同步失败（poison 在控制路径上报告；`monotonic` 读取走恢复策略）。
+    #[error("手动时钟状态锁同步失败")]
     Synchronization,
 }
-
-impl fmt::Display for ManualClockError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ManualClockError::WallOverflow => write!(f, "手动时钟墙钟时间溢出"),
-            ManualClockError::MonotonicOverflow => {
-                write!(f, "手动时钟单调流逝溢出")
-            }
-            ManualClockError::MonotonicRegression => {
-                write!(f, "手动时钟单调流逝回退")
-            }
-            ManualClockError::Synchronization => {
-                write!(f, "手动时钟状态锁同步失败")
-            }
-        }
-    }
-}
-
-impl std::error::Error for ManualClockError {}
 
 /// 某一时刻的一致快照（同锁临界区读取）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

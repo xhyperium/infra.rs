@@ -26,7 +26,8 @@ testkit
     └── StepRecord
 ```
 
-`clock` 提供确定性时间；`harness` 只编排内存 step。二者都只依赖 `kernel`。
+`clock` 提供确定性时间；`harness` 只编排内存 step。业务能力只依赖 `kernel`；crate 专用错误统一由
+workspace `thiserror` 派生，避免手写 `Error` 合同漂移。
 
 `IntegrationHarness` 的“Integration”指多个 crate 内动作组成的 scenario，不表示它拥有真实外部系统。外部 harness 的进程、容器、网络、凭据、真实端口和 evidence 生命周期归 tools/CI，保持 OOS。
 
@@ -84,7 +85,7 @@ runner 用 `ManualClock::snapshot` 记录 step 前后状态。snapshot 同步失
 
 ## 4. 依赖与安全
 
-- crate normal dependency 仅 `kernel`；runner 不引入第三方 runtime。
+- crate normal dependency 仅 `kernel` + `thiserror`；runner 不引入第三方 runtime。
 - 不执行网络、进程、文件、环境或真实时间操作。
 - 无 `unsafe`；不以析构器检查 expectation；不在 unwind 中二次 panic。
 - test assertion helper 可以 panic，但生命周期和执行控制返回 typed error。

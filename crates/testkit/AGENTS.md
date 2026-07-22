@@ -54,7 +54,7 @@ runner 子模块公开：
 
 ## 依赖与禁止项
 
-- normal dependency 仅 `kernel`；`default = []`
+- normal dependency 仅 `kernel` + workspace `thiserror`；`default = []`
 - 第三方依赖统一从 workspace 引用
 - 禁止 `xlib_test!`、`mock!`、`FixtureBuilder`、`provider_capability_contract_tests!`
 - 禁止 unsafe、占位 public API、unchecked 回绕、真实 sleep/时间、网络、文件 I/O、环境变量和全局可变状态

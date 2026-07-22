@@ -18,6 +18,7 @@ fn multi_thread_read_and_control_no_data_race() {
     let stop = Arc::new(AtomicBool::new(false));
     let start = Arc::new(Barrier::new(9));
     let first_read = Arc::new(Barrier::new(9));
+    let first_control_observed = Arc::new(Barrier::new(9));
     let mut handles = Vec::new();
 
     for _ in 0..8 {
@@ -25,11 +26,20 @@ fn multi_thread_read_and_control_no_data_race() {
         let stop = Arc::clone(&stop);
         let start = Arc::clone(&start);
         let first_read = Arc::clone(&first_read);
+        let first_control_observed = Arc::clone(&first_control_observed);
         handles.push(thread::spawn(move || {
             start.wait();
             let initial = clock.snapshot().expect("initial snapshot");
             assert_snapshot_relation(initial.wall().as_unix_nanos(), initial.monotonic_elapsed());
             first_read.wait();
+            loop {
+                let snap = clock.snapshot().expect("控制开始后的 snapshot");
+                assert_snapshot_relation(snap.wall().as_unix_nanos(), snap.monotonic_elapsed());
+                if snap.wall().as_unix_nanos() >= 1 {
+                    break;
+                }
+            }
+            first_control_observed.wait();
             while !stop.load(Ordering::Acquire) {
                 let snap = clock.snapshot().expect("snapshot");
                 assert_snapshot_relation(snap.wall().as_unix_nanos(), snap.monotonic_elapsed());
@@ -43,7 +53,11 @@ fn multi_thread_read_and_control_no_data_race() {
     start.wait();
     first_read.wait();
 
-    for i in 0_i64..500 {
+    clock.advance_wall(Duration::from_nanos(1)).expect("首次推进 wall");
+    clock.advance_monotonic(Duration::from_nanos(1)).expect("首次推进 mono");
+    first_control_observed.wait();
+
+    for i in 1_i64..500 {
         clock.advance_wall(Duration::from_nanos(1)).expect("advance wall");
         clock.advance_monotonic(Duration::from_nanos(1)).expect("advance mono");
         if i % 25 == 0 {

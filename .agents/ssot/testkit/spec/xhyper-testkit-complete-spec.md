@@ -8,7 +8,7 @@
 | 发布 | `publish = false` |
 | 架构身份 | T0 测试支持平面；L1 确定性测试原语；无生产运行时层级 |
 | 物理路径 | `crates/testkit` |
-| 依赖 | normal dependency 仅 `kernel` |
+| 依赖 | normal dependency 仅 `kernel` + `thiserror` |
 
 本文是 infra.rs 本仓 `testkit` 当前状态的 active SSOT。规格状态不证明实现、测试或门禁已经通过；实现事实以 `crates/testkit`、`cargo metadata` 和本轮新鲜证据为准。
 
@@ -157,7 +157,7 @@ runner 在执行 step 前后读取时钟/快照时：
 
 ## 5. 依赖与消费合同
 
-- normal dependency 仅允许 `kernel`；第三方测试依赖必须从 workspace 统一引用。
+- normal dependency 仅允许 `kernel` 与 crate 专用错误派生所需的 `thiserror`；`thiserror` 和第三方测试依赖必须从 workspace 统一引用。
 - `default = []`；不得通过 feature 引入 async runtime、网络、I/O、tracing 全局初始化或外部服务客户端。
 - 业务 crate 只能在 `[dev-dependencies]` 引用 `testkit`。
 - `testkit` 与 `contract-testkit` 的生产 normal dependents 必须为零。

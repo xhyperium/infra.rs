@@ -44,7 +44,7 @@ pub use testkit::{
 - 不提供通用 mock 框架
 - 不提供真实网络 / 进程级 integration harness（仅 ManualClock 步进 harness）
 - contract trait suite 见独立 `contract-testkit`（`crates/test-support/contracts`）
-- 生产依赖仅 `kernel`
+- 生产依赖仅 `kernel` + workspace `thiserror`（crate 专用错误派生）
 
 ## 最小用法
 
