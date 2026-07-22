@@ -1,6 +1,6 @@
 # decimalx 交付门禁
 
-> **状态**：Active gate definition · `c4604ce` 全仓/专项机器门禁 PASS；独立终审待裁决
+> **状态**：Active gate definition · `c4604ce` 全仓/专项机器门禁 PASS；`fff07ea` 独立终审 GO
 >
 > 本文件定义通过条件，不替代独立 reviewer 的裁决。
 

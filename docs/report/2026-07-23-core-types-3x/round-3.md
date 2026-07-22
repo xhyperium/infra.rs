@@ -9,7 +9,7 @@
 | 终门禁阻断修复候选 | `f26e29cf8f76c6db14be7210e41bd72b04791493` |
 | 最终内容候选 | `f62859b484dc3774a444623d8e2537e0204c4ca8` |
 | 最终状态校正候选 | `c4604ceb6c79df310ebe91fe56c516f88b1c8a6e` |
-| 当前状态 | **机器门禁 GREEN；独立双轴复审与最终聚合门禁待裁决** |
+| 当前状态 | **GO** |
 | 轮次目标 | 当前权威、历史战役、Cargo package 真相与生成状态一致 |
 
 ## 基线 RED
@@ -50,3 +50,7 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
 - 最终内容候选 `f62859b` 已重新通过完整机器闭包，见 [`evidence/r3-final-green.txt`](evidence/r3-final-green.txt)；独立双轴与聚合门禁仍待裁决。
 - Spec 复审发现 canonical current-state test 的“本轮证据”仍继承 R1 reviewer GO；已改为最新机器 PASS / REVIEW PENDING，R1/R2 只保留为历史回归输入。
 - 状态校正候选 `c4604ce` 已再次通过完整机器闭包，见 [`evidence/r3-final-state-green.txt`](evidence/r3-final-state-green.txt)。
+- 最终 Standards / Spec / 聚合门禁均对 `c4604ce..fff07ea` 给出 GO；原始裁决见
+  [`reviews/r3-final-state-standards-reviewer.md`](reviews/r3-final-state-standards-reviewer.md)、
+  [`reviews/r3-final-state-spec-reviewer.md`](reviews/r3-final-state-spec-reviewer.md) 与
+  [`reviews/r3-final-state-gate-reviewer.md`](reviews/r3-final-state-gate-reviewer.md)。

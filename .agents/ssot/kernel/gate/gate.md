@@ -6,7 +6,7 @@
 | Package candidate | `kernel 0.3.1` |
 | Distribution | `publish = false` |
 | Maturity | L1 Internal Ready；L4 仅限已证支持面 |
-| Current delivery verdict | **MACHINE GREEN / INDEPENDENT REVIEW PENDING**；`c4604ce` 全量门禁 PASS |
+| Current delivery verdict | **GO**；`c4604ce` 全量门禁 PASS，`fff07ea` 双轴与聚合终审 GO |
 | Production certification | 未声明 |
 
 本文件只记录当前交付门禁，不继承历史战役 PASS。行为变更已按 patch-default 从 `0.3.0` 升至 `0.3.1`，且本 PR 不再重复 bump。
@@ -15,15 +15,15 @@
 
 | Gate | 当前状态 | 通过条件 |
 |------|----------|----------|
-| Spec / design / test 一致 | `c4604ce` PASS / REVIEW PENDING | 三份合同使用相同签名和语义 |
-| `ClockDomain` | `c4604ce` PASS / REVIEW PENDING | process domain、共享 origin、跨 domain `None` |
-| 隐藏构造 seam | `c4604ce` PASS / REVIEW PENDING | 两个 `#[doc(hidden)]` seam 存在且调用边界明确 |
-| `wait_timeout` 返回面 | `c4604ce` PASS / REVIEW PENDING | `Result<bool, WaitTimeoutError>` |
-| deadline overflow | `c4604ce` PASS / REVIEW PENDING | 未触发时 `Duration::MAX` 精确匹配 typed error |
-| 常规 timeout / trigger | `c4604ce` PASS / REVIEW PENDING | `Ok(false)` / `Ok(true)` 正确，且已触发完成优先于 timeout 校验 |
-| 根公开 API | `c4604ce` PASS / REVIEW PENDING | 导出 `WaitTimeoutError`，API 基线同步 |
-| Doctest | `c4604ce` PASS / REVIEW PENDING | rustdoc `compile_fail` 全部通过 |
-| Loom | `c4604ce` PASS / REVIEW PENDING | 核心 wait/trigger 模型通过 |
+| Spec / design / test 一致 | `c4604ce` PASS / REVIEW GO | 三份合同使用相同签名和语义 |
+| `ClockDomain` | `c4604ce` PASS / REVIEW GO | process domain、共享 origin、跨 domain `None` |
+| 隐藏构造 seam | `c4604ce` PASS / REVIEW GO | 两个 `#[doc(hidden)]` seam 存在且调用边界明确 |
+| `wait_timeout` 返回面 | `c4604ce` PASS / REVIEW GO | `Result<bool, WaitTimeoutError>` |
+| deadline overflow | `c4604ce` PASS / REVIEW GO | 未触发时 `Duration::MAX` 精确匹配 typed error |
+| 常规 timeout / trigger | `c4604ce` PASS / REVIEW GO | `Ok(false)` / `Ok(true)` 正确，且已触发完成优先于 timeout 校验 |
+| 根公开 API | `c4604ce` PASS / REVIEW GO | 导出 `WaitTimeoutError`，API 基线同步 |
+| Doctest | `c4604ce` PASS / REVIEW GO | rustdoc `compile_fail` 全部通过 |
+| Loom | `c4604ce` PASS / REVIEW GO | 核心 wait/trigger 模型通过 |
 | 版本 | PASS | `0.3.0 → 0.3.1`，仅 bump 一次 |
 
 任何 deadline overflow 被返回为 `Ok(false)` 都必须 FAIL。任何历史 evidence 被当作本轮 PASS 也必须 FAIL。
