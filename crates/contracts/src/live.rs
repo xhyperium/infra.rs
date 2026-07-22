@@ -1,7 +1,7 @@
-//! 业务 live 面：Tx / Bus / Repo / Venue 的可观测编排与 profile 标记。
+//! 业务接线意图：Tx / Bus / Repo / Venue 的轻量编排与 profile 标记。
 //!
-//! 关闭 contracts DEFER「Tx/Bus/Repo/Venue 业务 live」：提供真实 trait 路径上的
-//! 编排辅助与「哪条契约已具备 live 实现」的声明式 profile，供 adapter / bootstrap 接线。
+//! 本模块不拥有后端连接，也不执行 readiness attestation。Profile 只表达接线意图；
+//! helper 只证明对应 trait 调用路径，不证明 E2E 交付、跨资源原子性或业务 live。
 
 use crate::{
     AccountSource, BusMessage, EventBus, ExecutionVenue, KeyValueStore, MessageAck, Repository,
@@ -14,7 +14,7 @@ use kernel::{XError, XResult};
 use std::sync::Arc;
 use std::time::Duration;
 
-/// 契约 live 能力开关（声明哪些业务面已接入真实后端）。
+/// 契约接线意图开关；布尔值本身不证明后端可用或生产 readiness。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct LiveContractProfile {
     /// KeyValueStore live。
@@ -117,8 +117,17 @@ pub async fn kv_roundtrip(store: &dyn KeyValueStore, key: &str, val: &[u8]) -> X
     }
 }
 
-/// Bus live 辅助：publish 后 subscribe 至少取一条（若流立即结束则 Ok 仍算路径走过）。
+/// 兼容入口：只执行一次 producer `publish`，不证明 subscribe、ack 或 E2E 交付。
 pub async fn bus_publish(bus: &dyn EventBus, topic: &str, payload: Bytes) -> XResult<()> {
+    publish_without_delivery_attestation(bus, topic, payload).await
+}
+
+/// 只执行一次 producer `publish`；成功不构成消费、确认或 E2E 交付证明。
+pub async fn publish_without_delivery_attestation(
+    bus: &dyn EventBus,
+    topic: &str,
+    payload: Bytes,
+) -> XResult<()> {
     bus.publish(topic, payload).await
 }
 
@@ -173,8 +182,20 @@ pub async fn venue_health(
     Ok((positions.len() + balances.len(), server_time))
 }
 
-/// 将 KV 操作包进事务编排（Tx 业务 live）：commit on Ok。
+/// 兼容入口：先在独立 KV 资源执行 set，再提交 TxContext；**不保证跨资源原子性**。
 pub async fn tx_kv_set(
+    runner: &dyn TxRunner,
+    store: Arc<dyn KeyValueStore>,
+    key: String,
+    val: Vec<u8>,
+) -> XResult<()> {
+    kv_set_then_commit_separate_resources(runner, store, key, val).await
+}
+
+/// 先执行独立 KV set，再提交 TxContext；名称明确两者没有共同事务绑定。
+///
+/// KV 失败会触发 TxContext rollback；commit 失败不会自动撤销已经完成的 KV set。
+pub async fn kv_set_then_commit_separate_resources(
     runner: &dyn TxRunner,
     store: Arc<dyn KeyValueStore>,
     key: String,
@@ -239,7 +260,10 @@ impl<'a> LiveHandles<'a> {
         Self { profile, kv: None, bus: None, tx: None, venue: None }
     }
 
-    /// 校验 profile 声明与句柄非空一致（声明 true 则句柄必须 Some）。
+    /// 校验 profile 声明与当前句柄类型可证明的引用形状一致。
+    ///
+    /// 这不是 I/O 健康探测或 readiness attestation。当前类型没有 repo/account/time
+    /// 句柄，因此对应声明一律 fail-closed。
     pub fn validate(&self) -> XResult<()> {
         if self.profile.kv && self.kv.is_none() {
             return Err(XError::missing("live profile 声明 kv 但未注入句柄"));
@@ -252,6 +276,19 @@ impl<'a> LiveHandles<'a> {
         }
         if self.profile.venue && self.venue.is_none() {
             return Err(XError::missing("live profile 声明 venue 但未注入句柄"));
+        }
+        if self.profile.repo {
+            return Err(XError::missing("live profile 声明 repo，但当前 handles 无 repo 句柄"));
+        }
+        if self.profile.account {
+            return Err(XError::missing(
+                "live profile 声明 account，但当前 handles 无 account 句柄",
+            ));
+        }
+        if self.profile.venue_time {
+            return Err(XError::missing(
+                "live profile 声明 venue_time，但当前 handles 无 venue_time 句柄",
+            ));
         }
         Ok(())
     }
@@ -550,7 +587,8 @@ mod tests {
         }
         let ven = Ven;
         h.venue = Some(&ven);
-        assert!(h.validate().is_ok());
+        let error = h.validate().expect_err("repo/account/venue_time 无对应句柄，必须 fail-closed");
+        assert!(error.context().contains("repo"));
         // drive unused trait methods on stubs for LCOV
         let req = canonical::CancelOrderRequest {
             venue: "v".into(),

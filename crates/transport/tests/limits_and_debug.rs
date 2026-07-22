@@ -7,9 +7,27 @@ use std::thread;
 use std::time::Duration;
 use transportx::{
     DEFAULT_MAX_REQUEST_BODY_BYTES, DEFAULT_MAX_RESPONSE_BODY_BYTES, DEFAULT_REQUEST_TIMEOUT,
-    HttpDriver, HttpRequest, HttpResponse, ReqwestHttpDriver, TransportError,
-    TungsteniteWsConnector, WsConnector, is_sensitive_header_name,
+    HttpDriver, HttpRequest, HttpResponse, ProxyConfig, ReqwestHttpDriver, TlsConfig, TlsMode,
+    TransportError, TungsteniteWsConnector, WsConnector, is_sensitive_header_name,
 };
+
+fn spawn_stalling_chunked_server(first_chunk: &'static [u8]) -> SocketAddr {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = listener.local_addr().unwrap();
+    thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut buf = [0u8; 4096];
+        let _ = stream.read(&mut buf);
+        stream.write_all(b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n").unwrap();
+        stream.write_all(format!("{:X}\r\n", first_chunk.len()).as_bytes()).unwrap();
+        stream.write_all(first_chunk).unwrap();
+        stream.write_all(b"\r\n").unwrap();
+        stream.flush().unwrap();
+        thread::sleep(Duration::from_secs(2));
+        let _ = stream.write_all(b"0\r\n\r\n");
+    });
+    addr
+}
 
 fn spawn_http_server(
     status_line: &'static str,
@@ -65,6 +83,55 @@ fn http_request_debug_redacts_secrets_and_body() {
     assert!(!dbg.contains("hunter2"), "body leaked: {dbg}");
     assert!(dbg.contains("<32 bytes>") || dbg.contains("bytes"), "body len: {dbg}");
     assert!(dbg.contains("application/json"));
+}
+
+#[test]
+fn request_and_proxy_debug_redact_url_userinfo_and_all_query_values() {
+    let secret_url = "https://alice:login-secret@api.example/v1/orders?symbol=BTCUSDT&cursor=a%2Fb&token=query-secret&Signature=sig-secret";
+    let req =
+        HttpRequest { method: "GET".into(), url: secret_url.into(), headers: vec![], body: None };
+    let req_debug = format!("{req:?}");
+    assert!(req_debug.contains("api.example/v1/orders"));
+    assert!(req_debug.contains("symbol=***"));
+    assert!(req_debug.contains("cursor=***"));
+    for leaked in ["alice", "login-secret", "BTCUSDT", "a%2Fb", "query-secret", "sig-secret"] {
+        assert!(!req_debug.contains(leaked), "URL secret leaked: {req_debug}");
+    }
+
+    let proxy = ProxyConfig::new(secret_url);
+    let proxy_debug = format!("{proxy:?}");
+    assert!(proxy_debug.contains("api.example/v1/orders"));
+    assert!(proxy_debug.contains("symbol=***"));
+    for leaked in ["alice", "login-secret", "BTCUSDT", "a%2Fb", "query-secret", "sig-secret"] {
+        assert!(!proxy_debug.contains(leaked), "proxy URL secret leaked: {proxy_debug}");
+    }
+}
+
+#[test]
+fn invalid_url_debug_is_fail_closed() {
+    let raw = "not a url?token=must-not-leak";
+    let req = HttpRequest { method: "GET".into(), url: raw.into(), headers: vec![], body: None };
+    let debug = format!("{req:?}");
+    assert!(!debug.contains("must-not-leak"), "invalid URL leaked: {debug}");
+    assert!(debug.contains("<invalid-url-redacted>"));
+
+    let opaque = HttpRequest {
+        method: "GET".into(),
+        url: "mailto:alice@example.test?token=opaque-secret".into(),
+        headers: vec![],
+        body: None,
+    };
+    let debug = format!("{opaque:?}");
+    assert!(!debug.contains("opaque-secret"), "opaque URL leaked: {debug}");
+    assert!(debug.contains("<invalid-url-redacted>"));
+}
+
+#[test]
+fn disabled_sni_is_rejected_instead_of_silently_ignored() {
+    let tls = TlsConfig { mode: TlsMode::SystemRoots, sni: false };
+    let err = ReqwestHttpDriver::with_tls(tls).expect_err("未接线的 SNI=false 必须 fail-closed");
+    assert!(matches!(err, TransportError::ProtocolViolation(_)), "got {err:?}");
+    assert!(err.to_string().contains("SNI"));
 }
 
 #[test]
@@ -132,6 +199,29 @@ async fn response_body_over_limit_fail_closed() {
         }
         other => panic!("unexpected {other:?}"),
     }
+}
+
+#[tokio::test]
+async fn chunked_response_stops_at_first_cumulative_overflow() {
+    let addr = spawn_stalling_chunked_server(b"123456789");
+    let driver =
+        ReqwestHttpDriver::with_limits(Some(Duration::from_secs(5)), 8, 1024).expect("driver");
+    let result = tokio::time::timeout(
+        Duration::from_millis(500),
+        driver.execute(HttpRequest {
+            method: "GET".into(),
+            url: format!("http://{addr}/chunked"),
+            headers: vec![],
+            body: None,
+        }),
+    )
+    .await
+    .expect("累计越界后必须立即中止，不能等待 chunked 响应结束");
+    let err = result.expect_err("chunked body must be rejected");
+    assert!(
+        matches!(err, TransportError::PayloadTooLarge { kind: "response_body", limit: 8, got: 9 }),
+        "unexpected {err:?}"
+    );
 }
 
 #[tokio::test]

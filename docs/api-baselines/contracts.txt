@@ -71,7 +71,9 @@ impl<'a> !core::panic::unwind_safe::UnwindSafe for contracts::live::LiveHandles<
 pub fn contracts::live::apply_ack(contracts::BusMessage, contracts::MessageAck) -> contracts::live::AckedMessage
 pub async fn contracts::live::bus_publish(&dyn contracts::EventBus, &str, bytes::bytes::Bytes) -> kernel::error::XResult<()>
 pub async fn contracts::live::kv_roundtrip(&dyn contracts::KeyValueStore, &str, &[u8]) -> kernel::error::XResult<()>
+pub async fn contracts::live::kv_set_then_commit_separate_resources(&dyn contracts::TxRunner, alloc::sync::Arc<dyn contracts::KeyValueStore>, alloc::string::String, alloc::vec::Vec<u8>) -> kernel::error::XResult<()>
 pub async fn contracts::live::kv_set_ttl(&dyn contracts::KeyValueStore, &str, alloc::vec::Vec<u8>, core::option::Option<core::time::Duration>) -> kernel::error::XResult<()>
+pub async fn contracts::live::publish_without_delivery_attestation(&dyn contracts::EventBus, &str, bytes::bytes::Bytes) -> kernel::error::XResult<()>
 pub async fn contracts::live::repo_roundtrip<T, Id>(&dyn contracts::Repository<T, Id>, Id, &T) -> kernel::error::XResult<core::option::Option<T>> where T: core::clone::Clone + core::marker::Send + core::marker::Sync, Id: core::marker::Send
 pub async fn contracts::live::run_on_tx_context<R, F, Fut>(&mut dyn contracts::TxContext, F) -> kernel::error::XResult<R> where F: core::ops::function::FnOnce() -> Fut + core::marker::Send, Fut: core::future::future::Future<Output = kernel::error::XResult<R>> + core::marker::Send, R: core::marker::Send
 pub async fn contracts::live::tx_kv_set(&dyn contracts::TxRunner, alloc::sync::Arc<dyn contracts::KeyValueStore>, alloc::string::String, alloc::vec::Vec<u8>) -> kernel::error::XResult<()>
@@ -250,7 +252,9 @@ pub async fn contracts::bus_publish(&dyn contracts::EventBus, &str, bytes::bytes
 pub fn contracts::is_default_cancel_order_request_error(&kernel::error::XError) -> bool
 pub fn contracts::is_default_query_order_request_error(&kernel::error::XError) -> bool
 pub async fn contracts::kv_roundtrip(&dyn contracts::KeyValueStore, &str, &[u8]) -> kernel::error::XResult<()>
+pub async fn contracts::kv_set_then_commit_separate_resources(&dyn contracts::TxRunner, alloc::sync::Arc<dyn contracts::KeyValueStore>, alloc::string::String, alloc::vec::Vec<u8>) -> kernel::error::XResult<()>
 pub async fn contracts::kv_set_ttl(&dyn contracts::KeyValueStore, &str, alloc::vec::Vec<u8>, core::option::Option<core::time::Duration>) -> kernel::error::XResult<()>
+pub async fn contracts::publish_without_delivery_attestation(&dyn contracts::EventBus, &str, bytes::bytes::Bytes) -> kernel::error::XResult<()>
 pub async fn contracts::repo_roundtrip<T, Id>(&dyn contracts::Repository<T, Id>, Id, &T) -> kernel::error::XResult<core::option::Option<T>> where T: core::clone::Clone + core::marker::Send + core::marker::Sync, Id: core::marker::Send
 pub async fn contracts::run_on_tx_context<R, F, Fut>(&mut dyn contracts::TxContext, F) -> kernel::error::XResult<R> where F: core::ops::function::FnOnce() -> Fut + core::marker::Send, Fut: core::future::future::Future<Output = kernel::error::XResult<R>> + core::marker::Send, R: core::marker::Send
 pub async fn contracts::run_tx_commit_on_ok<R, F, Fut>(&dyn contracts::TxRunner, F) -> kernel::error::XResult<R> where F: core::ops::function::FnOnce(&mut dyn contracts::TxContext) -> Fut + core::marker::Send, Fut: core::future::future::Future<Output = kernel::error::XResult<R>> + core::marker::Send, R: core::marker::Send

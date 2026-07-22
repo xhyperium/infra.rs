@@ -16,7 +16,7 @@ scaffold = []
 [dependencies]
 async-trait = { workspace = true }
 bytes = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.1" }
+contracts = { path = "../../../contracts", version = "0.1.2" }
 kernel = { path = "../../../kernel", version = "0.3.0" }
 reqwest = { workspace = true }
 serde = { workspace = true }

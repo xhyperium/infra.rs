@@ -5,9 +5,10 @@ use std::io::{Read, Write};
 use std::net::SocketAddr;
 use std::thread;
 use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
 use transportx::{
     __map_client_build_error, __map_reqwest_error, HttpDriver, HttpRequest, ReqwestHttpDriver,
-    TransportError,
+    TransportError, parse_retry_after_at,
 };
 
 /// 极简阻塞 HTTP/1.1 响应服务端（单连接）。
@@ -126,6 +127,25 @@ async fn reqwest_driver_429_with_retry_after_integer_seconds() {
         }
         other => panic!("unexpected: {other:?}"),
     }
+}
+
+#[test]
+fn retry_after_parser_supports_delay_seconds_and_http_date() {
+    let now = UNIX_EPOCH + Duration::from_secs(784_111_767);
+    assert_eq!(parse_retry_after_at("7", now), Some(Duration::from_secs(7)));
+    assert_eq!(
+        parse_retry_after_at("Sun, 06 Nov 1994 08:49:37 GMT", now),
+        Some(Duration::from_secs(10))
+    );
+    assert_eq!(
+        parse_retry_after_at(
+            "Sun, 06 Nov 1994 08:49:37 GMT",
+            SystemTime::UNIX_EPOCH + Duration::from_secs(784_111_787)
+        ),
+        Some(Duration::ZERO),
+        "过去的 HTTP-date 应钳制为零"
+    );
+    assert_eq!(parse_retry_after_at("not-a-date", now), None);
 }
 
 #[tokio::test]

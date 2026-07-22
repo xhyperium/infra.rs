@@ -1,7 +1,9 @@
-# contracts — Tasks
+# TASKS-CONTRACTS-MAINT-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 可执行任务清单待战役填充。
+- [x] 审计 live profile/handles 与 alignment 假阳性。
+- [x] C1 repo/account/venue_time validation fail-closed。
+- [x] C2 helper 准确命名、文档与失败传播。
+- [x] C3 公共 API 与 Additive Only 回归（baseline 更新仍 BLOCKED）。
+- [x] C4 版本、消费者、文档与证据。
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+此清单是审计制品；持久状态仍由 Beads `infra-2d9.8` 管理。

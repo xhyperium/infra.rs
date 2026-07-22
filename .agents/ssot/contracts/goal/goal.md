@@ -1,7 +1,7 @@
-# contracts — Goal
+# GOAL-CONTRACTS-MAINT-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> Source Goal 待战役定义；无证据不得宣称 In Progress 闭合。
+状态：IN PROGRESS（2026-07-23）
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+在 15 个 trait Additive Only 前提下，消除 live profile/handles 与 helper 命名造成的 readiness、E2E delivery、跨资源原子性假阳性。目标版本 `0.1.2`；不引入 backend adapter 实现，不修改 contract-testkit 源码。
+
+验收：不可证明能力 fail-closed、失败路径与公共 API 测试、所有生产消费者回归、双镜像与 scoped 门禁；全 contracts Production Ready 继续 NO-GO。

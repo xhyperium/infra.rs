@@ -39,7 +39,8 @@ pub mod live;
 mod venue_gate;
 pub use live::{
     AckedMessage, LiveContractProfile, LiveHandles, apply_ack, bus_publish, kv_roundtrip,
-    kv_set_ttl, repo_roundtrip, run_on_tx_context, tx_kv_set, venue_health, venue_place_and_query,
+    kv_set_then_commit_separate_resources, kv_set_ttl, publish_without_delivery_attestation,
+    repo_roundtrip, run_on_tx_context, tx_kv_set, venue_health, venue_place_and_query,
 };
 pub use venue_gate::{
     VENUE_CANCEL_REQUEST_DEFAULT_MSG, VENUE_QUERY_REQUEST_DEFAULT_MSG,

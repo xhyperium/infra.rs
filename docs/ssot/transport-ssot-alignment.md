@@ -1,81 +1,37 @@
 # transportx SSOT 对齐矩阵
 
 | 字段 | 值 |
-|------|-----|
-| 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| SSOT | `.agents/ssot/transport/spec/spec.md` |
-| 本仓 crate | `crates/transport` → package `transportx` / lib `transportx` |
-| 当前版本 | 0.1.2（L1 HTTP/WS）|
-| 覆盖率门禁 | `cargo llvm-cov -p transportx --fail-under-lines 100` |
+|---|---|
+| 审计日期 | 2026-07-23 |
+| baseline | `3cd29a942710c0fb42f3f6bc05e3c31570acad47` |
+| Active Spec | `.agents/ssot/transport/spec/spec.md`（与 xhyper 镜像 byte-identical） |
+| crate | `crates/transport` · package/lib `transportx` |
+| version | `0.1.3`（非 package stable） |
+| 声明边界 | 既有 HTTP/WS 客户端与配置面；未达 M3 |
 
-> 镜像写 COMPLETE ≠ 本仓可宣称 ship。本表以 **members + 源码 + 本仓测试** 为准。
+## Maintenance 对齐
 
-## §2 职责与非目标
+| ID | 要求 | 状态 | 代码/测试证据 |
+|---|---|---|---|
+| TR-HTTP-1 | chunk 流式累计、首次越界中止 | IMPLEMENTED | `ReqwestHttpDriver::execute`；stalling chunked loopback |
+| TR-WS-1 | 解码/聚合前 frame/message 上限 | IMPLEMENTED | `connect_async_with_config`；入站 32>8 loopback |
+| TR-DBG-1 | URL userinfo/query fail-closed 脱敏 | IMPLEMENTED | `RedactedUrl`；Request/Proxy/非法 URL 测试 |
+| TR-TLS-1 | 未接线 `sni=false` 不静默 | IMPLEMENTED | builder ProtocolViolation；default `sni=true` 测试 |
+| TR-POOL-1 | 有界配置 + RAII lease | IMPLEMENTED | `try_new` / `HttpClientLease`；drop/into_inner 回收 |
+| TR-RATE-1 | RFC 9110 Retry-After | IMPLEMENTED | `parse_retry_after_at` seconds/date/past/invalid |
 
-| ID | 要求 | 状态 | 证据 |
-|----|------|------|------|
-| 2.1.1 | 统一 HTTP/WS 客户端侧传输边界 | **PASS** | `HttpDriver` / `WsConnector` |
-| 2.1.2 | L1，可被适配器依赖 | **PASS** | 仅 kernel + 网络信封 |
-| 2.1.3 | 不承载业务契约 | **PASS** | 无业务 trait |
-| 2.1.4 | 驱动私有类型封装 | **PASS** | reqwest / tungstenite 私有字段 |
-| 2.2.* | 非目标（重试/熔断/bootstrap…） | **PASS** | 未实现；见 resiliencx / bootstrap |
+旧 `checkout_with`/`return_client`、`HttpDriver`、`WsConnector` 与错误变体保留。新增 `httpdate` 按 workspace dependency 管理。binancex/okxx 仅同步 transportx path version，不 bump 消费者。
 
-## §3–§4 公开表面（摘要）
+## 成熟度与 NO-GO
 
-| 项 | 状态 | 证据 |
-|----|------|------|
-| Http/Ws 驱动 + Mock | **PASS** | `src/lib.rs` + tests |
-| 429 → RateLimited | **PASS** | reqwest 驱动测 |
-| payload 上限 / Debug 脱敏 | **PASS** | #166 |
-| **TLS 配置面** | **PASS** | `src/tls.rs` · `TlsMode` / `TlsConfig` |
-| **连接/客户端池** | **PASS** | `src/pool.rs` · `HttpClientPool` / `PoolConfig`；`checkout_with` factory `Err` 回滚 `checked_out`（`factory_err_releases_slot_so_pool_not_exhausted`） |
-| **代理配置** | **PASS** | `src/proxy.rs` · `ProxyConfig` / `build_reqwest_proxy` |
-| 完整生产 TLS 合规矩阵 / mTLS 产品 | **OPEN** | 声明层配置 ≠ 企业 PKI 产品 |
-| exchange 业务协议 | **adapters 生产默认 REST+WS**（#210+#214） | transport 仅边界；业务在 binancex/okxx |
-
-## OBJECTIVE 处置（2026-07-22 defer-close）
-
-| 项 | 前状态 | 现状态 | 证据 |
-|----|--------|--------|------|
-| TLS 矩阵 | DEFER | **PASS（配置面）** | `crates/transport/src/tls.rs` |
-| 池 | DEFER | **PASS** | `crates/transport/src/pool.rs`；factory 失败槽位回滚 + 回归测 |
-| 代理 | DEFER | **PASS** | `crates/transport/src/proxy.rs` |
-| 敏感头 Debug | 部分 | **PASS（含 OKX）** | `is_sensitive_header_name` 含 `OK-ACCESS-*` / passphrase（0.1.1） |
-| exchange 适配器验收 | scaffold | **PASS（生产默认）** | `cargo test -p binancex -p okxx --all-targets`；live `server_time` ignore |
-
-## §6 测试与验收（摘要）
-
-| ID | 要求 | 状态 | 证据 |
-|----|------|------|------|
-| 6.cmd.binance/okx | adapter 验收命令 | **PASS（生产默认）** | 签名/协议/WS + 4xx/`sCode`；全量私有流/OCO **DEFER** |
-| 6.cmd.local | test/clippy/fmt | **PASS** | 本仓质量门禁 |
-
-## 本目标 FAIL 计数
-
-| 范围 | FAIL |
-|------|------|
-| portable scope（本 workspace 可实现 OBJECTIVE） | **0** |
-| 企业 TLS 产品 / exchange 业务 | OPEN / 外域 NO-GO |
+| 项 | 裁定 |
+|---|---|
+| HTTP/WS 受控实现面 | 有本地回归证据 |
+| 代理/TLS 配置面 | 仅既有 reqwest 配置；`sni=false` 明确拒绝 |
+| 企业 PKI/mTLS、WS 企业 TLS | **OPEN / NO-GO** |
+| M3 故障恢复、长稳、完整认证矩阵 | **OPEN / NO-GO** |
+| binance/okx 完整业务 live | adapter 外域 **NO-GO**；本轮不宣称 |
 
 ## 验证
 
-```bash
-cargo test -p transportx --all-targets
-cargo clippy -p transportx --all-targets -- -D warnings
-node scripts/quality-gates/cov-gate-100.mjs -p transportx
-```
-
-## 双栏落地（2026-07-22 · STATUS 100% structure）
-
-| 标尺 | 状态 |
-|------|------|
-| STATUS 结构完成度 | **100%** |
-| 声明面生产硬化 | 公共 API 集成测 + bench + docs 红线 |
-| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 企业 PKI 完成 |
-
-## 变更记录
-
-| 日期 | 说明 |
-|------|------|
-| 2026-07-22 | **defer-close**：tls/pool/proxy 声明层 PASS |
-| 2026-07-22 | **skeptic-fix**：`checkout_with` factory Err 回滚 `checked_out`（避免 size=1 池永久耗尽） |
+最终命令与退出码写入 `.agents/ssot/transport/evidence/README.md`。本地 loopback、测试和 coverage 通过都不能升级为公网或业务 readiness。maintainer/独立 reviewer 未签署前 release 保持 BLOCKED。

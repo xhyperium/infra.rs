@@ -40,7 +40,7 @@ impl ProxyConfig {
 impl fmt::Debug for ProxyConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ProxyConfig")
-            .field("url", &self.url)
+            .field("url", &crate::RedactedUrl(&self.url))
             .field("username", &self.username)
             .field("password", &self.password.as_ref().map(|_| "***"))
             .finish()

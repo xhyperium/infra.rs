@@ -21,7 +21,7 @@ async-trait = { workspace = true }
 bytes = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.1" }
+contracts = { path = "../../../contracts", version = "0.1.2" }
 kernel = { path = "../../../kernel", version = "0.3.0" }
 redis = { workspace = true }
 resiliencx = { path = "../../../resiliencx", version = "0.1.1", features = [
