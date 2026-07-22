@@ -125,12 +125,12 @@ impl KafkaConfig {
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_KAFKAX_CONNECT_TIMEOUT_MS") {
             cfg.connect_timeout = Duration::from_millis(v.parse::<u64>().map_err(|error| {
-                XError::invalid(format!("FOUNDATIONX_KAFKAX_CONNECT_TIMEOUT_MS 非法: {error}"))
+                XError::invalid("FOUNDATIONX_KAFKAX_CONNECT_TIMEOUT_MS 非法").with_source(error)
             })?);
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_KAFKAX_OPERATION_TIMEOUT_MS") {
             cfg.operation_timeout = Duration::from_millis(v.parse::<u64>().map_err(|error| {
-                XError::invalid(format!("FOUNDATIONX_KAFKAX_OPERATION_TIMEOUT_MS 非法: {error}"))
+                XError::invalid("FOUNDATIONX_KAFKAX_OPERATION_TIMEOUT_MS 非法").with_source(error)
             })?);
         }
         cfg.validate()?;
@@ -195,7 +195,7 @@ fn broker_host(broker: &str) -> XResult<String> {
     let candidate =
         if broker.contains("://") { broker.to_string() } else { format!("kafka://{broker}") };
     let parsed = url::Url::parse(&candidate)
-        .map_err(|error| XError::invalid(format!("kafkax: broker 地址非法: {error}")))?;
+        .map_err(|error| XError::invalid("kafkax: broker 地址非法").with_source(error))?;
     if !parsed.username().is_empty() || parsed.password().is_some() {
         return Err(XError::invalid("kafkax: broker 地址禁止内嵌 userinfo"));
     }

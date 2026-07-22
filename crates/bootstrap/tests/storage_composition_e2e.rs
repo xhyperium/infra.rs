@@ -38,9 +38,9 @@ async fn real_storage_contracts_are_callable_through_bootstrap() {
     let nats_pool = NatsPool::connect(nats_config).await.expect("连接隔离 NATS");
     let bus = NatsEventBus::new(nats_pool.clone());
 
-    let stores = ContractStoreSet::new()
-        .with_kv(Arc::new(redis.clone()) as Arc<dyn KeyValueStore>)
-        .with_event_bus(Arc::new(bus) as Arc<dyn EventBus>);
+    let kv: Arc<dyn KeyValueStore> = Arc::new(redis.clone());
+    let event_bus: Arc<dyn EventBus> = Arc::new(bus);
+    let stores = ContractStoreSet::new().with_kv(kv).with_event_bus(event_bus);
     let app = Bootstrap::new().with_contract_store_set(stores).try_build_app().expect("bootstrap");
 
     let suffix = format!(

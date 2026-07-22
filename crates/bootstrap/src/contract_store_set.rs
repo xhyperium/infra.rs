@@ -119,9 +119,9 @@ mod tests {
     #[tokio::test]
     async fn wires_callable_contracts_without_locator() {
         let probe = Arc::new(Probe);
-        let set = ContractStoreSet::new()
-            .with_kv(Arc::clone(&probe) as Arc<dyn KeyValueStore>)
-            .with_event_bus(probe as Arc<dyn EventBus>);
+        let kv: Arc<dyn KeyValueStore> = probe.clone();
+        let event_bus: Arc<dyn EventBus> = probe;
+        let set = ContractStoreSet::new().with_kv(kv).with_event_bus(event_bus);
         assert!(!set.is_empty());
         assert_eq!(set.wired_count(), 2);
         set.kv().expect("kv contract").set("key", b"value".to_vec(), None).await.expect("set");

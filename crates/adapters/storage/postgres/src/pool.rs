@@ -3,7 +3,7 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use kernel::{XError, XResult};
+use kernel::{ErrorKind, XError, XResult};
 use tokio_postgres::NoTls;
 use tokio_postgres::Row;
 use tokio_postgres::types::ToSql;
@@ -168,12 +168,10 @@ impl PostgresPool {
                 Ok(value)
             }
             Err(err) => {
-                // 业务失败：尽力 rollback，保留原错误
+                // 业务失败：尽力 rollback；双错误仍保留原分类与完整 source chain。
                 match tx.rollback().await {
                     Ok(()) => Err(err),
-                    Err(rb) => Err(XError::internal(format!(
-                        "事务业务错误且 rollback 失败: business={err}; rollback={rb}"
-                    ))),
+                    Err(rollback) => Err(with_rollback_failure(err, rollback)),
                 }
             }
         }
@@ -221,12 +219,26 @@ impl PostgresPool {
     pub fn summary(&self) -> &str {
         &self.config_summary
     }
+}
 
-    /// 底层 deadpool 池（高级用例）。
-    #[must_use]
-    pub fn inner(&self) -> &deadpool_postgres::Pool {
-        &self.inner
-    }
+fn with_rollback_failure(original: XError, rollback: XError) -> XError {
+    let context = format!("{}；此外 rollback 失败: {rollback}", original.context());
+    let wrapped = match original.kind() {
+        ErrorKind::Invalid => XError::invalid(context),
+        ErrorKind::Missing => XError::missing(context),
+        ErrorKind::Conflict => XError::conflict(context),
+        ErrorKind::Transient => original.retry_after().map_or_else(
+            || XError::transient(context.clone()),
+            |delay| XError::transient_after(context.clone(), delay),
+        ),
+        ErrorKind::Unavailable => XError::unavailable(context),
+        ErrorKind::Cancelled => XError::cancelled(context),
+        ErrorKind::DeadlineExceeded => XError::deadline_exceeded(context),
+        ErrorKind::Invariant => XError::invariant(context),
+        ErrorKind::Internal => XError::internal(context),
+        _ => XError::internal(context),
+    };
+    wrapped.with_source(original)
 }
 
 #[cfg(test)]
@@ -277,7 +289,7 @@ mod tests {
                 );
             }
             Ok(Ok(_)) => panic!("unexpected success"),
-            Err(_) => {}
+            Err(_) => panic!("PostgresPool::connect 必须受内部截止时间约束"),
         }
     }
 
@@ -304,7 +316,7 @@ mod tests {
                 );
             }
             Ok(Ok(_)) => panic!("unexpected success"),
-            Err(_) => {}
+            Err(_) => panic!("PostgresPool::connect TLS 路径必须受内部截止时间约束"),
         }
     }
 }

@@ -258,7 +258,7 @@ impl NatsConfig {
             return Err(XError::invalid("natsx: url 不能为空"));
         }
         let parsed = url::Url::parse(self.url.trim())
-            .map_err(|error| XError::invalid(format!("natsx: URL 非法: {error}")))?;
+            .map_err(|error| XError::invalid("natsx: URL 非法").with_source(error))?;
         if !parsed.username().is_empty() || parsed.password().is_some() {
             return Err(XError::invalid(
                 "natsx: URL 禁止内嵌 userinfo；请使用独立 user/password 字段",
@@ -327,7 +327,7 @@ fn apply_usize_env(target: &mut usize, keys: &[&str]) -> XResult<()> {
     if let Some(value) = env_first(keys) {
         *target = value
             .parse::<usize>()
-            .map_err(|error| XError::invalid(format!("{} 非法: {error}", keys[0])))?;
+            .map_err(|error| XError::invalid(format!("{} 非法", keys[0])).with_source(error))?;
     }
     Ok(())
 }
@@ -337,7 +337,7 @@ fn apply_duration_ms_env(target: &mut Duration, keys: &[&str]) -> XResult<()> {
         *target = value
             .parse::<u64>()
             .map(Duration::from_millis)
-            .map_err(|error| XError::invalid(format!("{} 非法: {error}", keys[0])))?;
+            .map_err(|error| XError::invalid(format!("{} 非法", keys[0])).with_source(error))?;
     }
     Ok(())
 }

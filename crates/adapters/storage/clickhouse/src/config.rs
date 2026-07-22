@@ -91,7 +91,7 @@ impl ClickHouseConfig {
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT") {
             cfg.http_port = v.parse().map_err(|error| {
-                XError::invalid(format!("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT 非法: {error}"))
+                XError::invalid("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT 非法").with_source(error)
             })?;
         }
         if let Ok(value) = std::env::var("FOUNDATIONX_CLICKHOUSEX_TLS") {
@@ -117,22 +117,23 @@ impl ClickHouseConfig {
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_TIMEOUT_MS") {
             cfg.timeout = Duration::from_millis(v.parse::<u64>().map_err(|error| {
-                XError::invalid(format!("FOUNDATIONX_CLICKHOUSEX_TIMEOUT_MS 非法: {error}"))
+                XError::invalid("FOUNDATIONX_CLICKHOUSEX_TIMEOUT_MS 非法").with_source(error)
             })?);
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_MAX_IDLE_PER_HOST") {
             cfg.max_idle_per_host = v.parse::<usize>().map_err(|error| {
-                XError::invalid(format!("FOUNDATIONX_CLICKHOUSEX_MAX_IDLE_PER_HOST 非法: {error}"))
+                XError::invalid("FOUNDATIONX_CLICKHOUSEX_MAX_IDLE_PER_HOST 非法").with_source(error)
             })?;
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_MAX_IN_FLIGHT") {
             cfg.max_in_flight = v.parse::<usize>().map_err(|error| {
-                XError::invalid(format!("FOUNDATIONX_CLICKHOUSEX_MAX_IN_FLIGHT 非法: {error}"))
+                XError::invalid("FOUNDATIONX_CLICKHOUSEX_MAX_IN_FLIGHT 非法").with_source(error)
             })?;
         }
         if let Ok(v) = std::env::var("FOUNDATIONX_CLICKHOUSEX_ACQUIRE_TIMEOUT_MS") {
             cfg.acquire_timeout = Duration::from_millis(v.parse::<u64>().map_err(|error| {
-                XError::invalid(format!("FOUNDATIONX_CLICKHOUSEX_ACQUIRE_TIMEOUT_MS 非法: {error}"))
+                XError::invalid("FOUNDATIONX_CLICKHOUSEX_ACQUIRE_TIMEOUT_MS 非法")
+                    .with_source(error)
             })?);
         }
         cfg.validate()?;

@@ -135,7 +135,8 @@ fn custom_instrumentation_and_evidence_modes() {
     assert_eq!(receipt.seq, 1);
 
     let mem = Arc::new(InMemoryEvidenceAppender::new());
-    let ctx = Bootstrap::new().with_evidence(mem.clone() as Arc<dyn EvidenceAppender>).build();
+    let mem_appender: Arc<dyn EvidenceAppender> = mem.clone();
+    let ctx = Bootstrap::new().with_evidence(mem_appender).build();
     ctx.platform().evidence().expect("m").append_named("boot").expect("ok");
     assert_eq!(mem.names(), vec!["boot".to_string()]);
 }
@@ -184,19 +185,15 @@ fn default_is_tracing_instrumentation_contracts_trait() {
 fn bounded_contexts_from_platform_clone() {
     let platform = Bootstrap::new().build().platform_cloned();
     let c = Arc::new(Cap("cap"));
-    let mdx = MarketDataContext::new(
-        Arc::clone(&c) as Arc<dyn bootstrap::BoundedMarketDataSource>,
-        Arc::clone(&c) as Arc<dyn bootstrap::BoundedInstrumentCatalog>,
-        Arc::clone(&c) as Arc<dyn bootstrap::BoundedKeyValueStore>,
-        platform.clone(),
-    );
+    let market_source: Arc<dyn bootstrap::BoundedMarketDataSource> = c.clone();
+    let catalog: Arc<dyn bootstrap::BoundedInstrumentCatalog> = c.clone();
+    let kv: Arc<dyn bootstrap::BoundedKeyValueStore> = c.clone();
+    let mdx = MarketDataContext::new(market_source, catalog, kv, platform.clone());
     assert_eq!(mdx.source().label(), "cap");
-    let ex = ExecutionContext::new(
-        Arc::clone(&c) as Arc<dyn bootstrap::BoundedExecutionVenue>,
-        Arc::clone(&c) as Arc<dyn bootstrap::BoundedAccountSource>,
-        Arc::clone(&c) as Arc<dyn bootstrap::BoundedVenueTimeSource>,
-        platform,
-    );
+    let venue: Arc<dyn bootstrap::BoundedExecutionVenue> = c.clone();
+    let account: Arc<dyn bootstrap::BoundedAccountSource> = c.clone();
+    let venue_time: Arc<dyn bootstrap::BoundedVenueTimeSource> = c;
+    let ex = ExecutionContext::new(venue, account, venue_time, platform);
     assert_eq!(ex.venue().venue_id(), "cap");
 }
 
@@ -212,9 +209,9 @@ fn no_service_locator_surface() {
 #[tokio::test]
 async fn formal_contract_store_set_is_callable_from_app_context() {
     let probe = Arc::new(ContractProbe);
-    let contracts = ContractStoreSet::new()
-        .with_kv(Arc::clone(&probe) as Arc<dyn KeyValueStore>)
-        .with_event_bus(probe as Arc<dyn EventBus>);
+    let kv: Arc<dyn KeyValueStore> = probe.clone();
+    let event_bus: Arc<dyn EventBus> = probe;
+    let contracts = ContractStoreSet::new().with_kv(kv).with_event_bus(event_bus);
     let ctx = Bootstrap::new().with_contract_store_set(contracts).try_build().expect("build");
 
     let stores = ctx.contract_store_set();

@@ -82,7 +82,10 @@ cargo bench -p postgresx --bench query_hot_path
 
 ## 回滚与连接池卫生
 
-- `PgTransaction` 在 `Drop` 且仍为 `Active` 时，会在当前 runtime 上异步 `ROLLBACK`；失败则丢弃连接
+- `PgTransaction` 在可取消 await 前先进入 `Failed`；仅在连接安全恢复后回到 `Active`
+- 服务端语句错误保持 rollback-only `Failed`：允许显式回滚，禁止继续 SQL 或 COMMIT
+- `PgTransaction` 在 `Drop` 且仍持有 Active 连接时，永久分离并关闭连接，由 PostgreSQL 在 session 终止时回滚；不启动 fire-and-forget 任务
+- 不公开底层 deadpool 池或原始连接，调用方不能绕过 deadline 与取消守卫
 - 业务路径优先 `with_transaction`（自动终结）
 - 避免跨 `.await` 长时间占用事务（占连接）
 

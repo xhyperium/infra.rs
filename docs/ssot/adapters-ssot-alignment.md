@@ -53,7 +53,7 @@ lib 入口                        adapters: Error/Result；contracts: ExchangeAd
 实现深度                        storage 声明面见专项；exchange **签名 REST + 公共 WS 解析/注入（交易 NO-GO）**
 标准布局八项                    已齐
 publish                         false（显式）
-version                         storage 独立版本；redis/postgres/kafka/nats `0.3.2`
+version                         storage 独立版本；postgres `0.3.3`；redis/kafka/nats/clickhouse `0.3.2`
 
 | 镜像路径 | 本仓路径 | package | 本仓状态 |
 |----------|----------|---------|----------|
@@ -63,7 +63,7 @@ version                         storage 独立版本；redis/postgres/kafka/nats
 | `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **`0.3.2`** AMO/ALO + TLS/CA/PLAIN 证据；group/native EOS NO-GO |
 | `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **`0.3.2`** Core/JetStream；同客户端重启恢复 NO-GO（`infra-2d9.3.1`） |
 | `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | **`0.3.1`** ObjectStore + multipart + retry；live 入口默认 ignore |
-| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **`0.3.2`** Pool/Tx/Repository + 远程 TLS + deadline/连接隔离证据 |
+| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **`0.3.3`** Pool/Tx/Repository + 远程 TLS 实现；deadline/连接隔离证据 |
 | `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **`0.3.2`** Standalone/Cluster/Sentinel + TLS；Redis live CI 可复验 |
 | `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **`0.3.1`** REST + batch write + Native WS 探测 + 有界池；live 入口默认 ignore |
 验证（本仓权威命令）：

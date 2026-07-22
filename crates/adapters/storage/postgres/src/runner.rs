@@ -60,12 +60,16 @@ impl TxContext for PgTxContext {
             TxState::RolledBack => {
                 return Err(XError::invariant("TxContext 已 rollback，无法 commit".to_string()));
             }
+            TxState::Failed => {
+                return Err(XError::unavailable("TxContext 已失败，无法 commit"));
+            }
             TxState::Active => {}
         }
         let tx = self
             .inner
             .take()
             .ok_or_else(|| XError::invariant("TxContext 无底层事务".to_string()))?;
+        self.state = TxState::Failed;
         tx.commit().await?;
         self.state = TxState::Committed;
         Ok(())
@@ -79,12 +83,16 @@ impl TxContext for PgTxContext {
             TxState::Committed => {
                 return Err(XError::invariant("TxContext 已 commit，无法 rollback".to_string()));
             }
+            TxState::Failed => {
+                return Err(XError::unavailable("TxContext 已失败且无可用事务句柄"));
+            }
             TxState::Active => {}
         }
         let tx = self
             .inner
             .take()
             .ok_or_else(|| XError::invariant("TxContext 无底层事务".to_string()))?;
+        self.state = TxState::Failed;
         tx.rollback().await?;
         self.state = TxState::RolledBack;
         Ok(())

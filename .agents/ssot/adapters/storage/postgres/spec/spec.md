@@ -1,6 +1,6 @@
 # `postgresx` 当前实现规范
 
-状态：当前 `0.3.2` 实现合同（`deadpool-postgres` + `tokio-postgres` 默认真实路径）。
+状态：当前 `0.3.3` 实现合同（`deadpool-postgres` + `tokio-postgres` 默认真实路径）。
 **未宣称 package stable。**
 
 ## 0. 权威与范围
@@ -28,11 +28,17 @@
 - 所有业务值使用 `$1..$N` 参数；禁止拼接不可信输入。
 - loopback / Unix socket 可显式 `sslmode=disable`；远程主机的 `disable` 或 `prefer` 在连接前
   返回 `Invalid`，仅 `require` 可用。
+- `DATABASE_URL` 只在入口解析；建池从同一组已校验字段重建配置，禁止 TLS 策略/执行漂移。
 - `Require` 使用 rustls + webpki roots；本版未提供自定义企业 CA / 客户端证书。
 - deadpool 的 wait/create/recycle 均有界且 recycle 使用 `Verified`。
 - `acquire_timeout` 独立约束池等待；`operation_timeout` 同时作为调用侧 deadline 和服务端
   `statement_timeout`。
-- 调用侧 SQL / COMMIT / ROLLBACK 超时保留 error source 并丢弃连接；COMMIT 超时不得宣称成功或失败。
+- RAII 取消守卫覆盖内部/外层 deadline、future drop 与 task abort；未知状态连接永久移出池。
+- 事务进入可取消 await 前先转为 `TxState::Failed`，仅在连接安全恢复后回到 Active；
+  不公开底层 deadpool 池或原始连接逃逸口。
+- 服务端语句错误保持 rollback-only `Failed`；只允许显式回滚，禁止继续 SQL 或 COMMIT。
+- SQL / COMMIT / ROLLBACK 超时保留 error source；COMMIT 超时不得宣称成功或失败。
+- Active transaction 被 Drop 时关闭已分离 session，由 PostgreSQL 回滚，不启动无监督任务。
 - 密码与完整 DSN 不写入 Debug、日志或仓库。
 
 ## 3. 错误语义
@@ -48,7 +54,8 @@ SQLSTATE 映射到 `Invalid` / `Missing` / `Conflict` / `Transient` /
 1. 最大池容量 1 时占用唯一连接，第二次 acquire 在约定期限内返回 `DeadlineExceeded`；
 2. 释放后可再次查询；
 3. 关闭服务端 statement timeout 后，`pg_sleep` 由调用侧截止并丢弃连接；
-4. 新建连接的 `SELECT 1` 成功，证明池未复用未知状态连接。
+4. 更短的外层 deadline 分别取消普通 SQL 与事务 SQL，随后均以新连接恢复；
+5. 新建连接的 `SELECT 1` 成功，证明池未复用未知状态连接。
 
 ```bash
 cargo test -p postgresx --all-targets

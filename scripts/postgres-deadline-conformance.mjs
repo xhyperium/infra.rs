@@ -2,7 +2,38 @@
 
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { writeSync } from "node:fs";
 import process from "node:process";
+
+const writeBackoff = new Int32Array(new SharedArrayBuffer(4));
+
+function writeAll(fd, message) {
+  const buffer = Buffer.from(`${message}\n`, "utf8");
+  let offset = 0;
+  while (offset < buffer.length) {
+    try {
+      const written = writeSync(fd, buffer, offset, buffer.length - offset);
+      if (written === 0) throw new Error("同步日志写入未取得进展");
+      offset += written;
+    } catch (error) {
+      const code = error && typeof error === "object" && "code" in error ? error.code : undefined;
+      if (code === "EINTR") continue;
+      if (code === "EAGAIN" || code === "EWOULDBLOCK") {
+        Atomics.wait(writeBackoff, 0, 0, 1);
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+function log(message) {
+  writeAll(process.stdout.fd, message);
+}
+
+function logError(message) {
+  writeAll(process.stderr.fd, message);
+}
 
 const image =
   "postgres@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193";
@@ -39,7 +70,7 @@ function boundedInteger(raw, name, minimum, maximum) {
 }
 
 function run(command, args, options = {}) {
-  console.log(`执行：${[command, ...args].join(" ")}`);
+  log(`执行：${[command, ...args].join(" ")}`);
   const result = spawnSync(command, args, {
     cwd: process.cwd(),
     env: options.env ?? process.env,
@@ -90,7 +121,7 @@ function waitUntilReady() {
       timeout: 2_000,
     });
     if (result.status === 0) {
-      console.log(`PostgreSQL 已就绪：127.0.0.1:${port}`);
+      log(`PostgreSQL 已就绪：127.0.0.1:${port}`);
       return;
     }
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1_000);
@@ -134,18 +165,28 @@ function cleanup() {
   if (failed) {
     spawnSync("docker", ["logs", container], { stdio: "inherit", timeout: 30_000 });
   }
-  spawnSync("docker", ["rm", "-f", container], { stdio: "ignore", timeout: 30_000 });
-  console.log(`PostgreSQL 容器已清理（result=${failed ? "failed" : "passed"}）`);
+  const removal = spawnSync("docker", ["rm", "-f", container], {
+    encoding: "utf8",
+    stdio: "pipe",
+    timeout: 30_000,
+  });
+  if (removal.error || removal.status !== 0) {
+    failed = true;
+    process.exitCode = 1;
+    logError(`PostgreSQL 容器清理失败：${removal.error?.message ?? removal.stderr.trim()}`);
+  } else {
+    log(`PostgreSQL 容器已清理（result=${failed ? "failed" : "passed"}）`);
+  }
 }
 
 try {
   startPostgres();
   waitUntilReady();
   runConformance();
-  console.log("PostgreSQL 截止时间与连接隔离 conformance 已通过");
+  log("PostgreSQL 截止时间与连接隔离 conformance 已通过");
 } catch (error) {
   failed = true;
-  console.error(error instanceof Error ? error.message : String(error));
+  logError(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;
 } finally {
   cleanup();

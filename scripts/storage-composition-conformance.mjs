@@ -1,8 +1,39 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
+import { writeSync } from "node:fs";
 import net from "node:net";
 import process from "node:process";
+
+const writeBackoff = new Int32Array(new SharedArrayBuffer(4));
+
+function writeAll(fd, message) {
+  const buffer = Buffer.from(`${message}\n`, "utf8");
+  let offset = 0;
+  while (offset < buffer.length) {
+    try {
+      const written = writeSync(fd, buffer, offset, buffer.length - offset);
+      if (written === 0) throw new Error("同步日志写入未取得进展");
+      offset += written;
+    } catch (error) {
+      const code = error && typeof error === "object" && "code" in error ? error.code : undefined;
+      if (code === "EINTR") continue;
+      if (code === "EAGAIN" || code === "EWOULDBLOCK") {
+        Atomics.wait(writeBackoff, 0, 0, 1);
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+function log(message) {
+  writeAll(process.stdout.fd, message);
+}
+
+function logError(message) {
+  writeAll(process.stderr.fd, message);
+}
 
 let redisPort = process.env.REDIS_PORT
   ? parseInteger(process.env.REDIS_PORT, "REDIS_PORT", 1, 65_535)
@@ -42,7 +73,7 @@ function parseInteger(raw, name, minimum, maximum) {
 }
 
 function run(command, args, options = {}) {
-  console.log(`执行：${[command, ...args].join(" ")}`);
+  log(`执行：${[command, ...args].join(" ")}`);
   const result = spawnSync(command, args, {
     cwd: process.cwd(),
     env: options.env ?? process.env,
@@ -135,7 +166,7 @@ function probePort(host, port) {
 async function waitForPort(host, port, label) {
   for (let attempt = 1; attempt <= 60; attempt += 1) {
     if (await probePort(host, port)) {
-      console.log(`${label} 已就绪：${host}:${port}`);
+      log(`${label} 已就绪：${host}:${port}`);
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, 1_000));
@@ -179,15 +210,21 @@ function cleanup() {
   }
   cleaned = true;
   if (failed) {
-    console.error("storage composition conformance 失败，输出容器日志后清理");
+    logError("storage composition conformance 失败，输出容器日志后清理");
     spawnSync("docker", ["logs", redisContainer], { stdio: "inherit", timeout: 30_000 });
     spawnSync("docker", ["logs", natsContainer], { stdio: "inherit", timeout: 30_000 });
   }
-  console.log(`清理容器：${redisContainer} ${natsContainer}`);
-  spawnSync("docker", ["rm", "-f", redisContainer, natsContainer], {
-    stdio: "ignore",
+  log(`清理容器：${redisContainer} ${natsContainer}`);
+  const removal = spawnSync("docker", ["rm", "-f", redisContainer, natsContainer], {
+    encoding: "utf8",
+    stdio: "pipe",
     timeout: 30_000,
   });
+  if (removal.error || removal.status !== 0) {
+    failed = true;
+    process.exitCode = 1;
+    logError(`storage 容器清理失败：${removal.error?.message ?? removal.stderr.trim()}`);
+  }
 }
 
 try {
@@ -195,10 +232,10 @@ try {
   await waitForPort("127.0.0.1", redisPort, "Redis");
   await waitForPort("127.0.0.1", natsPort, "NATS");
   runConformance();
-  console.log("bootstrap 正式 storage contracts E2E 已通过");
+  log("bootstrap 正式 storage contracts E2E 已通过");
 } catch (error) {
   failed = true;
-  console.error(error instanceof Error ? error.message : String(error));
+  logError(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;
 } finally {
   cleanup();

@@ -6,7 +6,7 @@
 | Domain | Draft DoD P0 | Current | Deferred (not OBJECTIVE / not stable) |
 |--------|--------------|---------|----------------------------------------|
 | redisx | Pool+KV+timeout+live | **done** + Cluster/Sentinel/TLS/resiliencx (`0.3.2`) | Streams full / pubsub 默认关 / package stable |
-| postgresx | Pool+query+tx+TLS | **done** + Repository + remote Require + deadline/隔离证据 (`0.3.2`) | 自定义 CA/mTLS / COPY / migrations / read-replica |
+| postgresx | Pool+query+tx+TLS | **done** + Repository + remote Require 实现 + deadline/隔离证据 (`0.3.3`) | 真实 TLS 实验 / 自定义 CA/mTLS / COPY / migrations / read-replica |
 | kafkax | Producer pool + EventBus | **done** + checkpoint/ALO + TLS/CA/PLAIN 证据 (`0.3.2`) | SCRAM/OAuth/mTLS / group/rebalance / native EOS / DLQ |
 | natsx | Core NATS EventBus | **done** + JetStream durable pull/显式确认 (`0.3.2`) | 同客户端自动恢复 NO-GO / NKey / Cluster/HA / 自动 DLQ / KV·Object 全量 |
 | ossx | ObjectStore put/get | **done** + multipart + resiliencx retry (`0.3.1`) | lifecycle / STS |

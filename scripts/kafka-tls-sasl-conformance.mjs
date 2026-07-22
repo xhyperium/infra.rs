@@ -2,11 +2,41 @@
 
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, rmSync, writeFileSync, writeSync } from "node:fs";
 import net from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
+
+const writeBackoff = new Int32Array(new SharedArrayBuffer(4));
+
+function writeAll(fd, message) {
+  const buffer = Buffer.from(`${message}\n`, "utf8");
+  let offset = 0;
+  while (offset < buffer.length) {
+    try {
+      const written = writeSync(fd, buffer, offset, buffer.length - offset);
+      if (written === 0) throw new Error("同步日志写入未取得进展");
+      offset += written;
+    } catch (error) {
+      const code = error && typeof error === "object" && "code" in error ? error.code : undefined;
+      if (code === "EINTR") continue;
+      if (code === "EAGAIN" || code === "EWOULDBLOCK") {
+        Atomics.wait(writeBackoff, 0, 0, 1);
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+function log(message) {
+  writeAll(process.stdout.fd, message);
+}
+
+function logError(message) {
+  writeAll(process.stderr.fd, message);
+}
 
 const timeoutSeconds = boundedInteger(
   process.env.KAFKA_TLS_TEST_TIMEOUT_SECONDS ?? "180",
@@ -43,7 +73,7 @@ function boundedInteger(raw, name, minimum, maximum) {
 }
 
 function run(command, args, options = {}) {
-  console.log(options.sensitive ? `执行：${command}（参数已脱敏）` : `执行：${[command, ...args].join(" ")}`);
+  log(options.sensitive ? `执行：${command}（参数已脱敏）` : `执行：${[command, ...args].join(" ")}`);
   const result = spawnSync(command, args, {
     cwd: process.cwd(),
     env: options.env ?? process.env,
@@ -113,8 +143,20 @@ function generateCertificates() {
     path.join(secretsDir, "kafka_server_jaas.conf"),
     `KafkaServer {\n  org.apache.kafka.common.security.plain.PlainLoginModule required\n  username="${username}"\n  password="${password}"\n  user_${username}="${password}";\n};\n`,
   );
-  for (const file of [caKey, caCert, badCaKey, badCaCert, serverKey, serverCsr, serverCert, extension, keystore, truststore, path.join(secretsDir, "key-credentials"), path.join(secretsDir, "keystore-credentials"), path.join(secretsDir, "truststore-credentials"), path.join(secretsDir, "kafka_server_jaas.conf")]) {
+  for (const file of [caCert, badCaCert, serverCsr, serverCert, extension, truststore]) {
     chmodSync(file, 0o644);
+  }
+  for (const file of [
+    caKey,
+    badCaKey,
+    serverKey,
+    keystore,
+    path.join(secretsDir, "key-credentials"),
+    path.join(secretsDir, "keystore-credentials"),
+    path.join(secretsDir, "truststore-credentials"),
+    path.join(secretsDir, "kafka_server_jaas.conf"),
+  ]) {
+    chmodSync(file, 0o600);
   }
   return { caCert, badCaCert };
 }
@@ -154,7 +196,7 @@ function probePort(port) {
 async function waitForPort(port) {
   for (let attempt = 1; attempt <= 120; attempt += 1) {
     if (await probePort(port)) {
-      console.log(`Kafka TLS 端口已就绪：127.0.0.1:${port}`);
+      log(`Kafka TLS 端口已就绪：127.0.0.1:${port}`);
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, 1_000));
@@ -265,12 +307,27 @@ function cleanup() {
   }
   cleaned = true;
   if (failed) {
-    console.error("Kafka TLS+SASL conformance 失败，输出容器日志后清理");
+    logError("Kafka TLS+SASL conformance 失败，输出容器日志后清理");
     spawnSync("docker", ["logs", container], { stdio: "inherit", timeout: 30_000 });
   }
-  console.log(`清理容器与临时证书：${container}`);
-  spawnSync("docker", ["rm", "-f", container], { stdio: "ignore", timeout: 30_000 });
-  rmSync(secretsDir, { recursive: true, force: true });
+  log(`清理容器与临时证书：${container}`);
+  const removal = spawnSync("docker", ["rm", "-f", container], {
+    encoding: "utf8",
+    stdio: "pipe",
+    timeout: 30_000,
+  });
+  if (removal.error || removal.status !== 0) {
+    failed = true;
+    process.exitCode = 1;
+    logError(`Kafka 容器清理失败：${removal.error?.message ?? removal.stderr.trim()}`);
+  }
+  try {
+    rmSync(secretsDir, { recursive: true, force: true });
+  } catch (error) {
+    failed = true;
+    process.exitCode = 1;
+    logError(`Kafka 临时证书清理失败：${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 try {
@@ -279,10 +336,10 @@ try {
   startKafka(port);
   await waitForPort(port);
   runConformance(port, certificates);
-  console.log("Kafka TLS+SASL/PLAIN conformance 已通过");
+  log("Kafka TLS+SASL/PLAIN conformance 已通过");
 } catch (error) {
   failed = true;
-  console.error(error instanceof Error ? error.message : String(error));
+  logError(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;
 } finally {
   cleanup();

@@ -6,8 +6,8 @@
 | SSOT | `.agents/ssot/adapters/storage/postgres/` |
 | 实现 | `crates/adapters/storage/postgres` |
 | 审计日期 | 2026-07-22 |
-| version | `0.3.2` |
-| 结论 | **生产默认池/Tx/Repository/TLS/内部 deadline/连接隔离已落地并有固定镜像证据**；**未**宣称 package stable |
+| version | `0.3.3` |
+| 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地；deadline/连接隔离有固定镜像证据**；**未**宣称真实 PostgreSQL TLS 已验证或 package stable |
 
 ## 结论摘要
 
@@ -17,7 +17,7 @@
 | prod Repository | `PgRepository` + `PgRecord`（`infra_pg_records`） |
 | SSL require | `MakeRustlsConnect`（rustls + webpki-roots）；远程仅 Require，Disable/Prefer fail-closed |
 | deadline | acquire 与 SQL/事务终结独立有界；服务端 `statement_timeout` + 调用侧 deadline |
-| 超时连接卫生 | 调用侧超时丢弃连接；COMMIT timeout 结果未知，不伪报 |
+| 超时连接卫生 | RAII guard 覆盖内/外层取消；未知连接脱池；COMMIT timeout 结果未知 |
 | resiliencx | `with_retry_sync` / `with_retry_async` |
 | contracts | `TxRunner` + 生产 `Repository` |
 | 环境变量 | `FOUNDATIONX_POSTGRESX_{HOST,PORT,DATABASE,USER,PASSWORD,SSLMODE}` 或 `DATABASE_URL` |

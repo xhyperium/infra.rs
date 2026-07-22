@@ -110,7 +110,8 @@ impl NatsPool {
             .client_capacity(config.client_capacity)
             .max_reconnects(Some(config.max_reconnects))
             .reconnect_delay_callback(move |attempt| {
-                let factor = 1u32.checked_shl(attempt.min(16) as u32).unwrap_or(u32::MAX);
+                let exponent = u32::try_from(attempt.min(16)).unwrap_or(16);
+                let factor = 1u32.checked_shl(exponent).unwrap_or(u32::MAX);
                 Duration::from_millis(100).saturating_mul(factor).min(reconnect_max_delay)
             })
             .event_callback(move |event| {

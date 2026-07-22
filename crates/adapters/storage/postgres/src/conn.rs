@@ -15,20 +15,47 @@ pub struct PgConnection {
     pub(crate) operation_timeout: Duration,
 }
 
+/// 池对象取消守卫。
+///
+/// 只要异步操作未明确调用 release，Drop 就把连接从 deadpool 分离。
+/// 因此外层 timeout、任务 abort 或 future drop 都不会把未知状态连接归池。
+pub(crate) struct PooledObjectGuard {
+    object: Option<Object>,
+}
+
+impl PooledObjectGuard {
+    pub(crate) fn new(object: Object) -> Self {
+        Self { object: Some(object) }
+    }
+
+    pub(crate) fn object(&self) -> XResult<&Object> {
+        self.object.as_ref().ok_or_else(|| XError::invariant("Postgres 连接守卫为空"))
+    }
+
+    pub(crate) fn release(mut self) -> XResult<Object> {
+        self.object.take().ok_or_else(|| XError::invariant("Postgres 连接守卫重复释放"))
+    }
+}
+
+impl Drop for PooledObjectGuard {
+    fn drop(&mut self) {
+        if let Some(object) = self.object.take() {
+            drop(Object::take(object));
+        }
+    }
+}
+
 impl PgConnection {
     /// 包装 deadpool 对象。
     pub(crate) fn new(client: Object, operation_timeout: Duration) -> Self {
         Self { client: Some(client), operation_timeout }
     }
 
-    fn object(&self) -> XResult<&Object> {
-        self.client.as_ref().ok_or_else(|| XError::unavailable("Postgres 连接已丢弃"))
-    }
-
-    fn discard(&mut self) {
-        if let Some(client) = self.client.take() {
-            drop(Object::take(client));
-        }
+    fn take_guard(&mut self) -> XResult<PooledObjectGuard> {
+        self.client
+            .take()
+            .map(PooledObjectGuard::new)
+            .ok_or_else(|| XError::unavailable("Postgres 连接已丢弃"))
     }
 
     /// 参数化 `EXECUTE`，返回影响行数。
@@ -36,12 +63,15 @@ impl PgConnection {
     /// # 安全
     /// 调用方必须使用 `$1..$N` 占位符；禁止字符串拼接用户输入。
     pub async fn execute(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<u64> {
-        match tokio::time::timeout(self.operation_timeout, self.object()?.execute(sql, params))
+        let guard = self.take_guard()?;
+        match tokio::time::timeout(self.operation_timeout, guard.object()?.execute(sql, params))
             .await
         {
-            Ok(result) => result.map_err(map_tokio_error),
+            Ok(result) => {
+                self.client = Some(guard.release()?);
+                result.map_err(map_tokio_error)
+            }
             Err(error) => {
-                self.discard();
                 Err(XError::deadline_exceeded("Postgres execute 超时；连接已丢弃")
                     .with_source(error))
             }
@@ -50,12 +80,15 @@ impl PgConnection {
 
     /// 参数化查询，期望恰好一行。
     pub async fn query_one(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<Row> {
-        match tokio::time::timeout(self.operation_timeout, self.object()?.query_one(sql, params))
+        let guard = self.take_guard()?;
+        match tokio::time::timeout(self.operation_timeout, guard.object()?.query_one(sql, params))
             .await
         {
-            Ok(result) => result.map_err(map_tokio_error),
+            Ok(result) => {
+                self.client = Some(guard.release()?);
+                result.map_err(map_tokio_error)
+            }
             Err(error) => {
-                self.discard();
                 Err(XError::deadline_exceeded("Postgres query_one 超时；连接已丢弃")
                     .with_source(error))
             }
@@ -64,11 +97,14 @@ impl PgConnection {
 
     /// 参数化查询，返回 0..N 行。
     pub async fn query(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<Vec<Row>> {
-        match tokio::time::timeout(self.operation_timeout, self.object()?.query(sql, params)).await
+        let guard = self.take_guard()?;
+        match tokio::time::timeout(self.operation_timeout, guard.object()?.query(sql, params)).await
         {
-            Ok(result) => result.map_err(map_tokio_error),
+            Ok(result) => {
+                self.client = Some(guard.release()?);
+                result.map_err(map_tokio_error)
+            }
             Err(error) => {
-                self.discard();
                 Err(XError::deadline_exceeded("Postgres query 超时；连接已丢弃").with_source(error))
             }
         }
@@ -80,12 +116,15 @@ impl PgConnection {
         sql: &str,
         params: &[&(dyn ToSql + Sync)],
     ) -> XResult<Option<Row>> {
-        match tokio::time::timeout(self.operation_timeout, self.object()?.query_opt(sql, params))
+        let guard = self.take_guard()?;
+        match tokio::time::timeout(self.operation_timeout, guard.object()?.query_opt(sql, params))
             .await
         {
-            Ok(result) => result.map_err(map_tokio_error),
+            Ok(result) => {
+                self.client = Some(guard.release()?);
+                result.map_err(map_tokio_error)
+            }
             Err(error) => {
-                self.discard();
                 Err(XError::deadline_exceeded("Postgres query_opt 超时；连接已丢弃")
                     .with_source(error))
             }
@@ -97,15 +136,5 @@ impl PgConnection {
         let client =
             self.client.take().ok_or_else(|| XError::unavailable("Postgres 连接已丢弃"))?;
         PgTransaction::begin(client, self.operation_timeout).await
-    }
-
-    /// 访问底层 client（高级用例）。
-    pub fn client(&self) -> XResult<&Object> {
-        self.object()
-    }
-
-    /// 可变访问底层 client。
-    pub fn client_mut(&mut self) -> XResult<&mut Object> {
-        self.client.as_mut().ok_or_else(|| XError::unavailable("Postgres 连接已丢弃"))
     }
 }
