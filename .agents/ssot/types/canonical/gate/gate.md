@@ -4,7 +4,7 @@
 |---|---|
 | 状态 | **交付门禁已定义**；package stable 仍 BLOCKED |
 | 更新 | 2026-07-23 |
-| 本轮证据 | `70d402a` 是前一机器候选；最新分支全仓/专项复验与独立终审待运行 |
+| 本轮证据 | `f26e29c` 全仓/专项机器门禁 PASS；独立终审待裁决 |
 
 | # | 门禁 | 通过条件 |
 |---|---|---|
@@ -16,7 +16,7 @@
 | G6 | Wire inventory | 12 个 committed 类型均有精确版本；coarse 查询保持兼容 |
 | G7 | Strict JSON | committed DTO 拒绝未知/缺失字段；enum 拒绝未知 variant |
 | G8 | 人工边界审查 | 源码与当前声明无 canonical bytes / 通用 codec / 跨语言协议 / 自动版本路由；现有脚本不冒充该边界的完备证明 |
-| G9 | Version | `0.1.1 → 0.1.2` 已同步；最新分支版本门禁待复验 |
+| G9 | Version | `0.1.1 → 0.1.2` 已同步；`f26e29c` 版本门禁 PASS |
 | G10 | Package stable | **BLOCKED / HUMAN_ONLY**；`publish = false` |
 
 门禁通过只证明 L2 committed serde JSON DTO subset 达标，不得据此宣称整个 package stable。

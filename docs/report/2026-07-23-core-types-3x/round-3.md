@@ -6,7 +6,8 @@
 | 初始内容候选 | `387a1dc550341767a24a1548dd9ae47b2c8b84ee` |
 | 主干同步候选 | `70d402a9a8b7b796077cba33e30ddf0c069c5e03`（包含 `origin/main 5fe242c`） |
 | 最终校正候选 | `ec2d938a031a659748d638902ea2d85a730335cd` |
-| 当前状态 | **终门禁 NO-GO；阻断修复 focused PASS，新固定候选待全量复验** |
+| 终门禁阻断修复候选 | `f26e29cf8f76c6db14be7210e41bd72b04791493` |
+| 当前状态 | **机器门禁 GREEN；独立双轴复审与最终聚合门禁待裁决** |
 | 轮次目标 | 当前权威、历史战役、Cargo package 真相与生成状态一致 |
 
 ## 基线 RED
@@ -41,3 +42,4 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
 - 最终聚合门禁发现 decimalx active spec 的三项验收勾选仍停留在实现前状态。实现、测试和双轴终审证据均已存在，因此本轮将其作为声明状态漂移校正；校正后的固定 SHA 必须重新通过全量机器门禁、双轴复审与最终聚合门禁后，才能恢复本轮 GO。
 - 校正候选 `ec2d938a` 的全仓与四域机器门禁已全部退出 0；固定条件、命令、摘要及一次无效路径转录失败见 [`evidence/r3-final-candidate-green.txt`](evidence/r3-final-candidate-green.txt)。
 - 对 `c27b7ce` 的最终聚合审查发现五项真实缺口：crate 专用错误未用 `thiserror`、HAR-04 未用 marker 证明 panic 后停止、decimal source 未断言类型身份、三个公开方法缺少行为测试、并发 reader loop 可能零次重叠。工作树已按测试先行闭合这些缺口；旧 evidence 与 reviewer GO 均不继承，新内容 SHA 固定前保持 NO-GO。
+- 阻断修复候选 `f26e29c` 的全仓与四域机器门禁已全部退出 0，见 [`evidence/r3-hardening-green.txt`](evidence/r3-hardening-green.txt)；独立复审完成前仍不恢复 GO。

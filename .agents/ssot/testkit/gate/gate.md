@@ -6,24 +6,24 @@
 | Design | [design/design.md](../design/design.md) |
 | Test | [test/test.md](../test/test.md) |
 | 当前 package 版本 | `0.1.3` |
-| 当前裁定 | **NO-GO / BLOCKER FIXES NOT YET FULLY VERIFIED** |
+| 当前裁定 | **MACHINE GREEN / INDEPENDENT REVIEW PENDING** |
 
 前一证据候选 `c27b7ce` 的终门禁发现 `thiserror`、panic 首错停止、公开方法测试与并发重叠缺口；
-该候选已经失效。修复工作树在固定新内容 SHA、运行全量机器门禁并重新取得独立裁决前保持 NO-GO。
+该候选已经失效。修复候选 `f26e29c` 的全量机器门禁已通过；重新取得独立裁决前保持非 GO。
 
 ## 1. 必须闭合的门禁
 
 | Gate | 当前状态 | GO 条件 |
 |---|---|---|
-| G-01 SSOT 一致 | 修复中；全量复验待运行 | spec/design/test/gate/matrix/AGENTS 使用 `testkit`、`0.1.3` 当前事实与同一边界；旧战役文档显式标为历史 |
-| G-02 ManualClock 合同 | focused PASS；全量复验待运行 | 单 Mutex、checked、fault、snapshot、poison、独立 domain 全部有新鲜测试 |
-| G-03 Runner typed API | focused PASS；全量复验待运行 | 导出 `HarnessReport`、`HarnessRunError`、四态 `StepOutcome`；`StepRecord` 字段私有且 getter 完整 |
-| G-04 Runner fail-closed | focused PASS；全量复验待运行 | `step(self)->Self`、`run(self)` 编译期排除重跑/运行后追加；clock fault/panic 返回 terminal error；首错停止 |
-| G-05 无 sentinel | focused PASS；全量复验待运行 | 所有 runner/clock 错误路径均不使用 epoch 0、空串或布尔成功掩盖失败 |
-| G-06 图隔离 | 全量复验待运行 | 仅 dev-dependency 消费；normal production dependents 为零 |
-| G-07 外部边界 | 全量复验待运行 | crate 无网络/进程/I/O/真实时间；external harness 仍在 tools/CI OOS |
-| G-08 质量门禁 | focused PASS；全量复验待运行 | fmt/clippy/test/API surface/相关质量门禁在固定候选上新鲜通过 |
-| G-09 版本同步 | 全量复验待运行 | 行为变化交付执行 PATCH bump，并同步 Cargo/lock/消费者/CHANGELOG/对齐文/SSOT |
+| G-01 SSOT 一致 | `f26e29c` PASS / REVIEW PENDING | spec/design/test/gate/matrix/AGENTS 使用 `testkit`、`0.1.3` 当前事实与同一边界；旧战役文档显式标为历史 |
+| G-02 ManualClock 合同 | `f26e29c` PASS / REVIEW PENDING | 单 Mutex、checked、fault、snapshot、poison、独立 domain 全部有新鲜测试 |
+| G-03 Runner typed API | `f26e29c` PASS / REVIEW PENDING | 导出 `HarnessReport`、`HarnessRunError`、四态 `StepOutcome`；`StepRecord` 字段私有且 getter 完整 |
+| G-04 Runner fail-closed | `f26e29c` PASS / REVIEW PENDING | `step(self)->Self`、`run(self)` 编译期排除重跑/运行后追加；clock fault/panic 返回 terminal error；首错停止 |
+| G-05 无 sentinel | `f26e29c` PASS / REVIEW PENDING | 所有 runner/clock 错误路径均不使用 epoch 0、空串或布尔成功掩盖失败 |
+| G-06 图隔离 | `f26e29c` PASS / REVIEW PENDING | 仅 dev-dependency 消费；normal production dependents 为零 |
+| G-07 外部边界 | `f26e29c` PASS / REVIEW PENDING | crate 无网络/进程/I/O/真实时间；external harness 仍在 tools/CI OOS |
+| G-08 质量门禁 | `f26e29c` PASS / REVIEW PENDING | fmt/clippy/test/API surface/相关质量门禁在固定候选上新鲜通过 |
+| G-09 版本同步 | `f26e29c` PASS / REVIEW PENDING | 行为变化交付执行 PATCH bump，并同步 Cargo/lock/消费者/CHANGELOG/对齐文/SSOT |
 
 ## 2. Residual
 
