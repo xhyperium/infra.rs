@@ -1,6 +1,6 @@
 # AGENTS — crates/types/decimal
 
-- Package：`decimalx` · lib：`decimalx` · path：`crates/types/decimal` · version：`0.1.0`
+- Package：`decimalx` · lib：`decimalx` · path：`crates/types/decimal` · version：`0.1.1`
 - 生产层级：**L1 Internal Ready**
 - 生产路径：`try_new` / parse / `checked_*`；禁止资金路径依赖 panicking ops
 - 依赖：仅 `kernel` + `serde`；禁止 canonical 反向依赖

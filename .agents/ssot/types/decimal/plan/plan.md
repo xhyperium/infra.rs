@@ -6,7 +6,7 @@
 | Source Goal | [`20260717/decimalx-complete-goal.md`](../20260717/decimalx-complete-goal.md) · `GOAL-TYPES-DECIMALX-002` |
 | Source Spec | [`20260717/decimalx-complete-spec.md`](../20260717/decimalx-complete-spec.md) · `SPEC-TYPES-DECIMALX-002` |
 | Active SSOT | [`../decimalx-spec.md`](../decimalx-spec.md)（**仍为权威验收合同**） |
-| Package | `xhyper-decimalx` @ `crates/types/decimal` · **0.1.0** |
+| Package | `xhyper-decimalx` @ `crates/types/decimal` · **0.1.1** |
 | Gap Matrix | [`gap-matrix.md`](./gap-matrix.md) |
 | Tasks | [`tasks.md`](./tasks.md) |
 | Residual | [`residual-open.md`](./residual-open.md) |

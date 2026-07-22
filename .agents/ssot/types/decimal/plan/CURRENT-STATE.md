@@ -4,7 +4,7 @@
 |------|-----|
 | Plan | `PLAN-TYPES-DECIMALX-002-agent-safe-v1` |
 | Branch | `fix/types-decimalx-agent-safe-20260717` |
-| Package | `xhyper-decimalx` **0.1.0** |
+| Package | `xhyper-decimalx` **0.1.1** |
 | Active SSOT | `.agents/ssot/types/decimal/decimalx-spec.md` |
 | Candidate | `20260717/` Draft · **Non-normative** · 相对链接 `../decimalx-spec.md` |
 | Campaign | **DONE (agent-safe)** · 10x PASS · **≠** Goal ACHIEVED · **≠** Spec Approved |
@@ -44,7 +44,7 @@
 |------|-----|
 | 仓库 | `infra.rs` |
 | 分支 | `feat/decimal-ssot-align`（对账回合） |
-| 实现路径 | `crates/types/decimal`（workspace member；package `xhyper-decimalx` 0.1.0） |
+| 实现路径 | `crates/types/decimal`（workspace member；package `xhyper-decimalx` 0.1.1） |
 | Active SSOT 路径 | `.agents/ssot/types/decimal/spec/spec.md`（dual mirror `cmp` exit 0） |
 | 对账证据 | 本地 SCRATCH `decimal-ssot-alignment.md`（**非** Goal Achieved） |
 | agent-safe 对账 | **完成**：§3 API 列表/§6 测试计数同步；entry 补强 sub/mul/rescale/newtype |
