@@ -9,13 +9,15 @@
 | NATS 监督修复 | `b4ce23ca2db2c11c61f75e783a8f14a80efa409b`（保留并等待 `JoinHandle`，panic fail-closed） |
 | 首轮固定测试候选 | `bbcc191f0cce9e1344f9cdbf70808167dd6fc7ea`（仅比 NATS 修复多生成式 `STATUS.md` 刷新） |
 | CI 门禁修复 | `50743dc387d78c5bf8be72cef7528218eefa2ca7`（Decimal 误报、文档结构、Markdown/CSpell） |
-| 最终固定测试候选 | `50743dc387d78c5bf8be72cef7528218eefa2ca7` |
+| 固定行为测试候选 | `50743dc387d78c5bf8be72cef7528218eefa2ca7` |
+| 最终合同候选 | `4de762eb7fea50b65d2732f969193c076b1323ee`（仅追加 ClickHouse 标准文档所有权对齐） |
 | 配置来源 | `/home/workspace/ZoneCNH/sre/secrets/env/dev.md`；仅由安全 runner 读取 |
 | 禁止范围 | 未读取或运行 `prod.md`；未在日志、命令行或仓库写入凭据值 |
 
 ## 全局门禁
 
-以下命令均在最终固定候选 `50743dc387d78c5bf8be72cef7528218eefa2ca7` 上重新执行，退出码均为 0；
+行为与隔离 conformance 命令均在固定候选 `50743dc387d78c5bf8be72cef7528218eefa2ca7` 上重新执行；
+最终合同候选 `4de762eb7fea50b65d2732f969193c076b1323ee` 又执行 Decimal/fence/Markdown/CSpell/质量门禁，退出码均为 0。
 原始摘要与输出哈希见同目录的 `storage-round3-raw-gates.md`：
 
 - `cargo fmt --all --check`
