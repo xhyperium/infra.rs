@@ -69,9 +69,14 @@ impl LayeredConfig {
     }
 
     /// 清空目标后写入合并结果。
+    ///
+    /// **先**完整 `load_merged`，成功后再 `clear` + 写入，避免源加载失败时抹掉旧配置。
     pub fn reload_into(&self, store: &ConfigStore) -> XResult<usize> {
+        let merged = self.load_merged()?;
         store.clear()?;
-        self.apply_to(store)
+        let n = merged.len();
+        store.extend_pairs(merged)?;
+        Ok(n)
     }
 }
 
@@ -114,5 +119,17 @@ mod tests {
         let empty = LayeredConfig::default();
         assert!(empty.is_empty());
         assert_eq!(empty.len(), 0);
+    }
+
+    #[test]
+    fn reload_preserves_on_source_error() {
+        use crate::source::FileSource;
+        let store = ConfigStore::new();
+        store.set("keep", "alive").unwrap();
+        // 不存在的文件源 → load 失败，keep 应仍在
+        let bad = Arc::new(FileSource::new("/no/such/configx-reload-fail.conf"));
+        let layered = LayeredConfig::new().with_source(bad);
+        assert!(layered.reload_into(&store).is_err());
+        assert_eq!(store.get("keep").as_deref(), Some("alive"));
     }
 }
