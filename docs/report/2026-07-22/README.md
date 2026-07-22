@@ -18,6 +18,8 @@
 | [round-08/review.md](./round-08/review.md) | R8 集成风险 |
 | [round-09/review.md](./round-09/review.md) | R9 DEFER 累积 |
 | [round-10/review.md](./round-10/review.md) | R10 对抗与终裁 |
+| [review-prompt.md](./review-prompt.md) | **全模块代码审查 Prompt（AI Agent 版）** — 通用审查维度 · 分层专项清单 · 门禁验证 · 报告模板 |
+| [review-evidence.md](./review-evidence.md) | **Prompt 可用性验证** — 按 Prompt 执行 evidence crate 实际审查产出的报告 |
 | [synthesis/go-nogo-synthesis.md](./synthesis/go-nogo-synthesis.md) | **综合 Go/No-Go + 补齐 backlog** |
 
 ## 逐 package 报告

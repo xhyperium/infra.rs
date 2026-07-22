@@ -42,7 +42,7 @@
 
 ### 1.3 项目架构速览
 
-```text
+```
 L0 (std-only, no async runtime)
   kernel ────────┬── testkit (ManualClock, dev-dep only)
                  ├── configx
@@ -130,17 +130,14 @@ ls docs/report/*/synthesis/
 ### 3.1 必审模块（22 crates + 2 tools）
 
 **L0 — 语义信任根：**
-
 - `crates/kernel` → `kernel` — 错误类型、时钟 trait、生命周期
 - `crates/testkit` → `testkit` — `ManualClock`（仅 dev-dep）
 
 **Types：**
-
 - `crates/types/decimal` → `decimalx` — 十进制数值（Money/Price/Qty）
 - `crates/types/canonical` → `canonical` — 跨层 DTO（wire 类型）
 
 **L1 — 基础设施模块：**
-
 - `crates/configx` → `xhyper-configx` — 内存字符串 KV 配置
 - `crates/schedulex` → `xhyper-schedulex` — 任务 ID 登记 + tick 驱动 JobRunner
 - `crates/observex` → `xhyper-observex` — TracingInstrumentation 最小面
@@ -150,15 +147,12 @@ ls docs/report/*/synthesis/
 - `crates/transport` → `transportx` — HTTP/WS 传输层
 
 **Contracts：**
-
 - `crates/contracts` → `xhyper-contracts` — Storage / Observability / Venue trait 出口
 
 **Test Support：**
-
 - `crates/test-support/contracts` → `contract-testkit` — Fake 实现 + conformance suite（仅 dev-dep）
 
 **Storage Adapters（7）：**
-
 - `crates/adapters/storage/redis` → `redisx`
 - `crates/adapters/storage/postgres` → `postgresx`
 - `crates/adapters/storage/kafka` → `kafkax`
@@ -168,12 +162,10 @@ ls docs/report/*/synthesis/
 - `crates/adapters/storage/oss` → `ossx`
 
 **Exchange Adapters（2）：**
-
 - `crates/adapters/exchange/binance` → `binancex`
 - `crates/adapters/exchange/okx` → `okxx`
 
 **Tools（2，可选）：**
-
 - `tools/goalctl` → `goalctl`
 - `tools/verifyctl` → `verifyctl`
 
@@ -316,7 +308,6 @@ ls docs/report/*/synthesis/
 - [ ] 真实后端 live 测试是否存在（哪怕 `#[ignore]`）？
 
 **Exchange 适配器额外检查：**
-
 - [ ] API 签名/认证是否正确（HMAC、时间戳、nonce）？
 - [ ] WebSocket 重连机制？
 - [ ] 速率限制遵循交易所规定？
@@ -324,7 +315,6 @@ ls docs/report/*/synthesis/
 - [ ] 错误码映射完整？
 
 **Storage 适配器额外检查：**
-
 - [ ] 连接池配置是否可用户自定义？
 - [ ] 事务支持（postgresx `TxRunner`）？
 - [ ] 发布/订阅语义（kafka/nats/redis）？
@@ -389,7 +379,7 @@ node scripts/quality-gates/cov-gate-100.mjs canonical
 
 ### 6.3 门禁结果记录格式
 
-```text
+```
 | 门禁项                   | 状态（✅/❌/N/A） | 备注                  |
 | ------------------------ | --------------- | --------------------- |
 | cargo build              | ✅               |                       |
@@ -545,7 +535,7 @@ node scripts/quality-gates/cov-gate-100.mjs canonical
 
 ### 7.3 目录结构约定
 
-```text
+```
 docs/report/{yyyy-mm-dd}/
 ├── README.md                    # 报告索引
 ├── review-prompt.md             # 本审查 prompt（审查指南）
