@@ -11,6 +11,7 @@
 | CI 门禁修复 | `50743dc387d78c5bf8be72cef7528218eefa2ca7`（Decimal 误报、文档结构、Markdown/CSpell） |
 | 固定行为测试候选 | `50743dc387d78c5bf8be72cef7528218eefa2ca7` |
 | 最终合同候选 | `4de762eb7fea50b65d2732f969193c076b1323ee`（仅追加 ClickHouse 标准文档所有权对齐） |
+| CodeQL 安全候选 | `ba6af26dcb7b0f0a56ad9a97e172013e5de2ed1b`（Kafka 错误认证凭据运行时随机生成） |
 | 配置来源 | `/home/workspace/ZoneCNH/sre/secrets/env/dev.md`；仅由安全 runner 读取 |
 | 禁止范围 | 未读取或运行 `prod.md`；未在日志、命令行或仓库写入凭据值 |
 
@@ -18,6 +19,7 @@
 
 行为与隔离 conformance 命令均在固定候选 `50743dc387d78c5bf8be72cef7528218eefa2ca7` 上重新执行；
 最终合同候选 `4de762eb7fea50b65d2732f969193c076b1323ee` 又执行 Decimal/fence/Markdown/CSpell/质量门禁，退出码均为 0。
+安全候选 `ba6af26dcb7b0f0a56ad9a97e172013e5de2ed1b` 再执行 Kafka TLS/SASL 正确/错误凭据实验 2/2，退出码为 0；等待远端 CodeQL 复核新增告警归零。
 原始摘要与输出哈希见同目录的 `storage-round3-raw-gates.md`：
 
 - `cargo fmt --all --check`

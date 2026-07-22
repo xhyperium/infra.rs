@@ -4,13 +4,14 @@
 
 - 固定行为候选：`50743dc387d78c5bf8be72cef7528218eefa2ca7`
 - 最终合同候选：`4de762eb7fea50b65d2732f969193c076b1323ee`；相对行为候选仅对齐 ClickHouse 标准文档，19–22 与质量门禁在该内容上复验。
+- CodeQL 安全候选：`ba6af26dcb7b0f0a56ad9a97e172013e5de2ed1b`；23 验证错误 SASL 凭据改为运行时随机生成后仍 fail-closed。
 - 基线：`3cd29a942710c0fb42f3f6bc05e3c31570acad47`
 - 日期：2026-07-23
 - 日志采集：每条命令独立保存 stdout/stderr，记录字节数与 SHA-256；遇到非零立即停止。
 - 安全边界：本轮只使用隔离容器/临时证书，不读取 `dev.md` 或 `prod.md`，日志不含凭据值。
 - 本文件是候选测试后的证据提交，只增加证据，不改变被测 Rust、脚本、配置或 SSOT 行为。
-- 完整日志归档：`storage-round3-raw-gates.tar.gz`，25345 字节，SHA-256
-  `734d0c58e2afc440aed1bf70897b72fe6d2e7718299e80cabee71a33971fadf1`；归档内含下表 22 个原始日志。
+- 完整日志归档：`storage-round3-raw-gates.tar.gz`，25592 字节，SHA-256
+  `d9d319112dce86298524cf500535774c3bff0d358d05dde9e5b09a855ba57a61`；归档内含下表 23 个原始日志。
 
 独立复验：
 
@@ -47,6 +48,7 @@ sha256sum "$verify_dir"/*.log
 | 20 | `python3 scripts/standards/check-fences.py` | 0 | 1133 | `1a8d744a4fc64468e05f372c8c9687fd1a89a3978d15db7f5b925bdb8e35daa2` |
 | 21 | `npx --yes markdownlint-cli2@0.23.1 ...` | 0 | 178 | `b5e3ab6b5c732e81032b57a1749d01248fb841b4b74fe41aed8ae33ec44510cf` |
 | 22 | `npx --yes cspell@10.0.1 ...` | 0 | 56 | `988ce6071107c495963b8e4705de3f7fac061796108d64da39145c8ec2d8affc` |
+| 23 | `node scripts/kafka-tls-sasl-conformance.mjs`（随机正确/错误凭据） | 0 | 3125 | `cfa594086261906c2d47528adb538d4702451bd498dec4ff160a264edc0607b4` |
 
 ## 原始 stdout/stderr 尾部
 
@@ -149,6 +151,13 @@ Summary: 0 issues in 0 files
 
 22-cspell.log
 CSpell: Files checked: 409, Issues found: 0 in 0 files.
+
+23-kafka-random-credentials.log
+test trusted_ca_and_plain_credentials_publish_to_real_broker ... ok
+test wrong_ca_and_wrong_password_fail_closed ... ok
+test result: ok. 2 passed; 0 failed; 0 ignored
+Kafka TLS+SASL/PLAIN conformance 已通过
+清理容器与临时证书
 ```
 
 完整日志的 SHA-256 与字节数是复验标识；本文件只摘录不含随机端点、容器名和临时路径的尾部，避免把短生命周期运行细节误当稳定接口。
