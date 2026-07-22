@@ -100,6 +100,7 @@ jobs:
     name: Harness 健康检查
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    if: github.event_name != 'merge_group'
     steps:
       - uses: actions/checkout@v4
       - name: 脱离 detached HEAD
@@ -176,6 +177,7 @@ jobs:
     name: crates 进度看板
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    if: github.event_name != 'merge_group'
     steps:
       - uses: actions/checkout@v4
       - name: 校验 STATUS.md 新鲜度
