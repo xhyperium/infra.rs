@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   yaml-lint:
-    name: YAML 检查
+    name: YAML 检�?
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -31,7 +31,7 @@ jobs:
               new-line-at-end-of-file: disable
 
   toml-lint:
-    name: TOML 检查
+    name: TOML 检�?
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -44,7 +44,7 @@ jobs:
         run: taplo fmt --check
 
   markdown-lint:
-    name: Markdown 检查
+    name: Markdown 检�?
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -59,7 +59,7 @@ jobs:
             docs/**/*.md
 
   spellcheck:
-    name: 拼写检查
+    name: 拼写检�?
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -67,11 +67,11 @@ jobs:
       - name: 运行 codespell
         uses: codespell-project/actions-codespell@v2
         with:
-          ignore_words_list: ser,ans,implementors,multiplikation,methoden
+          ignore_words_list: ser,ans,implementors,multiplikation,methoden,ALO
           skip: scripts/beads/gh-sync-i18n-test.mjs
 
   link-check:
-    name: 链接检查
+    name: 链接检�?
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -85,7 +85,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   harness:
-    name: Harness 健康检查
+    name: Harness 健康检�?
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -97,18 +97,18 @@ jobs:
           fi
       - name: 安装 bd CLI
         run: curl -sSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
-      - name: 初始化 beads
+      - name: 初始�? beads
         run: bd init --quiet
       - name: 运行 harness check
         run: node scripts/quality-gates/check.mjs
 
   canonical-align:
-    name: Canonical 对齐检查
+    name: Canonical 对齐检�?
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: 安装 Rust 工具链
+      - name: 安装 Rust 工具�?
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: 运行 canonical-align check
@@ -129,7 +129,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: 安装 Rust 工具链
+      - name: 安装 Rust 工具�?
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: 校验 crates 独立 version + path 依赖对齐
@@ -141,10 +141,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: 安装 Rust 工具链
+      - name: 安装 Rust 工具�?
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: 校验依赖集中管理（禁止内联第三方版本）
+      - name: 校验依赖集中管理（禁止内联第三方版本�?
         run: node scripts/quality-gates/check-workspace-deps.mjs
       - name: L1 单元测试
         run: node scripts/quality-gates/check-workspace-deps.test.mjs
@@ -166,7 +166,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: 校验 STATUS.md 新鲜度
+      - name: 校验 STATUS.md 新鲜�?
         run: node scripts/docs/gen-crate-status.mjs --check
       - name: 写入 Job Summary
         if: always()
