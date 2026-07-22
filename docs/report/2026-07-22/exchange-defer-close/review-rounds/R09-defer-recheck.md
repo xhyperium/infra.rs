@@ -1,9 +1,8 @@
 # R9 DEFER 复查
 
-| DEFER | 结论 |
+| 项 | 状态 |
 | --- | --- |
 | 签名 | PASS |
-| 下单 place/cancel/query | PASS |
-| WS 行情 | PASS（公共流最小面） |
-| 全量管理订单 WS | OPEN |
-| package stable / L5 | 禁止宣称 |
+| 下单协议 | PASS（离线+错误矩阵） |
+| WS 行情公共面 | PASS |
+| 私有/管理 WS、OCO、L5 | OPEN |

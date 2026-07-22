@@ -1,6 +1,6 @@
 # binancex docs
 
-**Package**：`binancex` · **lib**：`binancex` · **角色**：exchange adapter scaffold
+**Package**：`binancex` · **lib**：`binancex` · **角色**：exchange adapter 生产默认 REST+WS
 
 本目录存放 **crate 级**设计 / 契约补充 / 迁移笔记。
 不替代 rustdoc；不重复仓库根治理文档（见分层边界 `crates/AGENTS.md`）。
@@ -23,13 +23,13 @@
 
 ## 状态声明
 
-本 crate 当前为 **scaffold**：标准布局与 trait 接线可能已齐，**不等于**业务实现或 package stable。
-以对齐矩阵与 `cargo metadata` 为准。
+本 crate 为 **生产默认 REST+WS 协议路径**（#210+#214）：注入 `HttpDriver`+凭证走签名 REST；注入 `WsConnector` 解析公共行情。
+**不等于** package stable / L5 / crates.io。以对齐矩阵与 `cargo metadata` 为准。
 
 ## 生产误用警示（infra-s9t.14）
 
-**默认实现是进程内 scaffold/mock，不是生产客户端。**
+**默认（无注入）是进程内 mock / 空流；注入后为协议路径。**
 
-- 禁止把 `*Adapter` 类型名当成已对接真实 Binance/Postgres/Redis/…
-- 真实入口须有显式 feature（如 redisx `live`）与文档/CI 证据
-- 详见 `docs/plans/artifacts/prod-consume-surface.md`
+- 禁止无注入时把返回的 `Open` 当成真实成交
+- live 仅 `#[ignore]` 公共 server_time；签名交易不进默认 CI
+- 详见 crate 根 README 行为分层表与 `docs/ssot/adapters-ssot-alignment.md`

@@ -1,6 +1,5 @@
 # R8 集成
 
-- HttpDriver/WsConnector 注入边界清晰
-- RecordingHttp 覆盖 DELETE/签名动态 query
-- FixtureWs 覆盖公共流
-- residual: 真实 WS loopback 联调非 gating（有 fixture）
+- binance：DELETE + push_status 4xx
+- okx：POST cancel；RecordingHttp 支持 status；空体非 2xx
+- 分 venue：okx cancel 非 DELETE（协议）

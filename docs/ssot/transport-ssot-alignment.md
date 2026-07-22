@@ -69,7 +69,7 @@
 | 6.unit | mock + 驱动映射测试 | **PASS** | `tests/*`；多于上游 11 测 |
 | 6.not-mock-only | 不得描述为 mock-only | **PASS** | 真实驱动 + loopback |
 | 6.not-prod | 不得宣称生产 TLS 就绪 | **PASS** | 文档声明 |
-| 6.cmd.binance/okx | adapter 验收命令 | **PASS（生产默认）** | `cargo test -p binancex -p okxx --all-targets`：签名/协议/WS 解析 mock 内容断言；live `server_time` ignore；全量私有流/OCO **DEFER** |
+| 6.cmd.binance/okx | adapter 验收命令 | **PASS（生产默认 0.3.2）** | `cargo test -p binancex -p okxx --all-targets`：签名/协议/WS + 4xx/`sCode` 错误路径；live `server_time` ignore；全量私有流/OCO **DEFER** |
 | 6.cmd.local | test/clippy/fmt | **PASS** | 本仓质量门禁 |
 
 ## 覆盖率

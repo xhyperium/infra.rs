@@ -21,7 +21,7 @@
 | 全 trait 深度合同 / 真实后端 | **L3 子集 PASS**（KV live + Instr）；Tx/Bus/Repo/Venue 业务 live **DEFER** |
 | bootstrap 双平面 | **已收敛命名**：bootstrap 用 `Bounded*`；`Instrumentation` re-export contracts |
 
-替换 `#43`/`#46`/`#53` 的 `xhyper-contracts` 草图。消费者：`observex` 实现 `Instrumentation`；`resiliencx` 消费；adapters storage 生产客户端 + **exchange binancex/okxx 生产默认 VenueAdapter** 为实现面（非 package stable）。
+替换 `#43`/`#46`/`#53` 的 `xhyper-contracts` 草图。消费者：`observex` 实现 `Instrumentation`；`resiliencx` 消费；adapters storage 生产客户端 + **exchange binancex/okxx 生产默认 VenueAdapter**（#210+#214）为实现面（非 package stable）。
 
 ## 本仓可观察事实
 

@@ -6,7 +6,7 @@
 | 镜像 | `.agents/ssot/adapters/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 本仓路径 | `crates/adapters/{exchange,storage}/<name>` |
 | 审计日期 | 2026-07-22 |
-| 结论 | **7 个 storage 默认生产客户端已落地**（#188–#190）+ **exchange 生产默认 REST+WS 路径已闭合 named DEFER**（binancex/okxx：HMAC/四头签名、place/cancel/query 协议解析、公共 WS 行情解析 + mock 内容断言 + `#[ignore]` live server_time）；scaffold 改 `feature = "scaffold"`（storage）；**未**宣称 package stable / L5 代签 / Cluster·JetStream·EOS 全量 / crates.io |
+| 结论 | **7 个 storage 默认生产客户端已落地**（#188–#190）+ **exchange 生产默认 REST+WS 路径已闭合 named DEFER**（binancex/okxx：HMAC/四头签名、place/cancel/query 协议解析、公共 WS 行情解析 + mock 内容断言 + HTTP 4xx/`sCode` 错误路径（#214）+ `#[ignore]` live server_time）；scaffold 改 `feature = "scaffold"`（storage）；**未**宣称 package stable / L5 代签 / Cluster·JetStream·EOS 全量 / crates.io |
 
 ## 结论摘要
 
@@ -53,13 +53,13 @@ lib 入口                        adapters: Error/Result；contracts: ExchangeAd
 实现深度                        storage **生产默认客户端** + live/bench；exchange **签名 REST + WS 行情解析**（非 package stable）；Cluster/JetStream 等 DEFER
 标准布局八项                    已齐
 publish                         false（显式）
-version                         各 crate 独立（binancex/okxx 0.3.1）
+version                         各 crate 独立（binancex 0.3.2 · okxx 0.3.3；#210 生产默认 REST+WS · #214 4xx/sCode 错误路径）
 ```
 
 | 镜像路径 | 本仓路径 | package | 本仓状态 |
 |----------|----------|---------|----------|
-| `.agents/ssot/adapters/exchange/binance` | `crates/adapters/exchange/binance` | `binancex` | **生产默认 REST+WS**：HMAC-SHA256 + place/cancel/query 签名路径 + `bookTicker`/`trade`/`depth` 解析；无凭证明确 mock；`#[ignore]` live server_time |
-| `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | **生产默认 REST+WS**：四头鉴权 + `code`/`data` 信封 + place/cancel/query；`tickers`/`trades`/`books5` 解析；无凭证明确 mock；`#[ignore]` live server_time |
+| `.agents/ssot/adapters/exchange/binance` | `crates/adapters/exchange/binance` | `binancex` | **生产默认 REST+WS**（0.3.2 / #210+#214）：HMAC + place/cancel/query（Exchange `orderId` / Client `origClientOrderId`）；HTTP 4xx 业务体优先映射 `ErrorKind`；公共 WS 解析；无凭证明确 mock；`#[ignore]` live server_time |
+| `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | **生产默认 REST+WS**（0.3.2 / #210+#214）：四头鉴权 + `code`/`data` 信封；cancel 校验 `data[0].sCode`；公共 WS 解析；无凭证明确 mock；`#[ignore]` live server_time |
 | `.agents/ssot/adapters/storage/clickhouse` | `crates/adapters/storage/clickhouse` | `clickhousex` | **生产 `ClickHousePool` HTTP** + `AnalyticsSink` + `FOUNDATIONX_CLICKHOUSEX_*` + live；scaffold feature |
 | `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **生产 `KafkaPool`/`Producer`/`Consumer`** + `EventBus`（at-most-once）+ SASL + live；scaffold feature |
 | `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **生产 `NatsPool`** + `EventBus` + `FOUNDATIONX_NATS_*` + live；scaffold feature |
@@ -100,6 +100,17 @@ cargo test --workspace --all-targets
 # cargo test -p clickhousex --test live_smoke -- --ignored
 # cargo test -p taosx --test live_smoke -- --ignored
 ```
+
+## exchange named DEFER（#210 / #214）
+
+| DEFER 项 | 状态 | 证据 |
+|----------|------|------|
+| binancex 签名 HMAC-SHA256 | **PASS** | `auth::sign_*` 向量 + 签名 REST mock |
+| binancex 下单 place/cancel/query | **PASS** | 签名路径 + 4xx 业务错误映射 |
+| binancex WS 行情 | **PASS（公共最小面）** | bookTicker/trade/depth 解析 + `with_ws` |
+| okxx 签名四头 | **PASS** | `OkxApiKey::sign*` + Debug 脱敏 |
+| okxx 业务协议信封 | **PASS** | `code`/`data` + cancel `sCode` |
+| 全量私有/管理订单 WS、OCO、L5/stable | **OPEN / 非目标** | CHANGELOG + README |
 
 ## 对齐矩阵（本仓证据，非镜像勾选）
 

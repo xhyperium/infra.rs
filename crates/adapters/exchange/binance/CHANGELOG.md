@@ -19,9 +19,6 @@
 
 ### Fixed
 
-- 签名 REST：HTTP 4xx + 业务错误体优先映射 `ErrorKind`（先于 status→Unavailable）
-- 测试：HTTP 400 + `-1013`/`-2011` 驱动 place/cancel 入口
-
 - `OrderAck.ts` 按 CAN-TIME-001 从交易所毫秒转为纳秒
 - 无凭证路径明确 mock（`Open`），不静默假成交
 
