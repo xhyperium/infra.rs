@@ -21,6 +21,21 @@ ship 波次证据：仓库根 [`evidence/testkit/2026-07-14-stable-gates/`](../.
 - testkit 单波次 ship（2026-07-14），无多波次继承问题。
 - `plan/archive/`：十轮验收过程证据（round-findings / pass summaries），pass3 CLOSED 后归档，**非 live SSOT**，不得作为 §24 闭合证据。
 
+## 2026-07-23 contract-testkit 维护候选
+
+候选证据位于源码与可重放命令，不伪造静态 PASS 日志：
+
+```bash
+cargo test -p contract-testkit --all-targets
+cargo test -p contract-testkit --test negative_implementations
+cargo clippy -p contract-testkit -p contracts --all-targets -- -D warnings
+node --test scripts/quality-gates/check-test-support-graph.test.mjs
+node scripts/quality-gates/check-test-support-graph.mjs --json
+node scripts/quality-gates/check-public-api.mjs -p contract-testkit --require-tool
+```
+
+最终 evidence 必须来自重放到最新 main 后的执行结果与 CI；当前候选不得写成已发布或人工批准。
+
 ## 禁止
 
 - 把 `plan/archive/` 下的过程证据当成当前 live SSOT。

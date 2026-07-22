@@ -23,8 +23,19 @@
 
 ## OPEN（不得据此宣称 §24.3 全闭合以外保证）
 
+### 2026-07-23 contract-testkit 0.1.2 候选
+
+| 项 | 候选证据 |
+|----|----------|
+| reference suites | `tests/suite_self_tests.rs` 覆盖 14 trait 的参考 Fake 路径 |
+| broken matrix | `tests/negative_implementations.rs`：14 trait / 15 case，精确断言 contract/case |
+| graph isolation | cargo metadata default/all-features normal/build 闭包 + inventory fail-closed |
+| public API | `docs/api-baselines/contract-testkit.txt` |
+
+上述证据须在最终主干重放后复跑；Fake/smoke 通过不等于 Sandbox/Real 或生产后端 readiness。
+
 - [ ] branch coverage ≥90% · **OPTIONAL**（line≥95% 已强制 CI；进 nightly `testkit-quality`，非阻塞 Stable）
-- [ ] contract suite 矩阵完备性 · 演进度量（非阻塞）
+- [ ] Sandbox/Real contract matrix · 演进度量（非阻塞；当前仅 Fake/reference/broken）
 - [ ] Miri 进 CI required 周期 · 演进度量（非阻塞）
 
 ## 禁止

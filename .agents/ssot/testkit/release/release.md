@@ -41,3 +41,7 @@
 - 破坏性 API 变更：新 spec 版本或 supersede，bump version 走 `scripts/version.mjs` + CHANGELOG `[Unreleased]`。
 
 **Status: COMPLETE。`publish = false` 保持。未发布到 crates.io。**
+
+## 0.1.2 维护候选（contract-testkit only）
+
+`contract-testkit 0.1.2` 的候选范围是 suite/negative matrix、确定性 fixture、图隔离与 API ratchet。它不改变本页对历史 testkit 0.1.1 ship 的记录；在独立审查、CI、人工批准和主干合并前，状态为 **NOT RELEASED**。候选说明见 `crates/test-support/contracts/releases/0.1.2.md`。

@@ -24,6 +24,18 @@
 | `cargo xtl test-graph-check` | **PASS** | test-support 不进生产图 |
 | archgate TESTKIT-* | **OOS / N/A** | **infra.rs 不移植** archgate / `.architecture`；历史 TESTKIT-* 规则 ID 仅参考。可选机控：结构扫描 / CI job / `test-graph-check`（若落地）— 非 archgate |
 
+## contract-testkit 0.1.2 候选门禁（2026-07-23）
+
+| Gate | 状态 |
+|------|------|
+| reference suites + 15 broken cases | **本地 PASS；待最终主干重放** |
+| `check-test-support-graph.mjs` default/all-features | **本地 PASS；待 CI** |
+| `contract-testkit` public API baseline | **本地 PASS；待 CI** |
+| 独立 code/spec review | **待执行** |
+| 人工批准、PR 合并、发布 | **BLOCKED / 未发生** |
+
+候选门禁不覆盖 live backend、EventBus/PubSub delivery 或跨资源原子性。
+
 ## Residual OPEN
 
 **无阻塞项。** DEF-001…010 全 CLOSED。仅 1 **OPTIONAL**（branch cov ≥90%，line≥95% 已强制）。详见 [plan/residual-open.md](../plan/residual-open.md)。

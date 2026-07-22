@@ -8,6 +8,8 @@
 > **Ship PR**：[#247](https://github.com/xhyperium/infra.rs/pull/247) · [#254](https://github.com/xhyperium/infra.rs/pull/254) · [#255](https://github.com/xhyperium/infra.rs/pull/255) · tag `testkit-v0.1.1`
 > **历史**：[testkit-spec.md](spec/spec.md)（SUPERSEDED，`xlib_harness` 草案）→ SPEC-TESTKIT-002
 
+> **本仓维护候选（2026-07-23）**：`contract-testkit 0.1.2` 正在以独立 PR 收口 14 trait / 15 broken case、确定性 `FixtureNamespace`、production graph gate 与公开 API baseline。该候选不改变既有 testkit core Stable 记录；PR/CI/人工批准前不得宣称已发布或真实 backend ready。
+
 ## 11 层映射
 
 | 管线层 | 路径 | 状态 |
@@ -57,7 +59,7 @@ grep -n '^name' crates/testkit/Cargo.toml   # 应为 xhyper-testkit
 
 # 测试 + 图隔离
 cargo test -p testkit -p contract-testkit
-cargo xtl test-graph-check
+node scripts/quality-gates/check-test-support-graph.mjs
 cargo xtl lint-deps
 ```
 

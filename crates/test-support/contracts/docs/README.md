@@ -19,6 +19,7 @@
 
 - **放这里**：本 crate Fake/suite 边界、消费方式、与 contracts 的依赖关系
 - **不放这里**：trait 语义正文（见 `crates/contracts/docs/`）、全仓 SSOT 总览
+- **不得外推**：Fake 或 smoke 通过不代表真实 adapter、外部服务、交付语义或持久化 readiness
 
 ## 公开 API 说明
 

@@ -2,11 +2,21 @@
 
 ## Unreleased
 
+## 0.1.2 — 2026-07-23
+
 ### Added
 
 - 标准七项布局：`docs/` · `benches/` · `examples/` · `review/` · `releases/`
 - `examples/basic.rs`：Fake KV + Tx suite 最小消费者路径
 - `benches/hot_path`：RecordingInstrumentation + FakeKeyValueStore
+- ObjectStore、TimeSeriesStore、AnalyticsSink、PubSub suite 与确定性 `FixtureNamespace`。
+- 14 trait / 15 case broken implementation 负测矩阵；精确断言 `ContractFailure.contract/case`。
+- `contract-testkit` 公开 API baseline 与 test-support production graph gate。
+
+### Changed
+
+- EventBus / PubSub 明确降为操作 smoke，不声明交付、重放、顺序或次数。
+- AnalyticsSink / Instrumentation 增加 observer-aware suite，不改变 contracts trait。
 
 ## 0.1.0 — 2026-07-21
 

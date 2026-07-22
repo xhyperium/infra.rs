@@ -7,7 +7,7 @@ T0 **contract conformance** test-support（SPEC-TESTKIT-002 §3.2）。
 | package | `contract-testkit` |
 | lib | `contract_testkit` |
 | path | `crates/test-support/contracts` |
-| version | `0.1.0` |
+| version | `0.1.2` |
 | publish | `false`（internal only） |
 | plane | **test-support**（不是生产 runtime） |
 
@@ -33,10 +33,13 @@ use contract_testkit::{
 ### Per-trait suite
 
 ```rust
-use contract_testkit::{assert_key_value_store, assert_event_bus, assert_tx_runner};
+use contract_testkit::{
+    FixtureNamespace, assert_event_bus, assert_key_value_store, assert_tx_runner,
+};
 
-assert_key_value_store(&my_kv).await?;
-assert_event_bus(&my_bus).await?;
+let fixture = FixtureNamespace::new("adapter_contract")?;
+assert_key_value_store(&my_kv, &fixture).await?;
+assert_event_bus(&my_bus, &fixture).await?;
 assert_tx_runner(&my_runner).await?;
 ```
 
@@ -49,11 +52,20 @@ assert_tx_runner(&my_runner).await?;
 | TxRunner | `assert_tx_runner` |
 | Repository | `assert_repository` |
 | Instrumentation | `assert_instrumentation` |
+| Instrumentation（可观察） | `assert_instrumentation_observed` |
 | MarketDataSource | `assert_market_data_source` |
 | InstrumentCatalog | `assert_instrument_catalog` |
 | ExecutionVenue | `assert_execution_venue` |
 | AccountSource | `assert_account_source` |
 | VenueTimeSource | `assert_venue_time_source` |
+| ObjectStore | `assert_object_store` |
+| TimeSeriesStore | `assert_time_series_store` |
+| AnalyticsSink | `assert_analytics_sink_callable` / `assert_analytics_sink_observed` |
+| PubSub | `assert_pub_sub_smoke` |
+
+`FixtureNamespace` 为需要资源名的 suite 提供显式、确定且可并行隔离的命名空间；不读取时间、随机数或环境变量。
+
+`EventBus` / `PubSub` 仅验证 subscribe/publish 可成功调用，不承诺必达、重放、顺序、确认、背压或投递次数。`AnalyticsSink` 与 `Instrumentation` 的 observed suite 依赖调用方提供观察函数，只按包含关系验证；它们不扩展生产 trait 合同，也不证明真实 exporter 或持久化后端 readiness。
 
 ## 硬限制
 
@@ -61,6 +73,8 @@ assert_tx_runner(&my_runner).await?;
 - 不提供 integration harness（真实网络 / Docker）
 - 不与 `testkit`（ManualClock）混放
 - 失败返回 [`ContractFailure`]（§9.6），避免无定位 unwrap
+- `tests/negative_implementations.rs` 对 14 个 trait 提供 15 个故意破坏实现；每个反例断言精确 `contract/case`
+- 不提供真实后端、网络、Docker、testnet 或 live readiness 证据
 
 ## 验证
 

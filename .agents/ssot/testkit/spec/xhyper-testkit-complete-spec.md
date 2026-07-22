@@ -47,10 +47,8 @@ Test graph:
     → kernel
 
   contract-testkit
-    → testkit
-    → contracts
-    → canonical
-    → async test runtime
+    → contracts / kernel / canonical / decimalx
+    → async test runtime（仅 test-support）
 
   integration harness
     → built binaries
@@ -310,13 +308,16 @@ plane:   test-support
 role:    reusable contract conformance suites
 ```
 
-允许依赖：
+当前允许依赖（以 Cargo.toml 为准）：
 
 ```text
-testkit
 kernel
 contracts
 canonical
+decimalx
+async-trait
+bytes
+futures-core
 futures-util
 tokio
 ```
@@ -335,7 +336,16 @@ venue_time_source
 execution_venue
 key_value_store
 event_bus
+object_store
+time_series_store
+analytics_sink
+pub_sub
+instrumentation
+tx
+repository
 ```
+
+资源型 suite 必须接收显式 `FixtureNamespace`；命名空间不得读取真实时间、随机数或环境变量。`EventBus` / `PubSub` 只验证 subscribe/publish 可调用，不声明交付、重放、顺序、确认、背压或次数。AnalyticsSink / Instrumentation 的 observed suite 依赖调用方观察 seam，只做包含检查，不扩展生产 trait 合同。
 
 禁止使用一个“provider capability”大宏同时测试所有能力。
 
@@ -432,15 +442,26 @@ crates/test-support/contracts/
 ├── AGENTS.md
 ├── src/
 │   ├── lib.rs
-│   ├── market_data_source.rs
-│   ├── instrument_catalog.rs
-│   ├── account_source.rs
-│   ├── venue_time_source.rs
-│   ├── execution_venue.rs
-│   └── key_value_store.rs
+│   ├── fixture.rs
+│   ├── fakes/
+│   └── suite/
+│       ├── market_data_source.rs
+│       ├── instrument_catalog.rs
+│       ├── account_source.rs
+│       ├── venue_time_source.rs
+│       ├── execution_venue.rs
+│       ├── key_value_store.rs
+│       ├── event_bus.rs
+│       ├── object_store.rs
+│       ├── time_series_store.rs
+│       ├── analytics_sink.rs
+│       ├── pub_sub.rs
+│       ├── instrumentation.rs
+│       ├── repository.rs
+│       └── tx.rs
 └── tests/
     ├── suite_self_tests.rs
-    └── compile_fail.rs
+    └── negative_implementations.rs
 ```
 
 ---
@@ -546,11 +567,13 @@ testkit ∉ production graph
 contract-testkit ∉ production graph
 ```
 
-验证示例：
+机器门禁必须从 `cargo metadata` 同时检查 default 与 all-features 的 normal/build 闭包，并报告完整依赖路径。dev edge 与 test-support package 之间的 edge 不计生产污染。
+
+验证：
 
 ```bash
-cargo tree -p marketd -e normal
-cargo tree -p market_data -e normal
+node scripts/quality-gates/check-test-support-graph.mjs
+node scripts/quality-gates/check-test-support-graph.mjs --json
 ```
 
 不得依赖 feature resolver 的偶然行为保证隔离。
@@ -1080,13 +1103,10 @@ Suite 不得依赖具体 adapter crate。
 示例：
 
 ```rust
-pub async fn assert_key_value_store_contract<F, S>(
-    factory: F,
-    profile: KeyValueStoreProfile,
-) -> ContractResult
-where
-    F: Fn() -> S,
-    S: KeyValueStore;
+pub async fn assert_key_value_store(
+    store: &dyn KeyValueStore,
+    fixture: &FixtureNamespace,
+) -> ContractResult;
 ```
 
 若 Rust test discovery 要求生成独立测试函数，可提供极薄声明宏：
@@ -1477,6 +1497,10 @@ cargo miri test -p testkit
 一个明确通过的 reference fake
 一个故意违反合同的 broken fake
 ```
+
+当前选择矩阵覆盖 contracts 的 14 个 trait；`tests/negative_implementations.rs` 含 15 个 broken case（AnalyticsSink 分 callable 与 observed 两例）。每个反例必须断言精确的 `ContractFailure.contract` 与 `ContractFailure.case`，禁止仅以“返回任意错误”计为杀死。
+
+Fake/reference/broken 自测只证明 suite 的局部判别能力，不是 Sandbox、Real/Testnet 或生产 backend readiness 证据。
 
 Broken fake 必须使对应 suite 失败。
 
