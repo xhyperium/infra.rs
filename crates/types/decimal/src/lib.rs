@@ -12,10 +12,11 @@
 //! ## 生产路径（P0）
 //! - 构造：[`Decimal::try_new`] / [`str::parse`] / [`Decimal::new`]（均强制 `scale ≤ MAX_SCALE`）
 //! - 字段私有：非法 scale 不可表示；serde 反序列化走校验路径
-//! - 运算：`checked_*` 对可达状态只返回 `Ok/Err`，不 panic；资金路径禁用 panicking `+/-/*`
+//! - 运算：`checked_*` 对可达状态只返回 `Ok/Err`，不 panic；**资金路径必须用 checked API**
+//! - panicking 运算符 `+/-/*` 仅在 feature `panicking-ops` 下公开（**默认关闭**）
 //! - 错误：[`DecimalError`] 区分 scale / mantissa / 除零 / 舍入 / 表示范围（中文 Display）
 //! - 中间值合同：`i128` 中间值溢出则 `Err`，即使约分后可表示
-//! - wire：serde 字段 shape 为**当前事实**，**不**等于跨版本稳定协议（见 `docs/WIRE.md`）
+//! - wire：serde 字段 shape 由 [`WIRE_SCHEMA_VERSION`] 标识；破坏性字段变更须升版本（见 `docs/WIRE.md`）
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -27,7 +28,6 @@ use serde::{Deserialize, Serialize, Serializer};
 use std::cmp::Ordering;
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use std::ops::{Add, Mul, Sub};
 use std::str::FromStr;
 
 // ---------------------------------------------------------------------------
@@ -124,6 +124,13 @@ pub const MAX_SCALE: u8 = 18;
 
 /// i128 可表示的最大 `10^exp` 指数。
 pub const TECH_MAX_POW10_EXP: u32 = 38;
+
+/// 当前 wire schema 版本（`Decimal` / `Money` / `Currency` JSON 字段形状）。
+///
+/// - **v1**：`Decimal` = `{mantissa, scale}`；`Money` = `{amount, currency}`；
+///   `Currency` = `[u8; 3]` 大写 ASCII；均 `deny_unknown_fields`（Decimal/Money）。
+/// - 破坏性字段 rename / shape 变更必须递增本常量，并由 `wire_schema_v1_*` 测试拦截。
+pub const WIRE_SCHEMA_VERSION: u32 = 1;
 
 /// 十进制表示边界（生产 fallible 路径）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -503,14 +510,19 @@ impl fmt::Display for Decimal {
     }
 }
 
+// ---------------------------------------------------------------------------
+// panicking 运算符（feature = "panicking-ops"；默认关闭）
+// ---------------------------------------------------------------------------
+
 /// 加法运算符：内部走 [`Decimal::checked_add`]。
 ///
-/// **生产资金路径请用 [`Decimal::checked_add`]**；本运算符仅保留兼容/测试便利。
+/// **仅在 feature `panicking-ops` 下可用。生产资金路径必须用 [`Decimal::checked_add`]。**
 ///
 /// # Panics
 ///
 /// scale 对齐或 mantissa 加法溢出时 panic（含 `MAX_SCALE` 越界）。
-impl Add for Decimal {
+#[cfg(feature = "panicking-ops")]
+impl std::ops::Add for Decimal {
     type Output = Decimal;
     fn add(self, other: Decimal) -> Decimal {
         self.checked_add(other).expect("decimal add overflow")
@@ -519,12 +531,13 @@ impl Add for Decimal {
 
 /// 减法运算符：内部走 [`Decimal::checked_sub`]。
 ///
-/// **生产资金路径请用 [`Decimal::checked_sub`]**；本运算符仅保留兼容/测试便利。
+/// **仅在 feature `panicking-ops` 下可用。生产资金路径必须用 [`Decimal::checked_sub`]。**
 ///
 /// # Panics
 ///
 /// scale 对齐或 mantissa 减法溢出时 panic（含 `MAX_SCALE` 越界）。
-impl Sub for Decimal {
+#[cfg(feature = "panicking-ops")]
+impl std::ops::Sub for Decimal {
     type Output = Decimal;
     fn sub(self, other: Decimal) -> Decimal {
         self.checked_sub(other).expect("decimal sub overflow")
@@ -533,12 +546,13 @@ impl Sub for Decimal {
 
 /// 乘法运算符：内部走 [`Decimal::checked_mul`]。
 ///
-/// **生产资金路径请用 [`Decimal::checked_mul`]**；本运算符仅保留兼容/测试便利。
+/// **仅在 feature `panicking-ops` 下可用。生产资金路径必须用 [`Decimal::checked_mul`]。**
 ///
 /// # Panics
 ///
 /// mantissa 相乘、scale 相加溢出或结果 `scale > MAX_SCALE` 时 panic。
-impl Mul for Decimal {
+#[cfg(feature = "panicking-ops")]
+impl std::ops::Mul for Decimal {
     type Output = Decimal;
     fn mul(self, other: Decimal) -> Decimal {
         self.checked_mul(other).expect("decimal mul overflow")
@@ -813,13 +827,13 @@ mod tests {
         h.finish()
     }
 
-    // ── 加减与 scale 对齐 ──────────────────────────────────────────
+    // ── 加减与 scale 对齐（默认路径用 checked_*；运算符见 panicking-ops） ──
 
     #[test]
     fn decimal_add_aligns_scale() {
         let a = Decimal::new(1, 0);
         let b = Decimal::new(25, 2);
-        let c = a + b;
+        let c = a.checked_add(b).unwrap();
         assert_eq!(c.scale(), 2);
         assert_eq!(c.mantissa(), 125);
     }
@@ -828,7 +842,7 @@ mod tests {
     fn decimal_sub() {
         let a = Decimal::new(10, 1);
         let b = Decimal::new(1, 0);
-        let c = a - b;
+        let c = a.checked_sub(b).unwrap();
         assert_eq!(c.mantissa(), 0);
         assert!(c.eq_value(Decimal::ZERO));
     }
@@ -837,17 +851,28 @@ mod tests {
     fn decimal_mul_scales_add() {
         let a = Decimal::new(2, 1);
         let b = Decimal::new(3, 0);
-        let c = a * b;
+        let c = a.checked_mul(b).unwrap();
         assert_eq!(c.scale(), 1);
         assert_eq!(c.mantissa(), 6);
     }
 
     #[test]
-    fn checked_add_sub_match_operators() {
+    fn checked_add_sub_mul_concrete() {
+        let a = Decimal::new(1, 0);
+        let b = Decimal::new(25, 2);
+        assert_eq!(a.checked_add(b).unwrap().mantissa(), 125);
+        assert_eq!(a.checked_sub(b).unwrap().mantissa(), 75);
+        assert_eq!(a.checked_mul(b).unwrap().mantissa(), 25);
+    }
+
+    #[cfg(feature = "panicking-ops")]
+    #[test]
+    fn panicking_ops_match_checked() {
         let a = Decimal::new(1, 0);
         let b = Decimal::new(25, 2);
         assert_eq!(a.checked_add(b).unwrap(), a + b);
         assert_eq!(a.checked_sub(b).unwrap(), a - b);
+        assert_eq!(a.checked_mul(b).unwrap(), a * b);
     }
 
     // ── 相等 / 排序（数值语义，非结构字段） ────────────────────────
@@ -1087,7 +1112,61 @@ mod tests {
         assert!(Decimal::new(i128::MIN, 0) < small);
     }
 
-    // ── serde round-trip ───────────────────────────────────────────
+    // ── serde round-trip / wire schema v1 稳定合同 ─────────────────
+
+    #[test]
+    fn wire_schema_version_is_v1() {
+        assert_eq!(WIRE_SCHEMA_VERSION, 1);
+    }
+
+    #[test]
+    fn wire_schema_v1_decimal_exact_json_shape() {
+        // 字段名/顺序/形状冻结：rename 或改 shape 必须先升 WIRE_SCHEMA_VERSION
+        let d = Decimal::new(-12345, 3);
+        let json = serde_json::to_string(&d).unwrap();
+        assert_eq!(json, r#"{"mantissa":-12345,"scale":3}"#);
+        let back: Decimal = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.mantissa(), -12345);
+        assert_eq!(back.scale(), 3);
+        assert_eq!(back, d);
+        // 字段名必须存在（拦截 rename）
+        let v: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert!(v.get("mantissa").is_some(), "wire v1 requires field mantissa");
+        assert!(v.get("scale").is_some(), "wire v1 requires field scale");
+        assert_eq!(v.as_object().map(|o| o.len()), Some(2));
+    }
+
+    #[test]
+    fn wire_schema_v1_money_exact_json_shape() {
+        let m = Money::try_new(Decimal::new(999, 2), "USD".parse().unwrap()).unwrap();
+        let json = serde_json::to_string(&m).unwrap();
+        assert_eq!(json, r#"{"amount":{"mantissa":999,"scale":2},"currency":[85,83,68]}"#);
+        let back: Money = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, m);
+        let v: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert!(v.get("amount").is_some(), "wire v1 requires field amount");
+        assert!(v.get("currency").is_some(), "wire v1 requires field currency");
+        assert_eq!(v.as_object().map(|o| o.len()), Some(2));
+    }
+
+    #[test]
+    fn wire_schema_v1_rejects_renamed_fields() {
+        // 若有人把 mantissa 改成 value，这些 golden 反序列化必须失败
+        assert!(serde_json::from_str::<Decimal>(r#"{"value":1,"scale":0}"#).is_err());
+        assert!(serde_json::from_str::<Decimal>(r#"{"mantissa":1,"precision":0}"#).is_err());
+        assert!(
+            serde_json::from_str::<Money>(
+                r#"{"value":{"mantissa":1,"scale":0},"currency":[85,83,68]}"#
+            )
+            .is_err()
+        );
+        assert!(
+            serde_json::from_str::<Money>(
+                r#"{"amount":{"mantissa":1,"scale":0},"ccy":[85,83,68]}"#
+            )
+            .is_err()
+        );
+    }
 
     #[test]
     fn serde_unknown_fields_rejected_on_decimal() {
@@ -1191,10 +1270,10 @@ mod tests {
 
     #[test]
     fn ledger_style_sum_display() {
-        // 与 ledger 测试期望对齐： "100.0" + "50.0" → "150"
+        // 与 ledger 测试期望对齐： "100.0" + "50.0" → "150"（checked 路径）
         let a: Decimal = "100.0".parse().unwrap();
         let b: Decimal = "50.0".parse().unwrap();
-        assert_eq!((a + b).to_string(), "150");
+        assert_eq!(a.checked_add(b).unwrap().to_string(), "150");
         let c: Decimal = "10.0".parse().unwrap();
         assert_eq!(c.to_string(), "10");
     }

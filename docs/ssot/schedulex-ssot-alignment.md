@@ -2,37 +2,46 @@
 
 | 字段 | 值 |
 |------|-----|
-| 审计日期 | 2026-07-21 |
+| 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
 | Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ `spec/xhyper-schedulex-complete-spec.md` |
-| 本仓 crate | `crates/schedulex` · package `schedulex` · lib `schedulex` · `0.1.0` |
-| 合同范围 | **内存任务 ID 登记表**（非 production timer scheduler） |
+| 本仓 crate | `crates/schedulex` · package `schedulex` · lib `schedulex` |
+| 合同范围 | **内存任务 ID 登记表** + **进程内 tick 驱动 JobRunner**（**≠** 分布式调度器） |
 
 ## 合同矩阵
 
-| 表面 | Active SSOT | 本仓 | 状态 |
-|------|-------------|------|------|
+| 表面 | Active SSOT / 扩展 | 本仓 | 状态 |
+|------|---------------------|------|------|
 | Package / lib / path | `schedulex` / `schedulex` / `crates/schedulex` | 同左 | ✅ |
-| 依赖 | std-only，无生产依赖 | `[dependencies]` 空 | ✅ |
+| 依赖 | 登记表 std-only | 登记表无生产 dep | ✅ |
 | `new` / `Default` | 空登记表 | `Scheduler::{new, default}` | ✅ |
 | `schedule(id)` | 插入；重复 ID 幂等覆盖 | `HashMap::insert` | ✅ |
 | `cancel(id)` | 删除并返回此前是否存在 | `remove(...).is_some()` | ✅ |
 | `list()` | 当前 ID；顺序未承诺 | `keys().cloned().collect()` | ✅ |
-| Clock / timer / Job·Run | **禁止**（§3） | 生产源码无此类类型/依赖 | ✅ |
-| async runtime / 持久化 / shutdown | **禁止**（§3） | 无 | ✅ |
-| 测试五条 | schedule+list / cancel / cancel missing / Default 空 / 重复幂等 | `src/lib.rs` unit + `tests/public_api.rs` | ✅ |
-| 覆盖率 | 目标 100% lines（本仓 goal） | `cargo llvm-cov -p schedulex --fail-under-lines 100` | ✅（见 evidence） |
+| Job / Schedule / JobRunner | 审查 OBJECTIVE 关闭项 | `job.rs` / `schedule.rs` / `runner.rs` | **PASS** |
+| `JobRunner::tick(now_ms)` | 确定性 tick | 显式时间输入；无墙钟 daemon | **PASS** |
+| Once / FixedDelay / cron 子集 | tick 驱动 | `Schedule::{once,fixed_delay,cron}` | **PASS**（**≠** 完整 cron 方言 / 分布式 lease） |
+| async runtime / 持久化 / 分布式 | 非目标 | 无 | 诚实边界 OPEN |
 
-## 明确非目标
+## OBJECTIVE 处置（2026-07-22 defer-close）
 
-Once / FixedDelay / FixedRate / cron / misfire / 并发 lease / timeout token /
-graceful shutdown / 持久化恢复 / 分布式调度 —— active §3；Candidate Draft 非权威。
+| 项 | 前状态 | 现状态 | 证据 |
+|----|--------|--------|------|
+| timer / cron / Job 执行 | DEFER | **PASS（进程内 tick）** | `crates/schedulex/src/{job,schedule,runner}.rs` · `JobRunner::tick` |
 
-## 生产误用红线（infra-s9t.8）
+## 明确非目标 / 诚实边界
+
+- **分布式调度**、跨进程 lease、持久化恢复、misfire 产品矩阵
+- 后台墙钟线程自动触发（本仓为 **显式 `tick(now_ms)`**）
+- 完整 cron 方言 / 时区产品
+- 把 `Scheduler`（登记表）与 `JobRunner`（执行器）混为一谈的误读
+
+## 生产误用红线
 
 | 允许 | 禁止 |
 |------|------|
-| 进程内任务 **ID 登记** / 幂等 cancel | 把 `Scheduler` 当 timer / cron / 调度执行器 |
-| 单测与组合根登记表 | 依赖墙钟触发、持久化恢复、分布式 lease |
+| 进程内任务 **ID 登记** / 幂等 cancel | 把 `Scheduler` 当分布式 cron |
+| `JobRunner::tick` 由宿主驱动 | 依赖隐式墙钟 daemon 即生产调度平台 |
+| 单测与组合根登记 | 宣称 package stable / Agent L5 |
 
 见 crate README 与 [prod-consume-surface.md](../plans/artifacts/prod-consume-surface.md)。
 
@@ -59,6 +68,12 @@ cargo llvm-cov -p schedulex --fail-under-lines 100 --summary-only
 |------|------|
 | STATUS 结构完成度 | **100%**（layout+tests+content；非 Production Ready） |
 | 声明面生产硬化 | 公共 API 集成测 + 热路径 bench + `docs/` 红线；**cov-gate-100 行覆盖** |
-| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
+| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 分布式调度产品 |
 
-自验证：`cargo test -p schedulex --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p schedulex`；`cargo run -p schedulex --example …`；`cargo bench -p schedulex --bench hot_path -- --quick`。
+自验证：`cargo test -p schedulex --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p schedulex`。
+
+## 变更记录
+
+| 日期 | 说明 |
+|------|------|
+| 2026-07-22 | **defer-close**：Job/Schedule/JobRunner tick 面 PASS；分布式仍 OPEN |

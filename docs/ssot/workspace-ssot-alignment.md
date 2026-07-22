@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-22 |
-| 跟进 | P0/P1 **#98**；L5 **0.3.0-signoff**；四包 GO **#159** · **`v0.3.0-four-crates`**；kernel **#163**；**`infra-s9t` 18/18 closed**（#166–#168 · #172）· 对齐 **#174** · closeout **#175**；**contract-testkit #178**；**不**宣称 workspace Production Ready / L5 |
+| 跟进 | P0/P1 **#98**；L5 **0.3.0-signoff**；四包 GO **#159** · **`v0.3.0-four-crates`**；kernel **#163**；**`infra-s9t` 18/18 closed**；**contract-testkit #178**；**#188–#191** storage/tools；**defer-close 2026-07-22**：13 包 OBJECTIVE DEFER→PASS（archgate **OOS-Accept**）；**不**宣称 workspace Production Ready / Agent L5 |
 | 用途 | 一眼看清：**镜像有什么** vs **本仓落地了什么** |
 | 权威 members | 根 `Cargo.toml` `[workspace.members]` + `cargo metadata --no-deps`（**package 名以 metadata 为准**） |
 
@@ -12,19 +12,19 @@
 | Package（`cargo -p`） | 路径 | lib | 角色 | 对齐文档 |
 |---------|------|-----|------|----------|
 | `kernel` | `crates/kernel/` | `kernel` | L0 语义信任根 · **L1+L4 已内部发布** | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
-| `testkit` | `crates/testkit/` | `testkit` | T0 test-support（仅 dev-dep）· **L1** ManualClock | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
-| `contract-testkit` | `crates/test-support/contracts/` | `contract_testkit` | T0 Fake + per-trait suite（仅 dev-dep）· #178 | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) · [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
-| `configx` | `crates/configx/` | `configx` | L1 内存字符串 KV（非多源热更新） | [configx-ssot-alignment.md](./configx-ssot-alignment.md) |
-| `schedulex` | `crates/schedulex/` | `schedulex` | L1 任务 ID 登记表（registry only） | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) |
-| `bootstrap` | `crates/bootstrap/` | `bootstrap` | L1 唯一组合根（ADR-016） | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) |
-| `evidence` | `crates/evidence/` | `evidence` | L1 审计证据追加面 | [evidence-ssot-alignment.md](./evidence-ssot-alignment.md) |
-| `observex` | `crates/observex/` | `observex` | L1 TracingInstrumentation（L3 Instr 入口） | [observex-ssot-alignment.md](./observex-ssot-alignment.md) |
-| `resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试（含 async）+ 熔断 + 限流 + 舱壁 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
-| `decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money · **L1** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
-| `canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO · **L2 wire 子集** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
-| `contracts` | `crates/contracts/` | `contracts` | adapter trait 出口；L3 子集（KV+Instr） | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
-| `binancex` | `crates/adapters/exchange/binance/` | `binancex` | 生产默认：HMAC REST 下单/撤/查 + 公共 WS 行情解析 + live server_time ignore | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `okxx` | `crates/adapters/exchange/okx/` | `okxx` | 生产默认：四头鉴权 REST + 业务信封 + 公共 WS 行情解析 + live server_time ignore | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `testkit` | `crates/testkit/` | `testkit` | T0 test-support · ManualClock + **IntegrationHarness** | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
+| `contract-testkit` | `crates/test-support/contracts/` | `contract_testkit` | T0 Fake + suite + Batch-2 + BackendProfile（仅 dev-dep） | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) · [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
+| `configx` | `crates/configx/` | `configx` | L1 内存 KV + 文件/env 源 + 分层 + 进程内 watch + secret | [configx-ssot-alignment.md](./configx-ssot-alignment.md) |
+| `schedulex` | `crates/schedulex/` | `schedulex` | L1 登记表 + tick 驱动 JobRunner（≠ 分布式） | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) |
+| `bootstrap` | `crates/bootstrap/` | `bootstrap` | L1 唯一组合根 + StoreSet + AsyncDrain | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) |
+| `evidence` | `crates/evidence/` | `evidence` | L1 追加面 + query/sign/remote 接口 | [evidence-ssot-alignment.md](./evidence-ssot-alignment.md) |
+| `observex` | `crates/observex/` | `observex` | L1 TracingInstrumentation + 进程内 export/flush | [observex-ssot-alignment.md](./observex-ssot-alignment.md) |
+| `resiliencx` | `crates/resiliencx/` | `resiliencx` | L1 重试/熔断/限流/舱壁 + budget；redis/pg wire | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
+| `decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money · **L1** · WIRE_SCHEMA_VERSION | [types-ssot-alignment.md](./types-ssot-alignment.md) |
+| `canonical` | `crates/types/canonical/` | `canonical` | `/types/` 纯 DTO · **L2 wire 子集** + Envelope | [types-ssot-alignment.md](./types-ssot-alignment.md) |
+| `contracts` | `crates/contracts/` | `contracts` | adapter trait 出口；L3 子集 + LiveContractProfile | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
+| `binancex` | `crates/adapters/exchange/binance/` | `binancex` | exchange scaffold + mock HTTP + `server_time` 解析 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `okxx` | `crates/adapters/exchange/okx/` | `okxx` | exchange scaffold + mock HTTP + `server_time` 解析 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **生产** HTTP `ClickHousePool` + live/bench（#188–#190） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **生产** `KafkaPool`/`Producer`/`Consumer` + SASL + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `natsx` | `crates/adapters/storage/nats/` | `natsx` | **生产** `NatsPool` + EventBus + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
@@ -34,7 +34,7 @@
 | `taosx` | `crates/adapters/storage/taos/` | `taosx` | **生产** `TaosPool` REST（6041）+ live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `goalctl` | `tools/goalctl/` | `goalctl` | 最小 Goal→Contract CLI（doctor/validate/compile）· #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | `verifyctl` | `tools/verifyctl/` | `verifyctl` | 最小 plan/execute/report CLI · #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
-| `transportx` | `crates/transport/` | `transportx` | L1 HTTP/WS 传输 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) |
+| `transportx` | `crates/transport/` | `transportx` | L1 HTTP/WS + TLS/池/代理配置面 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) |
 
 > **已移除**：`infra-core`（不在 SSOT 三域 kernel/testkit/types 内；文档历史见根 `CHANGELOG` / DDR-003 撤销说明）。
 
@@ -57,7 +57,7 @@
 └─────────┘
 
   adapters/storage/* ── 生产客户端（redis/pg/kafka/nats/oss/ch/taos）+ scaffold feature 可选
-  adapters/exchange/* ── 生产默认 REST 签名 + WS 行情解析（非 package stable）
+  adapters/exchange/* ── scaffold + mock HTTP + server_time
   contracts ── serde + thiserror + decimalx（trait 出口；#43）
   contract-testkit ── contracts（**仅 dev-dep**；Fake/suite；禁止 production graph）
   tools/goalctl · tools/verifyctl ── 最小生产 CLI（#188）
@@ -69,19 +69,19 @@
 | 上游镜像域 | 镜像路径 | 本仓 crate | 状态 |
 |------------|----------|------------|------|
 | kernel | `.agents/ssot/kernel/` | `crates/kernel` | **已落地**；ClockDomain + loom CI + wait_timeout；见 kernel 对齐文 |
-| testkit | `.agents/ssot/testkit/` | `crates/testkit` | **ManualClock core 已落地**（含 domain） |
-| contract-testkit | `.agents/ssot/testkit/` §3.2 | `crates/test-support/contracts` | **已落地**（Fake + per-trait suite；仅 dev-dep） |
-| schedulex | `.agents/ssot/schedulex/` | `crates/schedulex` | **registry 已落地**（active SSOT 最小合同） |
-| types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；decimal **L1**；canonical **L2** committed v1–v1.3；package stable **OPEN** |
-| configx | `.agents/ssot/configx/` | `crates/configx` | **0.1.0 内存 KV 已落地**；多源/热更新 DEFER |
-| bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根已落地**；`Bounded*` + Instrumentation/Evidence；`require_evidence` **release fail-closed**（#168）；全量 async contracts **DEFER** |
-| resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
-| observex | `.agents/ssot/observex/` | `crates/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
+| testkit | `.agents/ssot/testkit/` | `crates/testkit` | **ManualClock + IntegrationHarness** 已落地（仅测试） |
+| contract-testkit | `.agents/ssot/testkit/` §3.2 | `crates/test-support/contracts` | **已落地**（Fake + suite + Batch-2 + BackendProfile；仅 dev-dep） |
+| schedulex | `.agents/ssot/schedulex/` | `crates/schedulex` | **registry + JobRunner tick**；**≠** 分布式调度 |
+| types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；decimal **L1** + WIRE_SCHEMA_VERSION + panicking-ops off；canonical **L2** + Envelope；package stable **OPEN** |
+| configx | `.agents/ssot/configx/` | `crates/configx` | **内存 KV + file/env 源 + layered + watch + secret**；**≠** 远端配置中心 |
+| bootstrap | `.agents/ssot/bootstrap/` | `crates/bootstrap` | **组合根 + StoreSet + AsyncDrain**；`require_evidence` fail-closed；交易全栈装配仍 **NO-GO**（exchange） |
+| resiliencx | `.agents/ssot/resiliencx/` | `crates/resiliencx` | **重试/熔断/限流/舱壁/async + budget**；**redisx/postgresx wire** |
+| observex | `.agents/ssot/observex/` | `crates/observex` | **TracingInstrumentation + 进程内 TelemetryExporter/flush**；**≠** 完整 OTEL SDK |
 | infra 其余域 | `.agents/ssot/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
-| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **storage 7 库生产默认客户端** + live/bench（#188–#190）；**exchange binancex/okxx 生产默认 REST+WS**（签名/协议/行情；非 package stable）；Cluster·JetStream·EOS / 全量管理订单 WS **OPEN** |
-| （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Venue 业务 live **DEFER** |
-| transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
-| tools | `.agents/ssot/tools/` | `crates/evidence` + `tools/goalctl` + `tools/verifyctl` | evidence + **goalctl/verifyctl 最小生产 CLI 已 member**（#188）；live env 构建器 #191；xtask **未**落地 |
+| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | **storage 7 库生产默认客户端** + live/bench；redis/pg **resilience wire**；exchange 只读 server_time；**非** package stable / Cluster·JetStream·EOS |
+| （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口** + **LiveContractProfile**；Fake/suite/Batch-2 在 contract-testkit；L3 子集 KV+Instr |
+| transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同 + TLS/池/代理配置面**（#166 + defer-close） |
+| tools | `.agents/ssot/tools/` | `crates/evidence` + `tools/goalctl` + `tools/verifyctl` | evidence（含 query/sign/remote）+ goalctl/verifyctl；xtask **未**落地 |
 
 规则：
 
@@ -143,19 +143,27 @@ cargo run -p goalctl -- doctor
 cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 ```
 
-## 核心 crate 生产就绪快照（2026-07-21 · 更新）
+## 核心 crate 生产就绪快照（2026-07-22 · defer-close 更新）
 
 | crate | 本仓判定（分层） | 权威细节 |
 |-------|------------------|----------|
-| `kernel` | **L1 + L4 已内部发布**（#159 · #163 · GH Release） | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) · [0.3.0-internal](../../crates/kernel/releases/0.3.0-internal.md) |
-| `testkit` | **L1 ManualClock test-support**（非 runtime；四包 GO 内） | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
-| `contract-testkit` | **已落地** Fake + suite（仅 dev-dep；#178） | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
-| `decimalx` | **L1 Internal Ready**（四包 GO 内） | [types-ssot-alignment.md](./types-ssot-alignment.md) |
-| `canonical` | **L2 committed wire subset**（v1–v1.3；四包 GO 内） | 同上 |
-| `contracts` | **部分就绪**：L3 子集（KV+Instr）；非 first-batch 全绿 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) · [L3_FIRST_BATCH_STATUS](../../crates/contracts/docs/L3_FIRST_BATCH_STATUS.md) |
-| storage×7（redis…taos） | **生产默认路径 P0**（#188–#190）；live 真凭据已验；≠ package stable | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) · [draft-gap-matrix.md](./draft-gap-matrix.md) |
-| `goalctl` / `verifyctl` | **最小生产 CLI member**（#188）；自验证 schema v1 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
-| L1 平台（bootstrap/resiliencx/transport/…） | **P0 阻断已收敛**（`infra-s9t`）；≠ 各包 Production Ready | [七包双栏](../report/2026-07-21/seven-l1-contracts-dual-bar-readiness.md) · [prod-consume-surface](../plans/artifacts/prod-consume-surface.md) |
+| `kernel` | **L1 + L4 已内部发布**；archgate **OOS-Accept**；drain 归 bootstrap | [kernel-ssot-alignment.md](./kernel-ssot-alignment.md) |
+| `testkit` | **L1 ManualClock + IntegrationHarness**（非 runtime） | [testkit-ssot-alignment.md](./testkit-ssot-alignment.md) |
+| `contract-testkit` | Fake + suite + Batch-2 + BackendProfile（仅 dev-dep） | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
+| `decimalx` | **L1** + `WIRE_SCHEMA_VERSION` + panicking-ops off | [types-ssot-alignment.md](./types-ssot-alignment.md) |
+| `canonical` | **L2** committed wire + **Envelope** | 同上 |
+| `bootstrap` | StoreSet + AsyncDrain **PASS**；交易装配 **NO-GO** | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) |
+| `configx` | 多源/watch/secret **PASS**；配置中心 **NO** | [configx-ssot-alignment.md](./configx-ssot-alignment.md) |
+| `schedulex` | registry + tick JobRunner **PASS**；分布式 **NO** | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) |
+| `evidence` | query/sign/remote **PASS**；合规产品 **OPEN** | [evidence-ssot-alignment.md](./evidence-ssot-alignment.md) |
+| `observex` | 进程内 export/flush **PASS**；full OTEL **OPEN** | [observex-ssot-alignment.md](./observex-ssot-alignment.md) |
+| `resiliencx` | budget + redis/pg wire **PASS** | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
+| `transportx` | TLS/池/代理配置面 **PASS** | [transport-ssot-alignment.md](./transport-ssot-alignment.md) |
+| `contracts` | L3 子集 + LiveContractProfile **PASS**；exchange 业务 **NO-GO** | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
+| storage×7 | **生产默认路径 P0**；≠ package stable | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `goalctl` / `verifyctl` | 最小生产 CLI member | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
+
+**十轮 defer-close 审查：** [`../report/2026-07-22-defer-close/synthesis/go-nogo-synthesis.md`](../report/2026-07-22-defer-close/synthesis/go-nogo-synthesis.md)
 
 - 四包证据：[`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md)
 - kernel crate 发布记录：[`../../crates/kernel/releases/0.3.0-internal.md`](../../crates/kernel/releases/0.3.0-internal.md)
@@ -204,3 +212,4 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 `configx` / `evidence` / `observex` / `resiliencx` / `schedulex` / `transportx` / `contracts`：
 STATUS **结构 100%** + 声明面测/bench/cov-100；**≠** workspace Production Ready / L5。
 | 2026-07-22 | storage×7：SSOT 层实质化 + 分 package `*-ssot-alignment.md` |
+| 2026-07-22 | **defer-close**：13 包 OBJECTIVE 非 OOS DEFER→PASS（archgate OOS-Accept）；见 `docs/report/2026-07-22-defer-close/` |

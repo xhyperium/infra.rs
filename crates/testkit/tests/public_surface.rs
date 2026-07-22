@@ -54,6 +54,7 @@ fn strip_rust_comments(src: &str) -> String {
 
 const LIB_RS: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/lib.rs"));
 const CLOCK_RS: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/clock.rs"));
+const HARNESS_RS: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/harness.rs"));
 const CARGO_TOML: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml"));
 
 #[test]
@@ -65,6 +66,10 @@ fn lib_reexports_only_manual_clock_family() {
             && code.contains("ManualClockFault")
             && code.contains("ManualClockSnapshot"),
         "lib.rs must re-export ManualClock family"
+    );
+    assert!(
+        code.contains("IntegrationHarness") && code.contains("StepRecord"),
+        "lib.rs must re-export IntegrationHarness family"
     );
     for banned in [
         "macro_rules! xlib_test",
@@ -79,17 +84,21 @@ fn lib_reexports_only_manual_clock_family() {
     }
     let pub_uses: Vec<&str> =
         code.lines().map(str::trim).filter(|l| l.starts_with("pub use")).collect();
-    assert_eq!(pub_uses.len(), 1, "expected single pub use line, got {pub_uses:?}");
-    let line = pub_uses[0];
-    assert!(line.contains("clock::"), "pub use must come from clock module");
+    assert_eq!(pub_uses.len(), 2, "expected clock + harness pub use lines, got {pub_uses:?}");
+    let clock_line = pub_uses.iter().find(|l| l.contains("clock::")).expect("clock pub use");
     for name in ["ManualClock", "ManualClockError", "ManualClockFault", "ManualClockSnapshot"] {
-        assert!(line.contains(name), "pub use missing {name}: {line}");
+        assert!(clock_line.contains(name), "pub use missing {name}: {clock_line}");
     }
+    let harness_line = pub_uses.iter().find(|l| l.contains("harness::")).expect("harness pub use");
+    assert!(
+        harness_line.contains("IntegrationHarness") && harness_line.contains("StepRecord"),
+        "harness pub use missing symbols: {harness_line}"
+    );
 }
 
 #[test]
 fn source_tree_has_no_retired_macros_or_fixture_builder() {
-    let sources = [("lib.rs", LIB_RS), ("clock.rs", CLOCK_RS)];
+    let sources = [("lib.rs", LIB_RS), ("clock.rs", CLOCK_RS), ("harness.rs", HARNESS_RS)];
     let mut saw_manual_clock_struct = false;
     for (name, text) in sources {
         let code = strip_rust_comments(text);
@@ -158,11 +167,20 @@ fn cargo_toml_production_deps_only_kernel() {
 
 #[test]
 fn consumer_can_import_manual_clock_family() {
-    use testkit::{ManualClock, ManualClockError, ManualClockFault, ManualClockSnapshot};
+    use std::time::Duration;
+    use testkit::{
+        IntegrationHarness, ManualClock, ManualClockError, ManualClockFault, ManualClockSnapshot,
+        StepRecord,
+    };
 
     let c = ManualClock::new(kernel::Timestamp::from_unix_nanos(7));
     let _: ManualClockError = ManualClockError::WallOverflow;
     let _: ManualClockFault = ManualClockFault::Unavailable;
     let snap: ManualClockSnapshot = c.snapshot().expect("snap");
     assert_eq!(snap.wall().as_unix_nanos(), 7);
+
+    let mut h = IntegrationHarness::with_wall(kernel::Timestamp::from_unix_nanos(0));
+    h.step_advance_wall("t", Duration::from_nanos(1));
+    let rec: &[StepRecord] = h.run().expect("run");
+    assert_eq!(rec.len(), 1);
 }

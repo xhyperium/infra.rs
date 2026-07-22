@@ -1,10 +1,10 @@
 [package]
 name = "evidence"
-version = "0.1.0"
+version = "0.1.1"
 publish = false
 edition.workspace = true
 rust-version.workspace = true
-description = "L1 审计证据追加面（EvidenceAppender + 内存实现）"
+description = "L1 审计证据：追加 / 查询 / HMAC 签名 / 可注入远程传输"
 license.workspace = true
 repository.workspace = true
 
@@ -12,7 +12,8 @@ repository.workspace = true
 name = "evidence"
 
 [dependencies]
-# std-only 0.1.0：无生产依赖（与 bootstrap 注入边界对齐）
+# 签名 wire：workspace sha2（HMAC 自实现，无 hmac crate）
+sha2 = { workspace = true }
 
 [features]
 default = []

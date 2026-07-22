@@ -3,9 +3,9 @@
 | 字段 | 值 |
 |------|-----|
 | 策略 | **B — 本仓移植 core testkit** |
-| 日期 | 2026-07-21 |
+| 日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
 | 规范 | SPEC-TESTKIT-002（镜像 `.agents/ssot/testkit/spec/spec.md`） |
-| package | **`testkit`** 0.1.1 · lib `testkit`（Cargo 选择器 `-p testkit`；历史名 `xhyper-testkit` 已废弃） |
+| package | **`testkit`** · lib `testkit`（Cargo 选择器 `-p testkit`；历史名 `xhyper-testkit` 已废弃） |
 | 内部生产层级 | **L1 ManualClock test-support**（**不是**生产 runtime；PR #159 · tag `v0.3.0-four-crates`） |
 
 ## 结论摘要
@@ -15,8 +15,8 @@
 | 上游 SSOT 镜像 COMPLETE 叙事 | 仍是 xhyper 战役文档；**禁止**单独当作本仓交付证明 |
 | 本仓 `crates/testkit` core（ManualClock 族） | **已闭合**（§7 / §13.1–§13.5 / §24.1–§24.3 core / §24.5 core → 见 clause matrix） |
 | 内部生产 GO（声明层级） | **L1 test-support only**；证据 [`../plans/releases/2026-07-21-four-crates-internal-release.md`](../plans/releases/2026-07-21-four-crates-internal-release.md) |
-| 本仓 `contract-testkit` | **已落地**：`crates/test-support/contracts`（package `contract-testkit`）；Fake + per-trait suite；全 trait 深度 / 真实后端 profile 仍 **DEFER** |
-| integration harness | **DEFER**（跨 crate INFRA；§3.3 / §24.0 residual） |
+| 本仓 `contract-testkit` | **已落地**：`crates/test-support/contracts`（package `contract-testkit`）；Fake + per-trait suite + **Batch-2 Fake** + **BackendProfile**；见 [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
+| integration harness | **PASS**：`crates/testkit/src/harness.rs` · `IntegrationHarness` / `StepRecord`（**仅测试**；非生产 runtime） |
 | ClockDomain 跟随 | **PASS**：每 `ManualClock` 实例独立 domain；跨实例 `checked_duration_since` → `None` |
 | 用户可见错误中文 | **PASS**：`ManualClockError` Display 中文 |
 | `[lints] workspace = true` | **PASS** |
@@ -37,6 +37,7 @@ dev deps                        proptest, static_assertions
 features.default                []
 examples                        examples/basic.rs
 API baseline                    docs/api-baselines/testkit.txt
+IntegrationHarness              src/harness.rs（多步确定性集成 harness）
 ```
 
 ## 验证命令（本仓可复现）
@@ -118,7 +119,8 @@ CI 入口（与 kernel 同级 paths 过滤）：
 | 24.3 | branch ≥90% | DEFER | OPTIONAL（上游 residual；本仓不升强制） |
 | 24.3 | mutation ≥90% | PASS | missed=0 |
 | 24.3 | Miri | PASS | 本仓 miri 日志 |
-| 24.4 | Contract 闭合 | PARTIAL | **contract-testkit 已独立落地**；first-batch suite PASS；ObjectStore 等 + 真实后端仍 DEFER |
+| 24.4 | Contract 闭合 | PARTIAL→加厚 | **contract-testkit 已独立落地**；first-batch + Batch-2 Fake + `BackendProfile` 探测；ObjectStore/TimeSeries 等全深度 suite 仍 OPEN（非本轮 OBJECTIVE） |
+| 24.0-h | Integration harness | **PASS** | `src/harness.rs` · `IntegrationHarness::{new,step,run,clock}` + unit；导出见 `src/lib.rs` |
 | 24.5 | 消费为 dev-dep / 无 build-dep / 无 normal graph 泄漏（core 侧） | PASS | crate 自身 `publish=false` + prod deps only kernel；全仓 machine gate/xtask **DEFER**（无 infra-xtask graph check） |
 | 24.5 | feature 不泄漏 | PASS | `default=[]` 无其它 feature |
 | 24.6 | 治理（RFC / xtask…） | PARTIAL | CHANGELOG + Evidence 本仓已有；经 archgate 的治理机控 **OOS**（本仓明确不移植 archgate / `.architecture`） |
@@ -139,12 +141,20 @@ CI 入口（与 kernel 同级 paths 过滤）：
 - 详见 `.agents/ssot/SSOT.md` R6 / R7 与根 `AGENTS.md`
 - Workspace 总览（members 地图、依赖方向）：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
 
-## 未做（follow-up / DEFER）
+## OBJECTIVE 处置（2026-07-22 defer-close）
 
-- 全 trait 深度 conformance / 真实后端 profile（§24.4 残余）
+| 项 | 前状态 | 现状态 | 证据 |
+|----|--------|--------|------|
+| integration harness | DEFER | **PASS** | `crates/testkit/src/harness.rs` · `IntegrationHarness` |
+| contract-testkit Batch-2 / backend profile | DEFER（挂 contracts 侧） | **PASS**（见 contracts 对齐） | `crates/test-support/contracts/src/fakes/batch2.rs` · `backend.rs` |
+
+## 未做（follow-up / 诚实边界）
+
+- 全 trait 深度 conformance（ObjectStore / TimeSeries / PubSub / Analytics 等；§24.4 残余）
 - 全仓 production-graph machine gate（xtask，依赖缺失）
 - branch coverage ≥90% 强制（OPTIONAL residual）
 - 上游 SSOT 文档内部 STALE 收口（应在 xhyper.rs 修，再镜像同步）
+- **Agent L5 / Production Ready 人签** — 未填
 
 ## Core 必选 GAP 计数
 
@@ -158,7 +168,7 @@ core 必选 GAP = 0
 |----|------|
 | contracts 平面 | **已存在**（纠正旧文「缺 contracts」） |
 | 独立 contract-testkit | **已落地**：`crates/test-support/contracts` |
-| contracts 生产语义 | **部分闭合**（Tx/消息）；其余 trait 深度仍 DEFER |
+| contracts 生产语义 | **部分闭合**（Tx/消息 + live helpers）；全 trait 深度仍 OPEN |
 | ManualClock × ClockDomain | **PASS**；跨实例比较 → `None` |
 | 中文 Display / workspace lints | **PASS** |
 | 四包内部 GO（#159） | **L1 test-support**；tag `v0.3.0-four-crates`；**≠** 生产 runtime |
@@ -168,6 +178,7 @@ core 必选 GAP = 0
 
 | 日期 | 说明 |
 |------|------|
+| 2026-07-22 | **defer-close**：`IntegrationHarness` PASS；contract-testkit Batch-2/backend 交叉引用 |
 | 2026-07-22 | SSOT 同步文档纠偏：与 #178 落地叙事全仓对齐 |
 | 2026-07-21 | 独立 `contract-testkit` crate 落地（`crates/test-support/contracts`） |
 | 2026-07-21 | 生产就绪文档同步：contracts 存在性、domain、中文错误、PARTIAL contract-testkit；PR #98 **合入 main** |

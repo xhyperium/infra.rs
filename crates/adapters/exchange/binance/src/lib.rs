@@ -33,7 +33,7 @@ mod public_api_surface {
         let a = BinanceAdapter::mainnet();
         assert_eq!(a.state(), AdapterState::Disconnected);
         assert!(!a.has_ws());
-        let _ = Timeframe::M1;
+        let _ = Timeframe::M1.to_api_str();
         let c = Candle {
             open_time: 0,
             open: Price::new(Decimal::try_new(1, 0).expect("d")),

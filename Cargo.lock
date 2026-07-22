@@ -246,7 +246,7 @@ dependencies = [
 
 [[package]]
 name = "bootstrap"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "contracts",
  "evidence",
@@ -277,7 +277,7 @@ dependencies = [
 
 [[package]]
 name = "canonical"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "decimalx",
  "serde",
@@ -447,7 +447,7 @@ dependencies = [
 
 [[package]]
 name = "configx"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "kernel",
 ]
@@ -466,7 +466,7 @@ checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
 
 [[package]]
 name = "contract-testkit"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "bytes",
@@ -481,7 +481,7 @@ dependencies = [
 
 [[package]]
 name = "contracts"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "binancex",
@@ -684,7 +684,7 @@ dependencies = [
 
 [[package]]
 name = "decimalx"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bigdecimal",
  "kernel",
@@ -793,7 +793,10 @@ dependencies = [
 
 [[package]]
 name = "evidence"
-version = "0.1.0"
+version = "0.1.1"
+dependencies = [
+ "sha2 0.10.9",
+]
 
 [[package]]
 name = "fallible-iterator"
@@ -1658,7 +1661,7 @@ dependencies = [
 
 [[package]]
 name = "observex"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "contracts",
  "kernel",
@@ -1877,12 +1880,13 @@ dependencies = [
 
 [[package]]
 name = "postgresx"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "async-trait",
  "contracts",
  "deadpool-postgres",
  "kernel",
+ "resiliencx",
  "tokio",
  "tokio-postgres",
  "tracing",
@@ -2143,7 +2147,7 @@ dependencies = [
 
 [[package]]
 name = "redisx"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "async-trait",
  "bytes",
@@ -2152,6 +2156,7 @@ dependencies = [
  "futures-util",
  "kernel",
  "redis",
+ "resiliencx",
  "tokio",
 ]
 
@@ -2233,7 +2238,7 @@ dependencies = [
 
 [[package]]
 name = "resiliencx"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "contracts",
@@ -2415,7 +2420,7 @@ dependencies = [
 
 [[package]]
 name = "schedulex"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "scoped-tls"
@@ -2775,7 +2780,7 @@ dependencies = [
 
 [[package]]
 name = "testkit"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "kernel",
  "proptest",
@@ -3128,7 +3133,7 @@ dependencies = [
 
 [[package]]
 name = "transportx"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "bytes",

@@ -1,9 +1,9 @@
 [package]
 name = "resiliencx"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 rust-version.workspace = true
-description = "L1 弹性：重试 + 熔断 + 限流 + 舱壁（无墙钟；ADR-005）"
+description = "L1 弹性：重试 + 预算 + 熔断 + 限流 + 舱壁（无墙钟；ADR-005）"
 license.workspace = true
 repository.workspace = true
 publish = false
@@ -19,7 +19,7 @@ tokio = ["dep:tokio"]
 [dependencies]
 # path + version：满足 cargo-deny bans.wildcards=deny
 kernel = { path = "../kernel", version = "0.3.0" }
-contracts = { path = "../contracts", version = "0.1.0" }
+contracts = { path = "../contracts", version = "0.1.1" }
 async-trait = { workspace = true }
 tokio = { workspace = true, optional = true, features = ["time"] }
 

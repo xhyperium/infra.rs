@@ -17,18 +17,23 @@
 //! - 消费方（如 resiliencx）只依赖 `contracts`，**禁止**依赖 observex
 //!
 //! evidence：权威在 `xhyper-evidence`（re-export trait + `InMemoryEvidenceAppender`）。
-//! 完整 venue async API 仍 DEFER；本 crate 保留最小对象安全替面。
+//! 适配器接线：[`StoreSet`]；关停排空：[`AsyncDrain`]（组合根 drain 所有权）。
+//! 完整 venue 业务协议仍由 adapters 承载；本 crate 提供有界对象安全接线面。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
 mod bounded;
+mod drain;
 mod error;
+mod store_set;
 pub mod traits;
 
 pub use bounded::{ExecutionContext, MarketDataContext};
+pub use drain::{AsyncDrain, DrainStepResult};
 pub use error::{BootstrapError, into_xresult};
 pub use observex::TracingInstrumentation;
+pub use store_set::StoreSet;
 pub use traits::{
     AppendReceipt, BoundedAccountSource, BoundedExecutionVenue, BoundedInstrumentCatalog,
     BoundedKeyValueStore, BoundedMarketDataSource, BoundedVenueTimeSource, EvidenceAppender,
@@ -51,6 +56,7 @@ pub struct PlatformContext {
     instrumentation: Arc<dyn InstrumentationTrait>,
     shutdown_signal: ShutdownSignal,
     evidence: Option<Arc<dyn EvidenceAppenderTrait>>,
+    store_set: StoreSet,
 }
 
 impl PlatformContext {
@@ -67,6 +73,11 @@ impl PlatformContext {
     /// 可选审计追加器；未注入时 `None`。
     pub fn evidence(&self) -> Option<&dyn EvidenceAppenderTrait> {
         self.evidence.as_deref()
+    }
+
+    /// 已接线的适配器集合。
+    pub fn store_set(&self) -> &StoreSet {
+        &self.store_set
     }
 }
 
@@ -121,6 +132,8 @@ pub struct Bootstrap {
     require_evidence: bool,
     shutdown_guard: Option<ShutdownGuard>,
     shutdown_signal: ShutdownSignal,
+    store_set: StoreSet,
+    drain: AsyncDrain,
 }
 
 impl Bootstrap {
@@ -135,6 +148,8 @@ impl Bootstrap {
             require_evidence: false,
             shutdown_guard: Some(guard),
             shutdown_signal: signal,
+            store_set: StoreSet::new(),
+            drain: AsyncDrain::new(),
         }
     }
 
@@ -154,6 +169,23 @@ impl Bootstrap {
     pub fn require_evidence(mut self) -> Self {
         self.require_evidence = true;
         self
+    }
+
+    /// 注入完整 [`StoreSet`]（替换既有接线）。
+    pub fn with_store_set(mut self, store_set: StoreSet) -> Self {
+        self.store_set = store_set;
+        self
+    }
+
+    /// 注册关停 drain hook（LIFO；见 [`AsyncDrain`]）。
+    pub fn register_drain<F>(self, name: impl Into<String>, hook: F) -> Result<Self, BootstrapError>
+    where
+        F: FnOnce() -> kernel::XResult<()> + Send + 'static,
+    {
+        self.drain
+            .register(name, hook)
+            .map_err(|_e| BootstrapError::InvalidConfiguration { name: "drain" })?;
+        Ok(self)
     }
 
     /// 取出关停触发句柄（旧路径；推荐 [`build_app`](Self::build_app)）。
@@ -179,9 +211,11 @@ impl Bootstrap {
                 instrumentation: Arc::clone(&self.instrumentation),
                 shutdown_signal: self.shutdown_signal.clone(),
                 evidence: self.evidence.clone(),
+                store_set: self.store_set.clone(),
             },
             instrumentation: self.instrumentation,
             shutdown_signal: self.shutdown_signal,
+            drain: self.drain,
         }
     }
 
@@ -233,6 +267,7 @@ pub struct AppContext {
     platform: PlatformContext,
     instrumentation: Arc<dyn InstrumentationTrait>,
     shutdown_signal: ShutdownSignal,
+    drain: AsyncDrain,
 }
 
 impl AppContext {
@@ -254,6 +289,21 @@ impl AppContext {
     /// 关停观察端。
     pub fn shutdown_signal(&self) -> &ShutdownSignal {
         &self.shutdown_signal
+    }
+
+    /// 适配器 StoreSet。
+    pub fn store_set(&self) -> &StoreSet {
+        self.platform.store_set()
+    }
+
+    /// 关停排空编排器。
+    pub fn drain(&self) -> &AsyncDrain {
+        &self.drain
+    }
+
+    /// 执行组合根 drain（LIFO）。
+    pub fn run_drain(&self) -> Vec<DrainStepResult> {
+        self.drain.drain()
     }
 }
 
@@ -520,5 +570,37 @@ mod tests {
     fn try_build_success_without_require() {
         let ctx = Bootstrap::new().try_build().expect("ok");
         assert!(ctx.platform().evidence().is_none());
+    }
+
+    #[test]
+    fn store_set_wired_through_build() {
+        struct Stub;
+        impl traits::BoundedKeyValueStore for Stub {
+            fn label(&self) -> &str {
+                "redis-stub"
+            }
+        }
+        let set = StoreSet::new().with_kv(Arc::new(Stub) as Arc<dyn traits::BoundedKeyValueStore>);
+        let ctx = Bootstrap::new().with_store_set(set).build();
+        assert_eq!(ctx.store_set().wired_count(), 1);
+        assert_eq!(ctx.platform().store_set().kv().expect("kv").label(), "redis-stub");
+    }
+
+    #[test]
+    fn drain_registered_and_run_on_context() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        static N: AtomicUsize = AtomicUsize::new(0);
+        let b = Bootstrap::new()
+            .register_drain("step", || {
+                N.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            })
+            .expect("reg");
+        let ctx = b.build();
+        assert_eq!(ctx.drain().len(), 1);
+        let results = ctx.run_drain();
+        assert_eq!(results.len(), 1);
+        assert!(results[0].ok);
+        assert_eq!(N.load(Ordering::SeqCst), 1);
     }
 }
