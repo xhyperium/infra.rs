@@ -27,3 +27,9 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
 4. 独立 reviewer 审查 `origin/main...B` 全量差异并给出 GO。
 
 内容候选上的机器门禁已闭合；独立 review 与 evidence-only diff 复核完成前，本轮仍不写 GO，也不把 R1/R2 PASS 继承给最终候选。GREEN 命令和结果见 [`evidence/r3-green.txt`](evidence/r3-green.txt)。
+
+## 独立审查与 residual
+
+- 首轮 Standards 轴：GO；仅发现 testkit terminal report 重复组装这一项 P2 判断性气味，已登记 follow-up `infra-1j3`。
+- 首轮 Spec 轴：NO-GO；要求把 allocator residual 登记 Beads、统一 test/gate/matrix 状态，并澄清 stdout 的持久证据边界。本提交已逐项修复，等待固定新 HEAD 重审。
+- `R-CLK-DOMAIN-EXHAUSTION` 保持 OPEN，已登记 `infra-lip`；本轮不实现、不关闭，也不扩张唯一性声明。

@@ -5,7 +5,7 @@
 | Active Spec | [SPEC-TESTKIT-002](../spec/spec.md) |
 | package / current version | `testkit` / `0.1.3` |
 | 身份 | T0 测试支持平面；L1 确定性测试原语；非 production runtime |
-| 当前 Gate | **NO-GO / FIXED-CANDIDATE VERIFYING** |
+| 当前 Gate | **NO-GO / R3 GATES PASS / INDEPENDENT REVIEW PENDING** |
 
 ## 1. 能力矩阵
 

@@ -40,7 +40,7 @@ node scripts/quality-gates/check-public-api.mjs
 node scripts/quality-gates/check-workspace-deps.mjs
 ```
 
-执行者应把实际命令、commit、工具链和输出写入本轮 evidence，再将对应门禁改为 PASS 或 FAIL。
+执行者应把实际命令、commit、工具链、退出码和关键输出摘要写入本轮 evidence，再将对应门禁改为 PASS 或 FAIL。完整 stdout 可由 CI artifact 或执行会话承载，但若未入库必须明确说明，且不得把非持久会话当作仓库证据；入库 evidence 必须足以复算候选与重放命令。
 
 ## 3. 非本仓门禁
 

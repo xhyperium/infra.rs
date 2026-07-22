@@ -41,4 +41,4 @@ key output:
   public API: OK (4 baselines match)
   kernel loom release cfg: 3 passed
 
-说明：完整 stdout 由执行会话保留；本文件保存可重放命令、退出码、工具链、候选内容指纹与关键计数。
+说明：完整 stdout 未入库，执行会话也不是持久仓库证据；本文件只证明可重放命令、退出码、工具链、候选内容指纹与关键计数。最终完成声明另由 R3 固定内容候选的 workspace 全量门禁承担，不从本文件继承。
