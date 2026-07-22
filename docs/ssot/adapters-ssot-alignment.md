@@ -217,3 +217,8 @@ cargo test -p taosx --test live_smoke -- --ignored --nocapture
 | taosx | [taosx-ssot-alignment.md](./taosx-ssot-alignment.md) | `.agents/ssot/adapters/storage/taos/` |
 
 各域 `goal/design/plan/tasks/test/review/release/matrix/gate/evidence` 已从布局占位改为 **infra.rs P0 实质合同**。
+
+## STATUS 成熟度（2026-07-22）
+
+`scripts/docs/gen-crate-status.mjs`：`scaffoldSignal` 对 **default features 不含 scaffold 且存在 pool/client 生产模块** 的 storage adapter **不再**因文档中的 scaffold 字样封顶为 `scaffold+mock`。
+storage×7 STATUS 完成度 **100%** · 成熟度 `active`（结构进度，≠ package stable）。

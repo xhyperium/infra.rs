@@ -1,6 +1,19 @@
-# goalctl 文档
+# goalctl docs
 
-实现侧短说明。完整规划与合同在：
+| 文档 | 说明 |
+|------|------|
+| 本页 | crate 文档入口 |
+| [../README.md](../README.md) | 用户入口与 CLI |
+| [../../docs/ssot/tools-ssot-alignment.md](../../docs/ssot/tools-ssot-alignment.md) | SSOT 对齐 |
 
-- [`.agent/SSOT/tools/goalctl/`](../../../.agent/SSOT/tools/goalctl/)
-- [`docs/goal/schema/authority-policy.yaml`](../../../docs/goal/schema/authority-policy.yaml)
+## 职责
+
+`goalctl`：Goal YAML/JSON → Contract JSON（`goal-contract/v1`）+ 稳定 sha256 digest。
+
+## 命令
+
+```bash
+cargo run -p goalctl -- doctor
+cargo run -p goalctl -- validate tools/goalctl/tests/fixtures/good_goal.yaml
+cargo run -p goalctl -- compile tools/goalctl/tests/fixtures/good_goal.yaml -o /tmp/contract.json
+```
