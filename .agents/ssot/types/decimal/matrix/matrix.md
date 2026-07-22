@@ -12,8 +12,8 @@
 | DecimalError / Kind | §6 | `DecimalError`、`DecimalErrorKind` | `public_api_surface.rs` | 已实现 |
 | checked 四则 / rescale | §3–4 | `checked_*`、`div` | `entry_checked_ops.rs`、`boundary_matrix.rs`、`oracle_diff.rs` | 已实现 |
 | default-off panicking ops | §3 | Cargo feature + cfg impl | `public_api_surface.rs` + 生产路径脚本 | 已实现 |
-| Display → FromStr 全表示往返 | §5 | `Display`、`FromStr` | `boundary_matrix.rs` + property 测试 | 已实现；固定候选待终审 |
-| DecimalError → XError source | §6 | `From<DecimalError> for XError` | `boundary_matrix.rs` | 已实现；固定候选待终审 |
+| Display → FromStr 全表示往返 | §5 | `Display`、`FromStr` | `boundary_matrix.rs` + property 测试 | `70d402a` PASS；独立终审 GO |
+| DecimalError → XError source | §6 | `From<DecimalError> for XError` | `boundary_matrix.rs` | `70d402a` PASS；独立终审 GO |
 | 内部 Rust serde JSON v1 | §7 | `WIRE_SCHEMA_VERSION` + 自定义 serde | unit wire tests、`adversarial_serde.rs` | 有限承诺 |
 | JSON i128 跨语言精确承载 | §7 | 不在当前实现范围 | 尚无协议一致性套件 | residual |
 
@@ -36,7 +36,7 @@
 | 生产就绪 | L1 checked path | 整个金融领域模型 / package stable |
 | serde v1 | 内部 Rust JSON shape + 校验 | 跨语言精确协议 / canonical wire |
 | panic | default-off ops 与便利 API 的明确 panic | checked 资金路径可 panic |
-| 完成状态 | 实现已闭合、固定候选待终审 | Goal Achieved / reviewer PASS |
+| 完成状态 | 本轮实现、验证与独立双轴终审闭合 | Goal Achieved / package stable |
 
 开放项只在 [residual-open.md](../plan/residual-open.md) 维护；测试与门禁分别见
 [test.md](../test/test.md) 和 [gate.md](../gate/gate.md)。
