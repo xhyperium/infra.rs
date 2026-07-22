@@ -1,24 +1,24 @@
 # binancex
 
-binance exchange adapter scaffold。
+Binance exchange adapter — **生产默认 REST+WS 协议路径**（对标 storage P0，**非** package stable / L5）。
 
 实现 `contracts::VenueAdapter` + MarketDataSource / ExecutionVenue / AccountSource / InstrumentCatalog / VenueTimeSource。
 
-**非真实 HTTP**；不宣称 package stable。
+## 行为分层
 
-## 生产误用警示（infra-s9t.14）
+| 注入 | 行为 |
+|------|------|
+| 默认（无 http / key / ws） | 进程内明确 mock：`place`→`Open`（非 Filled）；行情空流 |
+| `with_http` + `with_api_key` | HMAC-SHA256 签名 REST：place / cancel / query / account |
+| `with_ws` | 公共行情：`bookTicker` / `trade` / `depth5` 帧解析为 contracts 类型 |
+| `#[ignore]` live | 仅公共 `server_time`（env 无密钥入库） |
 
-**默认实现是进程内 scaffold/mock，不是生产客户端。**
+- `publish = false`；禁止宣称 crates.io / package stable / workspace Production Ready / L5 代签
+- 全量用户数据流、OCO 等仍 **OPEN**
 
-- 禁止把 `*Adapter` 类型名当成已对接真实 Binance/Postgres/Redis/…
-- 真实入口须有显式 feature（如 redisx `live`）与文档/CI 证据
-- 详见 `docs/plans/artifacts/prod-consume-surface.md`
-
-## Live 只读 server_time（infra-s9t.13）
+## Live 只读 server_time
 
 ```bash
 cargo test -p binancex --test live_server_time -- --ignored --nocapture
+cargo test -p binancex --all-targets   # 默认离线绿
 ```
-
-注入真实 `ReqwestHttpDriver` + 公共 REST 时间接口；默认 CI 离线绿（`#[ignore]`）。
-可选 workflow `Exchange Live Readonly` 仅 `workflow_dispatch`（hosted runner 常遇 HTTP 451）。

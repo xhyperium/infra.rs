@@ -186,7 +186,7 @@ dependencies = [
 
 [[package]]
 name = "binancex"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "async-trait",
  "bytes",
@@ -195,8 +195,12 @@ dependencies = [
  "decimalx",
  "futures-core",
  "futures-util",
+ "hex",
+ "hmac 0.12.1",
  "kernel",
+ "serde",
  "serde_json",
+ "sha2 0.10.9",
  "tokio",
  "transportx",
 ]
@@ -1664,17 +1668,22 @@ dependencies = [
 
 [[package]]
 name = "okxx"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "async-trait",
+ "base64",
  "bytes",
  "canonical",
  "contracts",
  "decimalx",
  "futures-core",
  "futures-util",
+ "hex",
+ "hmac 0.12.1",
  "kernel",
+ "serde",
  "serde_json",
+ "sha2 0.10.9",
  "tokio",
  "transportx",
 ]

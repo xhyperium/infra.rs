@@ -54,8 +54,8 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `goalctl` | `tools/goalctl` | L1 | 7/7 | ✅ 1i+u | 574 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/tools-ssot-alignment.md) |
 | `verifyctl` | `tools/verifyctl` | L1 | 7/7 | ✅ 1i+u | 663 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/tools-ssot-alignment.md) |
 | `contracts` | `crates/contracts` | contracts | 7/7 | ✅ 4i+u | 616 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/contracts-ssot-alignment.md) |
-| `binancex` | `crates/adapters/exchange/binance` | adapter | 7/7 | ✅ 1i+u | 672 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
-| `okxx` | `crates/adapters/exchange/okx` | adapter | 7/7 | ✅ 1i+u | 508 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
+| `binancex` | `crates/adapters/exchange/binance` | adapter | 7/7 | ✅ 1i+u | ~1600 | · | `active` | **100%** ████████ | [✓](docs/ssot/adapters-ssot-alignment.md) |
+| `okxx` | `crates/adapters/exchange/okx` | adapter | 7/7 | ✅ 1i+u | ~1400 | · | `active` | **100%** ████████ | [✓](docs/ssot/adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse` | adapter | 7/7 | ✅ 1i+u | 529 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/clickhousex-ssot-alignment.md) |
 | `kafkax` | `crates/adapters/storage/kafka` | adapter | 7/7 | ✅ 1i+u | 1090 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/kafkax-ssot-alignment.md) |
 | `natsx` | `crates/adapters/storage/nats` | adapter | 7/7 | ✅ 1i+u | 719 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/natsx-ssot-alignment.md) |

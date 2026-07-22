@@ -6,7 +6,7 @@
 | 镜像 | `.agents/ssot/adapters/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 本仓路径 | `crates/adapters/{exchange,storage}/<name>` |
 | 审计日期 | 2026-07-22 |
-| 结论 | **7 个 storage 默认生产客户端已落地**（#188–#190）：RedisPool / PostgresPool / KafkaPool / NatsPool / OssClient / ClickHousePool / TaosPool + live `#[ignore]`（ZoneCNH 真凭据已验）+ 有界 benches；scaffold 改 `feature = "scaffold"`；exchange 仍只读 server_time；**未**宣称 package stable / Cluster·JetStream·EOS 全量 / crates.io |
+| 结论 | **7 个 storage 默认生产客户端已落地**（#188–#190）+ **exchange 生产默认 REST+WS 路径已闭合 named DEFER**（binancex/okxx：HMAC/四头签名、place/cancel/query 协议解析、公共 WS 行情解析 + mock 内容断言 + `#[ignore]` live server_time）；scaffold 改 `feature = "scaffold"`（storage）；**未**宣称 package stable / L5 代签 / Cluster·JetStream·EOS 全量 / crates.io |
 
 ## 结论摘要
 
@@ -14,7 +14,7 @@
 |------|------|
 | 上游镜像 COMPLETE / Spec Approved 叙事 | 描述的是 **xhyper monorepo 战役**；**禁止**单独当作本仓交付证明 |
 | 镜像同步 | **完整**：与 `xhyper.rs/.agent/SSOT/adapters/` `diff -rq` = 0（144 文件 / 1.1M） |
-| 本仓 adapter crates | **storage 生产默认路径已落地**（见下表）；scaffold → `feature = "scaffold"`；exchange 可选 `HttpDriver` + **公共 `server_time` JSON 解析**；Cluster / Sentinel / JetStream / EOS / multipart / migrations **DEFER** |
+| 本仓 adapter crates | **storage 生产默认路径已落地**（见下表）；scaffold → `feature = "scaffold"`；**exchange 生产默认**：签名 REST + 业务协议解析 + 可注入 `WsConnector` 行情帧解析；Cluster / Sentinel / JetStream / EOS / multipart / 全量管理订单 WS **DEFER** |
 | `crates/AGENTS.md` 标准八项布局 | **已齐**（README / AGENTS / CHANGELOG / examples / docs / tests / benches） |
 | `publish = false` | **已**在 adapter + contracts `Cargo.toml` 显式关闭 |
 | package stable / crates.io | **未**宣称 |
@@ -50,16 +50,16 @@ Cargo.toml members              含 crates/contracts + 9 个 crates/adapters/**
 package 命名                    xhyper-contracts；binancex / okxx / redisx / …（adapter 无 xhyper- 前缀）
 lib 入口                        adapters: Error/Result；contracts: ExchangeAdapter/StorageAdapter
 生产依赖                        adapters: thiserror；contracts: serde + thiserror
-实现深度                        storage **生产默认客户端** + live/bench；exchange 公共 time；Cluster/JetStream 等 DEFER
+实现深度                        storage **生产默认客户端** + live/bench；exchange **签名 REST + WS 行情解析**（非 package stable）；Cluster/JetStream 等 DEFER
 标准布局八项                    已齐
 publish                         false（显式）
-version                         workspace 0.3.0
+version                         各 crate 独立（binancex/okxx 0.3.1）
 ```
 
 | 镜像路径 | 本仓路径 | package | 本仓状态 |
 |----------|----------|---------|----------|
-| `.agents/ssot/adapters/exchange/binance` | `crates/adapters/exchange/binance` | `binancex` | scaffold + mock HTTP + **`parse_binance_server_time`** + `#[ignore]` live |
-| `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | scaffold + mock HTTP + **`parse_okx_server_time`** + `#[ignore]` live |
+| `.agents/ssot/adapters/exchange/binance` | `crates/adapters/exchange/binance` | `binancex` | **生产默认 REST+WS**：HMAC-SHA256 + place/cancel/query 签名路径 + `bookTicker`/`trade`/`depth` 解析；无凭证明确 mock；`#[ignore]` live server_time |
+| `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | **生产默认 REST+WS**：四头鉴权 + `code`/`data` 信封 + place/cancel/query；`tickers`/`trades`/`books5` 解析；无凭证明确 mock；`#[ignore]` live server_time |
 | `.agents/ssot/adapters/storage/clickhouse` | `crates/adapters/storage/clickhouse` | `clickhousex` | **生产 `ClickHousePool` HTTP** + `AnalyticsSink` + `FOUNDATIONX_CLICKHOUSEX_*` + live；scaffold feature |
 | `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **生产 `KafkaPool`/`Producer`/`Consumer`** + `EventBus`（at-most-once）+ SASL + live；scaffold feature |
 | `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **生产 `NatsPool`** + `EventBus` + `FOUNDATIONX_NATS_*` + live；scaffold feature |
@@ -113,7 +113,7 @@ cargo test --workspace --all-targets
 | A-6 | scaffold 可 `cargo check` / `cargo test` | PASS | feature `scaffold` 可选；默认生产路径可编译测试 |
 | A-7 | 标准八项布局 | PASS | 9 adapters + contracts 均已补齐（含 benches/） |
 | A-8 | `publish = false` | PASS | 各 `Cargo.toml` 显式关闭 |
-| A-9 | 实现真实 I/O / adapter 业务 | **部分（storage P0）** | 7 storage 生产客户端 + live 内容断言（真凭据 2026-07-22 已验）；exchange 交易 / Cluster / JetStream / EOS / multipart **OPEN** |
+| A-9 | 实现真实 I/O / adapter 业务 | **部分（storage P0 + exchange 生产默认）** | 7 storage 生产客户端 + live；binancex/okxx 签名 REST + WS 行情离线 fixture **PASS**；全量管理订单 WS / OCO / Cluster / JetStream / EOS / multipart **OPEN** |
 | A-10 | package stable / Spec Approved 本仓宣称 | OPEN | **禁止**用镜像 COMPLETE 代替；P0 生产入口 ≠ package stable |
 | A-11 | contracts workspace 注册 | PASS | #43 `crates/contracts` → `xhyper-contracts` |
 | A-12 | `FOUNDATIONX_*` 环境注入 + 密钥不入库 | PASS | `from_env` + live tests；`scripts/live/build-foundationx-env.mjs`（#191）；secrets 仅进程 env |
@@ -135,7 +135,7 @@ adapters/*  →  contracts / kernel（+ 外部 SDK：redis/tokio-postgres/rskafk
 ```
 
 - **storage 生产路径**依赖对应驱动（见各 crate `Cargo.toml`）；`scaffold` feature 保留 mock 面
-- exchange 仍以 mock + 可选 HTTP 为主；真实交易 / 签名 **默认禁止**，直至 Spec + 证据批准
+- exchange 生产默认：注入 `HttpDriver`+凭证走签名 REST；注入 `WsConnector` 解析公共行情；**无凭证不静默假成交**；live 下单仍 `#[ignore]` + env，默认 CI 不跑
 
 ## `crates/contracts` 评估结论
 
