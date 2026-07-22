@@ -36,11 +36,17 @@ fn display_parse_roundtrip_covers_i128_minimum() {
 
 #[test]
 fn oversized_fraction_length_never_wraps_in_diagnostic() {
-    let text = format!("0.{}", "1".repeat(256));
-    let error = text.parse::<Decimal>().expect_err("超长小数位必须拒绝");
-    assert_eq!(error.kind(), DecimalErrorKind::Parse);
-    assert!(error.to_string().contains("256"), "诊断必须保留真实小数位数: {error}");
-    assert!(!error.to_string().contains("scale 0"), "诊断不得把 256 窄化为 0: {error}");
+    for (length, expected_kind) in [
+        (19_usize, DecimalErrorKind::Scale),
+        (255, DecimalErrorKind::Scale),
+        (256, DecimalErrorKind::Parse),
+    ] {
+        let text = format!("0.{}", "1".repeat(length));
+        let error = text.parse::<Decimal>().expect_err("超长小数位必须拒绝");
+        assert_eq!(error.kind(), expected_kind, "小数位数 {length} 分类错误");
+        assert!(error.to_string().contains(&length.to_string()), "诊断必须保留真实长度: {error}");
+        assert!(!error.to_string().contains("scale 0"), "诊断不得发生窄化回绕: {error}");
+    }
 }
 
 proptest! {

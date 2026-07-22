@@ -19,8 +19,8 @@
 | `ClockDomain` | `fc201d7` PASS；最终候选待重验 | process domain、共享 origin、跨 domain `None` |
 | 隐藏构造 seam | `fc201d7` PASS；最终候选待重验 | 两个 `#[doc(hidden)]` seam 存在且调用边界明确 |
 | `wait_timeout` 返回面 | `fc201d7` PASS；最终候选待重验 | `Result<bool, WaitTimeoutError>` |
-| deadline overflow | `fc201d7` PASS；最终候选待重验 | `Duration::MAX` 精确匹配 typed error |
-| 常规 timeout / trigger | `fc201d7` PASS；最终候选待重验 | `Ok(false)` / `Ok(true)` 行为正确 |
+| deadline overflow | R2 focused PASS；最终候选待重验 | 未触发时 `Duration::MAX` 精确匹配 typed error |
+| 常规 timeout / trigger | R2 focused PASS；最终候选待重验 | `Ok(false)` / `Ok(true)` 正确，且已触发完成优先于 timeout 校验 |
 | 根公开 API | `fc201d7` PASS；最终候选待重验 | 导出 `WaitTimeoutError`，API 基线同步 |
 | Doctest | `fc201d7` PASS；最终候选待重验 | rustdoc `compile_fail` 全部通过 |
 | Loom | `fc201d7` PASS；最终候选待重验 | 核心 wait/trigger 模型通过 |

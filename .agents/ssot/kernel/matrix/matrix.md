@@ -22,7 +22,7 @@
 | 构造 seam | 两个 `#[doc(hidden)]` 公开 seam | API 基线 / 调用边界审查 |
 | Shutdown | Mutex + Condvar；一次触发 | unit / integration / loom |
 | Timeout | `Result<bool, WaitTimeoutError>` | std unit / integration |
-| Overflow | `Duration::MAX` 为 typed Err | 精确错误断言 |
+| Overflow / completion precedence | 未触发时 `Duration::MAX` 为 typed Err；已触发时立即 `Ok(true)` | 两种状态的精确断言 |
 | Negative API | 无 Default/serde/Component | doctest / static assertion |
 | Public API | 根导出含 `WaitTimeoutError` | public API gate |
 

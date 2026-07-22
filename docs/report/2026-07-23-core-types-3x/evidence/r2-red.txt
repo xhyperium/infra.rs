@@ -1,19 +1,45 @@
-R2 RED EVIDENCE
-date: 2026-07-23 Asia/Shanghai
-input-head: e0cc99d716638663cd605da749cc1988026528d9
+R2 失败证据
+日期：2026-07-23 Asia/Shanghai
+输入 HEAD：e0cc99d716638663cd605da749cc1988026528d9
+仅测试补丁：r2-red-tests.patch
+补丁 SHA-256：12a39ea8a3a91fb9cda7e5d571feae18dee367143d21b28160af3b1d5ec7f393
 
-[kernel completion precedence]
-command: cargo test -p kernel --lib wait_timeout_completed_state_precedes_deadline_validation
-exit: 101
-observed: left Err(DeadlineOverflow), right Ok(true)
+补丁重放：
+  git worktree add --detach /tmp/infra-r2-red-replay e0cc99d716638663cd605da749cc1988026528d9
+  git -C /tmp/infra-r2-red-replay apply <绝对路径>/r2-red-tests.patch
+  在 /tmp/infra-r2-red-replay 内执行下列两个 RED 命令
+  git worktree remove /tmp/infra-r2-red-replay
 
-[decimal oversized fraction]
-command: cargo test -p decimalx --test boundary_matrix oversized_fraction_length_never_wraps_in_diagnostic
-exit: 101
-observed: left DecimalErrorKind::Scale, right DecimalErrorKind::Parse; 256 位长度经旧 `as u8` 路径窄化。
+已独立执行 `git apply --check`，退出码为 0。
 
-[regression-only controls]
-testkit multi-controller baseline: exit 0, 1 passed
-canonical public surface baseline: exit 0, 5 passed
+[kernel 完成优先级]
+命令：cargo test -p kernel --lib wait_timeout_completed_state_precedes_deadline_validation
+退出码：101
+原始输出：r2-red-kernel-output.txt
+原始失败核心：
+  running 1 test
+  test lifecycle::tests::wait_timeout_completed_state_precedes_deadline_validation ... FAILED
+  assertion `left == right` failed
+    left: Err(DeadlineOverflow)
+   right: Ok(true)
+  test result: FAILED. 0 passed; 1 failed
 
-说明：仅 kernel/decimalx 是本轮真实 RED；testkit/canonical 不冒充 RED。
+[decimal 超长小数位]
+命令：cargo test -p decimalx --test boundary_matrix oversized_fraction_length_never_wraps_in_diagnostic
+退出码：101
+原始输出：r2-red-decimal-output.txt
+原始失败核心：
+  running 1 test
+  test oversized_fraction_length_never_wraps_in_diagnostic ... FAILED
+  assertion `left == right` failed
+    left: Scale
+   right: Parse
+  test result: FAILED. 0 passed; 1 failed
+
+[仅回归加固的基线控制]
+命令：cargo test -p testkit --test manual_clock_concurrency multiple_controllers_advance_wall_without_lost_updates
+退出码：0；1 passed
+命令：cargo test -p canonical --test public_api_surface
+退出码：0；5 passed
+
+说明：仅 kernel/decimalx 是本轮真实 RED；testkit/canonical 不冒充 RED。命令输出中的英文是工具原文。

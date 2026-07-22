@@ -182,16 +182,36 @@ fn modules_reachable() {
 
 #[test]
 fn exact_wire_inventory_and_time_boundaries_are_exhaustive() {
-    for (names, version) in [
-        (COMMITTED_WIRE_V1, WireVersion::V1),
-        (COMMITTED_WIRE_V1_1, WireVersion::V1_1),
-        (COMMITTED_WIRE_V1_2, WireVersion::V1_2),
-        (COMMITTED_WIRE_V1_3, WireVersion::V1_3),
-    ] {
-        for name in names {
-            assert_eq!(committed_wire_version(name), Some(version), "类型 {name} 版本错误");
-        }
+    let expected = [
+        ("CancelOrderRequest", WireVersion::V1),
+        ("OrderRef", WireVersion::V1),
+        ("OrderAck", WireVersion::V1),
+        ("OrderStatus", WireVersion::V1),
+        ("Side", WireVersion::V1),
+        ("Order", WireVersion::V1_1),
+        ("Tick", WireVersion::V1_2),
+        ("Trade", WireVersion::V1_2),
+        ("Position", WireVersion::V1_3),
+        ("OrderBookSnapshot", WireVersion::V1_3),
+        ("PriceLevel", WireVersion::V1_3),
+        ("SymbolMeta", WireVersion::V1_3),
+    ];
+    assert_eq!(expected.len(), 12);
+    for (name, version) in expected {
+        assert_eq!(committed_wire_version(name), Some(version), "类型 {name} 版本错误");
     }
+    let inventory: Vec<&str> = COMMITTED_WIRE_V1
+        .iter()
+        .chain(COMMITTED_WIRE_V1_1.iter())
+        .chain(COMMITTED_WIRE_V1_2.iter())
+        .chain(COMMITTED_WIRE_V1_3.iter())
+        .copied()
+        .collect();
+    assert_eq!(
+        inventory,
+        expected.into_iter().map(|(name, _)| name).collect::<Vec<_>>(),
+        "生产 inventory 必须与独立 12 项 oracle 完全一致"
+    );
     assert_eq!(committed_wire_version("Money"), None);
     assert_eq!(committed_wire_version("Unknown"), None);
 

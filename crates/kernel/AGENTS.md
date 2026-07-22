@@ -76,9 +76,9 @@ MonotonicInstant::from_clock_elapsed_in(Duration, ClockDomain)
 Result<bool, WaitTimeoutError>
 ```
 
-语义固定为 `Ok(true)` 已触发、`Ok(false)` 正常到期未触发、`Err(DeadlineOverflow)` deadline 不可表示。
+语义固定为 `Ok(true)` 已触发、`Ok(false)` 正常到期未触发、`Err(DeadlineOverflow)` 未触发且 deadline 不可表示。已触发状态优先于 timeout 校验，必须立即返回 `Ok(true)`。
 
-禁止用当前时刻替代不可表示的 deadline，禁止将其伪装为普通 timeout。`Duration::MAX` 必须由测试精确断言 typed error。
+禁止用当前时刻替代不可表示的 deadline，禁止将其伪装为普通 timeout。未触发时 `Duration::MAX` 必须由测试精确断言 typed error；已触发时必须断言完成优先。
 
 `wait_timeout` 仅在 `cfg(not(loom))` 存在；loom 继续验证无超时的核心协议。
 

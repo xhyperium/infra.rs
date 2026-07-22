@@ -1,0 +1,24 @@
+R2 decimalx RED 原始工具输出（RUST_BACKTRACE=0；重放工作树）
+
+   Compiling decimalx v0.1.2 (/tmp/infra-r2-red-replay/crates/types/decimal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.69s
+     Running tests/boundary_matrix.rs (.cargo/target/debug/deps/boundary_matrix-0a5dd81b31012652)
+
+running 1 test
+test oversized_fraction_length_never_wraps_in_diagnostic ... FAILED
+
+failures:
+
+---- oversized_fraction_length_never_wraps_in_diagnostic stdout ----
+thread 'oversized_fraction_length_never_wraps_in_diagnostic' (1586580) panicked at crates/types/decimal/tests/boundary_matrix.rs:41:5:
+assertion `left == right` failed
+  left: Scale
+ right: Parse
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+failures:
+    oversized_fraction_length_never_wraps_in_diagnostic
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p decimalx --test boundary_matrix`
