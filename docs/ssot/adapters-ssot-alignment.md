@@ -203,4 +203,3 @@ cargo test -p taosx --test live_smoke -- --ignored --nocapture
 | `adapters/README.md` | 九域索引 + storage P0 表 |
 | `storage/*/plan/infra-rs-landing.md` | 本仓生产落地说明 |
 | `storage/*/plan/infra-rs-draft-spec-goal.md` | draft SPEC_GOAL 入库快照 |
-
