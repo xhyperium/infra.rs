@@ -48,10 +48,11 @@
   - `crates/types/decimal` → `xhyper-decimalx`
   - `crates/types/canonical` → `xhyper-canonical`
   - `crates/contracts` → `xhyper-contracts`（adapter trait 出口；#43）
-  - `crates/adapters/**` → 9 个 adapter package（**scaffold**；见 adapters 对齐文）
+  - `crates/adapters/**` → 9 个 adapter package（**storage×7 生产默认客户端** + exchange scaffold；#188–#190）
+  - `tools/goalctl` · `tools/verifyctl` → 最小生产 CLI members（#188）
 - `contract-testkit` **已落地**（`crates/test-support/contracts`）；**infra 其余域**（gate 等）当前仅镜像，未宣称本仓实现
-- **adapters**：镜像已本地化；crate 为 scaffold，**未**宣称业务实现 / package stable
-- **tools**：镜像已本地化；仅 `crates/evidence` 最小面落地；goalctl / xtask / verifyctl **未**宣称落地
+- **adapters**：镜像已本地化；storage 生产 P0 已落地 + live/bench；**未**宣称 package stable / Cluster·JetStream·EOS 全量
+- **tools**：evidence + goalctl + verifyctl 已 member；xtask **未**宣称落地
 - `.agents/ssot/**` 变更走 **worktree + PR**；从外仓同步用删除感知 rsync（见 `docs/ssot/SSOT_SYNC_OPS.md`），**禁止**用上游覆盖冲掉本仓 OOS/落地裁定
 - 对齐审计总览：[docs/ssot/workspace-ssot-alignment.md](./docs/ssot/workspace-ssot-alignment.md)
   - kernel：[docs/ssot/kernel-ssot-alignment.md](./docs/ssot/kernel-ssot-alignment.md)
