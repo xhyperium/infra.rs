@@ -1,12 +1,15 @@
 //! Suite 自测：用本 crate Fake 跑完整 conformance（SPEC-TESTKIT-002 §4.2）。
 
 use contract_testkit::{
-    FakeAccountSource, FakeEventBus, FakeExecutionVenue, FakeInstrumentCatalog, FakeKeyValueStore,
-    FakeMarketDataSource, FakeRepository, FakeTxRunner, FakeVenueTimeSource,
-    RecordingInstrumentation, RecordingTxRunner, assert_account_source, assert_event_bus,
+    FakeAccountSource, FakeAnalyticsSink, FakeEventBus, FakeExecutionVenue, FakeInstrumentCatalog,
+    FakeKeyValueStore, FakeMarketDataSource, FakeObjectStore, FakePubSub, FakeRepository,
+    FakeTimeSeriesStore, FakeTxRunner, FakeVenueTimeSource, FixtureNamespace,
+    RecordingInstrumentation, RecordingTxRunner, assert_account_source,
+    assert_analytics_sink_callable, assert_analytics_sink_observed, assert_event_bus,
     assert_execution_venue, assert_instrument_catalog, assert_instrumentation,
-    assert_key_value_store, assert_market_data_source, assert_repository, assert_tx_runner,
-    assert_venue_time_source, default_symbol_meta, sample_order,
+    assert_instrumentation_observed, assert_key_value_store, assert_market_data_source,
+    assert_object_store, assert_pub_sub_smoke, assert_repository, assert_time_series_store,
+    assert_tx_runner, assert_venue_time_source, default_symbol_meta, sample_order,
 };
 use contracts::{VenueTimeSource, run_tx_commit_on_ok};
 use kernel::XError;
@@ -14,14 +17,49 @@ use kernel::XError;
 #[tokio::test]
 async fn suite_key_value_store_on_fake() {
     let store = FakeKeyValueStore::new();
-    assert_key_value_store(&store).await.expect("kv suite");
+    let fixture = FixtureNamespace::new("ctk_key_value_reference").expect("valid fixture");
+    assert_key_value_store(&store, &fixture).await.expect("kv suite");
     assert_eq!(store.len().expect("len"), 1);
 }
 
 #[tokio::test]
 async fn suite_event_bus_on_fake() {
     let bus = FakeEventBus::new();
-    assert_event_bus(&bus).await.expect("bus suite");
+    let fixture = FixtureNamespace::new("ctk_event_bus_reference").expect("valid fixture");
+    assert_event_bus(&bus, &fixture).await.expect("bus suite");
+}
+
+#[tokio::test]
+async fn suite_object_store_on_reference_fake() {
+    let fixture = FixtureNamespace::new("ctk_object_reference").expect("valid fixture");
+    assert_object_store(&FakeObjectStore::new(), &fixture).await.expect("object store suite");
+}
+
+#[tokio::test]
+async fn suite_time_series_store_on_reference_fake() {
+    let fixture = FixtureNamespace::new("ctk_time_series_reference").expect("valid fixture");
+    assert_time_series_store(&FakeTimeSeriesStore::new(), &fixture)
+        .await
+        .expect("time series suite");
+}
+
+#[tokio::test]
+async fn analytics_callable_suite_on_reference_fake() {
+    let fixture = FixtureNamespace::new("ctk_analytics_reference").expect("valid fixture");
+    let sink = FakeAnalyticsSink::new();
+    assert_analytics_sink_callable(&sink, &fixture).await.expect("analytics callable suite");
+    assert_analytics_sink_observed(&sink, &fixture, || sink.events())
+        .await
+        .expect("analytics observed suite");
+    let events = sink.events().expect("fake events");
+    assert_eq!(events.len(), 2);
+    assert_eq!(events[0].0, "ctk_analytics_reference__analytics_event");
+}
+
+#[tokio::test]
+async fn pub_sub_smoke_on_reference_fake() {
+    let fixture = FixtureNamespace::new("ctk_pub_sub_reference").expect("valid fixture");
+    assert_pub_sub_smoke(&FakePubSub::new(), &fixture).await.expect("pub sub smoke");
 }
 
 #[tokio::test]
@@ -67,6 +105,10 @@ async fn suite_repository_on_fake() {
 fn suite_instrumentation_on_recording() {
     let rec = RecordingInstrumentation::new();
     assert_instrumentation(&rec).expect("instr suite");
+    rec.clear().expect("clear smoke events");
+    let fixture = FixtureNamespace::new("ctk_instrumentation_reference").expect("valid fixture");
+    assert_instrumentation_observed(&rec, &fixture, || rec.snapshot())
+        .expect("observed instr suite");
     let snap = rec.snapshot().expect("snap");
     assert_eq!(snap.len(), 3);
 }

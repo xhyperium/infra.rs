@@ -26,6 +26,7 @@
 mod backend;
 mod failure;
 mod fakes;
+mod fixture;
 mod suite;
 
 pub use backend::{BackendProfile, classify_backends, classify_backends_with};
@@ -36,8 +37,11 @@ pub use fakes::{
     FakeTimeSeriesStore, FakeTxContext, FakeTxRunner, FakeVenueTimeSource, InstrEvent,
     RecordingInstrumentation, RecordingTxRunner, default_symbol_meta, sample_order,
 };
+pub use fixture::FixtureNamespace;
 pub use suite::{
-    assert_account_source, assert_event_bus, assert_execution_venue, assert_instrument_catalog,
-    assert_instrumentation, assert_key_value_store, assert_market_data_source, assert_repository,
+    assert_account_source, assert_analytics_sink_callable, assert_analytics_sink_observed,
+    assert_event_bus, assert_execution_venue, assert_instrument_catalog, assert_instrumentation,
+    assert_instrumentation_observed, assert_key_value_store, assert_market_data_source,
+    assert_object_store, assert_pub_sub_smoke, assert_repository, assert_time_series_store,
     assert_tx_runner, assert_venue_time_source,
 };
