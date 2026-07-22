@@ -174,7 +174,7 @@ Additive Only 稳定 contract layer。15 个 trait 定义完备，通过 contrac
 
 ## 5. 当前可部署最小集
 
-```
+```text
 kernel → testkit → decimalx → canonical → contracts
   ↓
 bootstrap → postgresx → resiliencx
@@ -182,12 +182,11 @@ bootstrap → postgresx → resiliencx
 
 6 个 crate 即可在量化交易场景中建立基础持久化 + 重试 + 类型系统。
 
-
 ## 7. 依赖链分析（第二遍审计）
 
 **关键发现：12 个 crate 为生产孤儿**——无任何其他 crate 消费它们。
 
-```
+```text
 孤儿 crate (无消费方):
   bootstrap, clickhousex, configx, kafkax, natsx, ossx,
   postgresx, redisx, resiliencx, schedulex, taosx
