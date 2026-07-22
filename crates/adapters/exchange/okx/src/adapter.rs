@@ -395,6 +395,16 @@ impl VenueAdapter for OkxAdapter {
                 let msg = v.get("msg").and_then(|m| m.as_str()).unwrap_or("cancel failed");
                 return Err(XError::invalid(format!("okx error {code}: {msg}")));
             }
+            // 与 place 对齐：顶层 code=0 仍可能 data[0].sCode 非 0（订单级失败）
+            if let Some(row) = v.get("data").and_then(|d| d.as_array()).and_then(|a| a.first()) {
+                if let Some(scode) = row.get("sCode").and_then(|x| x.as_str()) {
+                    if scode != "0" {
+                        let smsg =
+                            row.get("sMsg").and_then(|x| x.as_str()).unwrap_or("cancel rejected");
+                        return Err(XError::invalid(format!("okx sCode {scode}: {smsg}")));
+                    }
+                }
+            }
             return Ok(());
         }
 
@@ -985,6 +995,36 @@ mod tests {
         VenueAdapter::connect(&a).await.unwrap();
         let e = VenueAdapter::place_order(&a, &sample_order()).await.expect_err("e");
         assert_eq!(e.kind(), kernel::ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn signed_cancel_code0_but_scode_nonzero_is_err() {
+        // 生产形态：顶层 code=0 但 data[0].sCode=51400 → 不得 Ok(())
+        let http = Arc::new(RecordingHttp::new());
+        http.push(
+            "POST",
+            "/api/v5/trade/cancel-order",
+            Bytes::from_static(
+                br#"{"code":"0","msg":"","data":[{"clOrdId":"o1","ordId":"99","sCode":"51400","sMsg":"Cancellation failed as the order has been filled, canceled or does not exist."}]}"#,
+            ),
+        );
+        let a = OkxAdapter::mainnet().with_http(http).with_api_key(OkxApiKey::new(
+            "k",
+            "secret-key-value",
+            "p",
+        ));
+        VenueAdapter::connect(&a).await.unwrap();
+        let req = CancelOrderRequest {
+            venue: "okx".into(),
+            instrument: "BTC-USDT".into(),
+            id: OrderRef::Client("o1".into()),
+        };
+        let e = a.cancel_order_request(&req).await.expect_err("sCode");
+        assert_eq!(e.kind(), kernel::ErrorKind::Invalid);
+        assert!(
+            format!("{e}").contains("51400") || format!("{e}").contains("sCode"),
+            "err should surface sCode: {e}"
+        );
     }
 
     struct FixtureWs {
