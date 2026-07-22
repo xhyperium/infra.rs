@@ -40,8 +40,6 @@ node scripts/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
 `.agents/ssot/resiliencx/spec/spec.md`  
 对齐：[docs/ssot/resiliencx-ssot-alignment.md](../../docs/ssot/resiliencx-ssot-alignment.md)
 
-
-
 ## 异步重试（infra-s9t.6）
 
 ```rust
@@ -79,4 +77,3 @@ cargo run -p resiliencx --example retry_async_demo
 | 宣称 STATUS 98%/100% = Production Ready | 结构进度 ≠ 语义签字 |
 
 示例：`cargo run -p resiliencx --example retry_sync`
-

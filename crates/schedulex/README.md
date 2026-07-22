@@ -50,4 +50,3 @@ cargo llvm-cov -p schedulex --fail-under-lines 100 --summary-only
 | 假设 `schedule` 会触发回调 | 永不自动执行任何 Job |
 
 示例：`cargo run -p schedulex --example registry_only`
-

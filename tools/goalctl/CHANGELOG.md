@@ -9,8 +9,8 @@
 ## [0.1.1] - 2026-07-16
 
 ### Fixed
-- Phase 1.1 Truth Hardening: committed-view artifact/reconcile/compile; no directory→VERIFIED/OK; compile commit/tree bind; ApprovalRecord content validation; `--trust-level` CLI flag
 
+- Phase 1.1 Truth Hardening: committed-view artifact/reconcile/compile; no directory→VERIFIED/OK; compile commit/tree bind; ApprovalRecord content validation; `--trust-level` CLI flag
 
 ### Fixed
 

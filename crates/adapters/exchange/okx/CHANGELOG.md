@@ -7,14 +7,12 @@
 - place：`code=0` 且 `sCode≠0` 入口测；空体 HTTP 非 2xx → Unavailable
 - adapter 级 trades/books5 WS fixture 流测（对齐 binance）
 
-
 ## [0.3.2] — 2026-07-22
 
 ### Fixed
 
 - cancel：顶层 `code=0` 时仍校验 `data[0].sCode`（与 place 对齐）
 - 测试：`code=0` + `sCode=51400` 必须 Err
-
 
 ## [0.3.1] — 2026-07-22
 
