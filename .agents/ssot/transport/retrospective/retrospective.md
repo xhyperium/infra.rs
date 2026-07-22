@@ -1,7 +1,5 @@
-# transport — Retrospective
+# RETRO-TRANSPORT-MAINT-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 复盘待战役结束后填写。
+状态：OPEN
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+触发原因：旧实现把“有上限字段”误当成“聚合前已约束”，并让未接线配置与 README 成熟度陈述产生假阳性。完成验证后记录红灯敏感度、残余 NO-GO 与后续企业 TLS/M3 工作，当前不提前宣称成功。

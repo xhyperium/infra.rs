@@ -1,7 +1,5 @@
-# contracts — Retrospective
+# RETRO-CONTRACTS-MAINT-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 复盘待战役结束后填写。
+状态：OPEN
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+触发原因：布尔 profile 与不完整 handles 被文档误读为 live readiness，helper 名称又把一次调用放大为 E2E/原子事务。完成后记录红灯敏感度与剩余 backend 证据缺口，当前不提前宣称闭合。

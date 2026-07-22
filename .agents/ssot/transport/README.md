@@ -2,9 +2,9 @@
 
 > 实现 / 代码唯一位置：`crates/transport`  
 > **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-transportx-complete-spec.md](spec/xhyper-transportx-complete-spec.md)  
-> **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
+> **Source Goal**：见 [goal/goal.md](goal/goal.md) — maintenance IN PROGRESS
 > **布局**：对齐 [`.agents/ssot/kernel/`](../kernel/)（[AGENTS.md](../../../AGENTS.md) §2）  
-> **状态**：布局已对齐 kernel · 战役内容未宣称闭合
+> **状态**：`0.1.3` maintenance 执行中；M3/企业 PKI/业务 live 未宣称
 
 ## 11 层映射
 
@@ -12,14 +12,14 @@
 |--------|------|------|
 | Goal | [goal/goal.md](goal/goal.md) | 入口存在 · 未宣称 AC 闭合 |
 | Spec | [spec/spec.md](spec/spec.md) | **SSOT 入口**（布局迁移） |
-| Design | [design/design.md](design/design.md) | 入口 / 占位 |
+| Design | [design/design.md](design/design.md) | maintenance 设计 |
 | Plan | [plan/plan.md](plan/plan.md) | 入口；战役文件可并列于 plan/ |
 | Tasks | [tasks/tasks.md](tasks/tasks.md) | 入口 / 占位 |
 | Prompt | [prompt/prompt.md](prompt/prompt.md) | 入口 / 占位 |
 | **Code** | **`crates/transport`** | 实现不在 `.agents/ssot/` |
-| Test | [test/test.md](test/test.md) | 入口 / 占位 |
-| Review | [review/review.md](review/review.md) | 默认 NOT PASS |
-| Release | [release/release.md](release/release.md) | 默认 BLOCKED |
+| Test | [test/test.md](test/test.md) | maintenance 测试策略 |
+| Review | [review/review.md](review/review.md) | 验证前 NOT PASS |
+| Release | [release/release.md](release/release.md) | 验证前 BLOCKED |
 | Retrospective | [retrospective/retrospective.md](retrospective/retrospective.md) | 入口 / 占位 |
 
 ## 横切

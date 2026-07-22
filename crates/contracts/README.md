@@ -11,6 +11,13 @@ Active Spec：`.agents/ssot/contracts/spec/spec.md`
 - **推荐**：`ExecutionVenue`（结构化 cancel/query，无 additive default）
 - **迁移 facade**：`VenueAdapter`（`cancel_order_request` / `query_order_request` 有中文 Invalid default；树内 adapter 必须覆盖）
 
+## Live helper 边界
+
+- `LiveContractProfile` 只是接线意图，不是 readiness attestation。
+- `LiveHandles::validate` 只校验当前句柄形状；repo/account/venue_time 无对应句柄时 fail-closed。
+- `publish_without_delivery_attestation` 不证明订阅/确认/E2E 交付。
+- `kv_set_then_commit_separate_resources` 明确 KV 与事务上下文不是同一原子资源。
+
 ## contract-testkit（独立 crate）
 
 Fake / Recording / per-trait suite **不在**本 crate：
@@ -36,6 +43,8 @@ use contract_testkit::{FakeKeyValueStore, assert_key_value_store};
 - SSOT 对齐：[`docs/ssot/contracts-ssot-alignment.md`](../../docs/ssot/contracts-ssot-alignment.md)
 
 **非**整体 Production Ready（真实后端见后续工作项）。
+
+当前版本：`0.1.2`。
 
 ## 生产误用红线
 

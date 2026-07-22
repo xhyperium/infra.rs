@@ -1,7 +1,11 @@
-# contracts — Gate
+# GATE-CONTRACTS-MAINT-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 模块门禁清单（≠ .agent/gates/ 机器规格）。
+状态：LOCAL VALIDATION PASS；PR/CI/HUMAN GATES PENDING
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+- G1 双镜像 `cmp`；G2 fmt；G3 contracts/contract-testkit test+clippy+doc。
+- G4 bootstrap、observex、resiliencx、9 adapters 等生产消费者 check/test。
+- G5 API ratchet只允许 additive；workspace deps/crate versions 通过。
+- G6 coverage 与相关 quality gate；缺工具如实记录。
+- G7 release/alignment 保持交易业务 live、全 conformance、原子性/E2E NO-GO。
+
+任一 trait removal/signature change、backend 实现进入 contracts 或验证假通过：BLOCKED。

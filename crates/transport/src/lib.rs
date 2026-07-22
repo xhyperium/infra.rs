@@ -26,7 +26,7 @@
 //! - 超限 → [`TransportError::PayloadTooLarge`]（fail-closed）
 //! - TLS：[`TlsConfig`] / [`TlsMode`]；池：[`HttpClientPool`]；代理：[`ProxyConfig`]（Debug 脱敏）
 //!
-//! 实现合同：`.agents/ssot/infra/transport/spec/spec.md`
+//! 实现合同：`.agents/ssot/transport/spec/spec.md`
 
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -36,14 +36,17 @@ use reqwest::{Client, Method};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::RwLock;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 use tokio::net::TcpStream;
-use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async, tungstenite::Message};
+use tokio_tungstenite::{
+    MaybeTlsStream, WebSocketStream, connect_async_with_config,
+    tungstenite::{Message, protocol::WebSocketConfig},
+};
 
 mod pool;
 mod proxy;
 mod tls;
-pub use pool::{HttpClientPool, PoolConfig, SharedHttpClientPool};
+pub use pool::{HttpClientLease, HttpClientPool, PoolConfig, SharedHttpClientPool};
 pub use proxy::{ProxyConfig, build_reqwest_proxy};
 pub use tls::{TlsConfig, TlsMode};
 
@@ -66,16 +69,16 @@ pub enum TransportError {
         /// `true` 表示对端/本端已完成协议关闭握手。
         clean: bool,
     },
-    /// HTTP 429；可选整数秒 `Retry-After`。
+    /// HTTP 429；可选 RFC 9110 `Retry-After`（整数秒或 HTTP-date）。
     #[error("rate limited{retry_after:?}")]
     RateLimited {
-        /// 建议等待时长（来自整数秒 `Retry-After`）。
+        /// 建议等待时长（来自 delay-seconds 或相对当前时间的 HTTP-date）。
         retry_after: Option<Duration>,
     },
     /// 请求/响应/帧超过资源上限（fail-closed）。
     #[error("载荷过大: {kind} 上限 {limit} 字节，实际 {got} 字节")]
     PayloadTooLarge {
-        /// 资源类别（request_body / response_body / ws_frame）。
+        /// 资源类别（request_body / response_body / ws_frame / ws_message）。
         kind: &'static str,
         /// 配置上限（字节）。
         limit: usize,
@@ -113,7 +116,7 @@ impl fmt::Debug for HttpRequest {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("HttpRequest")
             .field("method", &self.method)
-            .field("url", &self.url)
+            .field("url", &RedactedUrl(&self.url))
             .field("headers", &RedactedHeaders(&self.headers))
             .field("body", &BodyDebug(self.body.as_ref().map(|b| b.len())))
             .finish()
@@ -155,6 +158,34 @@ impl fmt::Debug for BodyDebug {
 
 /// Debug 辅助：敏感 header 脱敏。
 struct RedactedHeaders<'a>(&'a [(String, String)]);
+
+/// Debug 辅助：隐藏 URL userinfo 与全部 query 值；解析失败时不回显原文。
+pub(crate) struct RedactedUrl<'a>(pub(crate) &'a str);
+
+impl fmt::Debug for RedactedUrl<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Ok(mut url) = reqwest::Url::parse(self.0) else {
+            return f.write_str("\"<invalid-url-redacted>\"");
+        };
+        if url.cannot_be_a_base() {
+            return f.write_str("\"<invalid-url-redacted>\"");
+        }
+        let _ = url.set_username("");
+        let _ = url.set_password(None);
+        let query = url
+            .query_pairs()
+            .map(|(key, _value)| (key.into_owned(), "***".to_owned()))
+            .collect::<Vec<_>>();
+        if !query.is_empty() {
+            url.set_query(None);
+            let mut pairs = url.query_pairs_mut();
+            for (key, value) in query {
+                pairs.append_pair(&key, &value);
+            }
+        }
+        fmt::Debug::fmt(url.as_str(), f)
+    }
+}
 
 impl fmt::Debug for RedactedHeaders<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -200,10 +231,24 @@ pub fn is_sensitive_header_name(name: &str) -> bool {
 pub trait HttpDriver: Send + Sync {
     /// 执行一次 HTTP 请求。
     ///
-    /// - HTTP 429 → [`TransportError::RateLimited`]（整数秒 `Retry-After`）
+    /// - HTTP 429 → [`TransportError::RateLimited`]（delay-seconds / HTTP-date）
     /// - 其他 4xx/5xx → [`Ok`]`(`[`HttpResponse`]`)`
     /// - 体超限 → [`TransportError::PayloadTooLarge`]
     async fn execute(&self, request: HttpRequest) -> Result<HttpResponse, TransportError>;
+}
+
+/// 按 RFC 9110 解析 `Retry-After` 的 delay-seconds 或 HTTP-date。
+///
+/// 显式传入 `now` 以便调用方和测试获得确定性结果；过去日期钳制为零。
+#[must_use]
+pub fn parse_retry_after_at(value: &str, now: SystemTime) -> Option<Duration> {
+    let value = value.trim();
+    if let Ok(seconds) = value.parse::<u64>() {
+        return Some(Duration::from_secs(seconds));
+    }
+    httpdate::parse_http_date(value)
+        .ok()
+        .map(|deadline| deadline.duration_since(now).unwrap_or(Duration::ZERO))
 }
 
 // ---------------------------------------------------------------------------
@@ -335,6 +380,11 @@ impl ReqwestHttpDriver {
             builder = builder.timeout(timeout);
         }
         if let Some(tls) = tls {
+            if !tls.sni {
+                return Err(TransportError::ProtocolViolation(
+                    "SNI=false 当前未接线，拒绝静默忽略".into(),
+                ));
+            }
             match tls.mode {
                 TlsMode::SystemRoots => {}
                 TlsMode::CustomCa { path } => {
@@ -417,19 +467,18 @@ impl HttpDriver for ReqwestHttpDriver {
             builder = builder.body(body);
         }
         let request = builder.build().map_err(map_reqwest_error)?;
-        let response = self.client.execute(request).await.map_err(map_reqwest_error)?;
+        let mut response = self.client.execute(request).await.map_err(map_reqwest_error)?;
         let status = response.status();
         if status.as_u16() == 429 {
             let retry_after = response
                 .headers()
                 .get(reqwest::header::RETRY_AFTER)
                 .and_then(|value| value.to_str().ok())
-                .and_then(|value| value.parse::<u64>().ok())
-                .map(Duration::from_secs);
+                .and_then(|value| parse_retry_after_at(value, SystemTime::now()));
             return Err(TransportError::RateLimited { retry_after });
         }
         if let Some(cl) = response.content_length() {
-            let cl = cl as usize;
+            let cl = usize::try_from(cl).unwrap_or(usize::MAX);
             if self.max_response_body_bytes > 0 && cl > self.max_response_body_bytes {
                 return Err(TransportError::PayloadTooLarge {
                     kind: "response_body",
@@ -438,15 +487,19 @@ impl HttpDriver for ReqwestHttpDriver {
                 });
             }
         }
-        let body = response.bytes().await.map_err(map_reqwest_error)?;
-        if self.max_response_body_bytes > 0 && body.len() > self.max_response_body_bytes {
-            return Err(TransportError::PayloadTooLarge {
-                kind: "response_body",
-                limit: self.max_response_body_bytes,
-                got: body.len(),
-            });
+        let mut body = Vec::new();
+        while let Some(chunk) = response.chunk().await.map_err(map_reqwest_error)? {
+            let got = body.len().saturating_add(chunk.len());
+            if self.max_response_body_bytes > 0 && got > self.max_response_body_bytes {
+                return Err(TransportError::PayloadTooLarge {
+                    kind: "response_body",
+                    limit: self.max_response_body_bytes,
+                    got,
+                });
+            }
+            body.extend_from_slice(&chunk);
         }
-        Ok(HttpResponse { status: status.as_u16(), body })
+        Ok(HttpResponse { status: status.as_u16(), body: Bytes::from(body) })
     }
 }
 
@@ -504,6 +557,10 @@ pub(crate) fn map_tungstenite_error(
         Error::Io(error) => TransportError::Io(Box::new(error)),
         Error::Protocol(error) => TransportError::ProtocolViolation(error.to_string()),
         Error::Url(error) => TransportError::ProtocolViolation(error.to_string()),
+        Error::Capacity(tokio_tungstenite::tungstenite::error::CapacityError::MessageTooLong {
+            size,
+            max_size,
+        }) => TransportError::PayloadTooLarge { kind: "ws_message", limit: max_size, got: size },
         other => TransportError::ProtocolViolation(other.to_string()),
     }
 }
@@ -522,7 +579,11 @@ fn enforce_frame_limit(max_frame_bytes: usize, payload: Bytes) -> Result<Bytes, 
 #[async_trait]
 impl WsConnector for TungsteniteWsConnector {
     async fn connect(&self, url: &str) -> Result<Box<dyn WsConnection>, TransportError> {
-        let fut = connect_async(url);
+        let inbound_limit = (self.max_frame_bytes > 0).then_some(self.max_frame_bytes);
+        let config = WebSocketConfig::default()
+            .max_frame_size(inbound_limit)
+            .max_message_size(inbound_limit);
+        let fut = connect_async_with_config(url, Some(config), false);
         let (stream, _) = tokio::time::timeout(self.connect_timeout, fut)
             .await
             .map_err(|_| TransportError::ConnectTimeout)?

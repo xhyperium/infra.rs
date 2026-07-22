@@ -1,7 +1,7 @@
-# transport — Test
+# TEST-TRANSPORT-MAINT-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 测试策略入口；测试代码在实现 crate，不在本树。
+策略：仅通过冻结的公共 seam 测可观察行为；网络边界使用本地 loopback，时间使用显式 `SystemTime`，不 mock crate 内部函数。
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+红灯必须来自：chunked 超限仍先聚合、tungstenite 未配置入站上限、URL 泄漏、SNI 被忽略、无 lease API/无配置校验、HTTP-date 未解析。每个红灯记录命令与退出码，绿灯复用同一测试。
+
+最终：transportx all-targets test/clippy/doc、binancex/okxx 回归、coverage/API/依赖与版本门禁。

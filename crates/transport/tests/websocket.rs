@@ -190,6 +190,25 @@ async fn ws_stream_end_without_close_frame() {
     assert!(result.is_err() || matches!(result, Ok(None)), "{result:?}");
 }
 
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn ws_inbound_limit_is_enforced_by_decoder_before_delivery() {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        let (stream, _) = listener.accept().await.unwrap();
+        let mut ws = accept_async(stream).await.unwrap();
+        ws.send(Message::Binary(Bytes::from(vec![0_u8; 32]))).await.unwrap();
+    });
+
+    let connector = TungsteniteWsConnector::with_limits(std::time::Duration::from_secs(2), 8);
+    let mut conn = connector.connect(&format!("ws://{addr}/")).await.unwrap();
+    let err = conn.next_frame().await.expect_err("入站超限不得交付 payload");
+    assert!(
+        matches!(err, TransportError::PayloadTooLarge { kind: "ws_message", limit: 8, got: 32 }),
+        "底层 decoder 必须报告入站 message 上限，got {err:?}"
+    );
+}
+
 #[test]
 fn connector_debug_default() {
     let c = TungsteniteWsConnector::new();

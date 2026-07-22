@@ -1,112 +1,56 @@
-# transportx L1 规范
+# transportx `0.1.3` maintenance 实现合同
 
-状态：当前 `0.1.2` active 实现合同（HTTP/WS 真实驱动 + Mock 已落地；**未达**生产 M3）
-权威来源：`CONSTITUTION.md`、`docs/architecture/spec.md`、ADR-007、当前 crate 源码
-crate 路径：`crates/transport`
+| 字段 | 值 |
+|---|---|
+| Status | Active maintenance spec；限定既有 HTTP/WS 客户端面，**未达 M3 / 非 package stable** |
+| Package / lib | `transportx` / `transportx` |
+| Path | `crates/transport` |
+| Baseline | `3cd29a942710c0fb42f3f6bc05e3c31570acad47`（2026-07-23 审计） |
+| Target | `0.1.3`（`0.1.2` PATCH +1） |
+| Mirror | `spec/spec.md` 与 `spec/xhyper-transportx-complete-spec.md` 必须 byte-identical |
 
-- Package / lib：`transportx` / `transportx`（别名 `xhyper-transportx` 仅作废弃兼容标签 / dual-mirror 文件名）
-- Implementation snapshot：`b0934baa`（2026-07-15）
-- Document commit：`e0b98df4`
-- Verified at：`e0b98df4`（相关实现路径未变化）
-- Candidate：[SPEC-INFRA-TRANSPORTX-002](../../../draft/transportx-complete-spec.md)（Draft，非权威，不覆盖本文）
+本文只批准已有 `HttpDriver`、`WsConnector`、`HttpClientPool` 及其配置面的安全加固，不扩展为企业网络平台。
 
-> **证据优先**：本文描述当前代码事实，不是生产就绪证明。TLS 策略、连接池、认证、gRPC、生产级故障矩阵仍为 Unknown / 未闭环。
+## 1. 责任与边界
 
-## 1. 目的与证据等级
+- 提供 HTTP/WS 客户端传输、默认 reqwest/tungstenite 驱动与 Mock。
+- 位于 L1，不依赖其他 L1，不承载重试、熔断、业务合同或组合根职责。
+- `HttpDriver`、`WsConnector`、`HttpClientPool` 是本轮冻结的公共 TDD seam；兼容接口保留。
+- M3 故障恢复、企业 PKI/mTLS、WS 企业 TLS、完整代理/认证矩阵与业务 live 证据保持 **OPEN / NO-GO**。
 
-`transportx` 提供可供存储与交易所适配器复用的 HTTP/WebSocket 传输基础设施。
+## 2. HTTP 合同
 
-- **证据（Evidence）**：XLib spec、Approved ADR、当前 `Cargo.toml` / `src/lib.rs`。
-- **推论（Inference）**：满足证据所需的最小实现后果。
-- **未知（Unknown）**：权威材料尚未裁定，实施不得静默选择。
+1. 请求体在发网前按 `max_request_body_bytes` fail-closed。
+2. 响应若 `Content-Length` 已知且超限，可在读取前拒绝；无论是否有长度，正文必须按 chunk 流式累计，并在累计首次越界时立即停止读取，禁止先聚合整包再检查。
+3. 429 的 `Retry-After` 支持 RFC 9110 `delay-seconds` 与 HTTP-date。解析使用显式 `now` 的确定性公共 seam；过去日期钳制为零，非法值为 `None`。
+4. 其他 4xx/5xx 仍返回 `Ok(HttpResponse)`；`HttpResponse` 仍仅含 status/body。
 
-权威顺序：`CONSTITUTION.md` → `docs/architecture/spec.md` → Approved ADR → 当前代码。
+## 3. WebSocket 合同
 
-## 2. 职责与非目标
+- `TungsteniteWsConnector` 在 handshake 时把 `max_frame_size` 与 `max_message_size` 下沉到 tungstenite 配置，使限制在帧解码/消息聚合前生效。
+- 出站与解码后的防御性检查保留；入站超限必须终止为 `PayloadTooLarge` 或协议错误，不交付应用 payload。
+- 连接超时、Close/异常关闭的既有公共语义保持兼容。
 
-### 2.1 职责
+## 4. 安全配置合同
 
-1. 统一 HTTP / WebSocket 客户端侧传输边界（spec §4.4）。
-2. 位于 L1，可被存储与交易所适配器依赖（ADR-007；R2/R2.1）。
-3. 只承载传输实现，不承载业务契约；业务 trait/type 属于 `contracts` / `canonical`。
-4. 将驱动私有类型（`reqwest::Client`、tungstenite stream）封装在 crate 内部。
+- `HttpRequest` 与 `ProxyConfig` 的 `Debug` 必须隐藏 URL userinfo 与**全部 query value**；scheme/host/path 与 query key 可保留用于定位。禁止依赖敏感 key 黑名单。
+- URL 无法可靠解析时采用 fail-closed 输出，不回显原始值。
+- `TlsConfig.sni == false` 当前没有真实接线，构建驱动必须明确拒绝；不得静默忽略。`sni == true` 保持既有系统根、自定义 CA、仅开发 insecure 行为。
 
-### 2.2 非目标
+## 5. 有界对象池合同
 
-- 不定义存储、交易所或领域业务语义。
-- 不实现重试、熔断、限流或调度（`resiliencx` / `schedulex`）。
-- 不成为组合根（`bootstrap`）。
-- 不承诺完整服务发现、负载均衡、生产 TLS/认证矩阵、gRPC 服务端生命周期（均为 Unknown / 未闭环）。
+- `PoolConfig` 要求 `max_pool_size > 0` 且 `max_idle <= max_pool_size`；新增可失败构造执行校验，旧 `new` 保持兼容。
+- 新增 RAII lease：checkout 成功后 lease 持有对象，`Drop` 自动归还对象并释放许可；显式取走对象时必须仍释放许可。
+- 旧 `checkout_with` / `return_client` 保留；其手动借还风险写入文档，不宣称 RAII 可修复旧调用方遗忘归还。
 
-## 3. 当前代码与依赖契约
+## 6. 验收与 NO-GO
 
-| 项 | 事实 |
-|----|------|
-| 版本 | `0.1.2` |
-| 依赖 | `kernel`、`async-trait`、`bytes`、`thiserror`、`reqwest`、`tokio`（`net`）、`tokio-tungstenite`、`futures-util` |
-| R3 | **禁止**依赖其他 L1（configx/observex/resiliencx/schedulex/bootstrap） |
-| 公开错误 | `TransportError`（timeout / closed / rate-limited / protocol / I/O） |
-| HTTP 边界 | `HttpRequest` / `HttpResponse` / `HttpDriver` |
-| WS 边界 | `WsConnector` / `WsConnection` |
-| 真实驱动 | `ReqwestHttpDriver`、`TungsteniteWsConnector` |
-| Mock | `MockHttpTransport`（并实现 `HttpDriver`） |
-| 遗留 | `HttpTransport` trait 已 `#[deprecated(note = "use HttpDriver")]` |
-
-binance/okx 的 REST 路径消费 `HttpDriver`，WS 路径消费 `WsConnector`；默认构造使用真实 reqwest/tungstenite，测试使用 `MockHttpTransport`。
-
-第三方网络依赖须通过 `cargo-deny`；版本走 workspace dependencies。
-
-## 4. 公开 API 状态
-
-### 4.1 已实现（代码事实）
-
-- `HttpDriver::execute`
-- `WsConnector::connect` + `WsConnection::{next_frame,send_frame,close}`
-- 默认驱动构造：`ReqwestHttpDriver::new` / `with_timeout`；`TungsteniteWsConnector`
-- Mock 预置响应：`MockHttpTransport::{set_get,set_post}`
-
-### 4.2 提案而非合同
-
-implementation-plan 中的 `Codec` / `RpcClient` / `RpcServer` **仍未批准**，不得据此固化跨层 SPI。若形成稳定多实现方契约，优先走 `contracts` additive 提案。
-
-### 4.3 未闭环 / Unknown
-
-协议 feature 切分、生产 TLS/mTLS、代理、连接池、压缩、背压、统一取消/超时预算、gRPC 面、完整错误到 `XError` 映射策略。
-
-### 4.4 当前 HTTP/WS 特例
-
-- HTTP 429 当前读取整数秒 `Retry-After` 后返回 `TransportError::RateLimited`；其他 4xx/5xx 返回 `Ok(HttpResponse)`。
-- `HttpResponse` 当前只保留 status/body，不保留 response headers。
-- WS text/binary 转为 `Bytes`；Ping/Pong/Frame 被跳过，Close 返回 `None` 且不保留 code/reason。
-- 当前没有 request/response/frame size limit、absolute deadline 或 cancellation API。
-
-## 5. 行为、不变量与错误
-
-1. **分层**：L1 实现，不迁入业务合同（ADR-007）。
-2. **复用方向**：适配器可依赖 transportx；transportx 不反向依赖适配器。
-3. **同层隔离**：R3/R3.1；不直接依赖其他 L1。
-4. **错误边界**：可恢复网络失败不 panic；驱动错误映射到 `TransportError`。
-5. **资源边界**：失败/取消后不得遗留不可回收连接/任务（生产矩阵仍待 M3 Evidence）。
-6. **成熟度**：实现级可用 ≠ M2/M3 真实集成/故障恢复证据。
-
-## 6. 测试与验收
-
-- 当前 11 个单元测试覆盖 mock 与有限驱动映射（见 `src/lib.rs` `#[cfg(test)]`）。
-- **不得**将本 crate 描述为 mock-only 或“不引入 reqwest/tungstenite”。
-- **不得**将本地成功构建宣称为生产 TLS/认证就绪。
+必须覆盖 chunked/无长度超限、入站 WS 超限、URL 脱敏、SNI 拒绝、lease drop 回收、两种 Retry-After 格式及失败路径。通过本地 loopback 只证明受控实现面，不证明公网、企业 PKI 或完整业务 live。
 
 ```bash
-cargo test -p transportx（别名 xhyper-transportx 已废弃，不可用于 -p）
-cargo check -p transportx --all-targets
-cargo clippy -p transportx --all-targets -- -D warnings
-cargo test -p binancex（别名 xhyper-binance 已废弃）
-cargo test -p okxx（别名 xhyper-okx 已废弃）
-cargo xtl lint-deps
-cargo fmt -- --check
+cargo test -p transportx --all-targets
+cargo clippy -p transportx --all-targets --all-features -- -D warnings
+cargo doc -p transportx --no-deps
+cargo test -p binancex --all-targets
+cargo test -p okxx --all-targets
 ```
-
-## 7. 变更日志（文档）
-
-| 日期 | 变更 |
-|------|------|
-| 2026-07-14 | 由“骨架/空依赖”改为与源码一致的实现合同；明确真实驱动与未达 M3 |

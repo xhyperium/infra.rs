@@ -26,6 +26,22 @@ impl PoolConfig {
     pub const fn new(max_pool_size: usize, max_idle: usize) -> Self {
         Self { max_pool_size, max_idle }
     }
+
+    /// 校验有界池配置。
+    pub fn validate(self) -> Result<(), TransportError> {
+        if self.max_pool_size == 0 {
+            return Err(TransportError::ProtocolViolation(
+                "http client pool max_pool_size 必须大于 0".into(),
+            ));
+        }
+        if self.max_idle > self.max_pool_size {
+            return Err(TransportError::ProtocolViolation(format!(
+                "http client pool max_idle {} 不得超过 max_pool_size {}",
+                self.max_idle, self.max_pool_size
+            )));
+        }
+        Ok(())
+    }
 }
 
 /// 可 checkout 的 HTTP 客户端池（泛型槽位；通常放 `ReqwestHttpDriver` 或连接 id）。
@@ -43,6 +59,49 @@ struct PoolState<T> {
     checked_out: usize,
 }
 
+/// HTTP 客户端池 RAII 借用；离开作用域时自动归还对象并释放许可。
+pub struct HttpClientLease<'a, T> {
+    pool: &'a HttpClientPool<T>,
+    item: Option<T>,
+}
+
+impl<T> HttpClientLease<'_, T> {
+    /// 只读访问借出的对象。
+    #[must_use]
+    pub fn get(&self) -> Option<&T> {
+        self.item.as_ref()
+    }
+
+    /// 可变访问借出的对象。
+    pub fn get_mut(&mut self) -> Option<&mut T> {
+        self.item.as_mut()
+    }
+
+    /// 取走对象并释放池许可；对象不再归还 idle，Drop 不会重复释放。
+    #[must_use]
+    pub fn into_inner(mut self) -> Option<T> {
+        let item = self.item.take();
+        if item.is_some() {
+            self.pool.release_permit();
+        }
+        item
+    }
+}
+
+impl<T> Drop for HttpClientLease<'_, T> {
+    fn drop(&mut self) {
+        if let Some(item) = self.item.take() {
+            self.pool.return_client(item);
+        }
+    }
+}
+
+impl<T: std::fmt::Debug> std::fmt::Debug for HttpClientLease<'_, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HttpClientLease").field("item", &self.item).finish_non_exhaustive()
+    }
+}
+
 impl<T> HttpClientPool<T> {
     /// 空池。
     #[must_use]
@@ -52,6 +111,12 @@ impl<T> HttpClientPool<T> {
             state: Mutex::new(PoolState { idle: Vec::new(), checked_out: 0 }),
             cvar: Condvar::new(),
         }
+    }
+
+    /// 构造已校验的有界池。
+    pub fn try_new(config: PoolConfig) -> Result<Self, TransportError> {
+        config.validate()?;
+        Ok(Self::new(config))
     }
 
     /// 配置。
@@ -94,6 +159,17 @@ impl<T> HttpClientPool<T> {
         self.cvar.notify_one();
     }
 
+    fn release_permit(&self) {
+        let mut state = match self.state.lock() {
+            Ok(state) => state,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        if state.checked_out > 0 {
+            state.checked_out -= 1;
+        }
+        self.cvar.notify_one();
+    }
+
     /// 借出：优先空闲；否则若未达 `max_pool_size` 用 `factory` 创建。
     ///
     /// `factory` 失败时会回滚 `checked_out`，避免槽位永久泄漏。
@@ -116,14 +192,7 @@ impl<T> HttpClientPool<T> {
                 Ok(item) => Ok(item),
                 Err(e) => {
                     // factory 失败：归还许可，否则 size=1 池会永久耗尽
-                    let mut g = match self.state.lock() {
-                        Ok(g) => g,
-                        Err(p) => p.into_inner(),
-                    };
-                    if g.checked_out > 0 {
-                        g.checked_out -= 1;
-                    }
-                    self.cvar.notify_one();
+                    self.release_permit();
                     Err(e)
                 }
             }
@@ -133,6 +202,17 @@ impl<T> HttpClientPool<T> {
                 self.config.max_pool_size
             )))
         }
+    }
+
+    /// 借出 RAII lease；调用方即使忘记显式归还，Drop 也会回收对象与许可。
+    pub fn checkout_lease_with<F>(
+        &self,
+        factory: F,
+    ) -> Result<HttpClientLease<'_, T>, TransportError>
+    where
+        F: FnOnce() -> Result<T, TransportError>,
+    {
+        self.checkout_with(factory).map(|item| HttpClientLease { pool: self, item: Some(item) })
     }
 
     /// 限时等待空闲槽（无 factory：仅从 idle 取）。
@@ -270,6 +350,19 @@ mod tests {
         assert_eq!(item, 99);
         assert_eq!(pool.checked_out(), 1);
         pool.return_client(item);
+        assert_eq!(pool.checked_out(), 0);
+    }
+
+    #[test]
+    fn lease_debug_and_into_inner_recover_from_poison() {
+        let pool = HttpClientPool::try_new(PoolConfig::new(1, 1)).unwrap();
+        let lease = pool.checkout_lease_with(|| Ok(7)).unwrap();
+        assert!(format!("{lease:?}").contains('7'));
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _guard = pool.state.lock().expect("lock");
+            panic!("poison pool before into_inner");
+        }));
+        assert_eq!(lease.into_inner(), Some(7));
         assert_eq!(pool.checked_out(), 0);
     }
 }
