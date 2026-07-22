@@ -1,73 +1,79 @@
-# `schedulex` 当前实现规范
+# SPEC-SCHEDULEX-003
+
+状态：APPROVED FOR MAINTENANCE IMPLEMENTATION；本轮候选尚未发布。
 
 | 字段 | 值 |
 |---|---|
-| Status | 当前 `0.1.1`：任务 ID 登记表（active SSOT registry）+ 确定性 tick 驱动 JobRunner（additive 面）；**非** 完整调度器/执行器 |
-| Package / lib | `schedulex` / `schedulex`（别名 `xhyper-schedulex` 仅作废弃兼容标签 / dual-mirror 文件名） |
-| Path | `crates/schedulex` |
-| Layer | L1 Infra |
-| Authority | 本文件是 active current-state spec |
-| Candidate | [SPEC-INFRA-SCHEDULEX-002](../../../draft/schedulex-complete-spec.md)（Draft，非权威，不覆盖本文） |
-| Implementation snapshot | `b0934baa`（2026-07-15） |
-| Document commit | `e0b98df4` |
-| Verified at | `e0b98df4`（相关实现路径未变化） |
+| Baseline | `3cd29a942710c0fb42f3f6bc05e3c31570acad47` |
+| Package / lib | `schedulex` / `schedulex` |
+| Path / layer | `crates/schedulex` / L1 |
+| 依赖 | std-only，生产依赖必须为空 |
+| Authority | 本文件与双镜像共同定义当前声明面 |
 
-## 1. 定位与依赖
+## 1. 模块定位
 
-本 crate 是 L1 任务 ID 登记表（**active SSOT registry**：单一任务 ID 真源），并附带确定性、进程内 `tick(now_ms)` 驱动的 `JobRunner` additive 面（最小 cron 子集）。**登记 ≠ 自动执行**：`Scheduler`（登记表）与 `JobRunner`（执行器）相互独立，无自动联动。明确边界：**非** 完整作业调度器 / 执行器——无 async runtime、无分布式 lease、无墙钟 daemon、无生产调度平台。当前 crate 为 std-only、无任何生产依赖；workspace 无 owner 外的生产消费者。
+本 crate 包含两个互不自动联动的深模块：
 
-## 2. 当前公开 API
+- `Scheduler`：任务 ID registry seam；登记、查询、集合运算，不执行回调。
+- `JobRunner`：宿主显式调用 `tick(now_ms)` 的进程内 deterministic seam。
 
-`Scheduler` 内部为 `HashMap<String, ()>`（任务 ID 登记表）：
+本 crate 不是后台 timer、分布式 scheduler 或持久化作业平台。登记 ID 不等于执行 Job。
 
-| API | 当前行为 |
+## 2. Scheduler interface
+
+- `schedule` 重复 ID 幂等覆盖；`cancel` 返回此前是否存在。
+- `schedule_checked` / `schedule_normalized` 使用统一 ID 校验。
+- `list` 与集合运算顺序不承诺；调用方不得依赖 HashMap 迭代顺序。
+- registry 与 `JobRunner` 不同步、不共享生命周期。
+
+## 3. JobRunner interface
+
+| 行为 | 合同 |
 |---|---|
-| `new/default` | 创建空登记表 |
-| `schedule(id)` / `schedule_checked` / `schedule_normalized` / `try_schedule` / `schedule_many` | 登记任务 ID；重复 ID 幂等覆盖 |
-| `cancel(id)` / `cancel_many` | 删除并返回此前是否存在 |
-| `list()` / `contains` / `len` / `is_empty` | 查询登记表 |
-| `intersection_ids` / `difference_ids` / `union_ids` / `retain` / `clear` | 集合运算 |
+| `add` | 插入前校验 `JobId` 与 `Schedule`；失败不改变 runner |
+| 重复 ID | 新 Job、Schedule 与全部运行状态完整替换旧条目 |
+| `cancel` | 标记取消；条目存在即返回 `true`，重复取消仍为 `true`，直至 `remove` |
+| `remove` | 删除条目并释放 Job；返回此前是否存在 |
+| `list_meta` | 包含已取消未移除条目，按 Rust `str::cmp` 的 Job ID 字典序返回 |
+| `tick` | 同一 tick 的到期 Job 按 Rust `str::cmp` 的 Job ID 字典序执行 |
+| 错误 | Job `Err` 按执行顺序进入 `TickResult.errors`，推进触发状态并继续后续 Job |
+| panic | 不捕获；panic 传播并中止当前 tick，部分执行状态不保证 |
 
-`additive 面`（与登记表独立，无自动联动）：
+`JobId::new` / `From` 可构造未校验值，但任何值进入 runner 前必须由 `add` 统一校验，不能绕过空值、长度和控制字符规则。
 
-| 类型 | 当前行为 |
-|---|---|
-| `JobRunner` | `add(Job, Schedule)` + `tick(now_ms) -> TickResult`；确定性、进程内、无墙钟 |
-| `Schedule` | `once` / `fixed_delay` / `cron`（最小子集；非完整 cron 方言） |
-| `Job` / `JobFn` / `JobId` / `JobMeta` | 闭包式一次性 job 描述 |
+## 4. Schedule 与时间语义
 
-“登记一个任务 ID”**不等于**定时触发或执行任务；`JobRunner::tick` 由宿主显式驱动。
+- `Once { at_ms }`：首次 `now_ms >= at_ms` 时执行一次。
+- `FixedDelay`：`every_ms > 0`；首次到期后按上次实际执行时间计算；大跨度 tick 只执行一次，不补跑。
+- `Cron every:<ms>`：stateful interval；首次非回退 tick 立即执行，之后距上次执行达到 `every_ms` 时执行；大跨度只执行一次。Job `Err` 也推进 interval 基准。
+- 五段 Cron：仅分钟子集，按逻辑分钟 epoch 对齐；公开 `expr` 必须可重新解析且结果与 `parsed` 相等。
+- `cron_matches()` 是公开的无状态 epoch predicate；`JobRunner` 的 `every:<ms>` interval 不使用它，五段 MinuteMatch 行为不变。
+- `now_ms` 是逻辑毫秒且应非递减；小于上次 tick 的输入 fail-closed：不执行、不推进。
+- 同一逻辑分钟内 Cron MinuteMatch 最多执行一次。
+- 每个 Job 在每次 `tick` 调用中最多执行一次。
 
-## 3. 未实现能力
+调度解析失败详情必须为简体中文；协议字面量（如 `every:<ms>`）和标识符可保留英文。
 
-- 分布式调度 / 跨进程 lease / fencing；
-- 墙钟后台 daemon（仅显式 `tick(now_ms)`，无自动触发）；
-- async runtime / tokio 集成；
-- 持久化恢复 / misfire 产品矩阵；
-- 完整 cron 方言 / 时区产品；
-- 把 `Scheduler`（登记表）与 `JobRunner`（执行器）混为一谈，或宣称 package stable / Agent L5。
+## 5. 明确非目标 / NO-GO
 
-候选单进程/分布式分级方案见 Candidate Draft；未批准前不属于 active API。
+- 真实墙钟、后台线程、daemon、`Clock`、tokio 或 async runtime；
+- 持久化恢复、misfire 补跑矩阵、timeout/cancellation 产品；
+- 跨进程 lease、fencing、leader election、分布式调度；
+- 完整 cron 方言、时区和日历产品；
+- package stable、Production Ready/L5 或业务 live 声明。
 
-## 4. 当前测试
+## 6. 验收与证据
 
-5 个测试覆盖：登记/list、取消、取消 missing、Default 空、重复登记幂等。
-
-反例条件：owner 外出现 consumer，或源码/Cargo 出现 timer、Clock、Job/Run、runtime/persistence/shutdown 时，“仅登记”结论失效。
-
-## 5. 验收
+外部测试只通过公开 interface 验证：非法 ID/调度 fail-closed、稳定排序、错误继续、时间回退、无补跑、替换、取消、Cron 与 panic 策略。最终必须通过：
 
 ```bash
-cargo test -p schedulex
-cargo check -p schedulex --all-targets
+cmp .agents/ssot/schedulex/spec/spec.md \
+  .agents/ssot/schedulex/spec/xhyper-schedulex-complete-spec.md
+cargo test -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
-cargo xtl lint-deps
-cargo fmt -- --check
+cargo fmt --all --check
+node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/schedulex/src
+node scripts/quality-gates/check-workspace-deps.mjs
 ```
 
-通过条件：API/依赖与源码一致；不把 registry 冒充 production scheduler。
-
-## 6. 追溯
-
-- `docs/architecture/spec.md` §4.4
-- `crates/schedulex/{Cargo.toml,src/lib.rs}`
+本地通过不能替代 PR CI、独立 reviewer、版本同步或人工审批。

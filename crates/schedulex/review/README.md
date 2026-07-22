@@ -1,7 +1,11 @@
-# review/
+# schedulex review
 
-本 crate 审查记录与审查指南。
+当前 maintenance 候选的审查重点：
 
-- 审查指南：审查流程、审查清单、审查标准
-- 审查记录：各次审查的签名、结论、整改跟踪
-- 暂无内容时保留本文件作占位。
+- `add` 是否原子 fail-closed；
+- 排序、时间、错误、panic 与 cancel 语义是否由 public seam 证明；
+- 是否保持 std-only 且无后台/持久化/分布式能力；
+- API 是否无 removal/signature change；
+- SSOT、rustdoc、README 与 alignment 是否一致。
+
+独立 reviewer 结论记录于 `.agents/ssot/schedulex/review/review.md`。

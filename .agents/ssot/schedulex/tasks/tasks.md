@@ -1,7 +1,14 @@
-# schedulex — Tasks
+# TASKS-SCHEDULEX-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 可执行任务清单待战役填充。
-
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+| 任务 | 状态 |
+|---|---|
+| 事实矩阵与治理冲突审计 | DONE |
+| Goal/Design/Spec/Matrix/Test/Gate 冻结 | DONE |
+| public seam Red→Green | DONE |
+| crate 文档与 alignment 收敛 | IN PROGRESS |
+| scoped coverage/API/clippy/test | DONE |
+| #256 合并后 rebase 与版本同步 | BLOCKED BY HUMAN MERGE |
+| contract-testkit 阶段 | BLOCKED BY PREDECESSOR |
+| 独立 reviewer | BLOCKED；2 项已修，根治理与 API CI/版本待前序 |
+| 最终 verifier | PENDING |
+| PR / CI / 人工合并 / 清理 | PENDING |

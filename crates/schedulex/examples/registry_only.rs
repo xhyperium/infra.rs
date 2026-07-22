@@ -1,29 +1,22 @@
-//! 任务 ID 登记表：schedule / list / cancel。**不会**触发任何定时执行。
+//! 仅演示 `Scheduler` ID registry；本示例不会触发任何 Job。
 //!
-//! ```bash
-//! cargo run -p schedulex --example registry_only
-//! ```
-//!
-//! # 生产红线
-//! - 本 crate **不是** timer / cron / Job 执行器。
-//! - `schedule(id)` 仅把 ID 放入集合；没有任何回调会在未来被调用。
-//! - 需要真实调度时请使用外部调度器，勿扩展本 crate 冒充 production scheduler（SSOT §3 禁止）。
+//! crate 另有宿主显式驱动的 `JobRunner::tick(now_ms)`，但仍无后台 timer、
+//! 持久化或分布式调度能力。
 
 use schedulex::Scheduler;
 
 fn main() {
-    let mut s = Scheduler::new();
-    s.schedule("job-a");
-    s.schedule("job-b");
-    s.schedule("job-a"); // 幂等覆盖
+    let mut registry = Scheduler::new();
+    registry.schedule("job-a");
+    registry.schedule("job-b");
+    registry.schedule("job-a");
 
-    let mut ids = s.list();
+    let mut ids = registry.list();
     ids.sort();
     assert_eq!(ids, vec!["job-a".to_string(), "job-b".to_string()]);
 
-    assert!(s.cancel("job-a"));
-    assert!(!s.cancel("job-a")); // 已不存在
+    assert!(registry.cancel("job-a"));
+    assert!(!registry.cancel("job-a"));
 
-    // 注意：此处没有任何 sleep / timer / 回调被触发。
-    println!("schedulex_registry_ok remaining={:?} (IDs only; no timers fired)", s.list());
+    println!("schedulex_registry_ok remaining={:?}", registry.list());
 }

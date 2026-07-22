@@ -1,7 +1,7 @@
-# schedulex — Prompt
+# PROMPT-SCHEDULEX-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 下一刀 Context Package 待填充。
+继续条件：只在独立 worktree 修改 schedulex 域；禁止触碰父任务四域。
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+实现目标：保持 std-only 和现有 public interface，使 JobRunner 在非法输入、同 tick 顺序、时间回退、错误、panic、替换与取消方面具备明确且可测语义。
+
+停止条件：出现 breaking API、Cargo/依赖变化早于前序 PR 合并、引入后台/分布式能力、并发 writer 或无法解释的门禁失败。
