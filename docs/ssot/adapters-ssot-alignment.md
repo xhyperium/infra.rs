@@ -6,7 +6,7 @@
 | 镜像 | `.agents/ssot/adapters/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 本仓路径 | `crates/adapters/{exchange,storage}/<name>` |
 | 审计日期 | 2026-07-22 |
-| 结论 | **storage×7 生产默认 + OBJECTIVE DEFER 闭合（`0.3.1`）** + **exchange 生产默认 REST+WS named DEFER 闭合**（binancex/okxx）；live `#[ignore]` + benches；scaffold → `feature = "scaffold"`（storage）；**未**宣称 package stable / L5 代签 / crates.io |
+| 结论 | **storage×7 生产默认 + OBJECTIVE DEFER 闭合（`0.3.1`/`0.3.2`）** + **exchange 生产默认 REST+WS named DEFER 闭合**（binancex/okxx）；live `#[ignore]` + benches；scaffold → `feature = "scaffold"`（storage）；**未**宣称 package stable / L5 代签 / crates.io |
 
 ## 结论摘要
 
@@ -53,7 +53,7 @@ lib 入口                        adapters: Error/Result；contracts: ExchangeAd
 实现深度                        storage **生产默认 + OBJECTIVE DEFER 闭合** + live/bench；exchange **签名 REST + WS 行情解析**
 标准布局八项                    已齐
 publish                         false（显式）
-version                         storage×7 与 exchange `0.3.1`（独立）```
+version                         storage×7 `0.3.1`（redis/postgres `0.3.2`）与 exchange 独立版本```
 
 | 镜像路径 | 本仓路径 | package | 本仓状态 |
 |----------|----------|---------|----------|
@@ -63,8 +63,8 @@ version                         storage×7 与 exchange `0.3.1`（独立）```
 | `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **`0.3.1`** Pool/EventBus + offset/at-least-once/应用级 EOS + live |
 | `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **`0.3.1`** Core + JetStream + TLS 默认策略 + live |
 | `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | **`0.3.1`** ObjectStore + multipart + resiliencx retry + live |
-| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **`0.3.1`** Pool/Tx + PgRepository + SSL require + resiliencx + live |
-| `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **`0.3.1`** Standalone/Cluster/Sentinel + TLS + resiliencx + live |
+| `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **`0.3.2`** Pool/Tx + PgRepository + SSL require + resiliencx + live |
+| `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **`0.3.2`** Standalone/Cluster/Sentinel + TLS + resiliencx + live |
 | `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **`0.3.1`** REST + batch write + Native WS 探测 + 有界池 + live |
 验证（本仓权威命令）：
 

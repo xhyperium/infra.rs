@@ -5,8 +5,8 @@
 
 | Domain | Draft DoD P0 | Current | Deferred (not OBJECTIVE / not stable) |
 |--------|--------------|---------|----------------------------------------|
-| redisx | Pool+KV+timeout+live | **done** + Cluster/Sentinel/TLS/resiliencx (`0.3.1`) | Streams full / pubsub 默认关 / package stable |
-| postgresx | Pool+query+tx+TLS | **done** + prod Repository + SSL require + resiliencx (`0.3.1`) | COPY / migrations / read-replica |
+| redisx | Pool+KV+timeout+live | **done** + Cluster/Sentinel/TLS/resiliencx (`0.3.2`) | Streams full / pubsub 默认关 / package stable |
+| postgresx | Pool+query+tx+TLS | **done** + prod Repository + SSL require + resiliencx (`0.3.2`) | COPY / migrations / read-replica |
 | kafkax | Producer pool + EventBus | **done** + offset commit + at-least-once + 应用级 EOS (`0.3.1`) | schema registry / broker 事务协议 |
 | natsx | Core NATS EventBus | **done** + JetStream 薄封装 + TLS 默认策略 (`0.3.1`) | NKey / JetStream KV·Object 全量 |
 | ossx | ObjectStore put/get | **done** + multipart + resiliencx retry (`0.3.1`) | lifecycle / STS |
@@ -31,4 +31,4 @@ cargo test -p redisx -p postgresx -p kafkax -p natsx -p ossx -p clickhousex -p t
 |----|------|
 | #188–#191 | storage 生产客户端 + live 凭据 |
 | #195 | storage×7 SSOT layers |
-| （本 PR） | storage×7 OBJECTIVE DEFER 闭合 → `0.3.1` |
+| （本 PR） | storage×7 OBJECTIVE DEFER 闭合 → `0.3.1`/`0.3.2` (redis/postgres) |

@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/adapters/storage/redis/` |
 | 实现 | `crates/adapters/storage/redis` |
 | 审计日期 | 2026-07-22 |
-| version | `0.3.1` |
+| version | `0.3.2` |
 | 结论 | **生产默认客户端已落地**（Standalone / Cluster / Sentinel + TLS + resiliencx）；**未**宣称 package stable |
 
 ## 结论摘要
