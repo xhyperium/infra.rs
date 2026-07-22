@@ -5,7 +5,7 @@
 | Active SSOT | `.agents/ssot/types/decimal/decimalx-spec.md` 仍为实现验收权威 |
 | Candidate Draft | `.agents/ssot/types/decimal/20260717/*` · Status **Draft** · 不覆盖 Active |
 | ADR | ADR-006 舍入/对齐/checked；ADR-007 层/唯一定义点 — 代码一致 |
-| Package | `xhyper-decimalx` 0.1.0 · lib `decimalx` · path `crates/types/decimal` |
+| Package | `xhyper-decimalx` 0.1.1 · lib `decimalx` · path `crates/types/decimal` |
 | Plan | `PLAN-TYPES-DECIMALX-002-agent-safe-v1` · agent-safe 闭合 |
 | Todo | `.agents/ssot/types/decimal/todo.md` · disposition 台账 |
 | Evidence | `plan/evidence/m0-consumer-inventory-2026-07-17.txt` · SCRATCH 测试/10x 日志 |

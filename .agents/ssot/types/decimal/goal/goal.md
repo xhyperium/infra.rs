@@ -12,7 +12,7 @@
 
 | 维度 | 判定 |
 |------|------|
-| 实现路径 | `crates/types/decimal` · lib `decimalx` · `0.1.0` |
+| 实现路径 | `crates/types/decimal` · lib `decimalx` · `0.1.1` |
 | Active 合同可行使 | **是**（表示、五策略、checked 四则/rescale、Eq/Ord/Hash、Currency/Money、serde 字段 shape、MAX_SCALE 生产强制） |
 | agent-safe 对账 | **完成**（见 `plan/CURRENT-STATE.md`、scratch alignment 矩阵） |
 | Goal Achieved | **否**（T-HUM-005；含人审 residual） |

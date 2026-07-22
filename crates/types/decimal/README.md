@@ -7,7 +7,7 @@
 | package | `decimalx` |
 | lib | `decimalx` |
 | path | `crates/types/decimal` |
-| version | `0.1.0` |
+| version | `0.1.1` |
 | publish | `false`（internal only） |
 | **生产层级** | **L1 Internal Ready** |
 | 支持矩阵 | Linux x86_64 · MSRV 1.85 |

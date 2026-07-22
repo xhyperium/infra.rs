@@ -5,7 +5,7 @@
 
 ## 本轮（2026-07-21 / infra.rs · feat/decimal-ssot-align）
 
-- **实现路径**：`crates/types/decimal` · package `xhyper-decimalx` · lib `decimalx` · `0.1.0`
+- **实现路径**：`crates/types/decimal` · package `xhyper-decimalx` · lib `decimalx` · `0.1.1`
 - **对齐权威**：Active SSOT `spec/spec.md`（dual mirror `cmp` exit 0）
 - **agent-safe 基线**：表示、五策略舍入、checked 四则/rescale、数值 Eq/Ord/Hash、Currency/Money/Price/Qty/Ratio、serde 字段 shape、MAX_SCALE 生产路径强制、`# Panics` 文档
 - **本回合文档对齐**：Active §3 公开 API 列表补全（`try_new`/`MAX_SCALE`/`FromStr`/`Display`/…）；§6 测试计数 49 unit + 11 proptest + entry；goal/matrix 诚实状态
