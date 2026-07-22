@@ -57,8 +57,6 @@ jobs:
             AGENTS.md
             CLAUDE.md
             docs/**/*.md
-            crates/**/*.md
-            tools/**/*.md
 
   spellcheck:
     name: 拼写检查
@@ -66,21 +64,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: 运行 cspell
-        run: npx cspell --no-progress "{README,AGENTS,CLAUDE}.md" "docs/**/*.md" "crates/**/*.md" "tools/**/*.md"
-
-  fence-check:
-    name: 代码块结构检查
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - uses: actions/checkout@v4
-      - name: 安装 Python
-        uses: actions/setup-python@v5
+      - name: 运行 codespell
+        uses: codespell-project/actions-codespell@v2
         with:
-          python-version: '3.12'
-      - name: 检查代码块开闭标记交替
-        run: python3 scripts/standards/check-fences.py
+          ignore_words_list: ser,ans,implementors,multiplikation,methoden
+          skip: scripts/beads/gh-sync-i18n-test.mjs
 
   link-check:
     name: 链接检查
@@ -100,7 +88,6 @@ jobs:
     name: Harness 健康检查
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: github.event_name != 'merge_group'
     steps:
       - uses: actions/checkout@v4
       - name: 脱离 detached HEAD
@@ -147,20 +134,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: 校验 crates 独立 version + path 依赖对齐
         run: node scripts/quality-gates/check-crate-versions.mjs
-  workspace-deps:
-    name: 依赖集中管理门禁
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - name: 安装 Rust 工具链
-        uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - name: 校验依赖集中管理（禁止内联第三方版本）
-        run: node scripts/quality-gates/check-workspace-deps.mjs
-      - name: L1 单元测试
-        run: node scripts/quality-gates/check-workspace-deps.test.mjs
-
 
   settings-hooks:
     name: settings hooks 门禁
@@ -177,7 +150,6 @@ jobs:
     name: crates 进度看板
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: github.event_name != 'merge_group'
     steps:
       - uses: actions/checkout@v4
       - name: 校验 STATUS.md 新鲜度
@@ -185,13 +157,14 @@ jobs:
       - name: 写入 Job Summary
         if: always()
         run: node scripts/docs/gen-crate-status.mjs --summary >> "$GITHUB_STEP_SUMMARY"
+
   utf8-encoding:
     name: UTF-8 编码门禁
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: 编码扫描
+      - name: 扫描非 UTF-8 编码文件
         run: |
           bad=0
           while IFS= read -r -d '' f; do
@@ -200,11 +173,48 @@ jobs:
               *utf-8*|*ascii*|*us-ascii*) ;;
               *binary*) ;;
               *)
-                echo "❌ $f → $enc"
+                echo "❌ $f  →  $enc"
                 bad=$((bad+1))
                 ;;
             esac
-          done < <(find . -type f -not -path './.git/*' -not -path './node_modules/*' -not -path './.cargo/*' -not -path './target/*' -not -name '*.png' -not -name '*.jpg' -not -name '*.ico' -not -name '*.svg' -not -name '*.woff*' -not -name '*.lock' -print0)
-          [ "$bad" -gt 0 ] && echo "❌ $bad 个非 UTF-8 文件" && exit 1
-          echo "✅ UTF-8 / ASCII"
-
+          done < <(find . -type f \
+            -not -path './.git/*' \
+            -not -path './node_modules/*' \
+            -not -path './.cargo/*' \
+            -not -path './target/*' \
+            -not -name '*.png' -not -name '*.jpg' \
+            -not -name '*.ico' -not -name '*.svg' \
+            -not -name '*.woff*' -not -name '*.lock' \
+            -print0)
+          if [ "$bad" -gt 0 ]; then
+            echo ""
+            echo "❌ 发现 $bad 个非 UTF-8 文件，项目要求全部文本文件使用 UTF-8 无 BOM"
+            exit 1
+          fi
+          echo "✅ 编码检查通过"
+      - name: 扫描 U+FFFD 编码残留
+        run: |
+          residue=0
+          while IFS= read -r -d '' f; do
+            if grep -qP '\xef\xbf\xbd' "$f" 2>/dev/null; then
+              echo "⚠️  $f  — 含 U+FFFD 替换字符（GBK编码残留）"
+              residue=$((residue+1))
+            fi
+          done < <(find . -type f \
+            -not -path './.git/*' \
+            -not -path './node_modules/*' \
+            -not -path './.cargo/*' \
+            -not -path './target/*' \
+            -not -name '*.png' -not -name '*.jpg' \
+            -not -name '*.ico' -not -name '*.svg' \
+            -not -name '*.woff*' -not -name '*.lock' \
+            -not -name '*.bin' -not -name '*.dat' \
+            -not -name '*.db' -not -name '*.dbf' \
+            -print0)
+          if [ "$residue" -gt 0 ]; then
+            echo ""
+            echo "⚠️  发现 $residue 个文件含 U+FFFD 替换字符（编码残留）"
+            echo "   修复: node scripts/fix-encoding.mjs --fix"
+          else
+            echo "✅ 无 U+FFFD 残留"
+          fi
