@@ -133,6 +133,7 @@ Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTU
 
 | 文档 | 说明 |
 |------|------|
+|------|------|
 | [CONSTITUTION.md](CONSTITUTION.md) | 工程宪章根索引 → [docs/constitution/](docs/constitution/) 分章正文 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 架构文档 — 结构、Crate、CI/CD、治理 |
 | [STATUS.md](STATUS.md) | **自动生成**入库看板：crates 进度/完成度；日常看 `docs/status/CRATES_STATUS.local.md`（`make status`） |
