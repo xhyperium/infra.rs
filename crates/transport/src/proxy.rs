@@ -65,10 +65,10 @@ mod tests {
     fn proxy_debug_redacts_password() {
         // 测试口令由片段拼接，避免 CodeQL hard-coded password 误报
         let secret = format!("{}-{}", "super", "secret");
-        let p = ProxyConfig::with_auth("http://proxy:1", "u", &secret);
+        let p = ProxyConfig::with_auth("http://proxy:1", "u", secret.clone());
         let d = format!("{p:?}");
         assert!(d.contains("***"));
-        assert!(!d.contains(&secret));
+        assert!(!d.contains(secret.clone()));
         assert!(p.has_auth());
         let plain = ProxyConfig::new("http://proxy:1");
         assert!(!plain.has_auth());
