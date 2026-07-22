@@ -22,6 +22,7 @@ make beads-sync-interactive           # TTY conflict review
 ```
 
 ### Key Features
+
 - Bidirectional beads ↔ GitHub Issues
 - `--interactive` mode with side-by-side TTY review
 - Footer-based idempotency (`<!-- beads-sync: ID | synced: TS -->`)
@@ -29,6 +30,7 @@ make beads-sync-interactive           # TTY conflict review
 - Hook integration: `session-review.mjs` fires incremental sync
 
 ### CI: `.github/workflows/beads-test.yml`
+
 - 5 suites (180 assertions) parallel execution
 - PR-triggered, path-filtered to `scripts/beads/**`
 - `workflow_dispatch` for manual runs
@@ -48,7 +50,7 @@ make beads-sync-interactive           # TTY conflict review
 
 ### Current State
 
-```
+```text
 GitHub Secrets:      43 active (38 PASSWORD + 5 service tokens)
 Source:              dev.md (57 password-only entries extracted)
 Scope:               No DATABASE/USER entries (removed as non-sensitive)
@@ -77,11 +79,13 @@ node scripts/sre/secrets-migrate-all.mjs --source tables --env dev --live
 **Location:** `.github/workflows/workflow-security.yml`
 
 6 rules across 3 severity levels:
+
 - HIGH: permissions block required, no `pull_request_target`, no self-hosted runners
 - MEDIUM: explicit permissions (not `read-all` string)
 - LOW: concurrency groups, path filters on PR triggers
 
 **Ruleset:** `main-ai-first` (#19250230) — 3 required status checks:
+
 1. Constitution Check
 2. Template Validation
 3. Workflow Security / 审计工作流安全基线
@@ -98,7 +102,7 @@ node scripts/sre/secrets-migrate-all.mjs --source tables --env dev --live
 
 ### Security Scan Results
 
-```
+```text
 35 workflows scanned: 0 HIGH, 0 MEDIUM, 0 LOW
 4 files fixed (permissions + concurrency blocks)
 False positives eliminated (self-hosted, checkout@v3)
@@ -111,6 +115,7 @@ False positives eliminated (self-hosted, checkout@v3)
 **Location:** `crates/AGENTS.md` (v1.6.0)
 
 Changed from 8-item to 7-item standard:
+
 - Removed: `examples/`, `CHANGELOG.md`, `AGENTS.md`
 - Added: `review/`, `releases/`
 - All 21 crates: `review/README.md` + `releases/README.md` created
@@ -145,7 +150,7 @@ Changed from 8-item to 7-item standard:
 
 ## 7. Commits Summary
 
-```
+```text
 docs:     credential-baseline.md, commit-template.md, README badges
 feat:     beads sync engine, secrets migration, CI workflows
 fix:      security permissions, false positives, import guards
@@ -169,5 +174,5 @@ scripts/sre/extract_all_secrets.sh dev
 python3 -c "import yaml; ..."  # inline in workflow-security.yml
 ```
 
-**PR:** https://github.com/xhyperium/infra.rs/pull/169 (main)
+**PR:** [xhyperium/infra.rs#169](https://github.com/xhyperium/infra.rs/pull/169) (main)
 **Badge:** `[![Beads Sync Test](...beads-test.yml/badge.svg)]` — 200 ✓
