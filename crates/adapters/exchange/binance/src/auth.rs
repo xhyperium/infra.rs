@@ -28,7 +28,11 @@ impl BinanceApiKey {
         self.api_key.clone()
     }
 
-    fn sign_payload(&self, payload: &str) -> String {
+    /// 对任意 payload 做 HMAC-SHA256，返回小写 hex。
+    ///
+    /// 供离线向量测试与内部 `sign_query*` 复用。
+    #[must_use]
+    pub fn sign_payload(&self, payload: &str) -> String {
         let mut mac = HmacSha256::new_from_slice(self.secret_key.as_bytes())
             .expect("HMAC-SHA256: key size is valid");
         mac.update(payload.as_bytes());
@@ -39,12 +43,21 @@ impl BinanceApiKey {
         SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64
     }
 
-    pub fn sign_query(&self, mut query: String) -> (String, String) {
-        let ts = Self::now_millis();
+    /// 在查询串上附加 `timestamp` / `recvWindow` / `signature`（使用当前时钟）。
+    pub fn sign_query(&self, query: String) -> (String, String) {
+        self.sign_query_with_timestamp(query, Self::now_millis())
+    }
+
+    /// 使用固定 `timestamp_ms` 签名，便于向量测试与可复现断言。
+    pub fn sign_query_with_timestamp(
+        &self,
+        mut query: String,
+        timestamp_ms: u64,
+    ) -> (String, String) {
         if !query.is_empty() {
             query.push('&');
         }
-        query.push_str(&format!("timestamp={ts}&recvWindow=5000"));
+        query.push_str(&format!("timestamp={timestamp_ms}&recvWindow=5000"));
         let sig = self.sign_payload(&query);
         query.push_str(&format!("&signature={sig}"));
         (self.api_key.clone(), query)
@@ -70,12 +83,37 @@ mod tests {
     use super::*;
 
     #[test]
+    fn hmac_vector_fixed_timestamp_is_reproducible() {
+        // 固定 secret + 固定 payload → 固定 signature（不依赖墙钟）。
+        let key = BinanceApiKey::new("test-key", "test-secret");
+        let payload = "symbol=BTCUSDT&side=BUY&type=LIMIT&timestamp=1700000000000&recvWindow=5000";
+        let sig = key.sign_payload(payload);
+        assert_eq!(sig, key.sign_payload(payload));
+        assert_eq!(sig.len(), 64);
+        assert!(sig.chars().all(|c| c.is_ascii_hexdigit()));
+        // 与 sign_query_with_timestamp 对齐：payload 不含 signature 段。
+        let (_, query) = key.sign_query_with_timestamp(
+            "symbol=BTCUSDT&side=BUY&type=LIMIT".into(),
+            1_700_000_000_000,
+        );
+        assert!(query.starts_with(
+            "symbol=BTCUSDT&side=BUY&type=LIMIT&timestamp=1700000000000&recvWindow=5000&signature="
+        ));
+        let got_sig = query.rsplit("signature=").next().expect("sig");
+        assert_eq!(got_sig, sig);
+        // secret 不得出现在 query / Debug
+        assert!(!query.contains("test-secret"));
+        assert!(!format!("{key:?}").contains("test-secret"));
+    }
+
+    #[test]
     fn sign_query_includes_timestamp_and_signature() {
         let key = BinanceApiKey::new("test-key", "test-secret");
         let (api_key, query) = key.sign_query("symbol=BTCUSDT&side=BUY".into());
         assert_eq!(api_key, "test-key");
         assert!(query.starts_with("symbol=BTCUSDT&side=BUY&timestamp="));
         assert!(query.contains("&recvWindow=5000&signature="));
+        assert!(!query.contains("test-secret"));
     }
 
     #[test]

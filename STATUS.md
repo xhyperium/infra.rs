@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-22T04:31:53Z
+> **生成时间**：2026-07-22T04:37:48Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -13,8 +13,8 @@
 | workspace members | **24** |
 | 布局七项齐全 | **24** / 24（100%） |
 | 含测试（单元或集成） | **24** / 24（100%） |
-| scaffold 信号 | **2** |
-| **平均完成度** | **99%** ██████████ |
+| scaffold 信号 | **0** |
+| **平均完成度** | **100%** ██████████ |
 
 ### 成熟度分布
 
@@ -22,10 +22,10 @@
 |------|------|------|
 | `layout-incomplete` | 标准七项缺项 | 0 |
 | `scaffold` | adapter/显式 scaffold 骨架 | 0 |
-| `scaffold+mock` | scaffold 且具备 mock/测试入口 | 2 |
+| `scaffold+mock` | scaffold 且具备 mock/测试入口 | 0 |
 | `thin` | 布局齐但实质偏薄 | 0 |
 | `partial` | 有测试 + 一定源码量 | 0 |
-| `active` | 布局齐 + 测试 + 较厚实现 | 22 |
+| `active` | 布局齐 + 测试 + 较厚实现 | 24 |
 
 ## 完成度公式
 
@@ -54,8 +54,8 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `goalctl` | `tools/goalctl` | L1 | 7/7 | ✅ 1i+u | 574 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/tools-ssot-alignment.md) |
 | `verifyctl` | `tools/verifyctl` | L1 | 7/7 | ✅ 1i+u | 663 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/tools-ssot-alignment.md) |
 | `contracts` | `crates/contracts` | contracts | 7/7 | ✅ 4i+u | 1218 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/contracts-ssot-alignment.md) |
-| `binancex` | `crates/adapters/exchange/binance` | adapter | 7/7 | ✅ 1i+u | 1319 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
-| `okxx` | `crates/adapters/exchange/okx` | adapter | 7/7 | ✅ 1i+u | 755 | · | `scaffold+mock` | **89%** ███████░ | [✓](docs/ssot/adapters-ssot-alignment.md) |
+| `binancex` | `crates/adapters/exchange/binance` | adapter | 7/7 | ✅ 1i+u | 1909 | · | `active` | **98%** ████████ | [✓](docs/ssot/adapters-ssot-alignment.md) |
+| `okxx` | `crates/adapters/exchange/okx` | adapter | 7/7 | ✅ 1i+u | 1572 | · | `active` | **98%** ████████ | [✓](docs/ssot/adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse` | adapter | 7/7 | ✅ 1i+u | 529 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/clickhousex-ssot-alignment.md) |
 | `kafkax` | `crates/adapters/storage/kafka` | adapter | 7/7 | ✅ 1i+u | 1090 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/kafkax-ssot-alignment.md) |
 | `natsx` | `crates/adapters/storage/nats` | adapter | 7/7 | ✅ 1i+u | 719 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/natsx-ssot-alignment.md) |

@@ -24,10 +24,10 @@ workspace = true
 [dev-dependencies]
 contract-testkit = { path = "../test-support/contracts", version = "0.1.1" }
 async-trait = { workspace = true }
-binancex = { path = "../adapters/exchange/binance", version = "0.3.0" }
+binancex = { path = "../adapters/exchange/binance", version = "0.3.1" }
 decimalx = { path = "../types/decimal", version = "0.1.1" }
 futures-core = { workspace = true }
-okxx = { path = "../adapters/exchange/okx", version = "0.3.0" }
+okxx = { path = "../adapters/exchange/okx", version = "0.3.1" }
 tokio = { workspace = true }
 
 [[bench]]

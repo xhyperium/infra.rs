@@ -1,4 +1,4 @@
-//! Binance `VenueAdapter` 生产就绪（可选注入 `transportx::HttpDriver` 和 `BinanceApiKey`）。
+//! Binance `VenueAdapter` 生产默认路径（可选注入 `HttpDriver` / `BinanceApiKey` / `WsConnector`）。
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use canonical::{
     CancelOrderRequest, Money, Order, OrderAck, OrderBookSnapshot, OrderRef, OrderStatus, Position,
-    SymbolMeta, Tick, Trade, VenueId,
+    SymbolMeta, Tick, Trade, VenueId, ns_from_unix_millis,
 };
 use contracts::{
     AccountSource, ExecutionVenue, InstrumentCatalog, MarketDataSource, VenueAdapter,
@@ -18,9 +18,14 @@ use futures_core::stream::BoxStream;
 use futures_util::stream;
 use kernel::{ErrorKind, XError, XResult};
 use serde::Deserialize;
-use transportx::{HttpDriver, HttpRequest, HttpResponse, TransportError};
+#[cfg(test)]
+use transportx::WsConnection;
+use transportx::{HttpDriver, HttpRequest, HttpResponse, TransportError, WsConnector};
 
 use crate::auth::BinanceApiKey;
+use crate::market::{
+    binance_ws_stream_url, parse_binance_book_ticker, parse_binance_orderbook, parse_binance_trade,
+};
 use crate::response::{
     AccountInfo, BinanceError, CancelOrderResponse, ExchangeInfoSymbol, OrderResponse,
 };
@@ -88,6 +93,7 @@ pub enum Timeframe {
 }
 
 impl Timeframe {
+    #[allow(dead_code)] // 预留给 fetch_candles 真 REST 接线
     /// Binance klines interval 字符串。
     #[must_use]
     pub fn to_api_str(self) -> &'static str {
@@ -129,9 +135,12 @@ fn _check_binance_error_deser() {
 pub struct BinanceAdapter {
     name: String,
     base_url: String,
+    /// 公共 WS 基址（不含 /ws/...）。
+    ws_base: String,
     connected: AtomicBool,
     http: Option<Arc<dyn HttpDriver>>,
     api_key: Option<BinanceApiKey>,
+    ws: Option<Arc<dyn WsConnector>>,
 }
 
 impl BinanceAdapter {
@@ -139,9 +148,11 @@ impl BinanceAdapter {
         Self {
             name: name.into(),
             base_url: base_url.into(),
+            ws_base: "wss://stream.binance.com:9443".into(),
             connected: AtomicBool::new(false),
             http: None,
             api_key: None,
+            ws: None,
         }
     }
 
@@ -177,6 +188,26 @@ impl BinanceAdapter {
     #[must_use]
     pub fn has_api_key(&self) -> bool {
         self.api_key.is_some()
+    }
+
+    /// 注入 WS 连接器，启用公共行情订阅。
+    #[must_use]
+    pub fn with_ws(mut self, ws: Arc<dyn WsConnector>) -> Self {
+        self.ws = Some(ws);
+        self
+    }
+
+    /// 覆盖公共 WS 基址（默认 `wss://stream.binance.com:9443`）。
+    #[must_use]
+    pub fn with_ws_base(mut self, base: impl Into<String>) -> Self {
+        self.ws_base = base.into();
+        self
+    }
+
+    /// 是否已配置 WS 连接器。
+    #[must_use]
+    pub fn has_ws(&self) -> bool {
+        self.ws.is_some()
     }
 
     pub fn name(&self) -> &str {
@@ -434,14 +465,29 @@ impl VenueAdapter for BinanceAdapter {
                 ("newClientOrderId", &order.id),
             ];
             let resp = self.http_post_signed("/api/v3/order", &params).await?;
+            if resp.status < 200 || resp.status >= 300 {
+                return Err(XError::unavailable(format!(
+                    "place_order http status {}",
+                    resp.status
+                )));
+            }
             check_binance_error(&resp.body)?;
             let order_resp: OrderResponse = serde_json::from_slice(&resp.body)
                 .map_err(|e| XError::invalid(format!("place_order parse: {e}")))?;
             let status = Self::map_order_status(&order_resp.status);
-            return Ok(OrderAck { id: order.id.clone(), status, ts: order_resp.update_time });
+            let ms =
+                if order_resp.update_time != 0 { order_resp.update_time } else { order_resp.time };
+            let ts = ns_from_unix_millis(ms)
+                .ok_or_else(|| XError::invalid(format!("place_order ts overflow: {ms}")))?;
+            let id = if order.id.is_empty() {
+                order_resp.order_id.to_string()
+            } else {
+                order.id.clone()
+            };
+            return Ok(OrderAck { id, status, ts });
         }
 
-        // 降级：内存占位
+        // 无凭证：明确内存占位（非静默已成交）
         Ok(OrderAck { id: order.id.clone(), status: OrderStatus::Open, ts: 0 })
     }
 
@@ -460,14 +506,23 @@ impl VenueAdapter for BinanceAdapter {
     async fn cancel_order_request(&self, request: &CancelOrderRequest) -> XResult<()> {
         self.require_connected()?;
 
-        // 已签名 HTTP 路径
+        // 已签名 HTTP 路径：Exchange → orderId；Client → origClientOrderId
         if self.http.is_some() && self.api_key.is_some() {
-            let id = match &request.id {
-                OrderRef::Exchange(s) | OrderRef::Client(s) => s.as_str(),
+            let params: Vec<(&str, &str)> = match &request.id {
+                OrderRef::Exchange(s) => {
+                    vec![("symbol", &request.instrument), ("orderId", s.as_str())]
+                }
+                OrderRef::Client(s) => {
+                    vec![("symbol", &request.instrument), ("origClientOrderId", s.as_str())]
+                }
             };
-            let params: Vec<(&str, &str)> =
-                vec![("symbol", &request.instrument), ("origClientOrderId", id)];
             let resp = self.http_delete_signed("/api/v3/order", &params).await?;
+            if resp.status < 200 || resp.status >= 300 {
+                return Err(XError::unavailable(format!(
+                    "cancel_order http status {}",
+                    resp.status
+                )));
+            }
             check_binance_error(&resp.body)?;
             let _cancel: CancelOrderResponse = serde_json::from_slice(&resp.body)
                 .map_err(|e| XError::invalid(format!("cancel_order parse: {e}")))?;
@@ -495,14 +550,23 @@ impl VenueAdapter for BinanceAdapter {
     async fn query_order_request(&self, request: &CancelOrderRequest) -> XResult<OrderStatus> {
         self.require_connected()?;
 
-        // 已签名 HTTP 路径
+        // 已签名 HTTP 路径：Exchange → orderId；Client → origClientOrderId
         if self.http.is_some() && self.api_key.is_some() {
-            let id = match &request.id {
-                OrderRef::Exchange(s) | OrderRef::Client(s) => s.as_str(),
+            let params: Vec<(&str, &str)> = match &request.id {
+                OrderRef::Exchange(s) => {
+                    vec![("symbol", &request.instrument), ("orderId", s.as_str())]
+                }
+                OrderRef::Client(s) => {
+                    vec![("symbol", &request.instrument), ("origClientOrderId", s.as_str())]
+                }
             };
-            let params: Vec<(&str, &str)> =
-                vec![("symbol", &request.instrument), ("origClientOrderId", id)];
             let resp = self.http_get_signed("/api/v3/order", &params).await?;
+            if resp.status < 200 || resp.status >= 300 {
+                return Err(XError::unavailable(format!(
+                    "query_order http status {}",
+                    resp.status
+                )));
+            }
             check_binance_error(&resp.body)?;
             let order_resp: OrderResponse = serde_json::from_slice(&resp.body)
                 .map_err(|e| XError::invalid(format!("query_order parse: {e}")))?;
@@ -638,22 +702,75 @@ impl VenueAdapter for BinanceAdapter {
         Ok(vec![Money::try_new(amt, ccy).map_err(|e| XError::internal(format!("money: {e}")))?])
     }
 
-    async fn subscribe_ticks(&self, _symbol: &str) -> XResult<BoxStream<'static, Tick>> {
+    async fn subscribe_ticks(&self, symbol: &str) -> XResult<BoxStream<'static, Tick>> {
         self.require_connected()?;
-        Ok(Box::pin(stream::empty()))
+        let Some(ws) = self.ws.clone() else {
+            // 未注入 WS：空流（明确降级，非假行情）
+            return Ok(Box::pin(stream::empty()));
+        };
+        let url = binance_ws_stream_url(&self.ws_base, symbol, "bookTicker");
+        let conn = ws.connect(&url).await.map_err(map_transport_error)?;
+        let s = stream::unfold(conn, |mut conn| async move {
+            loop {
+                match transportx::WsConnection::next_frame(conn.as_mut()).await {
+                    Ok(Some(bytes)) => {
+                        if let Ok(tick) = parse_binance_book_ticker(&bytes) {
+                            return Some((tick, conn));
+                        }
+                    }
+                    Ok(None) | Err(_) => return None,
+                }
+            }
+        });
+        Ok(Box::pin(s))
     }
 
     async fn subscribe_orderbook(
         &self,
-        _symbol: &str,
+        symbol: &str,
     ) -> XResult<BoxStream<'static, OrderBookSnapshot>> {
         self.require_connected()?;
-        Ok(Box::pin(stream::empty()))
+        let Some(ws) = self.ws.clone() else {
+            return Ok(Box::pin(stream::empty()));
+        };
+        let url = binance_ws_stream_url(&self.ws_base, symbol, "depth5");
+        let sym = symbol.to_string();
+        let conn = ws.connect(&url).await.map_err(map_transport_error)?;
+        let s = stream::unfold((conn, sym), |(mut conn, sym)| async move {
+            loop {
+                match transportx::WsConnection::next_frame(conn.as_mut()).await {
+                    Ok(Some(bytes)) => {
+                        if let Ok(book) = parse_binance_orderbook(&bytes, &sym) {
+                            return Some((book, (conn, sym)));
+                        }
+                    }
+                    Ok(None) | Err(_) => return None,
+                }
+            }
+        });
+        Ok(Box::pin(s))
     }
 
-    async fn subscribe_trades(&self, _symbol: &str) -> XResult<BoxStream<'static, Trade>> {
+    async fn subscribe_trades(&self, symbol: &str) -> XResult<BoxStream<'static, Trade>> {
         self.require_connected()?;
-        Ok(Box::pin(stream::empty()))
+        let Some(ws) = self.ws.clone() else {
+            return Ok(Box::pin(stream::empty()));
+        };
+        let url = binance_ws_stream_url(&self.ws_base, symbol, "trade");
+        let conn = ws.connect(&url).await.map_err(map_transport_error)?;
+        let s = stream::unfold(conn, |mut conn| async move {
+            loop {
+                match transportx::WsConnection::next_frame(conn.as_mut()).await {
+                    Ok(Some(bytes)) => {
+                        if let Ok(trade) = parse_binance_trade(&bytes) {
+                            return Some((trade, conn));
+                        }
+                    }
+                    Ok(None) | Err(_) => return None,
+                }
+            }
+        });
+        Ok(Box::pin(s))
     }
 
     async fn server_time(&self) -> XResult<i64> {
@@ -1032,5 +1149,243 @@ mod tests {
     fn check_binance_error_ok_on_non_error() {
         let body = br#"{"orderId":1,"status":"NEW"}"#;
         check_binance_error(body).unwrap();
+    }
+
+    /// 记录请求并按 method+path 前缀应答的测试驱动（支持 DELETE / 动态 signature query）。
+    struct RecordingHttp {
+        responses: std::sync::Mutex<Vec<(String, String, Bytes)>>, // method, path_prefix, body
+        captured: std::sync::Mutex<Vec<HttpRequest>>,
+    }
+
+    impl RecordingHttp {
+        fn new() -> Self {
+            Self {
+                responses: std::sync::Mutex::new(Vec::new()),
+                captured: std::sync::Mutex::new(Vec::new()),
+            }
+        }
+        fn push(&self, method: &str, path_prefix: &str, body: Bytes) {
+            self.responses.lock().expect("lock").push((method.into(), path_prefix.into(), body));
+        }
+        fn last(&self) -> HttpRequest {
+            self.captured.lock().expect("lock").last().cloned().expect("captured")
+        }
+    }
+
+    #[async_trait]
+    impl HttpDriver for RecordingHttp {
+        async fn execute(&self, request: HttpRequest) -> Result<HttpResponse, TransportError> {
+            self.captured.lock().expect("lock").push(request.clone());
+            let method = request.method.to_ascii_uppercase();
+            let url = request.url.clone();
+            let path = url.split('?').next().unwrap_or(url.as_str()).to_string();
+            let list = self.responses.lock().expect("lock");
+            for (m, prefix, body) in list.iter() {
+                if m.eq_ignore_ascii_case(&method) && path.contains(prefix.as_str()) {
+                    return Ok(HttpResponse { status: 200, body: body.clone() });
+                }
+            }
+            Err(TransportError::ProtocolViolation(format!("recording mock miss {method} {url}")))
+        }
+    }
+
+    #[tokio::test]
+    async fn signed_place_cancel_query_assert_path_headers_and_parse() {
+        let http = Arc::new(RecordingHttp::new());
+        http.push(
+            "POST",
+            "/api/v3/order",
+            Bytes::from_static(
+                br#"{"symbol":"BTCUSDT","orderId":42,"clientOrderId":"o1","origQty":"1","executedQty":"0","cummulativeQuoteQty":"0","status":"NEW","side":"BUY","price":"1","type":"LIMIT","timeInForce":"GTC","updateTime":1700000001000,"time":1700000001000}"#,
+            ),
+        );
+        http.push(
+            "DELETE",
+            "/api/v3/order",
+            Bytes::from_static(
+                br#"{"symbol":"BTCUSDT","origClientOrderId":"o1","orderId":42,"clientOrderId":"o1","status":"CANCELED"}"#,
+            ),
+        );
+        http.push(
+            "GET",
+            "/api/v3/order",
+            Bytes::from_static(
+                br#"{"symbol":"BTCUSDT","orderId":42,"clientOrderId":"o1","origQty":"1","executedQty":"1","cummulativeQuoteQty":"1","status":"FILLED","side":"BUY","price":"1","type":"LIMIT","timeInForce":"GTC","updateTime":1700000002000,"time":1700000001000}"#,
+            ),
+        );
+
+        let key = BinanceApiKey::new("k", "secret-key-value");
+        let a = BinanceAdapter::mainnet().with_http(http.clone()).with_api_key(key);
+        VenueAdapter::connect(&a).await.unwrap();
+
+        let ack = VenueAdapter::place_order(&a, &sample_order()).await.unwrap();
+        assert_eq!(ack.id, "o1");
+        assert_eq!(ack.status, OrderStatus::Open);
+        assert_eq!(ack.ts, 1_700_000_001_000 * 1_000_000);
+        let place_req = http.last();
+        assert_eq!(place_req.method.to_ascii_uppercase(), "POST");
+        assert!(place_req.url.contains("/api/v3/order?"));
+        assert!(place_req.url.contains("signature="));
+        assert!(place_req.url.contains("timestamp="));
+        assert!(
+            !place_req.url.contains("secret-key-value"),
+            "secret leaked in url: {}",
+            place_req.url
+        );
+        assert!(place_req.headers.iter().any(|(k, v)| k == "X-MBX-APIKEY" && v == "k"));
+
+        // Client id → origClientOrderId
+        let req = CancelOrderRequest {
+            venue: "binance".into(),
+            instrument: "BTCUSDT".into(),
+            id: OrderRef::Client("o1".into()),
+        };
+        a.cancel_order_request(&req).await.unwrap();
+        let cancel_req = http.last();
+        assert_eq!(cancel_req.method.to_ascii_uppercase(), "DELETE");
+        assert!(cancel_req.url.contains("origClientOrderId=o1"));
+        assert!(cancel_req.url.contains("signature="));
+
+        let st = a.query_order_request(&req).await.unwrap();
+        assert_eq!(st, OrderStatus::Filled);
+        let query_req = http.last();
+        assert_eq!(query_req.method.to_ascii_uppercase(), "GET");
+        assert!(query_req.url.contains("origClientOrderId=o1"));
+        assert!(query_req.url.contains("signature="));
+
+        // Exchange id → orderId=
+        let ex = CancelOrderRequest {
+            venue: "binance".into(),
+            instrument: "BTCUSDT".into(),
+            id: OrderRef::Exchange("42".into()),
+        };
+        a.cancel_order_request(&ex).await.unwrap();
+        let cancel_ex = http.last();
+        assert!(cancel_ex.url.contains("orderId=42"));
+        assert!(!cancel_ex.url.contains("origClientOrderId="));
+    }
+
+    #[tokio::test]
+    async fn place_without_key_is_open_mock_not_filled() {
+        let a = BinanceAdapter::mainnet();
+        VenueAdapter::connect(&a).await.unwrap();
+        let ack = VenueAdapter::place_order(&a, &sample_order()).await.unwrap();
+        assert_eq!(ack.status, OrderStatus::Open);
+        assert_ne!(ack.status, OrderStatus::Filled);
+    }
+
+    #[tokio::test]
+    async fn signed_binance_error_maps_kind() {
+        let http = Arc::new(RecordingHttp::new());
+        http.push(
+            "POST",
+            "/api/v3/order",
+            Bytes::from_static(br#"{"code":-1013,"msg":"Filter failure"}"#),
+        );
+        let a =
+            BinanceAdapter::mainnet().with_http(http).with_api_key(BinanceApiKey::new("k", "s"));
+        VenueAdapter::connect(&a).await.unwrap();
+        let e = VenueAdapter::place_order(&a, &sample_order()).await.expect_err("err");
+        assert_eq!(e.kind(), kernel::ErrorKind::Invalid);
+    }
+
+    /// 预置帧的 WS mock。
+    struct FixtureWs {
+        frames: std::sync::Mutex<Vec<Bytes>>,
+        urls: std::sync::Mutex<Vec<String>>,
+    }
+
+    struct FixtureConn {
+        frames: Vec<Bytes>,
+        idx: usize,
+    }
+
+    #[async_trait]
+    impl WsConnection for FixtureConn {
+        async fn next_frame(&mut self) -> Result<Option<Bytes>, TransportError> {
+            if self.idx >= self.frames.len() {
+                return Ok(None);
+            }
+            let f = self.frames[self.idx].clone();
+            self.idx += 1;
+            Ok(Some(f))
+        }
+        async fn send_frame(&mut self, _frame: Bytes) -> Result<(), TransportError> {
+            Ok(())
+        }
+        async fn close(&mut self) -> Result<(), TransportError> {
+            Ok(())
+        }
+    }
+
+    #[async_trait]
+    impl WsConnector for FixtureWs {
+        async fn connect(&self, url: &str) -> Result<Box<dyn WsConnection>, TransportError> {
+            self.urls.lock().expect("lock").push(url.to_string());
+            let frames = self.frames.lock().expect("lock").clone();
+            Ok(Box::new(FixtureConn { frames, idx: 0 }))
+        }
+    }
+
+    #[tokio::test]
+    async fn subscribe_ticks_parses_book_ticker_fixture() {
+        use futures_util::StreamExt;
+        let frame = Bytes::from_static(
+            br#"{"u":1,"s":"BTCUSDT","b":"100.0","B":"1","a":"101.0","A":"2","E":1700000000123}"#,
+        );
+        let ws = Arc::new(FixtureWs {
+            frames: std::sync::Mutex::new(vec![frame]),
+            urls: std::sync::Mutex::new(Vec::new()),
+        });
+        let a = BinanceAdapter::mainnet().with_ws(ws.clone());
+        VenueAdapter::connect(&a).await.unwrap();
+        let mut stream = VenueAdapter::subscribe_ticks(&a, "BTCUSDT").await.unwrap();
+        let tick = stream.next().await.expect("event");
+        assert_eq!(tick.symbol, "BTCUSDT");
+        assert_eq!(tick.bid.as_decimal(), "100.0".parse().unwrap());
+        assert_eq!(tick.ask.as_decimal(), "101.0".parse().unwrap());
+        assert_eq!(tick.ts, 1_700_000_000_123 * 1_000_000);
+        let urls = ws.urls.lock().expect("lock");
+        assert!(urls[0].contains("btcusdt@bookTicker"));
+    }
+
+    #[tokio::test]
+    async fn subscribe_trades_and_book_parse_fixtures() {
+        use futures_util::StreamExt;
+        let trade = Bytes::from_static(
+            br#"{"e":"trade","E":1700000000456,"s":"ETHUSDT","t":1,"p":"2500.5","q":"0.01","T":1700000000456,"m":false}"#,
+        );
+        let depth = Bytes::from_static(
+            br#"{"lastUpdateId":1,"bids":[["1.0","2.0"]],"asks":[["1.1","3.0"]]}"#,
+        );
+        let ws_trade = Arc::new(FixtureWs {
+            frames: std::sync::Mutex::new(vec![trade]),
+            urls: std::sync::Mutex::new(Vec::new()),
+        });
+        let a = BinanceAdapter::mainnet().with_ws(ws_trade);
+        VenueAdapter::connect(&a).await.unwrap();
+        let mut s = VenueAdapter::subscribe_trades(&a, "ETHUSDT").await.unwrap();
+        let t = s.next().await.expect("trade");
+        assert_eq!(t.price.as_decimal(), "2500.5".parse().unwrap());
+
+        let ws_book = Arc::new(FixtureWs {
+            frames: std::sync::Mutex::new(vec![depth]),
+            urls: std::sync::Mutex::new(Vec::new()),
+        });
+        let b = BinanceAdapter::mainnet().with_ws(ws_book);
+        VenueAdapter::connect(&b).await.unwrap();
+        let mut s2 = VenueAdapter::subscribe_orderbook(&b, "BTCUSDT").await.unwrap();
+        let book = s2.next().await.expect("book");
+        assert_eq!(book.bids.len(), 1);
+        assert_eq!(book.asks[0].qty.as_decimal(), "3.0".parse().unwrap());
+    }
+
+    #[tokio::test]
+    async fn subscribe_without_ws_returns_empty_stream() {
+        use futures_util::StreamExt;
+        let a = BinanceAdapter::mainnet();
+        VenueAdapter::connect(&a).await.unwrap();
+        let mut s = VenueAdapter::subscribe_ticks(&a, "BTCUSDT").await.unwrap();
+        assert!(s.next().await.is_none());
     }
 }
