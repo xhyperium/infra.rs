@@ -6,6 +6,13 @@
 > **布局**：对齐 [`.agents/ssot/kernel/`](../../../kernel)（[AGENTS.md](../../../../../AGENTS.md) §2）  
 > **状态**：布局已对齐 kernel · 战役内容未宣称闭合
 
+## infra.rs 本仓落地（#188–#191）
+
+- 落地说明：[plan/infra-rs-landing.md](plan/infra-rs-landing.md)
+- draft SPEC_GOAL 快照：[plan/infra-rs-draft-spec-goal.md](plan/infra-rs-draft-spec-goal.md)
+- 对齐：[docs/ssot/adapters-ssot-alignment.md](../../../../docs/ssot/adapters-ssot-alignment.md)
+- **状态**：生产默认客户端 **P0 已落地**；package stable **未宣称**
+
 ## 11 层映射
 
 | 管线层 | 路径 | 状态 |

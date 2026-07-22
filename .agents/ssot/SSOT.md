@@ -92,8 +92,15 @@
 - 本仓是否落地以 `Cargo.toml` workspace members + `crates/` 路径 + 本仓测试为准
 - **testkit**：本仓已落地 `crates/testkit`；`contract-testkit` 已落地 `crates/test-support/contracts`
 - **infra**：按各域对齐文；未在 members 中的域不得宣称落地
-- **adapters 九域**：crate 为 scaffold，**未**宣称业务实现 / package stable
-- **tools**：仅 `crates/evidence` 最小面落地；goalctl / xtask / verifyctl **未**落地
+- **adapters 九域**（2026-07-22 · #188–#191）：
+  - **storage×7**（redis/postgres/kafka/nats/oss/clickhouse/taos）：**生产默认客户端 P0 已落地** + live `#[ignore]` + benches；scaffold 改 `feature = "scaffold"`
+  - **exchange×2**（binance/okx）：scaffold + mock HTTP + 只读 `server_time`
+  - **未**宣称 package stable / Cluster·JetStream·EOS 全量 / crates.io
+- **tools**（2026-07-22 · #188–#191）：
+  - `crates/evidence` 最小面已落地
+  - `tools/goalctl` · `tools/verifyctl` **workspace members**（最小生产 CLI）
+  - `tools/xtask` **未**落地
+- 落地说明：`plan/infra-rs-landing.md`（各域）；draft 快照：`plan/infra-rs-draft-*.md`
 - 审计基线见 `docs/ssot/*-ssot-alignment.md` 与 `docs/ssot/workspace-ssot-alignment.md`
 
 ---
