@@ -80,4 +80,4 @@
 ## 6. 参考
 
 - 官方站点与规范获取：通过 ASD-STE100 官方渠道（版权与词典以官方版本为准）
-- 组织语言政策：https://github.com/xhyperium/.github/blob/main/rulesets/language.md
+- 组织语言政策：[`rulesets/language.md`](https://github.com/xhyperium/.github/blob/main/rulesets/language.md)
