@@ -6,13 +6,14 @@
 
 | 项 | 说明 |
 |----|------|
-| **标准名** | 《Rust 编码规范（完整版）》**v2.0** |
+| **标准名** | 《Rust 编码规范（完整版）》**v2.1.1** |
 | **组织 SSOT（xhyperium）** | [`xhyperium/.github`](https://github.com/xhyperium/.github) → [`rulesets/rust/RULES.md`](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md) |
-| **上游镜像** | [`bytechainx/.github`](https://github.com/bytechainx/.github) → `rulesets/rust/`（历史/跨 org 副本；本 org 以 xhyperium 为准） |
+| **组织语言政策** | [`rulesets/language.md`](https://github.com/xhyperium/.github/blob/main/rulesets/language.md)（**人类可读文本强制中文**） |
+| **历史上游副本** | `bytechainx/.github` 等仅作参考；**本 org 以 xhyperium 为准** |
 | **专项文档** | 同目录：`security` / `async-runtime` / `api-design` / `testing` / `observability` / `release` / `clippy` / `ci` / `cheatsheet` |
 | **可复用 CI** | `xhyperium/.github` → `workflows/ci-rust-standard.yml` / `ci-rust-foundation.yml`（checks：`rust-fmt` / `rust-clippy` / `rust-test`） |
-| **Agent 本机加载** | `~/.claude/rules/rust.md`；分发：`curl -sSL https://raw.githubusercontent.com/xhyperium/.github/main/scripts/setup-global-rules.sh \| bash` |
-| **本仓关系** | 本章 §4.1–§4.8 与 [质量门禁](./05-quality-gates.md) 为**项目加严与落地**；冲突时：**不可削弱完整版 P0，可以加严** |
+| **Agent 本机加载** | `~/.claude/rules/rust.md` + `language.md`；分发：`curl -sSL https://raw.githubusercontent.com/xhyperium/.github/main/scripts/setup-global-rules.sh \| bash` |
+| **本仓关系** | 本章 §4.1–§4.8 与 [质量门禁](./05-quality-gates.md) 为**项目加严与落地**；冲突时：**不可削弱组织 P0（含 language.md），可以加严** |
 
 ### 4.0.1 必须遵守的完整版 P0 摘要
 
@@ -32,8 +33,7 @@ Agent 与人类编写本仓 Rust 代码时，至少遵守：
 | 上位基线 | 本仓加严 |
 |----------|----------|
 | 命名 / 模块惯例 | §4.3 crate `*x` 后缀、适配器路径 |
-| 语言编码 | §4.5 中文注释 + UTF-8 强制 |
-| 英文技术文档 | §4.6 ASD-STE100 |
+| 语言 | 组织 `language.md` 强制中文；§4.5 为本仓落地；§4.6 STE 仅英文可选层 |
 | 脚本 | §4.8 仅 ESM `.mjs` |
 | 门禁 | [§5](./05-quality-gates.md) `cargo deny`、宪章校验脚本等 |
 
@@ -83,8 +83,9 @@ Agent 与人类编写本仓 Rust 代码时，至少遵守：
 - **标签**：`v{MAJOR}.{MINOR}.{PATCH}`（[SemVer](https://semver.org/)）
   - 例：`v0.3.0`, `v1.0.0`
 - **commit**：[Conventional Commits](https://www.conventionalcommits.org/)
-  - 例：`feat(binancex): add order management scaffold`
+  - 例：`feat(binancex): 增加订单管理脚手架`
   - **模板**：仓库提供 `.gitmessage` 提交信息模板，首次克隆后执行 `git config commit.template .gitmessage` 激活；之后每次 `git commit`（不带 `-m`）自动在编辑器中加载模板
+  - **说明语言**：Conventional Commits 的 type/scope 可英文；**说明部分须中文**（对齐组织 `language.md`）
 
 ### 4.3.4 文件与目录
 
@@ -103,7 +104,14 @@ Agent 与人类编写本仓 Rust 代码时，至少遵守：
 
 ## 4.5 语言与编码（强制）
 
-本仓库对**文本语言与字符编码**作出强制约定。细则见 [docs/governance/编码与语言约定.md](../governance/编码与语言约定.md)；冲突时以本宪章为准。
+本仓库对**文本语言与字符编码**作出强制约定。
+
+| 上位 | 说明 |
+|------|------|
+| 组织语言政策 | [`xhyperium/.github` → `rulesets/language.md`](https://github.com/xhyperium/.github/blob/main/rulesets/language.md)（**P0，不可削弱**） |
+| 本仓细则 | [docs/governance/编码与语言约定.md](../governance/编码与语言约定.md) |
+
+冲突时：**组织 language.md > 本宪章 §4.5 > 细则文档**。
 
 ### 4.5.1 字符编码
 
@@ -113,18 +121,23 @@ Agent 与人类编写本仓 Rust 代码时，至少遵守：
 - 禁止出现替换字符 `U+FFFD`（表示编码损坏）
 - 编辑器配置以 `.editorconfig` 的 `charset = utf-8` 为准
 
-### 4.5.2 语言
+### 4.5.2 语言（强制中文）
+
+**凡人类可读的自然语言，默认且强制使用简体中文。**
 
 | 类别 | 要求 |
 |------|------|
 | 代码注释（`//`、`///`、`//!`） | **中文** |
-| 项目治理 / 协作文档（宪章、AGENTS、PR/Issue 模板等） | **中文** |
+| 项目治理 / 协作文档（宪章、AGENTS、PR/Issue、设计规格） | **中文** |
 | 用户可见错误信息（`Display` / 业务文案） | **中文** |
-| **英文技术文档**（手册、API 英文说明、运维英文 runbook 等） | **ASD-STE100（[§4.6](#46-文档标准asd-ste100强制)）** |
+| Agent 对用户输出 / 审查 / handoff | **中文** |
+| 提交说明 | Conventional Commits：`type(scope): 中文说明` |
 | 标识符（类型、函数、模块、字段名） | 英文（Rust 惯例） |
-| 提交说明 | 中文，或 Conventional Commits（英文 type + 中文说明） |
+| 技术术语 | 中文叙述 + 可保留 API / CI / crate 等英文本体 |
 | `LICENSE` 等法律文本 | 英文原文 |
-| 第三方 skills / 上游文档 | 可保留原文；**新增中文内容优先中文；新增英文技术正文适用 STE** |
+| 第三方 skills / 上游文档 | 可保留原文；**本组织新增内容默认中文** |
+
+**禁止**：无书面豁免的大段英文文档或英文 Agent 汇报作为默认交付（见组织 `language.md`）。
 
 ### 4.5.3 技术术语
 
@@ -137,58 +150,46 @@ Agent 与人类编写本仓 Rust 代码时，至少遵守：
 - 本地 / CI 应能检测：非 UTF-8、`U+FFFD`、明显双重编码痕迹
 - 宪章校验脚本：`./scripts/quality-gates/check-constitution.mjs` 包含 §4.5 检查
 
-## 4.6 文档标准：ASD-STE100（强制）
+## 4.6 英文技术文档与 ASD-STE100（可选加严）
 
-**ASD-STE100**（*Simplified Technical English*，简化技术英语，简称 **STE**）是用于编写技术文档的**受控自然语言**与国际通行规范。  
-本仓库将 **ASD-STE100 作为全局英文技术文档标准**。
+> **定位变更（v1.8.0）**：组织默认 **中文**。本节**不再**把 STE 作为全局强制交付语言。  
+> 仅当项目**书面决定**产出英文技术交付物时，英文正文建议采用 STE 风格。
 
-> 落地指南见 [docs/governance/ASD-STE100.md](../governance/ASD-STE100.md)。  
-> 官方规范受版权保护；本宪章只规定**适用边界与强制原则**，不复制官方词表全文。
+**ASD-STE100**（Simplified Technical English）是受控英语写作规范。  
+落地指南：[docs/governance/ASD-STE100.md](../governance/ASD-STE100.md)（不复制官方词表）。
 
-### 4.6.1 适用范围
+### 4.6.1 何时适用
 
-以下类型的**英文**文本必须符合 STE（或项目批准的 STE 兼容子集）：
+| 情况 | 要求 |
+|------|------|
+| 默认（中文文档 / 中文注释 / 中文错误文案） | 仅 §4.5；**不适用** STE |
+| 存在**书面豁免**的对外英文手册 / 英文 API 说明 / 英文 runbook | 英文正文**建议** STE（或兼容子集）；PR 注明豁免范围与期限 |
+| 无豁免却新增大段英文技术正文 | **不合规**（应先中文，或走豁免） |
 
-- 用户 / 运维 / 集成类技术手册与 runbook（英文版）
-- 对外 API 的英文说明与操作步骤
-- 可交付的英文故障排查、安装、配置说明
-- crate / 产品的**对外英文 README 技术正文**（非法律文本）
+### 4.6.2 若启用英文交付的写作原则（摘要）
 
-**不适用**（仍遵循 [§4.5](#45-语言与编码强制)）：
+1. 一词一义；术语全文一致  
+2. 短句；一句一个主题  
+3. 描述用主动语态 + 简单现在时；步骤用祈使语气  
+4. 编号步骤；一步一动作；警告在操作之前  
+5. 避免俚语、双关与不必要缩写堆叠  
 
-- 中文治理与协作文档
-- 代码注释（中文）
-- 标识符与纯代码
-- `LICENSE` 等法律原文
-- 已存在的第三方英文 skills 原文（新增英文技术交付物时适用 STE）
+### 4.6.3 与中文的关系
 
-### 4.6.2 强制原则（摘要）
-
-英文技术文档至少满足：
-
-1. **一词一义** — 同一词不得在文中切换含义；术语全文一致  
-2. **短句** — 一句一个主题；描述句宜短；避免深层嵌套从句  
-3. **语态与时态** — 描述优先主动语态 + 简单现在时；操作步骤用祈使语气  
-4. **步骤可执行** — 程序类内容用编号步骤；一步一动作  
-5. **警告在前** — Warning / Caution / Note 出现在相关操作之前  
-6. **可翻译** — 避免俚语、双关、文化隐喻与不必要的缩写堆叠  
-
-### 4.6.3 与中文文档的关系
-
-- **双轨制**：中文管协作与项目内说明；英文技术交付用 STE  
-- 中英双语同一主题时，**术语与步骤顺序必须一致**  
-- 中文文档借鉴 STE 精神：短句、一步一事、少歧义（不强制 STE 英文词表）
+- **母语与默认交付：中文**（组织 `language.md` + §4.5）  
+- 英文层为**可选加严**，不得压过中文义务  
+- 中英并存时术语与步骤顺序一致  
 
 ### 4.6.4 AI 与审查
 
-- AI 撰写英文技术文档时必须按 §4.6 自检（见 `docs/governance/ASD-STE100.md` 清单）  
-- 审查英文技术 PR 时，审查者应抽查 STE 合规（词汇一致、句长、步骤结构）  
-- 完整词典与规则集以官方 ASD-STE100 版本为准；项目指南不得与官方冲突
+- AI **默认**用中文写文档与说明  
+- 仅在豁免范围内写英文时，按本节与 `ASD-STE100.md` 自检  
+- 审查以中文合规为先；英文层再抽查 STE 风格  
 
 ### 4.6.5 合规检查
 
-- 宪章校验脚本检查：宪章目录含 §4.6 条款、`docs/governance/ASD-STE100.md` 存在  
-- 深度 STE 词表校验不强制自动化（依赖官方工具/人工）；结构与原则抽查为强制审查义务
+- 须保留 `docs/governance/ASD-STE100.md` 作为可选指南  
+- STE 词表级自动化非强制；无豁免的英文大段正文可在审查中拦截  
 
 ## 4.8 脚本语言：ECMAScript Module（强制）
 

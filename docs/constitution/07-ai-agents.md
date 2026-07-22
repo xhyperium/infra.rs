@@ -17,10 +17,23 @@
 
 - AI 生成的代码须与手工代码同等质量
 - AI 须明确标注不确定的部分
-- AI 修改后须运行 `cargo test` + `cargo fmt --check` + `cargo clippy`
-- AI 产出的**注释、中文文档、用户可见错误信息**须为**中文**（§4.5）
-- AI 产出的**英文技术文档**须符合 **ASD-STE100**（§4.6）
+- AI 修改后须运行 `cargo test` + `cargo fmt --check` + `cargo clippy`（或本仓 `make ci` 等价门禁）
+- AI 对用户与仓库的**自然语言输出强制中文**（§4.5 + 组织 [`language.md`](https://github.com/xhyperium/.github/blob/main/rulesets/language.md)）：
+  - 对话、审查、handoff、PR/Issue 描述
+  - 注释、中文文档、用户可见错误信息
+- **禁止**无故用英文长文回复或新增无豁免的英文技术正文
+- 仅在 §4.6 **书面豁免**范围内撰写英文技术文档时，可参考 STE 风格（见 `docs/governance/ASD-STE100.md`）
 - AI 写入的文本文件须为 **UTF-8 无 BOM**；不得引入乱码或 `U+FFFD`
+
+## 7.4 与组织 Agent 规则
+
+组织级纪律与路由（本仓不可削弱其 P0）：
+
+- [`rulesets/agent-teams-constitution.md`](https://github.com/xhyperium/.github/blob/main/rulesets/agent-teams-constitution.md)
+- [`rulesets/agent-workflow.md`](https://github.com/xhyperium/.github/blob/main/rulesets/agent-workflow.md)
+- [`rulesets/agent-quality-gates.md`](https://github.com/xhyperium/.github/blob/main/rulesets/agent-quality-gates.md)
+
+本仓加严：worktree 强制（§6.0.5）、宪章脚本、`*x` 命名等。
 
 ---
 

@@ -122,7 +122,7 @@ cargo test --workspace --all-targets
 | A-6 | scaffold 可 `cargo check` / `cargo test` | PASS | feature `scaffold` 可选；默认生产路径可编译测试 |
 | A-7 | 标准八项布局 | PASS | 9 adapters + contracts 均已补齐（含 benches/） |
 | A-8 | `publish = false` | PASS | 各 `Cargo.toml` 显式关闭 |
-| A-9 | 实现真实 I/O / adapter 业务 | **部分（storage OBJECTIVE DEFER 闭合 + exchange 生产默认）** | storage×7 生产客户端 + Cluster/Sentinel/TLS/resiliencx/Repository/offset/ALO/应用级 EOS/JetStream/multipart/batch/pool 等 OBJECTIVE 面 **PASS**（#211）+ live；binancex/okxx 签名 REST + WS 行情 **PASS**；全量管理订单 WS / OCO / Streams full / broker 事务 / native 9000 / package stable **OPEN（非 OBJECTIVE）** |
+| A-9 | 实现真实 I/O / adapter 业务 | **部分（storage OBJECTIVE DEFER 闭合 + exchange 生产默认）** | storage×7 生产客户端 + Cluster/Sentinel/TLS/resiliencx/Repository/offset/at-least-once/应用级 EOS/JetStream/multipart/batch/pool 等 OBJECTIVE 面 **PASS**（#211）+ live；binancex/okxx 签名 REST + WS 行情 **PASS**；全量管理订单 WS / OCO / Streams full / broker 事务 / native 9000 / package stable **OPEN（非 OBJECTIVE）** |
 | A-10 | package stable / Spec Approved 本仓宣称 | OPEN | **禁止**用镜像 COMPLETE 代替；P0 生产入口 ≠ package stable |
 | A-11 | contracts workspace 注册 | PASS | #43 `crates/contracts` → `xhyper-contracts` |
 | A-12 | `FOUNDATIONX_*` 环境注入 + 密钥不入库 | PASS | `from_env` + live tests；`scripts/live/build-foundationx-env.mjs`（#191）；secrets 仅进程 env |
