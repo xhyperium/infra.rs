@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-23
+
 ### Changed
 
 - `JobRunner::add` 在插入前统一校验 JobId 与公开 Schedule 状态。
