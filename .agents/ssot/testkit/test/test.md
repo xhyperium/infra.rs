@@ -4,7 +4,7 @@
 |---|---|
 | Source Spec | [SPEC-TESTKIT-002](../spec/spec.md) |
 | 当前 package 版本 | `0.1.3` |
-| 本轮状态 | **`2e6d77d` 全量门禁 PASS；独立重审 PENDING；旧 GO 不继承** |
+| 本轮状态 | **`2e6d77d` 全量门禁 PASS；`2961afd` 独立重审 GO** |
 | 适用范围 | T0/L1 test-support；非 production runtime |
 
 本文列出实现必须通过的测试，不记录未经本轮执行的 PASS。旧 PR、tag、release evidence 与历史 coverage 只能作回归线索，不能替代当前候选的新鲜结果。
