@@ -6,10 +6,11 @@
 | Design | [design/design.md](../design/design.md) |
 | Test | [test/test.md](../test/test.md) |
 | 当前 package 版本 | `0.1.3` |
-| 当前裁定 | **GO / `c4604ce` GATES PASS / `fff07ea` REVIEW GO** |
+| 当前裁定 | **REVIEW PENDING — PR #258 coverage 修复待固定候选** |
 
 前一证据候选 `c27b7ce` 的终门禁发现 `thiserror`、panic 首错停止、公开方法测试与并发重叠缺口；
-该候选已经失效。最终状态校正候选 `c4604ce` 的全量机器门禁与 `fff07ea` 独立终审均已通过。
+该候选已经失效。最终状态校正候选 `c4604ce` 的全量机器门禁与 `fff07ea` 独立终审曾通过；
+PR #258 随后发现 testkit 100% 行覆盖门禁缺口，旧 GO 按 failure condition 失效，新候选完成机器门禁与独立重审前保持 REVIEW PENDING。
 
 ## 1. 必须闭合的门禁
 

@@ -4,7 +4,7 @@
 |---|---|
 | Source Spec | [SPEC-TESTKIT-002](../spec/spec.md) |
 | 当前 package 版本 | `0.1.3` |
-| 本轮状态 | **`c4604ce` 全量门禁 PASS；`fff07ea` 独立终审 GO** |
+| 本轮状态 | **PR #258 coverage 修复待固定候选与独立重审；旧 GO 不继承** |
 | 适用范围 | T0/L1 test-support；非 production runtime |
 
 本文列出实现必须通过的测试，不记录未经本轮执行的 PASS。旧 PR、tag、release evidence 与历史 coverage 只能作回归线索，不能替代当前候选的新鲜结果。
@@ -38,8 +38,10 @@
 | HAR-08 | 运行后追加 | `run(self)` 后原 builder 已移动；`step(self)` compile-fail，不存在静默丢 step 路径 |
 | HAR-09 | 首错停止 | 失败步以后所有闭包均未调用，且没有成功记录 |
 | HAR-10 | record/report 封装 | `StepRecord` 字段私有；名称/outcome/前后 snapshot getter 可读；report 持最终 clock+records；直接字段访问 compile-fail |
-| HAR-11 | 非文本 panic payload | 明确记录 panic 类别；不因格式化再次 panic |
+| HAR-11 | panic payload 分类 | `&str` / `String` 精确保留；非文本 payload 明确分类；不因格式化再次 panic |
 | HAR-12 | report assert helper | 成功断言通过；不满足时按测试惯例 panic；helper 仅在 `HarnessReport`，不改变 report 状态 |
+| HAR-13 | panic + 终态观测失败 | 终态为 `ObservationFailed`；detail 同时保留 panic/观测上下文；source 为观测错误；有快照时保留 fault |
+| HAR-14 | 诊断格式 | pending step Debug 保留名称；terminal error Debug 保留结构且 source 值使用占位符，不展开底层对象 |
 
 ## 3. 边界与图测试
 

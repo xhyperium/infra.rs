@@ -136,7 +136,8 @@ step 按登记顺序执行；首个非成功结果后停止，后续 step 不执
 - step 名称由调用方显式提供；runner 不生成依赖全局状态的随机名称。
 - step 的错误类型必须满足 `Error + Send + Sync + 'static`；runner 保存该 source，形成 `StepOutcome::Failed`，并使 `run()` 返回保留 source chain 的 `HarnessRunError`。
 - step panic 必须用 `catch_unwind` 截获，形成 panic 结果并使 `run()` 返回 typed error；不得让 panic 穿透 runner，也不得在 unwind 时二次 panic。
-- panic payload 不能安全转换为文本时使用明确的非文本说明，不得伪装成成功。
+- `&str` 与 `String` panic payload 必须保留原文本；其他 payload 使用明确的非文本说明，不得伪装成成功或在格式化时二次 panic。
+- step 已 panic、但终态 snapshot/fault 观测同时失败时，以 `ObservationFailed` 为终态，detail 同时保留 panic 与观测失败上下文，并把观测错误放入 source chain；不得让 panic 掩盖更晚发生的观测失败。
 - `assert_*` 辅助只属于 `HarnessReport`，可按 Rust 测试惯例 panic；builder 执行控制路径本身不得靠 panic 报错。
 
 `StepOutcome` 固定区分 `Passed`、`Failed`、`Panicked` 与 `ObservationFailed`；不得压缩回 `bool + String`。

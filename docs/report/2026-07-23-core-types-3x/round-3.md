@@ -9,7 +9,7 @@
 | 终门禁阻断修复候选 | `f26e29cf8f76c6db14be7210e41bd72b04791493` |
 | 最终内容候选 | `f62859b484dc3774a444623d8e2537e0204c4ca8` |
 | 最终状态校正候选 | `c4604ceb6c79df310ebe91fe56c516f88b1c8a6e` |
-| 当前状态 | **GO** |
+| 当前状态 | **REVIEW PENDING（PR #258 coverage 修复）** |
 | 轮次目标 | 当前权威、历史战役、Cargo package 真相与生成状态一致 |
 
 ## 基线 RED
@@ -54,3 +54,4 @@ R3 先在未改内容的输入 HEAD 上执行 workspace build/test/fmt/clippy/de
   [`reviews/r3-final-state-standards-reviewer.md`](reviews/r3-final-state-standards-reviewer.md)、
   [`reviews/r3-final-state-spec-reviewer.md`](reviews/r3-final-state-spec-reviewer.md) 与
   [`reviews/r3-final-state-gate-reviewer.md`](reviews/r3-final-state-gate-reviewer.md)。
+- PR #258 首次远端 CI 发现 `Testkit Coverage` 仅 95.9481%（25 行未覆盖），使 `bf904e3` 的最终 GO 失效。修复补齐 owned `String` panic、panic+终态观测失败、Debug/source 占位与缺失 snapshot getter 等真实路径，并以已覆盖的时钟推进步骤替代按合同不得执行的 marker 闭包；本地同一 coverage 命令达到 100.0000%。新内容候选固定、全量复验与独立重审完成前保持 REVIEW PENDING。
