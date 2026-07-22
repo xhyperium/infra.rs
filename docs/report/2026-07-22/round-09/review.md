@@ -27,7 +27,7 @@
 | `kernel` | 低 | archgate OOS; 组合根 drain 在 bootstrap | 有条件 GO（库语义） |
 | `testkit` | 低 | integration harness DEFER | 有条件 GO（仅测试） |
 | `decimalx` | 低（纪律） | wire 跨版本 stable; panicking 算子仍公开 | 有条件 GO（内部） |
-| `canonical` | 中（envelope） | 无 schema_version envelope | 有条件 GO（committed wir |
+| `canonical` | 中（envelope） | 无 schema_version envelope | 有条件 GO（committed wire） |
 | `bootstrap` | 高（接线） | StoreSet/adapter 未接线; async drain DEFER | NO-GO 交易装配 |
 | `configx` | 高（生产配置） | 多源/热更新/secret DEFER | 合同内 GO / 配置中心 NO |
 | `schedulex` | 高（名实） | 无 timer/cron/Job 执行 | 登记 GO / 调度 NO |
@@ -35,14 +35,14 @@
 | `observex` | 高（OTEL） | OTEL exporter/flush DEFER | 最小面 GO / OTEL NO |
 | `resiliencx` | 中（集成） | budget; 未接入 adapters | 有条件 GO（同步原语） |
 | `transportx` | 中（TLS 矩阵） | TLS 矩阵/池/代理 DEFER | 有条件 GO |
-| `contracts` | 高（扩面） | Tx/Bus/Repo/Venue 业务 live | 子集 GO / first-batch  |
+| `contracts` | 高（扩面） | Tx/Bus/Repo/Venue 业务 live | 子集 GO / first-batch NO |
 | `contract-testkit` | 中（扩 suite） | Batch-2 Fake; 真后端 profile | 有条件 GO（仅 dev） |
 | `binancex` | 极高 | 签名/下单/WS 行情 | NO-GO 交易 |
 | `okxx` | 极高 | 签名/业务协议 | NO-GO 交易 |
 | `redisx` | 中 | Cluster/Sentinel; TLS 强制; resiliencx | 有条件 GO（KV） |
 | `postgresx` | 中 | prod Repository; SSL require; resiliencx | 有条件 GO（SQL） |
 | `kafkax` | 高 | offset commit; at-least-once; EOS | 有条件 / EOS NO |
-| `natsx` | 高 | JetStream; TLS 默认 | Core GO / JetStream  |
+| `natsx` | 高 | JetStream; TLS 默认 | Core GO / JetStream NO |
 | `ossx` | 中 | multipart; retry | 有条件 GO |
 | `clickhousex` | 高 | 批量 insert; 池强度 | 部分 / 批量 NO |
 | `taosx` | 高 | 批量写; native; 池 | 部分 |
