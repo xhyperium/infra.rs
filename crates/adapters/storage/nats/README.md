@@ -5,6 +5,7 @@
 - [`NatsPool`](src/pool.rs)：`connect` / `publish` / `subscribe` / `ping` / `health` / `close`
 - [`NatsEventBus`](src/bus.rs)：`contracts::EventBus`（**at-most-once**）
 - [`JetStreamConsumer`](src/jetstream.rs)：durable pull、有限等待与显式确认
+- `JetStreamConsumerConfig::command_timeout`：约束确认类 broker 指令
 - feature `scaffold`：旧内存 `NatsAdapter` / `MockNatsBus`
 
 ## 配置
@@ -48,7 +49,7 @@ cargo test -p natsx
 cargo test -p natsx --features scaffold
 cargo test -p natsx --test live_event_bus -- --ignored
 cargo bench -p natsx --bench hot_path -- --quick
-./scripts/broker-conformance.sh
+node scripts/broker-conformance.mjs
 ```
 
 ## 生产误用警示

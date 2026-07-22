@@ -108,6 +108,10 @@ impl KafkaConfig {
     }
 
     /// 校验配置完整性。
+    ///
+    /// # Errors
+    ///
+    /// broker 为空、请求当前未实现的 TLS，或 SASL 凭据不完整时返回 `Invalid`。
     pub fn validate(&self) -> XResult<()> {
         if self.brokers.trim().is_empty() {
             return Err(XError::invalid("kafkax: brokers 不能为空"));
@@ -187,6 +191,7 @@ mod tests {
     fn tls_fails_closed_until_transport_is_implemented() {
         let cfg = KafkaConfig { tls: true, ..KafkaConfig::default() };
         let error = cfg.validate().expect_err("不得静默忽略 TLS");
+        assert_eq!(error.kind(), kernel::ErrorKind::Invalid);
         assert!(error.context().contains("未接入 TLS"));
     }
 }

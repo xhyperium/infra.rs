@@ -64,6 +64,11 @@ impl ProduceThenCheckpointCoordinator {
     /// 非原子 dual-write：produce → 成功才 checkpoint。
     ///
     /// Fail-closed：`produce` 失败时 **不** 调用 store.commit。
+    ///
+    /// # Errors
+    ///
+    /// broker produce 失败或应用 checkpoint 写入失败时返回对应错误。checkpoint 失败时
+    /// produce 可能已成功，调用方必须按重复窗口处理。
     pub async fn produce_then_commit(
         &self,
         producer: &KafkaProducer,
@@ -89,6 +94,10 @@ impl ProduceThenCheckpointCoordinator {
     ///
     /// - `Ok(delivery)` → commit 后返回 delivery
     /// - `Err(_)` → **不** commit，原样返回错误
+    ///
+    /// # Errors
+    ///
+    /// 输入的 produce 结果失败时原样返回，或 checkpoint 写入失败时返回 store 错误。
     #[deprecated(since = "0.3.2", note = "结果可由调用方伪造；生产路径请使用 produce_then_commit")]
     pub async fn after_produce_result(
         &self,
@@ -148,6 +157,10 @@ impl ProduceThenCheckpointSession {
     }
 
     /// 标记 side-effect produce 成功（高级兼容面）。
+    ///
+    /// # Errors
+    ///
+    /// 会话已 abort 或已 checkpoint 时返回 `Conflict`。
     #[deprecated(
         since = "0.3.2",
         note = "调用方可伪造成功；生产路径请使用 ProduceThenCheckpointCoordinator::produce_then_commit"
@@ -175,6 +188,10 @@ impl ProduceThenCheckpointSession {
     /// 尝试 commit：仅当 `produce_ok` 且尚未 committed / abort。
     ///
     /// Fail-closed：produce 未成功 → `Conflict`，store 不变。
+    ///
+    /// # Errors
+    ///
+    /// 会话未标记 produce 成功、已终结，或 checkpoint store 写入失败时返回错误。
     pub async fn try_commit(&mut self) -> XResult<()> {
         if self.aborted {
             return Err(XError::conflict(
@@ -212,6 +229,7 @@ pub type EosSession = ProduceThenCheckpointSession;
 
 #[cfg(test)]
 mod tests {
+    // 兼容性单测必须调用已弃用入口，确保旧下游仍可编译迁移。
     #![allow(deprecated)]
 
     use super::*;
@@ -227,10 +245,10 @@ mod tests {
         let out = coordinator
             .after_produce_result(Ok(delivery), "consume-topic", 0, 7)
             .await
-            .expect("ok");
+            .expect("消息生产结果成功");
         assert_eq!(out.offset, 42);
         // commit next-to-read = 8
-        assert_eq!(store.committed("consume-topic", 0).await.expect("c"), Some(8));
+        assert_eq!(store.committed("consume-topic", 0).await.expect("读取位点"), Some(8));
     }
 
     #[tokio::test]
@@ -241,10 +259,10 @@ mod tests {
         let err = coordinator
             .after_produce_result(Err(XError::unavailable("broker down")), "consume-topic", 0, 7)
             .await
-            .expect_err("must fail");
+            .expect_err("produce 失败必须返回错误");
         assert_eq!(err.kind(), ErrorKind::Unavailable);
         // fail-closed：store 无记录
-        assert!(store.committed("consume-topic", 0).await.expect("c").is_none());
+        assert!(store.committed("consume-topic", 0).await.expect("读取位点").is_none());
     }
 
     #[tokio::test]
@@ -255,24 +273,24 @@ mod tests {
         let mut session = coordinator.begin("t", 0, 3);
 
         // 未 produce → commit 拒绝
-        let e = session.try_commit().await.expect_err("closed");
+        let e = session.try_commit().await.expect_err("未 produce 时必须关闭");
         assert_eq!(e.kind(), ErrorKind::Conflict);
-        assert!(store.committed("t", 0).await.expect("c").is_none());
+        assert!(store.committed("t", 0).await.expect("读取位点").is_none());
 
         // produce ok → commit 成功
-        session.mark_produce_ok().expect("mark");
-        session.try_commit().await.expect("commit");
+        session.mark_produce_ok().expect("标记 produce 成功");
+        session.try_commit().await.expect("提交 checkpoint");
         assert!(session.is_committed());
-        assert_eq!(store.committed("t", 0).await.expect("c"), Some(4));
+        assert_eq!(store.committed("t", 0).await.expect("读取位点"), Some(4));
 
         // 新会话 + rollback
         let mut s2 = coordinator.begin("t", 0, 10);
-        s2.mark_produce_ok().expect("mark");
+        s2.mark_produce_ok().expect("标记 produce 成功");
         s2.rollback();
-        let e2 = s2.try_commit().await.expect_err("rolled back");
+        let e2 = s2.try_commit().await.expect_err("回滚后必须拒绝提交");
         assert_eq!(e2.kind(), ErrorKind::Conflict);
         // 仍为 4，未前进到 11
-        assert_eq!(store.committed("t", 0).await.expect("c"), Some(4));
+        assert_eq!(store.committed("t", 0).await.expect("读取位点"), Some(4));
     }
 
     #[tokio::test]
@@ -281,15 +299,12 @@ mod tests {
         let coordinator =
             ProduceThenCheckpointCoordinator::new(Arc::clone(&store) as Arc<dyn OffsetCommitStore>);
         let mut session = coordinator.begin("orders", 1, 100);
-        session.mark_produce_ok().expect("mark");
+        session.mark_produce_ok().expect("标记 produce 成功");
         session.mark_produce_failed();
         assert!(!session.produce_ok());
-        let e = session.try_commit().await.expect_err("fail closed");
-        assert!(
-            e.context().contains("fail-closed")
-                || e.to_string().contains("fail-closed")
-                || e.context().contains("拒绝")
-        );
-        assert!(store.committed("orders", 1).await.expect("c").is_none());
+        let e = session.try_commit().await.expect_err("必须故障关闭");
+        assert_eq!(e.kind(), ErrorKind::Conflict);
+        assert!(e.context().contains("fail-closed"));
+        assert!(store.committed("orders", 1).await.expect("读取位点").is_none());
     }
 }

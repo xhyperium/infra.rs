@@ -15,7 +15,7 @@
 cargo test -p natsx
 
 # 可复现 Core/JetStream 单节点语义
-./scripts/broker-conformance.sh
+node scripts/broker-conformance.mjs
 
 # live（需真实 NATS + 已 export 环境变量）
 cargo test -p natsx -- --ignored --nocapture

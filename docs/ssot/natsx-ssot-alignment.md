@@ -16,7 +16,7 @@
 | `NatsEventBus` | Core AMO PASS | 只接收订阅建立后的实时消息，无 ack/回放 |
 | `JetStream::publish` | PASS | 等待 publish ack |
 | `JetStreamConsumer` | 有条件 PASS | durable pull、Explicit ack、有限 fetch、稳定元数据 |
-| ack/nak/progress/term | PASS | 每次错误可观察；终结操作消费 delivery 句柄 |
+| ack/nak/progress/term | PASS | 每次错误可观察；`command_timeout` 有界；终结操作消费 delivery 句柄 |
 | MaxDeliver/Term | 有条件 PASS | 停止重投；**不等于自动 DLQ** |
 | Cluster/HA/跨账户/KV/ObjectStore | NO-GO | 无对应系统证据 |
 
@@ -25,10 +25,10 @@
 ```bash
 cargo test -p natsx --all-targets
 cargo clippy -p natsx --all-targets -- -D warnings
-./scripts/broker-conformance.sh
+node scripts/broker-conformance.mjs
 ```
 
-broker conformance 已覆盖：Core 无回放、JetStream 重投与 double ack、`max_ack_pending` 背压恢复、`max_deliver`/`term` 负向边界。单节点容器结果不证明 Cluster/HA 或自动 DLQ。
+broker conformance 已覆盖：Core 无回放、JetStream 连接重建后的重投与 double ack、nak/progress、`max_ack_pending` 背压恢复、`max_deliver`/`term` 与 DLQ 探针负向边界。单节点容器结果不证明 Cluster/HA 或自动 DLQ。
 
 ## 相关
 

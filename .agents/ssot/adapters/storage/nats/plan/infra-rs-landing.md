@@ -22,7 +22,7 @@
 
 ```bash
 cargo test -p natsx --all-targets
-./scripts/broker-conformance.sh
+node scripts/broker-conformance.mjs
 # live:
 # node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
 # set -a; source /tmp/foundationx-live.env; set +a

@@ -42,6 +42,7 @@ pub use at_least_once::{AtLeastOnceConsumer, KafkaAtLeastOnceBus, resolve_start_
 pub use bus::KafkaEventBus;
 pub use config::{DEFAULT_BROKERS, DEFAULT_SASL_MECHANISM, KafkaConfig};
 pub use consumer::{ConsumerConfig, KafkaConsumer};
+// 源码兼容期仍需从 crate root 导出旧 `Eos*` 别名；新代码与文档不得使用。
 #[allow(deprecated)]
 pub use eos::{
     EosCoordinator, EosSession, ProduceThenCheckpointCoordinator, ProduceThenCheckpointSession,

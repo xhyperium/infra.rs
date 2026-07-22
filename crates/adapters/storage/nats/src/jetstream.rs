@@ -10,6 +10,7 @@
 //! 完整 Cluster / 跨账户 / 对象存储 **不在** 本版本稳定承诺内。
 
 use std::fmt;
+use std::future::Future;
 use std::time::Duration;
 
 use bytes::Bytes;
@@ -48,6 +49,8 @@ pub struct JetStreamConsumerConfig {
     pub max_deliver: i64,
     /// consumer 允许的最大未确认消息数。
     pub max_ack_pending: i64,
+    /// ack/nak/progress/term 等 broker 指令的调用侧截止时间。
+    pub command_timeout: Duration,
 }
 
 impl JetStreamConsumerConfig {
@@ -60,6 +63,7 @@ impl JetStreamConsumerConfig {
             ack_wait: Duration::from_secs(30),
             max_deliver: 5,
             max_ack_pending: 1_024,
+            command_timeout: Duration::from_secs(5),
         }
     }
 
@@ -74,6 +78,9 @@ impl JetStreamConsumerConfig {
         if self.max_ack_pending <= 0 {
             return Err(XError::invalid("natsx jetstream: max_ack_pending 必须大于零"));
         }
+        if self.command_timeout.is_zero() {
+            return Err(XError::invalid("natsx jetstream: command_timeout 必须大于零"));
+        }
         if self.filter_subject.as_ref().is_some_and(|subject| subject.trim().is_empty()) {
             return Err(XError::invalid("natsx jetstream: filter_subject 不能为空"));
         }
@@ -85,6 +92,7 @@ impl JetStreamConsumerConfig {
 #[derive(Clone)]
 pub struct JetStreamConsumer {
     inner: async_nats::jetstream::consumer::Consumer<async_nats::jetstream::consumer::pull::Config>,
+    command_timeout: Duration,
 }
 
 impl fmt::Debug for JetStreamConsumer {
@@ -121,6 +129,7 @@ pub struct JetStreamDelivery {
     payload: Bytes,
     metadata: JetStreamDeliveryMetadata,
     raw: async_nats::jetstream::Message,
+    command_timeout: Duration,
 }
 
 impl fmt::Debug for JetStreamDelivery {
@@ -133,13 +142,27 @@ impl fmt::Debug for JetStreamDelivery {
     }
 }
 
+async fn run_bounded_command<F>(
+    timeout: Duration,
+    operation: &'static str,
+    command: F,
+) -> XResult<()>
+where
+    F: Future<Output = XResult<()>>,
+{
+    tokio::time::timeout(timeout, command).await.map_err(|error| {
+        XError::deadline_exceeded(format!("natsx jetstream: {operation} 超时")).with_source(error)
+    })?
+}
+
 impl JetStreamDelivery {
-    fn from_raw(raw: async_nats::jetstream::Message) -> XResult<Self> {
+    fn from_raw(raw: async_nats::jetstream::Message, command_timeout: Duration) -> XResult<Self> {
         let info = raw.info().map_err(|error| {
-            XError::invalid("natsx jetstream: 投递缺少合法的 JetStream 元数据").with_source(error)
+            XError::unavailable("natsx jetstream: 投递缺少合法的 JetStream 元数据")
+                .with_source(error)
         })?;
         let delivery_attempts = u64::try_from(info.delivered).map_err(|error| {
-            XError::invalid("natsx jetstream: delivery attempts 不能为负").with_source(error)
+            XError::unavailable("natsx jetstream: delivery attempts 不能为负").with_source(error)
         })?;
         let metadata = JetStreamDeliveryMetadata {
             stream: info.stream.to_string(),
@@ -149,7 +172,13 @@ impl JetStreamDelivery {
             delivery_attempts,
             pending: info.pending,
         };
-        Ok(Self { subject: raw.subject.to_string(), payload: raw.payload.clone(), metadata, raw })
+        Ok(Self {
+            subject: raw.subject.to_string(),
+            payload: raw.payload.clone(),
+            metadata,
+            raw,
+            command_timeout,
+        })
     }
 
     /// 原始 subject。
@@ -171,40 +200,80 @@ impl JetStreamDelivery {
     }
 
     /// 异步发送确认；消费 `self`，避免同一句柄重复终结。
+    ///
+    /// # Errors
+    ///
+    /// broker 连接不可用或确认发送失败时返回 `Unavailable`；超过配置的
+    /// `command_timeout` 时返回 `DeadlineExceeded`。
     pub async fn ack(self) -> XResult<()> {
-        self.raw.ack().await.map_err(|error| {
-            XError::unavailable("natsx jetstream: ack 发送失败").with_source(error)
+        run_bounded_command(self.command_timeout, "ack", async move {
+            self.raw.ack().await.map_err(|error| {
+                XError::unavailable("natsx jetstream: ack 发送失败").with_source(error)
+            })
         })
+        .await
     }
 
     /// 发送确认并等待服务端确认；消费 `self`。
+    ///
+    /// # Errors
+    ///
+    /// broker 未确认或连接不可用时返回 `Unavailable`；超过配置的
+    /// `command_timeout` 时返回 `DeadlineExceeded`。
     pub async fn double_ack(self) -> XResult<()> {
-        self.raw.double_ack().await.map_err(|error| {
-            XError::unavailable("natsx jetstream: double_ack 失败").with_source(error)
+        run_bounded_command(self.command_timeout, "double_ack", async move {
+            self.raw.double_ack().await.map_err(|error| {
+                XError::unavailable("natsx jetstream: double_ack 失败").with_source(error)
+            })
         })
+        .await
     }
 
     /// 请求重投，可选延迟；消费 `self`。
+    ///
+    /// # Errors
+    ///
+    /// broker 连接不可用或 NAK 发送失败时返回 `Unavailable`；超过配置的
+    /// `command_timeout` 时返回 `DeadlineExceeded`。
     pub async fn nak(self, delay: Option<Duration>) -> XResult<()> {
-        self.raw.ack_with(async_nats::jetstream::AckKind::Nak(delay)).await.map_err(|error| {
-            XError::unavailable("natsx jetstream: nak 发送失败").with_source(error)
+        run_bounded_command(self.command_timeout, "nak", async move {
+            self.raw.ack_with(async_nats::jetstream::AckKind::Nak(delay)).await.map_err(|error| {
+                XError::unavailable("natsx jetstream: nak 发送失败").with_source(error)
+            })
         })
+        .await
     }
 
     /// 通知服务端处理仍在进行，延长 ack wait。
+    ///
+    /// # Errors
+    ///
+    /// broker 连接不可用或 progress 发送失败时返回 `Unavailable`；超过配置的
+    /// `command_timeout` 时返回 `DeadlineExceeded`。
     pub async fn progress(&self) -> XResult<()> {
-        self.raw.ack_with(async_nats::jetstream::AckKind::Progress).await.map_err(|error| {
-            XError::unavailable("natsx jetstream: progress 发送失败").with_source(error)
+        run_bounded_command(self.command_timeout, "progress", async {
+            self.raw.ack_with(async_nats::jetstream::AckKind::Progress).await.map_err(|error| {
+                XError::unavailable("natsx jetstream: progress 发送失败").with_source(error)
+            })
         })
+        .await
     }
 
     /// 终止该消息后续重投；消费 `self`。
     ///
     /// `term` **不是 DLQ**，不会自动把 payload 发布到隔离 subject。
+    ///
+    /// # Errors
+    ///
+    /// broker 连接不可用或终止指令发送失败时返回 `Unavailable`；超过配置的
+    /// `command_timeout` 时返回 `DeadlineExceeded`。
     pub async fn term(self) -> XResult<()> {
-        self.raw.ack_with(async_nats::jetstream::AckKind::Term).await.map_err(|error| {
-            XError::unavailable("natsx jetstream: term 发送失败").with_source(error)
+        run_bounded_command(self.command_timeout, "term", async move {
+            self.raw.ack_with(async_nats::jetstream::AckKind::Term).await.map_err(|error| {
+                XError::unavailable("natsx jetstream: term 发送失败").with_source(error)
+            })
         })
+        .await
     }
 }
 
@@ -213,6 +282,10 @@ impl JetStreamConsumer {
     ///
     /// 服务端 fetch expiry 正常结束返回 `Ok(None)`；broker/协议错误返回 `Err`。
     /// 外层客户端超时比服务端 expiry 多一秒，仅用于阻止连接异常时无限挂起。
+    ///
+    /// # Errors
+    ///
+    /// `timeout` 为零、fetch 创建失败、broker 返回错误或服务端未按期终止时返回错误。
     pub async fn next_timeout(&self, timeout: Duration) -> XResult<Option<JetStreamDelivery>> {
         if timeout.is_zero() {
             return Err(XError::invalid("natsx jetstream: fetch timeout 必须大于零"));
@@ -226,7 +299,9 @@ impl JetStreamConsumer {
                 XError::unavailable("natsx jetstream: 创建有限 fetch 失败").with_source(error)
             })?;
         match tokio::time::timeout(client_deadline, batch.next()).await {
-            Ok(Some(Ok(message))) => JetStreamDelivery::from_raw(message).map(Some),
+            Ok(Some(Ok(message))) => {
+                JetStreamDelivery::from_raw(message, self.command_timeout).map(Some)
+            }
             Ok(Some(Err(error))) => {
                 Err(XError::unavailable("natsx jetstream: 拉取消息失败").with_source(error))
             }
@@ -336,6 +411,10 @@ impl JetStream {
     }
 
     /// 创建或更新显式确认的 durable consumer，并返回稳定消费面。
+    ///
+    /// # Errors
+    ///
+    /// stream/consumer 配置非法或 broker 创建 consumer 失败时返回错误。
     pub async fn consumer(
         &self,
         stream: &str,
@@ -343,6 +422,7 @@ impl JetStream {
     ) -> XResult<JetStreamConsumer> {
         validate_stream_name(stream)?;
         cfg.validate()?;
+        let command_timeout = cfg.command_timeout;
         let pull = async_nats::jetstream::consumer::pull::Config {
             durable_name: Some(cfg.durable_name),
             filter_subject: cfg.filter_subject.unwrap_or_default(),
@@ -352,11 +432,17 @@ impl JetStream {
             max_ack_pending: cfg.max_ack_pending,
             ..Default::default()
         };
-        let inner =
-            self.context.create_consumer_on_stream(pull, stream).await.map_err(|error| {
+        let create = self.context.create_consumer_on_stream(pull, stream);
+        let inner = tokio::time::timeout(command_timeout, create)
+            .await
+            .map_err(|error| {
+                XError::deadline_exceeded("natsx jetstream: 创建持久 consumer 超时")
+                    .with_source(error)
+            })?
+            .map_err(|error| {
                 XError::unavailable("natsx jetstream: 创建持久 consumer 失败").with_source(error)
             })?;
-        Ok(JetStreamConsumer { inner })
+        Ok(JetStreamConsumer { inner, command_timeout })
     }
 
     /// 获取已有 pull consumer 的底层句柄（高级逃生口）。
@@ -416,11 +502,10 @@ mod tests {
     fn stream_name_validation() {
         assert!(validate_stream_name("events").is_ok());
         assert!(validate_stream_name("EV_1").is_ok());
-        assert!(validate_stream_name("").is_err());
-        assert!(validate_stream_name("bad.name").is_err());
-        assert!(validate_stream_name("bad*name").is_err());
-        assert!(validate_stream_name("bad>name").is_err());
-        assert!(validate_stream_name("has space").is_err());
+        for invalid in ["", "bad.name", "bad*name", "bad>name", "has space"] {
+            let error = validate_stream_name(invalid).expect_err("非法 stream 名必须失败");
+            assert_eq!(error.kind(), ErrorKind::Invalid);
+        }
     }
 
     #[test]
@@ -443,20 +528,38 @@ mod tests {
         let durable = JetStreamConsumerConfig::durable("worker-3");
         assert_eq!(durable.max_deliver, 5);
         assert_eq!(durable.max_ack_pending, 1_024);
-        assert!(durable.validate().is_ok());
+        assert_eq!(durable.command_timeout, Duration::from_secs(5));
+        durable.validate().expect("默认持久消费者配置应有效");
     }
 
     #[test]
     fn durable_consumer_config_rejects_unbounded_values() {
         let mut cfg = JetStreamConsumerConfig::durable("worker");
         cfg.ack_wait = Duration::ZERO;
-        assert!(cfg.validate().is_err());
+        let ack_wait = cfg.validate().expect_err("零 ack_wait 必须失败");
+        assert_eq!(ack_wait.kind(), ErrorKind::Invalid);
         cfg.ack_wait = Duration::from_secs(1);
         cfg.max_deliver = 0;
-        assert!(cfg.validate().is_err());
+        let max_deliver = cfg.validate().expect_err("零 max_deliver 必须失败");
+        assert_eq!(max_deliver.kind(), ErrorKind::Invalid);
         cfg.max_deliver = 1;
         cfg.max_ack_pending = 0;
-        assert!(cfg.validate().is_err());
+        let max_ack_pending = cfg.validate().expect_err("零 max_ack_pending 必须失败");
+        assert_eq!(max_ack_pending.kind(), ErrorKind::Invalid);
+        cfg.max_ack_pending = 1;
+        cfg.command_timeout = Duration::ZERO;
+        let command_timeout = cfg.validate().expect_err("零 command_timeout 必须失败");
+        assert_eq!(command_timeout.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn broker_command_timeout_maps_to_deadline_exceeded() {
+        let pending = std::future::pending::<XResult<()>>();
+        let error = run_bounded_command(Duration::from_millis(1), "测试指令", pending)
+            .await
+            .expect_err("挂起指令必须按截止时间失败");
+        assert_eq!(error.kind(), ErrorKind::DeadlineExceeded);
+        assert!(std::error::Error::source(&error).is_some());
     }
 
     #[test]
@@ -480,16 +583,15 @@ mod tests {
         let res = tokio::time::timeout(Duration::from_secs(2), NatsPool::connect(cfg)).await;
         match res {
             Ok(Err(err)) => assert_eq!(err.kind(), ErrorKind::Unavailable),
-            Ok(Ok(_)) => panic!("must fail without server"),
-            Err(_) => {
-                // 超时也算连接失败路径已覆盖
-            }
+            Ok(Ok(_)) => panic!("无服务端时必须连接失败"),
+            Err(_) => panic!("连接拒绝路径不得超出测试硬超时"),
         }
 
         // 离线：validate_stream_name 在无服务器时仍可用
         assert!(validate_stream_name("offline_ok").is_ok());
         assert!(validate_consumer_name("c1").is_ok());
-        assert!(validate_consumer_name("").is_err());
+        let consumer_error = validate_consumer_name("").expect_err("空 consumer 名必须失败");
+        assert_eq!(consumer_error.kind(), ErrorKind::Invalid);
     }
 
     #[test]

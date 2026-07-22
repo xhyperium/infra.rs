@@ -49,15 +49,16 @@ cargo clippy -p kafkax --all-targets -- -D warnings
 可复现 broker conformance：
 
 ```bash
-./scripts/broker-conformance.sh
+node scripts/broker-conformance.mjs
 ```
 
 Kafka 场景必须证明：
 
-1. 未 ack 后重建读取相同 offset；
-2. ack 后重建读取下一 offset；
-3. produce 成功但 checkpoint 失败后重试可产生重复；
-4. 唯一 topic、硬超时、日志与容器清理。
+1. AMO EventBus 不回放订阅建立前的消息；
+2. 未 ack 后重建读取相同 offset；
+3. ack 后重建读取下一 offset；
+4. produce 成功但 checkpoint 失败后重试可产生重复；
+5. 唯一 topic、cargo 外层硬超时、日志与容器清理。
 
 受控外部环境仍可运行 `tests/live_event_bus.rs`，但 ignored 或单节点 PASS 不得升级为 group/rebalance/TLS/HA/native EOS 结论。
 

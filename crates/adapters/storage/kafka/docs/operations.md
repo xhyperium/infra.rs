@@ -16,7 +16,7 @@
 
 ## 升级 / 回滚
 
-1. 发布前跑 `cargo test -p kafkax` 与 `./scripts/broker-conformance.sh`
+1. 发布前跑 `cargo test -p kafkax` 与 `node scripts/broker-conformance.mjs`
 2. 升级：先滚动 canary 实例，观察错误率与延迟
 3. 回滚：回退至上一 crate 版本；配置 schema 保持向后兼容（仅新增字段）
 

@@ -25,6 +25,7 @@ Core NATS 与 JetStream 是两个独立合同。Core 发布发生在订阅建立
 - `ack_wait > 0`；
 - `max_deliver > 0`；
 - `max_ack_pending > 0`；
+- `command_timeout > 0`，用于约束 ack/nak/progress/term 等 broker 指令；
 - durable name 合法，filter subject 若存在则非空。
 
 `JetStreamConsumer::next_timeout` 同时设置服务端 fetch expiry 与客户端外层超时。服务端有限批次正常到期为 `Ok(None)`；broker/协议错误保留 source 并返回 `Unavailable`；服务端未在 expiry 后结束则返回 `DeadlineExceeded`。
@@ -39,7 +40,7 @@ Core NATS 与 JetStream 是两个独立合同。Core 发布发生在订阅建立
 - `progress(&self)`：延长处理窗口；
 - `term(self)`：停止该消息继续重投。
 
-`term` 与 `max_deliver` 都不等于 DLQ：库不会自动把 payload 发布到隔离 subject。DLQ 路由、业务重试与幂等由应用显式实现。
+`term` 与 `max_deliver` 都不等于 DLQ：库不会自动把 payload 发布到隔离 subject。conformance 只对约定的 DLQ 探针作负向检查；其他业务路由由应用显式实现并验证。
 
 ## 3. 安全与运维边界
 
@@ -60,16 +61,17 @@ cargo clippy -p natsx --all-targets -- -D warnings
 可复现 broker conformance：
 
 ```bash
-./scripts/broker-conformance.sh
+node scripts/broker-conformance.mjs
 ```
 
 NATS 场景必须证明：
 
 1. Core NATS 不回放订阅前消息；
-2. JetStream 未 ack 后按相同 stream sequence 重投，double ack 后停止；
-3. `max_ack_pending=1` 在未 ack 时背压、ack 后恢复；
-4. `max_deliver` 与 `term` 停止重投但不会自动创建 DLQ；
-5. 唯一 stream/subject/durable、硬超时、日志与清理。
+2. JetStream 连接重建后按相同 stream sequence 重投，double ack 后停止；
+3. `nak` 触发重投，`progress` 延长 ack wait；
+4. `max_ack_pending=1` 在未 ack 时背压、ack 后恢复；
+5. `max_deliver` 与 `term` 停止重投且 DLQ 探针无消息；
+6. 唯一 stream/subject/durable、cargo 外层硬超时、日志与清理。
 
 受控外部环境仍可运行 `tests/live_event_bus.rs`，但 ignored 或单节点 PASS 不得升级为 Cluster/HA/TLS/exactly-once 结论。
 

@@ -14,7 +14,7 @@ cargo clippy -p natsx --all-targets -- -D warnings
 可复现单节点 conformance（优先）：
 
 ```bash
-./scripts/broker-conformance.sh
+node scripts/broker-conformance.mjs
 ```
 
 ```bash

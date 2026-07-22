@@ -27,10 +27,10 @@
 ```bash
 cargo test -p kafkax --all-targets
 cargo clippy -p kafkax --all-targets -- -D warnings
-./scripts/broker-conformance.sh
+node scripts/broker-conformance.mjs
 ```
 
-broker conformance 已覆盖：未 ack 重建同 offset、ack 后推进、produce 成功/checkpoint 失败后的可观察重复。单节点容器结果不证明 group/rebalance/HA/TLS/native EOS。
+broker conformance 已覆盖：AMO 无历史回放、未 ack 重建同 offset、ack 后推进、produce 成功/checkpoint 失败后的可观察重复。单节点容器结果不证明 group/rebalance/HA/TLS/native EOS。
 
 ## 相关
 

@@ -18,26 +18,26 @@ fn unique_suffix() -> String {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-#[ignore = "requires live Kafka; run with --ignored when broker available"]
+#[ignore = "需要可用 Kafka；请在 broker 就绪后使用 --ignored 运行"]
 async fn live_publish_consume_content() {
     let cfg = KafkaConfig::from_env();
-    let pool = KafkaPool::connect(cfg).await.expect("connect");
+    let pool = KafkaPool::connect(cfg).await.expect("连接 Kafka");
 
     let topic = format!("infra-draft-kafkax-{}", unique_suffix());
-    pool.ensure_topic(&topic, 1, 1).await.expect("ensure_topic");
+    pool.ensure_topic(&topic, 1, 1).await.expect("创建主题");
     tokio::time::sleep(Duration::from_secs(1)).await;
 
-    let health = pool.health().await.expect("health");
-    assert!(health.ready, "cluster not ready: {}", health.detail);
+    let health = pool.health().await.expect("读取健康状态");
+    assert!(health.ready, "集群未就绪：{}", health.detail);
 
     let payload = format!("payload-{}", unique_suffix());
     let mut consumer = pool
         .consumer(ConsumerConfig::assign(&topic, 0, format!("g-{}", unique_suffix())))
         .await
-        .expect("consumer");
+        .expect("创建消费者");
 
     let delivery =
-        pool.producer().publish(&topic, Bytes::from(payload.clone())).await.expect("publish");
+        pool.producer().publish(&topic, Bytes::from(payload.clone())).await.expect("发布消息");
     assert_eq!(delivery.partition, 0);
 
     let deadline = tokio::time::Instant::now() + Duration::from_secs(30);
@@ -51,10 +51,10 @@ async fn live_publish_consume_content() {
                 }
             }
             Ok(None) => {}
-            Err(e) => eprintln!("recv err: {e}"),
+            Err(e) => eprintln!("接收消息失败：{e}"),
         }
     }
-    let msg = found.expect("did not receive published payload in time");
+    let msg = found.expect("未在截止时间内收到已发布 payload");
     assert_eq!(msg.payload.as_ref(), payload.as_bytes());
     assert_eq!(msg.bus_id(), encode_bus_id(&msg.topic, msg.partition, msg.offset));
     assert_eq!(msg.offset, delivery.offset);
@@ -63,11 +63,11 @@ async fn live_publish_consume_content() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-#[ignore = "requires live Kafka; EventBus publish + id encoding"]
+#[ignore = "需要可用 Kafka；验证 EventBus 发布与消息 ID 编码"]
 async fn live_event_bus_publish_and_id() {
-    let pool = KafkaPool::connect_from_env().await.expect("connect");
+    let pool = KafkaPool::connect_from_env().await.expect("连接 Kafka");
     let topic = format!("infra-draft-kafkax-eb-{}", unique_suffix());
-    pool.ensure_topic(&topic, 1, 1).await.expect("ensure_topic");
+    pool.ensure_topic(&topic, 1, 1).await.expect("创建主题");
     tokio::time::sleep(Duration::from_secs(1)).await;
 
     let bus = KafkaEventBus::new(pool.clone());
@@ -76,9 +76,9 @@ async fn live_event_bus_publish_and_id() {
     let mut consumer = pool
         .consumer(ConsumerConfig::assign(&topic, 0, format!("eb-{}", unique_suffix())))
         .await
-        .expect("consumer");
+        .expect("创建消费者");
 
-    EventBus::publish(&bus, &topic, Bytes::from(payload.clone())).await.expect("publish");
+    EventBus::publish(&bus, &topic, Bytes::from(payload.clone())).await.expect("发布消息");
 
     let deadline = tokio::time::Instant::now() + Duration::from_secs(30);
     let mut hit = false;
@@ -87,7 +87,7 @@ async fn live_event_bus_publish_and_id() {
             Ok(Some(msg)) if msg.payload.as_ref() == payload.as_bytes() => {
                 let id = msg.bus_id();
                 assert_eq!(id, encode_bus_id(&msg.topic, msg.partition, msg.offset));
-                let (t, p, o) = kafkax::parse_bus_id(&id).expect("parse id");
+                let (t, p, o) = kafkax::parse_bus_id(&id).expect("解析消息 ID");
                 assert_eq!(t, topic.as_str());
                 assert_eq!(p, msg.partition);
                 assert_eq!(o, msg.offset);
@@ -96,9 +96,9 @@ async fn live_event_bus_publish_and_id() {
             }
             Ok(Some(_)) => {}
             Ok(None) => {}
-            Err(e) => eprintln!("recv err {e}"),
+            Err(e) => eprintln!("接收消息失败：{e}"),
         }
     }
-    assert!(hit, "did not observe EventBus published payload");
+    assert!(hit, "未观察到 EventBus 发布的 payload");
     let _ = pool.close(Duration::from_secs(3)).await;
 }

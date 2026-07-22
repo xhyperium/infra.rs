@@ -38,5 +38,5 @@ pool.close(std::time::Duration::from_secs(3)).await?;
 | `SASL_USERNAME` / `SASL_PASSWORD` | SASL 凭据 |
 | `TLS` | 当前未接入；`true` 会 fail-closed，禁止静默明文降级 |
 
-可复现的单节点 broker 语义测试：`./scripts/broker-conformance.sh`。该结果不证明
+可复现的单节点 broker 语义测试：`node scripts/broker-conformance.mjs`。该结果不证明
 group/rebalance/HA/TLS/native EOS。

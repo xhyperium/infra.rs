@@ -9,8 +9,10 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use async_trait::async_trait;
 use bytes::Bytes;
+use contracts::EventBus;
+use futures_util::StreamExt;
 use kafkax::{
-    ConsumerConfig, FileOffsetStore, KafkaAtLeastOnceBus, KafkaConfig, KafkaPool,
+    ConsumerConfig, FileOffsetStore, KafkaAtLeastOnceBus, KafkaConfig, KafkaEventBus, KafkaPool,
     MemoryOffsetStore, OffsetCommitStore, ProduceThenCheckpointCoordinator,
 };
 use kernel::{ErrorKind, XError, XResult};
@@ -26,11 +28,36 @@ async fn live_pool() -> KafkaPool {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-#[ignore = "requires isolated Kafka; run via scripts/broker-conformance.sh"]
+#[ignore = "需要隔离 Kafka；请通过 scripts/broker-conformance.mjs 运行"]
+async fn event_bus_does_not_replay_messages_published_before_subscribe() {
+    let pool = live_pool().await;
+    let topic = format!("infra-conformance-amo-{}", unique_suffix());
+    eprintln!("Kafka AMO 语义验证主题：{topic}");
+    pool.ensure_topic(&topic, 1, 1).await.expect("创建 topic");
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    pool.producer()
+        .publish(&topic, Bytes::from_static(b"before-subscribe"))
+        .await
+        .expect("订阅前发布");
+
+    let bus = KafkaEventBus::new(pool.clone());
+    let mut stream = bus.subscribe(&topic).await.expect("建立 AMO 订阅");
+    tokio::time::sleep(Duration::from_millis(500)).await;
+    bus.publish(&topic, Bytes::from_static(b"after-subscribe")).await.expect("订阅后发布");
+    let observed = tokio::time::timeout(Duration::from_secs(10), stream.next())
+        .await
+        .expect("等待订阅后消息")
+        .expect("订阅保持打开");
+    assert_eq!(observed.payload, Bytes::from_static(b"after-subscribe"));
+    pool.close(Duration::from_secs(3)).await.expect("关闭 Kafka pool");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+#[ignore = "需要隔离 Kafka；请通过 scripts/broker-conformance.mjs 运行"]
 async fn unacked_restarts_same_offset_and_acked_advances() {
     let pool = live_pool().await;
     let topic = format!("infra-conformance-checkpoint-{}", unique_suffix());
-    eprintln!("kafka conformance topic={topic}");
+    eprintln!("Kafka checkpoint 语义验证主题：{topic}");
     pool.ensure_topic(&topic, 1, 1).await.expect("创建 topic");
     tokio::time::sleep(Duration::from_secs(1)).await;
 
@@ -39,7 +66,11 @@ async fn unacked_restarts_same_offset_and_acked_advances() {
     pool.producer().publish(&topic, first_payload.clone()).await.expect("发布第一条");
 
     let dir = std::env::temp_dir().join(format!("kafkax-conformance-{}", unique_suffix()));
-    std::fs::create_dir_all(&dir).expect("创建 checkpoint 临时目录");
+    let create_dir = dir.clone();
+    tokio::task::spawn_blocking(move || std::fs::create_dir_all(create_dir))
+        .await
+        .expect("等待创建 checkpoint 临时目录")
+        .expect("创建 checkpoint 临时目录");
     let path = dir.join("offsets.tsv");
     let first_store: Arc<dyn OffsetCommitStore> = Arc::new(FileOffsetStore::new(&path));
     let bus = KafkaAtLeastOnceBus::new(pool.clone(), first_store);
@@ -82,7 +113,10 @@ async fn unacked_restarts_same_offset_and_acked_advances() {
     assert_eq!(next.payload, second_payload);
     advanced.ack().await.expect("确认第二条");
 
-    std::fs::remove_dir_all(&dir).expect("清理 checkpoint 临时目录");
+    tokio::task::spawn_blocking(move || std::fs::remove_dir_all(dir))
+        .await
+        .expect("等待清理 checkpoint 临时目录")
+        .expect("清理 checkpoint 临时目录");
     pool.close(Duration::from_secs(3)).await.expect("关闭 Kafka pool");
 }
 
@@ -112,11 +146,11 @@ impl OffsetCommitStore for FailFirstCommitStore {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-#[ignore = "requires isolated Kafka; run via scripts/broker-conformance.sh"]
+#[ignore = "需要隔离 Kafka；请通过 scripts/broker-conformance.mjs 运行"]
 async fn successful_produce_then_failed_checkpoint_has_duplicate_window() {
     let pool = live_pool().await;
     let topic = format!("infra-conformance-duplicate-{}", unique_suffix());
-    eprintln!("kafka conformance duplicate-window topic={topic}");
+    eprintln!("Kafka 重复窗口验证主题：{topic}");
     pool.ensure_topic(&topic, 1, 1).await.expect("创建 topic");
     tokio::time::sleep(Duration::from_secs(1)).await;
 
