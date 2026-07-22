@@ -10,7 +10,6 @@
 - 公开 API 集成覆盖扩展（`tests/public_api_surface.rs` 等）
 - `docs/API.md`：公开消费面与最小用法
 
-
 ## [0.1.0] - 2026-07-21
 
 ### 新增

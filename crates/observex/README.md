@@ -57,7 +57,6 @@ node scripts/cov-gate-100.mjs -p observex --filter crates/observex/src
 
 示例：`cargo run -p observex --example trace_events`
 
-
 ## Subscriber 故障隔离（infra-s9t.17）
 
 - `TracingInstrumentation` 仅调用 `tracing::info!`；**无**自定义 subscriber 时为 no-op，不 panic。

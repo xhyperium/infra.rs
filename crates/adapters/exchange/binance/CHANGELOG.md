@@ -7,7 +7,6 @@
 - 签名 REST：HTTP 4xx + 业务错误体优先映射 `ErrorKind`（先于 status→Unavailable）
 - 测试：HTTP 400 + `-1013`/`-2011` 驱动 place/cancel 真实入口
 
-
 ## [0.3.1] — 2026-07-22
 
 ### Added
