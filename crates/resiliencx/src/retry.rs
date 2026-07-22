@@ -223,6 +223,31 @@ pub fn retry_fn_with_wait(
     wait: &dyn Wait,
     f: &mut dyn FnMut() -> XResult<RetryValue>,
 ) -> XResult<RetryValue> {
+    retry_fn_with_wait_budget(config, instrumentation, op, wait, None, f)
+}
+
+/// 带可选 [`crate::RetryBudget`] 的重试。
+///
+/// 在即将发起第 N 次重试（非首次）前 `try_consume`；预算耗尽返回 budget 错误。
+pub fn retry_fn_with_budget(
+    config: &RetryConfig,
+    instrumentation: &dyn Instrumentation,
+    op: &str,
+    budget: &crate::RetryBudget,
+    f: &mut dyn FnMut() -> XResult<RetryValue>,
+) -> XResult<RetryValue> {
+    retry_fn_with_wait_budget(config, instrumentation, op, &ThreadSleepWait, Some(budget), f)
+}
+
+/// 完整：Wait + 可选预算。
+pub fn retry_fn_with_wait_budget(
+    config: &RetryConfig,
+    instrumentation: &dyn Instrumentation,
+    op: &str,
+    wait: &dyn Wait,
+    budget: Option<&crate::RetryBudget>,
+    f: &mut dyn FnMut() -> XResult<RetryValue>,
+) -> XResult<RetryValue> {
     let mut last_err = None;
     for attempt in 1..=config.max_attempts {
         match f() {
@@ -231,6 +256,11 @@ pub fn retry_fn_with_wait(
                 let retryable = e.is_retryable();
                 last_err = Some(e);
                 if retryable && attempt < config.max_attempts {
+                    if let Some(b) = budget {
+                        if !b.try_consume() {
+                            return Err(crate::budget_exhausted_error());
+                        }
+                    }
                     instrumentation.record_retry(op, attempt);
                     let delay = retry_delay_ms(config, attempt);
                     wait.wait_ms(delay);
@@ -407,5 +437,26 @@ mod tests {
         let d = RetryConfig::default();
         assert_eq!(d.backoff, Backoff::Constant);
         assert_eq!(d.jitter_bps, 0);
+    }
+
+    #[test]
+    fn budget_stops_further_retries() {
+        let cfg = RetryConfig::fixed(10, 0);
+        let budget = crate::RetryBudget::new(1); // only one retry token
+        let hits = std::sync::Mutex::new(0u32);
+        let mut op = || {
+            let mut g = hits.lock().unwrap();
+            *g += 1;
+            Err(XError::transient("t"))
+        };
+        let instr = crate::NoopInstrumentation;
+        let err = retry_fn_with_wait_budget(&cfg, &instr, "op", &NoWait, Some(&budget), &mut op)
+            .unwrap_err();
+        // 第 1 次失败 → consume → 第 2 次失败 → consume 失败 → Unavailable
+        assert_eq!(err.kind(), kernel::ErrorKind::Unavailable);
+        assert_eq!(*hits.lock().unwrap(), 2);
+        assert!(budget.is_exhausted());
+        budget.reset();
+        assert_eq!(budget.remaining(), 1);
     }
 }

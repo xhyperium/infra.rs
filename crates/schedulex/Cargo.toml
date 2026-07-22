@@ -1,10 +1,10 @@
 [package]
 name = "schedulex"
-version = "0.1.0"
+version = "0.1.1"
 publish = false
 edition.workspace = true
 rust-version.workspace = true
-description = "L1 task-id registry (active schedulex SSOT: no real timers)"
+description = "L1 task-id registry + deterministic JobRunner (tick-driven; minimal cron)"
 license.workspace = true
 repository.workspace = true
 

@@ -5,8 +5,11 @@
 //! | [`EvidenceAppender`] | 对象安全追加 trait |
 //! | [`InMemoryEvidenceAppender`] | 进程内（**非**合规审计） |
 //! | [`FileEvidenceAppender`] | 本地文件最小持久化 |
+//! | [`EvidenceQuery`] | 按名 / 序号范围查询 |
+//! | [`SignedEvidence`] | HMAC-SHA256 签名 wire |
+//! | [`RemoteEvidenceAppender`] | 可注入 [`EvidenceTransport`] 的远程追加 |
 //!
-//! **非目标**：远程签名链、跨进程总线。
+//! **非目标**：跨进程合规总线、PKI 证书链。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -19,11 +22,19 @@ use std::sync::Mutex;
 mod format;
 mod inspect;
 mod policy;
+mod query;
+mod remote;
+mod sign;
 pub use format::{format_line, max_seq, parse_line, render_log};
 pub use inspect::{event_count, seq_is_monotonic, validate_log_text};
 pub use policy::{
     BackendClass, allows_as_sole_compliance_store, allows_in_memory_for_compliance, classify_file,
     classify_in_memory, classify_remote, file_appender_is_min_durable, policy_summary,
+};
+pub use query::EvidenceQuery;
+pub use remote::{EvidenceTransport, FnTransport, MockEvidenceTransport, RemoteEvidenceAppender};
+pub use sign::{
+    SignedEvidence, canonical_bytes, hmac_sha256, sign_evidence, signature_hex, verify_evidence,
 };
 
 /// 证据错误。
@@ -138,6 +149,30 @@ impl InMemoryEvidenceAppender {
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    /// 内部锁（查询模块使用）。
+    pub(crate) fn inner_lock(&self) -> Result<std::sync::MutexGuard<'_, MemState>, EvidenceError> {
+        self.inner.lock().map_err(|_| EvidenceError::Unavailable)
+    }
+
+    /// 按名查询（便捷方法，委托 [`EvidenceQuery`]）。
+    pub fn query_by_name(&self, name: &str) -> Result<Vec<AppendReceipt>, EvidenceError> {
+        EvidenceQuery::query_by_name(self, name)
+    }
+
+    /// 序号范围查询。
+    pub fn query_range(
+        &self,
+        seq_start: u64,
+        seq_end: u64,
+    ) -> Result<Vec<AppendReceipt>, EvidenceError> {
+        EvidenceQuery::query_range(self, seq_start, seq_end)
+    }
+
+    /// 列出全部。
+    pub fn list_all(&self) -> Result<Vec<AppendReceipt>, EvidenceError> {
+        EvidenceQuery::list_all(self)
     }
 }
 
@@ -309,5 +344,21 @@ mod tests {
         let f = FileEvidenceAppender::open(&path).unwrap();
         assert_eq!(f.append_named("bad\nname"), Err(EvidenceError::DurabilityFailure));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn query_sign_remote_integration() {
+        let a = InMemoryEvidenceAppender::new();
+        a.append_named("e1").unwrap();
+        a.append_named("e2").unwrap();
+        assert_eq!(a.query_by_name("e1").unwrap().len(), 1);
+        assert_eq!(a.query_range(1, 2).unwrap().len(), 2);
+        assert_eq!(a.list_all().unwrap().len(), 2);
+        let signed = sign_evidence(b"k", 1, "e1");
+        verify_evidence(b"k", &signed).unwrap();
+        let mock = MockEvidenceTransport::new();
+        let remote = RemoteEvidenceAppender::new(mock);
+        remote.append_named("r1").unwrap();
+        assert_eq!(remote.transport().lines().len(), 1);
     }
 }

@@ -5,10 +5,11 @@
 | Spec | SPEC-KERNEL-002（`.agents/ssot/kernel/spec/spec.md` ≡ `xhyper-kernel-complete-spec.md`） |
 | 镜像 | `.agents/ssot/kernel/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 本仓实现 | `crates/kernel` · package **`kernel`** · lib `kernel` · workspace version `0.3.0` |
-| 审计日期 | 2026-07-21 |
+| 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
 | 内部生产层级 | **L1 Internal Ready + L4 Platform Ready** |
 | 内部发布状态 | **已执行**（PR #159 实现 · #163 发布记录 · tag/GitHub Release `v0.3.0-four-crates`） |
-| 结论 | **可移植语义面 + §11 可在本仓执行的合同：无残留 FAIL**；**内部生产已发布**；**≠** crates.io / 整体 Production Ready |
+| 结论 | **可移植语义面 + §11 可在本仓执行的合同：无残留 FAIL**；**内部生产已发布**；**≠** crates.io / 整体 Production Ready / Agent L5 |
+| OBJECTIVE 主项 | archgate = **OOS-Accept**；组合根 drain 所有权 = **PASS**（落在 bootstrap，见 bootstrap 对齐文） |
 
 ## 结论摘要
 
@@ -187,15 +188,28 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 
 ## 残留 FAIL
 
-**无。** 所有实现相关 FAIL 已在 `crates/kernel` 内消除；未完成项均为显式 **DEFER** 或 **OOS**（archgate 明确不移植）。
+**无。** 所有实现相关 FAIL 已在 `crates/kernel` 内消除；OBJECTIVE 未完成项仅为 **OOS-Accept**（archgate）；crates.io 再发布为显式不动作。
+
+## OBJECTIVE 处置（2026-07-22 defer-close）
+
+| 项 | 前状态 | 现状态 | 证据 |
+|----|--------|--------|------|
+| archgate / `.architecture` | OOS | **OOS-Accept** | 本仓明确不移植；机控 = 结构扫描 / CI / `check-public-api.mjs` |
+| 组合根 drain 所有权 | 审查侧 DEFER（「在 bootstrap」） | **PASS**（归属 bootstrap） | `crates/bootstrap/src/drain.rs` · `AsyncDrain` · `Bootstrap::register_drain` / `AppContext::run_drain`；**不**在 kernel 实现 |
 
 ## 未做（follow-up，不阻塞本仓语义对齐）
 
-- archgate 明确不移植（**OOS**）；机控继续用结构扫描 / CI / public-api 等已有门禁
+- archgate 明确不移植（**OOS-Accept**）；机控继续用结构扫描 / CI / public-api 等已有门禁
 - mutants / miri 本会话全量实测通过声明（CI 入口已有）
 - crates.io 再发布与 `publish = true`
 - 上游 SSOT 镜像内部措辞收口（应在 xhyper.rs 修，再删除感知同步）
-- 整体 Production Ready 签字（见 [core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) §8/§11）
+- 整体 Production Ready / **Agent L5 人签**（见 [core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) §8/§11；模板 `docs/governance/prod-signoff-TEMPLATE.md`）
+
+## 变更记录
+
+| 日期 | 说明 |
+|------|------|
+| 2026-07-22 | **defer-close**：OBJECTIVE 表 archgate OOS-Accept；drain 归属 bootstrap PASS |
 
 ## Workspace 交叉引用
 

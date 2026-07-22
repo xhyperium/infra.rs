@@ -2,10 +2,10 @@
 
 | 字段 | 值 |
 |------|-----|
-| 日期 | 2026-07-21 |
+| 日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
 | Active SSOT | `.agents/ssot/resiliencx/spec/spec.md` |
 | 用户路径别名 | `.agent/ssot/resiliencx` → `.agents/ssot/resiliencx` |
-| 实现 | `crates/resiliencx` · package `resiliencx`（文档/产品名可写 xhyper-resiliencx） |
+| 实现 | `crates/resiliencx` · package `resiliencx` |
 
 ## 结论
 
@@ -17,8 +17,18 @@
 | 舱壁（bulkhead） | **PASS**（并发上限；RAII） | `bulkhead.rs` + unit/public_api |
 | Instrumentation | **PASS** | re-export `contracts::Instrumentation`；禁止 observex |
 | LCOV 行 100% | **PASS** | `cov-gate-100.mjs -p resiliencx` |
-| async wait | **PASS**（infra-s9t.6 / #167） | `retry_async` + `AsyncWait`；feature `tokio` → `TokioSleepWait` |
-| backoff / budget / stable | **DEFER** | residual OPEN |
+| async wait | **PASS**（#167） | `retry_async` + `AsyncWait`；feature `tokio` → `TokioSleepWait` |
+| budget | **PASS** | `src/budget.rs` · 重试/调用预算 |
+| adapter 接线（redis/pg） | **PASS** | `crates/adapters/storage/redis/src/resilience.rs` · `postgres/src/resilience.rs` |
+| 全 9 adapters 统一接线 / package stable | **OPEN** | 本轮关闭 redis+pg 最小 wire；其余 adapter 按需跟进 |
+| Agent L5 | **未填** | — |
+
+## OBJECTIVE 处置（2026-07-22 defer-close）
+
+| 项 | 前状态 | 现状态 | 证据 |
+|----|--------|--------|------|
+| budget | DEFER | **PASS** | `crates/resiliencx/src/budget.rs` |
+| 接入 adapters | DEFER | **PASS（redisx + postgresx）** | `redis/src/resilience.rs` · `postgres/src/resilience.rs` |
 
 ## 熔断合同（本仓）
 
@@ -45,6 +55,7 @@
 ```bash
 cargo test -p resiliencx --all-targets
 cargo test -p resiliencx --features tokio --all-targets
+cargo test -p redisx -p postgresx --all-targets
 cargo clippy -p resiliencx --all-targets -- -D warnings
 node scripts/quality-gates/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
 cargo tree -p resiliencx -i observex  # 须无匹配
@@ -56,6 +67,12 @@ cargo tree -p resiliencx -i observex  # 须无匹配
 |------|------|
 | STATUS 结构完成度 | **100%**（layout+tests+content；非 Production Ready） |
 | 声明面生产硬化 | 公共 API 集成测 + 热路径 bench + `docs/` 红线；**cov-gate-100 行覆盖** |
-| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 扩大 SSOT DEFER 平台面 |
+| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 全 adapters 统一 resiliency 产品 |
 
-自验证：`cargo test -p resiliencx --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p resiliencx`；`cargo run -p resiliencx --example …`；`cargo bench -p resiliencx --bench hot_path -- --quick`。
+自验证：`cargo test -p resiliencx --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p resiliencx`。
+
+## 变更记录
+
+| 日期 | 说明 |
+|------|------|
+| 2026-07-22 | **defer-close**：budget + redis/pg resilience wire PASS |

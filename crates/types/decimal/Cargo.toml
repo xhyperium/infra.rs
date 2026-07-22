@@ -1,6 +1,6 @@
 [package]
 name = "decimalx"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 rust-version.workspace = true
 description = "/types/ 十进制数值类型（ADR-006/007，spec §4.2）"
@@ -10,6 +10,11 @@ publish = false
 
 [lib]
 name = "decimalx"
+
+[features]
+default = []
+# 可选：`impl Add/Sub/Mul for Decimal`（溢出 panic）。生产资金路径必须保持关闭，改用 checked_*。
+panicking-ops = []
 
 [dependencies]
 # path + version：满足 cargo-deny bans.wildcards=deny（禁止裸 path 通配依赖）

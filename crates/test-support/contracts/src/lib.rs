@@ -23,15 +23,18 @@
 #![deny(unreachable_pub)]
 #![deny(missing_docs)]
 
+mod backend;
 mod failure;
 mod fakes;
 mod suite;
 
+pub use backend::{BackendProfile, classify_backends, classify_backends_with};
 pub use failure::{ContractFailure, ContractResult, ensure};
 pub use fakes::{
-    FakeAccountSource, FakeEventBus, FakeExecutionVenue, FakeInstrumentCatalog, FakeKeyValueStore,
-    FakeMarketDataSource, FakeRepository, FakeTxContext, FakeTxRunner, FakeVenueTimeSource,
-    InstrEvent, RecordingInstrumentation, RecordingTxRunner, default_symbol_meta, sample_order,
+    FakeAccountSource, FakeAnalyticsSink, FakeEventBus, FakeExecutionVenue, FakeInstrumentCatalog,
+    FakeKeyValueStore, FakeMarketDataSource, FakeObjectStore, FakePubSub, FakeRepository,
+    FakeTimeSeriesStore, FakeTxContext, FakeTxRunner, FakeVenueTimeSource, InstrEvent,
+    RecordingInstrumentation, RecordingTxRunner, default_symbol_meta, sample_order,
 };
 pub use suite::{
     assert_account_source, assert_event_bus, assert_execution_venue, assert_instrument_catalog,

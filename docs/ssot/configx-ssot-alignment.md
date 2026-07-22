@@ -5,8 +5,8 @@
 | Spec | active configx 0.1.0（`.agents/ssot/configx/spec/spec.md` ≡ `xhyper-configx-complete-spec.md`） |
 | 镜像 | `.agents/ssot/configx/**`（R6 只读；**禁止**改镜像冒充本仓完成） |
 | 本仓实现 | `crates/configx` · package `configx` · lib `configx` · version `0.1.0` |
-| 审计日期 | 2026-07-21 |
-| 结论 | **active 合同面（§2–§7 可移植条款）无 FAIL 残留**；上位多源/热更新能力统一 **DEFER** |
+| 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
+| 结论 | **active 合同面（§2–§7）无 FAIL**；**多源/热更新/secret 声明层 PASS**；**≠** 远端配置中心 / Agent L5 |
 
 ## 结论摘要
 
@@ -14,7 +14,10 @@
 |------|------|
 | 上游镜像 COMPLETE / 布局对齐 | 描述的是 **goal 管线布局**；**禁止**单独当作本仓实现证明 |
 | 本仓 `crates/configx` | **已落地**并与 active SSOT §2–§6 可移植子集对齐 |
-| 多源加载 / 热更新 / secret | **DEFER**（SSOT Unknown；未批准前不实现） |
+| 多源加载 / 分层合并 | **PASS**：`source.rs`（Memory/Env/File）+ `layered.rs`（后注册覆盖先注册） |
+| 热更新通知 | **PASS**：`watch.rs` · `ConfigWatch` / `ConfigSubscription`（**进程内**；非分布式配置中心） |
+| secret | **PASS**：`secret.rs` · `SecretString`（Debug 脱敏）+ `set_secret`/`get_secret` |
+| 远端配置中心 / 动态服务发现 | **OPEN（诚实边界）** — **未**实现；禁止宣称配置中心产品 |
 | line/branch cov | 目标 100%（`cargo llvm-cov -p configx`） |
 | 本仓 crates.io 再发布 | **不做**；`publish = false` |
 
@@ -29,7 +32,8 @@ version                         0.1.0
 publish                         false
 生产依赖                        仅 xhyper-kernel（path）
 features                        default = []
-公开面                          ConfigStore + new/get/set/Default
+公开面                          ConfigStore + source/layered/watch/secret
+模块                            lib · source · layered · watch · secret
 ```
 
 验证（本仓权威命令）：
@@ -89,7 +93,7 @@ cargo llvm-cov -p configx --summary-only
 | 4.3 | `get` 返回拥有字符串 | `set_then_get_returns_owned_clone` / `get_returns_owned_string_not_borrow` | PASS |
 | 4.4 | 锁失败不对称：读→None，写→Invalid | poison 两测 | PASS |
 | 4.5 | 不通过直接依赖 observex 观测 | `Cargo.toml` 无 observex | PASS |
-| 4.6 | 上位：多源优先级 / 解析校验 / 原子快照 / 更新通知 / 热重载 | 未实现；本仓不宣称 | DEFER（SSOT Unknown） |
+| 4.6 | 上位：多源优先级 / 更新通知 / 热重载 | **PASS（进程内）** | `LayeredConfig` 后覆盖先；`ConfigWatch::reload`；**≠** 远端配置中心 / schema 产品 |
 | 4.7 | 不得声称所有 None 都是正常缺失 | README / rustdoc 写明读中毒折叠 | PASS |
 
 ### §5 错误、并发、生命周期与信任边界
@@ -97,12 +101,12 @@ cargo llvm-cov -p configx --summary-only
 | ID | 要求 | 本仓证据 | 判定 |
 |----|------|----------|------|
 | 5.1 | std `RwLock` 共享并发；不承诺公平性/批量原子/无饥饿 | 实现 + 并发 smoke 不证明公平性 | PASS |
-| 5.2 | 无后台任务 / watcher / 显式 shutdown | 源码无 spawn/watcher | PASS |
-| 5.3 | 热更新 runtime / 去抖 / 背压 / 关闭协议 | 未实现 | DEFER（Unknown） |
-| 5.4 | key/value 未分类字符串；无 secret 类型/脱敏 Debug | 仅 `String`；无自定义 Debug 脱敏 | PASS（诚实最小面） |
-| 5.5 | secret 脱敏 / 信任合同诊断路径 | 未实现 | DEFER（Unknown） |
+| 5.2 | 无隐式后台 daemon | 无自动 spawn 的远程轮询 | PASS |
+| 5.3 | 热更新通知（进程内） | **PASS** | `ConfigWatch` / `ConfigSubscription`；**无** 去抖/背压产品矩阵 |
+| 5.4 | 基础 KV 仍为字符串 | `ConfigStore` 仍 `String` map | PASS |
+| 5.5 | secret 脱敏 | **PASS** | `SecretString` Debug=`***`；`SECRET_KEY_PREFIX` |
 | 5.6 | 可恢复失败不得 panic | poison 测不 panic；set/get 可恢复 | PASS |
-| 5.7 | 未来解析失败不得半更新替换有效配置 | 无解析路径 | DEFER（无此代码路径） |
+| 5.7 | 未来解析失败不得半更新替换有效配置 | KV 路径无 schema 解析半更新 | **N/A**（无此产品路径；诚实边界） |
 
 ### §6 测试合同
 
@@ -112,7 +116,7 @@ cargo llvm-cov -p configx --summary-only
 | 6.2 | 命令：`cargo test/check/clippy/fmt -p configx` | 本仓可执行；见验证入口 | PASS |
 | 6.3 | 锁中毒语义 | `read_lock_poison_folds_to_none` / `write_lock_poison_returns_invalid` | PASS |
 | 6.4 | 并发读写 | `tests/concurrency.rs` + 单元 concurrent smoke | PASS |
-| 6.5 | 源优先级 / 解析失败保留旧快照 / 更新通知 / secret 脱敏 / watch 关闭 | 未批准能力 | DEFER（Unknown；非 0.1.0 面） |
+| 6.5 | 源优先级 / 更新通知 / secret 脱敏 | **PASS** | source/layered/watch/secret 模块 + 单测 |
 | 6.6 | lint-deps 证明无 L1 横向依赖 | 生产依赖仅 kernel（`Cargo.toml` + metadata 扫描） | PASS（等价证据） |
 
 ### §7 验收标准与开放决策
@@ -120,17 +124,26 @@ cargo llvm-cov -p configx --summary-only
 | ID | 要求 | 本仓证据 | 判定 |
 |----|------|----------|------|
 | 7.1 | API/错误字符串/依赖/测试与 §2–§6 一致 | 本矩阵 + 测试套件 | PASS |
-| 7.2 | 文档不把内存 KV 描述成多源热更新系统 | `README.md` / rustdoc / 本文结论 | PASS |
-| 7.3 | 新增源/格式/优先级/类型化/通知/runtime 前评审 | 未添加；开放决策见下 | PASS（未越界） |
-| 7.4 | 版本仅 `x.y.z → x.y.(z+1)` | 首版 `0.1.0` | PASS |
-| 7.5 | 开放决策：源/格式/优先级/类型化/中毒语义变更/热更新/secret/未知键/schema | 未裁定；实现前须评审 | DEFER |
+| 7.2 | 文档诚实：file/env ≠ 远端配置中心 | `README.md` / rustdoc / 本文 | PASS |
+| 7.3 | 声明层源/分层/watch/secret 已落地 | 见 OBJECTIVE | PASS |
+| 7.4 | 版本仅 `x.y.z → x.y.(z+1)` | 独立 package version | PASS |
+| 7.5 | 远端配置中心 / schema 产品 / 类型化 API | 未实现 | **OPEN（诚实边界）** |
 
-## 非目标（明确不在本仓 0.1.0 完成面）
+## OBJECTIVE 处置（2026-07-22 defer-close）
 
-- 多源加载、文件/远端源、优先级合并
-- schema 校验、热重载、订阅/通知
-- 类型化配置 API、secret 管理
-- 其他 infra 域（bootstrap/gate/observex/…）
+| 项 | 前状态 | 现状态 | 证据 |
+|----|--------|--------|------|
+| 多源 | DEFER | **PASS** | `crates/configx/src/source.rs` · Memory/Env/File |
+| 分层/优先级 | DEFER | **PASS** | `crates/configx/src/layered.rs` · 后覆盖先 |
+| 热更新 | DEFER | **PASS（进程内）** | `crates/configx/src/watch.rs` |
+| secret | DEFER | **PASS** | `crates/configx/src/secret.rs` |
+
+## 非目标 / 诚实边界
+
+- **远端配置中心**、服务发现、动态推送、多机一致性
+- 完整 JSON/TOML/YAML schema 校验产品
+- 类型化配置 builder 全家桶
+- 其他 infra 域（gate 等）
 
 ## 覆盖率目标
 

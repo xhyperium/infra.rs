@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-22 — DEFER close: schema_version envelope
+
+### Added
+
+- `envelope` 模块：`Envelope<T>`（`schema_version` + `payload`）、版本常量、
+  `wrap` / `validate_version` / `into_payload_if_version`
+- unit 测试：serde 往返、拒绝缺 `schema_version`、拒绝未知字段、版本不匹配
+
+### Notes
+
+- envelope **不含**业务校验；DTO committed wire 仍以 `wire` 模块为准
+- 依赖 `decimalx` path version 对齐 `0.1.1`
+
 ## [0.1.0] - 2026-07-21 — four-crate production tranche（L2 committed wire）
 
 ### Added

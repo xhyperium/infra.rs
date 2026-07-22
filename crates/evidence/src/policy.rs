@@ -15,7 +15,7 @@ pub const fn file_appender_is_min_durable() -> bool {
 /// 策略摘要。
 #[must_use]
 pub fn policy_summary() -> &'static str {
-    "in-memory=dev-only; file=min-durable; remote=DEFER"
+    "in-memory=dev-only; file=min-durable; remote=transport-injected; sign=hmac-sha256"
 }
 
 /// 评估后端是否可用于给定用途。
@@ -42,9 +42,11 @@ pub fn classify_file() -> BackendClass {
 }
 
 /// 分类远程后端。
+///
+/// 可注入 [`crate::EvidenceTransport`] 的远程追加为 **DevOnly**（非合规唯一落盘）。
 #[must_use]
 pub fn classify_remote() -> BackendClass {
-    BackendClass::Deferred
+    BackendClass::DevOnly
 }
 
 /// 是否允许作为合规唯一落盘。
@@ -66,13 +68,13 @@ mod tests {
         assert!(policy_summary().contains("dev-only"));
         assert_eq!(classify_in_memory(), BackendClass::DevOnly);
         assert_eq!(classify_file(), BackendClass::LocalMinDurable);
-        assert_eq!(classify_remote(), BackendClass::Deferred);
+        assert_eq!(classify_remote(), BackendClass::DevOnly);
         assert!(!allows_as_sole_compliance_store(BackendClass::DevOnly));
         assert!(allows_as_sole_compliance_store(BackendClass::LocalMinDurable));
         assert!(!allows_as_sole_compliance_store(BackendClass::Deferred));
         let _ = format!("{:?}", BackendClass::DevOnly);
         for _ in 0..30 {
-            assert_eq!(classify_remote(), BackendClass::Deferred);
+            assert_eq!(classify_remote(), BackendClass::DevOnly);
         }
     }
 }

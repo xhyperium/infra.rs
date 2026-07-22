@@ -18,3 +18,6 @@ pub use venue_caps::{
     FakeAccountSource, FakeExecutionVenue, FakeInstrumentCatalog, FakeMarketDataSource,
     FakeVenueTimeSource, default_symbol_meta, sample_order,
 };
+
+mod batch2;
+pub use batch2::{FakeAnalyticsSink, FakeObjectStore, FakePubSub, FakeTimeSeriesStore};

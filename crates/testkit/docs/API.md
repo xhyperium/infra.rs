@@ -11,6 +11,8 @@
 | `ManualClockSnapshot` | `wall` · `monotonic_elapsed` · `wall_fault` |
 | `ManualClockFault` | `BeforeUnixEpoch` · `Overflow` · `Unavailable`（映射 `ClockError`） |
 | `ManualClockError` | `WallOverflow` · `MonotonicOverflow` · `MonotonicRegression` · `Synchronization`（中文 `Display`） |
+| `IntegrationHarness` | `new` · `with_wall` · `clock` · `step` · `step_advance_wall` · `step_advance_monotonic` · `run` · `records` · `assert_all_ok` · `assert_wall_ns` · `assert_monotonic_elapsed`（`dyn Clock` 经 `clock()`） |
+| `StepRecord` | `name` · `ok` · `detail` · `wall_after_ns` |
 
 ## 不变量
 

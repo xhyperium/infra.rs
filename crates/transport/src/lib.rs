@@ -24,6 +24,7 @@
 //! - [`ReqwestHttpDriver::new`]：30s 总超时 + 16 MiB 请求/响应体上限
 //! - [`TungsteniteWsConnector::new`]：30s 连接超时 + 4 MiB 单帧上限
 //! - 超限 → [`TransportError::PayloadTooLarge`]（fail-closed）
+//! - TLS：[`TlsConfig`] / [`TlsMode`]；池：[`HttpClientPool`]；代理：[`ProxyConfig`]（Debug 脱敏）
 //!
 //! 实现合同：`.agents/ssot/infra/transport/spec/spec.md`
 
@@ -38,6 +39,13 @@ use std::sync::RwLock;
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async, tungstenite::Message};
+
+mod pool;
+mod proxy;
+mod tls;
+pub use pool::{HttpClientPool, PoolConfig, SharedHttpClientPool};
+pub use proxy::{ProxyConfig, build_reqwest_proxy};
+pub use tls::{TlsConfig, TlsMode};
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -283,9 +291,65 @@ impl ReqwestHttpDriver {
         max_response_body_bytes: usize,
         max_request_body_bytes: usize,
     ) -> Result<Self, TransportError> {
+        Self::builder(timeout, max_response_body_bytes, max_request_body_bytes, None, None)
+    }
+
+    /// 带 TLS 配置。
+    pub fn with_tls(tls: TlsConfig) -> Result<Self, TransportError> {
+        Self::builder(
+            Some(DEFAULT_REQUEST_TIMEOUT),
+            DEFAULT_MAX_RESPONSE_BODY_BYTES,
+            DEFAULT_MAX_REQUEST_BODY_BYTES,
+            Some(tls),
+            None,
+        )
+    }
+
+    /// 带代理配置。
+    pub fn with_proxy(proxy: ProxyConfig) -> Result<Self, TransportError> {
+        Self::builder(
+            Some(DEFAULT_REQUEST_TIMEOUT),
+            DEFAULT_MAX_RESPONSE_BODY_BYTES,
+            DEFAULT_MAX_REQUEST_BODY_BYTES,
+            None,
+            Some(proxy),
+        )
+    }
+
+    /// 完整构造：超时 / 体限 / TLS / 代理。
+    pub fn builder(
+        timeout: Option<Duration>,
+        max_response_body_bytes: usize,
+        max_request_body_bytes: usize,
+        tls: Option<TlsConfig>,
+        proxy: Option<ProxyConfig>,
+    ) -> Result<Self, TransportError> {
         let mut builder = Client::builder();
         if let Some(timeout) = timeout {
             builder = builder.timeout(timeout);
+        }
+        if let Some(tls) = tls {
+            match tls.mode {
+                TlsMode::SystemRoots => {}
+                TlsMode::CustomCa { path } => {
+                    let pem = std::fs::read(&path).map_err(|e| {
+                        TransportError::Io(Box::new(std::io::Error::new(
+                            e.kind(),
+                            format!("read custom CA {}: {e}", path.display()),
+                        )))
+                    })?;
+                    let cert = reqwest::Certificate::from_pem(&pem).map_err(|e| {
+                        TransportError::ProtocolViolation(format!("invalid CA pem: {e}"))
+                    })?;
+                    builder = builder.add_root_certificate(cert);
+                }
+                TlsMode::InsecureDevOnly => {
+                    builder = builder.danger_accept_invalid_certs(true);
+                }
+            }
+        }
+        if let Some(proxy_cfg) = proxy {
+            builder = builder.proxy(build_reqwest_proxy(&proxy_cfg)?);
         }
         let client = builder.build().map_err(map_client_build_error)?;
         Ok(Self { client, max_response_body_bytes, max_request_body_bytes })

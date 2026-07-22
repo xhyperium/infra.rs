@@ -1,10 +1,10 @@
 [package]
 name = "observex"
-version = "0.1.0"
+version = "0.1.1"
 publish = false
 edition.workspace = true
 rust-version.workspace = true
-description = "L1 tracing/metrics 封装（SPEC observex 0.1.0 / ADR-005）"
+description = "L1 tracing/metrics + OTEL-compatible in-process export surface"
 license.workspace = true
 repository.workspace = true
 

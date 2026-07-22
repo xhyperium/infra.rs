@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-22 — DEFER close: wire schema v1 + panicking-ops feature
+
+### Added
+
+- `WIRE_SCHEMA_VERSION = 1` 与 unit/public 面 golden 测试（拦截字段 rename/shape 破坏）
+- feature `panicking-ops`（默认关闭）：可选公开 `impl Add/Sub/Mul for Decimal`
+
+### Changed
+
+- 默认构建下 `+/-/*` 运算符不再公开；生产资金路径强制 `checked_*`
+- `docs/WIRE.md` 升级为 wire schema v1 政策
+
 ## [0.1.0] - 2026-07-21 — four-crate production tranche（L1 Internal Ready）
 
 ### Added
