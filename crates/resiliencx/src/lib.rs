@@ -15,11 +15,11 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
-mod budget;
-mod bulkhead;
-mod circuit;
-mod rate_limit;
-mod retry;
+pub mod budget;
+pub mod bulkhead;
+pub mod circuit;
+pub mod rate_limit;
+pub mod retry;
 
 pub use budget::{RetryBudget, budget_exhausted_error, call_with_retry_budget, ensure_budget};
 pub use bulkhead::{Bulkhead, BulkheadConfig, BulkheadPermit};

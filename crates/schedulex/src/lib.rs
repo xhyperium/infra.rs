@@ -14,12 +14,12 @@
 
 use std::collections::HashMap;
 
-mod bulk;
-mod id;
-mod job;
-mod runner;
-mod schedule;
-mod stats;
+pub mod bulk;
+pub mod id;
+pub mod job;
+pub mod runner;
+pub mod schedule;
+pub mod stats;
 pub use bulk::{schedule_checked_many, schedule_filtering};
 pub use id::{MAX_ID_LEN, debug_label, is_debug_label, normalize_task_id, validate_task_id};
 pub use job::{Job, JobFn, JobId, JobMeta};

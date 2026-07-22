@@ -19,12 +19,12 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-mod format;
-mod inspect;
-mod policy;
-mod query;
-mod remote;
-mod sign;
+pub mod format;
+pub mod inspect;
+pub mod policy;
+pub mod query;
+pub mod remote;
+pub mod sign;
 pub use format::{format_line, max_seq, parse_line, render_log};
 pub use inspect::{event_count, seq_is_monotonic, validate_log_text};
 pub use policy::{

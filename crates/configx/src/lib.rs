@@ -21,12 +21,12 @@ use std::sync::RwLock;
 
 use kernel::{XError, XResult};
 
-mod diff;
-mod layered;
-mod secret;
-mod source;
-mod view;
-mod watch;
+pub mod diff;
+pub mod layered;
+pub mod secret;
+pub mod source;
+pub mod view;
+pub mod watch;
 pub use diff::{ConfigDiff, diff_snapshots};
 pub use layered::LayeredConfig;
 pub use secret::{SECRET_KEY_PREFIX, SecretString, get_secret, is_secret_key, set_secret};

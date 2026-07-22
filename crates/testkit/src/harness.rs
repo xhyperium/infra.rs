@@ -35,7 +35,7 @@ pub struct StepRecord {
 /// let clock = ManualClock::new(Timestamp::from_unix_nanos(0));
 /// let mut h = IntegrationHarness::new(clock);
 /// h.step("advance", |c| {
-///     c.advance_wall(Duration::from_nanos(10))?;
+///     c.advance_wall(Duration::from_nanos(10)).map_err(|e| e.to_string())?;
 ///     Ok(())
 /// });
 /// h.run().expect("all steps ok");
