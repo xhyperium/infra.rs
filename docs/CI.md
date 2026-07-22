@@ -19,7 +19,7 @@
 | `pr-template-check.yml` | PR → main | PR 模板完整性 |
 | `ci-summary.yml` | workflow_run（completed） | CI 结果汇总 |
 | `workflow-security.yml` | workflow_run（completed） | 工作流安全审查 |
-| `ci-rust-org.yml` | workflow_dispatch | 组织级 Rust CI 检�� |
+| `ci-rust-org.yml` | workflow_dispatch | 组织级 Rust CI 检 |
 | `release.yml` | workflow_dispatch | 发布流程 |
 
 ---

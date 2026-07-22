@@ -105,7 +105,7 @@ if violations > 0:
     print()
     print(f'  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     print(f'  强度报告')
-    print(f'  ━━━━━━━━━━━━━━━━━��━━━━━━━━━━━')
+    print(f'  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
     pass_count = total - violations
     pass_pct = round(pass_count / total * 100, 1)

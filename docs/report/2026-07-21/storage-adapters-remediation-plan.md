@@ -242,7 +242,7 @@ A-D 阶段可并行执行（不同 crate）。E-H 阶段可在 B 完成后启动
 
 ## 5. 验收标准
 
-��个阶段**完成**的标志：
+个阶段**完成**的标志：
 
 | 阶段 | 标准 |
 |-------|----------|
@@ -263,5 +263,5 @@ A-D 阶段可并行执行（不同 crate）。E-H 阶段可在 B 完成后启动
 | NATS JetStream API 变更 | 低 | 中 | 锁定 async-nats 版本 |
 | TDengine REST API 变更 | 低 | 低 | 使用稳定 v3.x API 端点 |
 | Aliyun OSS 签名兼容性 | 低 | 中 | 生产前用 dev bucket 测试 |
-| 连接池配置冲�� | 中 | 低 | 使用 ConfigBuilder 模式，附合理默认值 |
+| 连接池配置冲 | 中 | 低 | 使用 ConfigBuilder 模式，附合理默认值 |
 | Scaffold feature gate 断裂 | 低 | 低 | CI 中验证 `#[cfg(feature = "scaffold")]` |

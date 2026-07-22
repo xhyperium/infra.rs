@@ -3,7 +3,7 @@
  * check-pr-template.test.mjs — PR 模板校验脚本 L1 测试套件
  *
  * 覆盖:
- *   1. 完整模板通过��验
+ *   1. 完整模板通过验
  *   2. 缺失必填字段检测
  *   3. 部分填写模板检测
  *   4. 错误降级模式 (PR_TEMPLATE_ERROR_DOWNGRADE)

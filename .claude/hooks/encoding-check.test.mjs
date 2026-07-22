@@ -150,7 +150,7 @@ try {
   if (tmpDir) cleanup(tmpDir);
 }
 
-// 6.b 含 BOM 的文���
+// 6.b 含 BOM 的文
 try {
   tmpDir = makeTempDir();
   const bomFile = join(tmpDir, "bom.md");

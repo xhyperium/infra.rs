@@ -25,7 +25,7 @@ const REPO_ROOT = resolve(__dirname, "..", "..");
 
 // ── 编码检测工具函数 ──────────────────────────────────
 
-// CI ���禁检测（file 命令）
+// CI 禁检测（file 命令）
 function ciDetect(filePath) {
   if (!existsSync(filePath)) return { pass: true };
   try {
@@ -302,7 +302,7 @@ try {
   // 5b. 文件名含 Unicode
   f = join(tmpDir, "中文文件.md");
   writeFileSync(f, "# 中文文件名", "utf8");
-  ok(ciDetect(f).pass, "文件名含中文 CI ��过");
+  ok(ciDetect(f).pass, "文件名含中文 CI 过");
 
   // 5c. 文件名含特殊字符
   f = join(tmpDir, "a(b)c[1].md");
@@ -334,7 +334,7 @@ try {
     { name: "GBK中文", data: Buffer.from([0xbc, 0xdc, 0xb9, 0xb9]) },
     { name: "UTF-16LE", data: Buffer.from([0xFF, 0xFE, 0x68, 0x00]) },
     { name: "Latin-1", data: Buffer.from([0xE9, 0xE0, 0xFC]) },
-    { name: "���文件", data: Buffer.from([]) },
+    { name: "文件", data: Buffer.from([]) },
     { name: "纯BOM", data: Buffer.from([0xEF, 0xBB, 0xBF]) },
     { name: "Emoji", data: Buffer.from("🎉🚀💯", "utf8") },
     { name: "Overlong", data: Buffer.from([0xC0, 0xAF]) },
@@ -488,7 +488,7 @@ const sections = [
     "纯 BOM（3 字节）",
     "无扩展名 (Makefile)",
     "点文件 (.gitignore)",
-    "无结尾换��",
+    "无结尾换",
     "ASCII 控制字符含 NUL",
     "1MB 大文件性能",
   ]},

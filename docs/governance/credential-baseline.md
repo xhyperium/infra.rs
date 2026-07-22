@@ -29,7 +29,7 @@ python3 -c "import secrets; print(secrets.token_hex(16))"
 
 ## 合规检查
 
-`extract_all_secrets.sh` 在 dry-run 时自动验证所��凭据是否符合��杂度要求。
+`extract_all_secrets.sh` 在 dry-run 时自动验证所凭据是否符合杂度要求。
 不符合要求的凭据将标记并列出。
 
 ### 快速使用
@@ -110,7 +110,7 @@ $ echo $?
 
 ## 轮换跟踪
 
-以下密码在 `extract_all_secrets.sh` 审计中标记为不符��复杂度要求（��于 24 字符）。
+以下密码在 `extract_all_secrets.sh` 审计中标记为不符复杂度要求（于 24 字符）。
 每条记录对应一个独立密码及其所有关联数据库。
 
 ### dev 环境：15 个不合规密码（影响 15 个数据库 × 2 引擎 = 30 处更新）
@@ -161,7 +161,7 @@ scripts/sre/extract_all_secrets.sh dev
 
 ## 轮换审计日志
 
-完整��史记录见各环境文件：
+完整史记录见各环境文件：
 
 | Environment | Rotation Log Location | Most Recent Entry |
 |-------------|----------------------|-------------------|

@@ -52,7 +52,7 @@
 |------|----:|------|
 | `clock.rs` | 561 | `ManualClock` — 确定性可控制时钟，含故障注入 |
 
-`ManualClock` 提供 wall/monotonic 独立控制、`ManualClockFault`（BeforeUnixEpoch/Overflow/Unavailable）故障注入、单锁一致性快照及 poison 恢复。已确认仅在 dev-dependency 使用。6 个测试文���。
+`ManualClock` 提供 wall/monotonic 独立控制、`ManualClockFault`（BeforeUnixEpoch/Overflow/Unavailable）故障注入、单锁一致性快照及 poison 恢复。已确认仅在 dev-dependency 使用。6 个测试文。
 
 ### 2.2 Types 层
 
@@ -60,7 +60,7 @@
 
 15 个公开类型全部实现 Serialize/Deserialize，所有 committed wire types 使用 `deny_unknown_fields`。Wire commitment 分 v1/v1.1/v1.2/v1.3 四个层级，golden fixture 测试覆盖每层。非包级稳定——wire 已承诺但包稳定性待 M1 批准。
 
-**decimalx (1,475 LOC)** — �� 接近就绪
+**decimalx (1,475 LOC)** —  接近就绪
 
 10 个公开类型，核心 `Decimal { mantissa: i128, scale: u8 }`，MAX_SCALE=18。5 种舍入策略带中点检测，所有算术运算均为已验证。6 个测试文件覆盖属性测试、oracle 对比、边界矩阵、adversarial serde。
 
@@ -82,7 +82,7 @@
 
 **evidence (425 LOC)** — ⚠️ 未就绪
 
-审计证据追加面（仅 `append()`）。无查询/验证 API、无持��化后端、无证据链完整���校验。
+审计证据追加面（仅 `append()`）。无查询/验证 API、无持化后端、无证据链完整校验。
 
 **observex (494 LOC)** — ⚠️ 未就绪
 
