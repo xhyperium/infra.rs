@@ -102,7 +102,44 @@ if nats_token:
     check_password(nats_token, 'NATS token', is_token=True)
 
 if violations > 0:
-    print(f'  ❌ {violations}/{total} passwords fail complexity check')
+    print()
+    print(f'  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    print(f'  强度报告')
+    print(f'  ━━━━━━━━━━━━━━━━━��━━━━━━━━━━━')
+
+    pass_count = total - violations
+    pass_pct = round(pass_count / total * 100, 1)
+    fail_pct = round(violations / total * 100, 1)
+
+    print(f'  Total checked:     {total}')
+    print(f'  Pass:              {pass_count} ({pass_pct}%)')
+    print(f'  Fail:              {violations} ({fail_pct}%)')
+    print(f'  Pass ratio:        {pass_count}/{total} = {pass_pct:.1f}%')
+
+    # Category breakdown
+    length_fails = sum(1 for pwd in passwords if len(pwd.strip()) < 24)
+    hex_fail = 1 if fred_key and len(fred_key.strip()) < 32 else 0
+    token_fail = 0  # exempt
+
+    print(f'  ┌─────────────────────────────')
+    print(f'  │ 按类别统计')
+    print(f'  ├ 长度 < 24:        {length_fails + hex_fail} ({round((length_fails + hex_fail)/total*100, 1)}%)')
+    print(f'  ├ 令牌/API Key:     {token_fail + (1 if hex_fail else 0)} ({round((token_fail + (1 if hex_fail else 0))/total*100, 1)}%) [exempt]')
+    print(f'  └ 合规比例:         {pass_count}/{total}')
+    print()
+
+    # Severity-based rating
+    if fail_pct >= 50:
+        rating = "CRITICAL"
+    elif fail_pct >= 25:
+        rating = "WARNING"
+    elif fail_pct > 0:
+        rating = "IMPROVING"
+    else:
+        rating = "HEALTHY"
+
+    print(f'  Overall rating: {rating} ({pass_pct}% pass rate)')
+    print()
     sys.exit(1)
 else:
     print(f'  ✅ {total} passwords pass complexity rules')
