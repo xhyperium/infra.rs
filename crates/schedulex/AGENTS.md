@@ -1,30 +1,34 @@
 # AGENTS.md — schedulex
 
-> 仓库级规则见 [`../../AGENTS.md`](../../AGENTS.md) 与 [`../../docs/constitution/`](../../docs/constitution/)。  
-> 权威规范：active schedulex SSOT · [`.agents/ssot/schedulex/spec/spec.md`](../../.agents/ssot/schedulex/spec/spec.md)
+> 仓库级规则见 [`../../AGENTS.md`](../../AGENTS.md)。
+> 权威规范：[SPEC-SCHEDULEX-003](../../.agents/ssot/schedulex/spec/spec.md)
 
 ## 身份
 
-- **L1 任务 ID 登记表**（非 production scheduler；`publish = false`）
-- package：`xhyper-schedulex` · lib：`schedulex` · path：`crates/schedulex`
-- 稳定公开面仅 `Scheduler`：`new` / `Default` / `schedule` / `cancel` / `list`
+- package/lib：`schedulex`；L1；`publish = false`
+- `Scheduler`：任务 ID registry seam
+- `JobRunner`：独立、进程内、宿主显式 `tick(now_ms)` 的 deterministic seam
+- 两者不自动联动；本 crate 不是后台或分布式 scheduler
 
-## 本 crate 约束
+## 强制约束
 
-- 生产依赖：**std-only**（`[dependencies]` 必须为空）
-- `default = []`；禁止 feature 泄漏
-- **禁止** 在生产源码引入 timer / Clock / Job / Run / tokio / async runtime / 持久化 / shutdown
-- 重复 `schedule(id)` 必须幂等覆盖；`cancel` 必须返回此前是否存在；`list` 顺序未承诺
-- 验证：`cargo test -p xhyper-schedulex` · `cargo clippy -p schedulex --all-targets -- -D warnings`
-- 覆盖率：`cargo llvm-cov -p schedulex --fail-under-lines 100`
-- 对齐矩阵：[`../../docs/ssot/schedulex-ssot-alignment.md`](../../docs/ssot/schedulex-ssot-alignment.md)
+- 生产依赖 std-only；`[dependencies]` 为空，`default = []`
+- 禁止 Clock、真实墙钟、sleep、后台线程、tokio/async runtime
+- 禁止持久化、misfire 补跑产品、lease/fencing/leader election、完整 cron/时区
+- `add` 必须在插入前校验 JobId 与 Schedule；失败不得改变 runner
+- 同 tick 执行和 `list_meta` 按 Rust `str::cmp` 的 Job ID 字典序
+- 时间回退不执行、不推进；大跨度 tick 每 Job 最多执行一次
+- `every:<ms>` 首次 tick 立即执行，随后按上次执行时刻计算 interval；Err 也推进
+- Job Err 推进状态并继续；panic 传播
+- 用户可见错误为简体中文
 
-## 与 SSOT 镜像的关系
+## 验证
 
-- `.agents/ssot/schedulex` 是上游镜像布局；active 规范定义当前为 **registry only**
-- **本 crate 是 infra.rs 落地**；完成声明以本仓 `cargo test` / llvm-cov 为准
-- 不得把 registry 冒充 production timer scheduler
+```bash
+cargo test -p schedulex --all-targets
+cargo clippy -p schedulex --all-targets -- -D warnings
+cargo fmt --all --check
+node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/schedulex/src
+```
 
-## 禁止占位
-
-不得合并无行为 public placeholder，或静默扩大到 timer/Job 面而未更新 active SSOT。
+不得把本地测试通过外推为 package stable、生产平台 readiness 或分布式能力。

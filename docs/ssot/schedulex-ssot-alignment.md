@@ -1,82 +1,46 @@
 # schedulex SSOT 本仓对齐
 
 | 字段 | 值 |
-|------|-----|
-| 审计日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ `spec/xhyper-schedulex-complete-spec.md` |
-| 本仓 crate | `crates/schedulex` · package `schedulex` · lib `schedulex` · **v0.1.1** |
-| 合同范围 | 任务 ID 登记表 + 进程内、宿主驱动的确定性 `JobRunner::tick`；非 runtime/分布式调度产品 |
+|---|---|
+| Baseline | `55433a2ec3567624c5cd98601b9f4581a7e69cb6` |
+| Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ dual mirror |
+| Crate | `crates/schedulex` · package/lib `schedulex` · 当前 v0.1.1 |
+| 范围 | Scheduler registry + 独立 explicit tick JobRunner |
 
 ## 合同矩阵
 
-| 表面 | Active SSOT / 扩展 | 本仓 | 状态 |
-|------|---------------------|------|------|
-| Package / lib / path | `schedulex` / `schedulex` / `crates/schedulex` | 同左 | ✅ |
-| 依赖 | 登记表 std-only | 登记表无生产 dep | ✅ |
-| `new` / `Default` | 空登记表 | `Scheduler::{new, default}` | ✅ |
-| `schedule(id)` | 插入；重复 ID 幂等覆盖 | `HashMap::insert` | ✅ |
-| `cancel(id)` | 删除并返回此前是否存在 | `remove(...).is_some()` | ✅ |
-| `list()` | 当前 ID；顺序未承诺 | `keys().cloned().collect()` | ✅ |
-| Job / Schedule / JobRunner | 审查 OBJECTIVE 关闭项 | `job.rs` / `schedule.rs` / `runner.rs` | **PASS** |
-| `JobRunner::tick(now_ms)` | 宿主驱动的确定性 tick | 显式时间输入；无墙钟 daemon | **PASS** |
-| Once / FixedDelay / cron 子集 | tick 驱动 | `Schedule::{once,fixed_delay,cron}` | **PASS**（**≠** 完整 cron 方言 / 分布式 lease） |
-| async runtime / 持久化 / 分布式 | 非目标 | 无 | 诚实边界 OPEN |
+| 表面 | 本仓事实 | 状态 |
+|---|---|---|
+| std-only / default=[] | Cargo 无生产依赖 | PASS |
+| Scheduler registry | 登记、取消、查询、集合运算 | PASS |
+| Job/Schedule/JobRunner | 进程内显式 tick | PASS |
+| add 输入校验 | ID + Schedule 插入前校验 | PASS |
+| add 失败原子性 | 无效替换保留原 callback/schedule/运行与取消状态 | PASS |
+| deterministic | due 与 metadata 按 Job ID 排序 | PASS |
+| 时间回退 | 忽略且不推进 | PASS |
+| 大跨度 tick | 每 Job 最多一次，不补跑 | PASS |
+| `every:<ms>` | stateful interval；首次 tick 执行，Err 推进 | PASS |
+| Job Err | 有序记录、推进并继续 | PASS |
+| panic | 传播，中止当前 tick | PASS |
+| 中文错误 | cron/调度详情中文 | PASS |
+| 后台/持久化/分布式 | 不实现 | NO-GO |
+| 根 `AGENTS.md` 身份 | 父 `.9` writer 已拥有同一 hunk，待其修正后 rebase | BLOCKED |
 
-## OBJECTIVE 处置（2026-07-22 defer-close）
+## 误用红线
 
-| 项 | 前状态 | 现状态 | 证据 |
-|----|--------|--------|------|
-| timer / cron / Job 执行 | DEFER | **PASS（进程内 tick）** | `crates/schedulex/src/{job,schedule,runner}.rs` · `JobRunner::tick` |
-
-## 明确非目标 / 诚实边界
-
-- **分布式调度**、跨进程 lease、持久化恢复、misfire 产品矩阵
-- 后台墙钟线程自动触发（本仓为 **显式 `tick(now_ms)`**）
-- 完整 cron 方言 / 时区产品
-- 把 `Scheduler`（登记表）与 `JobRunner`（执行器）混为一谈的误读
-- runtime / 分布式调度产品与 package stable 声明
-
-## 生产误用红线
-
-| 允许 | 禁止 |
-|------|------|
-| 进程内任务 **ID 登记** / 幂等 cancel | 把 `Scheduler` 当分布式 cron |
-| `JobRunner::tick` 由宿主驱动 | 依赖隐式墙钟 daemon 即生产调度平台 |
-| 单测与组合根登记 | 宣称 package stable / Agent L5 |
-
-见 crate README 与 [prod-consume-surface.md](../plans/artifacts/prod-consume-surface.md)。
+- `Scheduler::schedule` 不执行 Job。
+- `JobRunner` 需要宿主主动 tick，不是 daemon。
+- 测试与 coverage 不能证明业务 live、长稳、分布式能力或 package stable。
+- 完整 cron、时区、misfire、恢复、lease/fencing 保持 OPEN/NO-GO。
 
 ## 验证
 
 ```bash
 cmp .agents/ssot/schedulex/spec/spec.md \
-    .agents/ssot/schedulex/spec/xhyper-schedulex-complete-spec.md
+  .agents/ssot/schedulex/spec/xhyper-schedulex-complete-spec.md
 cargo test -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
-cargo fmt --all --check
-cargo llvm-cov -p schedulex --fail-under-lines 100 --summary-only
+node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/schedulex/src
 ```
 
-## 追溯
-
-- Active SSOT：`.agents/ssot/schedulex/spec/spec.md`
-- 实现：`crates/schedulex/`
-- 总览：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
-
-## 双栏落地（2026-07-22 · STATUS 100% structure）
-
-| 标尺 | 状态 |
-|------|------|
-| STATUS 结构完成度 | **100%**（layout+tests+content；非 Production Ready） |
-| 声明面生产硬化 | 公共 API 集成测 + 热路径 bench + `docs/` 红线；**cov-gate-100 行覆盖** |
-| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 分布式调度产品 |
-
-自验证：`cargo test -p schedulex --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p schedulex`。
-
-## 变更记录
-
-| 日期 | 说明 |
-|------|------|
-| 2026-07-22 | **defer-close**：Job/Schedule/JobRunner tick 面 PASS；分布式仍 OPEN |
-| 2026-07-22 | 对齐 Cargo 真相：版本 `0.1.1`；明确 JobRunner/TASK 面为 active SSOT 任务 ID 登记表，**非** 完整调度器/执行器；`xhyper-schedulex` 仅废弃别名 |
-| 2026-07-22 | 冻结宿主驱动的确定性 `JobRunner::tick` additive 面；runtime/分布式调度仍 OPEN |
+最终发布仍需前序 PR 合并后的版本/lock/STATUS 同步、全仓门禁、独立 review、PR CI 与人工审批。

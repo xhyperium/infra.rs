@@ -1,0 +1,432 @@
+pub mod schedulex
+pub mod schedulex::bulk
+pub fn schedulex::bulk::schedule_checked_many(&mut schedulex::Scheduler, &[&str]) -> core::result::Result<usize, schedulex::ScheduleError>
+pub fn schedulex::bulk::schedule_filtering(&mut schedulex::Scheduler, &[&str]) -> (usize, alloc::vec::Vec<alloc::string::String>)
+pub mod schedulex::id
+pub const schedulex::id::MAX_ID_LEN: usize
+pub fn schedulex::id::debug_label(&str, &str) -> alloc::string::String
+pub fn schedulex::id::is_debug_label(&str) -> bool
+pub fn schedulex::id::normalize_task_id(&str) -> core::result::Result<alloc::string::String, schedulex::ScheduleError>
+pub fn schedulex::id::validate_task_id(&str) -> core::result::Result<(), schedulex::ScheduleError>
+pub mod schedulex::job
+pub struct schedulex::job::Job
+pub schedulex::job::Job::id: schedulex::job::JobId
+pub schedulex::job::Job::name: core::option::Option<alloc::string::String>
+pub schedulex::job::Job::run: schedulex::job::JobFn
+impl schedulex::job::Job
+pub fn schedulex::job::Job::meta(&self) -> schedulex::job::JobMeta
+pub fn schedulex::job::Job::new<F>(impl core::convert::Into<schedulex::job::JobId>, F) -> Self where F: core::ops::function::FnMut() -> core::result::Result<(), schedulex::ScheduleError> + core::marker::Send + 'static
+pub fn schedulex::job::Job::with_name(self, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::fmt::Debug for schedulex::job::Job
+pub fn schedulex::job::Job::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for schedulex::job::Job
+impl core::marker::Send for schedulex::job::Job
+impl !core::marker::Sync for schedulex::job::Job
+impl core::marker::Unpin for schedulex::job::Job
+impl core::marker::UnsafeUnpin for schedulex::job::Job
+impl !core::panic::unwind_safe::RefUnwindSafe for schedulex::job::Job
+impl !core::panic::unwind_safe::UnwindSafe for schedulex::job::Job
+pub struct schedulex::job::JobId(_)
+impl schedulex::job::JobId
+pub fn schedulex::job::JobId::as_str(&self) -> &str
+pub fn schedulex::job::JobId::checked(impl core::convert::Into<alloc::string::String>) -> core::result::Result<Self, schedulex::ScheduleError>
+pub fn schedulex::job::JobId::new(impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for schedulex::job::JobId
+pub fn schedulex::job::JobId::clone(&self) -> schedulex::job::JobId
+impl core::cmp::Eq for schedulex::job::JobId
+impl core::cmp::PartialEq for schedulex::job::JobId
+pub fn schedulex::job::JobId::eq(&self, &schedulex::job::JobId) -> bool
+impl core::convert::AsRef<str> for schedulex::job::JobId
+pub fn schedulex::job::JobId::as_ref(&self) -> &str
+impl core::convert::From<&str> for schedulex::job::JobId
+pub fn schedulex::job::JobId::from(&str) -> Self
+impl core::convert::From<alloc::string::String> for schedulex::job::JobId
+pub fn schedulex::job::JobId::from(alloc::string::String) -> Self
+impl core::fmt::Debug for schedulex::job::JobId
+pub fn schedulex::job::JobId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for schedulex::job::JobId
+pub fn schedulex::job::JobId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for schedulex::job::JobId
+pub fn schedulex::job::JobId::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::StructuralPartialEq for schedulex::job::JobId
+impl core::marker::Freeze for schedulex::job::JobId
+impl core::marker::Send for schedulex::job::JobId
+impl core::marker::Sync for schedulex::job::JobId
+impl core::marker::Unpin for schedulex::job::JobId
+impl core::marker::UnsafeUnpin for schedulex::job::JobId
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::job::JobId
+impl core::panic::unwind_safe::UnwindSafe for schedulex::job::JobId
+pub struct schedulex::job::JobMeta
+pub schedulex::job::JobMeta::id: schedulex::job::JobId
+pub schedulex::job::JobMeta::name: core::option::Option<alloc::string::String>
+impl core::clone::Clone for schedulex::job::JobMeta
+pub fn schedulex::job::JobMeta::clone(&self) -> schedulex::job::JobMeta
+impl core::cmp::Eq for schedulex::job::JobMeta
+impl core::cmp::PartialEq for schedulex::job::JobMeta
+pub fn schedulex::job::JobMeta::eq(&self, &schedulex::job::JobMeta) -> bool
+impl core::fmt::Debug for schedulex::job::JobMeta
+pub fn schedulex::job::JobMeta::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for schedulex::job::JobMeta
+impl core::marker::Freeze for schedulex::job::JobMeta
+impl core::marker::Send for schedulex::job::JobMeta
+impl core::marker::Sync for schedulex::job::JobMeta
+impl core::marker::Unpin for schedulex::job::JobMeta
+impl core::marker::UnsafeUnpin for schedulex::job::JobMeta
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::job::JobMeta
+impl core::panic::unwind_safe::UnwindSafe for schedulex::job::JobMeta
+pub type schedulex::job::JobFn = alloc::boxed::Box<(dyn core::ops::function::FnMut() -> core::result::Result<(), schedulex::ScheduleError> + core::marker::Send)>
+pub mod schedulex::runner
+pub struct schedulex::runner::JobRunner
+impl schedulex::runner::JobRunner
+pub fn schedulex::runner::JobRunner::active_len(&self) -> usize
+pub fn schedulex::runner::JobRunner::add(&mut self, schedulex::job::Job, schedulex::schedule::Schedule) -> core::result::Result<(), schedulex::ScheduleError>
+pub fn schedulex::runner::JobRunner::cancel(&mut self, &str) -> bool
+pub fn schedulex::runner::JobRunner::contains(&self, &str) -> bool
+pub fn schedulex::runner::JobRunner::list_meta(&self) -> alloc::vec::Vec<schedulex::job::JobMeta>
+pub fn schedulex::runner::JobRunner::new() -> Self
+pub fn schedulex::runner::JobRunner::remove(&mut self, &str) -> bool
+pub fn schedulex::runner::JobRunner::tick(&mut self, u64) -> schedulex::runner::TickResult
+impl core::default::Default for schedulex::runner::JobRunner
+pub fn schedulex::runner::JobRunner::default() -> schedulex::runner::JobRunner
+impl core::fmt::Debug for schedulex::runner::JobRunner
+pub fn schedulex::runner::JobRunner::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for schedulex::runner::JobRunner
+impl core::marker::Send for schedulex::runner::JobRunner
+impl !core::marker::Sync for schedulex::runner::JobRunner
+impl core::marker::Unpin for schedulex::runner::JobRunner
+impl core::marker::UnsafeUnpin for schedulex::runner::JobRunner
+impl !core::panic::unwind_safe::RefUnwindSafe for schedulex::runner::JobRunner
+impl !core::panic::unwind_safe::UnwindSafe for schedulex::runner::JobRunner
+pub struct schedulex::runner::TickResult
+pub schedulex::runner::TickResult::errors: alloc::vec::Vec<(schedulex::job::JobId, schedulex::ScheduleError)>
+pub schedulex::runner::TickResult::fired: usize
+impl core::default::Default for schedulex::runner::TickResult
+pub fn schedulex::runner::TickResult::default() -> schedulex::runner::TickResult
+impl core::fmt::Debug for schedulex::runner::TickResult
+pub fn schedulex::runner::TickResult::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for schedulex::runner::TickResult
+impl core::marker::Send for schedulex::runner::TickResult
+impl core::marker::Sync for schedulex::runner::TickResult
+impl core::marker::Unpin for schedulex::runner::TickResult
+impl core::marker::UnsafeUnpin for schedulex::runner::TickResult
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::runner::TickResult
+impl core::panic::unwind_safe::UnwindSafe for schedulex::runner::TickResult
+pub mod schedulex::schedule
+pub enum schedulex::schedule::CronParsed
+pub schedulex::schedule::CronParsed::EveryMs
+pub schedulex::schedule::CronParsed::EveryMs::every_ms: u64
+pub schedulex::schedule::CronParsed::MinuteMatch
+pub schedulex::schedule::CronParsed::MinuteMatch::every_n: core::option::Option<u32>
+pub schedulex::schedule::CronParsed::MinuteMatch::exact: core::option::Option<u32>
+impl core::clone::Clone for schedulex::schedule::CronParsed
+pub fn schedulex::schedule::CronParsed::clone(&self) -> schedulex::schedule::CronParsed
+impl core::cmp::Eq for schedulex::schedule::CronParsed
+impl core::cmp::PartialEq for schedulex::schedule::CronParsed
+pub fn schedulex::schedule::CronParsed::eq(&self, &schedulex::schedule::CronParsed) -> bool
+impl core::fmt::Debug for schedulex::schedule::CronParsed
+pub fn schedulex::schedule::CronParsed::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for schedulex::schedule::CronParsed
+impl core::marker::Freeze for schedulex::schedule::CronParsed
+impl core::marker::Send for schedulex::schedule::CronParsed
+impl core::marker::Sync for schedulex::schedule::CronParsed
+impl core::marker::Unpin for schedulex::schedule::CronParsed
+impl core::marker::UnsafeUnpin for schedulex::schedule::CronParsed
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::schedule::CronParsed
+impl core::panic::unwind_safe::UnwindSafe for schedulex::schedule::CronParsed
+pub enum schedulex::schedule::Schedule
+pub schedulex::schedule::Schedule::Cron
+pub schedulex::schedule::Schedule::Cron::expr: alloc::string::String
+pub schedulex::schedule::Schedule::Cron::parsed: schedulex::schedule::CronParsed
+pub schedulex::schedule::Schedule::FixedDelay
+pub schedulex::schedule::Schedule::FixedDelay::every_ms: u64
+pub schedulex::schedule::Schedule::FixedDelay::first_at_ms: u64
+pub schedulex::schedule::Schedule::Once
+pub schedulex::schedule::Schedule::Once::at_ms: u64
+impl schedulex::schedule::Schedule
+pub fn schedulex::schedule::Schedule::cron(impl core::convert::Into<alloc::string::String>) -> core::result::Result<Self, schedulex::ScheduleError>
+pub fn schedulex::schedule::Schedule::fixed_delay(u64) -> core::result::Result<Self, schedulex::ScheduleError>
+pub const fn schedulex::schedule::Schedule::once(u64) -> Self
+impl core::clone::Clone for schedulex::schedule::Schedule
+pub fn schedulex::schedule::Schedule::clone(&self) -> schedulex::schedule::Schedule
+impl core::cmp::Eq for schedulex::schedule::Schedule
+impl core::cmp::PartialEq for schedulex::schedule::Schedule
+pub fn schedulex::schedule::Schedule::eq(&self, &schedulex::schedule::Schedule) -> bool
+impl core::fmt::Debug for schedulex::schedule::Schedule
+pub fn schedulex::schedule::Schedule::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for schedulex::schedule::Schedule
+impl core::marker::Freeze for schedulex::schedule::Schedule
+impl core::marker::Send for schedulex::schedule::Schedule
+impl core::marker::Sync for schedulex::schedule::Schedule
+impl core::marker::Unpin for schedulex::schedule::Schedule
+impl core::marker::UnsafeUnpin for schedulex::schedule::Schedule
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::schedule::Schedule
+impl core::panic::unwind_safe::UnwindSafe for schedulex::schedule::Schedule
+pub fn schedulex::schedule::cron_matches(&schedulex::schedule::CronParsed, u64) -> bool
+pub fn schedulex::schedule::parse_cron_expr(&str) -> core::result::Result<schedulex::schedule::CronParsed, schedulex::ScheduleError>
+pub mod schedulex::stats
+pub struct schedulex::stats::RegistryStats
+pub schedulex::stats::RegistryStats::empty: bool
+pub schedulex::stats::RegistryStats::len: usize
+impl core::clone::Clone for schedulex::stats::RegistryStats
+pub fn schedulex::stats::RegistryStats::clone(&self) -> schedulex::stats::RegistryStats
+impl core::cmp::Eq for schedulex::stats::RegistryStats
+impl core::cmp::PartialEq for schedulex::stats::RegistryStats
+pub fn schedulex::stats::RegistryStats::eq(&self, &schedulex::stats::RegistryStats) -> bool
+impl core::fmt::Debug for schedulex::stats::RegistryStats
+pub fn schedulex::stats::RegistryStats::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for schedulex::stats::RegistryStats
+impl core::marker::StructuralPartialEq for schedulex::stats::RegistryStats
+impl core::marker::Freeze for schedulex::stats::RegistryStats
+impl core::marker::Send for schedulex::stats::RegistryStats
+impl core::marker::Sync for schedulex::stats::RegistryStats
+impl core::marker::Unpin for schedulex::stats::RegistryStats
+impl core::marker::UnsafeUnpin for schedulex::stats::RegistryStats
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::stats::RegistryStats
+impl core::panic::unwind_safe::UnwindSafe for schedulex::stats::RegistryStats
+pub const schedulex::stats::NO_HARD_CAPACITY: core::option::Option<usize>
+pub fn schedulex::stats::is_busy(&schedulex::Scheduler, usize) -> bool
+pub fn schedulex::stats::over_soft_threshold(&schedulex::Scheduler, usize) -> bool
+pub fn schedulex::stats::stats(&schedulex::Scheduler) -> schedulex::stats::RegistryStats
+pub fn schedulex::stats::status_line(&schedulex::Scheduler) -> alloc::string::String
+pub fn schedulex::stats::utilization(&schedulex::Scheduler, usize) -> f64
+pub enum schedulex::CronParsed
+pub schedulex::CronParsed::EveryMs
+pub schedulex::CronParsed::EveryMs::every_ms: u64
+pub schedulex::CronParsed::MinuteMatch
+pub schedulex::CronParsed::MinuteMatch::every_n: core::option::Option<u32>
+pub schedulex::CronParsed::MinuteMatch::exact: core::option::Option<u32>
+impl core::clone::Clone for schedulex::schedule::CronParsed
+pub fn schedulex::schedule::CronParsed::clone(&self) -> schedulex::schedule::CronParsed
+impl core::cmp::Eq for schedulex::schedule::CronParsed
+impl core::cmp::PartialEq for schedulex::schedule::CronParsed
+pub fn schedulex::schedule::CronParsed::eq(&self, &schedulex::schedule::CronParsed) -> bool
+impl core::fmt::Debug for schedulex::schedule::CronParsed
+pub fn schedulex::schedule::CronParsed::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for schedulex::schedule::CronParsed
+impl core::marker::Freeze for schedulex::schedule::CronParsed
+impl core::marker::Send for schedulex::schedule::CronParsed
+impl core::marker::Sync for schedulex::schedule::CronParsed
+impl core::marker::Unpin for schedulex::schedule::CronParsed
+impl core::marker::UnsafeUnpin for schedulex::schedule::CronParsed
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::schedule::CronParsed
+impl core::panic::unwind_safe::UnwindSafe for schedulex::schedule::CronParsed
+pub enum schedulex::Schedule
+pub schedulex::Schedule::Cron
+pub schedulex::Schedule::Cron::expr: alloc::string::String
+pub schedulex::Schedule::Cron::parsed: schedulex::schedule::CronParsed
+pub schedulex::Schedule::FixedDelay
+pub schedulex::Schedule::FixedDelay::every_ms: u64
+pub schedulex::Schedule::FixedDelay::first_at_ms: u64
+pub schedulex::Schedule::Once
+pub schedulex::Schedule::Once::at_ms: u64
+impl schedulex::schedule::Schedule
+pub fn schedulex::schedule::Schedule::cron(impl core::convert::Into<alloc::string::String>) -> core::result::Result<Self, schedulex::ScheduleError>
+pub fn schedulex::schedule::Schedule::fixed_delay(u64) -> core::result::Result<Self, schedulex::ScheduleError>
+pub const fn schedulex::schedule::Schedule::once(u64) -> Self
+impl core::clone::Clone for schedulex::schedule::Schedule
+pub fn schedulex::schedule::Schedule::clone(&self) -> schedulex::schedule::Schedule
+impl core::cmp::Eq for schedulex::schedule::Schedule
+impl core::cmp::PartialEq for schedulex::schedule::Schedule
+pub fn schedulex::schedule::Schedule::eq(&self, &schedulex::schedule::Schedule) -> bool
+impl core::fmt::Debug for schedulex::schedule::Schedule
+pub fn schedulex::schedule::Schedule::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for schedulex::schedule::Schedule
+impl core::marker::Freeze for schedulex::schedule::Schedule
+impl core::marker::Send for schedulex::schedule::Schedule
+impl core::marker::Sync for schedulex::schedule::Schedule
+impl core::marker::Unpin for schedulex::schedule::Schedule
+impl core::marker::UnsafeUnpin for schedulex::schedule::Schedule
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::schedule::Schedule
+impl core::panic::unwind_safe::UnwindSafe for schedulex::schedule::Schedule
+#[non_exhaustive] pub enum schedulex::ScheduleError
+pub schedulex::ScheduleError::EmptyId
+pub schedulex::ScheduleError::IdControlChar
+pub schedulex::ScheduleError::IdTooLong
+pub schedulex::ScheduleError::IdTooLong::max: usize
+pub schedulex::ScheduleError::InvalidSchedule(alloc::string::String)
+pub schedulex::ScheduleError::JobFailed(alloc::string::String)
+impl core::clone::Clone for schedulex::ScheduleError
+pub fn schedulex::ScheduleError::clone(&self) -> schedulex::ScheduleError
+impl core::cmp::Eq for schedulex::ScheduleError
+impl core::cmp::PartialEq for schedulex::ScheduleError
+pub fn schedulex::ScheduleError::eq(&self, &schedulex::ScheduleError) -> bool
+impl core::error::Error for schedulex::ScheduleError
+impl core::fmt::Debug for schedulex::ScheduleError
+pub fn schedulex::ScheduleError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for schedulex::ScheduleError
+pub fn schedulex::ScheduleError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for schedulex::ScheduleError
+impl core::marker::Freeze for schedulex::ScheduleError
+impl core::marker::Send for schedulex::ScheduleError
+impl core::marker::Sync for schedulex::ScheduleError
+impl core::marker::Unpin for schedulex::ScheduleError
+impl core::marker::UnsafeUnpin for schedulex::ScheduleError
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::ScheduleError
+impl core::panic::unwind_safe::UnwindSafe for schedulex::ScheduleError
+pub struct schedulex::Job
+pub schedulex::Job::id: schedulex::job::JobId
+pub schedulex::Job::name: core::option::Option<alloc::string::String>
+pub schedulex::Job::run: schedulex::job::JobFn
+impl schedulex::job::Job
+pub fn schedulex::job::Job::meta(&self) -> schedulex::job::JobMeta
+pub fn schedulex::job::Job::new<F>(impl core::convert::Into<schedulex::job::JobId>, F) -> Self where F: core::ops::function::FnMut() -> core::result::Result<(), schedulex::ScheduleError> + core::marker::Send + 'static
+pub fn schedulex::job::Job::with_name(self, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::fmt::Debug for schedulex::job::Job
+pub fn schedulex::job::Job::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for schedulex::job::Job
+impl core::marker::Send for schedulex::job::Job
+impl !core::marker::Sync for schedulex::job::Job
+impl core::marker::Unpin for schedulex::job::Job
+impl core::marker::UnsafeUnpin for schedulex::job::Job
+impl !core::panic::unwind_safe::RefUnwindSafe for schedulex::job::Job
+impl !core::panic::unwind_safe::UnwindSafe for schedulex::job::Job
+pub struct schedulex::JobId(_)
+impl schedulex::job::JobId
+pub fn schedulex::job::JobId::as_str(&self) -> &str
+pub fn schedulex::job::JobId::checked(impl core::convert::Into<alloc::string::String>) -> core::result::Result<Self, schedulex::ScheduleError>
+pub fn schedulex::job::JobId::new(impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for schedulex::job::JobId
+pub fn schedulex::job::JobId::clone(&self) -> schedulex::job::JobId
+impl core::cmp::Eq for schedulex::job::JobId
+impl core::cmp::PartialEq for schedulex::job::JobId
+pub fn schedulex::job::JobId::eq(&self, &schedulex::job::JobId) -> bool
+impl core::convert::AsRef<str> for schedulex::job::JobId
+pub fn schedulex::job::JobId::as_ref(&self) -> &str
+impl core::convert::From<&str> for schedulex::job::JobId
+pub fn schedulex::job::JobId::from(&str) -> Self
+impl core::convert::From<alloc::string::String> for schedulex::job::JobId
+pub fn schedulex::job::JobId::from(alloc::string::String) -> Self
+impl core::fmt::Debug for schedulex::job::JobId
+pub fn schedulex::job::JobId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for schedulex::job::JobId
+pub fn schedulex::job::JobId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for schedulex::job::JobId
+pub fn schedulex::job::JobId::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::StructuralPartialEq for schedulex::job::JobId
+impl core::marker::Freeze for schedulex::job::JobId
+impl core::marker::Send for schedulex::job::JobId
+impl core::marker::Sync for schedulex::job::JobId
+impl core::marker::Unpin for schedulex::job::JobId
+impl core::marker::UnsafeUnpin for schedulex::job::JobId
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::job::JobId
+impl core::panic::unwind_safe::UnwindSafe for schedulex::job::JobId
+pub struct schedulex::JobMeta
+pub schedulex::JobMeta::id: schedulex::job::JobId
+pub schedulex::JobMeta::name: core::option::Option<alloc::string::String>
+impl core::clone::Clone for schedulex::job::JobMeta
+pub fn schedulex::job::JobMeta::clone(&self) -> schedulex::job::JobMeta
+impl core::cmp::Eq for schedulex::job::JobMeta
+impl core::cmp::PartialEq for schedulex::job::JobMeta
+pub fn schedulex::job::JobMeta::eq(&self, &schedulex::job::JobMeta) -> bool
+impl core::fmt::Debug for schedulex::job::JobMeta
+pub fn schedulex::job::JobMeta::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for schedulex::job::JobMeta
+impl core::marker::Freeze for schedulex::job::JobMeta
+impl core::marker::Send for schedulex::job::JobMeta
+impl core::marker::Sync for schedulex::job::JobMeta
+impl core::marker::Unpin for schedulex::job::JobMeta
+impl core::marker::UnsafeUnpin for schedulex::job::JobMeta
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::job::JobMeta
+impl core::panic::unwind_safe::UnwindSafe for schedulex::job::JobMeta
+pub struct schedulex::JobRunner
+impl schedulex::runner::JobRunner
+pub fn schedulex::runner::JobRunner::active_len(&self) -> usize
+pub fn schedulex::runner::JobRunner::add(&mut self, schedulex::job::Job, schedulex::schedule::Schedule) -> core::result::Result<(), schedulex::ScheduleError>
+pub fn schedulex::runner::JobRunner::cancel(&mut self, &str) -> bool
+pub fn schedulex::runner::JobRunner::contains(&self, &str) -> bool
+pub fn schedulex::runner::JobRunner::list_meta(&self) -> alloc::vec::Vec<schedulex::job::JobMeta>
+pub fn schedulex::runner::JobRunner::new() -> Self
+pub fn schedulex::runner::JobRunner::remove(&mut self, &str) -> bool
+pub fn schedulex::runner::JobRunner::tick(&mut self, u64) -> schedulex::runner::TickResult
+impl core::default::Default for schedulex::runner::JobRunner
+pub fn schedulex::runner::JobRunner::default() -> schedulex::runner::JobRunner
+impl core::fmt::Debug for schedulex::runner::JobRunner
+pub fn schedulex::runner::JobRunner::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for schedulex::runner::JobRunner
+impl core::marker::Send for schedulex::runner::JobRunner
+impl !core::marker::Sync for schedulex::runner::JobRunner
+impl core::marker::Unpin for schedulex::runner::JobRunner
+impl core::marker::UnsafeUnpin for schedulex::runner::JobRunner
+impl !core::panic::unwind_safe::RefUnwindSafe for schedulex::runner::JobRunner
+impl !core::panic::unwind_safe::UnwindSafe for schedulex::runner::JobRunner
+pub struct schedulex::RegistryStats
+pub schedulex::RegistryStats::empty: bool
+pub schedulex::RegistryStats::len: usize
+impl core::clone::Clone for schedulex::stats::RegistryStats
+pub fn schedulex::stats::RegistryStats::clone(&self) -> schedulex::stats::RegistryStats
+impl core::cmp::Eq for schedulex::stats::RegistryStats
+impl core::cmp::PartialEq for schedulex::stats::RegistryStats
+pub fn schedulex::stats::RegistryStats::eq(&self, &schedulex::stats::RegistryStats) -> bool
+impl core::fmt::Debug for schedulex::stats::RegistryStats
+pub fn schedulex::stats::RegistryStats::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for schedulex::stats::RegistryStats
+impl core::marker::StructuralPartialEq for schedulex::stats::RegistryStats
+impl core::marker::Freeze for schedulex::stats::RegistryStats
+impl core::marker::Send for schedulex::stats::RegistryStats
+impl core::marker::Sync for schedulex::stats::RegistryStats
+impl core::marker::Unpin for schedulex::stats::RegistryStats
+impl core::marker::UnsafeUnpin for schedulex::stats::RegistryStats
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::stats::RegistryStats
+impl core::panic::unwind_safe::UnwindSafe for schedulex::stats::RegistryStats
+pub struct schedulex::Scheduler
+impl schedulex::Scheduler
+pub fn schedulex::Scheduler::cancel(&mut self, &str) -> bool
+pub fn schedulex::Scheduler::cancel_many<'a, I>(&mut self, I) -> usize where I: core::iter::traits::collect::IntoIterator<Item = &'a str>
+pub fn schedulex::Scheduler::clear(&mut self)
+pub fn schedulex::Scheduler::contains(&self, &str) -> bool
+pub fn schedulex::Scheduler::difference_ids(&self, &schedulex::Scheduler) -> alloc::vec::Vec<alloc::string::String>
+pub fn schedulex::Scheduler::intersection_ids(&self, &schedulex::Scheduler) -> alloc::vec::Vec<alloc::string::String>
+pub fn schedulex::Scheduler::is_empty(&self) -> bool
+pub fn schedulex::Scheduler::len(&self) -> usize
+pub fn schedulex::Scheduler::list(&self) -> alloc::vec::Vec<alloc::string::String>
+pub fn schedulex::Scheduler::new() -> Self
+pub fn schedulex::Scheduler::retain<F>(&mut self, F) where F: core::ops::function::FnMut(&str) -> bool
+pub fn schedulex::Scheduler::schedule(&mut self, impl core::convert::Into<alloc::string::String>)
+pub fn schedulex::Scheduler::schedule_checked(&mut self, impl core::convert::Into<alloc::string::String>) -> core::result::Result<(), schedulex::ScheduleError>
+pub fn schedulex::Scheduler::schedule_many<I, S>(&mut self, I) where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
+pub fn schedulex::Scheduler::schedule_normalized(&mut self, &str) -> core::result::Result<(), schedulex::ScheduleError>
+pub fn schedulex::Scheduler::try_schedule(&mut self, impl core::convert::Into<alloc::string::String>) -> bool
+pub fn schedulex::Scheduler::union_ids(&self, &schedulex::Scheduler) -> alloc::vec::Vec<alloc::string::String>
+impl core::clone::Clone for schedulex::Scheduler
+pub fn schedulex::Scheduler::clone(&self) -> schedulex::Scheduler
+impl core::default::Default for schedulex::Scheduler
+pub fn schedulex::Scheduler::default() -> Self
+impl core::fmt::Debug for schedulex::Scheduler
+pub fn schedulex::Scheduler::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for schedulex::Scheduler
+impl core::marker::Send for schedulex::Scheduler
+impl core::marker::Sync for schedulex::Scheduler
+impl core::marker::Unpin for schedulex::Scheduler
+impl core::marker::UnsafeUnpin for schedulex::Scheduler
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::Scheduler
+impl core::panic::unwind_safe::UnwindSafe for schedulex::Scheduler
+pub struct schedulex::TickResult
+pub schedulex::TickResult::errors: alloc::vec::Vec<(schedulex::job::JobId, schedulex::ScheduleError)>
+pub schedulex::TickResult::fired: usize
+impl core::default::Default for schedulex::runner::TickResult
+pub fn schedulex::runner::TickResult::default() -> schedulex::runner::TickResult
+impl core::fmt::Debug for schedulex::runner::TickResult
+pub fn schedulex::runner::TickResult::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for schedulex::runner::TickResult
+impl core::marker::Send for schedulex::runner::TickResult
+impl core::marker::Sync for schedulex::runner::TickResult
+impl core::marker::Unpin for schedulex::runner::TickResult
+impl core::marker::UnsafeUnpin for schedulex::runner::TickResult
+impl core::panic::unwind_safe::RefUnwindSafe for schedulex::runner::TickResult
+impl core::panic::unwind_safe::UnwindSafe for schedulex::runner::TickResult
+pub const schedulex::MAX_ID_LEN: usize
+pub const schedulex::NO_HARD_CAPACITY: core::option::Option<usize>
+pub fn schedulex::cron_matches(&schedulex::schedule::CronParsed, u64) -> bool
+pub fn schedulex::debug_label(&str, &str) -> alloc::string::String
+pub fn schedulex::is_busy(&schedulex::Scheduler, usize) -> bool
+pub fn schedulex::is_debug_label(&str) -> bool
+pub fn schedulex::normalize_task_id(&str) -> core::result::Result<alloc::string::String, schedulex::ScheduleError>
+pub fn schedulex::over_soft_threshold(&schedulex::Scheduler, usize) -> bool
+pub fn schedulex::parse_cron_expr(&str) -> core::result::Result<schedulex::schedule::CronParsed, schedulex::ScheduleError>
+pub fn schedulex::schedule_checked_many(&mut schedulex::Scheduler, &[&str]) -> core::result::Result<usize, schedulex::ScheduleError>
+pub fn schedulex::schedule_filtering(&mut schedulex::Scheduler, &[&str]) -> (usize, alloc::vec::Vec<alloc::string::String>)
+pub fn schedulex::stats(&schedulex::Scheduler) -> schedulex::stats::RegistryStats
+pub fn schedulex::status_line(&schedulex::Scheduler) -> alloc::string::String
+pub fn schedulex::utilization(&schedulex::Scheduler, usize) -> f64
+pub fn schedulex::validate_task_id(&str) -> core::result::Result<(), schedulex::ScheduleError>
+pub type schedulex::JobFn = alloc::boxed::Box<(dyn core::ops::function::FnMut() -> core::result::Result<(), schedulex::ScheduleError> + core::marker::Send)>
