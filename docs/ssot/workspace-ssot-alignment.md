@@ -27,10 +27,11 @@
 | `okxx` | `crates/adapters/exchange/okx/` | `okxx` | 生产默认：四头鉴权 REST + 业务信封 + 公共 WS 行情解析 + live server_time ignore | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **0.3.1** insert_batch + 有界池 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **0.3.1** offset/at-least-once/应用级 EOS + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.1** JetStream + TLS 策略 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) || `ossx` | `crates/adapters/storage/oss/` | `ossx` | **生产** `OssClient`（OSS V1 签名）+ live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **生产** `PostgresPool`/`PgTransaction` + SQLSTATE + live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `redisx` | `crates/adapters/storage/redis/` | `redisx` | **生产** `RedisPool`/`RedisClient` + KV + live/bench（默认路径，非仅 `live` feature） | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `taosx` | `crates/adapters/storage/taos/` | `taosx` | **生产** `TaosPool` REST（6041）+ live/bench | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.1** JetStream + TLS 策略 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `ossx` | `crates/adapters/storage/oss/` | `ossx` | **0.3.1** ObjectStore + multipart + retry + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **0.3.1** Pool/Tx + PgRepository + SSL require + resiliencx + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `redisx` | `crates/adapters/storage/redis/` | `redisx` | **0.3.1** Cluster/Sentinel/TLS + resiliencx + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `taosx` | `crates/adapters/storage/taos/` | `taosx` | **0.3.1** batch write + Native WS 探测 + 有界池 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `goalctl` | `tools/goalctl/` | `goalctl` | 最小 Goal→Contract CLI（doctor/validate/compile）· #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | `verifyctl` | `tools/verifyctl/` | `verifyctl` | 最小 plan/execute/report CLI · #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | `transportx` | `crates/transport/` | `transportx` | L1 HTTP/WS 传输 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) |
@@ -81,6 +82,7 @@
 | （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Venue 业务 live **DEFER** |
 | transport | `.agents/ssot/transport/` | `crates/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
 | tools | `.agents/ssot/tools/` | `crates/evidence` + `tools/goalctl` + `tools/verifyctl` | evidence + **goalctl/verifyctl 最小生产 CLI 已 member**（#188）；live env 构建器 #191；xtask **未**落地 |
+
 规则：
 
 1. 规格写 COMPLETE / Stable ≠ 本仓可宣称 ship

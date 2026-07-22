@@ -7,6 +7,7 @@
 | 本仓路径 | `crates/adapters/{exchange,storage}/<name>` |
 | 审计日期 | 2026-07-22 |
 | 结论 | **storage×7 生产默认 + OBJECTIVE DEFER 闭合（`0.3.1`）** + **exchange 生产默认 REST+WS named DEFER 闭合**（binancex/okxx）；live `#[ignore]` + benches；scaffold → `feature = "scaffold"`（storage）；**未**宣称 package stable / L5 代签 / crates.io |
+
 ## 结论摘要
 
 | 问题 | 状态 |
