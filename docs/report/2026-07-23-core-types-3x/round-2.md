@@ -36,4 +36,4 @@
 
 - RED 原因与退出码：[`evidence/r2-red.txt`](evidence/r2-red.txt)。
 - GREEN 命令、工具链、计数与可复算指纹：[`evidence/r2-green.txt`](evidence/r2-green.txt)。
-- 独立 reviewer 对候选 `6c8da41` 与 evidence HEAD `cc93223` 给出 **GO（0.96）**；reviewer 明确区分两个真实 RED 修复与两个绿色回归加固。
+- 独立 reviewer 对候选 `6c8da41` 与 evidence HEAD `cc93223` 给出 **GO（0.97）**；原始终局输出见 [`reviews/r2-final-reviewer.md`](reviews/r2-final-reviewer.md)，并明确区分两个真实 RED 修复与两个绿色回归加固。

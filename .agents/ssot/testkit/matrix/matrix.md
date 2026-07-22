@@ -50,4 +50,4 @@
 
 - `R-CLK-DOMAIN-EXHAUSTION`：OPEN；保持 process-lifetime 边界，禁止回绕后继续宣称唯一。
 - `R-EXTERNAL-HARNESS`：OOS；不与 crate 内 `IntegrationHarness` 混同。
-- typed runner、fail-closed 测试和 PATCH bump：IMPLEMENTED；固定候选重审与全仓门禁仍待闭合。
+- typed runner、fail-closed 测试和 PATCH bump：IMPLEMENTED；`387a1dc` 全仓门禁 PASS，独立终审待闭合。
