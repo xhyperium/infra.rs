@@ -33,6 +33,8 @@
 | `pr-template-check.yml` | PR Template Check | pull_request | `template-check` |
 | `public-api.yml` | 公开 API | pull_request, workflow_dispatch | `public-api` |
 | `quality.yml` | 质量 | pull_request, workflow_dispatch | `check-rust`, `fmt`, `clippy`, `doc` |
+| `rebase-on-label.yml` | 自动 Rebase（标签） | pull_request | `validate`, `notify-fork`, `block-invalid`, `rebase` |
+| `rebase-on-push.yml` | push 时自动 Rebase | push | `audit-and-rebase` |
 | `redisx-live.yml` | Redisx Live | pull_request, workflow_dispatch | `live` |
 | `release.yml` | Release | workflow_dispatch | `release-build`, `release-test`, `release-clippy`, `release-doc` |
 | `resiliencx-coverage.yml` | Resiliencx Coverage | pull_request, workflow_dispatch | `line-coverage` |
@@ -50,8 +52,8 @@
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 36 |
-| Job 总数（解析） | 70 |
+| 工作流文件数 | 38 |
+| Job 总数（解析） | 75 |
 
 ## 维护
 
