@@ -28,9 +28,9 @@
 
 | Gate | 状态 |
 |------|------|
-| reference suites + 15 broken cases | **本地 PASS；待最终主干重放** |
-| `check-test-support-graph.mjs` default/all-features | **本地 PASS；待 CI** |
-| `contract-testkit` public API baseline | **本地 PASS；待 CI** |
+| reference suites + 15 broken cases | **stack PASS；待最终主干重放**（[evidence](../evidence/2026-07-23-contract-testkit-stack.md)） |
+| `check-test-support-graph.mjs` default/all-features | **stack PASS；待 CI**（同上） |
+| `contract-testkit` public API baseline | **stack PASS；待 CI**（同上） |
 | 独立 code/spec review | **待执行** |
 | 人工批准、PR 合并、发布 | **BLOCKED / 未发生** |
 
