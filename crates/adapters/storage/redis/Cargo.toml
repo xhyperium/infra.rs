@@ -23,8 +23,10 @@ futures-core = { workspace = true }
 futures-util = { workspace = true }
 contracts = { path = "../../../contracts", version = "0.1.1" }
 kernel = { path = "../../../kernel", version = "0.3.0" }
-resiliencx = { path = "../../../resiliencx", version = "0.1.1" }
 redis = { workspace = true }
+resiliencx = { path = "../../../resiliencx", version = "0.1.1", features = [
+  "tokio",
+] }
 tokio = { workspace = true, features = ["sync", "time", "macros", "rt"] }
 
 [dev-dependencies]

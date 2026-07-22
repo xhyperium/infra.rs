@@ -1,7 +1,7 @@
 //! ClickHouse HTTP 生产客户端（8123）。
 
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -9,12 +9,36 @@ use contracts::AnalyticsSink;
 use kernel::{XError, XResult};
 use reqwest::StatusCode;
 use serde_json::Value;
+use tokio::sync::{OwnedSemaphorePermit, Semaphore};
+use tokio::time::timeout;
 use tracing::debug;
 
 use crate::config::ClickHouseConfig;
 
 /// 默认 analytics sink 表名。
 pub const ANALYTICS_TABLE: &str = "analytics_events";
+
+/// 批量插入选项。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BatchInsertOptions {
+    /// 每个 HTTP 请求最大行数（≥1；0 会被抬升为 1）。
+    pub max_rows_per_chunk: usize,
+}
+
+impl Default for BatchInsertOptions {
+    fn default() -> Self {
+        Self { max_rows_per_chunk: 1000 }
+    }
+}
+
+/// 池运行时快照。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ClickHousePoolStats {
+    /// 正在执行的请求数。
+    pub in_flight: usize,
+    /// 是否已关闭。
+    pub closed: bool,
+}
 
 /// 共享 HTTP 连接资源 + 配置。
 ///
@@ -27,22 +51,52 @@ pub struct ClickHousePool {
 struct PoolInner {
     http: reqwest::Client,
     config: ClickHouseConfig,
+    sem: Arc<Semaphore>,
+    in_flight: AtomicUsize,
     closed: AtomicBool,
 }
 
 /// 池上的工作句柄（与 [`ClickHousePool`] 等价，便于命名区分）。
 pub type ClickHouseClient = ClickHousePool;
 
+/// 计算分块范围：`(start, end)` 半开区间。
+///
+/// 纯函数，供单测驱动具体 chunk 尺寸。
+#[must_use]
+pub fn chunk_ranges(total: usize, max_per_chunk: usize) -> Vec<(usize, usize)> {
+    if total == 0 {
+        return Vec::new();
+    }
+    let size = max_per_chunk.max(1);
+    let mut out = Vec::new();
+    let mut start = 0;
+    while start < total {
+        let end = (start + size).min(total);
+        out.push((start, end));
+        start = end;
+    }
+    out
+}
+
 impl ClickHousePool {
     /// 使用配置建立 HTTP 客户端并 `ping`。
     pub async fn connect(config: ClickHouseConfig) -> XResult<Self> {
+        config.validate()?;
         let http = reqwest::Client::builder()
             .timeout(config.timeout)
-            .pool_max_idle_per_host(8)
+            .pool_max_idle_per_host(config.max_idle_per_host)
             .build()
             .map_err(|e| XError::internal(format!("clickhouse http client: {e}")))?;
-        let pool =
-            Self { inner: Arc::new(PoolInner { http, config, closed: AtomicBool::new(false) }) };
+        let max_in_flight = config.max_in_flight;
+        let pool = Self {
+            inner: Arc::new(PoolInner {
+                http,
+                config,
+                sem: Arc::new(Semaphore::new(max_in_flight)),
+                in_flight: AtomicUsize::new(0),
+                closed: AtomicBool::new(false),
+            }),
+        };
         pool.ping().await?;
         Ok(pool)
     }
@@ -50,6 +104,27 @@ impl ClickHousePool {
     /// 从环境变量连接。
     pub async fn connect_from_env() -> XResult<Self> {
         Self::connect(ClickHouseConfig::from_env()).await
+    }
+
+    /// 仅测试：跳过 ping，便于离线验证 close / stats / acquire。
+    #[cfg(test)]
+    pub(crate) fn connect_without_ping(config: ClickHouseConfig) -> XResult<Self> {
+        config.validate()?;
+        let http = reqwest::Client::builder()
+            .timeout(config.timeout)
+            .pool_max_idle_per_host(config.max_idle_per_host)
+            .build()
+            .map_err(|e| XError::internal(format!("clickhouse http client: {e}")))?;
+        let max_in_flight = config.max_in_flight;
+        Ok(Self {
+            inner: Arc::new(PoolInner {
+                http,
+                config,
+                sem: Arc::new(Semaphore::new(max_in_flight)),
+                in_flight: AtomicUsize::new(0),
+                closed: AtomicBool::new(false),
+            }),
+        })
     }
 
     /// 返回工作客户端（当前即 `self` 的克隆）。
@@ -62,6 +137,21 @@ impl ClickHousePool {
     #[must_use]
     pub fn config(&self) -> &ClickHouseConfig {
         &self.inner.config
+    }
+
+    /// 当前统计。
+    #[must_use]
+    pub fn stats(&self) -> ClickHousePoolStats {
+        ClickHousePoolStats {
+            in_flight: self.inner.in_flight.load(Ordering::Relaxed),
+            closed: self.inner.closed.load(Ordering::Relaxed),
+        }
+    }
+
+    /// 是否已关闭。
+    #[must_use]
+    pub fn is_closed(&self) -> bool {
+        self.inner.closed.load(Ordering::Acquire)
     }
 
     /// `SELECT 1` 健康检查。
@@ -118,6 +208,26 @@ impl ClickHousePool {
         Ok(())
     }
 
+    /// 分块批量插入：按 `max_rows_per_chunk` 切分后调用 `insert_json_each_row`。
+    ///
+    /// 空 `rows` → `Ok(())`。
+    pub async fn insert_batch(
+        &self,
+        table: &str,
+        rows: &[Value],
+        options: BatchInsertOptions,
+    ) -> XResult<()> {
+        validate_ident(table)?;
+        if rows.is_empty() {
+            return Ok(());
+        }
+        let ranges = chunk_ranges(rows.len(), options.max_rows_per_chunk);
+        for (start, end) in ranges {
+            self.insert_json_each_row(table, &rows[start..end]).await?;
+        }
+        Ok(())
+    }
+
     /// 确保 analytics 表存在（MergeTree）。
     pub async fn ensure_analytics_table(&self) -> XResult<()> {
         let sql = format!(
@@ -133,6 +243,8 @@ impl ClickHousePool {
     /// 关闭池：拒绝后续请求（HTTP 连接由 Drop 回收）。
     pub async fn close(&self) -> XResult<()> {
         self.inner.closed.store(true, Ordering::SeqCst);
+        // 关闭信号量，使后续 acquire 失败
+        self.inner.sem.close();
         Ok(())
     }
 
@@ -143,8 +255,36 @@ impl ClickHousePool {
         Ok(())
     }
 
-    async fn post_query(&self, sql: &str, body_suffix: Option<String>) -> XResult<String> {
+    async fn acquire(&self) -> XResult<OwnedSemaphorePermit> {
         self.ensure_open()?;
+        let result =
+            timeout(self.inner.config.acquire_timeout, self.inner.sem.clone().acquire_owned())
+                .await;
+        match result {
+            Ok(Ok(permit)) => {
+                if self.is_closed() {
+                    drop(permit);
+                    return Err(XError::unavailable("clickhouse pool 已关闭"));
+                }
+                Ok(permit)
+            }
+            Ok(Err(_)) => Err(XError::unavailable("clickhouse 背压信号量已关闭")),
+            Err(_) => Err(XError::deadline_exceeded(format!(
+                "clickhouse 获取 in-flight 许可超时（max={}）",
+                self.inner.config.max_in_flight
+            ))),
+        }
+    }
+
+    async fn post_query(&self, sql: &str, body_suffix: Option<String>) -> XResult<String> {
+        let _permit = self.acquire().await?;
+        self.inner.in_flight.fetch_add(1, Ordering::SeqCst);
+        let result = self.post_query_inner(sql, body_suffix).await;
+        self.inner.in_flight.fetch_sub(1, Ordering::SeqCst);
+        result
+    }
+
+    async fn post_query_inner(&self, sql: &str, body_suffix: Option<String>) -> XResult<String> {
         let cfg = &self.inner.config;
         let mut url = url::Url::parse(&cfg.base_url())
             .map_err(|e| XError::invalid(format!("clickhouse base url: {e}")))?;
@@ -265,12 +405,30 @@ mod tests {
         assert!(validate_ident("").is_err());
     }
 
+    #[test]
+    fn chunk_ranges_concrete_sizes() {
+        assert!(chunk_ranges(0, 10).is_empty());
+        assert_eq!(chunk_ranges(5, 10), vec![(0, 5)]);
+        assert_eq!(chunk_ranges(5, 2), vec![(0, 2), (2, 4), (4, 5)]);
+        assert_eq!(chunk_ranges(3, 1), vec![(0, 1), (1, 2), (2, 3)]);
+        // max_per_chunk=0 → 抬升为 1
+        assert_eq!(chunk_ranges(2, 0), vec![(0, 1), (1, 2)]);
+        assert_eq!(chunk_ranges(7, 3), vec![(0, 3), (3, 6), (6, 7)]);
+    }
+
+    #[test]
+    fn batch_options_default() {
+        let o = BatchInsertOptions::default();
+        assert_eq!(o.max_rows_per_chunk, 1000);
+    }
+
     #[tokio::test]
     async fn connect_refused_fails_on_ping_path() {
         let cfg = ClickHouseConfig {
             host: "127.0.0.1".into(),
             http_port: 1,
             timeout: Duration::from_millis(300),
+            acquire_timeout: Duration::from_millis(300),
             ..ClickHouseConfig::default()
         };
         match ClickHousePool::connect(cfg).await {
@@ -296,5 +454,57 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[tokio::test]
+    async fn connect_rejects_zero_max_in_flight() {
+        let cfg = ClickHouseConfig {
+            max_in_flight: 0,
+            host: "127.0.0.1".into(),
+            http_port: 1,
+            timeout: Duration::from_millis(100),
+            ..ClickHouseConfig::default()
+        };
+        let err = match ClickHousePool::connect(cfg).await {
+            Ok(_) => panic!("must reject zero max_in_flight"),
+            Err(e) => e,
+        };
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn closed_pool_rejects_and_stats() {
+        let cfg = ClickHouseConfig {
+            host: "127.0.0.1".into(),
+            http_port: 1,
+            timeout: Duration::from_millis(200),
+            acquire_timeout: Duration::from_millis(200),
+            max_in_flight: 2,
+            ..ClickHouseConfig::default()
+        };
+        let pool = ClickHousePool::connect_without_ping(cfg).expect("build");
+        assert_eq!(pool.stats().in_flight, 0);
+        assert!(!pool.stats().closed);
+
+        pool.close().await.expect("close");
+        assert!(pool.stats().closed);
+        assert!(pool.is_closed());
+
+        let err = pool.execute("SELECT 1").await.expect_err("closed");
+        assert_eq!(err.kind(), ErrorKind::Unavailable);
+    }
+
+    #[tokio::test]
+    async fn idle_per_host_applied_on_builder() {
+        let cfg = ClickHouseConfig {
+            max_idle_per_host: 3,
+            max_in_flight: 4,
+            host: "127.0.0.1".into(),
+            http_port: 1,
+            ..ClickHouseConfig::default()
+        };
+        let pool = ClickHousePool::connect_without_ping(cfg).expect("build");
+        assert_eq!(pool.config().max_idle_per_host, 3);
+        assert_eq!(pool.config().max_in_flight, 4);
     }
 }

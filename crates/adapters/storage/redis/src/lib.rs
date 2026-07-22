@@ -2,14 +2,15 @@
 //!
 //! ## 生产入口
 //!
-//! - [`RedisConfig`] / [`RedisConfigBuilder`]：私有字段配置
-//! - [`RedisPool`]：`ConnectionManager` + Semaphore 背压 + `close`
+//! - [`RedisConfig`] / [`RedisConfigBuilder`]：私有字段配置（Standalone / Cluster / Sentinel + TLS）
+//! - [`RedisPool`]：双后端（`ConnectionManager` | `ClusterConnection`）+ Semaphore 背压 + `close`
 //! - [`RedisClient`]：KV 扩展 + [`contracts::KeyValueStore`]
-//! - feature `pubsub`：[`RedisPubSub`] / [`RedisPubSubFacade`]
+//! - resilience：基于 resiliencx 的重试包装
+//! - feature `pubsub`：`RedisPubSub` / `RedisPubSubFacade`
 //!
 //! ## Scaffold（可选）
 //!
-//! feature `scaffold` 下保留旧 [`RedisAdapter`] / [`InMemoryRedis`] / [`MockRedisAdapter`]，
+//! feature `scaffold` 下保留旧 `RedisAdapter` / `InMemoryRedis` / `MockRedisAdapter`，
 //! **禁止**当作生产 Redis。
 //!
 //! ## 兼容
@@ -28,7 +29,10 @@ pub use client::RedisClient;
 pub use config::{RedisConfig, RedisConfigBuilder, RedisMode};
 pub use error_map::{map_redis_error, map_redis_result};
 pub use pool::{RedisPool, RedisPoolStats};
-pub use resilience::{with_budget, with_budget_async, with_budget_async_noop, with_budget_noop};
+pub use resilience::{
+    RedisRetryConfig, with_budget, with_budget_async, with_budget_async_noop, with_budget_noop,
+    with_retry_async, with_retry_async_no_wait, with_retry_sync,
+};
 
 /// 兼容旧名称：真实 Redis KV 客户端。
 pub type RedisLiveKv = RedisClient;
@@ -54,6 +58,8 @@ mod public_api_surface {
         let cfg: RedisConfig = builder.build().expect("cfg");
         let _dbg = format!("{cfg:?}");
         let _mode = RedisMode::Standalone;
+        let _ = RedisMode::Cluster;
+        let _ = RedisMode::Sentinel;
 
         let ok: kernel::XResult<i32> = map_redis_result(Ok(7));
         assert_eq!(ok.unwrap(), 7);
@@ -69,5 +75,8 @@ mod public_api_surface {
         assert_type::<RedisConfigBuilder>();
         assert_type::<RedisPoolStats>();
         let _ = map_redis_error;
+        let cfg = RedisRetryConfig::fixed(1, 0);
+        let v = with_retry_sync(&cfg, "surface", || Ok(1_i32)).expect("retry");
+        assert_eq!(v, 1);
     }
 }

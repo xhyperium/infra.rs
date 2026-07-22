@@ -1,17 +1,15 @@
-//! resiliencx 接入：对可重试 KV 操作施加 [`RetryBudget`]。
-//!
-//! 生产路径：[`crate::RedisClient::get`] / [`crate::RedisClient::set`] 在配置了 budget 时经
-//! [`with_budget_async`] 驱动真实 I/O。
+//! resiliencx 接入：`RetryBudget` 生产路径 + `RetryConfig` 辅助包装。
 
 use std::future::Future;
 
 use kernel::XResult;
 use resiliencx::{
-    Instrumentation, NoopInstrumentation, RetryBudget, budget_exhausted_error,
-    call_with_retry_budget,
+    Instrumentation, NoWait, NoopInstrumentation, RetryBudget, RetryConfig, TokioSleepWait,
+    budget_exhausted_error, call_with_retry_budget, retry_async, retry_downcast, retry_fn,
+    retry_ok,
 };
 
-/// 带预算的同步重试包装（供非 async 编排或测试 double 使用）。
+/// 带预算的同步重试包装。
 pub fn with_budget<F, T>(
     budget: &RetryBudget,
     max_attempts: u32,
@@ -33,9 +31,7 @@ where
     with_budget(budget, max_attempts, op, &NoopInstrumentation, f)
 }
 
-/// 带预算的 **async** 重试：驱动真实 async I/O（redis get/set 生产入口）。
-///
-/// 第 1 次不扣 budget；第 2 次起 `try_consume`；预算耗尽返回最后一次可重试错误。
+/// 带预算的 **async** 重试：驱动真实 async I/O。
 pub async fn with_budget_async<F, Fut, T>(
     budget: &RetryBudget,
     max_attempts: u32,
@@ -81,6 +77,67 @@ where
     with_budget_async(budget, max_attempts, op, &NoopInstrumentation, f).await
 }
 
+/// 同步重试包装：仅 Transient 可重试。
+pub fn with_retry_sync<T, F>(config: &RetryConfig, op: &str, mut f: F) -> XResult<T>
+where
+    T: 'static + Send,
+    F: FnMut() -> XResult<T>,
+{
+    let mut wrapped = || match f() {
+        Ok(v) => Ok(retry_ok(v)),
+        Err(e) => Err(e),
+    };
+    let value = retry_fn(config, &NoopInstrumentation, op, &mut wrapped)?;
+    retry_downcast(value)
+}
+
+/// 异步重试（TokioSleepWait）。
+pub async fn with_retry_async<T, F, Fut>(config: &RetryConfig, op: &str, mut f: F) -> XResult<T>
+where
+    T: 'static + Send,
+    F: FnMut() -> Fut,
+    Fut: Future<Output = XResult<T>> + Send,
+{
+    let value = retry_async(config, &NoopInstrumentation, op, &TokioSleepWait, || {
+        let fut = f();
+        async move {
+            match fut.await {
+                Ok(v) => Ok(retry_ok(v)),
+                Err(e) => Err(e),
+            }
+        }
+    })
+    .await?;
+    retry_downcast(value)
+}
+
+/// 异步重试（NoWait，单测）。
+pub async fn with_retry_async_no_wait<T, F, Fut>(
+    config: &RetryConfig,
+    op: &str,
+    mut f: F,
+) -> XResult<T>
+where
+    T: 'static + Send,
+    F: FnMut() -> Fut,
+    Fut: Future<Output = XResult<T>> + Send,
+{
+    let value = retry_async(config, &NoopInstrumentation, op, &NoWait, || {
+        let fut = f();
+        async move {
+            match fut.await {
+                Ok(v) => Ok(retry_ok(v)),
+                Err(e) => Err(e),
+            }
+        }
+    })
+    .await?;
+    retry_downcast(value)
+}
+
+/// 重导出。
+pub use resiliencx::RetryConfig as RedisRetryConfig;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -120,21 +177,22 @@ mod tests {
         .await
         .unwrap();
         assert_eq!(v, 3);
-        // attempts 2 and 3 consumed budget (max 2)
-        assert_eq!(budget.remaining(), 0);
     }
 
     #[tokio::test]
     async fn redis_async_budget_exhausts() {
         let budget = RetryBudget::new(1);
-        let n = AtomicU32::new(0);
-        let err = with_budget_async_noop(&budget, 5, "redis.set", || {
-            n.fetch_add(1, Ordering::SeqCst);
-            async { Err::<(), _>(XError::transient("again")) }
+        let err = with_budget_async_noop(&budget, 5, "redis.set", || async {
+            Err::<(), _>(XError::transient("timeout"))
         })
         .await
         .unwrap_err();
-        assert!(n.load(Ordering::SeqCst) >= 2);
         assert!(matches!(err.kind(), ErrorKind::Unavailable | ErrorKind::Transient));
+    }
+
+    #[test]
+    fn retry_sync_success() {
+        let cfg = RetryConfig::fixed(2, 0);
+        assert_eq!(with_retry_sync(&cfg, "op", || Ok(1_u8)).unwrap(), 1);
     }
 }

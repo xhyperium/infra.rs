@@ -3,16 +3,18 @@
 //! ## 生产入口
 //!
 //! - [`OssConfig`] / [`OssConfigBuilder`]：配置与 `FOUNDATIONX_OSSX_*` 环境变量
-//! - [`OssClient`]：reqwest + OSS Signature V1；实现 [`contracts::ObjectStore`]
+//! - [`OssClient`]：reqwest + OSS Signature V1；multipart；`resiliencx` 重试
+//! - 实现 [`contracts::ObjectStore`]
 //!
 //! ## Scaffold
 //!
-//! feature `scaffold` 暴露进程内 [`OssAdapter`]（**非**生产）。
+//! feature `scaffold` 暴露进程内 `OssAdapter`（**非**生产）。
 
 #![forbid(unsafe_code)]
 
 mod client;
 mod config;
+mod retry;
 mod sign;
 
 pub use client::OssClient;
@@ -20,7 +22,11 @@ pub use config::{
     ENV_ACCESS_KEY_ID, ENV_ACCESS_KEY_SECRET, ENV_BUCKET, ENV_ENDPOINT, ENV_REGION, OssConfig,
     OssConfigBuilder,
 };
-pub use sign::{authorization_header, canonicalized_resource, sign_v1};
+pub use retry::{default_retry_config, is_oss_retryable, with_retry, with_retry_default};
+pub use sign::{
+    authorization_header, canonicalized_resource, canonicalized_resource_with_subresources,
+    sign_v1, split_parts,
+};
 
 #[cfg(feature = "scaffold")]
 mod adapter;
@@ -54,6 +60,13 @@ mod public_api_surface {
         let resource = canonicalized_resource("b", "/k");
         let sig = sign_v1("sec", "GET", "", "", "date", "", &resource);
         let _ = authorization_header("id", &sig);
+
+        let multi = canonicalized_resource_with_subresources("b", "k", &[("uploads", None)]);
+        assert!(multi.ends_with("?uploads"));
+        assert!(split_parts(b"abc", 2).len() == 2);
+
+        let _ = default_retry_config();
+        assert!(is_oss_retryable(&kernel::XError::transient("t")));
 
         fn assert_type<T: ?Sized>() {}
         assert_type::<OssClient>();

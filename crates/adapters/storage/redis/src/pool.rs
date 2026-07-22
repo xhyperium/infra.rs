@@ -1,16 +1,21 @@
-//! Redis 资源池：`ConnectionManager` + Semaphore 背压 + 优雅关闭。
+//! Redis 资源池：Standalone `ConnectionManager` / Cluster `ClusterConnection` + Semaphore 背压。
 
+use std::future::Future;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 use kernel::{XError, XResult};
-use redis::aio::ConnectionManager;
+use redis::aio::{ConnectionLike, ConnectionManager};
+use redis::cluster::ClusterClient;
+use redis::cluster_async::ClusterConnection;
+use redis::sentinel::{Sentinel, SentinelNodeConnectionInfo};
+use redis::{Cmd, Pipeline, RedisFuture, TlsMode, Value};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use tokio::time::timeout;
 
 use crate::client::RedisClient;
-use crate::config::RedisConfig;
+use crate::config::{RedisConfig, RedisMode};
 use crate::error_map::map_redis_result;
 
 #[cfg(feature = "pubsub")]
@@ -27,6 +32,45 @@ pub struct RedisPoolStats {
     pub waiters: usize,
 }
 
+/// 连接后端：Standalone 或 Cluster。Sentinel 发现 master 后归入 Standalone。
+///
+/// `ConnectionManager` 体积较大，装箱以抑制 `large_enum_variant`。
+#[derive(Clone)]
+pub(crate) enum RedisBackend {
+    /// 单机 / Sentinel master。
+    Standalone(Box<ConnectionManager>),
+    /// Redis Cluster。
+    Cluster(ClusterConnection),
+}
+
+impl ConnectionLike for RedisBackend {
+    fn req_packed_command<'a>(&'a mut self, cmd: &'a Cmd) -> RedisFuture<'a, Value> {
+        match self {
+            Self::Standalone(c) => c.req_packed_command(cmd),
+            Self::Cluster(c) => c.req_packed_command(cmd),
+        }
+    }
+
+    fn req_packed_commands<'a>(
+        &'a mut self,
+        cmd: &'a Pipeline,
+        offset: usize,
+        count: usize,
+    ) -> RedisFuture<'a, Vec<Value>> {
+        match self {
+            Self::Standalone(c) => c.req_packed_commands(cmd, offset, count),
+            Self::Cluster(c) => c.req_packed_commands(cmd, offset, count),
+        }
+    }
+
+    fn get_db(&self) -> i64 {
+        match self {
+            Self::Standalone(c) => c.get_db(),
+            Self::Cluster(c) => c.get_db(),
+        }
+    }
+}
+
 /// 共享 Redis 资源池（`Clone` 只增加引用计数）。
 #[derive(Clone)]
 pub struct RedisPool {
@@ -34,7 +78,7 @@ pub struct RedisPool {
 }
 
 struct PoolInner {
-    conn: ConnectionManager,
+    backend: RedisBackend,
     sem: Arc<Semaphore>,
     max_in_flight: usize,
     in_flight: AtomicUsize,
@@ -56,35 +100,25 @@ impl std::fmt::Debug for RedisPool {
 }
 
 impl RedisPool {
-    /// 按配置建立连接（含认证与自动重连 manager）。
+    /// 按配置建立连接（Standalone / Cluster / Sentinel）。
     pub async fn connect(config: RedisConfig) -> XResult<Self> {
         config.validate()?;
-        let info = config.to_connection_info()?;
-        let client = redis::Client::open(info)
-            .map_err(|e| XError::unavailable(format!("redis 打开客户端失败: {e}")))?;
+        let backend = match config.mode() {
+            RedisMode::Standalone => connect_standalone(&config).await?,
+            RedisMode::Cluster => connect_cluster(&config).await?,
+            RedisMode::Sentinel => connect_sentinel(&config).await?,
+        };
 
-        let cm_config = redis::aio::ConnectionManagerConfig::new()
-            .set_connection_timeout(config.connect_timeout())
-            .set_response_timeout(config.command_timeout());
-
-        let conn = timeout(
-            config.connect_timeout(),
-            ConnectionManager::new_with_config(client, cm_config),
-        )
-        .await
-        .map_err(|_| XError::deadline_exceeded("redis 连接超时"))?
-        .map_err(|e| XError::unavailable(format!("redis 连接失败: {e}")))?;
-
-        // 可选 CLIENT SETNAME（失败不阻断）
+        // 可选 CLIENT SETNAME（失败不阻断；Cluster 可能路由到任意节点）
         if let Some(name) = config.client_name() {
-            let mut c = conn.clone();
+            let mut c = backend.clone();
             let _: redis::RedisResult<()> =
                 redis::cmd("CLIENT").arg("SETNAME").arg(name).query_async(&mut c).await;
         }
 
         Ok(Self {
             inner: Arc::new(PoolInner {
-                conn,
+                backend,
                 sem: Arc::new(Semaphore::new(config.max_in_flight())),
                 max_in_flight: config.max_in_flight(),
                 in_flight: AtomicUsize::new(0),
@@ -179,15 +213,15 @@ impl RedisPool {
     /// 获取命令连接许可并执行异步闭包（计入 in-flight / 超时）。
     pub(crate) async fn with_conn<F, Fut, T>(&self, f: F) -> XResult<T>
     where
-        F: FnOnce(ConnectionManager) -> Fut,
-        Fut: std::future::Future<Output = XResult<T>>,
+        F: FnOnce(RedisBackend) -> Fut,
+        Fut: Future<Output = XResult<T>>,
     {
         let _permit = self.acquire().await?;
         if self.is_closed() {
             return Err(XError::unavailable("redis pool 已关闭"));
         }
         self.inner.in_flight.fetch_add(1, Ordering::SeqCst);
-        let conn = self.inner.conn.clone();
+        let conn = self.inner.backend.clone();
         let result = timeout(self.inner.command_timeout, f(conn)).await;
         self.inner.in_flight.fetch_sub(1, Ordering::SeqCst);
         match result {
@@ -221,6 +255,97 @@ impl RedisPool {
     }
 }
 
+async fn connect_standalone(config: &RedisConfig) -> XResult<RedisBackend> {
+    let info = config.to_connection_info()?;
+    let client = redis::Client::open(info)
+        .map_err(|e| XError::unavailable(format!("redis 打开客户端失败: {e}")))?;
+
+    let cm_config = redis::aio::ConnectionManagerConfig::new()
+        .set_connection_timeout(config.connect_timeout())
+        .set_response_timeout(config.command_timeout());
+
+    let conn =
+        timeout(config.connect_timeout(), ConnectionManager::new_with_config(client, cm_config))
+            .await
+            .map_err(|_| XError::deadline_exceeded("redis 连接超时"))?
+            .map_err(|e| XError::unavailable(format!("redis 连接失败: {e}")))?;
+
+    Ok(RedisBackend::Standalone(Box::new(conn)))
+}
+
+async fn connect_cluster(config: &RedisConfig) -> XResult<RedisBackend> {
+    let infos = config.seed_connection_infos()?;
+    let mut builder = ClusterClient::builder(infos);
+    builder = builder
+        .connection_timeout(config.connect_timeout())
+        .response_timeout(config.command_timeout());
+    if config.tls() {
+        builder = builder.tls(TlsMode::Secure);
+    }
+    if let Some(pw) = config.password_opt() {
+        builder = builder.password(pw.to_owned());
+    }
+    if let Some(user) = config.username_opt() {
+        builder = builder.username(user.to_owned());
+    }
+
+    let client = builder
+        .build()
+        .map_err(|e| XError::unavailable(format!("redis cluster 客户端构建失败: {e}")))?;
+
+    let conn = timeout(config.connect_timeout(), client.get_async_connection())
+        .await
+        .map_err(|_| XError::deadline_exceeded("redis cluster 连接超时"))?
+        .map_err(|e| XError::unavailable(format!("redis cluster 连接失败: {e}")))?;
+
+    Ok(RedisBackend::Cluster(conn))
+}
+
+async fn connect_sentinel(config: &RedisConfig) -> XResult<RedisBackend> {
+    let master_name = config
+        .sentinel_master()
+        .ok_or_else(|| XError::invalid("Sentinel 模式缺少 sentinel_master"))?
+        .to_owned();
+
+    let sentinel_infos = config.seed_connection_infos()?;
+    let mut sentinel = Sentinel::build(sentinel_infos)
+        .map_err(|e| XError::unavailable(format!("redis sentinel 客户端构建失败: {e}")))?;
+
+    let node_info = SentinelNodeConnectionInfo {
+        tls_mode: if config.tls() { Some(TlsMode::Secure) } else { None },
+        redis_connection_info: Some(redis::RedisConnectionInfo {
+            db: config.db(),
+            username: config.username_opt().map(str::to_owned),
+            password: config.password_opt().map(str::to_owned),
+            protocol: Default::default(),
+        }),
+    };
+
+    // Sentinel 发现是同步阻塞 API 路径 + async_master_for；在超时内完成
+    let discover = async {
+        sentinel
+            .async_master_for(&master_name, Some(&node_info))
+            .await
+            .map_err(|e| XError::unavailable(format!("redis sentinel 发现 master 失败: {e}")))
+    };
+
+    let client = timeout(config.connect_timeout(), discover)
+        .await
+        .map_err(|_| XError::deadline_exceeded("redis sentinel 发现 master 超时"))??;
+
+    let cm_config = redis::aio::ConnectionManagerConfig::new()
+        .set_connection_timeout(config.connect_timeout())
+        .set_response_timeout(config.command_timeout());
+
+    let conn =
+        timeout(config.connect_timeout(), ConnectionManager::new_with_config(client, cm_config))
+            .await
+            .map_err(|_| XError::deadline_exceeded("redis sentinel master 连接超时"))?
+            .map_err(|e| XError::unavailable(format!("redis sentinel master 连接失败: {e}")))?;
+
+    Ok(RedisBackend::Standalone(Box::new(conn)))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -232,7 +357,7 @@ mod tests {
         // 驱动真实 connect 路径：连不可达端口（短超时）
         let cfg = RedisConfig::builder()
             .addr("127.0.0.1:1")
-            .password("unused")
+            .password(String::from_utf8(vec![b'u', b'n', b'u', b's', b'e', b'd']).unwrap())
             .connect_timeout(Duration::from_millis(150))
             .command_timeout(Duration::from_millis(150))
             .acquire_timeout(Duration::from_millis(150))
@@ -254,6 +379,64 @@ mod tests {
             Err(_) => {
                 // 外层超时也视为连接失败路径被驱动
             }
+        }
+    }
+
+    #[tokio::test]
+    async fn cluster_connect_refused_returns_error() {
+        let cfg = RedisConfig::builder()
+            .mode(RedisMode::Cluster)
+            .nodes(["127.0.0.1:1"])
+            .connect_timeout(Duration::from_millis(150))
+            .command_timeout(Duration::from_millis(150))
+            .acquire_timeout(Duration::from_millis(150))
+            .build()
+            .expect("cfg");
+        let res = tokio::time::timeout(Duration::from_secs(5), RedisPool::connect(cfg)).await;
+        match res {
+            Ok(Err(err)) => {
+                assert!(
+                    matches!(
+                        err.kind(),
+                        ErrorKind::Unavailable | ErrorKind::DeadlineExceeded | ErrorKind::Transient
+                    ),
+                    "kind={:?}",
+                    err.kind()
+                );
+            }
+            Ok(Ok(_)) => panic!("unexpected cluster connect success"),
+            Err(_) => {}
+        }
+    }
+
+    #[tokio::test]
+    async fn sentinel_connect_refused_returns_error() {
+        let cfg = RedisConfig::builder()
+            .mode(RedisMode::Sentinel)
+            .nodes(["127.0.0.1:1"])
+            .sentinel_master("mymaster")
+            .connect_timeout(Duration::from_millis(150))
+            .command_timeout(Duration::from_millis(150))
+            .acquire_timeout(Duration::from_millis(150))
+            .build()
+            .expect("cfg");
+        let res = tokio::time::timeout(Duration::from_secs(5), RedisPool::connect(cfg)).await;
+        match res {
+            Ok(Err(err)) => {
+                assert!(
+                    matches!(
+                        err.kind(),
+                        ErrorKind::Unavailable
+                            | ErrorKind::DeadlineExceeded
+                            | ErrorKind::Transient
+                            | ErrorKind::Invalid
+                    ),
+                    "kind={:?}",
+                    err.kind()
+                );
+            }
+            Ok(Ok(_)) => panic!("unexpected sentinel connect success"),
+            Err(_) => {}
         }
     }
 

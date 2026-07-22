@@ -1,6 +1,7 @@
 //! `taosx` — TDengine 时序存储适配器。
 //!
 //! - **默认**：[`TaosPool`] / [`TaosClient`] REST 生产客户端（端口 6041）。
+//! - **Native WS**：`TransportMode::NativeWs` + native 连通性探测。
 //! - **feature `scaffold`**：`TaosAdapter` 进程内内存实现（**非**生产）。
 //!
 //! 实现 [`contracts::TimeSeriesStore`]（`Tick.ts` 为纳秒 epoch）。
@@ -9,9 +10,11 @@
 
 mod client;
 mod config;
+mod native;
 
-pub use client::{TaosClient, TaosExecResult, TaosPool};
-pub use config::{TaosConfig, TsPrecision};
+pub use client::{TaosClient, TaosExecResult, TaosPool, TaosPoolStats, build_insert_sql_chunks};
+pub use config::{TaosConfig, TransportMode, TsPrecision};
+pub use native::{build_native_ws_url, connect_native_ws, validate_mode};
 
 #[cfg(feature = "scaffold")]
 mod adapter;
@@ -27,6 +30,7 @@ mod public_api_surface {
     fn default_exports_named() {
         let _cfg = TaosConfig::default();
         let _ = TsPrecision::Ms;
+        let _ = TransportMode::Rest;
         let result = TaosExecResult {
             code: 0,
             rows: vec![vec!["1".into()]],
@@ -34,10 +38,16 @@ mod public_api_surface {
             affected_rows: Some(1),
         };
         assert_eq!(result.code, 0);
+        assert_eq!(build_native_ws_url(&_cfg), "ws://127.0.0.1:6041/rest/ws");
+        validate_mode(&_cfg).expect("mode");
+        let empty = build_insert_sql_chunks("t", &[], TsPrecision::Ms, 10).unwrap();
+        assert!(empty.is_empty());
         fn assert_type<T: ?Sized>() {}
         assert_type::<TaosClient>();
         assert_type::<TaosPool>();
         assert_type::<TaosConfig>();
         assert_type::<TaosExecResult>();
+        assert_type::<TaosPoolStats>();
+        assert_type::<TransportMode>();
     }
 }

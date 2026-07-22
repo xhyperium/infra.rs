@@ -1,14 +1,12 @@
-//! resiliencx 接入：对可重试 SQL 操作施加 [`RetryBudget`]。
-//!
-//! 生产路径：[`crate::PostgresPool::execute`] / [`crate::PostgresPool::query`] 在配置了 budget 时经
-//! [`with_budget_async`] 驱动真实 I/O。
+//! resiliencx 接入：`RetryBudget` 生产路径 + `RetryConfig` 辅助包装。
 
 use std::future::Future;
 
 use kernel::XResult;
 use resiliencx::{
-    Instrumentation, NoopInstrumentation, RetryBudget, budget_exhausted_error,
-    call_with_retry_budget,
+    Instrumentation, NoWait, NoopInstrumentation, RetryBudget, RetryConfig, TokioSleepWait,
+    budget_exhausted_error, call_with_retry_budget, retry_async, retry_downcast, retry_fn,
+    retry_ok,
 };
 
 /// 带预算的同步重试包装。
@@ -33,7 +31,7 @@ where
     with_budget(budget, max_attempts, op, &NoopInstrumentation, f)
 }
 
-/// 带预算的 **async** 重试：驱动真实 async I/O（postgres execute/query 生产入口）。
+/// 带预算的 **async** 重试。
 pub async fn with_budget_async<F, Fut, T>(
     budget: &RetryBudget,
     max_attempts: u32,
@@ -79,6 +77,67 @@ where
     with_budget_async(budget, max_attempts, op, &NoopInstrumentation, f).await
 }
 
+/// 同步重试包装。
+pub fn with_retry_sync<T, F>(config: &RetryConfig, op: &str, mut f: F) -> XResult<T>
+where
+    T: 'static + Send,
+    F: FnMut() -> XResult<T>,
+{
+    let mut wrapped = || match f() {
+        Ok(v) => Ok(retry_ok(v)),
+        Err(e) => Err(e),
+    };
+    let value = retry_fn(config, &NoopInstrumentation, op, &mut wrapped)?;
+    retry_downcast(value)
+}
+
+/// 异步重试。
+pub async fn with_retry_async<T, F, Fut>(config: &RetryConfig, op: &str, mut f: F) -> XResult<T>
+where
+    T: 'static + Send,
+    F: FnMut() -> Fut,
+    Fut: Future<Output = XResult<T>> + Send,
+{
+    let value = retry_async(config, &NoopInstrumentation, op, &TokioSleepWait, || {
+        let fut = f();
+        async move {
+            match fut.await {
+                Ok(v) => Ok(retry_ok(v)),
+                Err(e) => Err(e),
+            }
+        }
+    })
+    .await?;
+    retry_downcast(value)
+}
+
+/// 异步重试（NoWait）。
+pub async fn with_retry_async_no_wait<T, F, Fut>(
+    config: &RetryConfig,
+    op: &str,
+    mut f: F,
+) -> XResult<T>
+where
+    T: 'static + Send,
+    F: FnMut() -> Fut,
+    Fut: Future<Output = XResult<T>> + Send,
+{
+    let value = retry_async(config, &NoopInstrumentation, op, &NoWait, || {
+        let fut = f();
+        async move {
+            match fut.await {
+                Ok(v) => Ok(retry_ok(v)),
+                Err(e) => Err(e),
+            }
+        }
+    })
+    .await?;
+    retry_downcast(value)
+}
+
+/// 重导出。
+pub use resiliencx::RetryConfig as PgRetryConfig;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -116,5 +175,11 @@ mod tests {
         .unwrap();
         assert_eq!(v, 2);
         assert_eq!(budget.remaining(), 1);
+    }
+
+    #[test]
+    fn retry_sync_ok() {
+        let cfg = RetryConfig::fixed(2, 0);
+        assert_eq!(with_retry_sync(&cfg, "pg", || Ok(9_u8)).unwrap(), 9);
     }
 }
