@@ -30,7 +30,8 @@ pub use config::{RedisConfig, RedisConfigBuilder, RedisMode};
 pub use error_map::{map_redis_error, map_redis_result};
 pub use pool::{RedisPool, RedisPoolStats};
 pub use resilience::{
-    RedisRetryConfig, with_retry_async, with_retry_async_no_wait, with_retry_sync,
+    RedisRetryConfig, with_budget, with_budget_async, with_budget_async_noop, with_budget_noop,
+    with_retry_async, with_retry_async_no_wait, with_retry_sync,
 };
 
 /// 兼容旧名称：真实 Redis KV 客户端。

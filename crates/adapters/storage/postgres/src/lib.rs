@@ -47,7 +47,10 @@ pub use conn::PgConnection;
 pub use error::{error_kind_from_sqlstate, map_pool_error, map_tokio_error, xerror_from_sqlstate};
 pub use pool::{PoolStats, PostgresPool};
 pub use repository::{PgRecord, PgRepository};
-pub use resilience::{PgRetryConfig, with_retry_async, with_retry_async_no_wait, with_retry_sync};
+pub use resilience::{
+    PgRetryConfig, with_budget, with_budget_async, with_budget_async_noop, with_budget_noop,
+    with_retry_async, with_retry_async_no_wait, with_retry_sync,
+};
 pub use runner::PgTxRunner;
 pub use tls::{MakeRustlsConnect, build_client_config};
 pub use tx::{PgTransaction, TxState};
