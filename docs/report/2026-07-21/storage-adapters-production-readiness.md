@@ -46,7 +46,7 @@
 |------|----:|---------|
 | `config.rs` | 431 | 连接池配置、认证、SSL |
 | `pool.rs` | 280 | Deadpool 管理的连接池，带健康检查 |
-| `mock.rs` | 279 | `ObservingPostgresAdapter` — 提交边界 mock，���暂存写入和 observable 机制 |
+| `mock.rs` | 279 | `ObservingPostgresAdapter` — 提交边界 mock，暂存写入和 observable 机制 |
 | `error.rs` | 199 | SQLSTATE → `kernel::ErrorKind` 映射 |
 | `tx.rs` | 158 | `PgTransaction`、`TxState`（Active/Committed/RolledBack） |
 | `adapter.rs` | 117 | `PostgresAdapter`（scaffold） |
@@ -60,7 +60,7 @@
 
 | 差距 | 严重性 | 行动 |
 |-----|--------|------|
-| Repository trait ���进入生产 | 中 | 在 PostgresPool 上实现 Repository，或明确记录为有意不实现 |
+| Repository trait 进入生产 | 中 | 在 PostgresPool 上实现 Repository，或明确记录为有意不实现 |
 | 缺少 TLS 强制 | 中 | 生产配置中 SSL mode 应设为 `require` 或 `verify-full` |
 | 无重试集成 | 中 | 用 resiliencx 重试策略包裹池操作 |
 | 仅 1 个集成测试 | 低 | 增加事务边界测试、连接失败测试 |
@@ -161,7 +161,7 @@
 | 硬编码 HMAC-SHA1 签名 | 中 | 提取为可拔插签名器以支持其他 OSS providers（AWS S3、GCS） |
 | 单文件 client.rs | 低 | 拆分为 get、put、delete、list 操作 |
 
-**量化交易说明：** OSS 存储历史行情数据快照、模型检查点和审计工件。无重试意味着大文件上传会因瞬时网络错��而失败。
+**量化交易说明：** OSS 存储历史行情数据快照、模型检查点和审计工件。无重试意味着大文件上传会因瞬时网络错而失败。
 
 ### 3.6 natsx (666 LOC) — 接近生产 🟡🟢
 

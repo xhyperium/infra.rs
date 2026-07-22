@@ -93,7 +93,7 @@ ok(isWriteOrEdit("Agent") === false, "Agent 工具不被检测");
 ok(extractFilePath({ file_path: "/a/b.md" }) === "/a/b.md", "提取 file_path 字段");
 ok(extractFilePath({ path: "/c/d.rs" }) === "/c/d.rs", "回退到 path 字段");
 ok(extractFilePath({ file_path: "/a.md", path: "/b.md" }) === "/a.md", "file_path 优先于 path");
-ok(extractFilePath({}) === "", "���路径字段返回空字符串");
+ok(extractFilePath({}) === "", "路径字段返回空字符串");
 
 // --- 5. 格式化工具匹配 ---
 const mockExists = (target) => (name) => name === target;
