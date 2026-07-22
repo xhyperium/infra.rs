@@ -67,8 +67,10 @@ async fn wrong_ca_and_wrong_password_fail_closed() {
     );
     assert!(std::error::Error::source(&ca_error).is_some());
 
-    let bad_password =
-        config("definitely-wrong-password".into(), required_env("INFRA_KAFKA_TLS_CA_FILE").into());
+    let bad_password = config(
+        required_env("INFRA_KAFKA_TLS_WRONG_PASSWORD"),
+        required_env("INFRA_KAFKA_TLS_CA_FILE").into(),
+    );
     let auth_error = match KafkaPool::connect(bad_password).await {
         Err(error) => error,
         Ok(_) => panic!("错误密码必须拒绝"),

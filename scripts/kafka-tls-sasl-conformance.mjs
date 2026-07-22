@@ -40,7 +40,7 @@ function logError(message) {
 
 function redactSensitive(message) {
   let redacted = String(message ?? "");
-  for (const value of [password, keystorePassword]) {
+  for (const value of [password, wrongPassword, keystorePassword]) {
     if (value) redacted = redacted.split(value).join("<redacted>");
   }
   return redacted;
@@ -57,6 +57,10 @@ const container = `${runId}-kafka`;
 const secretsDir = mkdtempSync(path.join(tmpdir(), "infra-kafka-tls-"));
 const username = "infra-test";
 const password = randomBytes(24).toString("hex");
+let wrongPassword = randomBytes(24).toString("hex");
+while (wrongPassword === password) {
+  wrongPassword = randomBytes(24).toString("hex");
+}
 const keystorePassword = randomBytes(24).toString("hex");
 let failed = false;
 let cleaned = false;
@@ -301,6 +305,7 @@ function runConformance(port, certificates) {
         INFRA_KAFKA_TLS_BROKER: `localhost:${port}`,
         INFRA_KAFKA_TLS_USERNAME: username,
         INFRA_KAFKA_TLS_PASSWORD: password,
+        INFRA_KAFKA_TLS_WRONG_PASSWORD: wrongPassword,
         INFRA_KAFKA_TLS_CA_FILE: certificates.caCert,
         INFRA_KAFKA_TLS_BAD_CA_FILE: certificates.badCaCert,
       },
