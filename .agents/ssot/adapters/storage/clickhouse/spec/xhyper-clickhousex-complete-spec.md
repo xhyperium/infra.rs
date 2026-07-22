@@ -9,7 +9,7 @@
 `ClickHouseConfig`、`ClickHousePool`、`ClickHouseClient`；内存实现仅在
 `scaffold` feature 下导出。
 
-非目标：原生 9000 协议、DDL/migration 所有权、Cluster/ReplicatedMergeTree 运维、
+非目标：原生 9000 协议、通用 DDL/migration 治理、Cluster/ReplicatedMergeTree 运维、
 跨节点 exactly-once 或查询 DSL。
 
 ## 1. 公开合同
@@ -19,7 +19,7 @@
 | `ClickHouseConfig` | 严格 env 解析、HTTP(S)、认证、数据库、连接/请求/获取截止时间、池容量；`HTTP_PORT` 优先并兼容 `PORT` |
 | `ClickHousePool` | Semaphore 约束 in-flight；close 后拒绝新请求；stats 可观察 |
 | `ClickHouseClient` | ping、文本/行查询、JSONEachRow、分块批量写 |
-| `AnalyticsSink` | 将 event/payload 写入调用方管理的表 |
+| `AnalyticsSink` | 幂等确保固定 `ANALYTICS_TABLE` 后写入 event/payload；其他表由调用方管理 |
 
 `insert_batch` 按 `max_rows_per_chunk` 有界分块；表名等结构化 SQL 标识符必须通过现有校验，
 业务值经 HTTP body/参数路径传递。

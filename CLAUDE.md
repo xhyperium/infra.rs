@@ -19,6 +19,7 @@
   - tools 平面在 `.agents/ssot/tools/{goalctl,xtask,verifyctl}/…`（保留 `tools/` 层级；verifyctl 为本仓扩展）
   - **archgate / `.architecture`：OOS**（PR #164）
 - 本仓 members：`kernel` / `testkit` / `contract-testkit` / `configx` / `schedulex` / `bootstrap` / `evidence` / `observex` / `resiliencx` / `transport` / `types/*` / `contracts` / `adapters/**` / `goalctl` / `verifyctl`（configx 为本地多源/宿主 reload，schedulex 为宿主驱动 `JobRunner::tick`；storage×7 默认客户端入口；exchange 签名 REST + 公共 WS 解析/注入但交易 **NO-GO**；verifyctl 非生产 verifier；**无** `infra-core`；gate/xtask 等未落地）
+- storage 当前边界：NATS 同客户端重启恢复连续 3 轮通过，但 Core 断线窗口无回放且 Cluster/HA 仍 NO-GO；不得外推为 package stable。
 - Fake/Recording 在 **`contract-testkit`**（`crates/test-support/contracts`，仅 dev-dep）；**禁止** production graph 依赖
 - 验证：`cargo test --workspace`；专项见对齐文档
 - 总览：[docs/ssot/workspace-ssot-alignment.md](./docs/ssot/workspace-ssot-alignment.md)

@@ -61,11 +61,11 @@ version                         storage 独立版本；postgres `0.3.3`；redis/
 | `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | **`0.3.3`** 四头签名 REST + 公共 WS 解析/注入；live 仅 server_time；交易 NO-GO |
 | `.agents/ssot/adapters/storage/clickhouse` | `crates/adapters/storage/clickhouse` | `clickhousex` | **`0.3.2`** HTTP(S)+PEM CA+`insert_batch`+有界池；真实集群 TLS OPEN |
 | `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **`0.3.2`** AMO/ALO + TLS/CA/PLAIN 证据；group/native EOS NO-GO |
-| `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **`0.3.2`** Core/JetStream；同客户端重启恢复 NO-GO（`infra-2d9.3.1`） |
-| `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | **`0.3.1`** ObjectStore + multipart + retry；live 入口默认 ignore |
+| `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **`0.3.2`** Core/JetStream；同客户端重启恢复 3/3，断线窗口无回放、Cluster/HA NO-GO |
+| `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | **`0.3.2`** ObjectStore + 有界 multipart/retry/orphan 补偿；dev live PASS |
 | `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **`0.3.3`** Pool/Tx/Repository + 远程 TLS 实现；deadline/连接隔离证据 |
-| `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **`0.3.2`** Standalone/Cluster/Sentinel + TLS；Redis live CI 可复验 |
-| `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **`0.3.1`** REST + batch write + Native WS 探测 + 有界池；live 入口默认 ignore |
+| `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **`0.3.3`** Standalone + 安全 PubSub 边界；Cluster/Sentinel/TLS live OPEN |
+| `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **`0.3.2`** REST/NCHAR Decimal + WS 探测 + 资源上界；固定 digest live PASS |
 验证（本仓权威命令）：
 
 ```bash

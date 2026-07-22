@@ -202,14 +202,21 @@ impl TaosPool {
         if !pool.inner.config.database.is_empty() {
             let db = pool.inner.config.database.clone();
             validate_ident(&db)?;
-            let _ = pool
-                .exec_sql_raw(&format!("CREATE DATABASE IF NOT EXISTS `{db}` KEEP 3650"), false)
-                .await;
-            if let Ok(p) = pool.detect_precision().await {
-                if let Ok(mut g) = pool.inner.precision.write() {
-                    *g = p;
+            pool.exec_sql_raw(&format!("CREATE DATABASE IF NOT EXISTS `{db}` KEEP 3650"), false)
+                .await?;
+            let detected = pool.detect_precision().await?;
+            if let Some(configured) = pool.inner.config.precision {
+                if configured != detected {
+                    return Err(XError::invalid(format!(
+                        "taos 配置精度 {configured:?} 与数据库精度 {detected:?} 不一致"
+                    )));
                 }
             }
+            *pool
+                .inner
+                .precision
+                .write()
+                .map_err(|_| XError::invariant("taos 精度状态锁已中毒"))? = detected;
         }
 
         pool.ping().await?;
@@ -381,12 +388,11 @@ impl TaosPool {
         let sql =
             format!("SELECT `precision` FROM information_schema.ins_databases WHERE name='{db}'");
         let r = self.exec_sql_raw(&sql, false).await?;
-        if let Some(row) = r.rows.first() {
-            if let Some(p) = row.first().and_then(|s| TsPrecision::parse(s)) {
-                return Ok(p);
-            }
-        }
-        Ok(self.precision())
+        r.rows
+            .first()
+            .and_then(|row| row.first())
+            .and_then(|value| TsPrecision::parse(value))
+            .ok_or_else(|| XError::invariant("taos 无法从 information_schema 探测数据库精度"))
     }
 
     async fn acquire(&self) -> XResult<RequestGuard> {

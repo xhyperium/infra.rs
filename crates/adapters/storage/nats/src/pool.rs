@@ -1,14 +1,15 @@
 //! `NatsPool`：共享 `async_nats::Client` + publish/subscribe/health/close。
 
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use async_nats::Client;
 use bytes::Bytes;
 use futures_util::StreamExt;
 use kernel::{XError, XResult};
-use tokio::sync::mpsc;
+use tokio::sync::{Notify, mpsc};
+use tokio::task::AbortHandle;
 
 use crate::config::NatsConfig;
 
@@ -41,6 +42,27 @@ pub struct NatsHealth {
 /// 订阅句柄：后台任务将消息推入 mpsc。
 pub struct NatsSubscription {
     rx: mpsc::Receiver<NatsMessage>,
+    task: Option<SubscriptionTask>,
+}
+
+struct SubscriptionTask(AbortHandle);
+
+impl Drop for SubscriptionTask {
+    fn drop(&mut self) {
+        self.0.abort();
+    }
+}
+
+struct SubscriptionGuard {
+    active: Arc<AtomicU64>,
+    drained: Arc<Notify>,
+}
+
+impl Drop for SubscriptionGuard {
+    fn drop(&mut self) {
+        self.active.fetch_sub(1, Ordering::AcqRel);
+        self.drained.notify_waiters();
+    }
 }
 
 /// 收到的 Core NATS 消息。
@@ -62,10 +84,9 @@ impl NatsSubscription {
 
     /// 转为 `'static` 流（消费 self）。
     pub fn into_stream(self) -> impl futures_core::Stream<Item = NatsMessage> + Send {
-        futures_util::stream::unfold(
-            self.rx,
-            |mut rx| async move { rx.recv().await.map(|m| (m, rx)) },
-        )
+        futures_util::stream::unfold((self.rx, self.task), |(mut rx, task)| async move {
+            rx.recv().await.map(|message| (message, (rx, task)))
+        })
     }
 }
 
@@ -85,6 +106,9 @@ struct PoolInner {
     connected: Arc<AtomicU64>,
     disconnected: Arc<AtomicU64>,
     slow_consumers: Arc<AtomicU64>,
+    subscription_tasks: Mutex<Vec<AbortHandle>>,
+    active_subscriptions: Arc<AtomicU64>,
+    subscriptions_drained: Arc<Notify>,
 }
 
 impl NatsPool {
@@ -165,6 +189,9 @@ impl NatsPool {
                 connected,
                 disconnected,
                 slow_consumers,
+                subscription_tasks: Mutex::new(Vec::new()),
+                active_subscriptions: Arc::new(AtomicU64::new(0)),
+                subscriptions_drained: Arc::new(Notify::new()),
             }),
         })
     }
@@ -253,7 +280,21 @@ impl NatsPool {
         let counter = Arc::new(AtomicU64::new(0));
         let slow_consumers = Arc::clone(&self.inner.slow_consumers);
         let operation_timeout = self.inner.config.operation_timeout;
-        tokio::spawn(async move {
+        let mut tasks = self
+            .inner
+            .subscription_tasks
+            .lock()
+            .map_err(|_| XError::invariant("natsx 订阅任务注册表锁已中毒"))?;
+        self.ensure_open()?;
+        tasks.retain(|handle| !handle.is_finished());
+
+        self.inner.active_subscriptions.fetch_add(1, Ordering::AcqRel);
+        let guard = SubscriptionGuard {
+            active: Arc::clone(&self.inner.active_subscriptions),
+            drained: Arc::clone(&self.inner.subscriptions_drained),
+        };
+        let task = tokio::spawn(async move {
+            let _guard = guard;
             while let Some(msg) = sub.next().await {
                 let n = counter.fetch_add(1, Ordering::Relaxed);
                 let out = NatsMessage {
@@ -271,7 +312,11 @@ impl NatsPool {
                 }
             }
         });
-        Ok(NatsSubscription { rx })
+        let abort_handle = task.abort_handle();
+        tasks.push(abort_handle.clone());
+        drop(tasks);
+        drop(task);
+        Ok(NatsSubscription { rx, task: Some(SubscriptionTask(abort_handle)) })
     }
 
     /// ping/flush 健康检查。
@@ -306,9 +351,39 @@ impl NatsPool {
         }
     }
 
-    /// 关停（标记 closed；连接在 drop 时释放）。
+    /// 关停：拒绝新请求，取消并等待订阅转发任务，再刷新连接缓冲。
     pub async fn close(&self) -> XResult<()> {
         self.inner.closed.store(true, Ordering::SeqCst);
+        let handles = {
+            let mut tasks = self
+                .inner
+                .subscription_tasks
+                .lock()
+                .map_err(|_| XError::invariant("natsx 订阅任务注册表锁已中毒"))?;
+            tasks.drain(..).collect::<Vec<_>>()
+        };
+        for handle in handles {
+            handle.abort();
+        }
+        let drain = async {
+            loop {
+                if self.inner.active_subscriptions.load(Ordering::Acquire) == 0 {
+                    return;
+                }
+                let notified = self.inner.subscriptions_drained.notified();
+                tokio::pin!(notified);
+                notified.as_mut().enable();
+                if self.inner.active_subscriptions.load(Ordering::Acquire) == 0 {
+                    return;
+                }
+                notified.await;
+            }
+        };
+        tokio::time::timeout(self.inner.config.operation_timeout, drain).await.map_err(
+            |error| {
+                XError::deadline_exceeded("natsx close 等待订阅任务退出超时").with_source(error)
+            },
+        )?;
         // async-nats Client 无显式 close；flush 后丢弃引用
         tokio::time::timeout(self.inner.config.operation_timeout, self.inner.client.flush())
             .await
@@ -352,6 +427,17 @@ mod tests {
             Ok(Ok(_)) => panic!("must fail"),
             Err(_) => panic!("NatsPool::connect 必须受内部截止时间约束"),
         }
+    }
+
+    #[tokio::test]
+    async fn dropping_subscription_aborts_owned_forwarder_task() {
+        let (_tx, rx) = mpsc::channel(1);
+        let task = tokio::spawn(std::future::pending::<()>());
+        let subscription =
+            NatsSubscription { rx, task: Some(SubscriptionTask(task.abort_handle())) };
+        drop(subscription);
+        let error = task.await.expect_err("订阅 drop 必须取消转发任务");
+        assert!(error.is_cancelled());
     }
 
     #[tokio::test]
@@ -410,7 +496,7 @@ mod tests {
     #[tokio::test]
     async fn subscription_recv_and_into_stream() {
         let (tx, rx) = mpsc::channel(2);
-        let mut sub = NatsSubscription { rx };
+        let mut sub = NatsSubscription { rx, task: None };
         tx.send(NatsMessage { subject: "s1".into(), payload: Bytes::from_static(b"a"), seq: 1 })
             .await
             .expect("send");
@@ -419,7 +505,7 @@ mod tests {
         assert_eq!(got.subject, "s1");
 
         let (tx2, rx2) = mpsc::channel(1);
-        let sub2 = NatsSubscription { rx: rx2 };
+        let sub2 = NatsSubscription { rx: rx2, task: None };
         tx2.send(NatsMessage { subject: "s2".into(), payload: Bytes::from_static(b"b"), seq: 2 })
             .await
             .expect("send");

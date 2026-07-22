@@ -61,7 +61,7 @@
   - `crates/adapters/**` → 9 个 adapter package（storage×7 默认客户端入口；exchange 签名 REST + 公共 WS 解析/注入，交易 **NO-GO**；均非 package stable）
   - `tools/goalctl` · `tools/verifyctl` → 最小 CLI members（#188；verifyctl 非生产 verifier）
 - `contract-testkit` **已落地**（`crates/test-support/contracts`）；**infra 其余域**（gate 等）当前仅镜像，未宣称本仓实现
-- **adapters**：镜像已本地化；Redis live、Kafka TLS/PLAIN、Postgres deadline/连接隔离、ClickHouse HTTPS 客户端有固定 runner；NATS 同客户端恢复仍 NO-GO；**未**宣称整体生产闭合、package stable / Cluster·EOS 全量
+- **adapters**：镜像已本地化；Redis live、Kafka TLS/PLAIN、Postgres deadline/连接隔离、ClickHouse HTTPS 客户端有固定 runner；NATS 同客户端重启恢复已连续 3 轮通过，但 Core 断线窗口无回放且 Cluster/HA 仍 NO-GO；**未**宣称整体生产闭合、package stable / Cluster·EOS 全量
 - **tools**：evidence + goalctl + verifyctl 已 member；xtask **未**宣称落地
 - `.agents/ssot/**` 变更走 **worktree + PR**；从外仓同步用删除感知 rsync（见 `docs/ssot/SSOT_SYNC_OPS.md`），**禁止**用上游覆盖冲掉本仓 OOS/落地裁定
 - 对齐审计总览：[docs/ssot/workspace-ssot-alignment.md](./docs/ssot/workspace-ssot-alignment.md)
