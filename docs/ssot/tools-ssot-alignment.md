@@ -96,3 +96,13 @@ needle=$'xhyper\x2ers'
 | 2026-07-22 | #188：goalctl/verifyctl 进入 workspace members |
 | 2026-07-22 | #190：VERSION / report API 单测；公共 API 清单闭合 |
 | 2026-07-22 | #191：`scripts/live/build-foundationx-env.mjs`；对齐文档刷新 |
+
+## SSOT 树补充（2026-07-22）
+
+| 路径 | 说明 |
+|------|------|
+| `tools/*/plan/infra-rs-landing.md` | 本仓 member 落地说明 |
+| `tools/*/plan/infra-rs-draft-*.md` | `.cargo/draft` 入库只读快照 |
+| `.agents/ssot/AGENTS.md` | 操作说明（非空） |
+| `.agents/ssot/adapters/README.md` | adapters 索引 |
+

@@ -195,3 +195,12 @@ cargo test -p taosx --test live_smoke -- --ignored --nocapture
 | mock-first 离线 CI | **PASS**：默认无外部服务 |
 | redis live KV（s9t 子集） | **PASS**（后由 #188 升级为默认生产 `RedisPool`） |
 | exchange 只读 `server_time` | **PASS（入口）** |
+
+## SSOT 树补充（2026-07-22）
+
+| 路径 | 说明 |
+|------|------|
+| `adapters/README.md` | 九域索引 + storage P0 表 |
+| `storage/*/plan/infra-rs-landing.md` | 本仓生产落地说明 |
+| `storage/*/plan/infra-rs-draft-spec-goal.md` | draft SPEC_GOAL 入库快照 |
+
