@@ -18,6 +18,6 @@
 | [round-10/review.md](./round-10/review.md) | R10 对抗与终裁 |
 | [synthesis/go-nogo-synthesis.md](./synthesis/go-nogo-synthesis.md) | **综合 Go/No-Go + 补齐 backlog** |
 
-> **总裁定：workspace 生产发布 = NO-GO；量化端到端 = NO-GO；局部内部库语义 = 有条件 GO。**  
-> 前序：[`../2026-07-21/`](../2026-07-21/)  
+> **总裁定：workspace 生产发布 = NO-GO；量化端到端 = NO-GO；局部内部库语义 = 有条件 GO。**
+> 前序：[`../2026-07-21/`](../2026-07-21/)
 > 完成度看板：[`../../../STATUS.md`](../../../STATUS.md)（结构完成度 ≠ 生产就绪）

@@ -64,7 +64,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | 量化 | QT-6 Cond; 其余 N/A/弱 Cond |
 | 主 DEFER | archgate OOS; 组合根 drain 在 bootstrap |
 
-
 ### `testkit`
 
 | 项 | 值 |
@@ -79,7 +78,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | Go/No-Go | 有条件 GO（仅测试） |
 | 量化 | 全 N/A（非 runtime） |
 | 主 DEFER | integration harness DEFER |
-
 
 ### `decimalx`
 
@@ -96,7 +94,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | 量化 | QT-3 Ready(checked_*); QT-1/2/7 Cond |
 | 主 DEFER | wire 跨版本 stable; panicking 算子仍公开 |
 
-
 ### `canonical`
 
 | 项 | 值 |
@@ -111,7 +108,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | Go/No-Go | 有条件 GO（committed wire） |
 | 量化 | QT-1/2/4/7 Cond |
 | 主 DEFER | 无 schema_version envelope |
-
 
 ### `bootstrap`
 
@@ -128,7 +124,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | 量化 | 横切 Cond |
 | 主 DEFER | StoreSet/adapter 未接线; async drain DEFER |
 
-
 ### `configx`
 
 | 项 | 值 |
@@ -143,7 +138,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | Go/No-Go | 合同内 GO / 配置中心 NO |
 | 量化 | QT-5 Gap/Cond |
 | 主 DEFER | 多源/热更新/secret DEFER |
-
 
 ### `schedulex`
 
@@ -160,7 +154,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | 量化 | QT-5 Gap |
 | 主 DEFER | 无 timer/cron/Job 执行 |
 
-
 ### `evidence`
 
 | 项 | 值 |
@@ -175,7 +168,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | Go/No-Go | 开发默认 GO / 合规 NO |
 | 量化 | QT-4 Cond/Gap |
 | 主 DEFER | 远程/签名 wire; 查询 API |
-
 
 ### `observex`
 
@@ -192,7 +184,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | 量化 | QT-6 Gap/Cond |
 | 主 DEFER | OTEL exporter/flush DEFER |
 
-
 ### `resiliencx`
 
 | 项 | 值 |
@@ -207,7 +198,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | Go/No-Go | 有条件 GO（同步原语） |
 | 量化 | QT-3 Cond |
 | 主 DEFER | budget; 未接入 adapters |
-
 
 ### `transportx`
 
@@ -224,7 +214,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | 量化 | QT-1/2 Cond |
 | 主 DEFER | TLS 矩阵/池/代理 DEFER |
 
-
 ### `contracts`
 
 | 项 | 值 |
@@ -239,7 +228,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | Go/No-Go | 子集 GO / first-batch NO |
 | 量化 | 接口面 Cond |
 | 主 DEFER | Tx/Bus/Repo/Venue 业务 live |
-
 
 ### `contract-testkit`
 
@@ -256,7 +244,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | 量化 | 测资 Ready/Cond |
 | 主 DEFER | Batch-2 Fake; 真后端 profile |
 
-
 ### `binancex`
 
 | 项 | 值 |
@@ -271,7 +258,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | Go/No-Go | NO-GO 交易 |
 | 量化 | QT-1/2 Gap（仅 time Cond） |
 | 主 DEFER | 签名/下单/WS 行情 |
-
 
 ### `okxx`
 
@@ -288,7 +274,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | 量化 | QT-1/2 Gap |
 | 主 DEFER | 签名/业务协议 |
 
-
 ### `redisx`
 
 | 项 | 值 |
@@ -303,7 +288,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | Go/No-Go | 有条件 GO（KV） |
 | 量化 | QT-4 Cond; cache Ready |
 | 主 DEFER | Cluster/Sentinel; TLS 强制; resiliencx |
-
 
 ### `postgresx`
 
@@ -320,7 +304,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | 量化 | QT-4 Cond |
 | 主 DEFER | prod Repository; SSL require; resiliencx |
 
-
 ### `kafkax`
 
 | 项 | 值 |
@@ -335,7 +318,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | Go/No-Go | 有条件 / EOS NO |
 | 量化 | QT-4 Gap(offset) |
 | 主 DEFER | offset commit; at-least-once; EOS |
-
 
 ### `natsx`
 
@@ -352,7 +334,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | 量化 | QT-4 Gap(JetStream) |
 | 主 DEFER | JetStream; TLS 默认 |
 
-
 ### `ossx`
 
 | 项 | 值 |
@@ -367,7 +348,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | Go/No-Go | 有条件 GO |
 | 量化 | QT-4 Cond |
 | 主 DEFER | multipart; retry |
-
 
 ### `clickhousex`
 
@@ -384,7 +364,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | 量化 | QT-7 Gap/Cond |
 | 主 DEFER | 批量 insert; 池强度 |
 
-
 ### `taosx`
 
 | 项 | 值 |
@@ -399,9 +378,6 @@ bootstrap 接线、依赖图孤儿、组合风险。
 | Go/No-Go | 部分 |
 | 量化 | QT-7 Cond |
 | 主 DEFER | 批量写; native; 池 |
-
-
-
 
 ## 4. 跨 crate 观察
 
