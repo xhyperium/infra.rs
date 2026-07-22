@@ -22,7 +22,8 @@
 
 ### 已知问题
 
-- 同客户端跨 broker 重启恢复连续三次实验失败（命令通道关闭）；保持 NO-GO，跟踪 `infra-2d9.3.1`
+- 同客户端跨 broker 重启、原 Core subscription 恢复与慢消费者观测已连续 3/3 通过；`infra-2d9.3.1` 已关闭
+- 超过有限 `max_reconnects` 后命令通道仍会关闭，调用方必须重建 client；Core 断线窗口无回放，Cluster/HA 仍为 NO-GO
 
 ## [0.3.1] — 2026-07-22
 
