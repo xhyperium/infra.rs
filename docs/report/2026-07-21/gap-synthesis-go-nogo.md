@@ -27,13 +27,13 @@
 | 11 | resiliencx → adapters | 库就绪但未被消费 | 集成到 7 个 storage + 2 个 exchange adapter | 3d |
 | 12 | evidence → query | 仅 append() | 添加 read/verify API | 1d |
 
-**P0 总工时：14 days (single dev) / 10 days (2 devs)**
+P0 总工时：14 days (single dev) / 10 days (2 devs)。
 
 ---
 
 ## 量化交易部署最小集
 
-```
+```text
 Phase 1 (Week 1-2): Core infrastructure
   kernel + decimalx + canonical + contracts           ← already ready
   configx (+ file source) + observex (+ OTLP)         ← fix
@@ -58,7 +58,7 @@ Phase 3 (Week 3): Analytics & persistence
 
 当前依赖图：
 
-```
+```text
 kernel ←── contracts ←── {bootstrap, 14 others}
                                       └── bounded traits (占位)
                                               ↑
@@ -67,7 +67,7 @@ kernel ←── contracts ←── {bootstrap, 14 others}
 
 修复后的目标依赖图：
 
-```
+```text
 kernel ←── contracts ←── bootstrap (StoreSet + bounded traits)
                               │
          ┌────────────────────┼────────────────────┐
