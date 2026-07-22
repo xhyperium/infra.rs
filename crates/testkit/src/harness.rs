@@ -459,27 +459,23 @@ mod tests {
     use super::*;
     use std::error::Error;
     use std::io;
-    use std::sync::Arc;
-    use std::sync::atomic::{AtomicBool, Ordering};
 
     #[test]
     fn snapshot_synchronization_before_step_is_terminal() {
         let clock = ManualClock::new(Timestamp::from_unix_nanos(0));
         clock.poison_state_for_test();
-        let executed = Arc::new(AtomicBool::new(false));
-        let marker = Arc::clone(&executed);
 
         let error = IntegrationHarness::new(clock)
-            .step("不得执行", move |_| {
-                marker.store(true, Ordering::SeqCst);
-                Ok::<(), io::Error>(())
-            })
+            .step_advance_wall("不得执行", Duration::from_nanos(1))
             .run()
             .expect_err("step 前快照同步失败必须终止");
 
-        assert!(!executed.load(Ordering::SeqCst));
         assert_eq!(error.kind(), StepOutcome::ObservationFailed);
-        assert!(error.report().records()[0].before_snapshot().is_none());
+        let record = &error.report().records()[0];
+        assert!(record.before_snapshot().is_none());
+        assert_eq!(record.wall_after_ns(), None);
+        assert_eq!(record.wall_fault_after(), None);
+        assert!(error.to_string().contains("终态观测失败"));
         assert!(error.source().is_some());
     }
 
@@ -510,6 +506,9 @@ mod tests {
         assert_eq!(error.step(), "失败步骤");
         assert_eq!(error.kind(), StepOutcome::Failed);
         assert_eq!(error.detail(), "单元错误");
+        let debug = format!("{error:?}");
+        assert!(debug.contains("HarnessRunError"));
+        assert!(debug.contains("source: Some(\"...\")"));
         let record = &error.report().records()[0];
         assert_eq!(record.name(), "失败步骤");
         assert_eq!(record.detail(), Some("单元错误"));
@@ -526,16 +525,59 @@ mod tests {
 
     #[test]
     fn public_success_helpers_cover_complete_harness_surface() {
-        let report = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(5))
+        let harness = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(5))
             .step_advance_wall("推进墙钟", Duration::from_nanos(2))
-            .step_advance_monotonic("推进单调钟", Duration::from_nanos(3))
-            .run()
-            .expect("公开成功路径必须完成");
+            .step_advance_monotonic("推进单调钟", Duration::from_nanos(3));
+        let debug = format!("{harness:?}");
+        assert!(debug.contains("PendingStep"));
+        assert!(debug.contains("推进墙钟"));
+
+        let report = harness.run().expect("公开成功路径必须完成");
 
         report.assert_all_ok(2);
         report.assert_wall_ns(7);
         report.assert_monotonic_elapsed(Duration::from_nanos(3));
         assert_eq!(report.records()[0].name(), "推进墙钟");
         assert_eq!(report.records()[1].name(), "推进单调钟");
+    }
+
+    #[test]
+    fn outcome_messages_cover_every_terminal_variant() {
+        assert_eq!(StepOutcome::Passed.display_zh(), "成功");
+        assert_eq!(StepOutcome::Failed.display_zh(), "失败");
+        assert_eq!(StepOutcome::Panicked.display_zh(), "发生 panic");
+        assert_eq!(StepOutcome::ObservationFailed.display_zh(), "终态观测失败");
+    }
+
+    #[test]
+    fn owned_string_panic_preserves_message() {
+        let error = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(0))
+            .step("拥有型消息 panic", |_| -> Result<(), io::Error> {
+                std::panic::panic_any(String::from("拥有型消息"));
+            })
+            .run()
+            .expect_err("String panic 必须成为 terminal error");
+
+        assert_eq!(error.kind(), StepOutcome::Panicked);
+        assert_eq!(error.detail(), "拥有型消息");
+    }
+
+    #[test]
+    fn panic_plus_wall_fault_is_observation_failure() {
+        let error = IntegrationHarness::with_wall(Timestamp::from_unix_nanos(9))
+            .step("panic 并注入故障", |clock| -> Result<(), io::Error> {
+                clock.set_wall_fault(ManualClockFault::Unavailable).expect("故障注入应成功");
+                panic!("业务 panic");
+            })
+            .run()
+            .expect_err("panic 后观测失败必须优先暴露为观测错误");
+
+        assert_eq!(error.kind(), StepOutcome::ObservationFailed);
+        assert!(error.detail().contains("业务 panic"));
+        assert!(error.detail().contains("终态观测失败"));
+        assert!(error.source().is_some());
+        let record = &error.report().records()[0];
+        assert_eq!(record.wall_after_ns(), Some(9));
+        assert_eq!(record.wall_fault_after(), Some(ManualClockFault::Unavailable));
     }
 }
