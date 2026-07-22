@@ -347,6 +347,8 @@ repository
 
 资源型 suite 必须接收调用方提供的唯一标识，或通过显式 `FixtureNamespace` additive wrapper 派生；命名空间不得读取真实时间、随机数或环境变量。EventBus/PubSub 的可移植 surface 只验证 subscribe/publish 可调用，不声明交付、重放、顺序、确认、背压或次数。0.1.1 `assert_event_bus` 保留为 Snapshot/Replay profile，禁止用于判定实时 adapter。AnalyticsSink / Instrumentation 的 observed suite 依赖调用方观察 seam，只做包含检查，不扩展生产 trait 合同。
 
+TimeSeriesStore 的 0.1.2 `assert_time_series_store` 保留为 ClosedPoint 兼容 profile；可移植验证必须使用调用方窗口入口，不把 `[ts, ts]` 外推为所有后端的端点合同。
+
 禁止使用一个“provider capability”大宏同时测试所有能力。
 
 ## 3.3 Integration Harness

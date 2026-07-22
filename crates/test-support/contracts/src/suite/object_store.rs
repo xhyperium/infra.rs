@@ -11,6 +11,10 @@ const C: &str = "ObjectStore";
 ///
 /// 本 suite 不假定 missing、overwrite、metadata、清理、持久化时长或跨进程一致性；
 /// 真实后端调用方负责在 suite 返回后删除测试对象。
+///
+/// # Errors
+///
+/// key 为空、后端调用失败或读回 payload 不一致时返回 [`ContractFailure`]。
 pub async fn assert_object_store(
     store: &dyn ObjectStore,
     unique_key: &str,
@@ -29,6 +33,10 @@ pub async fn assert_object_store(
 }
 
 /// 使用确定性 fixture 派生 key 并运行 [`assert_object_store`]。
+///
+/// # Errors
+///
+/// 资源名派生失败或核心 suite 失败时返回 [`ContractFailure`]。
 pub async fn assert_object_store_with_fixture(
     store: &dyn ObjectStore,
     fixture: &FixtureNamespace,

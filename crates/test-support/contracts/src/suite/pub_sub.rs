@@ -10,6 +10,10 @@ const C: &str = "PubSub";
 /// 断言调用方提供的唯一 channel 的 subscribe 与 publish 操作均成功返回。
 ///
 /// 本函数不轮询订阅流，也不证明必达、重放、顺序、确认、背压或投递次数。
+///
+/// # Errors
+///
+/// channel 为空，或 subscribe/publish 调用失败时返回 [`ContractFailure`]。
 pub async fn assert_pub_sub_surface(
     pub_sub: &dyn PubSub,
     unique_channel: &str,
@@ -31,6 +35,10 @@ pub async fn assert_pub_sub_surface(
 }
 
 /// 使用确定性 fixture 运行 [`assert_pub_sub_surface`]。
+///
+/// # Errors
+///
+/// 资源名派生失败或 surface suite 失败时返回 [`ContractFailure`]。
 pub async fn assert_pub_sub_smoke(
     pub_sub: &dyn PubSub,
     fixture: &FixtureNamespace,

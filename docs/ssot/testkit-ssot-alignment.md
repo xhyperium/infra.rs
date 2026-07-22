@@ -153,7 +153,7 @@ CI 入口（与 kernel 同级 paths 过滤）：
 
 - Sandbox / Real/Testnet 后端合同与 live evidence；Fake/self-test 不升级为 readiness
 - EventBus/PubSub 的可移植 delivery、replay、order、ack、backpressure、投递次数；当前 portable surface 只做 subscribe/publish smoke，旧 EventBus profile 不外推
-- ObjectStore 覆盖/删除/列表/跨进程持久化与 TimeSeries 排序/重复/端点闭合语义
+- ObjectStore 覆盖/删除/列表/跨进程持久化与 TimeSeries 排序/重复语义；端点闭合只属于兼容 ClosedPoint profile，不外推到可移植窗口入口
 - branch coverage ≥90% 强制（OPTIONAL residual）
 - 上游 SSOT 文档内部 STALE 收口（应在 xhyper.rs 修，再镜像同步）
 - **Agent L5 / Production Ready 人签** — 未填

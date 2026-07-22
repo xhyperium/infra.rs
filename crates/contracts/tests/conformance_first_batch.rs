@@ -64,9 +64,9 @@ async fn event_bus_publish_subscribe_ids() {
 fn instrumentation_recording_surface() {
     let rec = RecordingInstrumentation::new();
     assert_instrumentation(&rec).expect("instr suite");
-    rec.clear().expect("clear smoke events");
-    let fixture = FixtureNamespace::new("ctk_contracts_instrumentation").expect("valid fixture");
+    rec.clear().expect("应清除 smoke 事件");
+    let fixture = FixtureNamespace::new("ctk_contracts_instrumentation").expect("fixture 应合法");
     assert_instrumentation_observed(&rec, &fixture, || rec.snapshot())
-        .expect("observed instr suite");
+        .expect("可观测 observed suite 应通过");
     assert_eq!(rec.snapshot().expect("snap").len(), 3);
 }
