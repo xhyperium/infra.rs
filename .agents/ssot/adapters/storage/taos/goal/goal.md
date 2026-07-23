@@ -5,7 +5,7 @@
 | package | `taosx` |
 | 标题 | TDengine TimeSeries |
 | 实现 | `crates/adapters/storage/taos` |
-| 状态 | **Production-default 全 API 面已落地**（`0.3.9`）；gap 未完成 **0** |
+| 状态 | **Production-default 全 API 面已落地**（`0.3.10`）；gap 未完成 **0** |
 | SSOT 路径 | `.agents/ssot/adapters/storage/taos/`（**不**另建 `taosx/`） |
 
 ## Outcome

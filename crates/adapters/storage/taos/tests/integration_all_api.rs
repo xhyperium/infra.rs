@@ -104,9 +104,13 @@ async fn it_write_query_stream_batcher_retry_tmq() {
     policy.run(|| async { pool.ping().await }).await.expect("retry ping");
 
     let topic = format!("_sct_it_{}", std::process::id());
+    // 订阅后写入新点，确保水位轮询可见（非恒真断言）
     let mut tmq = TmqConsumer::subscribe(pool.clone(), &topic, &t).await.expect("tmq");
-    let polled = tmq.poll(20).await.expect("poll");
-    assert!(!polled.is_empty() || true); // 水位可能已越过；至少 API 可调用
+    let ts_new = prec.to_nanos(prec.from_nanos(now + 5_000_000));
+    pool.write_series(&t, vec![sample("TMQ_NEW", ts_new)]).await.expect("tmq seed");
+    let polled = tmq.poll(50).await.expect("poll");
+    assert!(!polled.is_empty(), "tmq poll 在写入后必须非空; watermark 推进后应读到新行");
+    assert!(polled.iter().any(|r| r.symbol == "TMQ_NEW" || r.ts >= ts0));
     tmq.close().await.expect("tmq close");
 
     let _ = pool.exec_sql(&format!("DROP STABLE IF EXISTS `{t}`")).await;
@@ -121,10 +125,23 @@ async fn it_native_ws_sql_and_selfcheck_full() {
     // connect 会先 WS 握手再 REST SQL
     let pool = TaosPool::connect(cfg.clone()).await.expect("connect native mode");
     let body = pool.exec_sql_ws("SELECT SERVER_VERSION()").await.expect("ws sql");
-    assert!(!body.is_empty());
-    let free = exec_sql_ws(&cfg, "SELECT 1").await;
-    assert!(free.is_ok() || free.is_err()); // 会话可失败但 API 可达
-    let _ = connect_native_ws(&cfg).await;
+    assert!(!body.is_empty(), "ws sql body 不得为空");
+    // 自由函数路径：必须得到非空 Ok，或结构化错误（禁止恒真 is_ok||is_err）
+    match exec_sql_ws(&cfg, "SELECT 1").await {
+        Ok(b) => assert!(!b.is_empty(), "exec_sql_ws free Ok 体不得为空"),
+        Err(e) => assert!(
+            matches!(
+                e.kind(),
+                kernel::ErrorKind::Unavailable
+                    | kernel::ErrorKind::DeadlineExceeded
+                    | kernel::ErrorKind::Transient
+                    | kernel::ErrorKind::Invalid
+            ),
+            "unexpected kind {:?}",
+            e.kind()
+        ),
+    }
+    connect_native_ws(&cfg).await.expect("native handshake after sql");
     let (ok, err) = ws_probe_totals();
     assert!(ok + err >= 1);
 
