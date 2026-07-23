@@ -230,3 +230,40 @@ async fn live_tx_runner_boundary() {
 
     pool.close();
 }
+
+#[tokio::test]
+#[ignore = "requires live Postgres; run with --ignored when available"]
+async fn live_raw_client_and_pool_fail_closed() {
+    let pool = PostgresPool::connect(&live_config()).await.expect("connect");
+    let before = pool.stats();
+    assert!(!before.closed);
+
+    // deprecated raw client：标记污染 → Drop 脱池；禁止再 begin
+    #[allow(deprecated)]
+    {
+        let conn = pool.acquire().await.expect("acquire");
+        let _ = conn.client().expect("legacy client");
+        match conn.begin().await {
+            Ok(_) => panic!("raw 暴露后禁止 begin"),
+            Err(begin_err) => {
+                assert_eq!(begin_err.kind(), kernel::ErrorKind::Unavailable);
+                assert!(begin_err.context().contains("原始 client"));
+            }
+        }
+    }
+    // 污染连接已脱池；正式路径仍可借新连接
+    let row = pool.query_one("SELECT 1 AS n", &[]).await.expect("recover");
+    let n: i32 = row.get("n");
+    assert_eq!(n, 1);
+
+    // deprecated raw pool：仅关闭隔离池，get 明确 Closed
+    #[allow(deprecated)]
+    {
+        let err = pool.inner().get().await.expect_err("legacy raw pool Closed");
+        assert!(matches!(err, deadpool_postgres::PoolError::Closed));
+    }
+    let still = pool.query_one("SELECT 2 AS n", &[]).await.expect("正式池不受隔离池影响");
+    assert_eq!(still.get::<_, i32>(0), 2);
+
+    pool.close();
+}
