@@ -7,7 +7,7 @@ use canonical::{
     SymbolMeta, Tick, Trade, VenueId,
 };
 use contract_testkit::{
-    FixtureNamespace, assert_analytics_sink_callable, assert_analytics_sink_observed,
+    FixtureNamespace, InstrEvent, assert_analytics_sink_callable, assert_analytics_sink_observed,
     assert_event_bus_with_fixture, assert_key_value_store_isolated,
     assert_object_store_with_fixture, assert_pub_sub_smoke, assert_time_series_store_with_fixture,
 };
@@ -18,6 +18,7 @@ use contracts::{
 };
 use futures_core::stream::BoxStream;
 use kernel::{XError, XResult};
+use std::sync::Mutex;
 use std::time::Duration;
 
 struct CorruptingObjectStore;
@@ -88,7 +89,19 @@ async fn analytics_callable_suite_rejects_sink_error() {
     assert_eq!(failure.case, "sink");
 }
 
-struct DroppingAnalyticsSink;
+#[derive(Default)]
+struct DroppingAnalyticsSink {
+    observed: Mutex<Vec<(String, Bytes)>>,
+}
+
+impl DroppingAnalyticsSink {
+    fn observed(&self) -> XResult<Vec<(String, Bytes)>> {
+        self.observed
+            .lock()
+            .map(|events| events.clone())
+            .map_err(|_| XError::internal("分析反例观察锁中毒"))
+    }
+}
 
 #[async_trait]
 impl AnalyticsSink for DroppingAnalyticsSink {
@@ -100,10 +113,10 @@ impl AnalyticsSink for DroppingAnalyticsSink {
 #[tokio::test]
 async fn analytics_observed_suite_rejects_dropped_event() {
     let fixture = FixtureNamespace::new("ctk_analytics_dropped").expect("fixture 应合法");
-    let failure =
-        assert_analytics_sink_observed(&DroppingAnalyticsSink, &fixture, || Ok(Vec::new()))
-            .await
-            .expect_err("静默丢弃必须被 observed suite 拒绝");
+    let sink = DroppingAnalyticsSink::default();
+    let failure = assert_analytics_sink_observed(&sink, &fixture, || sink.observed())
+        .await
+        .expect_err("静默丢弃必须被 observed suite 拒绝");
 
     assert_eq!(failure.contract, "AnalyticsSink");
     assert_eq!(failure.case, "observed_event_missing");
@@ -247,7 +260,19 @@ async fn repository_suite_rejects_dropped_save() {
     assert_eq!(failure.case, "find_hit");
 }
 
-struct NoopInstrumentation;
+#[derive(Default)]
+struct NoopInstrumentation {
+    observed: Mutex<Vec<InstrEvent>>,
+}
+
+impl NoopInstrumentation {
+    fn observed(&self) -> XResult<Vec<InstrEvent>> {
+        self.observed
+            .lock()
+            .map(|events| events.clone())
+            .map_err(|_| XError::internal("埋点反例观察锁中毒"))
+    }
+}
 
 impl Instrumentation for NoopInstrumentation {
     fn record_retry(&self, _op: &str, _attempt: u32) {}
@@ -260,9 +285,10 @@ impl Instrumentation for NoopInstrumentation {
 #[test]
 fn instrumentation_observed_suite_rejects_noop() {
     let fixture = FixtureNamespace::new("ctk_instrumentation_broken").expect("fixture 应合法");
+    let instrumentation = NoopInstrumentation::default();
     let failure =
-        contract_testkit::assert_instrumentation_observed(&NoopInstrumentation, &fixture, || {
-            Ok(Vec::new())
+        contract_testkit::assert_instrumentation_observed(&instrumentation, &fixture, || {
+            instrumentation.observed()
         })
         .expect_err("空操作实现必须被 observed suite 拒绝");
 

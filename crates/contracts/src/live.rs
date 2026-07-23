@@ -119,11 +119,19 @@ pub async fn kv_roundtrip(store: &dyn KeyValueStore, key: &str, val: &[u8]) -> X
 }
 
 /// 兼容入口：只执行一次 producer `publish`，不证明 subscribe、ack 或 E2E 交付。
+///
+/// # Errors
+///
+/// [`EventBus::publish`] 失败时原样返回错误。
 pub async fn bus_publish(bus: &dyn EventBus, topic: &str, payload: Bytes) -> XResult<()> {
     publish_without_delivery_attestation(bus, topic, payload).await
 }
 
 /// 只执行一次 producer `publish`；成功不构成消费、确认或 E2E 交付证明。
+///
+/// # Errors
+///
+/// [`EventBus::publish`] 失败时原样返回错误。
 pub async fn publish_without_delivery_attestation(
     bus: &dyn EventBus,
     topic: &str,
@@ -186,9 +194,12 @@ pub async fn venue_health(
 /// 兼容顺序编排：先开启事务生命周期，再执行独立 KV 写入。
 ///
 /// `store` 不来自 [`TxContext`]，因此本函数**不保证** KV 写入与事务 commit/rollback
-/// 原子绑定。保留本符号仅用于兼容；生产代码应使用后端提供的真实事务操作面。
+/// 原子绑定。保留本符号仅用于兼容；新代码应使用准确命名入口或后端真实事务操作面。
+///
+/// # Errors
+///
+/// begin、KV set 或 commit 失败时返回错误；KV set 失败后的 rollback 错误按兼容语义丢弃。
 #[deprecated(note = "独立 KV 与 TxContext 不具备原子绑定；仅保留兼容")]
-#[allow(deprecated, reason = "兼容函数必须保持旧 run_tx_commit_on_ok 语义")]
 pub async fn tx_kv_set(
     runner: &dyn TxRunner,
     store: Arc<dyn KeyValueStore>,
@@ -198,23 +209,21 @@ pub async fn tx_kv_set(
     kv_set_then_commit_separate_resources(runner, store, key, val).await
 }
 
-/// 先执行独立 KV set，再提交 TxContext；名称明确两者没有共同事务绑定。
+/// 先执行独立 KV set，再提交 [`TxContext`]；名称明确两者没有共同事务绑定。
 ///
 /// KV 失败会触发 TxContext rollback；commit 失败不会自动撤销已经完成的 KV set。
-#[allow(deprecated, reason = "实现层调用旧 run_tx_commit_on_ok 保持兼容语义")]
+///
+/// # Errors
+///
+/// begin、KV set 或 commit 失败时返回错误；KV set 失败后的 rollback 错误按兼容语义丢弃。
+#[allow(deprecated, reason = "保持既有事务生命周期与错误映射语义")]
 pub async fn kv_set_then_commit_separate_resources(
     runner: &dyn TxRunner,
     store: Arc<dyn KeyValueStore>,
     key: String,
     val: Vec<u8>,
 ) -> XResult<()> {
-    run_tx_commit_on_ok(runner, move |_ctx| {
-        let store = Arc::clone(&store);
-        let key = key.clone();
-        let val = val.clone();
-        async move { store.set(&key, val, None).await }
-    })
-    .await
+    run_tx_commit_on_ok(runner, move |_ctx| async move { store.set(&key, val, None).await }).await
 }
 
 /// 可选 TTL 的 KV set（暴露 Duration 路径）。

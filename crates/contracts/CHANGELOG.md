@@ -1,5 +1,11 @@
 # Changelog — contracts
 
+## [0.1.3] — 2026-07-23
+
+### Changed
+
+- `live` 兼容入口补充 `# Errors` 文档；`kv_set_then_commit_separate_resources` 收紧闭包捕获。
+
 ## [0.1.0] — 2026-07-21
 
 ### 新增

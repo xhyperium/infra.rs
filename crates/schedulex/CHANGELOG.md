@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-07-23
+
+### Fixed
+
+- `cron_matches` MinuteMatch 先在 `u64` 中取模，避免逻辑分钟超过 `u32` 后截断误命中。
+
+### Changed
+
+- `JobRunner::add` / `tick` 补充 `# Errors` / `# Panics` 文档。
+
 ## [0.1.2] - 2026-07-23
 
 ### Changed
