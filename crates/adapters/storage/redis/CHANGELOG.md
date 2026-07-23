@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.13] — 2026-07-23
+
+### Added
+
+- **数据结构一等 API**：`hset/hget/hdel/hgetall`、`lpush/rpush/lpop/lrange/blpop`、`sadd/sismember/srem`、`zadd/zscore/zrem`
+- **Streams**：`xadd` / `xadd_with_id` / `xread` / `xread_block` / `xrange` / `xlen` / `xdel` + `StreamEntry`
+- **事务**：`multi_exec` / `multi_set` + `TxCmd`
+- **Lua SHA**：`script_load_and_eval` / `eval_sha`（固定脚本，禁止拼接）
+- **配置硬化**：`warmup_count`、`tcp_keepalive`、`reconnect_max_delay`、`max_cluster_redirects`、`blocking_timeout`、`command_lanes`、`password_from_provider` / `has_password`
+- **池**：逻辑 multi-lane（`stats.open = max_in_flight`）、`readiness` / `liveness`、`with_conn_budget`（阻塞命令）、Cluster `retries(max_cluster_redirects)`
+- **tracing**：`RedisPool::ping` instrument
+- live：`it_data_structures_*` / `it_streams_and_multi_exec` / `it_config_hardenings_and_topology_probe` / `it_blpop_timeout_none`
+- e2e：`e2e_klines_structures_streams_multi`（`/home/workspace/data`）
+- bench：`api_matrix` 扩 hash/list/streams/multi_exec/readiness
+
+### Boundaries
+
+- package stable **未宣称**
+- Pub/Sub 自动重连/必达 **NO-GO**
+- Cluster / Sentinel / TLS **live** 仅在 env 提供拓扑时执行；否则 soft-skip（不伪绿）
+- 跨模块 SelfValidator/HTTP/Prometheus/testcontainers 框架仍 OOS
+
 ## [0.3.12] — 2026-07-23
 
 ### Fixed
