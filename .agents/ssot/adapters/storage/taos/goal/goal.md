@@ -6,7 +6,7 @@
 | 标题 | TDengine TimeSeries |
 | 实现 | `crates/adapters/storage/taos` |
 | 战役 | draft SPEC_GOAL → 本仓生产默认路径 |
-| 状态 | **REST SQL 受限生产入口已落地**（`0.3.4`）；Native SQL / HA / package stable **NO-GO** |
+| 状态 | **REST SQL 受限生产入口已落地**（`0.3.5`）；Native SQL / HA / package stable **NO-GO** |
 | SSOT 路径 | `.agents/ssot/adapters/storage/taos/`（**不**另建 `taosx/`） |
 
 ## Outcome

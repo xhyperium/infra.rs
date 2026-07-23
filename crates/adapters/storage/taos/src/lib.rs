@@ -12,7 +12,10 @@ mod client;
 mod config;
 mod native;
 
-pub use client::{TaosClient, TaosExecResult, TaosPool, TaosPoolStats, build_insert_sql_chunks};
+pub use client::{
+    BatchWritePartialError, BatchWriteReport, TaosClient, TaosExecResult, TaosPool, TaosPoolStats,
+    build_insert_sql_chunks,
+};
 pub use config::{
     HARD_MAX_BATCH_BYTES, HARD_MAX_BATCH_ROWS, HARD_MAX_CLOSE_TIMEOUT, HARD_MAX_IN_FLIGHT,
     HARD_MAX_QUERY_ROWS, HARD_MAX_RESPONSE_BYTES, TaosConfig, TransportMode, TsPrecision,
@@ -70,10 +73,10 @@ mod public_api_surface {
         assert_type::<TsPrecision>();
     }
 
-    /// `TaosConfig` 公开方法与 URL 构造。
+    /// `TaosConfig` 公开方法与 URL 构造；Debug 脱敏必须遮住注入的假密码。
     #[test]
     fn config_public_methods_exercised() {
-        let cfg = TaosConfig::default();
+        let cfg = TaosConfig { password: "fake-pass-value-42".into(), ..TaosConfig::default() };
         assert_eq!(cfg.rest_sql_url(), "http://127.0.0.1:6041/rest/sql");
         assert!(cfg.rest_sql_db_url().contains("/rest/sql/"));
         assert_eq!(cfg.native_ws_url(), "ws://127.0.0.1:6041/rest/ws");
@@ -88,8 +91,15 @@ mod public_api_surface {
         assert_eq!(TransportMode::parse("ws"), Some(TransportMode::NativeWs));
 
         let debug = format!("{cfg:?}");
-        assert!(debug.contains("password: \"***\"") || debug.contains("***"));
-        assert!(!debug.contains("s3cret"));
+        assert!(debug.contains("***"), "Debug 必须脱敏: {debug}");
+        assert!(!debug.contains("fake-pass-value-42"), "明文密码不得出现在 Debug: {debug}");
+
+        let report = BatchWriteReport { accepted: 3, failed: 1, chunks_ok: 1, chunks_total: 2 };
+        assert!(!report.is_complete());
+        assert_eq!(report.accepted + report.failed, 4);
+        fn assert_type<T: ?Sized>() {}
+        assert_type::<BatchWriteReport>();
+        assert_type::<BatchWritePartialError>();
     }
 
     /// `from_env` 在无变量时回到默认，且不 panic。

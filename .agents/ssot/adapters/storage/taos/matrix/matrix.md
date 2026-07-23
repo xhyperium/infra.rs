@@ -2,7 +2,7 @@
 
 | 字段 | 值 |
 |------|-----|
-| package | `taosx` `0.3.4` |
+| package | `taosx` `0.3.5` |
 | 审计 | 2026-07-23 |
 
 | ID | 条款 | 状态 | 证据 |
@@ -23,3 +23,4 @@
 | S-13 | Native SQL / FFI / HA / 幂等重试 | NO-GO | 无实现或真实证据 |
 | S-14 | 十轮审查矩阵 | PASS | `docs/report/2026-07-23/taosx-ten-round-review.md` |
 | S-15 | 公开 API 表面 100% 点名 | PASS | `public_api_surface` + 行为测试 |
+| S-16 | 批量部分成功报告 | PASS | `BatchWriteReport` / `write_batch_chunked_outcome`（无自动重试） |
