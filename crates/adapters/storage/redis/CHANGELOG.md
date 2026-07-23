@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.9] — 2026-07-23
+
+### Added
+
+- **池累计指标**：`RedisMetricsSnapshot` + `RedisPool::metrics_snapshot`（commands_ok/err/timeout、acquire_timeout、rejected_closed；低基数、进程内）
+- **Pub/Sub 结果流**（feature `pubsub`）：`RedisPubSub::into_result_message_stream`，断线时末尾**恰好一次** `Err(Unavailable)`
+
+### Boundaries
+
+- 指标不是 OpenTelemetry / Prometheus 导出器
+- Pub/Sub 仍无可靠投递、无自动重连；Cluster / Sentinel / TLS live 仍 OPEN
+- 未宣称 package stable
+
 ## [0.3.8] — 2026-07-23
 
 ### Added

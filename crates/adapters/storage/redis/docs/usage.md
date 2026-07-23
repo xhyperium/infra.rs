@@ -1,6 +1,6 @@
 # redisx 使用说明
 
-当前文档对应 `redisx 0.3.8` 未发布候选；`0.3.3` 为 main 历史。
+当前文档对应 `redisx 0.3.9` 未发布候选。
 
 ## 生产入口
 
@@ -16,6 +16,10 @@ let client = pool.client();
 
 client.set("k", b"v".to_vec(), Some(Duration::from_secs(60))).await?;
 assert_eq!(client.get("k").await?, Some(b"v".to_vec()));
+
+// 池累计指标（进程内；非 OTel 导出器）
+let snap = pool.metrics_snapshot();
+assert!(snap.commands_ok >= 2);
 
 // 合同层
 let kv: &dyn KeyValueStore = &client;
@@ -81,6 +85,10 @@ cargo test -p redisx --features pubsub
 
 从 `RedisPool::subscribe` 建立会话时会复用池的 ACL / TLS / deadline 配置，不读取新的 env。
 Cluster / Sentinel 会明确返回错误；当前没有拓扑 Pub/Sub 或断线重订阅保证。
+
+- `into_message_stream()`：`BusMessage` 流；断线**静默结束**
+- `into_result_message_stream()`：`Result<BusMessage, XError>`；断线末尾**一次** `Err(Unavailable)`
+
 直接建立会话时使用 `RedisPubSub::connect_config(config, channels)`。旧 `connect(endpoint, ...)`
 因无法携带安全配置已 deprecated 并失败关闭；旧 `connect_with_config` 保留编译兼容但忽略外部
 display endpoint，端点只从配置脱敏派生。

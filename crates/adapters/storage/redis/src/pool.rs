@@ -2,7 +2,7 @@
 
 use std::future::Future;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 use kernel::{XError, XResult};
@@ -30,6 +30,23 @@ pub struct RedisPoolStats {
     pub in_flight: usize,
     /// 正在等待 acquire 的调用数。
     pub waiters: usize,
+}
+
+/// 低基数累计指标（进程内；无高基数 label）。
+///
+/// 供宿主导出 Prometheus / 日志采样；**不是** OpenTelemetry 实现。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct RedisMetricsSnapshot {
+    /// 命令成功次数（`with_conn*` 闭包返回 Ok）。
+    pub commands_ok: u64,
+    /// 命令失败次数（闭包返回 Err）。
+    pub commands_err: u64,
+    /// 命令超时次数（command budget 耗尽）。
+    pub commands_timeout: u64,
+    /// acquire 超时次数。
+    pub acquire_timeout: u64,
+    /// 池已关闭导致的拒绝次数。
+    pub rejected_closed: u64,
 }
 
 /// 连接后端：Standalone 或 Cluster。Sentinel 发现 master 后归入 Standalone。
@@ -109,6 +126,11 @@ struct PoolInner {
     command_timeout: Duration,
     acquire_timeout: Duration,
     display_endpoint: String,
+    commands_ok: AtomicU64,
+    commands_err: AtomicU64,
+    commands_timeout: AtomicU64,
+    acquire_timeout_count: AtomicU64,
+    rejected_closed: AtomicU64,
 }
 
 impl std::fmt::Debug for RedisPool {
@@ -137,6 +159,11 @@ impl RedisPool {
                 command_timeout: Duration::from_secs(1),
                 acquire_timeout: Duration::from_secs(1),
                 display_endpoint: "redis://测试-driver".to_owned(),
+                commands_ok: AtomicU64::new(0),
+                commands_err: AtomicU64::new(0),
+                commands_timeout: AtomicU64::new(0),
+                acquire_timeout_count: AtomicU64::new(0),
+                rejected_closed: AtomicU64::new(0),
             }),
         }
     }
@@ -168,6 +195,11 @@ impl RedisPool {
                 command_timeout: config.command_timeout(),
                 acquire_timeout: config.acquire_timeout(),
                 display_endpoint: config.display_endpoint(),
+                commands_ok: AtomicU64::new(0),
+                commands_err: AtomicU64::new(0),
+                commands_timeout: AtomicU64::new(0),
+                acquire_timeout_count: AtomicU64::new(0),
+                rejected_closed: AtomicU64::new(0),
                 #[cfg(feature = "pubsub")]
                 config,
             }),
@@ -214,6 +246,18 @@ impl RedisPool {
             open: if closed { 0 } else { 1 },
             in_flight: self.inner.in_flight.load(Ordering::Relaxed),
             waiters: self.inner.waiters.load(Ordering::Relaxed),
+        }
+    }
+
+    /// 低基数累计指标快照（进程内；无高基数 label）。
+    #[must_use]
+    pub fn metrics_snapshot(&self) -> RedisMetricsSnapshot {
+        RedisMetricsSnapshot {
+            commands_ok: self.inner.commands_ok.load(Ordering::Relaxed),
+            commands_err: self.inner.commands_err.load(Ordering::Relaxed),
+            commands_timeout: self.inner.commands_timeout.load(Ordering::Relaxed),
+            acquire_timeout: self.inner.acquire_timeout_count.load(Ordering::Relaxed),
+            rejected_closed: self.inner.rejected_closed.load(Ordering::Relaxed),
         }
     }
 
@@ -294,12 +338,14 @@ impl RedisPool {
         };
         let _permit = self.acquire_with_timeout(acquire_budget).await?;
         if self.is_closed() {
+            self.inner.rejected_closed.fetch_add(1, Ordering::Relaxed);
             return Err(XError::unavailable("redis 连接池已关闭"));
         }
         let command_budget = match total {
             Some(t) => {
                 let rem = t.saturating_sub(start.elapsed());
                 if rem.is_zero() {
+                    self.inner.commands_timeout.fetch_add(1, Ordering::Relaxed);
                     return Err(XError::deadline_exceeded(
                         "redis 排队耗尽调用总 deadline（acquire 计入总预算）",
                     ));
@@ -313,16 +359,28 @@ impl RedisPool {
         let result = timeout(command_budget, f(conn)).await;
         self.inner.in_flight.fetch_sub(1, Ordering::SeqCst);
         match result {
-            Ok(inner) => inner,
-            Err(_) => Err(XError::deadline_exceeded("redis 命令超时")),
+            Ok(Ok(v)) => {
+                self.inner.commands_ok.fetch_add(1, Ordering::Relaxed);
+                Ok(v)
+            }
+            Ok(Err(e)) => {
+                self.inner.commands_err.fetch_add(1, Ordering::Relaxed);
+                Err(e)
+            }
+            Err(_) => {
+                self.inner.commands_timeout.fetch_add(1, Ordering::Relaxed);
+                Err(XError::deadline_exceeded("redis 命令超时"))
+            }
         }
     }
 
     async fn acquire_with_timeout(&self, budget: Duration) -> XResult<OwnedSemaphorePermit> {
         if self.is_closed() {
+            self.inner.rejected_closed.fetch_add(1, Ordering::Relaxed);
             return Err(XError::unavailable("redis 连接池已关闭"));
         }
         if budget.is_zero() {
+            self.inner.acquire_timeout_count.fetch_add(1, Ordering::Relaxed);
             return Err(XError::deadline_exceeded("redis 获取 in-flight 许可预算为 0"));
         }
         self.inner.waiters.fetch_add(1, Ordering::SeqCst);
@@ -332,15 +390,19 @@ impl RedisPool {
             Ok(Ok(permit)) => {
                 if self.is_closed() {
                     drop(permit);
+                    self.inner.rejected_closed.fetch_add(1, Ordering::Relaxed);
                     return Err(XError::unavailable("redis 连接池已关闭"));
                 }
                 Ok(permit)
             }
             Ok(Err(_)) => Err(XError::unavailable("redis 背压信号量已关闭")),
-            Err(_) => Err(XError::deadline_exceeded(format!(
-                "redis 获取 in-flight 许可超时（max={}）",
-                self.inner.max_in_flight
-            ))),
+            Err(_) => {
+                self.inner.acquire_timeout_count.fetch_add(1, Ordering::Relaxed);
+                Err(XError::deadline_exceeded(format!(
+                    "redis 获取 in-flight 许可超时（max={}）",
+                    self.inner.max_in_flight
+                )))
+            }
         }
     }
 }
@@ -578,5 +640,53 @@ mod tests {
             "kind={:?}",
             err.kind()
         );
+        let snap = pool.metrics_snapshot();
+        assert!(snap.rejected_closed >= 1, "closed pool rejections should be counted: {snap:?}");
+    }
+
+    #[tokio::test]
+    async fn probe_metrics_count_command_errors() {
+        let pool = RedisPool::test_probe(Arc::new(AtomicUsize::new(0)));
+        let before = pool.metrics_snapshot();
+        assert_eq!(before, RedisMetricsSnapshot::default());
+
+        let err = pool
+            .with_conn(|mut conn| async move {
+                let _: String = map_redis_result(redis::cmd("PING").query_async(&mut conn).await)?;
+                Ok(())
+            })
+            .await
+            .expect_err("probe always fails command");
+        assert_eq!(err.kind(), ErrorKind::Transient);
+
+        let snap = pool.metrics_snapshot();
+        assert_eq!(snap.commands_ok, 0);
+        assert_eq!(snap.commands_err, 1);
+        assert_eq!(snap.commands_timeout, 0);
+        assert_eq!(snap.acquire_timeout, 0);
+        assert_eq!(snap.rejected_closed, 0);
+    }
+
+    #[tokio::test]
+    async fn probe_metrics_count_closed_reject() {
+        let pool = RedisPool::test_probe(Arc::new(AtomicUsize::new(0)));
+        pool.close(Duration::from_secs(1)).await.expect("close");
+        let err =
+            pool.with_conn(|_conn| async move { Ok::<(), XError>(()) }).await.expect_err("closed");
+        assert_eq!(err.kind(), ErrorKind::Unavailable);
+        let snap = pool.metrics_snapshot();
+        assert!(snap.rejected_closed >= 1, "snap={snap:?}");
+    }
+
+    #[tokio::test]
+    async fn probe_metrics_count_zero_deadline_as_acquire_timeout() {
+        let pool = RedisPool::test_probe(Arc::new(AtomicUsize::new(0)));
+        let err = pool
+            .with_conn_total_deadline(Duration::ZERO, |_conn| async move { Ok::<(), XError>(()) })
+            .await
+            .expect_err("zero total deadline");
+        assert_eq!(err.kind(), ErrorKind::DeadlineExceeded);
+        // 零总 deadline 在 with_conn_total_deadline 入口拦截，不计入 acquire_timeout
+        assert_eq!(pool.metrics_snapshot().acquire_timeout, 0);
     }
 }
