@@ -28,6 +28,8 @@ mod bus;
 mod config;
 mod jetstream;
 mod pool;
+/// 库内自验证（LIB-SELFCHECK / verifyctl.md §6.3）。
+pub mod validation;
 
 pub use bus::NatsEventBus;
 pub use config::{DEFAULT_URL, NatsConfig, TlsPolicy, url_is_loopback};
