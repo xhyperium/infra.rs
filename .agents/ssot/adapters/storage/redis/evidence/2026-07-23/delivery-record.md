@@ -20,9 +20,10 @@
 | 0.3.9 | #298 | metrics / result stream |
 | 0.3.10 | #300 | selfcheck §6.5 |
 | 0.3.11 | #305 | integration_all_api + data E2E + api_matrix |
-| **0.3.12** | **#306** | E2E soft-skip；budget/stream/Facade live；selfcheck cancel/JSON；CI pubsub |
+| 0.3.12 | #306 | E2E soft-skip；budget/stream/Facade live；selfcheck cancel/JSON；CI pubsub |
+| **0.3.13** | 本分支 | 结构/Streams/MULTI/配置硬化/readiness；全 API live+e2e+bench |
 
-当前 crate version：**0.3.12**（以 `crates/adapters/storage/redis/Cargo.toml` 为准）。
+当前 crate version：**0.3.13**（以 `crates/adapters/storage/redis/Cargo.toml` 为准）。
 
 ## 本机复验命令（当前）
 

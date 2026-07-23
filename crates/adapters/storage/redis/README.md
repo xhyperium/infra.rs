@@ -3,12 +3,15 @@
 生产默认的异步 Redis 客户端（`contracts::KeyValueStore` + 扩展 API）。
 
 - 调用级 deadline：`client.with_call_deadline(Duration::from_secs(2))`
-- 扩展：`pipeline_set` / `eval_script` / `lock_acquire`（fencing）
-- 池指标：`pool.metrics_snapshot()` → `RedisMetricsSnapshot`
+- 扩展：`pipeline_set` / `eval_script` / `eval_sha` / `lock_acquire`（fencing）
+- 数据结构：Hash / List / Set / ZSet / `blpop`
+- Streams：`xadd` / `xread` / `xrange` / `xlen` / `xdel`
+- 事务：`multi_exec` / `multi_set`
+- 池：multi-lane 背压、`metrics_snapshot`、`readiness` / `liveness`
 - Pub/Sub 结果流：`session.into_result_message_stream()`（断线一次 `Err`）
 - 自验证：`RedisValidator::new(client).run(CheckLevel::ReadWrite)`（§6.5）
 
-当前 workspace 版本为 `0.3.10` 未发布候选；`publish = false`，不代表已经发布。
+当前 workspace 版本为 **`0.3.13`** 未发布候选；`publish = false`，不代表已经发布。
 
 | 模式 | 类型 | 生产？ |
 |------|------|--------|

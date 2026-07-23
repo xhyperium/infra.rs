@@ -275,3 +275,80 @@ fn e2e_missing_csv_is_soft_skip_not_panic() {
     let missing = PathBuf::from("/nonexistent/redisx-e2e-no-data/1m.csv");
     assert!(try_load_klines(&missing, 10).is_none());
 }
+
+/// 用真实 K 线数据驱动 Hash / Streams / MULTI 公共 API 面。
+#[tokio::test]
+#[ignore = "requires live Redis; soft-skips if /home/workspace/data klines missing"]
+async fn e2e_klines_structures_streams_multi() {
+    use redisx::TxCmd;
+
+    let csv = default_csv();
+    let Some(rows) = try_load_klines(&csv, 32) else {
+        return;
+    };
+    let client = match RedisClient::connect_from_env().await {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("e2e soft-skip: redis connect: {e}");
+            return;
+        }
+    };
+    let run = format!("{}", std::process::id());
+    let hash = format!("redisx-e2e:{run}:meta");
+    let stream = format!("redisx-e2e:{run}:stream");
+    let list = format!("redisx-e2e:{run}:list");
+
+    // Hash：open_time → raw
+    for r in rows.iter().take(16) {
+        client.hset(&hash, &r.open_time, r.raw.clone()).await.expect("hset");
+    }
+    let first = &rows[0];
+    assert_eq!(
+        client.hget(&hash, &first.open_time).await.expect("hget").as_deref(),
+        Some(first.raw.as_slice())
+    );
+
+    // Streams：每根 K 线一条
+    let mut last_id = "0-0".to_owned();
+    for r in rows.iter().take(16) {
+        let id = client
+            .xadd(&stream, &[("ot", r.open_time.as_bytes()), ("row", r.raw.as_slice())])
+            .await
+            .expect("xadd");
+        last_id = id;
+    }
+    assert!(client.xlen(&stream).await.expect("xlen") >= 16);
+    let entries = client.xrange(&stream, "-", "+", Some(20)).await.expect("xrange");
+    assert!(entries.len() >= 16);
+    let more = client.xread(&stream, "0-0", Some(20)).await.expect("xread");
+    assert!(!more.is_empty());
+    assert!(!last_id.is_empty());
+
+    // List + MULTI：批量标记
+    for r in rows.iter().take(8) {
+        client.lpush(&list, r.open_time.as_bytes().to_vec()).await.expect("lpush");
+    }
+    let cmds: Vec<TxCmd> = rows
+        .iter()
+        .take(4)
+        .map(|r| TxCmd::Set {
+            key: format!("redisx-e2e:{run}:tx:{}", r.open_time),
+            value: r.raw.clone(),
+        })
+        .collect();
+    let vals = client.multi_exec(&cmds).await.expect("multi_exec");
+    assert_eq!(vals.len(), 4);
+
+    // cleanup
+    let _ = client.delete(&hash).await;
+    let _ = client.delete(&stream).await;
+    let _ = client.delete(&list).await;
+    for r in rows.iter().take(4) {
+        let _ = client.delete(&format!("redisx-e2e:{run}:tx:{}", r.open_time)).await;
+    }
+    eprintln!(
+        "e2e_structures_streams_multi ok rows_used={} csv={}",
+        rows.len().min(32),
+        csv.display()
+    );
+}

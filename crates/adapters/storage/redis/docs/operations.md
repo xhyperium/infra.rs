@@ -83,11 +83,10 @@ CI：`.github/workflows/redisx-live.yml`（service redis；可用 `REDIS_URL`）
 
 ## 尚未闭合
 
-- 真实 Cluster / Sentinel / TLS live 与故障切换
-- Cluster / Sentinel Pub/Sub 路由与重订阅
-- Streams / 分布式锁「业务正确」完整合同（fencing 令牌已有，不宣称 package stable）
-- 自动重试相对 TTL 写入、返回值敏感写入或 PUBLISH
-- OTel / Prometheus 内置导出
+- 真实 Cluster / Sentinel / TLS live 与故障切换（无拓扑 env 时 soft-skip，禁止 mock 伪绿）
+- package stable 宣告与 crates.io 发布
+- Pub/Sub 自动重连/必达（产品 NO-GO；可靠通道用 Streams）
+- 跨模块 SelfValidator / HTTP / Prometheus 导出框架（OOS；池内 `metrics_snapshot` 已有）
 
 ## 分布式锁（0.3.8）
 

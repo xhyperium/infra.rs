@@ -7,8 +7,8 @@
 | 路径裁决 | **不**新增 `.agents/ssot/adapters/storage/redisx/`；目录名 `redis` 对齐 storage×7，package 名 `redisx` |
 | 实现 | `crates/adapters/storage/redis` |
 | 审计日期 | 2026-07-23 |
-| version | **`0.3.12`**（#306 gap-zero；前序 #305 / #300 / #291 / #285 / #281） |
-| 结论 | **Standalone P0+ 生产默认客户端** + **selfcheck 模块 DoD（redisx 本地 §6.5）**；残余仅环境/产品边界 OPEN/NO-GO（见下表） |
+| version | **`0.3.13`**（能力缺口清零；前序 0.3.12 #306） |
+| 结论 | **Standalone P0+ 全公开 API 面**（KV/结构/Streams/事务/锁/selfcheck）+ live/e2e/bench；可行动能力缺口 **0**；残余仅 package stable / PubSub NO-GO / 拓扑 live 环境 |
 
 ## 结论摘要
 
@@ -25,8 +25,13 @@
 | E2E 数据 | `/home/workspace/data/binance_futures/merged/**`；可用 `REDISX_DATA_ROOT` / `REDISX_E2E_CSV` / `REDISX_E2E_ROWS`；**无数据 soft-skip** |
 | bench | `kv_hot_path` · `api_matrix` |
 | Pub/Sub | Standalone only；feature `pubsub`；重连/必达 **NO-GO** |
+| 数据结构 | Hash/List/Set/ZSet + `blpop` 一等 API + live |
+| Streams | `xadd/xread/xrange/xlen/xdel` + live/e2e |
+| 事务 | `multi_exec` / `multi_set` + live |
+| 配置硬化 | warmup / keepalive / reconnect_max_delay / max_cluster_redirects / command_lanes / secret provider |
+| 池 | multi-lane stats · readiness/liveness · 阻塞预算 |
 | selfcheck | `redisx::selfcheck`：§6.5 **11** ID；短路；cancel→Skipped；`to_json_string` / `run_json` |
-| Draft 全量 100% | **未宣称**（跨模块 runner / Cluster·TLS live / package stable 等仍 OPEN） |
+| Draft 全量 100% | **未宣称** package stable；跨模块 SelfValidator 框架 OOS |
 
 ## 对齐矩阵
 
@@ -66,17 +71,25 @@
 | REDISX-32 | PubSubFacade live | PASS | `it_result_message_stream_and_facade` |
 | REDISX-33 | E2E CI 无数据不红 | PASS | soft-skip；`e2e_missing_csv_is_soft_skip_not_panic` |
 
-## 残余 OPEN / NO-GO（不可伪 PASS；actionable 计数 = 0）
+| REDISX-34 | 数据结构 API | PASS | `structures.rs` + `it_data_structures_*` |
+| REDISX-35 | Streams API | PASS | `streams.rs` + live/e2e |
+| REDISX-36 | MULTI/EXEC | PASS | `transaction.rs` + live |
+| REDISX-37 | 配置硬化 + secret provider | PASS | config builder + `it_config_hardenings_*` |
+| REDISX-38 | multi-lane / readiness | PASS | pool stats.open + readiness/liveness |
+| REDISX-39 | eval_sha / SCRIPT LOAD | PASS | ext + live |
+| REDISX-40 | 阻塞命令预算 | PASS | `blpop` / `xread_block` + `with_conn_budget` |
+
+## 残余 OPEN / NO-GO（不可伪 PASS；**可行动能力缺口 = 0**）
 
 | ID | 残余 | 原因（一行） |
 |----|------|--------------|
 | REDISX-9 | package stable | 产品未宣告；禁止伪 stable |
-| REDISX-10 | Cluster live | 无真实 Cluster 拓扑；`cluster_slots` 非集群 → Skipped |
-| REDISX-11 | Sentinel live | 无 failover 环境 |
+| REDISX-10 | Cluster live | 无真实 Cluster 拓扑；代码+retries 配置 PASS；env soft-skip |
+| REDISX-11 | Sentinel live | 无 failover 环境；建连路径 PASS |
 | REDISX-12 | TLS live | 无真实 TLS 握手环境；secure 构造 unit PASS |
-| REDISX-15 | Pub/Sub 重连/必达 | 产品 **NO-GO**（Redis Pub/Sub 语义） |
-| REDISX-18 | Draft 全文 DoD | 跨模块 SelfValidator/HTTP/Prometheus/testcontainers 框架层 OOS |
-| REDISX-19 | 行覆盖 100% | 残余 Cluster/TLS/OPEN 路径；见 coverage-residual |
+| REDISX-15 | Pub/Sub 重连/必达 | 产品 **NO-GO**；可靠通道用 Streams |
+| REDISX-18 | 跨模块 SelfValidator 框架 | OOS（redisx 本地 selfcheck 已 DoD） |
+| REDISX-19 | 行覆盖 100% | 拓扑 OPEN 路径；禁止 mock 刷线 |
 
 ## 版本与 PR 轨迹（摘要）
 
@@ -88,7 +101,8 @@
 | 0.3.9 | #298 | metrics / result stream |
 | 0.3.10 | #300 | selfcheck §6.5 |
 | 0.3.11 | #305 | integration + data E2E + api_matrix |
-| **0.3.12** | **#306** | E2E soft-skip · budget/stream/Facade live · cancel/JSON · CI pubsub |
+| 0.3.12 | #306 | E2E soft-skip · budget/stream/Facade live · cancel/JSON · CI pubsub |
+| **0.3.13** | **本分支** | 结构/Streams/MULTI/配置硬化/readiness · 全 API live+e2e+bench |
 
 ## 10 轮审查与 gap 证据
 
