@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/adapters/storage/postgres/`（**非** `postgresx` 目录） |
 | 实现 | `crates/adapters/storage/postgres` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.8` |
+| version | `0.3.9` |
 | 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地**；dev live + 远程 Require TLS + deadline + **raw fail-closed live** 已跑通；**未**宣称 package stable / mTLS |
 
 ## 结论摘要
@@ -24,11 +24,11 @@
 | resiliencx | `with_retry_sync` / `with_retry_async` |
 | contracts | `TxRunner` + 生产 `Repository` |
 | 环境变量 | `FOUNDATIONX_POSTGRESX_{HOST,PORT,DATABASE,USER,PASSWORD,SSLMODE,TLS_CA_FILE,TLS_SERVER_NAME}` 或 `DATABASE_URL` |
-| live | `tests/live_postgres.rs`（10 cases，`#[ignore]`） |
+| live | `tests/live_postgres.rs`（11 cases，`#[ignore]`） |
 | deadline 实验 | `tests/deadline_conformance.rs` + `scripts/postgres-deadline-conformance.mjs` |
 | bench | `benches/query_hot_path.rs` |
 | 原 OBJECTIVE DEFER | **PASS**（prod Repository / SSL require 路径 / resiliencx） |
-| 仍 OPEN / DEFER | mTLS 客户端证书；COPY / migrations / read-replica / package stable |
+| 仍 OPEN / DEFER | mTLS 客户端证书；无限流式 COPY / migrations / read-replica / package stable |
 
 ## 对齐矩阵
 
@@ -38,7 +38,7 @@
 | POSTGRESX-2 | 生产默认导出 | PASS | `src/lib.rs` |
 | POSTGRESX-3 | from_env | PASS | config |
 | POSTGRESX-4 | 离线测试 | PASS | unit tests 全绿 |
-| POSTGRESX-5 | live 入口 + 本轮 dev 结果 | PASS | `tests/live_postgres.rs` 10/10 with secrets inject |
+| POSTGRESX-5 | live 入口 + 本轮 dev 结果 | PASS | `tests/live_postgres.rs` 11/11 with secrets inject |
 | POSTGRESX-6 | bench 有界 | PASS | `benches/query_hot_path.rs`（200 iters 完成） |
 | POSTGRESX-7 | crate docs | PASS | docs/* |
 | POSTGRESX-8 | SSOT 11 层 | PASS | `.agents/ssot/adapters/storage/postgres/` |
@@ -51,6 +51,8 @@
 | POSTGRESX-15 | 业务+rollback 双错误保真 | PASS | `src/error.rs` + `src/pool.rs` 单元测试 |
 | POSTGRESX-16 | deprecated raw 访问 fail-closed | PASS | `deadline_conformance` + `live_raw_client_and_pool_fail_closed` |
 | POSTGRESX-17 | Release 候选身份 | OPEN | package stable 未宣称；本轮交付为内部 foundation 闭合 |
+| POSTGRESX-18 | acquire_with | PASS | `pool.acquire_with` + live |
+| POSTGRESX-19 | 有界 COPY IN/OUT | PASS | `copy_in_bytes`/`copy_out_bytes` + live TEMP 往返 |
 
 ## 本轮验证（2026-07-23）
 

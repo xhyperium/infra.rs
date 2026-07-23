@@ -43,7 +43,7 @@ mod mock;
 pub use config::{
     DEFAULT_MAX_POOL_SIZE, DEFAULT_PORT, PostgresConfig, PostgresConfigBuilder, SslMode,
 };
-pub use conn::PgConnection;
+pub use conn::{DEFAULT_COPY_IN_MAX_BYTES, DEFAULT_COPY_OUT_MAX_BYTES, PgConnection};
 pub use error::{
     TransactionRollbackFailure, error_kind_from_sqlstate, map_pool_error, map_tokio_error,
     xerror_from_sqlstate,
@@ -91,6 +91,8 @@ mod unit_smoke {
     fn default_exports_named() {
         assert_eq!(DEFAULT_PORT, 5432);
         assert_eq!(DEFAULT_MAX_POOL_SIZE, 16);
+        assert_eq!(DEFAULT_COPY_IN_MAX_BYTES, 16 * 1024 * 1024);
+        assert_eq!(DEFAULT_COPY_OUT_MAX_BYTES, 16 * 1024 * 1024);
         let _ = SslMode::Disable.as_str();
         let _ = SslMode::Prefer.as_str();
         let _ = SslMode::Require.as_str();

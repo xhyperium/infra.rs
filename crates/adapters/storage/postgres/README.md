@@ -1,7 +1,7 @@
 # postgresx
 
 Postgres 存储适配：**生产连接池 / 参数化 SQL 为默认导出**。
-当前 workspace 版本为 `0.3.8`（foundation DoD 闭合）；`publish = false`，
+当前 workspace 版本为 `0.3.9`（foundation DoD 闭合）；`publish = false`，
 **未宣称** package stable / crates.io。
 
 | 面 | 说明 |
