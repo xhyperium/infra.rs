@@ -11,7 +11,6 @@
 - 真实 Cluster / Sentinel / TLS live **仍 OPEN**
 - 未宣称 package stable
 
-
 ## [0.3.4] — 未发布（2026-07-23 候选）
 
 ### Changed

@@ -13,7 +13,6 @@
 - native group EOS、事务 exactly-once、Schema Registry **仍 NO-GO**
 - 本轮未宣称 package stable / 真实集群 TLS 全量 live 闭合
 
-
 ## [0.3.2] — 2026-07-22
 
 ### 新增

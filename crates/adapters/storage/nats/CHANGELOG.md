@@ -13,7 +13,6 @@
 - Core 断线窗口回放、Cluster/HA **仍 NO-GO**
 - 未宣称 package stable
 
-
 ## [0.3.2] — 2026-07-22
 
 ### 新增

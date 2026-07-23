@@ -11,7 +11,6 @@
 
 - 自定义 CA/mTLS、迁移/COPY、HA 故障切换、package stable **未承诺**
 
-
 ## [0.3.4] — 未发布（2026-07-23 候选）
 
 - 在 `0.3.3` main 历史基础上收敛最新 Adapter safety / unchecked compatibility 合同与回归证据。

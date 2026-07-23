@@ -16,7 +16,6 @@
 
 - 未宣称 package stable / 真实集群 HA
 
-
 ## [0.3.2] — 2026-07-23
 
 ### Changed
