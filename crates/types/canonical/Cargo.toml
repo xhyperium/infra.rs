@@ -1,6 +1,6 @@
 [package]
 name = "xhyper-canonical"
-version = "0.1.2"
+version = "0.1.3"
 edition.workspace = true
 rust-version.workspace = true
 description = "/types/ 跨层共享纯 DTO（ADR-001）；Money 复用 decimalx"
