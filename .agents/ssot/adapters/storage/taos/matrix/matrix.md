@@ -2,7 +2,7 @@
 
 | 字段 | 值 |
 |------|-----|
-| package | `taosx` `0.3.6` |
+| package | `taosx` `0.3.7` |
 | 审计 | 2026-07-23 |
 
 | ID | 条款 | 状态 | 证据 |
@@ -26,3 +26,4 @@
 | S-16 | 批量部分成功报告 | PASS | `BatchWriteReport` / `write_batch_chunked_outcome`（无自动重试） |
 | S-17 | 有界 metrics 快照 | PASS | `TaosMetricsSnapshot` / `metrics()` |
 | S-18 | Native WS live 握手 | PASS | live_smoke；SQL 仍 REST |
+| S-19 | liveness/readiness | PASS | `liveness` + `health` + live_health_ready |

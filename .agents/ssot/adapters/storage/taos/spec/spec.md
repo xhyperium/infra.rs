@@ -1,6 +1,6 @@
 # taosx 实现规范
 
-状态：当前 `0.3.6` 实现合同（REST SQL + WS 可达性探测；真实后端测试默认 `#[ignore]`）。**未宣称 package stable。**
+状态：当前 `0.3.7` 实现合同（REST SQL + WS 可达性探测；真实后端测试默认 `#[ignore]`）。**未宣称 package stable。**
 
 ## 0. 权威、职责与非目标
 
@@ -17,7 +17,7 @@
 
 ## 1. Cargo、版本与公开面
 
-版本 `0.3.6`，package `taosx`，默认 feature 为空；可选 feature 仅 `scaffold`。
+版本 `0.3.7`，package `taosx`，默认 feature 为空；可选 feature 仅 `scaffold`。
 
 公开生产面：
 

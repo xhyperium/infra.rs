@@ -129,3 +129,18 @@ async fn live_metrics_after_write_query() {
     assert!(mid.sql_ok > before.sql_ok, "sql_ok should increase");
     let _ = pool.close().await;
 }
+
+#[tokio::test]
+#[ignore = "requires live TDengine REST"]
+async fn live_health_ready() {
+    let Some(cfg) = live_config() else {
+        panic!("FOUNDATIONX_TAOSX_PASSWORD required");
+    };
+    let pool = TaosPool::connect(cfg).await.expect("connect");
+    assert!(pool.liveness());
+    let health = pool.health().await.expect("health");
+    assert!(health.ready, "{health:?}");
+    assert!(health.server_version.is_some(), "{health:?}");
+    assert!(health.metrics.health_ready >= 1);
+    let _ = pool.close().await;
+}

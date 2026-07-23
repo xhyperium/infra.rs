@@ -2,16 +2,20 @@
 
 ## 健康检查
 
-- **liveness**：进程存活即可
-- **readiness**：调用池 `ping()`（有 deadline）；可选在编排层包装 HTTP 探针
+- **liveness**：`TaosPool::liveness()` — 仅看本地池是否仍接受请求（不访问网络）
+- **readiness**：`TaosPool::health().await` — 本地 open + 有 deadline 的 `SELECT SERVER_VERSION()`
+  - 返回 `TaosHealth { ready, precision, server_version, stats, metrics, detail }`
+  - 未就绪时 `ready=false` 且 `Ok(...)`（非 `Err`），便于编排探针
+  - `detail` 为中文短句，不含密钥
 
 ## 故障
 
 | 症状 | 处理 |
 |------|------|
 | connect 失败 | 检查 `FOUNDATIONX_TAOSX_*` 与网络/认证；远程须 TLS |
+| health.ready=false | 看 `detail`；查下游/鉴权/超时 |
 | DeadlineExceeded | 调高 timeout；查下游慢查询/in-flight 饱和 |
-| Unavailable | 下游重启/鉴权；观察 tracing |
+| Unavailable | 下游重启/鉴权；观察 tracing / metrics |
 | Conflict（schema） | 存量 DOUBLE stable 需受控迁移为 NCHAR(64+) |
 | Invalid（配置） | 校验 host/port/HARD_MAX 与精度声明 |
 
@@ -25,7 +29,7 @@
 
 ## 升级 / 回滚
 
-1. 发布前：`cargo test -p taosx --all-targets` + live（如可达）+ `cargo clippy -p taosx --all-targets -- -D warnings`
+1. 发布前：`cargo test -p taosx --all-targets` + live（如可达）+ clippy
 2. 升级：先 canary，观察错误率与延迟
 3. 回滚：回退 crate 版本；配置仅允许新增字段默认值
 
@@ -33,17 +37,18 @@
 
 调用 `close()`：原子拒绝新请求，并在 `CLOSE_TIMEOUT_MS` 内等待 RAII in-flight 排空；
 超时返回 `DeadlineExceeded`，池保持 closed，重复 `close()` 可继续等待。
+关闭后 `liveness()==false` 且 `health().ready==false`。
 
 ## 数据兼容
 
 - bid/ask 必须为 `NCHAR(64+)`；检测到旧 `DOUBLE` stable 时拒绝写查
 - 单次响应、SQL/batch、query rows 与并发均有配置上限和编译期硬上限
-- 多 chunk 写入不做内部重试；部分成功后的整批幂等重试仍为 **NO-GO**
+- 多 chunk 写入不做内部重试；可用 `BatchWriteReport` 定位部分成功
 
 ## 诚实 NO-GO
 
 - Native SQL / FFI / 6030 协议会话
-- WebSocket SQL 长会话与认证证明
+- WebSocket SQL 长会话与认证证明（仅握手探测）
 - HA / Cluster / leader failover 矩阵
 - package stable / crates.io publish
-- 24h soak
+- 24h soak / 远程 OTLP RED 导出

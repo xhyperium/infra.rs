@@ -24,6 +24,10 @@ pub struct TaosMetricsSnapshot {
     pub ping_ok: u64,
     /// `ping` 失败次数。
     pub ping_err: u64,
+    /// `health` 判定就绪次数。
+    pub health_ready: u64,
+    /// `health` 判定未就绪次数。
+    pub health_not_ready: u64,
     /// Native WS 握手探测成功（进程级累计）。
     pub ws_probe_ok: u64,
     /// Native WS 握手探测失败（进程级累计）。
@@ -42,6 +46,8 @@ impl TaosMetricsSnapshot {
             + self.query_err
             + self.ping_ok
             + self.ping_err
+            + self.health_ready
+            + self.health_not_ready
             + self.ws_probe_ok
             + self.ws_probe_err
     }
@@ -57,6 +63,8 @@ pub(crate) struct OpCounters {
     query_err: AtomicU64,
     ping_ok: AtomicU64,
     ping_err: AtomicU64,
+    health_ready: AtomicU64,
+    health_not_ready: AtomicU64,
 }
 
 impl OpCounters {
@@ -70,6 +78,8 @@ impl OpCounters {
             query_err: AtomicU64::new(0),
             ping_ok: AtomicU64::new(0),
             ping_err: AtomicU64::new(0),
+            health_ready: AtomicU64::new(0),
+            health_not_ready: AtomicU64::new(0),
         }
     }
 
@@ -84,6 +94,8 @@ impl OpCounters {
             query_err: self.query_err.load(Ordering::Relaxed),
             ping_ok: self.ping_ok.load(Ordering::Relaxed),
             ping_err: self.ping_err.load(Ordering::Relaxed),
+            health_ready: self.health_ready.load(Ordering::Relaxed),
+            health_not_ready: self.health_not_ready.load(Ordering::Relaxed),
             ws_probe_ok: ws_ok,
             ws_probe_err: ws_err,
         }
@@ -112,6 +124,12 @@ impl OpCounters {
     }
     pub(crate) fn inc_ping_err(&self) {
         self.ping_err.fetch_add(1, Ordering::Relaxed);
+    }
+    pub(crate) fn inc_health_ready(&self) {
+        self.health_ready.fetch_add(1, Ordering::Relaxed);
+    }
+    pub(crate) fn inc_health_not_ready(&self) {
+        self.health_not_ready.fetch_add(1, Ordering::Relaxed);
     }
 }
 
