@@ -224,7 +224,7 @@ async fn error_kind_invalid_for_illegal_identifier() {
     let err = pool
         .insert_json_each_row("1bad_table", &[serde_json::json!({"id": 1})])
         .await
-        .expect_err("非��标识符应失败");
+        .expect_err("非标识符应失败");
     assert_eq!(
         err.kind(),
         ErrorKind::Invalid,
