@@ -34,6 +34,7 @@ async fn setup_db() -> ClickHousePool {
 
 // ── 测试 1：类型映射正确性 ──────────────────────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn type_mapping_correctness() {
     let pool = setup_db().await;
@@ -151,6 +152,7 @@ async fn type_mapping_correctness() {
 
 // ── 测试 2：DateTime64 精度 ─────────────────────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn datetime_precision() {
     let pool = setup_db().await;
@@ -194,6 +196,7 @@ async fn datetime_precision() {
 
 // ── 测试 3：JSON 往返 ───────────────────────────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn json_roundtrip() {
     let pool = setup_db().await;

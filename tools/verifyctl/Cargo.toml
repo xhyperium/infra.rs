@@ -6,7 +6,7 @@ rust-version.workspace = true
 description = "Minimal verification planner/executor/reporter"
 license.workspace = true
 repository.workspace = true
-publish = false
+publish = true
 
 [lib]
 name = "verifyctl"

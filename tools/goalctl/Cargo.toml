@@ -6,7 +6,7 @@ rust-version.workspace = true
 description = "Minimal Goal → Contract compiler (doctor / validate / compile)"
 license.workspace = true
 repository.workspace = true
-publish = false
+publish = true
 
 [lib]
 name = "goalctl"

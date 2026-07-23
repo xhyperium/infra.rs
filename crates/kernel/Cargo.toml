@@ -7,7 +7,7 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 # 本仓不向 crates.io 再发布；与 testkit 一致显式关闭
-publish = false
+publish = true
 
 [lib]
 name = "kernel"
