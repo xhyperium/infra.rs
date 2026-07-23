@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# pre-commit: 版本一致性自动检查
+# 门禁：
+#   1. 依赖集中管理 — 第三方依赖必须 { workspace = true }
+#   2. Crate 独立版本 — path 依赖 version 对齐
+#   3. 禁止 U+FFFD 残留 — 编码完整性
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+echo "[pre-commit] 版本一致性检查..."
+
+# 1. 依赖集中管理门禁
+if ! node "$ROOT/scripts/quality-gates/check-workspace-deps.mjs" 2>&1; then
+    echo "[pre-commit] FAIL: check-workspace-deps"
+    exit 1
+fi
+
+# 2. Crate 版本对齐门禁
+if ! node "$ROOT/scripts/quality-gates/check-crate-versions.mjs" 2>&1; then
+    echo "[pre-commit] FAIL: check-crate-versions"
+    exit 1
+fi
+
+# 3. U+FFFD 残留扫描
+if /bin/grep -rn $'\xef\xbf\xbd' "$ROOT/crates/" "$ROOT/.agents/" "$ROOT/docs/" --include="*.rs" --include="*.md" 2>/dev/null; then
+    echo "[pre-commit] FAIL: U+FFFD 残留"
+    exit 1
+fi
+
+echo "[pre-commit] PASS: 版本一致性"
