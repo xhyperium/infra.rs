@@ -26,7 +26,7 @@
 | `binancex` | `crates/adapters/exchange/binance/` | `binancex` | HMAC 签名 REST + 公共 WS 解析/注入；仅 server_time live，**交易 NO-GO** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx/` | `okxx` | 四头签名 REST + 公共 WS 解析/注入；仅 server_time live，**交易 NO-GO** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **0.3.2** HTTP(S)+PEM CA+insert_batch+有界池；真实集群 TLS OPEN | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **0.3.2** AMO/ALO + TLS/CA/PLAIN；group/native EOS NO-GO | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `kafkax` | `crates/adapters/storage/kafka/` | `kafkax` | **0.4.0** AMO/ALO + TLS/CA/PLAIN；group/native EOS NO-GO | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.2** Core/JetStream；同客户端重启恢复 3/3，断线窗口无回放、Cluster/HA NO-GO | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `ossx` | `crates/adapters/storage/oss/` | `ossx` | **0.3.2** ObjectStore + 有界 multipart/retry/orphan 补偿 + dev live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **0.3.3** Pool/Tx/Repository + TLS 实现；deadline/隔离实验证据 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |

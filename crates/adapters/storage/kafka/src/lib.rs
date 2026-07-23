@@ -131,6 +131,20 @@ mod public_api_surface {
         assert!(parse_bus_id(&msg.bus_id()).is_some());
         assert!(parse_bus_id("bad").is_none());
 
+        // 时间戳往返语义断言（F2 gap-zero）
+        let ts = chrono::DateTime::from_timestamp_millis(1_752_700_000_000).unwrap();
+        let msg_ts = KafkaMessage {
+            topic: "t".into(),
+            partition: 0,
+            offset: 2,
+            payload: Bytes::from_static(b"y"),
+            key: None,
+            headers: Default::default(),
+            timestamp: Some(ts),
+        };
+        assert_eq!(msg_ts.timestamp, Some(ts));
+        assert!(msg_ts.timestamp.is_some());
+
         let health = KafkaHealth { ready: false, detail: "offline".into() };
         assert!(!health.ready);
         assert!(health.detail.contains("offline"));

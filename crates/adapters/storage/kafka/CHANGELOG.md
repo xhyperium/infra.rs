@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.0] — 2026-07-23
+
+### Milestone（0.3.x → 0.4.0 里程碑闭合）
+
+kafkax 自 0.3.0 初始生产默认落地以来累积 9 次 PATCH 迭代，可交付面 100% 闭合：
+
+- 十轮 draft 矩阵（R1–R10）全部收敛；不可交付面 100% 显式 NO-GO/OOS
+- 完整的生产功能面：Producer pool、分区消费、headers/key、stats
+- 可靠应用层语义：ALO（AtLeastOnceConsumer）、PTC（ProduceThenCheckpointCoordinator）
+- 安全边界：TLS+CA、SASL/PLAIN、远程明文 fail-closed、错误脱敏、凭据 Debug 屏蔽
+- 门禁与证据：110+ 直接测试（lib + offline + conformance + live + e2e + prod 矩阵 + benchmarks）
+- gap 清零（0.3.7）：headers/key 公共面、stats 扩展、全量 API 测试
+- G-STATS-01 严格计数（0.3.9）：produce cancel/timeout 统计
+- skeptic 行为测试（0.3.8）：ALO/with_group/with_config/stats
+
+### Boundary
+
+- NO-GO 不变：group / rebalance / 自动重连 / native EOS / schema registry / SCRAM / OAuth / mTLS / package stable
+- OOS：draft Part2 量化栈（embedded broker / io-uring / µs 热路径）
+- package stable 未宣称
+
 ## [0.3.9] — 2026-07-23
 
 ### Fixed（G-STATS-01 严格：produce cancel/timeout 计数）

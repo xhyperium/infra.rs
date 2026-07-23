@@ -61,3 +61,15 @@ pool.close(std::time::Duration::from_secs(3)).await?;
 可复现语义测试：`node scripts/kafka-broker-conformance.mjs`；
 TLS/SASL：`node scripts/kafka-tls-sasl-conformance.mjs`。这些结果不证明
 group/rebalance/HA/native EOS。
+
+## Gap 追踪
+
+> 最后更新：**2026-07-23** · 详情：[docs/ssot/gap-matrix.md](../../../../docs/ssot/gap-matrix.md)
+
+| 项 | 状态 |
+|----|------|
+| 版本 | `0.3.7` |
+| 生产就绪 | ✅ Producer pool + EventBus + headers/key/stats + selfcheck + 生产矩阵 |
+| group/rebalance/native EOS | ❌ OPEN |
+| Part2 / DLQ / 24h soak | ❌ OPEN |
+| package stable | ❌ OPEN（`publish = false`） |
