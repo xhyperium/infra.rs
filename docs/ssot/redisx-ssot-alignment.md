@@ -7,8 +7,8 @@
 | 路径裁决 | **不**新增 `.agents/ssot/adapters/storage/redisx/`；目录名 `redis` 对齐 storage×7，package 名 `redisx` |
 | 实现 | `crates/adapters/storage/redis` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.11`（全量 live 集成 + data E2E + api_matrix bench） |
-| 结论 | **Standalone P0+ 生产默认客户端** + **自验证 catalog**；Cluster / Sentinel / TLS live **OPEN**；**禁止** package stable / Draft 全文 DoD |
+| version | `0.3.12`（E2E soft-skip / budget+result-stream live / selfcheck cancel+JSON） |
+| 结论 | **Standalone P0+ 生产默认客户端** + **selfcheck 模块 DoD（redisx 本地）**；残余仅环境/产品边界 OPEN/NO-GO（见下表） |
 
 ## 结论摘要
 
@@ -20,10 +20,10 @@
 | resiliencx | budget 下只读 + 无 TTL SET/MSET 幂等重试；相对 TTL SET/DEL/PEXPIRE 多试前拒绝；PUBLISH 不自动重试 |
 | contracts | `contracts::KeyValueStore`（+ 可选 pubsub） |
 | 环境变量 | `FOUNDATIONX_REDISX_{ADDR,USERNAME,PASSWORD,DB,TLS,MODE,NODES,SENTINEL_MASTER}` |
-| live | `tests/live_kv.rs` · `live_kv_conformance.rs` · `live_pubsub_conformance.rs`（`#[ignore]`，需真实 Redis） |
-| bench | `benches/kv_hot_path.rs` |
+| live | `integration_all_api` · `e2e_klines_crud` · `live_*`（`#[ignore]`；secrets 注入；E2E 无数据 soft-skip） |
+| bench | `kv_hot_path` · `api_matrix` |
 | Pub/Sub | Standalone only；重连/必达 **NO-GO** |
-| Draft 全量 100% | **未达成**（P2–P4 + secret provider / Cluster live 等 OPEN；池 metrics 与 result stream 已在 0.3.9） |
+| Draft 全量 100% | **未宣称**（跨模块 runner / Cluster·TLS live / package stable 等仍 OPEN；见残余表） |
 
 ## 对齐矩阵
 
@@ -54,11 +54,26 @@
 | REDISX-23 | pipeline_set | PASS | 管道批量 SET；跨 slot 非原子 |
 | REDISX-24 | Lua + fencing 锁 | PASS | `eval_script` / `lock_*`；关键写须 fence；非 package stable |
 | REDISX-25 | 池累计 metrics | PASS | `metrics_snapshot`；非 OTel exporter |
-| REDISX-26 | Pub/Sub result stream | PASS | `into_result_message_stream`；断线一次 Err；无重连 |
-| REDISX-27 | 自验证 selfcheck | PASS | `redisx::selfcheck` §6.5 11 项；短路/skip/catalog；非 tools/verifyctl |
-| REDISX-28 | 全量 API live 集成 | PASS | `tests/integration_all_api.rs`（pool/KV/lua/lock/pubsub/selfcheck） |
-| REDISX-29 | data E2E CRUD | PASS | `tests/e2e_klines_crud.rs` + `/home/workspace/data/binance_futures` |
+| REDISX-26 | Pub/Sub result stream | PASS | live `it_result_message_stream_and_facade`；断线一次 Err；无重连 |
+| REDISX-27 | 自验证 selfcheck | PASS | §6.5 11 ID；短路；cancel→Skipped；`to_json_string`/`run_json` |
+| REDISX-28 | 全量 API live 集成 | PASS | `integration_all_api`：pool/KV/lua/lock/pubsub/budget/selfcheck |
+| REDISX-29 | data E2E CRUD | PASS | `e2e_klines_crud` + `/home/workspace/data`；无数据 soft-skip |
 | REDISX-30 | API 基准矩阵 | PASS | `benches/api_matrix.rs` |
+| REDISX-31 | retry-budget live | PASS | `it_retry_budget_get_set_live` |
+| REDISX-32 | PubSubFacade live | PASS | `it_result_message_stream_and_facade` |
+| REDISX-33 | E2E CI 无数据不红 | PASS | `try_load_klines` / soft-skip；`e2e_missing_csv_is_soft_skip_not_panic` |
+
+## 残余 OPEN / NO-GO（不可伪 PASS；actionable 计数 = 0）
+
+| ID | 残余 | 原因（一行） |
+|----|------|--------------|
+| REDISX-9 | package stable | 产品未宣告；禁止伪 stable |
+| REDISX-10 | Cluster live | 无真实 Cluster 拓扑；`cluster_slots` 非集群 → Skipped |
+| REDISX-11 | Sentinel live | 无 failover 环境 |
+| REDISX-12 | TLS live | 无真实 TLS 握手环境；secure 构造 unit PASS |
+| REDISX-15 | Pub/Sub 重连/必达 | 产品 **NO-GO**（Redis Pub/Sub 语义） |
+| REDISX-18 | Draft 全文 DoD | 跨模块 SelfValidator/HTTP/Prometheus/testcontainers 框架层 OOS |
+| REDISX-19 | 行覆盖 100% | 残余 Cluster/TLS/OPEN 路径；见 coverage-residual |
 
 ## 10 轮审查与 gap 证据
 

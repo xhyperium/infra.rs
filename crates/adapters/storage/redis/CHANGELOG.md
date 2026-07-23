@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.12] — 2026-07-23
+
+### Fixed
+
+- **E2E 无数据 soft-skip**：CSV/`REDISX_DATA_ROOT` 缺失时不再 panic（CI `live` 不因无本地 data 红）
+
+### Added
+
+- live：`with_retry_budget` / `get_with_budget` / `set_with_budget`；`into_result_message_stream`；`RedisPubSubFacade`
+- selfcheck：`run_with_context` / `run_json` / `ValidationReport::to_json_string`；cancel→全 Skipped 单测；§6.5 ID 对齐常量
+
+### Boundaries
+
+- Cluster / Sentinel / TLS live、package stable、跨模块 SelfValidator/HTTP/Prometheus 仍 OPEN/NO-GO
+- 未宣称 Draft 全文 DoD 100%
+
 ## [0.3.11] — 2026-07-23
 
 ### Added

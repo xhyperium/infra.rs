@@ -165,6 +165,15 @@ impl ValidationReport {
         let total_ms = items.iter().map(|i| i.latency_ms).sum();
         Self { module: module.into(), level, passed, degraded, total_ms, items }
     }
+
+    /// 机器可读 JSON 报告（规范 §10.1 模块子集）。
+    ///
+    /// # Errors
+    ///
+    /// 序列化失败时返回错误字符串（极少发生）。
+    pub fn to_json_string(&self) -> Result<String, String> {
+        serde_json::to_string_pretty(self).map_err(|e| format!("ValidationReport JSON: {e}"))
+    }
 }
 
 /// 检查项元描述（catalog / 配置校验）。

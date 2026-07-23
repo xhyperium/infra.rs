@@ -38,6 +38,7 @@ jobs:
           FOUNDATIONX_REDISX_DB: "0"
           FOUNDATIONX_REDISX_TLS: "false"
         run: |
-          cargo test -p redisx --all-targets
-          cargo test -p redisx -- --ignored --nocapture
-          cargo test -p redisx --test live_kv_conformance -- --ignored --nocapture
+          cargo test -p redisx --all-targets --features pubsub
+          cargo test -p redisx --features pubsub -- --ignored --nocapture
+          cargo test -p redisx --features pubsub --test live_kv_conformance -- --ignored --nocapture
+          cargo test -p redisx --features pubsub --test integration_all_api -- --ignored --nocapture
