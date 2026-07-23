@@ -18,7 +18,7 @@ pass() { echo -e "${GREEN}PASS${NC}  $*"; PASS=$((PASS + 1)); }
 fail() { echo -e "${RED}FAIL${NC}  $*"; FAIL=$((FAIL + 1)); }
 warn() { echo -e "${YELLOW}WARN${NC}  $*"; WARN=$((WARN + 1)); }
 
-echo "=== testkit 交叉引用完整���验证 ==="
+echo "=== testkit 交叉引用完整性验证 ==="
 echo ""
 
 # -----------------------------------------------------------
@@ -173,7 +173,7 @@ echo ""
 # -----------------------------------------------------------
 echo "--- §9 stale 引用扫描 ---"
 
-# 在 active 文件（非 plan/archive/）中搜索指向旧 root-level 文件���的引用
+# 在 active 文件（非 plan/archive/）中搜索指向旧 root-level 文件名的引用
 STALE_REF="testkit/xhyper-testkit-complete-spec\.md"
 
 while IFS= read -r -d '' file; do
