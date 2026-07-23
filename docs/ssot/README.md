@@ -17,7 +17,7 @@
 
 **不应放入本目录：**
 
-- 通用治理条文 → `docs/governance/`
+- 通用治理条文 → `.agents/rules/`
 - CI/配置状态快照 → `docs/status/`
 - 域规格正文 → `.agents/ssot/`（本仓 SSOT；变更走 PR，勿与外仓 rsync 无脑覆盖）
 

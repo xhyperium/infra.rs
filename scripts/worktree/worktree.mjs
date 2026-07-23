@@ -21,7 +21,7 @@
  *   --timeout <sec>   等待合并完成的超时秒数（默认 1800）
  *   --delete-remote   合并后尝试删除远程分支（若仍存在）
  *
- * SSOT: docs/constitution/06-governance.md §6.0.5 / docs/governance/worktree-policy.md
+ * SSOT: docs/constitution/06-governance.md §6.0.5 / .agents/rules/worktree-policy.md
  */
 
 import { execSync } from "child_process";

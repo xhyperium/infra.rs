@@ -2,7 +2,7 @@
 /**
  * crate-bump.mjs — 对单个 crates/ package 执行 PATCH +1，并同步 path 依赖 version 字符串
  *
- * 规则：docs/governance/VERSIONING.md R-C2
+ * 规则：.agents/rules/VERSIONING.md R-C2
  *
  * 用法:
  *   node scripts/version/crate-bump.mjs <package-name|relative-path>

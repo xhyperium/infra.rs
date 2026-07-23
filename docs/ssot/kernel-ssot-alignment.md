@@ -203,7 +203,7 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 - mutants / miri 本会话全量实测通过声明（CI 入口已有）
 - crates.io 再发布与 `publish = true`
 - 上游 SSOT 镜像内部措辞收口（应在 xhyper.rs 修，再删除感知同步）
-- 整体 Production Ready / **Agent L5 人签**（见 [core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) §8/§11；模板 `docs/governance/prod-signoff-TEMPLATE.md`）
+- 整体 Production Ready / **Agent L5 人签**（见 [core-crates-production-readiness.md](../report/2026-07-21/core-crates-production-readiness.md) §8/§11；模板 `.agents/rules/prod-signoff-TEMPLATE.md`）
 
 ## 变更记录
 

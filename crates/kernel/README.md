@@ -40,7 +40,7 @@ xhyper.rs / infra.rs 的 **L0 语义信任根**：错误分类、时间与生命
 
 - 不提供配置、日志、网络、异步运行时、依赖注入、持久化、serde wire 或业务能力
 - 新增公开项、依赖或 feature 必须走 RFC（`[features] default = []`）
-- 官方支持仅 Linux x86_64 + MSRV 1.85（见 `docs/governance/support-matrix.md`）
+- 官方支持仅 Linux x86_64 + MSRV 1.85（见 `.agents/rules/support-matrix.md`）
 
 ## 最小用法
 

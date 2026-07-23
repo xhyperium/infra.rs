@@ -57,6 +57,7 @@ jobs:
             AGENTS.md
             CLAUDE.md
             docs/**/*.md
+            .agents/rules/**/*.md
             crates/**/*.md
             tools/**/*.md
 
@@ -67,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: 运行 cspell
-        run: npx cspell --no-progress "{README,AGENTS,CLAUDE}.md" "docs/**/*.md" "crates/**/*.md" "tools/**/*.md"
+        run: npx cspell --no-progress "{README,AGENTS,CLAUDE}.md" "docs/**/*.md" ".agents/rules/**/*.md" "crates/**/*.md" "tools/**/*.md"
 
   fence-check:
     name: 代码块结构检查

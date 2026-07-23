@@ -43,7 +43,7 @@
 
 **不应放入本目录：**
 
-- 宪章条款的**实施细则** → [`docs/governance/`](../governance/)
+- 宪章条款的**实施细则** → [`.agents/rules/`](../../.agents/rules/)
 - SSOT 对齐矩阵 / 同步报告 → [`docs/ssot/`](../ssot/)
 - CI 状态、配置快照 → [`docs/status/`](../status/)
 - 架构决策（DDR）→ [`docs/decisions/`](../decisions/)
@@ -52,12 +52,12 @@
 
 | 细则 | 宪章锚点 |
 |------|----------|
-| [VERSIONING.md](../governance/VERSIONING.md) | §6.2 / 版本策略 |
-| [worktree-policy.md](../governance/worktree-policy.md) | §6.0.5 |
-| [编码与语言约定.md](../governance/编码与语言约定.md) | §4.5 |
-| [ASD-STE100.md](../governance/ASD-STE100.md) | §4.6（英文可选加严） |
-| [quant-dev-spec.md](../governance/quant-dev-spec.md) | 领域扩展（§3.3） |
-| [rust-dev-rules.md](../governance/rust-dev-rules.md) | §4.0 本仓 Rust 开发规则补充（错误/unsafe/并发/性能/依赖/测试/日志/序列化） |
+| [VERSIONING.md](../../.agents/rules/VERSIONING.md) | §6.2 / 版本策略 |
+| [worktree-policy.md](../../.agents/rules/worktree-policy.md) | §6.0.5 |
+| [编码与语言约定.md](../../.agents/rules/编码与语言约定.md) | §4.5 |
+| [ASD-STE100.md](../../.agents/rules/ASD-STE100.md) | §4.6（英文可选加严） |
+| [quant-dev-spec.md](../../.agents/rules/quant-dev-spec.md) | 领域扩展（§3.3） |
+| [rust-dev-rules.md](../../.agents/rules/rust-dev-rules.md) | §4.0 本仓 Rust 开发规则补充（错误/unsafe/并发/性能/依赖/测试/日志/序列化） |
 | 组织 [language.md 强制中文](https://github.com/xhyperium/.github/blob/main/rulesets/language.md) | §4.5 上位语言政策 |
 | 组织 [Rust 编码规范完整版 v2.1.1](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md) | §4.0 上位全局标准 |
 

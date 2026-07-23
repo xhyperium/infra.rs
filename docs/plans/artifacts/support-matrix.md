@@ -30,7 +30,7 @@
 ## 3. 与 crate 文档的关系
 
 - 各核心 crate README 若未写平台，以**本表**为准。
-- W5 可将本表摘要链入 `docs/governance/` 或根 README（可选，非 W0 阻塞）。
+- W5 可将本表摘要链入 `.agents/rules/` 或根 README（可选，非 W0 阻塞）。
 - `publish = false` 不变；支持矩阵描述的是 **内部生产消费者** 环境，不是 crates.io。
 
 ## 4. 变更记录

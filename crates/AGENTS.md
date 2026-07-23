@@ -36,7 +36,7 @@ crates/<crate-name>/
 
 | 路径 | 级别 | 职责 |
 |------|------|------|
-| `Cargo.toml` | 必选 | 包元数据、依赖、feature；**版本必须独立**（禁止 `version.workspace`，见 [VERSIONING.md](../docs/governance/VERSIONING.md) R-C1） |
+| `Cargo.toml` | 必选 | 包元数据、依赖、feature；**版本必须独立**（禁止 `version.workspace`，见 [VERSIONING.md](../.agents/rules/VERSIONING.md) R-C1） |
 | `src/` | 必选 | 实现与单元测试（`#[cfg(test)] mod tests`） |
 | `tests/` | 必选目录 | 集成测试、跨模块契约、公开 API 稳定性 |
 | `docs/` | 必选目录 | 至少 `README.md`（入口索引 + 对齐链接）；设计笔记/API 契约/迁移；不替代 rustdoc |
@@ -49,7 +49,7 @@ crates/<crate-name>/
 
 | 层级 | 放什么 | 不放什么 |
 |------|--------|----------|
-| 仓库根 `docs/`（`governance/` · `ssot/` · `status/` · `decisions/`） | 跨 crate 治理、SSOT 对齐、状态记录、DDR | 单个 crate 的 API 契约 |
+| 仓库根 `.agents/rules/` + `docs/`（`ssot/` · `status/` · `decisions/`） | 跨 crate 治理、SSOT 对齐、状态记录、DDR | 单个 crate 的 API 契约 |
 | 仓库根 `examples/` / `tests/` | 跨 crate 端到端示例与集成 | 单 crate 单元/契约测试 |
 | `crates/<name>/docs/` | 该 crate 设计、边界、迁移 | 全仓治理规则 |
 | `crates/<name>/tests/` | 本 crate 公开面契约 | 跨多个 crate 的 E2E |
@@ -68,7 +68,7 @@ crates/<crate-name>/
 7. 更新 `ARCHITECTURE.md` 层次模型（如职责变更）
 8. 确认 `node scripts/quality-gates/check-crate-versions.mjs` 通过
 
-### 版本规则（强制，SSOT: [VERSIONING.md](../docs/governance/VERSIONING.md)）
+### 版本规则（强制，SSOT: [VERSIONING.md](../.agents/rules/VERSIONING.md)）
 
 | 规则 | 要求 |
 |------|------|
