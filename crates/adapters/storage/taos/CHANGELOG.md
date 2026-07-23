@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.7] — 2026-07-23
+
+### Added
+
+- `TaosHealth` 与 `TaosPool::health()` / `liveness()`
+- readiness 未就绪时返回 `ready=false`（信封 `Ok`），便于编排探针
+- metrics：`health_ready` / `health_not_ready`
+- live：`live_health_ready`
+
+### Boundaries
+
+- 不宣称 package stable；HA / Native SQL / 自动幂等重试仍 NO-GO
+
 ## [0.3.6] — 2026-07-23
 
 ### Added

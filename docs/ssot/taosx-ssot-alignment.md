@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/adapters/storage/taos/`（**禁止**平行 `taosx/` 树） |
 | 实现 | `crates/adapters/storage/taos` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.6` |
+| version | `0.3.7` |
 | 结论 | **受限 REST SQL + WS reachability + BatchWriteReport 已落地**；Native SQL / HA / 幂等重试 / package stable **NO-GO** |
 
 ## 结论摘要
@@ -41,6 +41,7 @@
 | TAOSX-16 | 十轮审查矩阵 | PASS | `docs/report/2026-07-23/taosx-ten-round-review.md` |
 | TAOSX-17 | 公开 API 表面测试 | PASS | `src/lib.rs` `public_api_surface` |
 | TAOSX-18 | 有界 metrics | PASS | `TaosMetricsSnapshot` / live metrics 冒烟 |
+| TAOSX-19 | health/readiness | PASS | `TaosHealth` / `health` / `liveness` |
 | TAOSX-11b | WS live 握手 | PASS | `live_native_ws_handshake`（仍非 SQL 会话） |
 
 ## 诚实边界

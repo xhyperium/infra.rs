@@ -10,7 +10,7 @@
 
 ## 生产默认面
 
-`TaosPool` REST `TimeSeriesStore`（package `0.3.6`；含 `BatchWriteReport`）。
+`TaosPool` REST `TimeSeriesStore`（package `0.3.7`；含 `BatchWriteReport`）。
 
 密钥仅 `FOUNDATIONX_*` 环境变量；默认 `cargo test` 离线绿灯；live 测试 `#[ignore]`。
 SSOT 路径：`.agents/ssot/adapters/storage/taos/`（**不**另建 `taosx/`）。

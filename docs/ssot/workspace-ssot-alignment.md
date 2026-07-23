@@ -31,7 +31,7 @@
 | `ossx` | `crates/adapters/storage/oss/` | `ossx` | **0.3.2** ObjectStore + 有界 multipart/retry/orphan 补偿 + dev live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **0.3.3** Pool/Tx/Repository + TLS 实现；deadline/隔离实验证据 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `redisx` | `crates/adapters/storage/redis/` | `redisx` | **0.3.3** Standalone + 安全 PubSub 边界；Cluster/Sentinel/TLS live OPEN | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `taosx` | `crates/adapters/storage/taos/` | `taosx` | **0.3.6** REST/NCHAR + BatchWriteReport + WS 探测 + 真实 live + 十轮矩阵；幂等重试/package stable NO-GO | [taosx-ssot-alignment.md](./taosx-ssot-alignment.md) · [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `taosx` | `crates/adapters/storage/taos/` | `taosx` | **0.3.7** REST + BatchWriteReport + metrics + health/readiness + WS 握手 live；幂等/HA/package stable NO-GO | [taosx-ssot-alignment.md](./taosx-ssot-alignment.md) · [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `goalctl` | `tools/goalctl/` | `goalctl` | 最小 Goal→Contract CLI（doctor/validate/compile）· #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | `verifyctl` | `tools/verifyctl/` | `verifyctl` | 最小 plan/execute/report CLI · #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | `transportx` | `crates/transport/` | `transportx` | L1 HTTP/WS 传输 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) |

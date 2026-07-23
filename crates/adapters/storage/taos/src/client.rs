@@ -50,6 +50,35 @@ pub struct TaosPoolStats {
     pub closed: bool,
 }
 
+/// readiness 探针结果（有 deadline 的轻量 SQL + 本地状态）。
+///
+/// - `ready == true`：池未关闭且 `SELECT SERVER_VERSION()` 成功，并带回生效精度。
+/// - `ready == false`：本地 closed 或远端不可达；**不**用 `Err` 表示「未就绪」，便于编排探针。
+/// - 配置精度与探测精度冲突仅在 `connect` 时 fail-closed；本探针只报告当前生效精度。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TaosHealth {
+    /// 是否可服务写查。
+    pub ready: bool,
+    /// 当前生效时间精度。
+    pub precision: TsPrecision,
+    /// 服务端版本字符串（若可得）。
+    pub server_version: Option<String>,
+    /// 池瞬时统计。
+    pub stats: TaosPoolStats,
+    /// 操作计数快照。
+    pub metrics: TaosMetricsSnapshot,
+    /// 中文简短说明（可检索，不含密钥）。
+    pub detail: String,
+}
+
+impl TaosHealth {
+    /// 编排探针用：仅看 `ready`。
+    #[must_use]
+    pub fn is_ready(&self) -> bool {
+        self.ready
+    }
+}
+
 /// 批量写入结果报告（行数与 chunk 计数）。
 ///
 /// - 全部成功：`failed == 0` 且 `accepted == 请求行数`。
@@ -372,6 +401,71 @@ impl TaosPool {
     #[must_use]
     pub fn is_closed(&self) -> bool {
         self.inner.state.load(Ordering::Acquire) & CLOSED_BIT != 0
+    }
+
+    /// liveness：仅看本地池是否仍接受请求（不访问网络）。
+    #[must_use]
+    pub fn liveness(&self) -> bool {
+        !self.is_closed()
+    }
+
+    /// readiness：本地 open + 有 deadline 的 `SELECT SERVER_VERSION()`。
+    ///
+    /// 未就绪时返回 `Ok(TaosHealth { ready: false, .. })`，而非 `Err`，避免探针层把
+    /// 「依赖暂不可用」与「探针实现错误」混淆。关闭中的池直接 `ready=false`。
+    pub async fn health(&self) -> XResult<TaosHealth> {
+        let stats = self.stats();
+        let precision = self.precision();
+        if stats.closed {
+            self.inner.metrics.inc_health_not_ready();
+            return Ok(TaosHealth {
+                ready: false,
+                precision,
+                server_version: None,
+                stats,
+                metrics: self.metrics(),
+                detail: "池已关闭".into(),
+            });
+        }
+        match self.exec_sql("SELECT SERVER_VERSION()").await {
+            Ok(r) if r.code == 0 => {
+                self.inner.metrics.inc_ping_ok();
+                self.inner.metrics.inc_health_ready();
+                let server_version = r.rows.first().and_then(|row| row.first()).cloned();
+                Ok(TaosHealth {
+                    ready: true,
+                    precision,
+                    server_version,
+                    stats: self.stats(),
+                    metrics: self.metrics(),
+                    detail: "就绪".into(),
+                })
+            }
+            Ok(r) => {
+                self.inner.metrics.inc_ping_err();
+                self.inner.metrics.inc_health_not_ready();
+                Ok(TaosHealth {
+                    ready: false,
+                    precision,
+                    server_version: None,
+                    stats: self.stats(),
+                    metrics: self.metrics(),
+                    detail: format!("ping code={}", r.code),
+                })
+            }
+            Err(e) => {
+                self.inner.metrics.inc_ping_err();
+                self.inner.metrics.inc_health_not_ready();
+                Ok(TaosHealth {
+                    ready: false,
+                    precision,
+                    server_version: None,
+                    stats: self.stats(),
+                    metrics: self.metrics(),
+                    detail: format!("不可用: {e}"),
+                })
+            }
+        }
     }
 
     /// `SELECT SERVER_VERSION()`。
@@ -1391,5 +1485,55 @@ mod tests {
         let pool = TaosPool::connect_without_ping(cfg).expect("build");
         let error = pool.query_series("some_table", 0, 1).await.expect_err("must propagate");
         assert_eq!(error.kind(), ErrorKind::Internal);
+    }
+
+    #[tokio::test]
+    async fn health_reports_closed_pool_not_ready() {
+        let pool = TaosPool::connect_without_ping(TaosConfig::default()).expect("build");
+        assert!(pool.liveness());
+        pool.close().await.expect("close");
+        assert!(!pool.liveness());
+        let health = pool.health().await.expect("health envelope");
+        assert!(!health.ready);
+        assert!(!health.is_ready());
+        assert!(health.detail.contains("关闭"), "{health:?}");
+        assert!(pool.metrics().health_not_ready >= 1);
+    }
+
+    #[tokio::test]
+    async fn health_ready_when_server_version_ok() {
+        let body =
+            r#"{"code":0,"column_meta":[["v","VARCHAR",32]],"data":[["3.3.6.13"]],"rows":1}"#;
+        let port = serve_response("200 OK", body, false).await;
+        let cfg = TaosConfig {
+            port,
+            database: String::new(),
+            timeout: Duration::from_secs(2),
+            ..TaosConfig::default()
+        };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        let health = pool.health().await.expect("health");
+        assert!(health.ready, "{health:?}");
+        assert_eq!(health.server_version.as_deref(), Some("3.3.6.13"));
+        assert_eq!(health.detail, "就绪");
+        assert!(pool.metrics().health_ready >= 1);
+        assert!(pool.metrics().ping_ok >= 1);
+    }
+
+    #[tokio::test]
+    async fn health_not_ready_on_unreachable() {
+        let cfg = TaosConfig {
+            host: "127.0.0.1".into(),
+            port: 1,
+            database: String::new(),
+            timeout: Duration::from_millis(200),
+            acquire_timeout: Duration::from_millis(200),
+            ..TaosConfig::default()
+        };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        let health = pool.health().await.expect("envelope");
+        assert!(!health.ready);
+        assert!(!health.detail.is_empty());
+        assert!(pool.metrics().health_not_ready >= 1);
     }
 }

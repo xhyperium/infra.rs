@@ -14,8 +14,8 @@ mod metrics;
 mod native;
 
 pub use client::{
-    BatchWritePartialError, BatchWriteReport, TaosClient, TaosExecResult, TaosPool, TaosPoolStats,
-    build_insert_sql_chunks,
+    BatchWritePartialError, BatchWriteReport, TaosClient, TaosExecResult, TaosHealth, TaosPool,
+    TaosPoolStats, build_insert_sql_chunks,
 };
 pub use config::{
     HARD_MAX_BATCH_BYTES, HARD_MAX_BATCH_ROWS, HARD_MAX_CLOSE_TIMEOUT, HARD_MAX_IN_FLIGHT,
@@ -103,6 +103,7 @@ mod public_api_surface {
         assert_type::<BatchWriteReport>();
         assert_type::<BatchWritePartialError>();
         assert_type::<TaosMetricsSnapshot>();
+        assert_type::<TaosHealth>();
         let _ = ws_probe_totals();
     }
 
