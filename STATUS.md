@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-23T01:30:10Z
+> **生成时间**：2026-07-23T01:35:34Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -48,12 +48,12 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `evidence` | `crates/evidence` | L1 | 7/7 | ✅ 2i+u | 896 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/evidence-ssot-alignment.md) |
 | `observex` | `crates/observex` | L1 | 7/7 | ✅ 2i+u | 1593 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/observex-ssot-alignment.md) |
 | `resiliencx` | `crates/resiliencx` | L1 | 7/7 | ✅ 4i+u | 2059 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/resiliencx-ssot-alignment.md) |
-| `schedulex` | `crates/schedulex` | L1 | 7/7 | ✅ 3i+u | 1327 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/schedulex-ssot-alignment.md) |
-| `contract-testkit` | `crates/test-support/contracts` | L1 | 7/7 | ✅ 2i+u | 1941 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/testkit-ssot-alignment.md) |
+| `schedulex` | `crates/schedulex` | L1 | 7/7 | ✅ 3i+u | 1345 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/schedulex-ssot-alignment.md) |
+| `contract-testkit` | `crates/test-support/contracts` | L1 | 7/7 | ✅ 3i+u | 1981 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/testkit-ssot-alignment.md) |
 | `transportx` | `crates/transport` | L1 | 7/7 | ✅ 6i+u | 1514 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/transport-ssot-alignment.md) |
 | `goalctl` | `tools/goalctl` | L1 | 7/7 | ✅ 1i+u | 574 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/tools-ssot-alignment.md) |
 | `verifyctl` | `tools/verifyctl` | L1 | 7/7 | ✅ 1i+u | 663 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/tools-ssot-alignment.md) |
-| `contracts` | `crates/contracts` | contracts | 7/7 | ✅ 5i+u | 1513 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/contracts-ssot-alignment.md) |
+| `contracts` | `crates/contracts` | contracts | 7/7 | ✅ 5i+u | 1522 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/contracts-ssot-alignment.md) |
 | `binancex` | `crates/adapters/exchange/binance` | adapter | 7/7 | ✅ 1i+u | 1965 | · | `active` | **98%** ████████ | [✓](docs/ssot/adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx` | adapter | 7/7 | ✅ 1i+u | 1699 | · | `active` | **98%** ████████ | [✓](docs/ssot/adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse` | adapter | 7/7 | ✅ 3i+u | 994 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/clickhousex-ssot-alignment.md) |

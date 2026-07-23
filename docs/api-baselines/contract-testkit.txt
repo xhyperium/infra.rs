@@ -1,4 +1,16 @@
 pub mod contract_testkit
+pub mod contract_testkit::closed_point
+pub async fn contract_testkit::closed_point::assert_time_series_store(&dyn contracts::TimeSeriesStore, &str, canonical::Tick) -> contract_testkit::ContractResult
+pub mod contract_testkit::portable
+pub async fn contract_testkit::portable::assert_analytics_sink(&dyn contracts::AnalyticsSink, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
+pub async fn contract_testkit::portable::assert_event_bus_surface(&dyn contracts::EventBus, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
+pub async fn contract_testkit::portable::assert_object_store(&dyn contracts::ObjectStore, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
+pub async fn contract_testkit::portable::assert_pub_sub_surface(&dyn contracts::PubSub, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
+pub async fn contract_testkit::portable::assert_time_series_store(&dyn contracts::TimeSeriesStore, &str, canonical::Tick) -> contract_testkit::ContractResult
+pub async fn contract_testkit::portable::assert_time_series_store_in_window(&dyn contracts::TimeSeriesStore, &str, canonical::Tick, i64, i64) -> contract_testkit::ContractResult
+pub async fn contract_testkit::portable::assert_time_series_store_with_fixture(&dyn contracts::TimeSeriesStore, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub mod contract_testkit::snapshot
+pub async fn contract_testkit::snapshot::assert_event_bus(&dyn contracts::EventBus) -> contract_testkit::ContractResult
 pub enum contract_testkit::InstrEvent
 pub contract_testkit::InstrEvent::CircuitClose
 pub contract_testkit::InstrEvent::CircuitClose::op: alloc::string::String
