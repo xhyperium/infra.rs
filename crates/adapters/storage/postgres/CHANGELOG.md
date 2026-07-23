@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.9] — 2026-07-23
+
+### Added
+
+- `PostgresPool::acquire_with(deadline)`：按调用方截止时间借连接
+- 有界 `COPY`：`copy_in_bytes` / `copy_out_bytes`（连接级与池级；默认 16 MiB 上限 + operation_timeout）
+- live：`live_acquire_with_and_copy_roundtrip`（11/11）
+
+### Boundaries
+
+- 流式无限 COPY、二进制 COPY 协议高级选项、migrations runner、mTLS、package stable **未承诺**
+
 ## [0.3.8] — 2026-07-23
 
 ### Added

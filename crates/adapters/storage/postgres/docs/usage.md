@@ -1,6 +1,6 @@
 # postgresx 用法
 
-**Package**：`postgresx` `0.3.8`（`publish = false`） · 默认导出为**生产 SQL / 连接池 API**。
+**Package**：`postgresx` `0.3.9`（`publish = false`） · 默认导出为**生产 SQL / 连接池 API**。
 
 ## 最小示例
 
@@ -105,4 +105,13 @@ pool.query_one("SELECT * FROM t WHERE id = $1", &[&id]).await?;
 
 // ❌ 禁止
 // pool.query_one(&format!("SELECT * FROM t WHERE id = {id}"), &[]).await?;
+```
+
+
+## COPY（有界）
+
+```rust
+// 同一连接上：CREATE TEMP + COPY IN/OUT
+// pool.copy_in_bytes / conn.copy_in_bytes
+// 默认单次载荷上限 16 MiB；超时脱池
 ```

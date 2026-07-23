@@ -1929,11 +1929,13 @@ dependencies = [
 
 [[package]]
 name = "postgresx"
-version = "0.3.8"
+version = "0.3.9"
 dependencies = [
  "async-trait",
+ "bytes",
  "contracts",
  "deadpool-postgres",
+ "futures-util",
  "kernel",
  "resiliencx",
  "rustls",

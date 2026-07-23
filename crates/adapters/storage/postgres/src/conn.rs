@@ -1,6 +1,8 @@
 //! 池化连接句柄 [`PgConnection`]。
 
+use bytes::Bytes;
 use deadpool_postgres::Object;
+use futures_util::{SinkExt, StreamExt};
 use kernel::{XError, XResult};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
@@ -9,6 +11,12 @@ use tokio_postgres::types::ToSql;
 
 use crate::error::map_tokio_error;
 use crate::tx::PgTransaction;
+
+/// 单次 `COPY IN` 默认最大载荷（16 MiB）。
+pub const DEFAULT_COPY_IN_MAX_BYTES: usize = 16 * 1024 * 1024;
+
+/// 单次 `COPY OUT` 默认最大载荷（16 MiB）。
+pub const DEFAULT_COPY_OUT_MAX_BYTES: usize = 16 * 1024 * 1024;
 
 /// 从连接池借出的连接（归还由 drop 完成）。
 pub struct PgConnection {
@@ -133,6 +141,83 @@ impl PgConnection {
         }
     }
 
+    /// `COPY ... FROM STDIN`：将 `data` 作为单块写入，返回影响行数。
+    ///
+    /// - `statement` 必须是完整 `COPY ... FROM STDIN ...` SQL（**禁止**拼接不可信标识符）
+    /// - 载荷上限 [`DEFAULT_COPY_IN_MAX_BYTES`]；超时或错误时连接脱池
+    pub async fn copy_in_bytes(&mut self, statement: &str, data: &[u8]) -> XResult<u64> {
+        if statement.trim().is_empty() {
+            return Err(XError::invalid("COPY IN statement 不能为空"));
+        }
+        if data.len() > DEFAULT_COPY_IN_MAX_BYTES {
+            return Err(XError::invalid(format!(
+                "COPY IN 载荷 {} 字节超过上限 {}",
+                data.len(),
+                DEFAULT_COPY_IN_MAX_BYTES
+            )));
+        }
+        let guard = self.take_guard()?;
+        let statement = statement.to_owned();
+        let payload = Bytes::copy_from_slice(data);
+        let fut = async {
+            let sink = guard.object()?.copy_in(&statement).await.map_err(map_tokio_error)?;
+            let mut sink = std::pin::pin!(sink);
+            sink.send(payload).await.map_err(map_tokio_error)?;
+            sink.finish().await.map_err(map_tokio_error)
+        };
+        match tokio::time::timeout(self.operation_timeout, fut).await {
+            Ok(Ok(rows)) => {
+                self.client = Some(guard.release()?);
+                Ok(rows)
+            }
+            Ok(Err(error)) => Err(error),
+            Err(error) => {
+                Err(XError::deadline_exceeded("Postgres COPY IN 超时；连接已丢弃")
+                    .with_source(error))
+            }
+        }
+    }
+
+    /// `COPY ... TO STDOUT`：聚合数据块，受 `max_bytes` 上限约束。
+    ///
+    /// - `max_bytes == 0` 时使用 [`DEFAULT_COPY_OUT_MAX_BYTES`]
+    /// - 超过上限返回 `Invalid` 并脱池（流可能未读完，连接不可复用）
+    pub async fn copy_out_bytes(&mut self, statement: &str, max_bytes: usize) -> XResult<Vec<u8>> {
+        if statement.trim().is_empty() {
+            return Err(XError::invalid("COPY OUT statement 不能为空"));
+        }
+        let limit = if max_bytes == 0 { DEFAULT_COPY_OUT_MAX_BYTES } else { max_bytes };
+        let guard = self.take_guard()?;
+        let statement = statement.to_owned();
+        let fut = async {
+            let stream = guard.object()?.copy_out(&statement).await.map_err(map_tokio_error)?;
+            let mut stream = std::pin::pin!(stream);
+            let mut out = Vec::new();
+            while let Some(chunk) = stream.next().await {
+                let chunk = chunk.map_err(map_tokio_error)?;
+                let next = out.len().saturating_add(chunk.len());
+                if next > limit {
+                    return Err(XError::invalid(format!(
+                        "COPY OUT 聚合大小将超过上限 {limit} 字节"
+                    )));
+                }
+                out.extend_from_slice(&chunk);
+            }
+            Ok(out)
+        };
+        match tokio::time::timeout(self.operation_timeout, fut).await {
+            Ok(Ok(bytes)) => {
+                self.client = Some(guard.release()?);
+                Ok(bytes)
+            }
+            Ok(Err(error)) => Err(error),
+            Err(error) => {
+                Err(XError::deadline_exceeded("Postgres COPY OUT 超时；连接已丢弃")
+                    .with_source(error))
+            }
+        }
+    }
+
     /// 开启事务，消费本连接。
     pub async fn begin(mut self) -> XResult<PgTransaction> {
         if self.raw_exposed.load(Ordering::Acquire) {
@@ -172,5 +257,18 @@ impl Drop for PgConnection {
         {
             drop(Object::take(client));
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn copy_limits_are_documented_and_stable() {
+        // 上限作为公开合同；live 覆盖超限路径。
+        const _: () = assert!(DEFAULT_COPY_IN_MAX_BYTES >= 1024 * 1024);
+        const _: () = assert!(DEFAULT_COPY_OUT_MAX_BYTES >= 1024 * 1024);
+        assert_eq!(DEFAULT_COPY_IN_MAX_BYTES, DEFAULT_COPY_OUT_MAX_BYTES);
     }
 }

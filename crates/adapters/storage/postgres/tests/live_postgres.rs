@@ -267,3 +267,56 @@ async fn live_raw_client_and_pool_fail_closed() {
 
     pool.close();
 }
+
+#[tokio::test]
+#[ignore = "requires live Postgres; run with --ignored when available"]
+async fn live_acquire_with_and_copy_roundtrip() {
+    use std::time::Duration;
+
+    let pool = PostgresPool::connect(&live_config()).await.expect("connect");
+
+    // acquire_with：合法 deadline
+    let mut conn = pool.acquire_with(Duration::from_secs(5)).await.expect("acquire_with");
+    let row = conn.query_one("SELECT 3 AS n", &[]).await.expect("q");
+    assert_eq!(row.get::<_, i32>(0), 3);
+    drop(conn);
+
+    // acquire_with：零 deadline → Invalid
+    match pool.acquire_with(Duration::ZERO).await {
+        Ok(_) => panic!("zero deadline must fail"),
+        Err(zerr) => assert_eq!(zerr.kind(), kernel::ErrorKind::Invalid),
+    }
+
+    // COPY 往返：TEMP 表 + text 格式（全程同一会话连接）
+    let tag = format!("copy{}", std::process::id());
+    let mut conn = pool.acquire().await.expect("session");
+    conn.execute(
+        &format!("CREATE TEMP TABLE postgresx_{tag} (id int PRIMARY KEY, body text NOT NULL)"),
+        &[],
+    )
+    .await
+    .expect("create temp");
+
+    let payload = b"1\thello-copy\n2\tworld-copy\n";
+    let rows = conn
+        .copy_in_bytes(&format!("COPY postgresx_{tag} (id, body) FROM STDIN"), payload)
+        .await
+        .expect("copy in");
+    assert_eq!(rows, 2);
+
+    let out = conn
+        .copy_out_bytes(&format!("COPY postgresx_{tag} (id, body) TO STDOUT"), 1024 * 1024)
+        .await
+        .expect("copy out");
+    let text = String::from_utf8(out).expect("utf8");
+    assert!(text.contains("hello-copy"));
+    assert!(text.contains("world-copy"));
+
+    // COPY IN 超大载荷：发送前本地拒绝
+    let too_big = vec![b'x'; postgresx::DEFAULT_COPY_IN_MAX_BYTES + 1];
+    let over =
+        conn.copy_in_bytes("COPY postgresx_nope FROM STDIN", &too_big).await.expect_err("oversize");
+    assert_eq!(over.kind(), kernel::ErrorKind::Invalid);
+
+    pool.close();
+}

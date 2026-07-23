@@ -1,7 +1,7 @@
 [package]
 name = "postgresx"
 description = "postgres storage adapter (production pool/SQL + optional scaffold)"
-version = "0.3.8"
+version = "0.3.9"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -15,20 +15,22 @@ scaffold = []
 
 [dependencies]
 async-trait = { workspace = true }
+bytes = { workspace = true }
 contracts = { path = "../../../contracts", version = "0.1.4" }
 deadpool-postgres = { workspace = true }
+futures-util = { workspace = true }
 kernel = { path = "../../../kernel", version = "0.3.1" }
 resiliencx = { path = "../../../resiliencx", version = "0.1.2", features = [
   "tokio",
 ] }
 rustls = { workspace = true }
 rustls-pki-types = { workspace = true }
+rustls-pemfile = { workspace = true }
 tokio = { workspace = true }
 tokio-postgres = { workspace = true }
 tokio-rustls = { workspace = true }
 tracing = { workspace = true, optional = true }
 webpki-roots = { workspace = true }
-rustls-pemfile = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

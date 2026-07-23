@@ -125,12 +125,24 @@ impl PostgresPool {
         }
     }
 
-    /// 借出连接。
+    /// 借出连接（使用配置中的 `acquire_timeout`）。
     pub async fn acquire(&self) -> XResult<PgConnection> {
+        self.acquire_with(self.acquire_timeout).await
+    }
+
+    /// 在给定截止时间内借出连接。
+    ///
+    /// `deadline` 为零时返回 `Invalid`。超时返回 `DeadlineExceeded`。
+    pub async fn acquire_with(&self, deadline: std::time::Duration) -> XResult<PgConnection> {
         self.ensure_open()?;
-        let client = tokio::time::timeout(self.acquire_timeout, self.inner.get())
+        if deadline.is_zero() {
+            return Err(XError::invalid("Postgres acquire_with deadline 必须大于零"));
+        }
+        let client = tokio::time::timeout(deadline, self.inner.get())
             .await
-            .map_err(|error| XError::deadline_exceeded("Postgres acquire 超时").with_source(error))?
+            .map_err(|error| {
+                XError::deadline_exceeded("Postgres acquire_with 超时").with_source(error)
+            })?
             .map_err(map_pool_error)?;
         Ok(PgConnection::new(client, self.operation_timeout))
     }
@@ -161,6 +173,22 @@ impl PostgresPool {
     ) -> XResult<Option<Row>> {
         let mut conn = self.acquire().await?;
         conn.query_opt(sql, params).await
+    }
+
+    /// `COPY ... FROM STDIN`：写入有界字节缓冲，返回影响行数。
+    ///
+    /// 见 [`PgConnection::copy_in_bytes`]。
+    pub async fn copy_in_bytes(&self, statement: &str, data: &[u8]) -> XResult<u64> {
+        let mut conn = self.acquire().await?;
+        conn.copy_in_bytes(statement, data).await
+    }
+
+    /// `COPY ... TO STDOUT`：读出有界字节缓冲。
+    ///
+    /// 见 [`PgConnection::copy_out_bytes`]。
+    pub async fn copy_out_bytes(&self, statement: &str, max_bytes: usize) -> XResult<Vec<u8>> {
+        let mut conn = self.acquire().await?;
+        conn.copy_out_bytes(statement, max_bytes).await
     }
 
     /// 在事务中执行异步闭包：`Ok` → commit，`Err` → rollback。

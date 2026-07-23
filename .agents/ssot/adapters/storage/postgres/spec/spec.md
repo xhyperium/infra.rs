@@ -1,6 +1,6 @@
 # `postgresx` 当前实现规范
 
-状态：当前 `0.3.8` 实现合同（`deadpool-postgres` + `tokio-postgres` 默认真实路径）。
+状态：当前 `0.3.9` 实现合同（`deadpool-postgres` + `tokio-postgres` 默认真实路径）。
 **未宣称 package stable。**
 
 ## 0. 权威与范围
@@ -15,7 +15,7 @@
 | 入口 | 当前合同 |
 |---|---|
 | `PostgresConfig` | env / `DATABASE_URL`、池容量、连接/获取/操作截止时间、SSL 策略 |
-| `PostgresPool` | connect/acquire/参数化 SQL/事务/health/stats/close |
+| `PostgresPool` | connect/acquire/acquire_with/参数化 SQL/有界 COPY/事务/health/stats/close |
 | `PgConnection` | 参数化 SQL；客户端超时时丢弃连接，不把未知状态连接归池 |
 | `PgTransaction` | BEGIN/SQL/COMMIT/ROLLBACK 全部有界；非穷尽 `TxStatus`；终结超时视为结果未知并丢弃连接 |
 | `PgRepository` | 固定表 `infra_pg_records` 的生产 Repository |
@@ -73,10 +73,10 @@ cmp .agents/ssot/adapters/storage/postgres/spec/spec.md \
 
 ## 5. OPEN / NO-GO
 
-mTLS 客户端证书、迁移/COPY、隔离级别策略、read replica、跨资源事务、HA 故障切换与
+mTLS 客户端证书、无限流式 COPY、迁移、隔离级别策略、read replica、跨资源事务、HA 故障切换与
 package stable 均未承诺。
 
-- **可选自定义 CA 与 SNI（0.3.8 已落地）**：`tls_ca_file` / `tls_server_name` 叠加 webpki
+- **可选自定义 CA 与 SNI（0.3.9 已落地）**：`tls_ca_file` / `tls_server_name` 叠加 webpki
   公共根；远程自签 Require live 已通过（仍强制证书校验，无 insecure 旁路）。
 - **channel binding（`tls-server-end-point`）与 SCRAM-PLUS：未实现。**
   `MakeRustlsConnect` 的 `TlsStream::channel_binding()` 恒返回 `ChannelBinding::none()`；
