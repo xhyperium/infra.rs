@@ -19,7 +19,7 @@ async-nats = { workspace = true }
 bytes = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.4" }
+contracts = { path = "../../../contracts", version = "0.1.4", package = "xhyper-contracts" }
 kernel = { path = "../../../kernel", version = "0.3.1", package = "xhyper-kernel" }
 tokio = { workspace = true }
 tracing = { workspace = true }

@@ -19,7 +19,7 @@ futures-core = { workspace = true }
 futures-util = { workspace = true }
 canonical = { path = "../../../types/canonical", version = "0.1.2", package = "xhyper-canonical" }
 chrono = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.4" }
+contracts = { path = "../../../contracts", version = "0.1.4", package = "xhyper-contracts" }
 decimalx = { path = "../../../types/decimal", version = "0.1.4" }
 kernel = { path = "../../../kernel", version = "0.3.1", package = "xhyper-kernel" }
 reqwest = { workspace = true }

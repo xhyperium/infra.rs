@@ -14,7 +14,7 @@ name = "bootstrap"
 [dependencies]
 kernel = { path = "../kernel", version = "0.3.1", package = "xhyper-kernel" }
 # ADR-005：Instrumentation 契约权威在 contracts；默认实现来自 observex
-contracts = { path = "../contracts", version = "0.1.4" }
+contracts = { path = "../contracts", version = "0.1.4", package = "xhyper-contracts" }
 observex = { path = "../observex", version = "0.1.2" }
 # 审计证据追加权威在 evidence
 evidence = { path = "../evidence", version = "0.1.1" }
