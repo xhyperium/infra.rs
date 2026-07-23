@@ -8,7 +8,7 @@
 | natsx | Core EventBus | Core AMO + JetStream durable pull/显式确认 | **done** broker PASS；同客户端恢复连续 3/3 PASS | 超预算后重建/NKey/Cluster/HA/自动 DLQ/JS KV full |
 | ossx | ObjectStore | production OssClient + multipart + retry | **done** DEFER closed | lifecycle/STS |
 | clickhousex | Analytics | HTTP(S)+PEM CA+insert_batch+有界池 | **done** TLS client PASS | 真实集群 TLS/native/cluster |
-| taosx | TimeSeries | production REST + batch + Native WS 探测 + 有界池 | **done** DEFER closed | full WS SQL session |
+| taosx | TimeSeries | production REST + batch + Native WS 探测 + 有界池 + 真实 live + 十轮矩阵 (`0.3.4`) | **done** DEFER closed | full WS SQL session / HA / 幂等重试 / package stable |
 | goalctl | Goal→Contract | tools/goalctl member | **done** | full authority plane |
 | verifyctl | plan+execute | tools/verifyctl member | **done** | full V0–V3 matrix |
 
