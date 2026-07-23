@@ -1,5 +1,6 @@
 # clickhousex
 
+[![CI](https://github.com/xhyperium/infra.rs/actions/workflows/clickhousex-release.yml/badge.svg)](https://github.com/xhyperium/infra.rs/actions/workflows/clickhousex-release.yml)
 [![version](https://img.shields.io/badge/version-0.3.6-blue)](https://github.com/xhyperium/infra.rs/tree/main/crates/adapters/storage/clickhouse)
 [![tests](https://img.shields.io/badge/tests-69%20passed-brightgreen)](https://github.com/xhyperium/infra.rs/blob/main/.github/workflows/clickhousex-release.yml)
 [![rust](https://img.shields.io/badge/rust-1.85%20edition%202024-orange)](https://www.rust-lang.org/)
