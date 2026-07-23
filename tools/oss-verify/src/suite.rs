@@ -251,7 +251,7 @@ async fn check_stream_download(pool: &OssPool) -> (bool, String, Option<String>)
                 match cr { Ok(chunk) => c.extend_from_slice(&chunk), Err(e) => { let _ = pool.delete_object(&k).await; return (false, "stream chunk error".into(), Some(format!("{e:?}"))); } }
             }
             let _ = pool.delete_object(&k).await;
-            (Bytes::from(c) == d, "get_stream 数据一致".into(), None)
+            (c == d, "get_stream 数据一致".into(), None)
         }
         Err(e) => { let _ = pool.delete_object(&k).await; (false, "get_stream 失败".into(), Some(format!("{e:?}"))) }
     }
@@ -269,7 +269,7 @@ async fn check_stream_roundtrip(pool: &OssPool) -> (bool, String, Option<String>
                     let mut c = Vec::new();
                     while let Some(cr) = stream.next().await { if let Ok(chunk) = cr { c.extend_from_slice(&chunk); } }
                     let _ = pool.delete_object(&k).await;
-                    (Bytes::from(c) == d, "流 roundtrip 一致".into(), None)
+                    (c == d, "流 roundtrip 一致".into(), None)
                 }
                 Err(e) => { let _ = pool.delete_object(&k).await; (false, "get_stream 失败".into(), Some(format!("{e:?}"))) }
             }
@@ -287,7 +287,7 @@ async fn check_range_download(pool: &OssPool) -> (bool, String, Option<String>) 
             let mut c = Vec::new();
             while let Some(cr) = stream.next().await { if let Ok(chunk) = cr { c.extend_from_slice(&chunk); } }
             let _ = pool.delete_object(&k).await;
-            (Bytes::from(c) == Bytes::from(b"01234".to_vec()), "Range 0-4 正确".into(), None)
+            (c == b"01234".to_vec(), "Range 0-4 正确".into(), None)
         }
         Err(e) => { let _ = pool.delete_object(&k).await; (false, "Range 下载失败".into(), Some(format!("{e:?}"))) }
     }
@@ -296,13 +296,11 @@ async fn check_range_download(pool: &OssPool) -> (bool, String, Option<String>) 
 // ── L4: 高级功能 ────────────────────────────────────────────────────────────
 
 async fn check_object_key() -> (bool, String, Option<String>) {
-    let tests = vec![
-        ("valid", ObjectKey::new("key.txt").is_ok()),
+    let tests = [("valid", ObjectKey::new("key.txt").is_ok()),
         ("nested", ObjectKey::new("a/b/c").is_ok()),
         ("reject-empty", ObjectKey::new("").is_err()),
         ("reject-dotdot", ObjectKey::new("a/../b").is_err()),
-        ("reject-control", ObjectKey::new("a\nb").is_err()),
-    ];
+        ("reject-control", ObjectKey::new("a\nb").is_err())];
     let all_ok = tests.iter().all(|(_, ok)| *ok);
     let failed: Vec<_> = tests.iter().filter(|(_, ok)| !ok).map(|(n, _)| *n).collect();
     (all_ok, format!("ObjectKey {} 项验证", tests.len()), if all_ok { None } else { Some(format!("失败: {failed:?}")) })

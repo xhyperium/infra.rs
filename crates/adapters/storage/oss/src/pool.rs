@@ -298,7 +298,7 @@ impl OssPool {
     ) -> XResult<ObjectMeta> {
         let key = self.norm(key)?;
         let ps = if opts.part_size > 0 { opts.part_size } else { 5 * 1024 * 1024 };
-        if ps < MIN_PART || ps > MAX_PART {
+        if !(MIN_PART..=MAX_PART).contains(&ps) {
             return Err(XError::invalid("invalid part size"));
         }
         let mut stream = stream;
