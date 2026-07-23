@@ -6,14 +6,23 @@
 
 | 类型 | 位置 |
 |------|------|
-| 单元/集成（离线） | `cargo test -p redisx --all-targets --features pubsub` 日志 |
-| live | `crates/adapters/storage/redis/tests/live_kv.rs` 等 |
+| 单元/集成（离线） | `cargo test -p redisx --all-targets --features pubsub` |
+| live | `crates/adapters/storage/redis/tests/live_*.rs`（`#[ignore]`） |
 | bench | `crates/adapters/storage/redis/benches/kv_hot_path.rs` |
+| gap + 10 轮审查（2026-07-23） | [2026-07-23/](./2026-07-23/) |
 | landing | [../plan/infra-rs-landing.md](../plan/infra-rs-landing.md) |
-| draft | [../plan/infra-rs-draft-spec-goal.md](../plan/infra-rs-draft-spec-goal.md) |
+| draft 入库 | [../plan/infra-rs-draft-spec-goal.md](../plan/infra-rs-draft-spec-goal.md) |
 | 对齐 | `docs/ssot/redisx-ssot-alignment.md` |
 
-当前最终本地测试为 51 passed + 8 ignored；ignored live 项需要外部 Redis。候选曾冻结；治理修正后
-最终 SHA 待重冻，当前没有最终 SHA 的 reviewer/verifier 或 CI artifact。
+## 2026-07-23 本轮摘要
+
+| 项 | 结果 |
+|----|------|
+| version | `0.3.6` |
+| offline default | ~49 passed + live ignored |
+| offline pubsub | ~54 passed + live ignored |
+| live Standalone | KV 5 + conformance 2 + pubsub 1 passed（真实 Redis） |
+| Cluster/Sentinel/TLS live | OPEN |
+| package stable | 禁止宣称 |
 
 有新的验证输出时按 `YYYY-MM-DD/` 建日目录归档。

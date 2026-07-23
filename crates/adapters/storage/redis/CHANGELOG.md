@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.6] — 2026-07-23
+
+### Changed
+
+- 对齐文档与 crate 文档同步为 **0.3.6**；冻结 Draft×SSOT×实现 10 轮审查与 gap matrix
+- `closed_pool_is_closed_flag`：env 已设时禁止 connect 失败 silent pass
+- Standalone live（KV / conformance / pubsub）在真实 Redis 下复验通过（`#[ignore]` 仍默认）
+- SSOT 路径裁决：canonical 保持 `.agents/ssot/adapters/storage/redis/`（不新增 `redisx/` 目录）
+
+### Boundaries
+
+- Cluster / Sentinel / TLS live **仍 OPEN**
+- Draft 全文 DoD / package stable **未宣称**
+- 覆盖率：见 `docs/ssot/redisx-ssot-alignment.md` 与 evidence 残余说明
+
 ## [0.3.5] — 2026-07-23
 
 ### Added

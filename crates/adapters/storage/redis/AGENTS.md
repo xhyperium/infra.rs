@@ -1,6 +1,6 @@
 # redisx
 
-- **Package / lib / 当前版本**：`redisx` / `redisx` / `0.3.4`（未发布候选；`0.3.3` 为 main 历史）
+- **Package / lib / 当前版本**：`redisx` / `redisx` / `0.3.6`（未发布候选；`0.3.3` 为 main 历史）
 - **生产默认**：`RedisPool` / `RedisClient` 实现 `contracts::KeyValueStore`
 - 扩展：`delete` / `exists` / `expire` / `ttl` / `mget` / `mset`
 - feature `pubsub`：`RedisPubSub` / `RedisPubSubFacade`
