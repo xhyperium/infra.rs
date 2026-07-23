@@ -73,7 +73,7 @@ impl PostgresPool {
                     .map_err(map_create_pool_error)?,
             ),
             SslMode::Prefer | SslMode::Require => {
-                let tls = MakeRustlsConnect::with_webpki_roots()?;
+                let tls = MakeRustlsConnect::with_webpki_and_ca(config.tls_ca_file.as_deref())?;
                 (
                     dp_cfg
                         .clone()
