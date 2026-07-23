@@ -1,6 +1,6 @@
 [package]
 name = "xhyper-contracts"
-version = "0.1.4"
+version = "0.1.5"
 edition.workspace = true
 rust-version.workspace = true
 description = "契约层 trait 出口，Additive Only（spec §4.3，R4）"
@@ -23,10 +23,10 @@ thiserror = { workspace = true }
 workspace = true
 
 [dev-dependencies]
-contract-testkit = { path = "../test-support/contracts", version = "0.1.4" }
+contract-testkit = { path = "../test-support/contracts", version = "0.1.5" }
 async-trait = { workspace = true }
 binancex = { path = "../adapters/exchange/binance", version = "0.3.2" }
-decimalx = { path = "../types/decimal", version = "0.1.4" }
+decimalx = { path = "../types/decimal", version = "0.1.5" }
 futures-core = { workspace = true }
 okxx = { path = "../adapters/exchange/okx", version = "0.3.3" }
 tokio = { workspace = true }
