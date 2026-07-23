@@ -1,0 +1,205 @@
+# natsx self-healing CI workflow
+# Applies verifyctl.md §4 check levels: Basic (liveness) → ReadWrite (connectivity) → Full (integration)
+# Self-heals: auto-retry on network flake, isolate panics, clean up stale test artifacts
+
+name: natsx Self-Healing CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "crates/adapters/storage/nats/**"
+      - "crates/kernel/**"
+      - "crates/contracts/**"
+      - "Cargo.toml"
+      - ".github/workflows/natsx-self-healing.yml"
+  push:
+    branches: [main]
+    paths:
+      - "crates/adapters/storage/nats/**"
+      - "crates/kernel/**"
+      - "crates/contracts/**"
+  workflow_dispatch:
+    inputs:
+      level:
+        description: Validation level (basic|read_write|full)
+        default: full
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ── L0: Change Detection ────────────────────────────────────────────────
+  detect:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      natsx-changed: ${{ steps.filter.outputs.natsx }}
+      rust-changed: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            natsx:
+              - 'crates/adapters/storage/nats/**'
+              - 'Cargo.toml'
+              - '.github/workflows/natsx-self-healing.yml'
+            rust:
+              - '**/*.rs'
+              - '**/Cargo.toml'
+
+  # ── L1: Basic Health (liveness, ≤3s) ────────────────────────────────────
+  check-basic:
+    name: Basic — Build & Unit Tests
+    needs: detect
+    if: needs.detect.outputs.natsx-changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Basic — cargo build
+        run: cargo build -p natsx -p contracts -p kernel
+      - name: Basic — unit tests
+        run: cargo test -p natsx --lib -- --test-threads=4
+      - name: Auto-heal — stale lockfile
+        if: failure()
+        run: rm -f .cargo/target/.rustc_info.json && cargo build -p natsx -p contracts -p kernel
+
+  # ── L2: ReadWrite Health (connectivity, ≤15s) ───────────────────────────
+  check-rw:
+    name: ReadWrite — Clippy & Fmt
+    needs: [detect, check-basic]
+    if: needs.detect.outputs.natsx-changed == 'true' && success()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: ReadWrite — clippy strict
+        run: cargo clippy -p natsx --all-targets -- -D warnings
+      - name: ReadWrite — cargo fmt
+        run: cargo fmt -p natsx -- --check
+      - name: ReadWrite — workspace deps
+        run: node scripts/quality-gates/check-workspace-deps.mjs
+      - name: Auto-heal — cargo fmt fix
+        if: failure()
+        run: cargo fmt -p natsx && echo "::warning::natsx formatting auto-fixed. Review before merge."
+
+  # ── L3: Full Validation (integration, ≤120s) ────────────────────────────
+  check-full:
+    name: Full — Self-Validation & Integration
+    needs: [detect, check-basic, check-rw]
+    if: needs.detect.outputs.natsx-changed == 'true' && success()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      nats:
+        image: nats:2.10-alpine
+        ports:
+          - 4222:4222
+        options: --name nats-self-heal -js --store_dir /tmp/nats
+    env:
+      FOUNDATIONX_NATS_URL: nats://localhost:4222
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Wait for NATS
+        run: |
+          for i in $(seq 1 30); do
+            if nc -z localhost 4222 2>/dev/null; then
+              echo "NATS ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::NATS failed to start" && exit 1
+
+      - name: Full — broker conformance (ignored)
+        run: cargo test -p natsx --test broker_conformance -- --ignored --test-threads=2
+        timeout-minutes: 5
+
+      - name: Full — live event bus
+        run: cargo test -p natsx --test live_event_bus -- --ignored
+        timeout-minutes: 3
+
+      - name: Full — remaining consumer
+        run: cargo test -p natsx --test remaining_consumer -- --ignored
+        timeout-minutes: 3
+
+      - name: Full — push consumer conformance
+        run: cargo test -p natsx --test broker_conformance push_consumer -- --ignored
+        timeout-minutes: 3
+
+      - name: Full — run self-validator (via nats_verify)
+        run: cargo run --example nats_verify -p natsx
+        timeout-minutes: 5
+
+      - name: Auto-heal — NATS restart on flake
+        if: failure()
+        run: |
+          echo "::warning::Integration test flake detected. Retrying..."
+          docker restart nats-self-heal 2>/dev/null || true
+          sleep 3
+          cargo test -p natsx --test broker_conformance -- --ignored --test-threads=1
+
+  # ── L4: Summary & Self-Healing Report ───────────────────────────────────
+  summary:
+    name: Summary Report
+    needs: [detect, check-basic, check-rw, check-full]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Generate report
+        run: |
+          echo "## natsx Self-Healing CI Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Stage | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|--------|" >> "$GITHUB_STEP_SUMMARY"
+
+          for stage in check-basic check-rw check-full; do
+            result="${{ needs.$stage.result }}"
+            icon=""
+            case "$result" in
+              success) icon="✅" ;;
+              skipped) icon="⏭️" ;;
+              failure) icon="❌" ;;
+              *) icon="⚠️" ;;
+            esac
+            echo "| $stage | $icon $result |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          overall="${{ needs.check-full.result }}"
+          if [ "$overall" = "success" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**all_passed=true** — NATS self-validation complete." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**all_passed=false** — check logs for details." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Self-healing cleanup
+        if: always()
+        run: |
+          docker rm -f nats-self-heal 2>/dev/null || true
+          cargo clean -p natsx --release 2>/dev/null || true

@@ -21,7 +21,7 @@ futures-core = { workspace = true }
 futures-util = { workspace = true }
 canonical = { path = "../../../types/canonical", version = "0.1.2" }
 contracts = { path = "../../../contracts", version = "0.1.4" }
-decimalx = { path = "../../../types/decimal", version = "0.1.2" }
+decimalx = { path = "../../../types/decimal", version = "0.1.4" }
 hex = { workspace = true }
 hmac = { workspace = true }
 kernel = { path = "../../../kernel", version = "0.3.1" }
