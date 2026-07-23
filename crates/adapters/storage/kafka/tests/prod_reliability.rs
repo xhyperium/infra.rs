@@ -264,43 +264,104 @@ async fn observability_stats_increment_on_publish() {
     assert!(pool.stats().closed);
 }
 
-/// §7 关闭竞态：在途 produce 应走 cancel/timeout 计数（与 record_publish_* 同源）。
+/// §7 **严格**：`publish_timeouts` 或 `publish_cancelled` 必须在 produce 有界等待路径上递增。
+///
+/// 策略（确定性）：
+/// 1. 若提供 `KAFKAX_DOCKER_CONTAINER`：pause 容器使 broker I/O 挂起，短 `delivery_timeout` 命中 timeout 臂；
+/// 2. 否则：并发 produce + 立即 close，要求 `publish_cancelled > 0` 或 `publish_timeouts > 0`
+///    （禁止仅用 published/failed 凑绿）。
+///
+/// 离线确定性覆盖见 `producer::tests::limited_await_*_increments_*`（shipped `limited_produce_await`）。
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 #[ignore = "需要 Kafka；kafka-prod-matrix.mjs"]
 async fn stats_cancel_or_timeout_increment_on_close_during_publish() {
+    // 路径 A：docker pause → produce 超时臂（严格 publish_timeouts）
+    if let Ok(container) = std::env::var("KAFKAX_DOCKER_CONTAINER") {
+        if !container.is_empty() {
+            let mut cfg = KafkaConfig::from_env().expect("cfg");
+            cfg.delivery_timeout = Duration::from_millis(80);
+            cfg.operation_timeout = Duration::from_millis(500);
+            let pool = KafkaPool::connect(cfg).await.expect("connect");
+            let topic = format!("infra-prod-stats-to-{}", unique_suffix());
+            pool.ensure_topic(&topic, 1, 1).await.expect("topic");
+            tokio::time::sleep(Duration::from_millis(300)).await;
+            // 先成功一条，确保 topic 就绪
+            pool.producer().publish(&topic, Bytes::from_static(b"warm")).await.expect("warm");
+            let before = pool.stats().publish_timeouts;
+
+            let pause = std::process::Command::new("docker")
+                .args(["pause", &container])
+                .status()
+                .expect("docker pause");
+            assert!(pause.success(), "docker pause {container}");
+
+            let err = pool
+                .producer()
+                .publish(&topic, Bytes::from_static(b"after-pause"))
+                .await
+                .expect_err("pause 后应失败");
+            let _ = std::process::Command::new("docker").args(["unpause", &container]).status();
+
+            let after_to = pool.stats().publish_timeouts;
+            let after_ca = pool.stats().publish_cancelled;
+            // partition_client 也可能先超时；此时 produce 超时计数可能不增。
+            // 若未进入 produce 臂，至少 close 路径再验证 cancel。
+            if after_to > before {
+                assert!(
+                    matches!(
+                        err.kind(),
+                        ErrorKind::DeadlineExceeded | ErrorKind::Unavailable | ErrorKind::Transient
+                    ),
+                    "timeout path kind={:?}",
+                    err.kind()
+                );
+                let _ = pool.close(Duration::from_secs(3)).await;
+                return;
+            }
+            // fall through to close-race if pause 未打到 produce timeout
+            let _ = pool.close(Duration::from_secs(3)).await;
+            eprintln!(
+                "docker pause 未递增 publish_timeouts (to={after_to} ca={after_ca}); 改走 close 竞态"
+            );
+        }
+    }
+
+    // 路径 B：并发 produce + 快速 close，严格要求 cancelled|timeouts
     let pool = Arc::new(pool().await);
     let topic = format!("infra-prod-stats-cancel-{}", unique_suffix());
     pool.ensure_topic(&topic, 1, 1).await.expect("topic");
     tokio::time::sleep(Duration::from_millis(200)).await;
 
     let before = pool.stats();
-    let pool_c = Arc::clone(&pool);
-    let closer = tokio::spawn(async move {
-        tokio::time::sleep(Duration::from_millis(20)).await;
-        let _ = pool_c.close(Duration::from_secs(3)).await;
-    });
-
+    // 先启动一批会占用 produce 的任务
     let mut handles = Vec::new();
-    for i in 0..32 {
+    for i in 0..64 {
         let p = Arc::clone(&pool);
         let t = topic.clone();
         handles.push(tokio::spawn(async move {
-            p.producer().publish(&t, Bytes::from(format!("c-{i}"))).await
+            // 略微错开，增加处于 select 内的窗口
+            if i > 0 {
+                tokio::task::yield_now().await;
+            }
+            p.producer().publish(&t, Bytes::from(vec![0u8; 64 * 1024])).await
         }));
     }
+    // 几乎立即关闭，逼 produce 的 shutdown 臂
+    tokio::task::yield_now().await;
+    let pool_c = Arc::clone(&pool);
+    let closer = tokio::spawn(async move {
+        let _ = pool_c.close(Duration::from_secs(3)).await;
+    });
     for h in handles {
         let _ = h.await;
     }
     let _ = closer.await;
     let after = pool.stats();
     assert!(after.closed, "pool 应已关闭");
-    let progressed = after.published > before.published
-        || after.publish_cancelled > before.publish_cancelled
-        || after.publish_timeouts > before.publish_timeouts
-        || after.publish_failed > before.publish_failed;
     assert!(
-        progressed,
-        "关闭竞态应推进 published/cancelled/timeouts/failed 之一: before={before:?} after={after:?}"
+        after.publish_cancelled > before.publish_cancelled
+            || after.publish_timeouts > before.publish_timeouts,
+        "严格要求 publish_cancelled 或 publish_timeouts 递增（禁止仅 published/failed）: before={before:?} after={after:?}"
     );
 }
 

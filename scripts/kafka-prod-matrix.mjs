@@ -47,6 +47,9 @@ function boundedInteger(raw, name, minimum, maximum) {
   return value;
 }
 
+// 供 prod_reliability::stats_cancel_or_timeout_* 在 pause 路径使用
+process.env.KAFKAX_DOCKER_CONTAINER = container;
+
 function run(command, args, options = {}) {
   const printable = [command, ...args].join(" ");
   console.log(`执行：${printable.length > 200 ? printable.slice(0, 200) + "…" : printable}`);
