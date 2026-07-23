@@ -110,10 +110,8 @@ impl CheckItem {
                 if latency_ms > base {
                     status = CheckStatus::Degraded;
                     let over = latency_ms.saturating_sub(base);
-                    let pct = over
-                        .checked_mul(100)
-                        .and_then(|n| n.checked_div(base))
-                        .unwrap_or(100);
+                    let pct =
+                        over.checked_mul(100).and_then(|n| n.checked_div(base)).unwrap_or(100);
                     let deg = format!("延迟超基线 {pct}%（{latency_ms}ms > {base}ms）");
                     return Self {
                         id: id.into(),

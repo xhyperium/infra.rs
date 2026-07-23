@@ -860,8 +860,7 @@ fn redact_detail(s: &str) -> String {
     // 常见 password= 形态
     if let Some(i) = out.find("password=") {
         let rest = &out[i + "password=".len()..];
-        let end =
-            rest.find([' ', '&', ';', '"']).unwrap_or(rest.len());
+        let end = rest.find([' ', '&', ';', '"']).unwrap_or(rest.len());
         out.replace_range(i..i + "password=".len() + end, "password=***");
     }
     if out.len() > 400 {
