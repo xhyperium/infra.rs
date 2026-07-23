@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.14] — 2026-07-23
+
+### Fixed
+
+- **connect 路径应用配置硬化**：`reconnect_max_delay` → `ConnectionManagerConfig::set_max_delay` 与 Cluster `max_retry_wait`；`tcp_keepalive` 在 connect 路径读取并经 `pool.tcp_keepalive()` 可查询
+- **operations readiness 合同**：`stats().open` 现为逻辑 lane 数（= `command_lanes` / `max_in_flight`），不再写 `== 1`
+- **xread_block 覆盖**：离线 probe + live `it_streams_and_multi_exec`
+
+### Boundaries
+
+- redis 0.27 TCP keepalive 间隔由 OS 默认（`TcpKeepalive::new()`）；配置 Duration 为建池策略记录 + 路径消费证明，非自定义 socket 间隔 API
+
 ## [0.3.13] — 2026-07-23
 
 ### Added

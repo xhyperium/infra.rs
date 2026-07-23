@@ -30,7 +30,7 @@
 | `natsx` | `crates/adapters/storage/nats/` | `natsx` | **0.3.2** Core/JetStream；同客户端重启恢复 3/3，断线窗口无回放、Cluster/HA NO-GO | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `ossx` | `crates/adapters/storage/oss/` | `ossx` | **0.3.2** ObjectStore + 有界 multipart/retry/orphan 补偿 + dev live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **0.3.3** Pool/Tx/Repository + TLS 实现；deadline/隔离实验证据 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `redisx` | `crates/adapters/storage/redis/` | `redisx` | **0.3.13** Standalone 全 API + selfcheck + live/E2E/bench；拓扑 live 环境 OPEN | [redisx-ssot-alignment.md](./redisx-ssot-alignment.md) · [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `redisx` | `crates/adapters/storage/redis/` | `redisx` | **0.3.14** Standalone 全 API + selfcheck + live/E2E/bench；拓扑 live 环境 OPEN | [redisx-ssot-alignment.md](./redisx-ssot-alignment.md) · [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `taosx` | `crates/adapters/storage/taos/` | `taosx` | **0.3.7** REST + BatchWriteReport + metrics + health/readiness + WS 握手 live；幂等/HA/package stable NO-GO | [taosx-ssot-alignment.md](./taosx-ssot-alignment.md) · [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `goalctl` | `tools/goalctl/` | `goalctl` | 最小 Goal→Contract CLI（doctor/validate/compile）· #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | `verifyctl` | `tools/verifyctl/` | `verifyctl` | 最小 plan/execute/report CLI · #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
