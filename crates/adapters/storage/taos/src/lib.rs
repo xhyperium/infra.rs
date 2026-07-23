@@ -1,21 +1,28 @@
 //! `taosx` — TDengine 时序存储适配器。
 //!
 //! - **默认**：[`TaosPool`] / [`TaosClient`] REST 生产客户端（端口 6041）。
-//! - **Native WS**：`TransportMode::NativeWs` + native 连通性探测。
-//! - **自验证**：[`selfcheck`]（LIB-SELFCHECK-SPEC §6.7 taos 目录）。
+//! - **Native WS**：握手探测 + [`exec_sql_ws`] 短会话 SQL；[`probe_native_tcp`] 原生端口探测。
+//! - **流/批/重试/TMQ/soak**：[`TaosQueryStream`] / [`WriteBatcher`] / [`RetryPolicy`] / [`TmqConsumer`] / [`run_soak`]。
+//! - **自验证**：[`selfcheck`]（LIB-SELFCHECK-SPEC §6.7）。
 //! - **feature `scaffold`**：`TaosAdapter` 进程内内存实现（**非**生产）。
 //!
 //! 实现 [`contracts::TimeSeriesStore`]（`Tick.ts` 为纳秒 epoch）。
 
 #![forbid(unsafe_code)]
 
+mod batcher;
 mod client;
 mod config;
 mod metrics;
 mod native;
+mod retry;
+mod soak;
+mod stream;
+mod tmq;
 
 pub mod selfcheck;
 
+pub use batcher::{WriteBatcher, WriteBatcherConfig};
 pub use client::{
     BatchWritePartialError, BatchWriteReport, TaosClient, TaosExecResult, TaosHealth, TaosPool,
     TaosPoolStats, build_insert_sql_chunks,
@@ -25,7 +32,13 @@ pub use config::{
     HARD_MAX_QUERY_ROWS, HARD_MAX_RESPONSE_BYTES, TaosConfig, TransportMode, TsPrecision,
 };
 pub use metrics::{TaosMetricsSnapshot, ws_probe_totals};
-pub use native::{build_native_ws_url, connect_native_ws, validate_mode};
+pub use native::{
+    build_native_ws_url, connect_native_ws, exec_sql_ws, probe_native_tcp, validate_mode,
+};
+pub use retry::RetryPolicy;
+pub use soak::{SoakConfig, SoakReport, run_soak};
+pub use stream::TaosQueryStream;
+pub use tmq::TmqConsumer;
 
 #[cfg(feature = "scaffold")]
 mod adapter;
@@ -112,6 +125,20 @@ mod public_api_surface {
         assert_type::<selfcheck::ValidationReport>();
         assert_eq!(selfcheck::MODULE, "taos");
         assert_eq!(selfcheck::TaosValidator::static_catalog().len(), 9);
+        assert_type::<WriteBatcher>();
+        assert_type::<WriteBatcherConfig>();
+        assert_type::<TaosQueryStream>();
+        assert_type::<RetryPolicy>();
+        assert_type::<TmqConsumer>();
+        assert_type::<SoakConfig>();
+        assert_type::<SoakReport>();
+        let _ = RetryPolicy::for_read();
+        let _ = RetryPolicy::for_idempotent_write();
+        let text = TaosMetricsSnapshot::default().to_prometheus_text();
+        assert!(text.contains("taosx_ops_total"));
+        let _ = exec_sql_ws;
+        let _ = probe_native_tcp;
+        let _ = run_soak;
     }
 
     /// `from_env` 在无变量时回到默认，且不 panic。

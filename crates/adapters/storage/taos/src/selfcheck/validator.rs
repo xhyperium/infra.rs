@@ -22,6 +22,7 @@ pub const MODULE: &str = "taos";
 /// 检查返回：`Ok` 通过；`Skip` 拓扑/能力不适用；`Fail` 失败。
 enum CheckOutcome {
     Ok,
+    #[allow(dead_code)] // 拓扑不适用时使用（保留扩展点）
     Skip(String),
     Fail(String),
 }
@@ -545,9 +546,41 @@ impl TaosValidator {
         outcome
     }
 
-    async fn check_tmq_subscribe(&self, _ctx: &ValidationContext) -> CheckOutcome {
-        // 本 crate 生产面为 REST TimeSeriesStore，未实现 TMQ 客户端。
-        CheckOutcome::Skip("taosx 未实现 TMQ 订阅客户端（NO-GO / 诚实边界）".into())
+    async fn check_tmq_subscribe(&self, ctx: &ValidationContext) -> CheckOutcome {
+        use crate::tmq::TmqConsumer;
+        use contracts::TimeSeriesStore;
+        let stable = ctx.stable("tmq");
+        let topic = ctx.topic();
+        // 先确保有源数据
+        let now_ns = now_ns();
+        let prec = self.pool.precision();
+        let ts = prec.to_nanos(prec.from_nanos(now_ns));
+        let tick = sample_tick("TMQ_SYM", ts, 11, 12);
+        if let Err(e) = self.pool.write_series(&stable, vec![tick]).await {
+            let _ = self.drop_stable(&stable).await;
+            return CheckOutcome::Fail(format!("tmq seed write: {:?}", e.kind()));
+        }
+        let mut consumer = match TmqConsumer::subscribe(self.pool.clone(), &topic, &stable).await {
+            Ok(c) => c,
+            Err(e) => {
+                let _ = self.drop_stable(&stable).await;
+                return CheckOutcome::Fail(format!("tmq subscribe: {:?}", e.kind()));
+            }
+        };
+        let polled = match consumer.poll(10).await {
+            Ok(rows) => rows,
+            Err(e) => {
+                let _ = consumer.close().await;
+                let _ = self.drop_stable(&stable).await;
+                return CheckOutcome::Fail(format!("tmq poll: {:?}", e.kind()));
+            }
+        };
+        let _ = consumer.close().await;
+        let _ = self.drop_stable(&stable).await;
+        if polled.is_empty() {
+            return CheckOutcome::Fail("tmq poll 空集".into());
+        }
+        CheckOutcome::Ok
     }
 
     async fn check_db_config(&self, ctx: &ValidationContext) -> CheckOutcome {
@@ -702,11 +735,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn tmq_is_skipped_when_network_items_skipped() {
-        // 不可达时 skip 掉 basic/rw 与会访问网络的 full 项，仅跑 tmq → Skip（诚实边界）
+    async fn tmq_config_skip_marks_skipped() {
         let mut cfg = TaosSelfCheckConfig::default();
+        cfg.skip.insert("taos.full.tmq_subscribe".into());
+        // 同时 skip basic 以免网络失败污染
+        cfg.skip.insert("taos.basic.ping".into());
         for id in [
-            "taos.basic.ping",
             "taos.rw.insert_query",
             "taos.full.stable_ddl",
             "taos.full.auto_subtable",
@@ -721,7 +755,6 @@ mod tests {
         let report = v.run(CheckLevel::Full).await;
         let tmq = report.items.iter().find(|i| i.id == "taos.full.tmq_subscribe").expect("tmq");
         assert_eq!(tmq.status, CheckStatus::Skipped, "{tmq:?}");
-        assert!(tmq.detail.as_ref().is_some_and(|d| d.contains("TMQ") || d.contains("skip")));
         assert!(report.passed);
     }
 }
