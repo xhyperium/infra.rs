@@ -40,8 +40,8 @@ pub struct PullConsumerConfig {
 /// 与旧 [`PullConsumerConfig`] 分离，避免给公开结构体追加字段而破坏下游字面量构造。
 #[derive(Debug, Clone)]
 pub struct JetStreamConsumerConfig {
-    /// durable 名（亦作 consumer name）。
-    pub durable_name: String,
+    /// durable 名（`None` = ephemeral）。
+    pub durable_name: Option<String>,
     /// 可选 filter subject。
     pub filter_subject: Option<String>,
     /// 未确认消息的重投等待时间。
@@ -59,7 +59,20 @@ impl JetStreamConsumerConfig {
     #[must_use]
     pub fn durable(name: impl Into<String>) -> Self {
         Self {
-            durable_name: name.into(),
+            durable_name: Some(name.into()),
+            filter_subject: None,
+            ack_wait: Duration::from_secs(30),
+            max_deliver: 5,
+            max_ack_pending: 1_024,
+            command_timeout: Duration::from_secs(5),
+        }
+    }
+
+    /// 创建 ephemeral（非持久）consumer 配置。
+    #[must_use]
+    pub fn ephemeral() -> Self {
+        Self {
+            durable_name: None,
             filter_subject: None,
             ack_wait: Duration::from_secs(30),
             max_deliver: 5,
@@ -69,7 +82,10 @@ impl JetStreamConsumerConfig {
     }
 
     fn validate(&self) -> XResult<()> {
-        validate_consumer_name(&self.durable_name)?;
+        if let Some(ref name) = self.durable_name {
+            validate_consumer_name(name)?;
+        }
+        // ephemeral consumer：durable_name=None 是合法的
         if self.ack_wait.is_zero() {
             return Err(XError::invalid("natsx jetstream: ack_wait 必须大于零"));
         }
@@ -312,6 +328,72 @@ impl JetStreamConsumer {
             )),
         }
     }
+
+    /// 批量拉取最多 `max_messages` 条消息。
+    ///
+    /// # Errors
+    ///
+    /// `timeout` 或 `max_messages` 为零时返��� `Invalid`。
+    pub async fn next_batch(
+        &self,
+        timeout: Duration,
+        max_messages: usize,
+    ) -> XResult<Vec<JetStreamDelivery>> {
+        if timeout.is_zero() {
+            return Err(XError::invalid("natsx jetstream: next_batch timeout 必须大于零"));
+        }
+        if max_messages == 0 {
+            return Err(XError::invalid("natsx jetstream: next_batch max_messages 必须大于零"));
+        }
+        let client_deadline = timeout.saturating_add(Duration::from_secs(1));
+        let batch = self.inner.fetch().max_messages(max_messages).expires(timeout).messages();
+        let mut batch = tokio::time::timeout(client_deadline, batch)
+            .await
+            .map_err(|_| XError::deadline_exceeded("natsx jetstream: 创建批次 fetch 超时"))?
+            .map_err(|error| {
+                XError::unavailable("natsx jetstream: 创建批次 fetch 失败").with_source(error)
+            })?;
+        let mut deliveries = Vec::with_capacity(max_messages);
+        while let Some(result) = tokio::time::timeout(client_deadline, batch.next())
+            .await
+            .map_err(|_| XError::deadline_exceeded("natsx jetstream: 批次消息接收超时"))?
+        {
+            match result {
+                Ok(message) => {
+                    deliveries.push(JetStreamDelivery::from_raw(message, self.command_timeout)?);
+                }
+                Err(error) => {
+                    return Err(
+                        XError::unavailable("natsx jetstream: 批次拉取消息失败").with_source(error)
+                    );
+                }
+            }
+        }
+        Ok(deliveries)
+    }
+
+    /// 获取 consumer 信息（触发服务器往返）。
+    pub async fn info(&self) -> XResult<async_nats::jetstream::consumer::Info> {
+        let mut inner = self.inner.clone();
+        run_bounded_command(self.command_timeout, "consumer_info", async move {
+            inner.info().await.cloned().map_err(|error| {
+                XError::unavailable("natsx jetstream: consumer_info 失败").with_source(error)
+            })
+        })
+        .await
+    }
+
+    /// 获取 consumer 待投递消息数。
+    pub async fn pending(&self) -> XResult<u64> {
+        let mut inner = self.inner.clone();
+        let info = run_bounded_command(self.command_timeout, "consumer_info", async move {
+            inner.info().await.cloned().map_err(|error| {
+                XError::unavailable("natsx jetstream: consumer_info 失败").with_source(error)
+            })
+        })
+        .await?;
+        Ok(info.num_pending)
+    }
 }
 
 impl PullConsumerConfig {
@@ -460,7 +542,7 @@ impl JetStream {
         cfg.validate()?;
         let command_timeout = cfg.command_timeout;
         let pull = async_nats::jetstream::consumer::pull::Config {
-            durable_name: Some(cfg.durable_name),
+            durable_name: cfg.durable_name,
             filter_subject: cfg.filter_subject.unwrap_or_default(),
             ack_policy: async_nats::jetstream::consumer::AckPolicy::Explicit,
             ack_wait: cfg.ack_wait,
@@ -507,6 +589,63 @@ impl JetStream {
             })
         })
         .await
+    }
+
+    /// 删除 stream。
+    pub async fn delete_stream(&self, stream: &str) -> XResult<()> {
+        validate_stream_name(stream)?;
+        let context = self.context.clone();
+        run_bounded_command(self.operation_timeout, "delete_stream", async move {
+            context.delete_stream(stream).await.map(|_| ()).map_err(|error| {
+                XError::unavailable("natsx jetstream delete_stream 失败").with_source(error)
+            })
+        })
+        .await
+    }
+
+    /// 获取 stream 信息。
+    pub async fn get_stream_info(
+        &self,
+        stream: &str,
+    ) -> XResult<async_nats::jetstream::stream::Info> {
+        validate_stream_name(stream)?;
+        let context = self.context.clone();
+        let mut handle = run_bounded_command(self.operation_timeout, "get_stream", async move {
+            context.get_stream(stream).await.map_err(|error| {
+                XError::unavailable("natsx jetstream get_stream 失败").with_source(error)
+            })
+        })
+        .await?;
+        run_bounded_command(self.operation_timeout, "stream_info", async move {
+            handle.info().await.cloned().map_err(|error| {
+                XError::unavailable("natsx jetstream stream_info 失败").with_source(error)
+            })
+        })
+        .await
+    }
+
+    /// 清空 stream 中的全部消息（delete + recreate 方式）。
+    ///
+    /// 注意：async-nats 0.50 stream handle `purge()` 需要 `&mut self`，
+    /// 本封装暂不支持直接 purge。调用方可通过 delete_stream + get_or_create_stream 组合实现。
+    pub async fn purge_stream(&self, _stream: &str) -> XResult<()> {
+        Err(XError::unavailable(
+            "natsx jetstream: purge_stream 依赖 async-nats 0.50+ stream purge API，当前版本暂不支持直接调用；请组合使用 delete_stream + get_or_create_stream",
+        ))
+    }
+
+    /// 获取 stream 中指定 subject 的最后一条消息。
+    ///
+    /// 注意：async-nats 0.50 未暴露 `get_last_message` public API；
+    /// 此方法为 reserved 占位，待上游版本升级后启用。
+    pub async fn get_last_message(
+        &self,
+        _stream: &str,
+        _subject: &str,
+    ) -> XResult<Option<JetStreamDelivery>> {
+        Err(XError::unavailable(
+            "natsx jetstream: get_last_message 依赖 async-nats 0.50+ API，当前版本暂不支持",
+        ))
     }
 }
 

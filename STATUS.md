@@ -58,7 +58,7 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `okxx` | `crates/adapters/exchange/okx` | adapter | 7/7 | ✅ 1i+u | 1699 | · | `active` | **98%** ████████ | [✓](docs/ssot/adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse` | adapter | 7/7 | ✅ 3i+u | 1324 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/clickhousex-ssot-alignment.md) |
 | `kafkax` | `crates/adapters/storage/kafka` | adapter | 7/7 | ✅ 6i+u | 4338 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/kafkax-ssot-alignment.md) |
-| `natsx` | `crates/adapters/storage/nats` | adapter | 7/7 | ✅ 3i+u | 2017 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/natsx-ssot-alignment.md) |
+| `natsx` | `crates/adapters/storage/nats` | adapter | 7/7 | ✅ 3i+u | 2474 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/natsx-ssot-alignment.md) |
 | `ossx` | `crates/adapters/storage/oss` | adapter | 7/7 | ✅ 2i+u | 2607 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/ossx-ssot-alignment.md) |
 | `postgresx` | `crates/adapters/storage/postgres` | adapter | 7/7 | ✅ 3i+u | 5563 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/postgresx-ssot-alignment.md) |
 | `redisx` | `crates/adapters/storage/redis` | adapter | 7/7 | ✅ 6i+u | 6021 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/redisx-ssot-alignment.md) |

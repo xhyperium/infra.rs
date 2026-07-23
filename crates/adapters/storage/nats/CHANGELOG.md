@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.4] — 2026-07-23
+
+### Added
+
+- 配置：NKey/JWT、TLS CA/mTLS 证书路径（`FOUNDATIONX_NATSX_*` / `FOUNDATIONX_NATS_*`）
+- JetStream：`JetStreamConsumerConfig::ephemeral()`；`durable_name: Option<String>`
+- Core：`NatsPool::request`；`NatsMessage.headers`
+- tasks.md 勾选 P1-2/P1-3 部分项
+
+### Security
+
+- NKey seed / JWT Debug 脱敏；NKey 与 user/password 互斥校验
+
 ## [0.3.3] — 2026-07-23
 
 ### Added

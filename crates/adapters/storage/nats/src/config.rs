@@ -100,6 +100,17 @@ pub struct NatsConfig {
     pub reconnect_max_delay: Duration,
     /// 是否忽略服务端发现的地址，仅重连显式 URL（固定 ingress/端口映射场景）。
     pub ignore_discovered_servers: bool,
+    // —— 以下为 P1/P2 新增认证与 TLS 证书字段 ——
+    /// NKey seed（用户或账户私钥；安全敏感，不进入 Debug）。
+    pub nkey_seed: Option<String>,
+    /// JWT token（安全敏感，不进入 Debug）。
+    pub jwt: Option<String>,
+    /// CA bundle 文件路径（PEM 格式）。
+    pub tls_ca_file: Option<String>,
+    /// mTLS client certificate 文件路径（PEM 格式）。
+    pub tls_cert_file: Option<String>,
+    /// mTLS client key 文件路径（PEM 格式）。
+    pub tls_key_file: Option<String>,
 }
 
 impl Default for NatsConfig {
@@ -120,6 +131,11 @@ impl Default for NatsConfig {
             max_reconnects: 60,
             reconnect_max_delay: Duration::from_secs(5),
             ignore_discovered_servers: false,
+            nkey_seed: None,
+            jwt: None,
+            tls_ca_file: None,
+            tls_cert_file: None,
+            tls_key_file: None,
         }
     }
 }
@@ -141,6 +157,11 @@ impl fmt::Debug for NatsConfig {
             .field("max_reconnects", &self.max_reconnects)
             .field("reconnect_max_delay", &self.reconnect_max_delay)
             .field("ignore_discovered_servers", &self.ignore_discovered_servers)
+            .field("nkey_seed", &self.nkey_seed.as_ref().map(|_| "***"))
+            .field("jwt", &self.jwt.as_ref().map(|_| "***"))
+            .field("tls_ca_file", &self.tls_ca_file)
+            .field("tls_cert_file", &self.tls_cert_file)
+            .field("tls_key_file", &self.tls_key_file)
             .finish()
     }
 }
@@ -227,6 +248,39 @@ impl NatsConfig {
                 "FOUNDATIONX_NATSX_RECONNECT_MAX_DELAY_MS",
             ],
         )?;
+        // NKey 与 JWT
+        if let Some(v) = env_first(&["FOUNDATIONX_NATS_NKEY_SEED", "FOUNDATIONX_NATSX_NKEY_SEED"]) {
+            if !v.trim().is_empty() {
+                cfg.nkey_seed = Some(v);
+            }
+        }
+        if let Some(v) = env_first(&["FOUNDATIONX_NATS_JWT", "FOUNDATIONX_NATSX_JWT"]) {
+            if !v.trim().is_empty() {
+                cfg.jwt = Some(v);
+            }
+        }
+        // TLS 证书文件路径
+        if let Some(v) =
+            env_first(&["FOUNDATIONX_NATS_TLS_CA_FILE", "FOUNDATIONX_NATSX_TLS_CA_FILE"])
+        {
+            if !v.trim().is_empty() {
+                cfg.tls_ca_file = Some(v);
+            }
+        }
+        if let Some(v) =
+            env_first(&["FOUNDATIONX_NATS_TLS_CERT_FILE", "FOUNDATIONX_NATSX_TLS_CERT_FILE"])
+        {
+            if !v.trim().is_empty() {
+                cfg.tls_cert_file = Some(v);
+            }
+        }
+        if let Some(v) =
+            env_first(&["FOUNDATIONX_NATS_TLS_KEY_FILE", "FOUNDATIONX_NATSX_TLS_KEY_FILE"])
+        {
+            if !v.trim().is_empty() {
+                cfg.tls_key_file = Some(v);
+            }
+        };
         cfg.validate()?;
         Ok(cfg)
     }
@@ -286,6 +340,48 @@ impl NatsConfig {
         }
         if self.max_reconnects == 0 {
             return Err(XError::invalid("natsx: max_reconnects 必须为有限正数"));
+        }
+        // NKey/JWT 必须同时提供或同时缺省；与 user/password 互斥
+        match (&self.nkey_seed, &self.jwt) {
+            (Some(_), Some(_)) => {
+                if self.user.is_some() || self.password.is_some() {
+                    return Err(XError::invalid(
+                        "natsx: NKey/JWT 与 user/password 互斥，只能二选一",
+                    ));
+                }
+            }
+            (None, None) => {}
+            (Some(_), None) => {
+                return Err(XError::invalid("natsx: NKey seed 需要 JWT 同时提供"));
+            }
+            (None, Some(_)) => {
+                return Err(XError::invalid("natsx: JWT 需要 NKey seed 同时提供"));
+            }
+        }
+        // TLS 证书配置校验
+        match (&self.tls_cert_file, &self.tls_key_file) {
+            (Some(cert), Some(key)) => {
+                if std::path::Path::new(cert).exists() && std::path::Path::new(key).exists() {
+                    // cert + key 必须成对使用
+                } else {
+                    return Err(XError::invalid("natsx: TLS cert/key 文件路径不存在或不可访问"));
+                }
+                if policy == TlsPolicy::Disable {
+                    return Err(XError::invalid("natsx: TLS 证书已配置但 TLS 策略为 Disable"));
+                }
+            }
+            (None, None) => {}
+            (Some(_), None) => {
+                return Err(XError::invalid("natsx: TLS cert 文件需要 key 文件同时提供"));
+            }
+            (None, Some(_)) => {
+                return Err(XError::invalid("natsx: TLS key 文件需要 cert 文件同时提供"));
+            }
+        }
+        if let Some(ca) = &self.tls_ca_file {
+            if !std::path::Path::new(ca).exists() {
+                return Err(XError::invalid("natsx: TLS CA 文件路径不存在或不可访问"));
+            }
         }
         Ok(())
     }
@@ -473,5 +569,115 @@ mod tests {
                 kernel::ErrorKind::Invalid
             );
         }
+    }
+
+    #[test]
+    fn nkey_debug_redacts_seed_and_jwt() {
+        let c = NatsConfig {
+            nkey_seed: Some("SUACB...".into()),
+            jwt: Some("eyJhbG...".into()),
+            ..NatsConfig::default()
+        };
+        let s = format!("{c:?}");
+        assert!(s.contains("***"));
+        assert!(!s.contains("SUACB"));
+        assert!(!s.contains("eyJhbG"));
+    }
+
+    #[test]
+    fn nkey_requires_both_seed_and_jwt() {
+        let seed_only =
+            NatsConfig { nkey_seed: Some("s".into()), jwt: None, ..NatsConfig::default() };
+        assert_eq!(
+            seed_only.validate().expect_err("只有 seed 必须拒绝").kind(),
+            kernel::ErrorKind::Invalid
+        );
+
+        let jwt_only =
+            NatsConfig { nkey_seed: None, jwt: Some("j".into()), ..NatsConfig::default() };
+        assert_eq!(
+            jwt_only.validate().expect_err("只有 jwt 必须拒绝").kind(),
+            kernel::ErrorKind::Invalid
+        );
+
+        let both = NatsConfig {
+            nkey_seed: Some("s".into()),
+            jwt: Some("j".into()),
+            ..NatsConfig::default()
+        };
+        assert!(both.validate().is_ok());
+    }
+
+    #[test]
+    fn nkey_mutually_exclusive_with_user_password() {
+        let c = NatsConfig {
+            nkey_seed: Some("s".into()),
+            jwt: Some("j".into()),
+            user: Some("u".into()),
+            password: Some("p".into()),
+            ..NatsConfig::default()
+        };
+        assert_eq!(
+            c.validate().expect_err("NKey+user 必须互斥").kind(),
+            kernel::ErrorKind::Invalid
+        );
+    }
+
+    #[test]
+    fn tls_cert_requires_both_cert_and_key() {
+        // 只设置 cert 不加 key
+        let cert_only = NatsConfig {
+            tls_cert_file: Some("/nonexistent/cert.pem".into()),
+            ..NatsConfig::default()
+        };
+        assert_eq!(
+            cert_only.validate().expect_err("只有 cert 没有 key 必须拒绝").kind(),
+            kernel::ErrorKind::Invalid
+        );
+
+        // 都设置但路径不存在
+        let both = NatsConfig {
+            tls_cert_file: Some("/nonexistent/cert.pem".into()),
+            tls_key_file: Some("/nonexistent/key.pem".into()),
+            ..NatsConfig::default()
+        };
+        assert_eq!(
+            both.validate().expect_err("路径不存在必须拒绝").kind(),
+            kernel::ErrorKind::Invalid
+        );
+    }
+
+    #[test]
+    fn tls_cert_rejects_disable_policy() {
+        let c = NatsConfig {
+            tls_policy: Some(TlsPolicy::Disable),
+            tls_cert_file: Some("/nonexistent/cert.pem".into()),
+            tls_key_file: Some("/nonexistent/key.pem".into()),
+            ..NatsConfig::default()
+        };
+        assert_eq!(
+            c.validate().expect_err("证书+Disable 必须拒绝").kind(),
+            kernel::ErrorKind::Invalid
+        );
+    }
+
+    #[test]
+    fn tls_ca_file_nonexistent_is_rejected() {
+        let c =
+            NatsConfig { tls_ca_file: Some("/nonexistent/ca.pem".into()), ..NatsConfig::default() };
+        assert_eq!(
+            c.validate().expect_err("CA 文件不存在必须拒绝").kind(),
+            kernel::ErrorKind::Invalid
+        );
+    }
+
+    #[test]
+    fn defaults_have_no_nkey_or_tls_certs() {
+        let c = NatsConfig::default();
+        assert!(c.nkey_seed.is_none());
+        assert!(c.jwt.is_none());
+        assert!(c.tls_ca_file.is_none());
+        assert!(c.tls_cert_file.is_none());
+        assert!(c.tls_key_file.is_none());
     }
 }
