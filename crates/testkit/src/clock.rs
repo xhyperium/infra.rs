@@ -441,22 +441,22 @@ mod unit_tests {
     fn concurrent_readers_and_controller() {
         let c = Arc::new(ManualClock::new(ts(0)));
         let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
-        let ready = Arc::new(std::sync::Barrier::new(5)); // 4 readers + controller
-        // 确保每个 reader 至少执行一次读路径，避免 CI 上 controller 抢跑导致覆盖率漏计
-        let entered = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        // 两阶段 barrier：启动同步 + reader 完成首次读后再允许 controller 推进
+        let start = Arc::new(std::sync::Barrier::new(5)); // 4 readers + controller
+        let primed = Arc::new(std::sync::Barrier::new(5));
         let mut handles = vec![];
         for _ in 0..4 {
             let c = Arc::clone(&c);
             let stop = Arc::clone(&stop);
-            let ready = Arc::clone(&ready);
-            let entered = Arc::clone(&entered);
+            let start = Arc::clone(&start);
+            let primed = Arc::clone(&primed);
             handles.push(thread::spawn(move || {
-                ready.wait();
-                // 首次读必须在 stop 之前完成，避免快路径跳过 while 体
+                start.wait();
+                // 首次读路径（覆盖 now/monotonic/snapshot）必须在 controller 推进前完成
                 let _ = c.now();
                 let _ = c.monotonic();
                 let _ = c.snapshot();
-                entered.fetch_add(1, std::sync::atomic::Ordering::Release);
+                primed.wait();
                 while !stop.load(std::sync::atomic::Ordering::Acquire) {
                     let _ = c.now();
                     let _ = c.monotonic();
@@ -464,10 +464,8 @@ mod unit_tests {
                 }
             }));
         }
-        ready.wait();
-        while entered.load(std::sync::atomic::Ordering::Acquire) < 4 {
-            std::thread::yield_now();
-        }
+        start.wait();
+        primed.wait();
         for i in 0..200u64 {
             c.advance_wall(Duration::from_nanos(1)).unwrap();
             c.advance_monotonic(Duration::from_nanos(1)).unwrap();
