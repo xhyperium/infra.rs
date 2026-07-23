@@ -1,16 +1,17 @@
 //! Live profile/handles 与轻量 helper 的公共 fail-closed 合同。
 
+#![allow(deprecated, reason = "验证兼容别名仍保持错误传播语义")]
+
 use async_trait::async_trait;
 use bytes::Bytes;
-#[allow(deprecated, reason = "测试兼容别名 tx_kv_set 的错误面")]
 use contracts::{
     EventBus, KeyValueStore, LiveContractProfile, LiveHandles, TxContext, TxRunner, bus_publish,
     kv_set_then_commit_separate_resources, publish_without_delivery_attestation, tx_kv_set,
 };
 use futures_core::stream::BoxStream;
 use kernel::{ErrorKind, XError, XResult};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 #[test]
@@ -39,7 +40,7 @@ struct FailingBus;
 #[async_trait]
 impl EventBus for FailingBus {
     async fn publish(&self, _topic: &str, _payload: Bytes) -> XResult<()> {
-        Err(XError::transient("publish failed"))
+        Err(XError::transient("发布失败"))
     }
 
     async fn subscribe(&self, _topic: &str) -> XResult<BoxStream<'static, contracts::BusMessage>> {
@@ -52,8 +53,31 @@ async fn publish_helper_propagates_producer_failure_without_claiming_delivery() 
     let error =
         publish_without_delivery_attestation(&FailingBus, "orders", Bytes::from_static(b"payload"))
             .await
-            .expect_err("publish failure must propagate");
+            .expect_err("发布失败必须传播");
     assert_eq!(error.kind(), ErrorKind::Transient);
+}
+
+struct CountingBus(AtomicUsize);
+
+#[async_trait]
+impl EventBus for CountingBus {
+    async fn publish(&self, _topic: &str, _payload: Bytes) -> XResult<()> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
+
+    async fn subscribe(&self, _topic: &str) -> XResult<BoxStream<'static, contracts::BusMessage>> {
+        Err(XError::invalid("本测试不订阅"))
+    }
+}
+
+#[tokio::test]
+async fn publish_helper_calls_producer_exactly_once_without_subscribing() {
+    let bus = CountingBus(AtomicUsize::new(0));
+    publish_without_delivery_attestation(&bus, "orders", Bytes::from_static(b"payload"))
+        .await
+        .expect("生产者调用成功");
+    assert_eq!(bus.0.load(Ordering::SeqCst), 1, "helper 必须且只能调用一次 publish");
 }
 
 struct UnusedKv;
@@ -74,7 +98,7 @@ struct BeginFailRunner;
 #[async_trait]
 impl TxRunner for BeginFailRunner {
     async fn begin_tx(&self) -> XResult<Box<dyn TxContext>> {
-        Err(XError::transient("begin failed"))
+        Err(XError::transient("begin 失败"))
     }
 }
 
@@ -87,7 +111,7 @@ async fn separate_resource_helper_propagates_begin_failure() {
         b"v".to_vec(),
     )
     .await
-    .expect_err("begin failure must propagate");
+    .expect_err("begin 失败必须传播");
     assert_eq!(error.kind(), ErrorKind::Transient);
 }
 
@@ -102,12 +126,12 @@ struct RecordingTxContext {
 impl TxContext for RecordingTxContext {
     async fn commit(&mut self) -> XResult<()> {
         self.committed.store(true, Ordering::SeqCst);
-        if self.fail_commit { Err(XError::unavailable("commit failed")) } else { Ok(()) }
+        if self.fail_commit { Err(XError::unavailable("commit 失败")) } else { Ok(()) }
     }
 
     async fn rollback(&mut self) -> XResult<()> {
         self.rolled_back.store(true, Ordering::SeqCst);
-        if self.fail_rollback { Err(XError::unavailable("rollback failed")) } else { Ok(()) }
+        if self.fail_rollback { Err(XError::unavailable("rollback 失败")) } else { Ok(()) }
     }
 }
 
@@ -131,7 +155,7 @@ impl TxRunner for RecordingRunner {
 }
 
 struct SetOutcomeKv {
-    called: Arc<AtomicBool>,
+    calls: Arc<Mutex<Vec<(String, Vec<u8>)>>>,
     fail: bool,
 }
 
@@ -141,9 +165,9 @@ impl KeyValueStore for SetOutcomeKv {
         Ok(None)
     }
 
-    async fn set(&self, _key: &str, _val: Vec<u8>, _ttl: Option<Duration>) -> XResult<()> {
-        self.called.store(true, Ordering::SeqCst);
-        if self.fail { Err(XError::transient("set failed")) } else { Ok(()) }
+    async fn set(&self, key: &str, val: Vec<u8>, _ttl: Option<Duration>) -> XResult<()> {
+        self.calls.lock().expect("KV 调用记录锁应可用").push((key.to_owned(), val));
+        if self.fail { Err(XError::transient("set 失败")) } else { Ok(()) }
     }
 }
 
@@ -157,10 +181,10 @@ async fn separate_resource_helper_rolls_back_on_set_failure_and_keeps_primary_er
         fail_commit: false,
         fail_rollback: true,
     };
-    let set_called = Arc::new(AtomicBool::new(false));
+    let set_calls = Arc::new(Mutex::new(Vec::new()));
     let error = kv_set_then_commit_separate_resources(
         &runner,
-        Arc::new(SetOutcomeKv { called: Arc::clone(&set_called), fail: true }),
+        Arc::new(SetOutcomeKv { calls: Arc::clone(&set_calls), fail: true }),
         "k".into(),
         b"v".to_vec(),
     )
@@ -168,7 +192,7 @@ async fn separate_resource_helper_rolls_back_on_set_failure_and_keeps_primary_er
     .expect_err("set 失败必须传播");
 
     assert_eq!(error.kind(), ErrorKind::Transient, "rollback 失败不得覆盖原始 set 错误");
-    assert!(set_called.load(Ordering::SeqCst));
+    assert_eq!(*set_calls.lock().expect("KV 调用记录锁应可用"), vec![("k".into(), b"v".to_vec())]);
     assert!(rolled_back.load(Ordering::SeqCst));
     assert!(!committed.load(Ordering::SeqCst));
 }
@@ -183,10 +207,10 @@ async fn separate_resource_helper_exposes_commit_failure_without_claiming_atomic
         fail_commit: true,
         fail_rollback: false,
     };
-    let set_called = Arc::new(AtomicBool::new(false));
+    let set_calls = Arc::new(Mutex::new(Vec::new()));
     let error = kv_set_then_commit_separate_resources(
         &runner,
-        Arc::new(SetOutcomeKv { called: Arc::clone(&set_called), fail: false }),
+        Arc::new(SetOutcomeKv { calls: Arc::clone(&set_calls), fail: false }),
         "k".into(),
         b"v".to_vec(),
     )
@@ -194,13 +218,16 @@ async fn separate_resource_helper_exposes_commit_failure_without_claiming_atomic
     .expect_err("commit 失败必须传播");
 
     assert_eq!(error.kind(), ErrorKind::Unavailable);
-    assert!(set_called.load(Ordering::SeqCst), "独立 KV set 已先完成，不能声称原子撤销");
+    assert_eq!(
+        *set_calls.lock().expect("KV 调用记录锁应可用"),
+        vec![("k".into(), b"v".to_vec())],
+        "独立 KV set 已先完成且只执行一次，不能声称原子撤销"
+    );
     assert!(committed.load(Ordering::SeqCst));
     assert!(!rolled_back.load(Ordering::SeqCst));
 }
 
 #[tokio::test]
-#[allow(deprecated, reason = "显式验证兼容别名 tx_kv_set 错误面")]
 async fn compatibility_aliases_preserve_the_accurate_helpers_error_surface() {
     let publish_error = bus_publish(&FailingBus, "orders", Bytes::from_static(b"payload"))
         .await

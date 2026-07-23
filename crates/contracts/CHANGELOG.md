@@ -1,5 +1,11 @@
 # Changelog — contracts
 
+## [0.1.4] — 2026-07-23
+
+### Changed
+
+- `live_contracts` 兼容 helper 负测加厚：begin/set/commit 失败面与单次 publish 调用计数。
+
 ## [0.1.3] — 2026-07-23
 
 ### Changed

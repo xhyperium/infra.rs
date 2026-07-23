@@ -1,5 +1,11 @@
 # Changelog — contract-testkit
 
+## 0.1.4 — 2026-07-23
+
+### Changed
+
+- `assert_instrumentation` 不再伪造永真 ensure，仅保留可调用 smoke。
+
 ## 0.1.3 — 2026-07-23
 
 ### Added

@@ -138,6 +138,11 @@ ok(
   exists("scripts/quality-gates/check-test-support-graph.mjs"),
   "test-support 生产依赖图门禁脚本缺失",
 );
+ok(
+  "scripts/quality-gates/check-test-support-graph.test.mjs",
+  exists("scripts/quality-gates/check-test-support-graph.test.mjs"),
+  "test-support 生产依赖图负向测试缺失",
+);
 
 // crates/ 独立版本 + path version 对齐（VERSIONING.md R-C1/R-C2）
 const crateVersionsCheck = run(
@@ -176,7 +181,24 @@ const testSupportGraphCheck = run(
 ok(
   "test-support 生产依赖图门禁",
   testSupportGraphCheck.includes("PASS") && !testSupportGraphCheck.includes("FAIL"),
-  testSupportGraphCheck.slice(0, 400) || "check-test-support-graph.mjs 失败",
+  testSupportGraphCheck.slice(0, 500) || "check-test-support-graph.mjs 失败",
+);
+const testSupportGraphTests = run(
+  "node --test scripts/quality-gates/check-test-support-graph.test.mjs 2>&1",
+  120000,
+);
+const graphTestMetrics = Object.fromEntries(
+  [...testSupportGraphTests.matchAll(/\b(tests|pass|fail) (\d+)\b/g)].map((match) => [
+    match[1],
+    Number(match[2]),
+  ]),
+);
+ok(
+  "test-support 图故障注入测试",
+  graphTestMetrics.tests > 0 &&
+    graphTestMetrics.pass === graphTestMetrics.tests &&
+    graphTestMetrics.fail === 0,
+  testSupportGraphTests.slice(0, 500) || "check-test-support-graph.test.mjs 失败",
 );
 
 // settings.json nice/timeout/fail-closed 门禁（与 validation.yml settings-hooks job 同源）
