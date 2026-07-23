@@ -25,7 +25,7 @@ async-trait = { workspace = true }
 bytes = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-natsx = { path = "../adapters/storage/nats", version = "0.3.3" }
+natsx = { path = "../adapters/storage/nats", version = "0.3.4" }
 redisx = { path = "../adapters/storage/redis", version = "0.3.13" }
 tokio = { workspace = true }
 

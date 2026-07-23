@@ -300,10 +300,10 @@ async fn get_pull_consumer_rejects_invalid_names_and_missing_targets() {
     cfg.filter_subject = Some(subject.clone());
     jetstream.consumer(&stream, cfg.clone()).await.expect("创建 durable consumer");
     let handle = jetstream
-        .get_pull_consumer(&stream, &cfg.durable_name)
+        .get_pull_consumer(&stream, cfg.durable_name.as_deref().unwrap_or(""))
         .await
         .expect("已创建的 durable consumer 必须可获取");
-    assert_eq!(handle.cached_info().name, cfg.durable_name);
+    assert_eq!(handle.cached_info().name, cfg.durable_name.unwrap_or_default());
 
     jetstream.context().delete_stream(&stream).await.expect("删除 stream");
     pool.close().await.expect("关闭 NATS pool");
