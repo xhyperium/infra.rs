@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.7] — 2026-07-23
+
+### Added
+
+- `error_map` 补齐 Cluster/Sentinel/Response/Extension 分支离线单测（行覆盖约 99%）
+- `client` probe 路径：`duration_to_millis`、unsafe 副作用多试拒绝、budget/endpoint 形状测试
+- 交付记录：PR #281 merge SHA 写入 SSOT evidence
+
+### Boundaries
+
+- 行覆盖率仍非 100%（Cluster/TLS live 等 OPEN 路径）；见 coverage-residual
+- 未宣称 package stable
+
 ## [0.3.6] — 2026-07-23
 
 ### Changed
