@@ -6,7 +6,7 @@
 | 标题 | PostgreSQL |
 | 实现 | `crates/adapters/storage/postgres` |
 | 战役 | draft SPEC_GOAL → 本仓生产默认路径 |
-| 状态 | **P0 生产入口已落地**（#188–#191）；package stable **未宣称** |
+| 状态 | **P0 生产入口已落地**（#188–#191；`0.3.6` foundation 闭合）；package stable **未宣称** |
 
 ## Outcome
 
@@ -17,13 +17,14 @@
 1. workspace member `postgresx` 可 `cargo test -p postgresx --all-targets`
 2. 生产默认面：`PostgresPool / PgConnection / PgTransaction / PgTxRunner`
 3. 环境注入：`FOUNDATIONX_POSTGRESX_{HOST,PORT,DATABASE,USER,PASSWORD,SSLMODE} 或 DATABASE_URL`（密钥不入库）
-4. live：`tests/live_postgres.rs` 默认 `#[ignore]`，真凭据可绿
+4. live：`tests/live_postgres.rs` 默认 `#[ignore]`，真凭据可绿（含 Repository / query_opt / begin / resiliencx）
 5. bench：`benches/query_hot_path.rs`（不得挂死 `--all-targets`）
 6. scaffold 仅 `feature = "scaffold"`，禁止当作生产默认
+7. deadline 固定镜像：`node scripts/postgres-deadline-conformance.mjs` 可绿
 
 ## Not in scope
 
-COPY / migrations / read-replica / SSL require-only 默认
+COPY / migrations / read-replica / 远程 TLS live 强制 / package stable crates.io
 
 ## 证据指针
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.6] — 2026-07-23
+
+### Added
+
+- live 集成测扩展：`connect_from_env` / `query` / `query_opt` / `execute` / `begin` / `PgRepository` roundtrip / resiliencx 包装
+- SQLSTATE 映射表文档锚点（FK `23503` → `Invalid` 本仓选型说明）
+- SSOT/对齐文档同步至 `0.3.6`；10 轮 draft 对照审查落盘 `evidence/2026-07-23/`
+- 本轮 dev live 9/9 + deadline conformance 固定镜像 + bench 有界证据
+
+### Documentation
+
+- `docs/ssot/postgresx-ssot-alignment.md` / gap-matrix / crate docs 版本与 LIVE 状态诚实更新
+- 明确：远程 TLS 握手 live 与 package stable **仍 OPEN**；SSOT 路径为 `postgres` 非 `postgresx`
+
+### Boundaries
+
+- 自定义 CA/mTLS、迁移/COPY、HA 故障切换、远程 TLS live、package stable **未承诺**
+
 ## [0.3.5] — 2026-07-23
 
 ### Added

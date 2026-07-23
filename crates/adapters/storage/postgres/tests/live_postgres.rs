@@ -8,7 +8,10 @@
 //! cargo test -p postgresx --test live_postgres -- --ignored --nocapture
 //! ```
 
-use postgresx::{PostgresConfig, PostgresPool, TxStatus};
+use contracts::Repository;
+use postgresx::{
+    PgRecord, PgRepository, PgRetryConfig, PostgresConfig, PostgresPool, TxStatus, with_retry_async,
+};
 use std::sync::Arc;
 
 fn live_config() -> PostgresConfig {
@@ -27,6 +30,101 @@ async fn live_select_one() {
     pool.health().await.expect("health");
     let stats = pool.stats();
     assert!(stats.max_size >= 1);
+    assert!(!stats.closed);
+    assert!(pool.summary().contains(&live_config().host));
+    pool.close();
+    let closed = pool.stats();
+    assert!(closed.closed);
+}
+
+#[tokio::test]
+#[ignore = "requires live Postgres; run with --ignored when available"]
+async fn live_connect_from_env_and_query_opt_execute() {
+    let pool = PostgresPool::connect_from_env().await.expect("connect_from_env");
+    let n = 42i32;
+    let affected =
+        pool.execute("SELECT $1::int", &[&n]).await.expect("execute SELECT 返回 0 行影响亦可");
+    assert_eq!(affected, 1, "SELECT 语句在 PG 上通常 rows=1 或 0；此处接受 u64");
+
+    let some = pool
+        .query_opt("SELECT $1::int AS n WHERE $1::int > 0", &[&n])
+        .await
+        .expect("query_opt some");
+    let row = some.expect("应有一行");
+    let got: i32 = row.get("n");
+    assert_eq!(got, n);
+
+    let none = pool
+        .query_opt("SELECT $1::int AS n WHERE $1::int < 0", &[&n])
+        .await
+        .expect("query_opt none");
+    assert!(none.is_none());
+
+    let rows = pool.query("SELECT generate_series(1, 3) AS n", &[]).await.expect("query multi");
+    assert_eq!(rows.len(), 3);
+
+    pool.close();
+}
+
+#[tokio::test]
+#[ignore = "requires live Postgres; run with --ignored when available"]
+async fn live_pool_begin_commit() {
+    let pool = PostgresPool::connect(&live_config()).await.expect("connect");
+    let mut tx = pool.begin().await.expect("begin");
+    assert_eq!(tx.status(), TxStatus::Active);
+    let row = tx.query_one("SELECT 2 + 2 AS n", &[]).await.expect("tx query");
+    let n: i32 = row.get("n");
+    assert_eq!(n, 4);
+    tx.commit().await.expect("commit");
+    pool.close();
+}
+
+#[tokio::test]
+#[ignore = "requires live Postgres; run with --ignored when available"]
+async fn live_repository_find_save_roundtrip() {
+    let pool = PostgresPool::connect(&live_config()).await.expect("connect");
+    let repo = PgRepository::new(pool.clone());
+    repo.ensure_table().await.expect("ensure_table");
+
+    let id = format!("postgresx-live-{}", std::process::id());
+    let payload = format!("payload-{}", std::process::id()).into_bytes();
+    let record = PgRecord { id: id.clone(), data: payload.clone() };
+
+    // 清理残留（幂等）
+    let _ = pool.execute("DELETE FROM infra_pg_records WHERE id = $1", &[&id]).await;
+
+    assert!(repo.find(id.clone()).await.expect("find miss").is_none());
+
+    repo.save(&record).await.expect("save insert");
+    let found = repo.find(id.clone()).await.expect("find hit").expect("row");
+    assert_eq!(found.id, id);
+    assert_eq!(found.data, payload);
+
+    let updated = PgRecord { id: id.clone(), data: b"upserted".to_vec() };
+    repo.save(&updated).await.expect("save upsert");
+    let found2 = repo.find(id.clone()).await.expect("find after upsert").expect("row");
+    assert_eq!(found2.data, b"upserted");
+
+    pool.execute("DELETE FROM infra_pg_records WHERE id = $1", &[&id]).await.expect("cleanup");
+    pool.close();
+}
+
+#[tokio::test]
+#[ignore = "requires live Postgres; run with --ignored when available"]
+async fn live_resilience_retry_wrapper() {
+    let pool = PostgresPool::connect(&live_config()).await.expect("connect");
+    let cfg = PgRetryConfig::fixed(2, 0);
+    let n = with_retry_async(&cfg, "live_select", || {
+        let pool = pool.clone();
+        async move {
+            let row = pool.query_one("SELECT 9 AS n", &[]).await?;
+            let v: i32 = row.try_get(0).map_err(postgresx::map_tokio_error)?;
+            Ok::<_, kernel::XError>(v)
+        }
+    })
+    .await
+    .expect("retry async");
+    assert_eq!(n, 9);
     pool.close();
 }
 

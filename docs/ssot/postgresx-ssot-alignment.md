@@ -3,11 +3,11 @@
 | 字段 | 值 |
 |------|-----|
 | package | `postgresx` |
-| SSOT | `.agents/ssot/adapters/storage/postgres/` |
+| SSOT | `.agents/ssot/adapters/storage/postgres/`（**非** `postgresx` 目录） |
 | 实现 | `crates/adapters/storage/postgres` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.3` |
-| 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地；deadline/连接隔离有固定镜像证据**；**未**宣称真实 PostgreSQL TLS 已验证或 package stable |
+| version | `0.3.6` |
+| 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地**；dev live（`#[ignore]`）与固定镜像 deadline conformance **本轮已跑通**；**未**宣称远程 TLS 握手 live 或 package stable |
 
 ## 结论摘要
 
@@ -24,10 +24,11 @@
 | resiliencx | `with_retry_sync` / `with_retry_async` |
 | contracts | `TxRunner` + 生产 `Repository` |
 | 环境变量 | `FOUNDATIONX_POSTGRESX_{HOST,PORT,DATABASE,USER,PASSWORD,SSLMODE}` 或 `DATABASE_URL` |
-| live | `tests/live_postgres.rs`；固定摘要 deadline 实验 `tests/deadline_conformance.rs`（均 `#[ignore]`） |
+| live | `tests/live_postgres.rs`（9 cases，`#[ignore]`） |
+| deadline 实验 | `tests/deadline_conformance.rs` + `scripts/postgres-deadline-conformance.mjs` |
 | bench | `benches/query_hot_path.rs` |
-| 原 OBJECTIVE DEFER | **PASS**（prod Repository / SSL require / resiliencx） |
-| 仍 OPEN（非 OBJECTIVE） | COPY / migrations / read-replica |
+| 原 OBJECTIVE DEFER | **PASS**（prod Repository / SSL require 路径 / resiliencx） |
+| 仍 OPEN / DEFER | 远程 TLS live 握手；COPY / migrations / read-replica / package stable |
 
 ## 对齐矩阵
 
@@ -36,36 +37,41 @@
 | POSTGRESX-1 | workspace member | PASS | `cargo metadata -p postgresx` |
 | POSTGRESX-2 | 生产默认导出 | PASS | `src/lib.rs` |
 | POSTGRESX-3 | from_env | PASS | config |
-| POSTGRESX-4 | 离线测试 | PASS | 33 unit + ignored conformance 编译 |
-| POSTGRESX-5 | live 入口 | PASS | `tests/live_postgres.rs` |
-| POSTGRESX-6 | bench 有界 | PASS | `benches/query_hot_path.rs` |
+| POSTGRESX-4 | 离线测试 | PASS | unit tests 全绿 |
+| POSTGRESX-5 | live 入口 + 本轮 dev 结果 | PASS | `tests/live_postgres.rs` 9/9 with secrets inject |
+| POSTGRESX-6 | bench 有界 | PASS | `benches/query_hot_path.rs`（200 iters 完成） |
 | POSTGRESX-7 | crate docs | PASS | docs/* |
 | POSTGRESX-8 | SSOT 11 层 | PASS | `.agents/ssot/adapters/storage/postgres/` |
-| POSTGRESX-9 | package stable | OPEN | 禁止宣称 |
-| POSTGRESX-10 | 生产 Repository | PASS | `src/repository.rs` |
-| POSTGRESX-11 | SSL require 路径 | PASS | `src/tls.rs` + pool Prefer/Require |
-| POSTGRESX-12 | resiliencx 接入 | PASS | `src/resilience.rs` |
-| POSTGRESX-13 | pool/SQL deadline 与连接隔离 | PASS | 固定摘要 Postgres 17 实验 |
-| POSTGRESX-14 | 取消/abort 与事务 Failed 状态 | CODE PASS / LIVE OPEN | `src/{conn,tx}.rs` + ignored `tests/deadline_conformance.rs`；本轮未运行真实 PostgreSQL |
+| POSTGRESX-9 | package stable | OPEN | 禁止宣称；`publish = false` |
+| POSTGRESX-10 | 生产 Repository | PASS | `src/repository.rs` + live roundtrip |
+| POSTGRESX-11 | SSL require 路径 | CODE PASS / TLS live OPEN | `src/tls.rs` + pool Prefer/Require；**未**宣称远程握手 live |
+| POSTGRESX-12 | resiliencx 接入 | PASS | `src/resilience.rs` + live wrapper |
+| POSTGRESX-13 | pool/SQL deadline 与连接隔离 | PASS | 固定摘要 Postgres 17 实验通过 |
+| POSTGRESX-14 | 取消/abort 与事务 Failed 状态 | PASS | `src/{conn,tx}.rs` + deadline_conformance live |
 | POSTGRESX-15 | 业务+rollback 双错误保真 | PASS | `src/error.rs` + `src/pool.rs` 单元测试 |
-| POSTGRESX-16 | deprecated raw 访问 fail-closed | CODE PASS / LIVE OPEN | `src/{conn,pool}.rs` + ignored conformance；本轮未运行真实 PostgreSQL |
-| POSTGRESX-17 | Release 候选身份 | OPEN | Code 阶段不记录未提交 worktree/旧候选 SHA；由 Release 对实际候选提交重算 |
+| POSTGRESX-16 | deprecated raw 访问 fail-closed | CODE PASS / LIVE 有限 | `src/{conn,pool}.rs` + deadline 路径；无独立 raw live 用例 |
+| POSTGRESX-17 | Release 候选身份 | OPEN | package stable 未宣称；本轮交付为内部 foundation 闭合 |
 
-## 验证
+## 本轮验证（2026-07-23）
 
 ```bash
+# 凭据注入（不入库）
+node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
+set -a; source /tmp/foundationx-live.env; set +a
+
 RUSTC_WRAPPER= cargo test -p postgresx --all-targets
+RUSTC_WRAPPER= cargo test -p postgresx --test live_postgres -- --ignored --nocapture
 RUSTC_WRAPPER= cargo clippy -p postgresx --all-targets -- -D warnings
 cargo fmt --all --check
 node scripts/quality-gates/check-workspace-deps.mjs
+POSTGRESX_BENCH_ITERS=200 cargo bench -p postgresx --bench query_hot_path
+node scripts/postgres-deadline-conformance.mjs
 cmp .agents/ssot/adapters/storage/postgres/spec/spec.md \
   .agents/ssot/adapters/storage/postgres/spec/xhyper-postgresx-complete-spec.md
-
-# 需要本地 PostgreSQL 容器；Code 阶段未运行，不得据此关闭 issue
-node scripts/postgres-deadline-conformance.mjs
 ```
 
 ## 相关
 
 - [adapters-ssot-alignment.md](./adapters-ssot-alignment.md)
 - [gap-matrix.md](./gap-matrix.md)
+- 10 轮审查：`.agents/ssot/adapters/storage/postgres/evidence/2026-07-23/postgresx-10x-review.md`
