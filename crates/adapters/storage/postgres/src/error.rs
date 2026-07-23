@@ -1,6 +1,19 @@
 //! Postgres / deadpool 错误 → [`kernel::XError`] 映射。
 //!
 //! SQLSTATE 分类基于 PostgreSQL 官方错误类；未知码回落为 `Internal`。
+//!
+//! ## 映射锚点（与 draft 表对照）
+//!
+//! | SQLSTATE | 含义 | [`ErrorKind`] |
+//! |----------|------|---------------|
+//! | `23505` | unique_violation | `Conflict` |
+//! | `23503` / `23502` / `23514` | FK / not-null / check | **`Invalid`**（本仓选型：约束输入非法；非乐观并发 `Conflict`） |
+//! | `40P01` / `40001` | deadlock / serialization | `Transient` |
+//! | `42P01` | undefined_table | `Missing` |
+//! | `08*` | connection exception | `Unavailable` |
+//! | `57014` | query_canceled | `Cancelled` |
+//!
+//! draft 中 FK 可倾向 `Conflict`；本仓固定 **`Invalid`**，调用方应按码语义处理。
 
 use kernel::{ErrorKind, XError};
 use std::fmt;
