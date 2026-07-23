@@ -6,7 +6,7 @@
 //!   `FOUNDATIONX_POSTGRESX_*` 环境变量
 //! - [`PostgresPool`]：`connect` / `acquire` / `execute` / `query` / `query_one` /
 //!   `with_transaction` / `health` / `stats` / `close`
-//! - [`PgConnection`] / [`PgTransaction`]（准确状态 [`TxStatus`]；旧 [`TxState`] 迁移兼容）
+//! - [`PgConnection`]（`batch_execute`）/ [`PgTransaction`]（准确状态 [`TxStatus`]；旧 [`TxState`] 迁移兼容）
 //! - [`PgTxRunner`]：`contracts::TxRunner` 边界适配（**不**传 SQL 句柄，见模块文档）
 //! - [`PgRepository`] / [`PgRecord`]：生产 `contracts::Repository`
 //! - [`Migrator`]：advisory lock + checksum；默认 [`Migrator::verify`] 不自动 DDL

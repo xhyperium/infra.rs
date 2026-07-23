@@ -10,7 +10,7 @@
 //!
 //! Live 测试环境变量（`FOUNDATIONX_POSTGRESX_*`或`DATABASE_URL`）。
 
-// ━━━━━━━━━��━━━━━━━━━━━━━ 1. Config ━━━━━━━━━━━━━━━━━━━━━��━━
+// ==== 1. Config ====
 
 #[test]
 fn config_defaults_are_stable() {
@@ -289,7 +289,7 @@ fn transaction_rollback_failure_source_chain_downcast() {
     assert_eq!(source.kind(), kernel::ErrorKind::Conflict);
 }
 
-// ━━━━━━���━━━━━━━━━━━━━━━━ 3. Resilience ━━━━━━━━━━━━━━━━━━━
+// ==== 3. Resilience ====
 
 #[test]
 fn retry_config_fixed_fields() {
@@ -385,7 +385,7 @@ fn with_budget_safe_read_only_success() {
     assert_eq!(v, 42);
 }
 
-// ━━━━━━━━━━━━━━━━━━━��━━━ 4. TLS ━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ==== 4. TLS ====
 
 #[test]
 fn build_client_config_with_webpki() {
@@ -414,7 +414,7 @@ fn extra_ca_missing_file_fails_closed() {
     assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
 }
 
-// ━━━━━━━━━━━━━━━━━━━��━━━ 5. Selfcheck ━━━━━━━━━━━━━━━━━━━��
+// ==== 5. Selfcheck ====
 
 #[test]
 fn selfcheck_config_defaults() {
@@ -631,7 +631,7 @@ fn repository_ensure_table_sql_contains_correct_table() {
     assert!(sql.contains("CREATE TABLE IF NOT EXISTS"));
 }
 
-// ━━━━━━━━━━━━━━━━━━━��━━━ 7. Migration unit ━━━━━━━━━━━━━━━
+// ==== 7. Migration unit ====
 
 #[test]
 fn migration_checksum_stable() {
@@ -716,7 +716,7 @@ fn migration_constants() {
     assert_ne!(postgresx::MIGRATION_LOCK_KEY2, 0);
 }
 
-// ━━━━━━━��━━━━━━━━━━━━━━━ 8. 类型与常量 ━━━━━━━━━━━━━━━━━━
+// ==== 8. 类型与常量 ====
 
 #[test]
 fn public_types_are_send_sync() {
@@ -1216,7 +1216,7 @@ mod scaffold {
     }
 }
 
-// ━━━━━━━���━━━━━━━��━━━━━━━ 12. PgTxRunner ━━━━━━━━━━━━━━━━━━
+// ==== 12. PgTxRunner ====
 
 #[test]
 fn pg_tx_runner_constructible() {
