@@ -6,8 +6,8 @@
 | SSOT | `.agents/ssot/adapters/storage/kafka/` |
 | 实现 | `crates/adapters/storage/kafka` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.4` |
-| 结论 | **AMO、单 owner 应用 ALO、TLS+CA+SASL/PLAIN 有隔离 broker 与真 secrets live 证据**；group/rebalance/自动重连/native EOS **NO-GO**；Part2 量化栈 **OOS**；**未**宣称 package stable |
+| version | `0.3.5` |
+| 结论 | **AMO、单 owner 应用 ALO、TLS+CA+SASL/PLAIN 有隔离 broker 与真 secrets live 证据**；生产测试矩阵（离线+集成+bench+故障重建）已落地；group/rebalance/自动重连/native EOS **NO-GO**；Part2 量化栈 **OOS**；**未**宣称 package stable |
 
 ## 语义矩阵
 
@@ -41,6 +41,8 @@
 ```bash
 cargo test -p kafkax --all-targets
 cargo clippy -p kafkax --all-targets -- -D warnings
+node scripts/kafka-prod-matrix.mjs
+node scripts/kafka-prod-matrix.mjs --fault-restart
 node scripts/kafka-broker-conformance.mjs
 node scripts/kafka-tls-sasl-conformance.mjs
 # 真 secrets（不入库）
@@ -53,8 +55,9 @@ cargo test -p kafkax --test live_event_bus -- --ignored --nocapture
 
 | 项 | 结果 |
 |----|------|
-| 离线 `cargo test -p kafkax --all-targets` | PASS |
-| 真 secrets live | **3/3 PASS** |
+| 离线 `cargo test -p kafkax --all-targets` | PASS（含 prod_offline） |
+| `kafka-prod-matrix.mjs --fault-restart` | **主场景 9 + 故障/重建 PASS** |
+| 真 secrets live | **3/3 PASS**（#282 会话） |
 | `kafka-broker-conformance.mjs` | **3/3 PASS** |
 | TLS/SASL isolation harness | **2/2 PASS** |
 | 密钥入库扫描 | 仅 env 注入；仓库无密码 |

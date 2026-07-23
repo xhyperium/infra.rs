@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.5] — 2026-07-23
+
+### Added（生产发布测试矩阵）
+
+- `tests/prod_offline.rs`：离线功能/安全 fail-closed/不可达 broker/NO-GO 锚定
+- `tests/prod_reliability.rs`：集成可靠性（顺序、checksum、1MiB、突发并发、ALO 恢复、close、stats、可选 soak、故障连接）
+- `scripts/kafka-prod-matrix.mjs`：隔离 broker runner + `--fault-restart` / `--soak`
+- `benches/hot_path.rs`：100B/1KiB/1MiB produce 与 p50/p95/p99 摘要
+- `docs/测试矩阵-生产发布.md`：清单对照（PASS/NO-GO/OOS）
+
+### Evidence
+
+- 默认 CI：`prod_offline` + lib 全绿
+- 隔离：`node scripts/kafka-prod-matrix.mjs --fault-restart` 主场景 + 停机/重建 PASS
+- 24h soak **非**默认门禁（`KAFKAX_SOAK_SECONDS` 可选）
+- group/rebalance/native EOS/HA/package stable **仍 NO-GO**
+
 ## [0.3.4] — 2026-07-23
 
 ### Added

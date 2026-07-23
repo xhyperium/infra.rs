@@ -7,7 +7,7 @@
 |--------|--------------|---------|----------------------------------------|
 | redisx | Pool+KV+timeout+live | **done** + Standalone/PubSub 安全边界 (`0.3.3`) | Cluster/Sentinel/TLS live / Streams full / package stable |
 | postgresx | Pool+query+tx+TLS | **done** + Repository + 远程 Require live（CA+SNI）+ deadline + Migrator+COPY+mTLS+live 12/12 (`0.3.11`) | 无限流式 COPY / read-replica / package stable / 服务端强制 mTLS live / down migration |
-| kafkax | Producer pool + EventBus | **done** + checkpoint/ALO + TLS/CA/PLAIN + 真 secrets live + 十轮矩阵 (`0.3.4`) | SCRAM/OAuth/mTLS / group/rebalance / native EOS / DLQ / Part2 OOS |
+| kafkax | Producer pool + EventBus | **done** + 生产测试矩阵 offline/reliability/bench/fault (`0.3.5`) | SCRAM 成功路径/group/rebalance/native EOS/DLQ/Part2 OOS/24h 默认 soak |
 | natsx | Core NATS EventBus | **done** + JetStream durable pull/显式确认 + 同客户端重启恢复 3/3 (`0.3.2`) | 断线窗口无回放 / NKey / Cluster/HA / 自动 DLQ / KV·Object 全量 |
 | ossx | ObjectStore put/get | **done** + 有界 multipart/retry/orphan 补偿 (`0.3.2`) | lifecycle / STS / TB 流式对象 |
 | clickhousex | Analytics insert+select | **done** + HTTPS/PEM CA + insert_batch + 有界池 (`0.3.2`) | 真实集群 TLS / mTLS / native 9000 / cluster 运维 |

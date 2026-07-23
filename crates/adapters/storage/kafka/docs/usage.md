@@ -46,11 +46,19 @@ cargo test -p kafkax --all-targets
 node scripts/kafka-broker-conformance.mjs
 node scripts/kafka-tls-sasl-conformance.mjs
 
+# 生产矩阵（顺序/checksum/1MiB/并发/ALO 恢复/故障重建）
+node scripts/kafka-prod-matrix.mjs
+node scripts/kafka-prod-matrix.mjs --fault-restart
+# 可选有界 soak（默认不进 CI）
+KAFKAX_SOAK_SECONDS=60 node scripts/kafka-prod-matrix.mjs --soak
+
 # live（需真实 Kafka + 已 export 环境变量）
 node scripts/live/build-foundationx-env.mjs --env dev --out /path/private.env
 set -a; source /path/private.env; set +a
 cargo test -p kafkax --test live_event_bus -- --ignored --nocapture
 
-# bench（有界；无 broker 时自动 skip produce）
+# bench（有界；无 broker 时自动 skip produce；多 payload + 分位延迟）
 cargo bench -p kafkax --bench hot_path -- --quick
 ```
+
+完整清单见 [测试矩阵-生产发布.md](./测试矩阵-生产发布.md)。
