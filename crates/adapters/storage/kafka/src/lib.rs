@@ -61,7 +61,9 @@ pub use consumer::{ConsumerConfig, KafkaConsumer};
 pub use eos::{
     EosCoordinator, EosSession, ProduceThenCheckpointCoordinator, ProduceThenCheckpointSession,
 };
-pub use message::{Delivery, KafkaMessage, encode_bus_id, parse_bus_id};
+pub use message::{
+    Delivery, KafkaMessage, PublishRecord, encode_bus_id, parse_bus_id, partition_for_key,
+};
 pub use offset::{FileOffsetStore, MemoryOffsetStore, OffsetCommitStore};
 pub use pool::{KafkaHealth, KafkaPool, KafkaPoolStats};
 pub use producer::KafkaProducer;
@@ -116,8 +118,14 @@ mod public_api_surface {
             offset: 1,
             payload: Bytes::from_static(b"x"),
             key: None,
+            headers: Default::default(),
             timestamp: None,
         };
+        let rec = PublishRecord::payload("t", 0, Bytes::from_static(b"y"))
+            .with_key(Bytes::from_static(b"k"))
+            .header("h", Bytes::from_static(b"1"));
+        assert_eq!(rec.key.as_ref().map(|k| k.as_ref()), Some(&b"k"[..]));
+        assert_eq!(partition_for_key(b"k", 3), partition_for_key(b"k", 3));
         assert_eq!(msg.bus_id(), encode_bus_id("t", 0, 1));
         assert!(parse_bus_id(&msg.bus_id()).is_some());
         assert!(parse_bus_id("bad").is_none());
@@ -125,9 +133,18 @@ mod public_api_surface {
         let health = KafkaHealth { ready: false, detail: "offline".into() };
         assert!(!health.ready);
         assert!(health.detail.contains("offline"));
-        let stats = KafkaPoolStats { published: 2, publish_failed: 1, closed: false };
+        let stats = KafkaPoolStats {
+            published: 2,
+            publish_failed: 1,
+            publish_timeouts: 0,
+            publish_cancelled: 0,
+            topics_ensured: 1,
+            topics_deleted: 0,
+            closed: false,
+        };
         assert_eq!(stats.published, 2);
         assert_eq!(stats.publish_failed, 1);
+        assert_eq!(stats.topics_ensured, 1);
 
         let store = MemoryOffsetStore::new().shared();
         store.commit("t", 0, 3).await.expect("commit");

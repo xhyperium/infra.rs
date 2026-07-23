@@ -63,3 +63,13 @@
 ## 收敛结论
 
 在「rskafka 可交付面 + 其余显式 NO-GO/OOS」定义下，**可交付面闭合**；draft 幻想能力不实现、不宣称。
+
+## 增量 0.3.7（gap 清零）
+
+| 条款 | 状态 |
+|------|------|
+| headers 读写 | PASS |
+| key produce 公共 API | PASS |
+| stats 扩展 | PASS |
+| selfcheck 同源 produce | PASS |
+| NO-GO 表 | 不变 CLOSED |

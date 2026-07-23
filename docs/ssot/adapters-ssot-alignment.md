@@ -53,14 +53,14 @@ lib 入口                        adapters: Error/Result；contracts: ExchangeAd
 实现深度                        storage 声明面见专项；exchange **签名 REST + 公共 WS 解析/注入（交易 NO-GO）**
 标准布局八项                    已齐
 publish                         false（显式）
-version                         storage 独立版本；见下表各 package 行（kafkax `0.3.5`）
+version                         storage 独立版本；见下表各 package 行（kafkax `0.3.7`）
 
 | 镜像路径 | 本仓路径 | package | 本仓状态 |
 |----------|----------|---------|----------|
 | `.agents/ssot/adapters/exchange/binance` | `crates/adapters/exchange/binance` | `binancex` | **`0.3.2`** HMAC 签名 REST + 公共 WS 解析/注入；live 仅 server_time；交易 NO-GO |
 | `.agents/ssot/adapters/exchange/okx` | `crates/adapters/exchange/okx` | `okxx` | **`0.3.3`** 四头签名 REST + 公共 WS 解析/注入；live 仅 server_time；交易 NO-GO |
 | `.agents/ssot/adapters/storage/clickhouse` | `crates/adapters/storage/clickhouse` | `clickhousex` | **`0.3.3`** HTTP(S)+PEM CA+`insert_batch`+有界池；真实集群 TLS OPEN |
-| `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **`0.3.5`** AMO/ALO + TLS/PLAIN + 生产测试矩阵（offline/reliability/bench/fault）；group/native EOS NO-GO；Part2 OOS |
+| `.agents/ssot/adapters/storage/kafka` | `crates/adapters/storage/kafka` | `kafkax` | **`0.3.7`** AMO/ALO + TLS/PLAIN + 生产测试矩阵（offline/reliability/bench/fault）；group/native EOS NO-GO；Part2 OOS |
 | `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **`0.3.3`** Core/JetStream；同客户端重启恢复 3/3，断线窗口无回放、Cluster/HA NO-GO |
 | `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | **`0.3.3`** ObjectStore + 有界 multipart/retry/orphan 补偿；dev live PASS |
 | `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **`0.3.11`** Pool/Tx/Repository/COPY/Migrator/mTLS；live 12/12；package stable OPEN |

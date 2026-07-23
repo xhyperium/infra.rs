@@ -1421,7 +1421,7 @@ dependencies = [
 
 [[package]]
 name = "kafkax"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "async-trait",
  "bytes",

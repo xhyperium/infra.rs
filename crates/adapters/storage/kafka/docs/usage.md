@@ -67,3 +67,25 @@ cargo bench -p kafkax --bench hot_path -- --quick
 
 见 crate root `kafkax::selfcheck`（LIB-SELFCHECK-SPEC §6.2）。
 库内自验证 ≠ `tools/verifyctl`。
+
+## 生产 key / headers
+
+```rust
+use bytes::Bytes;
+use kafkax::{KafkaPool, PublishRecord, partition_for_key};
+
+# async fn demo(pool: &KafkaPool) -> Result<(), kernel::XError> {
+let key = Bytes::from_static(b"order-1");
+let part = partition_for_key(&key, 3);
+let rec = PublishRecord::payload("orders", part, Bytes::from_static(b"{}"))
+    .with_key(key)
+    .header("x-trace", Bytes::from_static(b"1"));
+let d = pool.producer().publish_record(rec).await?;
+assert!(d.offset >= 0);
+# Ok(())
+# }
+```
+
+背压：consumer/EventBus 有界队列；produce 受 `delivery_timeout` 约束；超时计入 `KafkaPoolStats::publish_timeouts`。
+无独立 librdkafka 本地 buffer 旋钮（rskafka 路径）。
+
