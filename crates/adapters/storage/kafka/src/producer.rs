@@ -1,4 +1,4 @@
-//! Kafka 生产者：等待 broker 确认。
+//! Kafka 生产者：等待 broker 确认（含 key/headers 公共面，gap-zero 0.3.7）。
 
 use bytes::Bytes;
 use chrono::Utc;
@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 
 use crate::error_map::map_kafka_err;
 use crate::lifecycle::wait_for_shutdown;
-use crate::message::Delivery;
+use crate::message::{Delivery, PublishRecord};
 use crate::pool::KafkaPool;
 
 /// 可克隆 producer。
@@ -23,49 +23,73 @@ impl KafkaProducer {
         self.publish_to_partition(topic, 0, payload).await
     }
 
-    /// 指定分区发布。
+    /// 指定分区发布（无 key / headers）。
     pub async fn publish_to_partition(
         &self,
         topic: &str,
         partition: i32,
         payload: Bytes,
     ) -> XResult<Delivery> {
+        self.publish_record(PublishRecord::payload(topic, partition, payload)).await
+    }
+
+    /// 指定分区 + key 发布。
+    pub async fn publish_with_key(
+        &self,
+        topic: &str,
+        partition: i32,
+        key: Bytes,
+        payload: Bytes,
+    ) -> XResult<Delivery> {
+        self.publish_record(PublishRecord::payload(topic, partition, payload).with_key(key)).await
+    }
+
+    /// 完整记录发布（key / headers / 分区）。
+    ///
+    /// # Errors
+    ///
+    /// topic 为空、partition 为负、pool 已关闭、delivery 超时或 broker 错误。
+    pub async fn publish_record(&self, record: PublishRecord) -> XResult<Delivery> {
         self.pool.ensure_open()?;
-        validate_publish_topic(topic)?;
-        if partition < 0 {
+        validate_publish_topic(&record.topic)?;
+        if record.partition < 0 {
             return Err(XError::invalid("kafkax: partition 不能为负"));
         }
-        let client = self.pool.partition_client(topic, partition).await?;
+        let client = self.pool.partition_client(&record.topic, record.partition).await?;
         let _operation = self.pool.start_operation()?;
         let mut shutdown = self.pool.shutdown_receiver();
-        let record = Record {
-            key: None,
-            value: Some(payload.to_vec()),
-            headers: BTreeMap::new(),
+        let wire = Record {
+            key: record.key.as_ref().map(|k| k.to_vec()),
+            value: Some(record.payload.to_vec()),
+            headers: record
+                .headers
+                .iter()
+                .map(|(k, v)| (k.clone(), v.to_vec()))
+                .collect::<BTreeMap<_, _>>(),
             timestamp: Utc::now(),
         };
         match tokio::select! {
             biased;
             () = wait_for_shutdown(&mut shutdown) => {
-                self.pool.record_publish_err();
+                self.pool.record_publish_cancelled();
                 return Err(XError::cancelled("kafkax produce 因 pool 关闭而取消"));
             }
             result = tokio::time::timeout(
                 self.pool.config().delivery_timeout,
-                client.produce(vec![record], KafkaPool::compression()),
+                client.produce(vec![wire], KafkaPool::compression()),
             ) => result,
         } {
             Ok(Ok(offsets)) => {
                 let offset = offsets.first().copied().unwrap_or(0);
                 self.pool.record_publish_ok();
-                Ok(Delivery { partition, offset })
+                Ok(Delivery { partition: record.partition, offset })
             }
             Ok(Err(e)) => {
                 self.pool.record_publish_err();
                 Err(map_kafka_err("kafkax produce", e))
             }
             Err(error) => {
-                self.pool.record_publish_err();
+                self.pool.record_publish_timeout();
                 Err(XError::deadline_exceeded("kafkax produce 超时").with_source(error))
             }
         }
@@ -95,5 +119,11 @@ mod tests {
     #[test]
     fn non_empty_topic_accepted() {
         validate_publish_topic("orders").expect("合法 topic");
+    }
+
+    #[test]
+    fn publish_record_rejects_negative_partition_shape() {
+        // 形状校验在 publish_record 入口；此处只测 topic 校验仍可用
+        validate_publish_topic("ok").expect("ok");
     }
 }

@@ -119,7 +119,7 @@ fn correctness_empty_topic_shapes_rejected_in_builder_defaults() {
 #[test]
 fn observability_default_stats_shape() {
     // 仅验证公开类型字段语义；连接后的计数见 prod_reliability
-    let s = kafkax::KafkaPoolStats { published: 0, publish_failed: 0, closed: false };
+    let s = kafkax::KafkaPoolStats::default();
     assert!(!s.closed);
     assert_eq!(s.published + s.publish_failed, 0);
 }
