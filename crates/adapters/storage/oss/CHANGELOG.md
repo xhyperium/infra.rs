@@ -14,6 +14,7 @@
 - 健康检查 `health()` + 池统计 `stats()`
 - `ObjectKey` / `ObjectMeta` / `ByteStream` / `UploadOptions` / `DownloadOptions` 类型
 - `live_object_store.rs` — 12 项全 API 面 E2E 测试（真实阿里云 OSS 通过）
+- `oss-verify` — OSS 独立自验证工具（6 层 24 项检查），附带 CI jq 过滤脚本
 
 ### Changed
 
