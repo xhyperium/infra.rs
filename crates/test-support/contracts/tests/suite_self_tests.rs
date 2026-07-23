@@ -14,7 +14,7 @@ use contract_testkit::{
     assert_pub_sub_smoke, assert_repository, assert_time_series_store_with_fixture,
     assert_tx_runner, assert_venue_time_source, default_symbol_meta, sample_order,
 };
-use contracts::{TimeSeriesStore, VenueTimeSource, run_tx_commit_on_ok};
+use contracts::{TimeSeriesStore, VenueTimeSource, run_tx_lifecycle};
 use kernel::{XError, XResult};
 use std::sync::Mutex;
 
@@ -104,7 +104,7 @@ async fn suite_tx_runner_on_fake_and_recording() {
     assert_tx_runner(&FakeTxRunner).await.expect("Fake 事务 suite 应通过");
 
     let rec = RecordingTxRunner::new();
-    let n = run_tx_commit_on_ok(&rec, |_ctx| async move { Ok::<_, XError>(1u8) })
+    let n = run_tx_lifecycle(&rec, || async move { Ok::<_, XError>(1u8) })
         .await
         .expect("记录事务应提交");
     assert_eq!(n, 1);
@@ -112,9 +112,10 @@ async fn suite_tx_runner_on_fake_and_recording() {
     assert!(!*rec.rolled_back.lock().expect("回滚锁应可用"));
 
     let rec = RecordingTxRunner::new();
-    let _ =
-        run_tx_commit_on_ok(&rec, |_ctx| async move { Err::<(), _>(XError::invalid("业务失败")) })
-            .await;
+    let err = run_tx_lifecycle(&rec, || async move { Err::<(), _>(XError::invalid("业务失败")) })
+        .await
+        .expect_err("业务失败应回滚");
+    assert!(matches!(err, contracts::TxRunError::Business { .. }));
     assert!(*rec.rolled_back.lock().expect("回滚锁应可用"));
     assert!(!*rec.committed.lock().expect("提交锁应可用"));
 }
