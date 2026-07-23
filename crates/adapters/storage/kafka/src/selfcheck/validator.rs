@@ -464,17 +464,28 @@ impl KafkaValidator {
         if let Err(e) = self.pool.ensure_topic(&topic, 1, repl).await {
             return CheckOutcome::Fail(format!("create: {:?}", e.kind()));
         }
-        // 确认出现在 metadata
-        match self.pool.client().list_topics().await {
-            Ok(topics) if topics.iter().any(|t| t.name == topic) => {}
-            Ok(_) => {
-                let _ = self.pool.delete_topic(&topic).await;
-                return CheckOutcome::Fail("create 后 list_topics 未见 topic".into());
+        // 确认出现在 metadata（远程集群可能有短暂传播延迟）
+        let mut seen = false;
+        let mut last_list_err = None;
+        for attempt in 0u32..8 {
+            if attempt > 0 {
+                tokio::time::sleep(Duration::from_millis(100 * u64::from(attempt))).await;
             }
-            Err(e) => {
-                let _ = self.pool.delete_topic(&topic).await;
-                return CheckOutcome::Fail(format!("list_topics: {e}"));
+            match self.pool.client().list_topics().await {
+                Ok(topics) if topics.iter().any(|t| t.name == topic) => {
+                    seen = true;
+                    break;
+                }
+                Ok(_) => {}
+                Err(e) => last_list_err = Some(e.to_string()),
             }
+        }
+        if !seen {
+            let _ = self.pool.delete_topic(&topic).await;
+            return CheckOutcome::Fail(match last_list_err {
+                Some(e) => format!("list_topics: {e}"),
+                None => "create 后 list_topics 未见 topic（已重试）".into(),
+            });
         }
         if let Err(e) = self.pool.delete_topic(&topic).await {
             return CheckOutcome::Fail(format!("delete: {:?}", e.kind()));
