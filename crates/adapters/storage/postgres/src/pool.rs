@@ -59,7 +59,11 @@ impl std::fmt::Debug for PostgresPool {
 impl PostgresPool {
     /// 按配置建池并验证至少能借出连接。
     pub async fn connect(config: &PostgresConfig) -> XResult<Self> {
+        #[cfg(feature = "tracing")]
+        tracing::info!(target: "postgresx", "connecting to {}:{}/{}", config.host, config.port, config.database);
         let this = Self::connect_lazy(config).await?;
+        #[cfg(feature = "tracing")]
+        tracing::info!(target: "postgresx", "connected pool_size={}", config.max_pool_size);
         // 冒烟：借一条连接跑 SELECT 1
         this.health().await?;
         Ok(this)
