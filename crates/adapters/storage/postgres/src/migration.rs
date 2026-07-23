@@ -25,7 +25,7 @@ pub const MIGRATION_LOCK_KEY1: i32 = 0x7058_5f6d; // 'px_m'
 /// advisory lock key2。
 pub const MIGRATION_LOCK_KEY2: i32 = 0x6967_7261; // 'igra'
 
-/// 单条迁移定义（仅 forward SQL）。
+/// 单条迁移定义（forward SQL + 可选 down SQL）。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Migration {
     /// 单调递增版本号（> 0）。
@@ -34,6 +34,8 @@ pub struct Migration {
     pub name: String,
     /// 完整 SQL 脚本（可多语句；由调用方保证安全）。
     pub sql: String,
+    /// 回滚 SQL（可选；`None` 表示不可回滚）。
+    pub down_sql: Option<String>,
 }
 
 impl Migration {
@@ -53,7 +55,35 @@ impl Migration {
         if name.len() > 256 {
             return Err(XError::invalid("migration name 过长（≤256）"));
         }
-        Ok(Self { version, name, sql })
+        Ok(Self { version, name, sql, down_sql: None })
+    }
+
+    /// 构造含回滚 SQL 的迁移定义。
+    pub fn with_down(
+        version: i64,
+        name: impl Into<String>,
+        sql: impl Into<String>,
+        down_sql: impl Into<String>,
+    ) -> XResult<Self> {
+        let name = name.into();
+        let sql = sql.into();
+        let down_sql = down_sql.into();
+        if version <= 0 {
+            return Err(XError::invalid("migration version 必须 > 0"));
+        }
+        if name.trim().is_empty() {
+            return Err(XError::invalid("migration name 不能为空"));
+        }
+        if sql.trim().is_empty() {
+            return Err(XError::invalid("migration sql 不能为空"));
+        }
+        if down_sql.trim().is_empty() {
+            return Err(XError::invalid("migration down_sql 不能为空（无回滚用 Migration::new）"));
+        }
+        if name.len() > 256 {
+            return Err(XError::invalid("migration name 过长（≤256）"));
+        }
+        Ok(Self { version, name, sql, down_sql: Some(down_sql) })
     }
 
     /// SQL 正文的 SHA-256 十六进制 checksum。
@@ -234,6 +264,78 @@ impl Migrator {
         Ok(status)
     }
 
+    /// 回滚最近一条已应用的迁移（需有 `down_sql`）。
+    ///
+    /// 全程持 session advisory lock；在事务中执行 down_sql 并删除历史行。
+    /// 若无已应用迁移，返回 `None`；若最近迁移无 `down_sql`，返回错误。
+    pub async fn down(&self) -> XResult<Option<i64>> {
+        let mut conn = self.pool.acquire().await?;
+        conn.execute(
+            "SELECT pg_advisory_lock($1, $2)",
+            &[&MIGRATION_LOCK_KEY1, &MIGRATION_LOCK_KEY2],
+        )
+        .await?;
+
+        let result = self.down_locked(&mut conn).await;
+
+        let _ = conn
+            .execute(
+                "SELECT pg_advisory_unlock($1, $2)",
+                &[&MIGRATION_LOCK_KEY1, &MIGRATION_LOCK_KEY2],
+            )
+            .await;
+        result
+    }
+
+    async fn down_locked(&self, conn: &mut crate::conn::PgConnection) -> XResult<Option<i64>> {
+        self.ensure_table_on_conn(conn).await?;
+
+        let list_sql = format!(
+            "SELECT version, name, checksum FROM {SCHEMA_MIGRATIONS_TABLE} ORDER BY version DESC LIMIT 1"
+        );
+        let rows = conn.query(&list_sql, &[]).await?;
+        let last_applied = match rows.first() {
+            None => return Ok(None),
+            Some(row) => {
+                let version: i64 = row.try_get(0).map_err(map_tokio_error)?;
+                version
+            }
+        };
+
+        // 从计划中查找对应迁移
+        let migration =
+            self.migrations.iter().find(|m| m.version == last_applied).ok_or_else(|| {
+                XError::conflict(format!("库中已应用版本 v{last_applied} 不在当前计划中，无法回滚"))
+            })?;
+
+        let down_sql = migration.down_sql.as_deref().ok_or_else(|| {
+            XError::invalid(format!("迁移 v{last_applied} 未提供 down_sql，无法回滚"))
+        })?;
+
+        conn.batch_execute(down_sql).await.map_err(|e| {
+            XError::internal(format!("migration v{last_applied} down 执行失败: {}", e.context()))
+        })?;
+
+        let delete = format!("DELETE FROM {SCHEMA_MIGRATIONS_TABLE} WHERE version = $1");
+        conn.execute(&delete, &[&last_applied]).await?;
+
+        Ok(Some(last_applied))
+    }
+
+    /// 在指定连接上确保历史表存在。
+    async fn ensure_table_on_conn(&self, conn: &mut crate::conn::PgConnection) -> XResult<()> {
+        let sql = format!(
+            "CREATE TABLE IF NOT EXISTS {SCHEMA_MIGRATIONS_TABLE} (\
+               version BIGINT PRIMARY KEY, \
+               name TEXT NOT NULL, \
+               checksum TEXT NOT NULL, \
+               applied_at TIMESTAMPTZ NOT NULL DEFAULT now()\
+             )"
+        );
+        conn.execute(&sql, &[]).await?;
+        Ok(())
+    }
+
     /// 显式应用全部 pending（按 version 升序）。
     ///
     /// 全程持 session advisory lock；每条 migration 在事务中执行 SQL 并写入历史行。
@@ -260,16 +362,7 @@ impl Migrator {
     }
 
     async fn apply_locked(&self, conn: &mut crate::conn::PgConnection) -> XResult<MigrationReport> {
-        // ensure table on this connection
-        let create = format!(
-            "CREATE TABLE IF NOT EXISTS {SCHEMA_MIGRATIONS_TABLE} (\
-               version BIGINT PRIMARY KEY, \
-               name TEXT NOT NULL, \
-               checksum TEXT NOT NULL, \
-               applied_at TIMESTAMPTZ NOT NULL DEFAULT now()\
-             )"
-        );
-        conn.execute(&create, &[]).await?;
+        self.ensure_table_on_conn(conn).await?;
 
         let list_sql = format!(
             "SELECT version, name, checksum FROM {SCHEMA_MIGRATIONS_TABLE} ORDER BY version ASC"
@@ -416,5 +509,21 @@ mod tests {
         let bad =
             vec![Migration::new(1, "a", "s1").unwrap(), Migration::new(1, "b", "s2").unwrap()];
         assert!(check_unique(&bad).is_err());
+    }
+
+    #[test]
+    fn with_down_constructs_migration_with_down_sql() {
+        let m =
+            Migration::with_down(1, "create", "CREATE TABLE t (id int)", "DROP TABLE t").unwrap();
+        assert_eq!(m.version, 1);
+        assert_eq!(m.name, "create");
+        assert!(m.down_sql.as_deref() == Some("DROP TABLE t"));
+        assert!(Migration::new(1, "a", "x").unwrap().down_sql.is_none());
+    }
+
+    #[test]
+    fn with_down_rejects_empty_down_sql() {
+        assert!(Migration::with_down(1, "a", "x", "").is_err());
+        assert!(Migration::with_down(1, "a", "x", "  ").is_err());
     }
 }
