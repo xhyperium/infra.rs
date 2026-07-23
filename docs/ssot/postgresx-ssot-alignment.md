@@ -6,8 +6,8 @@
 | SSOT | `.agents/ssot/adapters/storage/postgres/`（**非** `postgresx` 目录） |
 | 实现 | `crates/adapters/storage/postgres` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.11` |
-| 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地**；dev live + 远程 Require TLS + deadline + **raw fail-closed live** 已跑通；mTLS 客户端身份已落地；**未**宣称 package stable / 服务端强制 mTLS 全网 live |
+| version | `0.3.12` |
+| 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地**；dev live + 远程 Require TLS + deadline + **raw fail-closed live** 已跑通；mTLS 客户端身份已落地；**§6.1 selfcheck 自验证** Basic+RW+Full live 通过；**未**宣称 package stable / 服务端强制 mTLS 全网 live |
 
 ## 结论摘要
 
@@ -24,7 +24,8 @@
 | resiliencx | `with_retry_sync` / `with_retry_async` |
 | contracts | `TxRunner` + 生产 `Repository` |
 | 环境变量 | `FOUNDATIONX_POSTGRESX_{HOST,PORT,DATABASE,USER,PASSWORD,SSLMODE,TLS_CA_FILE,TLS_SERVER_NAME,TLS_CLIENT_CERT,TLS_CLIENT_KEY}` 或 `DATABASE_URL` |
-| live | `tests/live_postgres.rs`（12 cases，`#[ignore]`） |
+| live | `tests/live_postgres.rs`（12 cases）+ `tests/live_selfcheck.rs`（Basic/RW/Full） |
+| selfcheck | `src/selfcheck/*`（ID=`postgres.*`；crate=`postgresx`） |
 | deadline 实验 | `tests/deadline_conformance.rs` + `scripts/postgres-deadline-conformance.mjs` |
 | bench | `benches/query_hot_path.rs` |
 | 原 OBJECTIVE DEFER | **PASS**（prod Repository / SSL require 路径 / resiliencx） |
@@ -55,6 +56,7 @@
 | POSTGRESX-19 | 有界 COPY IN/OUT | PASS | `copy_in_bytes`/`copy_out_bytes` + live TEMP 往返 |
 | POSTGRESX-20 | mTLS 客户端证书配置 | PASS | cert+key 成对；离线 openssl 构建 + fail-closed；服务端强制 mTLS live 依赖部署 |
 | POSTGRESX-21 | Migrator verify/apply | PASS | advisory lock + checksum；live verify/apply/漂移 |
+| POSTGRESX-22 | LIB-SELFCHECK §6.1 自验证 | PASS | `selfcheck` catalog 11 项；live Basic+RW+Full；replication_lag 默认可 Skip |
 
 ## 本轮验证（2026-07-23）
 
@@ -63,15 +65,11 @@
 node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx-live.env
 set -a; source /tmp/foundationx-live.env; set +a
 
-RUSTC_WRAPPER= cargo test -p postgresx --all-targets
-RUSTC_WRAPPER= cargo test -p postgresx --test live_postgres -- --ignored --nocapture
+RUSTC_WRAPPER= cargo test -p postgresx --lib
+RUSTC_WRAPPER= cargo test -p postgresx --test live_selfcheck -- --ignored --test-threads=1
 RUSTC_WRAPPER= cargo clippy -p postgresx --all-targets -- -D warnings
 cargo fmt --all --check
 node scripts/quality-gates/check-workspace-deps.mjs
-POSTGRESX_BENCH_ITERS=200 cargo bench -p postgresx --bench query_hot_path
-node scripts/postgres-deadline-conformance.mjs
-cmp .agents/ssot/adapters/storage/postgres/spec/spec.md \
-  .agents/ssot/adapters/storage/postgres/spec/xhyper-postgresx-complete-spec.md
 ```
 
 ## 相关

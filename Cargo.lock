@@ -1930,7 +1930,7 @@ dependencies = [
 
 [[package]]
 name = "postgresx"
-version = "0.3.11"
+version = "0.3.12"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1942,6 +1942,8 @@ dependencies = [
  "rustls",
  "rustls-pemfile",
  "rustls-pki-types",
+ "serde",
+ "serde_json",
  "sha2 0.10.9",
  "tokio",
  "tokio-postgres",

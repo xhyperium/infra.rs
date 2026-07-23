@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-23T06:55:33Z
+> **生成时间**：2026-07-23T07:10:48Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -60,7 +60,7 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `kafkax` | `crates/adapters/storage/kafka` | adapter | 7/7 | ✅ 6i+u | 4338 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/kafkax-ssot-alignment.md) |
 | `natsx` | `crates/adapters/storage/nats` | adapter | 7/7 | ✅ 3i+u | 2017 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/natsx-ssot-alignment.md) |
 | `ossx` | `crates/adapters/storage/oss` | adapter | 7/7 | ✅ 2i+u | 2607 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/ossx-ssot-alignment.md) |
-| `postgresx` | `crates/adapters/storage/postgres` | adapter | 7/7 | ✅ 2i+u | 4112 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/postgresx-ssot-alignment.md) |
+| `postgresx` | `crates/adapters/storage/postgres` | adapter | 7/7 | ✅ 3i+u | 5564 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/postgresx-ssot-alignment.md) |
 | `redisx` | `crates/adapters/storage/redis` | adapter | 7/7 | ✅ 6i+u | 5152 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/redisx-ssot-alignment.md) |
 | `taosx` | `crates/adapters/storage/taos` | adapter | 7/7 | ✅ 3i+u | 3723 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/taosx-ssot-alignment.md) |
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.12] — 2026-07-23
+
+### Added
+
+- `selfcheck` 模块：LIB-SELFCHECK-SPEC §6.1 `postgres.*` 检查目录（Basic/ReadWrite/Full）
+- 四态报告 `CheckStatus` / `ValidationReport`；级别短路（basic 全失败 → rw/full Skipped）
+- `PostgresValidator` / `Validatable`；资源名 `_self_check_{token}`；运行后 DROP
+- `PostgresPool::connect_lazy`（无 health 冒烟，供短路单测）
+- live：`tests/live_selfcheck.rs`；example：`selfcheck_report`
+
+### Boundaries
+
+- 跨模块 `SelfValidator` 调度器 / HTTP 探针 / Prometheus 导出 **未**实现
+- `replication_lag` 默认 `replica_check=false` → Skipped
+- package stable 仍 OPEN
+
 ## [0.3.11] — 2026-07-23
 
 ### Added
