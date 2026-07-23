@@ -214,7 +214,7 @@ scripts/live/export-foundationx-env.sh --env dev -- \
 
 | package | 对齐文档 | SSOT |
 |---------|----------|------|
-    ├── redis/       # → crates/adapters/storage/redis      · package redisx
+| redisx | [redisx-ssot-alignment.md](./redisx-ssot-alignment.md) | `.agents/ssot/adapters/storage/redis/` |
 | postgresx | [postgresx-ssot-alignment.md](./postgresx-ssot-alignment.md) | `.agents/ssot/adapters/storage/postgres/` |
 | kafkax | [kafkax-ssot-alignment.md](./kafkax-ssot-alignment.md) | `.agents/ssot/adapters/storage/kafka/` |
 | natsx | [natsx-ssot-alignment.md](./natsx-ssot-alignment.md) | `.agents/ssot/adapters/storage/nats/` |
