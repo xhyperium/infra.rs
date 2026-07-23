@@ -118,8 +118,17 @@ pub async fn kv_roundtrip(store: &dyn KeyValueStore, key: &str, val: &[u8]) -> X
     }
 }
 
-/// Bus live 辅助：publish 后 subscribe 至少取一条（若流立即结束则 Ok 仍算路径走过）。
+/// 兼容入口：只执行一次 producer `publish`，不证明 subscribe、ack 或 E2E 交付。
 pub async fn bus_publish(bus: &dyn EventBus, topic: &str, payload: Bytes) -> XResult<()> {
+    publish_without_delivery_attestation(bus, topic, payload).await
+}
+
+/// 只执行一次 producer `publish`；成功不构成消费、确认或 E2E 交付证明。
+pub async fn publish_without_delivery_attestation(
+    bus: &dyn EventBus,
+    topic: &str,
+    payload: Bytes,
+) -> XResult<()> {
     bus.publish(topic, payload).await
 }
 
@@ -181,6 +190,19 @@ pub async fn venue_health(
 #[deprecated(note = "独立 KV 与 TxContext 不具备原子绑定；仅保留兼容")]
 #[allow(deprecated, reason = "兼容函数必须保持旧 run_tx_commit_on_ok 语义")]
 pub async fn tx_kv_set(
+    runner: &dyn TxRunner,
+    store: Arc<dyn KeyValueStore>,
+    key: String,
+    val: Vec<u8>,
+) -> XResult<()> {
+    kv_set_then_commit_separate_resources(runner, store, key, val).await
+}
+
+/// 先执行独立 KV set，再提交 TxContext；名称明确两者没有共同事务绑定。
+///
+/// KV 失败会触发 TxContext rollback；commit 失败不会自动撤销已经完成的 KV set。
+#[allow(deprecated, reason = "实现层调用旧 run_tx_commit_on_ok 保持兼容语义")]
+pub async fn kv_set_then_commit_separate_resources(
     runner: &dyn TxRunner,
     store: Arc<dyn KeyValueStore>,
     key: String,

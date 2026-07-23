@@ -18,12 +18,18 @@ pub enum TlsMode {
 }
 
 /// TLS 相关客户端配置。
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TlsConfig {
     /// 模式。
     pub mode: TlsMode,
-    /// 是否启用 SNI（默认 true；预留字段）。
+    /// 是否启用 SNI（默认 true）；当前设为 false 会被驱动构造明确拒绝。
     pub sni: bool,
+}
+
+impl Default for TlsConfig {
+    fn default() -> Self {
+        Self::system_roots()
+    }
 }
 
 impl TlsConfig {
@@ -60,6 +66,7 @@ mod tests {
     fn tls_defaults() {
         let d = TlsConfig::default();
         assert_eq!(d.mode, TlsMode::SystemRoots);
+        assert!(d.sni);
         assert!(!d.is_insecure());
         assert!(TlsConfig::system_roots().sni);
         assert!(TlsConfig::insecure_dev_only().is_insecure());

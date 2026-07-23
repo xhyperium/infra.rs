@@ -1,7 +1,11 @@
-# transport — Tasks
+# TASKS-TRANSPORT-MAINT-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 可执行任务清单待战役填充。
+- [x] 审计 `0.1.2` 实现与陈旧 SSOT。
+- [x] T1 HTTP chunk 累计限额。
+- [x] T2 WS 解码前 frame/message 限额。
+- [x] T3 URL Debug 脱敏与 SNI fail-closed。
+- [x] T4 Pool 校验与 RAII lease。
+- [x] T5 Retry-After 两格式。
+- [x] T6 版本、文档、回归、证据（release 残余门禁见 evidence）。
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+此清单是已批准 Goal 的审计制品；任务状态仍由 Beads `infra-2d9.8` 管理。

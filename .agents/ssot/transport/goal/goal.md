@@ -1,7 +1,7 @@
-# transport — Goal
+# GOAL-TRANSPORT-MAINT-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> Source Goal 待战役定义；无证据不得宣称 In Progress 闭合。
+状态：IN PROGRESS（2026-07-23）
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+在不扩大 transportx 职责的前提下，关闭六个可验证安全缺口：HTTP 流式限额、WS 解码前限额、URL Debug 脱敏、未接线 SNI fail-closed、有界池 RAII 回收、RFC 9110 Retry-After。目标版本 `0.1.3`。
+
+验收：公共 seam 红绿证据、双镜像一致、scoped test/clippy/doc、binancex/okxx 回归通过；M3、企业 PKI、完整业务 live 继续 NO-GO。

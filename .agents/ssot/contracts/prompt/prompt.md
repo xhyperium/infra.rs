@@ -1,7 +1,3 @@
-# contracts — Prompt
+# PROMPT-CONTRACTS-MAINT-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 下一刀 Context Package 待填充。
-
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+只修改 contracts 域及获准版本消费者；禁止改删 trait 方法、禁止 backend 实现与 contract-testkit 源码。公共 seam 为 live helper/validation。先红后绿，任何 profile 成功都不得表述为 readiness attestation。

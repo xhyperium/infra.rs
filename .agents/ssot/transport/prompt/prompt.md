@@ -1,7 +1,3 @@
-# transport — Prompt
+# PROMPT-TRANSPORT-MAINT-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 下一刀 Context Package 待填充。
-
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+实现时只修改 transport 域及获准版本消费者；公共 seam 为 `HttpDriver`、`WsConnector`、`HttpClientPool`。逐 seam 先红后绿，不将 loopback 证据扩大为 M3/企业 PKI/业务 live；禁止提交、推送或修改其他 worktree。

@@ -1,7 +1,8 @@
-# contracts — Plan
+# PLAN-CONTRACTS-MAINT-003
 
-> **状态**：布局占位 · **not started / not claimed Done**  
-> 执行计划入口；既有 plan 战役文件若已存在则保留并列。
+1. 固化 active spec、Additive Only 与 NO-GO。
+2. 先写公共 live helper/validation 红灯，再最小实现。
+3. 同步版本、直接消费者、README/API/CHANGELOG/release/alignment。
+4. 检查 contracts、contract-testkit 与全部生产消费者。
 
-本文件由 kernel 结构对齐迁移创建，**不**表示战役完成或层验收通过。
-有实质战役内容时再改写本入口；禁止空目录批量标 DONE。
+若兼容性 ratchet 显示 removal/signature change，则发布 BLOCKED；不以 bump 消解 breaking。
