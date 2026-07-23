@@ -18,6 +18,7 @@
 - `JobRunner`：宿主显式调用 `tick(now_ms)` 的进程内 deterministic seam。
 
 本 crate 不是后台 timer、分布式 scheduler 或持久化作业平台。登记 ID 不等于执行 Job。
+`JobRunner::tick` 是宿主驱动的显式入口；本 crate 不提供分布式调度。
 
 ## 2. Scheduler interface
 

@@ -4,7 +4,7 @@
 |---|---|
 | Baseline | `55433a2ec3567624c5cd98601b9f4581a7e69cb6` |
 | Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ dual mirror |
-| Crate | `crates/schedulex` · package/lib `schedulex` · 当前 v0.1.1 |
+| Crate | `crates/schedulex` · package/lib `schedulex` · 当前 v0.1.2 |
 | 范围 | Scheduler registry + 独立 explicit tick JobRunner |
 
 ## 合同矩阵
@@ -13,7 +13,7 @@
 |---|---|---|
 | std-only / default=[] | Cargo 无生产依赖 | PASS |
 | Scheduler registry | 登记、取消、查询、集合运算 | PASS |
-| Job/Schedule/JobRunner | 进程内显式 tick | PASS |
+| Job/Schedule/JobRunner | `JobRunner::tick` 为进程内宿主驱动入口 | PASS |
 | add 输入校验 | ID + Schedule 插入前校验 | PASS |
 | add 失败原子性 | 无效替换保留原 callback/schedule/运行与取消状态 | PASS |
 | deterministic | due 与 metadata 按 Job ID 排序 | PASS |
@@ -23,8 +23,8 @@
 | Job Err | 有序记录、推进并继续 | PASS |
 | panic | 传播，中止当前 tick | PASS |
 | 中文错误 | cron/调度详情中文 | PASS |
-| 后台/持久化/分布式 | 不实现 | NO-GO |
-| 根 `AGENTS.md` 身份 | 父 `.9` writer 已拥有同一 hunk，待其修正后 rebase | BLOCKED |
+| 后台/持久化/分布式调度 | 不实现 | NO-GO |
+| 根 `AGENTS.md` 身份 | 已声明 registry + 独立显式 tick JobRunner | PASS |
 
 ## 误用红线
 

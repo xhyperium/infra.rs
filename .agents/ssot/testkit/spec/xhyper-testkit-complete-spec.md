@@ -19,8 +19,8 @@ Active Path:      .agents/ssot/testkit/spec/spec.md
 Ship:             main@testkit-v0.1.2 · PR #247 #254 #255
 ```
 
-> **Status**：**Stable**（2026-07-14 ship）。实现 W0–W6 已合入 `main`（testkit **0.1.2**，PR #247 #254 #255）。  
-> 执行计划 / Tasks / 10x verdict 见模块 README 与 `plan/`（路径从模块根解析）。  
+> **Status**：**Stable**（2026-07-14 ship）。实现 W0–W6 已合入 `main`（testkit **0.1.2**，PR #247 #254 #255）。
+> 执行计划 / Tasks / 10x verdict 见模块 README 与 `plan/`（路径从模块根解析）。
 > **Stable** 不等于 §24 全闭合以外的额外保证；residual 见 §24.0 与 `plan/residual-open.md`。
 
 
@@ -1590,8 +1590,8 @@ contract-testkit 宏如果存在，必须：
 
 # 15. Archgate 规则（infra.rs OOS）
 
-> **infra.rs OOS**：本仓**不移植** `tools/archgate` / `.architecture`。  
-> 下列 TESTKIT-* 规则 ID 仅为 **历史 monorepo 参考**；**不**构成本仓强制验收条件，也**不**要求 `cargo run -p archgate`。  
+> **infra.rs OOS**：本仓**不移植** `tools/archgate` / `.architecture`。
+> 下列 TESTKIT-* 规则 ID 仅为 **历史 monorepo 参考**；**不**构成本仓强制验收条件，也**不**要求 `cargo run -p archgate`。
 > 可选残留机控（非 archgate）：结构扫描 / `lint-deps` / `test-graph-check`（若本仓落地）/ CI job / public-api 快照。
 
 历史规则 ID 参考（仅枚举，不强制实现）：
