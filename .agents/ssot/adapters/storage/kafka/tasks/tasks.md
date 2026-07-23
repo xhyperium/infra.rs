@@ -50,3 +50,15 @@
 - [x] 单测严格 timeout/cancel 计数（禁止仅 record_*）
 - [x] 集成 strict cancelled|timeouts（禁止 OR published|failed）
 - [x] SSOT / adapters-ssot / matrix S-20 对齐 0.3.9
+
+## 2026-07-23 0.4.0 里程碑闭合
+
+- [x] Cargo.toml 0.3.9 → 0.4.0
+- [x] CHANGELOG + releases/0.4.0.md
+- [x] SSOT domain/alignment version 同步
+- [x] 质量门禁通过（test + clippy + check-versions）
+- [ ] package stable 证据包（若 Lead 启动）
+- [ ] group / rebalance / auto-reconnect（需驱动能力变更）
+- [ ] native EOS / SCRAM / OAuth
+- [ ] Part2 量化栈（**OOS**）
+- [ ] 7×24 默认 soak 门禁

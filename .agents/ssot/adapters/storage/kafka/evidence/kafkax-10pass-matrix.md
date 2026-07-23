@@ -81,3 +81,14 @@
 | produce cancel/timeout 计数 | PASS（shipped `limited_produce_await` 两臂严格递增） |
 | 集成 strict cancelled\|timeouts | PASS（禁止 OR published\|failed） |
 | NO-GO 表 | 不变 CLOSED |
+
+## 增量 0.4.0（里程碑闭合）
+
+| 条款 | 状态 |
+|------|------|
+| 可交付面 | CLOSED（十轮全量证据） |
+| 不可交付面 | CLOSED（8 NO-GO + 2 OOS 不变） |
+| NO-GO 表 | 不变 CLOSED |
+| version | 0.4.0 |
+
+0.4.0 不引入新功能；是 0.3.x 九轮 PATCH 迭代的质量里程碑。

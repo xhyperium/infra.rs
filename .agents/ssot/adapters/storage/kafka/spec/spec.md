@@ -1,6 +1,6 @@
 # kafkax 实现规范
 
-状态：当前 `0.3.4` 实现合同（纯 Rust `rskafka 0.6` 默认真实路径；broker conformance 为显式运行的 `#[ignore]` 测试）。**未宣称 package stable。**
+状态：当前 `0.4.0` 实现合同（纯 Rust `rskafka 0.6` 默认真实路径；broker conformance 为显式运行的 `#[ignore]` 测试）。**未宣称 package stable。**
 
 ## 0. 权威与范围
 
