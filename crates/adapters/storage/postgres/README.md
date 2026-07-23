@@ -1,8 +1,19 @@
 # postgresx
 
 Postgres 存储适配：**生产连接池 / 参数化 SQL 为默认导出**。
-当前 workspace 版本为 `0.3.13`（foundation DoD 闭合）；`publish = false`，
-**未宣称** package stable / crates.io。
+当前 workspace 版本为 `0.3.13`（foundation DoD 闭合）。
+
+| 状态 | 值 |
+|------|-----|
+| publish | `false` |
+| crates.io | 未发布 |
+| package stable | 未宣称 |
+| 质量门禁 | build ✅ · 66 tests ✅ · clippy ✅ · fmt ✅ |
+| live 测试 (ignored) | ✅ 12/12 passed (凭据 `scripts/live/export-foundationx-env.sh`) |
+| crates.io 发布路径 | 📋 [release.md](../../../.agents/ssot/adapters/storage/postgres/release/release.md) 已文档化 |
+| internal readiness | P0 production entry ✅ (foundation DoD closed) |
+
+> **发布就绪**: 内部 P0 可用，质量门禁全通过。crates.io 需 rename → `xhyper-postgresx` + `publish = true`。
 
 | 面 | 说明 |
 |----|------|
