@@ -203,7 +203,8 @@ mod tests {
     use crate::pool::RedisPool;
     use kernel::ErrorKind;
     use std::sync::Arc;
-    use std::sync::atomic::AtomicUsize;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::time::Duration;
 
     #[tokio::test]
     async fn xadd_empty_fields_invalid() {
@@ -226,5 +227,21 @@ mod tests {
             err.kind(),
             ErrorKind::Transient | ErrorKind::Unavailable | ErrorKind::Internal
         ));
+    }
+
+    #[tokio::test]
+    async fn xread_block_hits_pool_budget_path() {
+        let calls = Arc::new(AtomicUsize::new(0));
+        let client = RedisPool::test_probe(calls.clone()).client();
+        // 阻塞读走 with_conn_budget → probe driver 被调用后返回错误
+        let err = client
+            .xread_block("s", "0-0", Duration::from_millis(50), Some(1))
+            .await
+            .expect_err("probe");
+        assert!(matches!(
+            err.kind(),
+            ErrorKind::Transient | ErrorKind::Unavailable | ErrorKind::Internal
+        ));
+        assert!(calls.load(Ordering::SeqCst) >= 1, "xread_block 必须进入池连接路径");
     }
 }

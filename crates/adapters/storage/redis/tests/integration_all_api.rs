@@ -366,6 +366,12 @@ async fn it_streams_and_multi_exec() {
     assert!(range.iter().any(|e| e.id == id));
     let read = client.xread(&stream, "0-0", Some(10)).await.expect("xread");
     assert!(!read.is_empty());
+    // XREAD BLOCK：从 0-0 应立即返回已有条目（block 预算走 with_conn_budget）
+    let blocked = client
+        .xread_block(&stream, "0-0", Duration::from_millis(200), Some(10))
+        .await
+        .expect("xread_block");
+    assert!(!blocked.is_empty(), "xread_block should return existing stream entries");
     assert_eq!(client.xdel(&stream, &[&id]).await.expect("xdel"), 1);
 
     let vals = client
@@ -437,6 +443,9 @@ async fn it_config_hardenings_and_topology_probe() {
     assert!(pool.liveness());
     pool.ping().await.expect("ping");
     assert_eq!(pool.stats().open, 8);
+    assert_eq!(pool.command_lanes(), 8);
+    assert_eq!(pool.reconnect_max_delay(), Duration::from_secs(2));
+    assert_eq!(pool.tcp_keepalive(), Some(Duration::from_secs(30)));
     let _ = pool.close(Duration::from_secs(2)).await;
 
     // 拓扑探测：无 Cluster/Sentinel/TLS env 时诚实 soft-skip（不伪绿）

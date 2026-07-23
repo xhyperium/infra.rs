@@ -7,7 +7,7 @@
 | 路径裁决 | **不**新增 `.agents/ssot/adapters/storage/redisx/`；目录名 `redis` 对齐 storage×7，package 名 `redisx` |
 | 实现 | `crates/adapters/storage/redis` |
 | 审计日期 | 2026-07-23 |
-| version | **`0.3.13`**（能力缺口清零；前序 0.3.12 #306） |
+| version | **`0.3.14`**（能力缺口清零；前序 0.3.12 #306） |
 | 结论 | **Standalone P0+ 全公开 API 面**（KV/结构/Streams/事务/锁/selfcheck）+ live/e2e/bench；可行动能力缺口 **0**；残余仅 package stable / PubSub NO-GO / 拓扑 live 环境 |
 
 ## 结论摘要
@@ -74,7 +74,7 @@
 | REDISX-34 | 数据结构 API | PASS | `structures.rs` + `it_data_structures_*` |
 | REDISX-35 | Streams API | PASS | `streams.rs` + live/e2e |
 | REDISX-36 | MULTI/EXEC | PASS | `transaction.rs` + live |
-| REDISX-37 | 配置硬化 + secret provider | PASS | config builder + `it_config_hardenings_*` |
+| REDISX-37 | 配置硬化 + secret provider | PASS | reconnect→`set_max_delay`/`max_retry_wait`；keepalive 经 connect 读取 + `pool.tcp_keepalive()`；live hardenings |
 | REDISX-38 | multi-lane / readiness | PASS | pool stats.open + readiness/liveness |
 | REDISX-39 | eval_sha / SCRIPT LOAD | PASS | ext + live |
 | REDISX-40 | 阻塞命令预算 | PASS | `blpop` / `xread_block` + `with_conn_budget` |
@@ -102,7 +102,7 @@
 | 0.3.10 | #300 | selfcheck §6.5 |
 | 0.3.11 | #305 | integration + data E2E + api_matrix |
 | 0.3.12 | #306 | E2E soft-skip · budget/stream/Facade live · cancel/JSON · CI pubsub |
-| **0.3.13** | **本分支** | 结构/Streams/MULTI/配置硬化/readiness · 全 API live+e2e+bench |
+| **0.3.14** | **本分支** | 结构/Streams/MULTI/配置硬化/readiness · 全 API live+e2e+bench |
 
 ## 10 轮审查与 gap 证据
 

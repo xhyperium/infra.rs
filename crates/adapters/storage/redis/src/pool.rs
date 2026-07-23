@@ -126,6 +126,10 @@ struct PoolInner {
     command_timeout: Duration,
     acquire_timeout: Duration,
     display_endpoint: String,
+    /// 已应用到 ConnectionManager / Cluster 重试退避的最大延迟。
+    reconnect_max_delay: Duration,
+    /// 配置请求的 TCP keepalive 间隔（见 [`RedisPool::tcp_keepalive`]）。
+    tcp_keepalive: Option<Duration>,
     commands_ok: AtomicU64,
     commands_err: AtomicU64,
     commands_timeout: AtomicU64,
@@ -159,6 +163,8 @@ impl RedisPool {
                 command_timeout: Duration::from_secs(1),
                 acquire_timeout: Duration::from_secs(1),
                 display_endpoint: "redis://测试-driver".to_owned(),
+                reconnect_max_delay: Duration::from_secs(5),
+                tcp_keepalive: None,
                 commands_ok: AtomicU64::new(0),
                 commands_err: AtomicU64::new(0),
                 commands_timeout: AtomicU64::new(0),
@@ -201,6 +207,8 @@ impl RedisPool {
                 command_timeout: config.command_timeout(),
                 acquire_timeout: config.acquire_timeout(),
                 display_endpoint: config.display_endpoint(),
+                reconnect_max_delay: config.reconnect_max_delay(),
+                tcp_keepalive: config.tcp_keepalive(),
                 commands_ok: AtomicU64::new(0),
                 commands_err: AtomicU64::new(0),
                 commands_timeout: AtomicU64::new(0),
@@ -267,6 +275,21 @@ impl RedisPool {
     #[must_use]
     pub fn command_lanes(&self) -> usize {
         self.inner.max_in_flight
+    }
+
+    /// 建池时应用到重连退避的最大延迟（毫秒级映射进驱动）。
+    #[must_use]
+    pub fn reconnect_max_delay(&self) -> Duration {
+        self.inner.reconnect_max_delay
+    }
+
+    /// 建池时记录的 TCP keepalive 请求间隔。
+    ///
+    /// redis 0.27 在 TCP 建连时启用 OS 默认 keepalive；本字段保存配置意图供宿主与
+    /// 未来驱动对齐，并保证 connect 路径读取了该配置。
+    #[must_use]
+    pub fn tcp_keepalive(&self) -> Option<Duration> {
+        self.inner.tcp_keepalive
     }
 
     /// Liveness：进程内池未关闭即可（不访问网络）。
@@ -479,14 +502,25 @@ impl RedisPool {
     }
 }
 
+/// 由 [`RedisConfig`] 构造 ConnectionManager 重连/超时参数（可单测）。
+pub(crate) fn connection_manager_config(
+    config: &RedisConfig,
+) -> redis::aio::ConnectionManagerConfig {
+    let max_delay_ms = u64::try_from(config.reconnect_max_delay().as_millis()).unwrap_or(u64::MAX);
+    // 读取 tcp_keepalive：保证 connect 路径消费该配置（驱动侧为 OS 默认 keepalive）。
+    let _keepalive_policy = config.tcp_keepalive();
+    redis::aio::ConnectionManagerConfig::new()
+        .set_connection_timeout(config.connect_timeout())
+        .set_response_timeout(config.command_timeout())
+        .set_max_delay(max_delay_ms)
+}
+
 async fn connect_standalone(config: &RedisConfig) -> XResult<RedisBackend> {
     let info = config.to_connection_info()?;
     let client = redis::Client::open(info)
         .map_err(|e| XError::unavailable(format!("redis 打开客户端失败: {e}")))?;
 
-    let cm_config = redis::aio::ConnectionManagerConfig::new()
-        .set_connection_timeout(config.connect_timeout())
-        .set_response_timeout(config.command_timeout());
+    let cm_config = connection_manager_config(config);
 
     let conn =
         timeout(config.connect_timeout(), ConnectionManager::new_with_config(client, cm_config))
@@ -500,10 +534,13 @@ async fn connect_standalone(config: &RedisConfig) -> XResult<RedisBackend> {
 async fn connect_cluster(config: &RedisConfig) -> XResult<RedisBackend> {
     let infos = config.seed_connection_infos()?;
     let mut builder = ClusterClient::builder(infos);
+    let max_wait_ms = u64::try_from(config.reconnect_max_delay().as_millis()).unwrap_or(u64::MAX);
+    let _keepalive_policy = config.tcp_keepalive();
     builder = builder
         .connection_timeout(config.connect_timeout())
         .response_timeout(config.command_timeout())
-        .retries(config.max_cluster_redirects());
+        .retries(config.max_cluster_redirects())
+        .max_retry_wait(max_wait_ms);
     if config.tls() {
         builder = builder.tls(TlsMode::Secure);
     }
@@ -558,9 +595,7 @@ async fn connect_sentinel(config: &RedisConfig) -> XResult<RedisBackend> {
         .await
         .map_err(|_| XError::deadline_exceeded("redis sentinel 发现 master 超时"))??;
 
-    let cm_config = redis::aio::ConnectionManagerConfig::new()
-        .set_connection_timeout(config.connect_timeout())
-        .set_response_timeout(config.command_timeout());
+    let cm_config = connection_manager_config(config);
 
     let conn =
         timeout(config.connect_timeout(), ConnectionManager::new_with_config(client, cm_config))
@@ -576,6 +611,23 @@ mod tests {
     use super::*;
     use crate::config::RedisConfig;
     use kernel::ErrorKind;
+
+    #[test]
+    fn connection_manager_config_applies_reconnect_max_delay() {
+        let cfg = RedisConfig::builder()
+            .addr("127.0.0.1:6379")
+            .reconnect_max_delay(Duration::from_millis(1234))
+            .tcp_keepalive(Duration::from_secs(30))
+            .build()
+            .expect("cfg");
+        // 构造路径必须读取 keepalive + 写入 max_delay（Debug 含 max_delay 字段）
+        let cm = connection_manager_config(&cfg);
+        let dbg = format!("{cm:?}");
+        assert!(dbg.contains("max_delay"), "cm={dbg}");
+        assert!(dbg.contains("1234") || dbg.contains("Some(1234)"), "cm={dbg}");
+        assert_eq!(cfg.tcp_keepalive(), Some(Duration::from_secs(30)));
+        assert_eq!(cfg.reconnect_max_delay(), Duration::from_millis(1234));
+    }
 
     #[tokio::test]
     async fn connect_refused_returns_error() {

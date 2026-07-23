@@ -11,9 +11,9 @@
 
 | 级别 | 做法 |
 |------|------|
-| liveness | 进程 / 任务存活（应用侧） |
-| readiness | `pool.ping()` 成功且 `stats().open == 1` |
-| diagnostics | `stats()` + `metrics_snapshot()` + 脱敏 `endpoint()`（低频） |
+| liveness | `pool.liveness()`（未关闭）或进程 / 任务存活 |
+| readiness | `pool.readiness().await`（内部 `ping`）成功；`stats().open == command_lanes()`（逻辑 lane 数 = `max_in_flight`，关闭时为 0） |
+| diagnostics | `stats()` + `metrics_snapshot()` + 脱敏 `endpoint()` + `reconnect_max_delay()` / `tcp_keepalive()`（低频） |
 
 ## 指标（0.3.9）
 
