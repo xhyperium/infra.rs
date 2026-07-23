@@ -19,7 +19,7 @@ contracts = { path = "../../contracts", version = "0.1.4" }
 decimalx = { path = "../../types/decimal", version = "0.1.2" }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-kernel = { path = "../../kernel", version = "0.3.1" }
+kernel = { package = "xhyper-kernel", path = "../../kernel", version = "0.3.1" }
 tokio = { workspace = true }
 
 [dev-dependencies]

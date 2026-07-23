@@ -22,7 +22,7 @@ contracts = { path = "../../../contracts", version = "0.1.4" }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
 hmac = { workspace = true }
-kernel = { path = "../../../kernel", version = "0.3.1" }
+kernel = { package = "xhyper-kernel", path = "../../../kernel", version = "0.3.1" }
 reqwest = { workspace = true }
 resiliencx = { path = "../../../resiliencx", version = "0.1.2", features = [
   "tokio",

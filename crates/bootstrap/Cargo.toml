@@ -12,7 +12,7 @@ publish = false
 name = "bootstrap"
 
 [dependencies]
-kernel = { path = "../kernel", version = "0.3.1" }
+kernel = { package = "xhyper-kernel", path = "../kernel", version = "0.3.1" }
 # ADR-005：Instrumentation 契约权威在 contracts；默认实现来自 observex
 contracts = { path = "../contracts", version = "0.1.4" }
 observex = { path = "../observex", version = "0.1.2" }
