@@ -107,7 +107,6 @@ pool.query_one("SELECT * FROM t WHERE id = $1", &[&id]).await?;
 // pool.query_one(&format!("SELECT * FROM t WHERE id = {id}"), &[]).await?;
 ```
 
-
 ## COPY（有界）
 
 ```rust
