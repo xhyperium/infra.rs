@@ -60,6 +60,7 @@ async fn drop_table_silently(pool: &ClickHousePool, table: &str) {
 // 1. 多种 JSON 类型往返
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn roundtrip_insert_query_multiple_types() {
     let pool = connect_integration().await;
@@ -118,6 +119,7 @@ async fn roundtrip_insert_query_multiple_types() {
 // 2. Batch 分块验证 — 50 行每 chunk=10 → 5 次独立 POST
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn batch_insert_chunk_verification() {
     // 一个接受恰好 5 次 POST 的计数服务端
@@ -174,6 +176,7 @@ async fn batch_insert_chunk_verification() {
 // 3. analytics_sink 完整路径
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn analytics_sink_full_path() {
     let pool = connect_integration().await;
@@ -220,6 +223,7 @@ async fn analytics_sink_full_path() {
 // 4. 双表 + close + reconnect 数据持久化
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn multi_table_and_persistence_across_reconnect() {
     let pool = connect_integration().await;
@@ -273,6 +277,7 @@ async fn multi_table_and_persistence_across_reconnect() {
 // 5. 大批量插入 (1000+ 行) 抽样校验
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn large_batch_insert_and_verify() {
     let pool = connect_integration().await;
@@ -315,6 +320,7 @@ async fn large_batch_insert_and_verify() {
 // 6. 错误恢复：合法插入后非法插入，已有数据不受影响
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_recovery_partial_success() {
     let pool = connect_integration().await;
@@ -355,6 +361,7 @@ async fn error_recovery_partial_success() {
 // 7. close 后拒绝所有新请求 + stats 反映已关闭
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn close_rejects_new_requests_and_stats_closed() {
     let pool = connect_integration().await;

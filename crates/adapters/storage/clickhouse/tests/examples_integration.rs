@@ -23,6 +23,7 @@ fn live_cfg(database: &str) -> ClickHouseConfig {
 
 // ============ 1. DDL Schema 验证 ============
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn ddl_schema_creates_all_tables_and_columns() {
     let pool = ClickHousePool::connect(live_cfg(BINANCE_DB)).await.expect("connect");
@@ -61,6 +62,7 @@ async fn ddl_schema_creates_all_tables_and_columns() {
 
 // ============ 2. 导入数据验证 ============
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn imported_data_count_matches_expected() {
     let pool = ClickHousePool::connect(live_cfg(BINANCE_DB)).await.expect("connect");
@@ -105,6 +107,7 @@ async fn imported_data_count_matches_expected() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn imported_data_price_sanity() {
     let pool = ClickHousePool::connect(live_cfg(BINANCE_DB)).await.expect("connect");
@@ -139,6 +142,7 @@ async fn imported_data_price_sanity() {
 
 // ============ 3. CRUD 操作验证 ============
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn crud_read_queries_return_data() {
     let pool = ClickHousePool::connect(live_cfg(BINANCE_DB)).await.expect("connect");
@@ -163,6 +167,7 @@ async fn crud_read_queries_return_data() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn crud_create_insert_and_verify() {
     let pool = ClickHousePool::connect(live_cfg("default")).await.expect("connect");
@@ -190,6 +195,7 @@ async fn crud_create_insert_and_verify() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn crud_delete_via_alter_table() {
     // 确保 TEST_DB 和表存在 (自给自足, 不依赖其他测试执行顺序)
@@ -222,6 +228,7 @@ async fn crud_delete_via_alter_table() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn crud_cleanup_test_tables() {
     // 确保 TEST_DB 存在 (自给自足)
@@ -234,6 +241,7 @@ async fn crud_cleanup_test_tables() {
 
 // ============ 4. 分析查询验证 ============
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn analytics_ohlcv_aggregation_produces_correct_bars() {
     let pool = ClickHousePool::connect(live_cfg(BINANCE_DB)).await.expect("connect");
@@ -256,6 +264,7 @@ async fn analytics_ohlcv_aggregation_produces_correct_bars() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn analytics_sma_produces_valid_values() {
     let pool = ClickHousePool::connect(live_cfg(BINANCE_DB)).await.expect("connect");
@@ -275,6 +284,7 @@ async fn analytics_sma_produces_valid_values() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn analytics_btc_eth_correlation_is_valid() {
     let pool = ClickHousePool::connect(live_cfg(BINANCE_DB)).await.expect("connect");
@@ -297,6 +307,7 @@ async fn analytics_btc_eth_correlation_is_valid() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn analytics_volume_top_returns_results() {
     let pool = ClickHousePool::connect(live_cfg(BINANCE_DB)).await.expect("connect");
@@ -320,6 +331,7 @@ async fn analytics_volume_top_returns_results() {
 
 // ============ 5. 导入示例边界测试 ============
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn import_handles_empty_csv_gracefully() {
     let pool = ClickHousePool::connect(live_cfg(BINANCE_DB)).await.expect("connect");
@@ -343,6 +355,7 @@ async fn import_handles_empty_csv_gracefully() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn import_handles_invalid_symbol_fast_fail() {
     let pool = ClickHousePool::connect(live_cfg(BINANCE_DB)).await.expect("connect");

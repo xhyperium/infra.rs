@@ -36,6 +36,7 @@ async fn setup_db() -> ClickHousePool {
 
 // ── 测试 1：非法端口返回 Unavailable/DeadlineExceeded ──────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn connect_invalid_port_returns_error() {
     let cfg = ClickHouseConfig {
@@ -60,6 +61,7 @@ async fn connect_invalid_port_returns_error() {
 
 // ── 测试 2：非法 host 返回 Unavailable/DeadlineExceeded/Transient ──
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn connect_invalid_host_returns_error() {
     let cfg = ClickHouseConfig {
@@ -91,6 +93,7 @@ async fn connect_invalid_host_returns_error() {
 
 // ── 测试 3：错误密码返回 Unavailable ────────────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn connect_wrong_password_returns_unavailable() {
     let mut cfg = default_config();
@@ -108,6 +111,7 @@ async fn connect_wrong_password_returns_unavailable() {
 
 // ── 测试 4：极小 timeout 返回 DeadlineExceeded ──────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn timeout_returns_deadline_exceeded() {
     let cfg = ClickHouseConfig {
@@ -146,6 +150,7 @@ async fn timeout_returns_deadline_exceeded() {
 
 // ── 测试 5：close 后重连成功 ping + query ──────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn reconnect_after_close_succeeds() {
     let pool = setup_db().await;
@@ -168,6 +173,7 @@ async fn reconnect_after_close_succeeds() {
 
 // ── 测试 6：背压 DeadlineExceeded ──────────────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn backpressure_deadline_exceeded() {
     let mut cfg = default_config();
@@ -199,6 +205,7 @@ async fn backpressure_deadline_exceeded() {
 
 // ── 测试 7：写入不存在表失败，已有数据完整 ─────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn write_to_nonexistent_table_preserves_existing_data() {
     let pool = setup_db().await;
@@ -234,6 +241,7 @@ async fn write_to_nonexistent_table_preserves_existing_data() {
 
 // ─ 测试 8：非法标识符返回 Invalid ────────────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_kind_invalid_for_illegal_identifier() {
     let pool = setup_db().await;
@@ -250,6 +258,7 @@ async fn error_kind_invalid_for_illegal_identifier() {
 
 // ── 测试 9：DROP 不存在表返回 Missing（或 Transient）───────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_kind_missing_for_nonexistent_table() {
     let pool = setup_db().await;
@@ -269,6 +278,7 @@ async fn error_kind_missing_for_nonexistent_table() {
 
 // ── 测试 10：重复建表返回 Conflict 或 Transient ───────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_kind_conflict_for_duplicate_table() {
     let pool = setup_db().await;
@@ -302,6 +312,7 @@ async fn error_kind_conflict_for_duplicate_table() {
 
 // ── 测试 11：错误密码返回 Unavailable ─────────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_kind_unavailable_for_wrong_password() {
     let mut cfg = default_config();
@@ -315,6 +326,7 @@ async fn error_kind_unavailable_for_wrong_password() {
 
 // ── 测试 12：背压返回 DeadlineExceeded ────────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_kind_deadline_exceeded_for_backpressure() {
     let mut cfg = default_config();
@@ -342,6 +354,7 @@ async fn error_kind_deadline_exceeded_for_backpressure() {
 
 // ── 测试 13：错误信息不含密码/payload/SQL ────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_messages_never_contain_secrets() {
     let pool = setup_db().await;
