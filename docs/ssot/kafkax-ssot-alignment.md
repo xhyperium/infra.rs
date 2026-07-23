@@ -74,12 +74,13 @@ cargo test -p kafkax --test live_event_bus -- --ignored --nocapture
 - `kafkax::selfcheck` 已落地 §6.2 catalog（9 IDs）；`group_lag`/`isr_health` NO-GO Skipped。
 - 库内自验证 ≠ tools/verifyctl；未宣称 package stable。
 
-## gap 清零（0.3.9）
+## gap 清零（0.3.7–0.3.9）
 
 | 项 | 状态 |
 |----|------|
 | headers 公共面 | PASS（`KafkaMessage::headers` + `publish_record`） |
 | key 生产 API | PASS（`publish_with_key` / `partition_for_key`） |
-| stats | PASS（timeouts/cancelled/topics_*） |
+| stats 字段 | PASS（timeouts/cancelled/topics_*） |
+| G-STATS-01 严格计数 | PASS（`limited_produce_await` 两臂 + 集成 strict；0.3.9） |
 | selfcheck ordering_headers | PASS（header 透传） |
 | group/rebalance/EOS/SCRAM/HA/stable | CLOSED-NO-GO |

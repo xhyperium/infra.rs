@@ -21,3 +21,4 @@
 | S-17 | 库内 selfcheck §6.2 | PASS | `kafkax::selfcheck`；group_lag/isr_health Skipped NO-GO |
 | S-18 | headers/key 公共 produce/consume | PASS | `PublishRecord` / `KafkaMessage::headers`（0.3.7） |
 | S-19 | pool stats 扩展 | PASS | timeouts/cancelled/topics_ensured/deleted |
+| S-20 | produce cancel/timeout 严格计数 | PASS | `limited_produce_await` + 集成 strict（0.3.9 G-STATS-01） |

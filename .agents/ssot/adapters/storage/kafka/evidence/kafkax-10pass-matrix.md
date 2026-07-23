@@ -73,3 +73,11 @@
 | stats 扩展 | PASS |
 | selfcheck 同源 produce | PASS |
 | NO-GO 表 | 不变 CLOSED |
+
+## 增量 0.3.9（G-STATS-01 严格）
+
+| 条款 | 状态 |
+|------|------|
+| produce cancel/timeout 计数 | PASS（shipped `limited_produce_await` 两臂严格递增） |
+| 集成 strict cancelled\|timeouts | PASS（禁止 OR published\|failed） |
+| NO-GO 表 | 不变 CLOSED |
