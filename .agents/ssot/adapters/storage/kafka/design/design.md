@@ -4,9 +4,12 @@
 
 | 组件 | 职责 |
 |------|------|
-| Config | `FOUNDATIONX_KAFKAX_{BROKERS,SASL_MECHANISM,SASL_USERNAME,SASL_PASSWORD,TLS}` / builder；密码 Debug 脱敏 |
+| Config | `FOUNDATIONX_KAFKAX_*` + `KafkaConfigBuilder`；密码 Debug 脱敏 |
 | Pool / Client | 连接、精确超时、健康、close deadline 与在途操作守卫 |
-| Consumer bridge | 固定容量队列、等待式背压、可取消后台任务 |
+| Producer | publish 等待 broker 确认；空 topic/负 partition 预检 |
+| Consumer bridge | 固定容量队列、等待式背压、可取消后台任务；timestamp 透传 |
+| ALO / offset | 应用层 `AtLeastOnceConsumer` + Memory/File store |
+| PTC | 非原子 produce-then-checkpoint（非 native EOS） |
 | Error map | 驱动错误 → `kernel::XError` / `ErrorKind` |
 | contracts 适配 | contracts::EventBus（at-most-once） |
 | scaffold feature | 进程内 mock / 旧适配器（非默认） |
@@ -25,6 +28,7 @@ kafkax → kernel + contracts（+ 驱动 crate）
 3. 无硬编码生产密钥
 4. 公共 API 中文文档 + 英文标识符
 5. group/rebalance/自动重连/native EOS 无实现时保持 NO-GO
+6. draft Part2 量化栈保持 OOS
 
 ## 参考
 

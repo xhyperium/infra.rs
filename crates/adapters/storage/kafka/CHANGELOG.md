@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.4] — 2026-07-23
+
+### Added
+
+- `KafkaConfigBuilder`：链式配置 + `build()` 校验（对齐 draft 公共对象）
+- `KafkaMessage::timestamp`：消费侧透传 record 时间戳
+- 公共 API 行为路径测试（builder / offset / PTC session / connect 拒绝）
+- 十轮 draft 对照矩阵：`.agents/ssot/adapters/storage/kafka/evidence/kafkax-10pass-matrix.md`
+
+### Evidence
+
+- 真 secrets live：`live_event_bus` **3/3 PASS**
+- 隔离 broker conformance **3/3 PASS**
+- Part2 量化栈显式 **OOS**；group/rebalance/native EOS 仍 **NO-GO**
+- **未**宣称 package stable
+
 ## [0.3.3] — 2026-07-23
 
 ### Added（R1–R3 生产路径 fail-closed 与可测性）

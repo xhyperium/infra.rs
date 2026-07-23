@@ -1,6 +1,6 @@
 # kafkax 实现规范
 
-状态：当前 `0.3.3` 实现合同（纯 Rust `rskafka 0.6` 默认真实路径；broker conformance 为显式运行的 `#[ignore]` 测试）。**未宣称 package stable。**
+状态：当前 `0.3.4` 实现合同（纯 Rust `rskafka 0.6` 默认真实路径；broker conformance 为显式运行的 `#[ignore]` 测试）。**未宣称 package stable。**
 
 ## 0. 权威与范围
 
@@ -81,3 +81,11 @@ Kafka 场景必须证明：
 - 匿名 EventBus group id 格式 `{prefix}-{seq}-{pid}`；同进程序号隔离。
 - `create_topic` 幂等仅当错误文本匹配「已存在」语义；鉴权/网络失败不得误判。
 - **NO-GO 不变**：native group EOS、事务 exactly-once、Schema Registry、package stable。
+
+## 8. 十轮 draft 收敛（0.3.4）
+
+- 驱动权威：`rskafka`（draft Document A 的 `rust-rdkafka` 基线已显式漂移）。
+- 公共对象补齐：`KafkaConfigBuilder`；`KafkaMessage.timestamp` 消费侧透传。
+- group/rebalance/自动重连/native EOS/SCRAM/OAuth/mTLS/package stable：**NO-GO**。
+- draft Part2（kafkax-proto / embedded / io-uring / µs 热路径等）：**OOS**。
+- 条款矩阵：`evidence/kafkax-10pass-matrix.md`。

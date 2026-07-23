@@ -1,7 +1,7 @@
 [package]
 name = "kafkax"
 description = "kafka storage adapter (KafkaPool + EventBus via pure-Rust rskafka)"
-version = "0.3.3"
+version = "0.3.4"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
