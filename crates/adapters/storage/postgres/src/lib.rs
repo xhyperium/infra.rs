@@ -10,6 +10,7 @@
 //! - [`PgTxRunner`]：`contracts::TxRunner` 边界适配（**不**传 SQL 句柄，见模块文档）
 //! - [`PgRepository`] / [`PgRecord`]：生产 `contracts::Repository`
 //! - [`Migrator`]：advisory lock + checksum；默认 [`Migrator::verify`] 不自动 DDL
+//! - 合同文档对齐 0.3.12+ 能力（见 dual-spec / docs/标准.md）
 //! - [`MakeRustlsConnect`]：`SslMode::Prefer` / `Require` 的 rustls TLS
 //! - [`with_retry_sync`] / [`with_retry_async`]：resiliencx 重试
 //! - SQLSTATE → [`kernel::ErrorKind`] 映射：[`error_kind_from_sqlstate`]
