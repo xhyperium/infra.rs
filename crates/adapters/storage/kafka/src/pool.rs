@@ -196,6 +196,43 @@ impl KafkaPool {
         }
     }
 
+    /// 删除 topic（Admin；自检清理 / Full `topic_create_delete`）。
+    pub async fn delete_topic(&self, topic: &str) -> XResult<()> {
+        if topic.trim().is_empty() {
+            return Err(XError::invalid("kafkax: topic 不能为空"));
+        }
+        let _operation = self.start_operation()?;
+        let mut shutdown = self.shutdown_receiver();
+        let ctrl = self
+            .inner
+            .client
+            .controller_client()
+            .map_err(|error| map_kafka_err("kafkax controller", error))?;
+        match tokio::select! {
+            biased;
+            () = wait_for_shutdown(&mut shutdown) => {
+                return Err(XError::cancelled("kafkax delete_topic 因 pool 关闭而取消"));
+            }
+            result = tokio::time::timeout(
+                self.inner.config.operation_timeout,
+                ctrl.delete_topic(topic, 5_000),
+            ) => result,
+        } {
+            Err(error) => {
+                Err(XError::deadline_exceeded("kafkax delete_topic 超时").with_source(error))
+            }
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => {
+                let text = error.to_string();
+                if is_topic_missing_error(&text) {
+                    Ok(())
+                } else {
+                    Err(map_kafka_err("kafkax delete_topic", error))
+                }
+            }
+        }
+    }
+
     /// 关闭：拒绝新请求、取消后台消费与 broker I/O，并等待在途操作释放。
     ///
     /// deadline 超时后 pool 仍保持关闭；调用方可再次调用以继续等待。
@@ -321,6 +358,16 @@ fn validate_topic_request(topic: &str, partitions: i32, replication: i16) -> XRe
 fn is_topic_already_exists_error(message: &str) -> bool {
     let s = message.to_ascii_lowercase();
     s.contains("exist") || s.contains("already") || s.contains("topic_already")
+}
+
+/// 删除时 topic 已不存在视为幂等成功。
+fn is_topic_missing_error(message: &str) -> bool {
+    let s = message.to_ascii_lowercase();
+    s.contains("unknown_topic")
+        || s.contains("unknown topic")
+        || s.contains("does not exist")
+        || s.contains("not_exist")
+        || s.contains("unknowntopic")
 }
 
 #[cfg(test)]

@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.6] — 2026-07-23
+
+### Added（LIB-SELFCHECK-SPEC §6.2 库内自验证）
+
+- `kafkax::selfcheck`：`CheckLevel` / `CheckStatus` / `CheckItem` / `ValidationReport` / `KafkaValidator`
+- catalog 9 项：`metadata` / `produce_consume` / Full 子集 + `group_lag`/`isr_health` **Skipped(NO-GO)**
+- `KafkaPool::delete_topic`：Admin 删 topic（自检清理 / Full DDL）
+- `KafkaValidator::connect_and_run`：连接失败合成报告（不 panic；Basic Failed → RW/Full 短路）
+- 离线单测 + `tests/live_selfcheck.rs`（live `#[ignore]`）
+
+### Boundary
+
+- **库内自验证 ≠ `tools/verifyctl` Goal Contract CLI**
+- 不宣称 multi-module `SelfValidator` / package stable
+- headers 公共面 partial；offset 为应用层语义
+
+### Evidence
+
+- `cargo test -p kafkax --lib selfcheck` + offline `connect_and_run` 全绿
+- 默认 CI 无 broker 时 live 诚实 ignore；有 broker 时 `--ignored` 跑 RW/Full
+
 ## [0.3.5] — 2026-07-23
 
 ### Added（生产发布测试矩阵）

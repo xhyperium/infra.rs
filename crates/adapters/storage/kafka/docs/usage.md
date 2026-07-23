@@ -62,3 +62,8 @@ cargo bench -p kafkax --bench hot_path -- --quick
 ```
 
 完整清单见 [测试矩阵-生产发布.md](./测试矩阵-生产发布.md)。
+
+## 自验证
+
+见 crate root `kafkax::selfcheck`（LIB-SELFCHECK-SPEC §6.2）。
+库内自验证 ≠ `tools/verifyctl`。

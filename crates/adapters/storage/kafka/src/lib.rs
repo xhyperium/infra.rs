@@ -21,6 +21,11 @@
 //!
 //! 启用 `scaffold` 时额外导出旧的内存 `KafkaAdapter` / `MockKafkaBus`。
 //!
+//! ## 自验证
+//!
+//! - [`selfcheck`]：LIB-SELFCHECK-SPEC §6.2 kafka 目录（`Basic` / `ReadWrite` / `Full`）
+//! - **不等于** `tools/verifyctl` Goal Contract CLI；不宣称 package stable
+//!
 //! ## 环境变量
 //!
 //! `FOUNDATIONX_KAFKAX_{BROKERS,SASL_MECHANISM,SASL_USERNAME,SASL_PASSWORD,TLS}`
@@ -45,6 +50,7 @@ mod message;
 mod offset;
 mod pool;
 mod producer;
+pub mod selfcheck;
 
 pub use at_least_once::{AtLeastOnceConsumer, KafkaAtLeastOnceBus, resolve_start_offset};
 pub use bus::KafkaEventBus;
