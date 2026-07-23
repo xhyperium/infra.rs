@@ -24,7 +24,8 @@
 //! - 需要可达 Kafka broker；`connect_and_run` 在连接失败时返回合成 Failed/Skipped 报告（不 panic）
 //! - `group_lag` / `isr_health` 在 rskafka 默认栈上 **Skipped（NO-GO）**
 //! - `offset_commit` 验证的是 **应用层** [`crate::OffsetCommitStore`] 语义，非 broker group commit
-//! - `ordering_headers`：同分区顺序可测；公共 `KafkaMessage` **无 headers 面**（detail 标明 partial）
+//! - `ordering_headers` / `key_partition_routing` 走公共 [`crate::KafkaProducer::publish_record`] /
+//!   [`crate::partition_for_key`]（与业务路径同源）
 //! - **未**实现跨模块 `SelfValidator` 调度器 / HTTP 探针 / Prometheus 导出器
 //! - **未**宣称 package stable
 

@@ -18,3 +18,6 @@
 | S-14 | 生产测试矩阵（离线+集成+bench） | PASS | `tests/prod_*` · `scripts/kafka-prod-matrix.mjs` · `docs/测试矩阵-生产发布.md` |
 | S-15 | 7×24 soak 默认门禁 | **OOS/可选** | `KAFKAX_SOAK_SECONDS`；非合并强制 |
 | S-16 | group rebalance / native EOS 测试 | **NO-GO** | 无能力；fail-closed 锚定在 prod_offline |
+| S-17 | 库内 selfcheck §6.2 | PASS | `kafkax::selfcheck`；group_lag/isr_health Skipped NO-GO |
+| S-18 | headers/key 公共 produce/consume | PASS | `PublishRecord` / `KafkaMessage::headers`（0.3.7） |
+| S-19 | pool stats 扩展 | PASS | timeouts/cancelled/topics_ensured/deleted |
