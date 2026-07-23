@@ -7,6 +7,8 @@ version: 1.0.0
 alwaysApply: true
 ---
 
+<!-- SSOT: .agents/rules/项目开发规则.md — 本文件为 Cursor 投影摘要，正文以 SSOT 为准 -->
+
 # infra.rs 核心开发规则
 
 ## DEV-001 优先复用内部库

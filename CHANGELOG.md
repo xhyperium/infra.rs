@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **项目规则统一至 `.agents/rules/`**：自 `docs/governance/` 迁入规则正文（版本、worktree、语言、Rust 开发、复用、存储配置等）；`docs/governance/` 仅保留兼容重定向 stub；更新 AGENTS/CLAUDE/宪章索引与脚本注释中的路径引用
+
 ### Core types（2026-07-23）
 
 - `kernel 0.3.1`：`wait_timeout` 改为 typed `Result`，deadline overflow 不再伪装成普通 timeout（破坏性 API 变更）。

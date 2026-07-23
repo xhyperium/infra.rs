@@ -1,43 +1,5 @@
-# 量化开发领域规范
+# 已迁移
 
-> 量化金融 Rust 开发专项要求，与 [docs/constitution/](../constitution/) 通用规范互补（§3.3 见 [03-architecture.md](../constitution/03-architecture.md#33-类型驱动设计)）。
+> **正文 SSOT**：[`.agents/rules/quant-dev-spec.md`](../../.agents/rules/quant-dev-spec.md)
 
-## 数值精度
-
-禁止浮点存储金融数据，使用 `rust_decimal::Decimal`：
-
-```rust
-use rust_decimal::Decimal;
-let price = Decimal::new(12345, 2); // 123.45
-pub struct Price(Decimal);
-pub struct Quantity(Decimal);
-```
-
-## 时间戳
-
-```rust
-pub struct NanoTimestamp(u64);
-```
-
-## 数据处理
-
-推荐 [Polars](https://pola.rs/) 惰性求值 + 并行计算。
-
-## 优化
-
-- 有界通道防溢出
-- SoA 缓存友好布局
-- `bytes::Bytes` 零拷贝
-
-## Python (PyO3)
-
-Rust 核心 + Python 原型验证。
-
-## 基准测试
-
-关键路径 `criterion` benchmark。
-
-## 依赖
-
-- 优先纯 Rust
-- `Cargo.lock` 入库
+本文件仅作兼容重定向。请更新引用至 `.agents/rules/`；新增与修订只在新路径进行。

@@ -7,7 +7,7 @@
  * 用法:
  *   node scripts/harness/gc-scan.mjs
  *
- * SSOT: .gitignore / docs/governance/worktree-policy.md
+ * SSOT: .gitignore / .agents/rules/worktree-policy.md
  */
 
 import { readFileSync, existsSync, readdirSync, statSync, writeFileSync, mkdirSync } from "fs";

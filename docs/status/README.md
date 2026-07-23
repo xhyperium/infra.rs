@@ -14,7 +14,7 @@
 
 **不应放入本目录：**
 
-- 长期有效的规则与策略 → `docs/governance/`
+- 长期有效的规则与策略 → `.agents/rules/`
 - SSOT 对齐矩阵 → `docs/ssot/`
 - 架构决策 → `docs/decisions/`
 

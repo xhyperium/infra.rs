@@ -141,7 +141,7 @@ W5  治理门禁 + 人工签字   ──►  L4/L5 · §8 全过
 |----|------|--------|-------|
 | W0-1 | 冻结 **生产 trait 子集**（建议首批） | `docs/plans/artifacts/prod-trait-inventory.md` | Lead |
 | W0-2 | 冻结 **committed wire 升格候选** | 扩展 `wire-commitment-matrix` 或本仓 `docs/plans/artifacts/` | Lead |
-| W0-3 | 声明 **支持矩阵**（OS / MSRV / arch） | `docs/governance` 或 crate README 补丁草案 | Lead |
+| W0-3 | 声明 **支持矩阵**（OS / MSRV / arch） | `.agents/rules` 或 crate README 补丁草案 | Lead |
 | W0-4 | 为每个 DEFER 标 **Close / Accept / Defer-with-sign** | 本文件 §11 更新 | Maintainer |
 | W0-5 | 创建 beads epic + 子任务 | `bd create` 树 | Executor |
 
@@ -450,7 +450,7 @@ rg -n 'impl (fmt::)?Display for' crates/kernel crates/testkit crates/types crate
 > **实现回写（2026-07-21）**：PR [#127](https://github.com/xhyperium/infra.rs/pull/127) 门禁与模板；正式签核 [`releases/0.3.0-signoff.md`](./releases/0.3.0-signoff.md)（草稿 [`releases/2026-07-21-signoff-DRAFT.md`](./releases/2026-07-21-signoff-DRAFT.md) 已 SUPERSEDED）。
 
 - [x] API snapshot / public-api baselines 落盘（`docs/api-baselines/*` + `check-public-api.mjs` / `public-api.yml`）
-- [x] 支持矩阵声明（`docs/governance/support-matrix.md`；DEFER-6 Accept 仅 Linux）
+- [x] 支持矩阵声明（`.agents/rules/support-matrix.md`；DEFER-6 Accept 仅 Linux）
 - [x] 签核模板 + DRAFT 证据指针
 - [x] **DEFER-7 Maintainer 手签** — **GO-with-Accepts** · `@ZoneCNH` · 2026-07-21 · [`releases/0.3.0-signoff.md`](./releases/0.3.0-signoff.md)
 
@@ -571,7 +571,7 @@ node scripts/quality-gates/check.mjs
 | [contracts-ssot-alignment.md](../ssot/contracts-ssot-alignment.md) | W3/W4 完成后同步 |
 | [kernel-ssot-alignment.md](../ssot/kernel-ssot-alignment.md) / [testkit-ssot-alignment.md](../ssot/testkit-ssot-alignment.md) | W5 矩阵声明同步 |
 | `.agents/ssot/types/canonical/plan/production-upgrade.md` | 上游战役 M1/M3 历史；**本仓以 crates + 本计划为准** |
-| `docs/governance/VERSIONING.md` | W5 semver 行为对齐 |
+| `.agents/rules/VERSIONING.md` | W5 semver 行为对齐 |
 
 ---
 

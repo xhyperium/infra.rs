@@ -33,7 +33,7 @@
 
 ### 6.0.5 Git Worktree 强制
 
-**所有活跃开发必须在独立的 Git Worktree 中进行。** 细则见 [docs/governance/worktree-policy.md](../governance/worktree-policy.md)。
+**所有活跃开发必须在独立的 Git Worktree 中进行。** 细则见 [.agents/rules/worktree-policy.md](../../.agents/rules/worktree-policy.md)。
 
 ```bash
 node scripts/worktree/worktree.mjs create feat/my-feature
@@ -46,7 +46,7 @@ cd .worktrees/feat/my-feature
 - **已废弃**：`.worktrees/workspaces/`、单数 `.worktree/`、全局 `~/.worktrees/`
 - 实质性任务必须使用独立分支 + worktree 隔离
 - 禁止多任务混用同一 worktree / 分支
-- **机器强制（BLOCK）**：`pre-tool-check.mjs` 拦截主仓**已跟踪**文件 Write/Edit、主仓 `checkout -b`/`switch` 功能分支、`main` 上 commit；`.gitignore` 匹配路径为例外（见 `docs/governance/worktree-policy.md`）；`session-context.mjs` 在主仓给出开工指引
+- **机器强制（BLOCK）**：`pre-tool-check.mjs` 拦截主仓**已跟踪**文件 Write/Edit、主仓 `checkout -b`/`switch` 功能分支、`main` 上 commit；`.gitignore` 匹配路径为例外（见 `.agents/rules/worktree-policy.md`）；`session-context.mjs` 在主仓给出开工指引
 
 ### 6.0.6 与 AI 协作
 
@@ -91,7 +91,7 @@ cd .worktrees/feat/my-feature
 - `1.0.0` 后严格 SemVer
 - **`crates/` 每个子模块独立版本**（禁止 `version.workspace = true`）
 - **统一更新规则**：某 crate 每次交付性更新，默认 **PATCH +1**（`x.y.z` → `x.y.(z+1)`）；仅 bump 实际变更的 package
-- 统一版本管理细则见 [docs/governance/VERSIONING.md](../governance/VERSIONING.md)
+- 统一版本管理细则见 [.agents/rules/VERSIONING.md](../../.agents/rules/VERSIONING.md)
 
 ## 6.3 所有权
 

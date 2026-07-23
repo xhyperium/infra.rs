@@ -17,6 +17,14 @@
 - 严格执行：CI 门禁 `node scripts/quality-gates/check-workspace-deps.mjs` 自动拦截内联版本；本地可先跑该脚本自检。
 - 参考上位标准《Rust 编码规范》依赖管理条款。
 
+## 项目规则（强制入口）
+
+- **本仓规则 SSOT**：[`.agents/rules/`](./.agents/rules/)（与 `.agents/skills/`、`.agents/ssot/` 并列）
+- **索引**：[`.agents/rules/README.md`](./.agents/rules/README.md)
+- **常用**：[`项目开发规则.md`](./.agents/rules/项目开发规则.md) · [`rust-dev-rules.md`](./.agents/rules/rust-dev-rules.md) · [`worktree-policy.md`](./.agents/rules/worktree-policy.md) · [`VERSIONING.md`](./.agents/rules/VERSIONING.md)
+- **兼容路径**：`docs/governance/` 仅 stub 重定向，**禁止**在旧路径维护正文
+- **组织全局规则**：`~/.claude/rules/`（`xhyperium/.github` `rulesets/`），本仓只可加严
+
 ## 语言与编码（强制）
 
 - **组织上位**：[language.md](https://github.com/xhyperium/.github/blob/main/rulesets/language.md) — **人类可读文本强制简体中文**
@@ -26,7 +34,7 @@
 - **标识符**：英文（Rust 惯例）；技术术语可保留英文本体
 - **LICENSE**：保留英文许可证原文
 - **英文技术正文**：非默认；须书面豁免后可参考 STE（宪章 §4.6 可选）
-- 细则：[§4.5 / §4.6](./docs/constitution/04-code-standards.md)、[编码与语言约定.md](./docs/governance/编码与语言约定.md)
+- 细则：[§4.5 / §4.6](./docs/constitution/04-code-standards.md)、[编码与语言约定.md](./.agents/rules/编码与语言约定.md)
 
 ## 项目身份
 
@@ -86,8 +94,12 @@ infra.rs/
 ├── crates/           # Rust workspace members
 ├── examples/         # 示例
 ├── tests/            # 集成测试
-├── docs/             # 文档（governance/ssot/status/decisions）
+├── docs/             # 文档（constitution/ssot/status/decisions；governance 为重定向）
 ├── scripts/          # Harness 健康检查 / GC / worktree 策略
+├── .agents/
+│   ├── rules/        # 项目规则 SSOT
+│   ├── skills/       # Agent 技能
+│   └── ssot/         # 域规格 SSOT
 ├── .cargo/           # Cargo 配置、target-dir、工具缓存约定
 ├── .claude/          # Claude Code：skills / hooks / settings
 ├── .codex/           # Codex：agents / hooks
@@ -146,11 +158,11 @@ node scripts/quality-gates/check-workspace-deps.mjs
 - **target-dir**：`.cargo/target/`
 - **alias**：`cargo xtask` → `infra-xtask`（crate 尚未添加时可忽略）
 - **突变测试输出**：`.cargo/cache/mutants/`
-- **Crate 版本**：`crates/` 每个 package **独立** `version`；交付更新默认 **PATCH +1**（`x.y.z → x.y.z+1`）。SSOT：[docs/governance/VERSIONING.md](./docs/governance/VERSIONING.md)；bump：`node scripts/version/crate-bump.mjs <name>`
+- **Crate 版本**：`crates/` 每个 package **独立** `version`；交付更新默认 **PATCH +1**（`x.y.z → x.y.z+1`）。SSOT：[.agents/rules/VERSIONING.md](./.agents/rules/VERSIONING.md)；bump：`node scripts/version/crate-bump.mjs <name>`
 
 ## Git Worktree（强制）
 
-完整细则见 [docs/governance/worktree-policy.md](./docs/governance/worktree-policy.md) 与 [docs/constitution/06-governance.md §6.0.5](./docs/constitution/06-governance.md#605-git-worktree-强制)。
+完整细则见 [.agents/rules/worktree-policy.md](./.agents/rules/worktree-policy.md) 与 [docs/constitution/06-governance.md §6.0.5](./docs/constitution/06-governance.md#605-git-worktree-强制)。
 
 - **所有活跃开发**在 `.worktrees/<branch-name>` 内进行
 - 开工：`node scripts/worktree/worktree.mjs create <type>/<id>-<slug>` → `cd` 进入 worktree

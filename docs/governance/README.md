@@ -1,47 +1,37 @@
-# governance/ — 治理与约定
+# governance/ — 已迁移至 `.agents/rules/`
 
-## 职责
+> **正文 SSOT**：[`../../.agents/rules/`](../../.agents/rules/)  
+> 本目录仅保留兼容重定向 stub，**不再维护规则正文**。
 
-存放**长期有效**的工程约定与宪章落地细则。内容应可被 Agent、CI 与人类共同引用。
+## 为什么迁移
 
-## 收录标准
+项目级规则与 Agent 资产对齐：
 
-**应放入本目录：**
+```text
+.agents/
+├── skills/    # Agent 技能
+├── ssot/      # 域规格
+└── rules/     # 项目规则（本仓 SSOT）
+```
 
-- 宪章条款的实施细则（语言、版本、worktree 等）
-- 跨 crate 的强制规范
-- 领域专项规范（如量化）
+## 文档对照表
 
-**不应放入本目录：**
+| 旧路径（stub） | 新路径（正文） |
+|----------------|----------------|
+| [项目开发规则.md](./项目开发规则.md) | [`.agents/rules/项目开发规则.md`](../../.agents/rules/项目开发规则.md) |
+| [rust-dev-rules.md](./rust-dev-rules.md) | [`.agents/rules/rust-dev-rules.md`](../../.agents/rules/rust-dev-rules.md) |
+| [编码与语言约定.md](./编码与语言约定.md) | [`.agents/rules/编码与语言约定.md`](../../.agents/rules/编码与语言约定.md) |
+| [文档组织约定.md](./文档组织约定.md) | [`.agents/rules/文档组织约定.md`](../../.agents/rules/文档组织约定.md) |
+| [worktree-policy.md](./worktree-policy.md) | [`.agents/rules/worktree-policy.md`](../../.agents/rules/worktree-policy.md) |
+| [VERSIONING.md](./VERSIONING.md) | [`.agents/rules/VERSIONING.md`](../../.agents/rules/VERSIONING.md) |
+| [ASD-STE100.md](./ASD-STE100.md) | [`.agents/rules/ASD-STE100.md`](../../.agents/rules/ASD-STE100.md) |
+| [commit-template.md](./commit-template.md) | [`.agents/rules/commit-template.md`](../../.agents/rules/commit-template.md) |
+| [support-matrix.md](./support-matrix.md) | [`.agents/rules/support-matrix.md`](../../.agents/rules/support-matrix.md) |
+| [prod-signoff-TEMPLATE.md](./prod-signoff-TEMPLATE.md) | [`.agents/rules/prod-signoff-TEMPLATE.md`](../../.agents/rules/prod-signoff-TEMPLATE.md) |
+| [storage-adapter-config.md](./storage-adapter-config.md) | [`.agents/rules/storage-adapter-config.md`](../../.agents/rules/storage-adapter-config.md) |
+| [credential-baseline.md](./credential-baseline.md) | [`.agents/rules/credential-baseline.md`](../../.agents/rules/credential-baseline.md) |
+| [quant-dev-spec.md](./quant-dev-spec.md) | [`.agents/rules/quant-dev-spec.md`](../../.agents/rules/quant-dev-spec.md) |
 
-- 工程宪章正文 / 条款导航 → `docs/constitution/`（根 `CONSTITUTION.md` 仅为兼容索引）
-- SSOT 对齐矩阵 / 同步报告 → `docs/ssot/`
-- CI 运行快照、配置检查记录 → `docs/status/`
-- 架构决策（DDR）→ `docs/decisions/`
-- 单 crate API/设计 → `crates/<name>/docs/`
+完整索引见 [`.agents/rules/README.md`](../../.agents/rules/README.md)。
 
-## 文档
-
-| 文档 | 宪章锚点 | 说明 |
-|------|----------|------|
-| [组织 language.md 强制中文](https://github.com/xhyperium/.github/blob/main/rulesets/language.md) | §4.5 | 组织语言政策（P0）— 人类可读文本强制中文 |
-| [组织 Rust 编码规范完整版 v2.1.1](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md) | §4.0 | Rust 全局编码规范（强制上位）— SSOT `xhyperium/.github` `rulesets/rust/`；本仓可加严不可削弱 |
-| [setup-global-rules.sh](https://github.com/xhyperium/.github/blob/main/scripts/setup-global-rules.sh) | §4.0 / §4.5 | Agent 一键分发 `rust.md` + `language.md` 等 |
-| [ci-rust-standard / foundation](https://github.com/xhyperium/.github/tree/main/workflows) | §5 | 质量门禁 — 组织可复用 Rust CI（本仓见 `.github/workflows/ci-rust-org.yml`） |
-| [VERSIONING.md](VERSIONING.md) | §6.2 | 版本策略 — 项目 / 宪章 / **crates 独立版本**（每次交付 PATCH +1） |
-| [support-matrix.md](support-matrix.md) | §5 | 质量门禁 — 官方支持矩阵（Linux x86_64 + MSRV 1.85） |
-| [prod-signoff-TEMPLATE.md](prod-signoff-TEMPLATE.md) | §6.1 | 变更流程 — L1–L5 模板；**仅 Maintainer 签核** |
-| [worktree-policy.md](worktree-policy.md) | §6.0.5 | Git Worktree 强制 — 隔离开发环境策略 |
-| [编码与语言约定.md](编码与语言约定.md) | §4.5 | 本仓语言落地 — UTF-8、强制中文 |
-| [文档组织约定.md](文档组织约定.md) | — | 文档目录结构与命名规范 — 报告路径 \\`docs/report/YYYY-MM-DD/\\` |
-| [项目开发规则.md](项目开发规则.md) | — | 开发规则总览 — 文档/工程/版本/worktree/质量门禁速查 |
-| [rust-dev-rules.md](rust-dev-rules.md) | §4.0 | Rust 开发规则补充 — 错误/unsafe/并发/性能/依赖/测试/日志/序列化 本仓落地 |
-| [storage-adapter-config.md](storage-adapter-config.md) | — | 存储适配器配置规范 — 7 适配器环境变量、本地数据库创建、权限隔离 |
-| [ASD-STE100.md](ASD-STE100.md) | §4.6 | 英文交付可选指南（须书面豁免；非默认） |
-| [commit-template.md](commit-template.md) | §4.3.3 | 分支与标签 — `.gitmessage` 提交信息模板使用指南 |
-| [credential-baseline.md](credential-baseline.md) | — | 凭据复杂度规范 — 密码强度报告与轮换跟踪 |
-| [quant-dev-spec.md](quant-dev-spec.md) | — | — 量化金融专项要求 |
-
-上级索引：[docs/README.md](../README.md)。  
-API baseline：[`../api-baselines/`](../api-baselines/)。  
-发布签核副本目录：[`../plans/releases/`](../plans/releases/)。
+上级文档索引：[docs/README.md](../README.md)。

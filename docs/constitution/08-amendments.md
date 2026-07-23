@@ -20,7 +20,7 @@
 | v1.6.1 | 2026-07-21 | §4.0 SSOT 迁至 `xhyperium/.github` `rulesets/rust/`；接入组织复用 CI `ci-rust-*` 与 `setup-global-rules.sh` |
 | v1.6.0 | 2026-07-21 | 新增 §4.0：显式采纳组织《Rust 编码规范（完整版）》为上位全局标准；本仓仅可加严 |
 | v1.5.0 | 2026-07-21 | 正文拆分至 `docs/constitution/` 分章；根 `CONSTITUTION.md` 改为索引 |
-| v1.4.0 | 2026-07-21 | 合并量化开发通用规范：类型驱动设计（§3.3）、量化领域专项（docs/governance/quant-dev-spec.md） |
+| v1.4.0 | 2026-07-21 | 合并量化开发通用规范：类型驱动设计（§3.3）、量化领域专项（.agents/rules/quant-dev-spec.md） |
 | v1.3.0 | 2026-07-21 | 新增 §4.6 ASD-STE100 作为全局英文技术文档标准 |
 | v1.2.0 | 2026-07-21 | 新增 §6.0 Git Main First（主干唯一、禁 main 直推、PR 收敛） |
 | v1.1.0 | 2026-07-21 | 新增 §4.5 语言与编码（中文注释/文档 + UTF-8 强制） |

@@ -9,7 +9,7 @@
 #   scripts/sre/extract_all_secrets.sh prod
 #   scripts/sre/extract_all_secrets.sh all
 #
-# SSOT: docs/governance/credential-baseline.md
+# SSOT: .agents/rules/credential-baseline.md
 
 set -euo pipefail
 

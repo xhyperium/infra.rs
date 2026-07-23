@@ -7,13 +7,13 @@
 | 目录 | 放什么 | 不放什么 |
 |------|--------|----------|
 | [`constitution/`](constitution/) | 工程宪章正文 SSOT（分章）+ 索引 | 落地细则、对齐矩阵、状态报告、DDR |
-| [`governance/`](governance/) | 宪章落地细则、强制工程约定、领域规范 | 对齐审计矩阵、一次性状态报告、DDR |
+| [`governance/`](governance/) | **兼容重定向 stub only**（正文已迁出） | 规则正文（→ [`.agents/rules/`](../.agents/rules/)） |
+| [`.agents/rules/`](../.agents/rules/) | 项目规则 SSOT：强制工程约定、领域规范 | 宪章正文、对齐矩阵、一次性报告 |
 | [`ssot/`](ssot/) | SSOT 镜像同步手册、域对齐矩阵、落地状态 | 通用治理条文、CI 配置快照 |
 | [`plans/`](plans/) | 跨 crate 可执行修复/晋级计划（波次、验收、门禁） | 一次性审计报告、长期治理条文、对齐矩阵 |
 | [`status/`](status/) | CI/仓库配置的**状态与验证记录**（可过期） | 长期有效的规则与策略 |
 | [`decisions/`](decisions/) | 架构决策记录（DDR） | 日常状态报告、对齐矩阵 |
 | [`api-baselines/`](api-baselines/) | 核心 crate 公开 API 文本快照（semver 门禁） | 叙事文档、一次性报告 |
-| [`plans/`](plans/) | 执行计划副本、发布签核包 | 宪章正文、SSOT 对齐矩阵 |
 | [`report/`](report/) | 只读审计/就绪度报告（可过期） | 可执行计划（→ `plans/`） |
 
 **根目录只允许**：本 `README.md`、分类子目录、`.gitkeep`。
@@ -22,7 +22,8 @@
 
 | 层级 | 职责 |
 |------|------|
-| 仓库根 `docs/` | 跨 crate 治理、SSOT 对齐、工作流、DDR |
+| 仓库根 `docs/` | 跨 crate 宪章、SSOT 对齐、工作流、DDR |
+| [`.agents/rules/`](../.agents/rules/) | 项目规则 SSOT（工程约定 / 本仓加严） |
 | `crates/<name>/docs/` | 单 crate 设计、API 契约、迁移 |
 
 ---
@@ -35,19 +36,21 @@
 | [01-mission.md](constitution/01-mission.md) … [08-amendments.md](constitution/08-amendments.md) | 分章正文 |
 | [CONSTITUTION.md](../CONSTITUTION.md) | 仓库根兼容索引（指向本目录） |
 
-## 治理与约定 — [`governance/`](governance/)
+## 项目规则 — [`.agents/rules/`](../.agents/rules/)
+
+> 正文 SSOT 在 [`.agents/rules/`](../.agents/rules/)；`docs/governance/` 仅保留兼容重定向。完整索引见 [rules/README.md](../.agents/rules/README.md)。
 
 | 文档 | 说明 |
 |------|------|
-| [VERSIONING.md](governance/VERSIONING.md) | 统一版本管理（项目 / 宪章 / Crate） |
-| [support-matrix.md](governance/support-matrix.md) | 官方支持矩阵（Linux x86_64 + MSRV 1.85；DEFER-6） |
-| [prod-signoff-TEMPLATE.md](governance/prod-signoff-TEMPLATE.md) | 生产签核包模板（L1–L5；仅 Maintainer 签核） |
-| [worktree-policy.md](governance/worktree-policy.md) | Git Worktree 强制开发策略（宪章 §6.0.5） |
-| [编码与语言约定.md](governance/编码与语言约定.md) | UTF-8 与中文/英文文档语言约定 |
-| [ASD-STE100.md](governance/ASD-STE100.md) | 英文技术文档受控语言（STE）落地指南 |
-| [quant-dev-spec.md](governance/quant-dev-spec.md) | 量化开发领域专项规范 |
-| [rust-dev-rules.md](governance/rust-dev-rules.md) | Rust 开发规则补充（错误/unsafe/并发/性能/依赖/测试/日志/序列化） |
-| [项目开发规则.md](governance/项目开发规则.md) | 开发规则总览（文档/工程/复用/门禁） |
+| [VERSIONING.md](../.agents/rules/VERSIONING.md) | 统一版本管理（项目 / 宪章 / Crate） |
+| [support-matrix.md](../.agents/rules/support-matrix.md) | 官方支持矩阵（Linux x86_64 + MSRV 1.85；DEFER-6） |
+| [prod-signoff-TEMPLATE.md](../.agents/rules/prod-signoff-TEMPLATE.md) | 生产签核包模板（L1–L5；仅 Maintainer 签核） |
+| [worktree-policy.md](../.agents/rules/worktree-policy.md) | Git Worktree 强制开发策略（宪章 §6.0.5） |
+| [编码与语言约定.md](../.agents/rules/编码与语言约定.md) | UTF-8 与中文/英文文档语言约定 |
+| [ASD-STE100.md](../.agents/rules/ASD-STE100.md) | 英文技术文档受控语言（STE）落地指南 |
+| [quant-dev-spec.md](../.agents/rules/quant-dev-spec.md) | 量化开发领域专项规范 |
+| [rust-dev-rules.md](../.agents/rules/rust-dev-rules.md) | Rust 开发规则补充（错误/unsafe/并发/性能/依赖/测试/日志/序列化） |
+| [项目开发规则.md](../.agents/rules/项目开发规则.md) | 开发规则总览（文档/工程/复用/门禁） |
 
 相关根文档：[CONSTITUTION.md](../CONSTITUTION.md)（兼容索引 → [`constitution/`](constitution/)）、[ARCHITECTURE.md](../ARCHITECTURE.md)。
 

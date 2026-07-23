@@ -63,7 +63,7 @@ infra.rs/
 │   └── agents/                # 28 个代理定义
 │
 ├── docs/                      # 项目文档（严格分类，见 docs/README.md）
-│   ├── governance/            # 治理与约定（版本/语言/worktree/STE）
+│   ├── governance/            # 兼容重定向 → .agents/rules/
 │   ├── ssot/                  # SSOT 对齐矩阵与同步手册
 │   ├── status/                # CI/配置状态记录
 │   └── decisions/             # 架构决策记录（DDR）

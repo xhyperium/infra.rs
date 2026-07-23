@@ -4,6 +4,12 @@
 
 详细治理见 [AGENTS.md](./AGENTS.md)。
 
+## 项目规则
+
+- 本仓规则 SSOT：[`.agents/rules/`](./.agents/rules/)（索引 [README.md](./.agents/rules/README.md)）
+- 开发总览：[`项目开发规则.md`](./.agents/rules/项目开发规则.md)
+- `docs/governance/` 仅为兼容重定向，勿在旧路径改正文
+
 ## 项目身份
 
 - 这是 **Rust 源码仓库**（Cargo workspace），不是外部项目的配置镜像
@@ -51,7 +57,7 @@
 
 ## Git Worktree（强制开工）
 
-**禁止在主仓 `main` 工作区直接改代码。** 细则：[docs/governance/worktree-policy.md](./docs/governance/worktree-policy.md)
+**禁止在主仓 `main` 工作区直接改代码。** 细则：[.agents/rules/worktree-policy.md](./.agents/rules/worktree-policy.md)
 
 ```bash
 node scripts/worktree/worktree.mjs create feat/<id>-<slug>
@@ -75,8 +81,8 @@ cd .worktrees/feat/<id>-<slug>
 ## 代码行为准则
 
 - **中文优先**：代码注释、中文治理文档、用户可见错误信息使用中文；标识符保持英文
-- **ASD-STE100**：英文技术文档使用简化技术英语（宪章 §4.6；见 `docs/governance/ASD-STE100.md`）
-- **UTF-8**：所有文本文件 UTF-8 无 BOM，换行 LF（宪章 §4.5；见 `docs/governance/编码与语言约定.md` 与 `.editorconfig`）
+- **ASD-STE100**：英文技术文档使用简化技术英语（宪章 §4.6；见 `.agents/rules/ASD-STE100.md`）
+- **UTF-8**：所有文本文件 UTF-8 无 BOM，换行 LF（宪章 §4.5；见 `.agents/rules/编码与语言约定.md` 与 `.editorconfig`）
 - **宪章约束**：语言/编码/文档标准见 `docs/constitution/04-code-standards.md` §4.0、§4.5、§4.6，不可削弱
 - **Rust 全局标准**：组织《Rust 编码规范（完整版）v2.0》——[`xhyperium/.github` `rulesets/rust/RULES.md`](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md)；本机 `~/.claude/rules/rust.md`（`setup-global-rules.sh`）；本仓仅可加严（§4.0）
 
@@ -88,7 +94,7 @@ cd .worktrees/feat/<id>-<slug>
 - **保守编辑**：优先小步修改现有文件
 - **SSOT**：技能以 `.claude/skills/` 为准
 - **Rust 质量门禁**：提交前 `fmt` + `clippy -D warnings` + `test`
-- **Crate 独立版本**：`crates/` 禁止 `version.workspace = true`；每次交付更新该 crate 的 PATCH +1（`x.y.z+1`）；见 `docs/governance/VERSIONING.md`，工具 `node scripts/version/crate-bump.mjs <name>`
+- **Crate 独立版本**：`crates/` 禁止 `version.workspace = true`；每次交付更新该 crate 的 PATCH +1（`x.y.z+1`）；见 `.agents/rules/VERSIONING.md`，工具 `node scripts/version/crate-bump.mjs <name>`
 - 禁止无上下文的 `unwrap()`；库代码优先 `thiserror`，应用侧可用 `anyhow`
 - 日志用 `tracing`，不用 `println!`（示例/bin 除外）
 

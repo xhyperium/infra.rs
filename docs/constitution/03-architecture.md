@@ -26,7 +26,7 @@ crates/
 - **让非法状态不可表示**：用类型系统在编译期阻止错误
 - 关键领域值（价格、数量、时间戳）必须创建 newtype 并在构造时校验
 - 优先使用枚举替代字符串或哨兵值
-- 量化领域专项见 [docs/governance/quant-dev-spec.md](../governance/quant-dev-spec.md)
+- 量化领域专项见 [.agents/rules/quant-dev-spec.md](../../.agents/rules/quant-dev-spec.md)
 
 ## 3.4 错误处理
 

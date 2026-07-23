@@ -3,7 +3,7 @@
 | 目录职责 | 说明 |
 |----------|------|
 | 放什么 | 可执行的多 crate / 多波次修复与晋级计划（含验收与门禁）；发布签核包 |
-| 不放什么 | 一次性审计报告（→ `docs/report/`）、长期治理条文（→ `docs/governance/`）、域对齐矩阵（→ `docs/ssot/`） |
+| 不放什么 | 一次性审计报告（→ `docs/report/`）、长期治理条文（→ `.agents/rules/`）、域对齐矩阵（→ `docs/ssot/`） |
 
 ## 索引
 
@@ -30,7 +30,7 @@
 | 路径 | 用途 |
 |------|------|
 | [`releases/`](releases/) | 按版本填写的生产签核包（从模板复制） |
-| 治理模板 | [`../governance/prod-signoff-TEMPLATE.md`](../governance/prod-signoff-TEMPLATE.md) |
+| 治理模板 | [`../governance/prod-signoff-TEMPLATE.md`](../../.agents/rules/prod-signoff-TEMPLATE.md) |
 
 **规则**：签核文件中的 `Signed-off-by` **仅 Maintainer**；Agent 不得代签。正式权威：`releases/<version>-signoff.md`（非 `*DRAFT*`）。
 

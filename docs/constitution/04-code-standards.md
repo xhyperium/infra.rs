@@ -26,7 +26,7 @@ Agent 与人类编写本仓 Rust 代码时，至少遵守：
 - 异步统一 `tokio`；禁止持锁跨 `.await`；通道/缓存有界；外部调用有 timeout
 - 敏感信息禁止硬编码与日志明文；默认 TLS 校验
 
-完整条款与规则 ID 以组织 `rulesets/rust/` 为准；本仓领域加严见 [quant-dev-spec.md](../governance/quant-dev-spec.md) 等。
+完整条款与规则 ID 以组织 `rulesets/rust/` 为准；本仓领域加严见 [quant-dev-spec.md](../../.agents/rules/quant-dev-spec.md) 等。
 
 ### 4.0.2 本仓加严示例（不削弱上位）
 
@@ -36,10 +36,10 @@ Agent 与人类编写本仓 Rust 代码时，至少遵守：
 | 语言 | 组织 `language.md` 强制中文；§4.5 为本仓落地；§4.6 STE 仅英文可选层 |
 | 脚本 | §4.8 仅 ESM `.mjs` |
 | 门禁 | [§5](./05-quality-gates.md) `cargo deny`、宪章校验脚本等 |
-| 错误 / unsafe / 并发 / 性能 / 依赖 / 测试 / 日志 / 序列化 | [rust-dev-rules.md](../governance/rust-dev-rules.md) 本仓落地与加严清单 |
+| 错误 / unsafe / 并发 / 性能 / 依赖 / 测试 / 日志 / 序列化 | [rust-dev-rules.md](../../.agents/rules/rust-dev-rules.md) 本仓落地与加严清单 |
 
-落地索引：[docs/governance/README.md](../governance/README.md)。  
-Rust 日常开发速查（本仓）：[rust-dev-rules.md](../governance/rust-dev-rules.md)。
+落地索引：[.agents/rules/README.md](../../.agents/rules/README.md)。  
+Rust 日常开发速查（本仓）：[rust-dev-rules.md](../../.agents/rules/rust-dev-rules.md)。
 
 ## 4.1 格式
 
@@ -111,7 +111,7 @@ Rust 日常开发速查（本仓）：[rust-dev-rules.md](../governance/rust-dev
 | 上位 | 说明 |
 |------|------|
 | 组织语言政策 | [`xhyperium/.github` → `rulesets/language.md`](https://github.com/xhyperium/.github/blob/main/rulesets/language.md)（**P0，不可削弱**） |
-| 本仓细则 | [docs/governance/编码与语言约定.md](../governance/编码与语言约定.md) |
+| 本仓细则 | [.agents/rules/编码与语言约定.md](../../.agents/rules/编码与语言约定.md) |
 
 冲突时：**组织 language.md > 本宪章 §4.5 > 细则文档**。
 
@@ -158,7 +158,7 @@ Rust 日常开发速查（本仓）：[rust-dev-rules.md](../governance/rust-dev
 > 仅当项目**书面决定**产出英文技术交付物时，英文正文建议采用 STE 风格。
 
 **ASD-STE100**（Simplified Technical English）是受控英语写作规范。  
-落地指南：[docs/governance/ASD-STE100.md](../governance/ASD-STE100.md)（不复制官方词表）。
+落地指南：[.agents/rules/ASD-STE100.md](../../.agents/rules/ASD-STE100.md)（不复制官方词表）。
 
 ### 4.6.1 何时适用
 
@@ -190,7 +190,7 @@ Rust 日常开发速查（本仓）：[rust-dev-rules.md](../governance/rust-dev
 
 ### 4.6.5 合规检查
 
-- 须保留 `docs/governance/ASD-STE100.md` 作为可选指南  
+- 须保留 `.agents/rules/ASD-STE100.md` 作为可选指南  
 - STE 词表级自动化非强制；无豁免的英文大段正文可在审查中拦截  
 
 ## 4.8 脚本语言：ECMAScript Module（强制）

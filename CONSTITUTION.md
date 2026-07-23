@@ -39,11 +39,11 @@
 |------|----------|
 | [组织语言政策 language.md](https://github.com/xhyperium/.github/blob/main/rulesets/language.md) | §4.5 上位 |
 | [组织 Rust 编码规范完整版 v2.1.1](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md) | §4.0 |
-| [docs/governance/编码与语言约定.md](./docs/governance/编码与语言约定.md) | §4.5 |
-| [docs/governance/ASD-STE100.md](./docs/governance/ASD-STE100.md) | §4.6（可选） |
-| [docs/governance/worktree-policy.md](./docs/governance/worktree-policy.md) | §6.0.5 |
-| [docs/governance/VERSIONING.md](./docs/governance/VERSIONING.md) | §6.2 |
-| [docs/governance/quant-dev-spec.md](./docs/governance/quant-dev-spec.md) | §3.3 领域扩展 |
+| [.agents/rules/编码与语言约定.md](./.agents/rules/编码与语言约定.md) | §4.5 |
+| [.agents/rules/ASD-STE100.md](./.agents/rules/ASD-STE100.md) | §4.6（可选） |
+| [.agents/rules/worktree-policy.md](./.agents/rules/worktree-policy.md) | §6.0.5 |
+| [.agents/rules/VERSIONING.md](./.agents/rules/VERSIONING.md) | §6.2 |
+| [.agents/rules/quant-dev-spec.md](./.agents/rules/quant-dev-spec.md) | §3.3 领域扩展 |
 
 ---
 
