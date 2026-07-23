@@ -274,6 +274,11 @@ impl PostgresConfig {
             .ok()
             .filter(|s| !s.trim().is_empty())
             .map(PathBuf::from);
+        let read_replicas = env::var("FOUNDATIONX_POSTGRESX_READ_REPLICAS")
+            .ok()
+            .filter(|s| !s.trim().is_empty())
+            .map(|s| s.split(',').map(|h| h.trim().to_string()).collect())
+            .unwrap_or_default();
 
         Ok(Self {
             host,
@@ -292,6 +297,7 @@ impl PostgresConfig {
             tls_client_cert,
             tls_client_key,
             database_url: Some(url.to_string()),
+            read_replicas,
         })
     }
 
