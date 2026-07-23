@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.13] — 2026-07-23
+
+### Changed
+
+- 文档/SSOT 合同与 **0.3.12 实现**对齐：Migrator、有界 COPY、CA/SNI、mTLS 客户端、selfcheck
+- dual-spec（`spec.md` / `xhyper-postgresx-complete-spec.md`）升至 `0.3.12` 合同叙述
+- 明确保留 OPEN/DEFER：无限流式 COPY、down migration、read-replica、channel binding、服务端 mTLS live、package stable
+
+### Boundaries
+
+- 无行为变更；仅文档与版本 PATCH
+
 ## [0.3.12] — 2026-07-23
 
 ### Added

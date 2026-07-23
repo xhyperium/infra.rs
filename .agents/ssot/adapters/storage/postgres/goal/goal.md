@@ -6,7 +6,7 @@
 | 标题 | PostgreSQL |
 | 实现 | `crates/adapters/storage/postgres` |
 | 战役 | draft SPEC_GOAL → 本仓生产默认路径 |
-| 状态 | **P0 生产入口已落地**（#188–#191；`0.3.6` foundation 闭合）；package stable **未宣称** |
+| 状态 | **P0 生产入口已落地**（foundation + Migrator/COPY/TLS/selfcheck；`0.3.12+`）；package stable **未宣称** |
 
 ## Outcome
 
@@ -22,10 +22,13 @@
 6. scaffold 仅 `feature = "scaffold"`，禁止当作生产默认
 7. deadline 固定镜像：`node scripts/postgres-deadline-conformance.mjs` 可绿
 
-## Not in scope
+## Not in scope / 仍 OPEN
 
-COPY / migrations / read-replica / 远程 TLS live 强制 / package stable crates.io
+- 无限流式 COPY、down migration、read-replica 路由
+- 服务端强制 mTLS live、channel binding、HA / multi-host
+- package stable / crates.io
 
+（有界 COPY、Migrator verify/apply、远程 Require TLS+CA/SNI、mTLS 客户端、selfcheck 已在合同内。）
 ## 证据指针
 
 - 落地说明：[../plan/infra-rs-landing.md](../plan/infra-rs-landing.md)
