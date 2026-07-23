@@ -1,5 +1,5 @@
 > **状态：Superseded（已被取代）**  
-> 权威规范：[`xhyper-testkit-complete-spec.md`](./testkit-complete-spec.md)（SPEC-TESTKIT-002）  
+> 权威规范：[`xhyper-testkit-complete-spec.md`](./xhyper-testkit-complete-spec.md)（SPEC-TESTKIT-002）  
 > 执行计划：[`plan/plan.md`](../plan/plan.md)（PLAN-TESTKIT-002-v1-complete v1.2.0）  
 > 本文仅作历史草案保留；**不得**作为实现或门禁 SSOT。`xlib_test!` / `mock!` 等职责以 002 退役合同为准。
 
