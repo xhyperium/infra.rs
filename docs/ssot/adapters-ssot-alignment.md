@@ -53,7 +53,7 @@ lib 入口                        adapters: Error/Result；contracts: ExchangeAd
 实现深度                        storage 声明面见专项；exchange **签名 REST + 公共 WS 解析/注入（交易 NO-GO）**
 标准布局八项                    已齐
 publish                         false（显式）
-version                         storage 独立版本；见下表（kafkax `0.3.4`）
+version                         storage 独立版本；见下表各 package 行（kafkax `0.3.4`）
 
 | 镜像路径 | 本仓路径 | package | 本仓状态 |
 |----------|----------|---------|----------|
@@ -64,13 +64,8 @@ version                         storage 独立版本；见下表（kafkax `0.3.4
 | `.agents/ssot/adapters/storage/nats` | `crates/adapters/storage/nats` | `natsx` | **`0.3.3`** Core/JetStream；同客户端重启恢复 3/3，断线窗口无回放、Cluster/HA NO-GO |
 | `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | **`0.3.3`** ObjectStore + 有界 multipart/retry/orphan 补偿；dev live PASS |
 | `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **`0.3.6`** Pool/Tx/Repository + 远程 TLS 路径；dev live 9/9 + deadline conformance；远程 TLS live / package stable OPEN |
-<<<<<<< HEAD
 | `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **`0.3.5`** Standalone + 安全 PubSub 边界；Cluster/Sentinel/TLS live OPEN |
 | `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **`0.3.4`** REST/NCHAR Decimal + WS 探测 + 资源上界；真实 dev live + 十轮矩阵 PASS；package stable NO-GO |
-=======
-    ├── redis/       # → crates/adapters/storage/redis      · package redisx
-| `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **`0.3.3`** REST/NCHAR Decimal + WS 探测 + 资源上界；固定 digest live PASS |
->>>>>>> b2a9a8f (docs(ssot): 同步 redisx 版本行至 origin/main)
 验证（本仓权威命令）：
 
 ```bash
