@@ -103,6 +103,12 @@ pub async fn run_soak(pool: &TaosPool, cfg: SoakConfig) -> XResult<SoakReport> {
     Ok(SoakReport { artifact: path.display().to_string(), ..report })
 }
 
+fn decimal_scale2(base: i128, iterations: u64) -> Decimal {
+    let offset = (iterations % 50) as i128;
+    let mantissa = base.saturating_add(offset);
+    Decimal::try_new(mantissa, 2).unwrap_or_else(|_| Decimal::try_new(0, 2).expect("zero"))
+}
+
 fn write_report(dir: &Path, report: &SoakReport) -> XResult<PathBuf> {
     let name = format!(
         "soak_{}_{}.json",
