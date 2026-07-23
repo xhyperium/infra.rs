@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.8] — 2026-07-23
+
+### Added
+
+- live：`live_raw_client_and_pool_fail_closed` — deprecated raw client 脱池 / begin 拒绝 / raw pool Closed
+- 对齐 POSTGRESX-16 / matrix S-13 升格为 PASS（独立 live 证据）
+
+### Boundaries
+
+- mTLS、COPY/migrations/read-replica、package stable **未承诺**
+
 ## [0.3.7] — 2026-07-23
 
 ### Added
