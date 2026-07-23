@@ -12,7 +12,7 @@ mod config;
 
 pub use client::{
     ANALYTICS_TABLE, BatchInsertOptions, ClickHouseClient, ClickHousePool, ClickHousePoolStats,
-    chunk_ranges, parse_tab_separated_rows,
+    chunk_ranges, parse_tab_separated_rows, validate_ident,
 };
 pub use config::ClickHouseConfig;
 

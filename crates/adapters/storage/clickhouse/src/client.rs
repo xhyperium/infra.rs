@@ -371,7 +371,7 @@ impl AnalyticsSink for ClickHousePool {
     }
 }
 
-fn validate_ident(name: &str) -> XResult<()> {
+pub fn validate_ident(name: &str) -> XResult<()> {
     if name.is_empty() || name.len() > 192 {
         return Err(XError::invalid(format!("非法标识符长度: {name}")));
     }
