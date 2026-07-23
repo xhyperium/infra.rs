@@ -104,3 +104,44 @@ async fn live_close_rejects_new_ops() {
     let err = client.get("any").await.expect_err("must reject after close");
     assert_eq!(err.kind(), ErrorKind::Unavailable);
 }
+
+#[tokio::test]
+#[ignore = "requires live Redis (FOUNDATIONX_REDISX_* or REDIS_URL)"]
+async fn live_call_deadline_and_bytes_aliases() {
+    let client = RedisClient::connect_from_env()
+        .await
+        .expect("connect")
+        .with_call_deadline(Duration::from_secs(5));
+    assert!(client.has_call_deadline());
+    let key = format!("redisx-live-deadline:{}", std::process::id());
+    client
+        .set_bytes(&key, b"bin".to_vec(), Some(Duration::from_secs(30)))
+        .await
+        .expect("set_bytes");
+    assert_eq!(client.get_bytes(&key).await.expect("get_bytes"), Some(b"bin".to_vec()));
+}
+
+#[tokio::test]
+#[ignore = "requires live Redis (FOUNDATIONX_REDISX_* or REDIS_URL)"]
+async fn live_pipeline_set_and_lock_fencing() {
+    let client = RedisClient::connect_from_env().await.expect("connect");
+    let prefix = format!("redisx-live-ext:{}:", std::process::id());
+    let a = format!("{prefix}a");
+    let b = format!("{prefix}b");
+    client.pipeline_set(&[(&a, b"1".to_vec()), (&b, b"2".to_vec())], None).await.expect("pipeline");
+    assert_eq!(client.get(&a).await.expect("ga"), Some(b"1".to_vec()));
+    assert_eq!(client.get(&b).await.expect("gb"), Some(b"2".to_vec()));
+
+    let lock_key = format!("{prefix}lock");
+    let lock = client.lock_acquire(&lock_key, Duration::from_secs(10)).await.expect("lock");
+    assert!(lock.fence() >= 1);
+    let err =
+        client.lock_acquire(&lock_key, Duration::from_secs(10)).await.expect_err("second lock");
+    assert_eq!(err.kind(), ErrorKind::Conflict);
+    assert!(client.lock_extend(&lock, Duration::from_secs(15)).await.expect("extend"));
+    assert!(client.lock_release(&lock).await.expect("release"));
+    // after release, acquire again should succeed with higher fence
+    let lock2 = client.lock_acquire(&lock_key, Duration::from_secs(5)).await.expect("re-lock");
+    assert!(lock2.fence() > lock.fence());
+    let _ = client.lock_release(&lock2).await;
+}

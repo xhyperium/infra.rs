@@ -1,7 +1,10 @@
 # redisx
 
 生产默认的异步 Redis 客户端（`contracts::KeyValueStore` + 扩展 API）。
-当前 workspace 版本为 `0.3.7` 未发布候选；`0.3.3` 为 main 既有历史；`publish = false`，
+- 调用级 deadline：`client.with_call_deadline(Duration::from_secs(2))`
+- 扩展：`pipeline_set` / `eval_script` / `lock_acquire`（fencing）
+
+当前 workspace 版本为 `0.3.8` 未发布候选；`0.3.3` 为 main 既有历史；`publish = false`，
 不代表已经发布。
 
 | 模式 | 类型 | 生产？ |
@@ -74,6 +77,9 @@ pool.close(Duration::from_secs(2)).await?;
 最终本地测试为 51 passed + 8 ignored；ignored live 项需要外部 Redis。
 
 模块级旧 `with_budget*` / `with_retry*` 为 unchecked compatibility，不得作为新生产默认。
+- 调用级 deadline：`client.with_call_deadline(Duration::from_secs(2))`
+- 扩展：`pipeline_set` / `eval_script` / `lock_acquire`（fencing）
+
 旧 `with_budget_async` 委托统一 unchecked core，预算耗尽返回标准 budget 错误并记录刚失败的
 attempt（从 1 起），但仍不会校验 `RetrySafety`。
 

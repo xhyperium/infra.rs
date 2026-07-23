@@ -68,6 +68,7 @@ redis = { version = "0.27", default-features = false, features = [
   "tls-rustls-webpki-roots",
   "cluster-async",
   "sentinel",
+  "script",
 ] }
 url = "2"
 # TLS (postgresx SSL require; redisx/natsx 共用)

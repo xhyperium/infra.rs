@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **redisx 0.3.8**：调用级 total deadline、pipeline_set、Lua 脚本与 fencing 分布式锁；workspace redis 启用 script feature
+
+
+### Changed
+
 - **redisx 0.3.7**：error_map/client 离线单测补强；交付记录挂 #281 merge SHA；覆盖率残余更新
 
 

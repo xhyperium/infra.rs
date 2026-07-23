@@ -7,8 +7,8 @@
 | 路径裁决 | **不**新增 `.agents/ssot/adapters/storage/redisx/`；目录名 `redis` 对齐 storage×7，package 名 `redisx` |
 | 实现 | `crates/adapters/storage/redis` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.7`（覆盖率补强；`0.3.6` 为 #281 P0 交付） |
-| 结论 | **Standalone P0 生产默认客户端已落地**；Cluster / Sentinel / TLS 真实 live 保持 **OPEN**；**禁止** package stable / draft 全文 DoD 宣称 |
+| version | `0.3.8`（deadline/pipeline/锁；`0.3.7` 覆盖率；`0.3.6` #281 P0） |
+| 结论 | **Standalone P0+ 生产默认客户端**（deadline / pipeline / fencing 锁）；Cluster / Sentinel / TLS live **OPEN**；**禁止** package stable / Draft 全文 DoD |
 
 ## 结论摘要
 
@@ -48,7 +48,11 @@
 | REDISX-17 | Draft P0 可宣称 bar | PASS | Standalone 生产默认 KV 客户端（有界） |
 | REDISX-18 | Draft 全文 DoD | OPEN | 见 evidence gap-matrix-v0 |
 | REDISX-19 | 行覆盖率 100% | OPEN / 残余已文档 | 离线 lib 约 **71%**；+live 约 **79.5%**；`error_map` 约 **99%**；见 [coverage-residual.md](../../.agents/ssot/adapters/storage/redis/evidence/2026-07-23/coverage-residual.md) |
-| REDISX-20 | 交付可追溯 | PASS | [delivery-record.md](../../.agents/ssot/adapters/storage/redis/evidence/2026-07-23/delivery-record.md) · PR #281 |
+| REDISX-20 | 交付可追溯 | PASS | [delivery-record.md](../../.agents/ssot/adapters/storage/redis/evidence/2026-07-23/delivery-record.md) · PR #281 / #285 |
+| REDISX-21 | 调用级总 deadline | PASS | `with_call_deadline`；acquire 计入总预算 |
+| REDISX-22 | get_bytes/set_bytes | PASS | 别名 → get/set |
+| REDISX-23 | pipeline_set | PASS | 管道批量 SET；跨 slot 非原子 |
+| REDISX-24 | Lua + fencing 锁 | PASS | `eval_script` / `lock_*`；关键写须 fence；非 package stable |
 
 ## 10 轮审查与 gap 证据
 
