@@ -946,4 +946,72 @@ mod tests {
         let observed_requests = server.await.expect("counting server task");
         assert_eq!(observed_requests, 3, "5 行按每块 2 行应产生 3 次独立请求");
     }
+
+    /// 属性验证：对于多组 (total, max_per_chunk) 参数，`insert_batch` 的 HTTP
+    /// 请求次数与 `chunk_ranges` 返回的 chunk 数量一致，且等于 ceil(total/max)。
+    #[tokio::test]
+    async fn insert_batch_request_count_matches_chunk_ranges() {
+        // 使用不限流的 server：所有 chunk 依次处理直到 timeout 关闭。
+        // 每个 case 独立创建一个 pool+server，避免状态污染。
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        use tokio::net::TcpListener;
+
+        async fn serve_until_idle(listener: TcpListener, expected: usize) -> usize {
+            let mut count = 0usize;
+            for _ in 0..expected {
+                match tokio::time::timeout(Duration::from_secs(3), listener.accept()).await {
+                    Ok(Ok((mut stream, _))) => {
+                        let mut buf = [0u8; 4096];
+                        let _ = tokio::time::timeout(Duration::from_secs(2), stream.read(&mut buf)).await;
+                        stream
+                            .write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 1\r\nConnection: close\r\n\r\n\n")
+                            .await
+                            .ok();
+                        stream.shutdown().await.ok();
+                        count += 1;
+                    }
+                    _ => break,
+                }
+            }
+            count
+        }
+
+        let cases: &[(usize, usize)] = &[
+            (3, 1),
+            (5, 2),
+            (10, 3),
+            (1, 1),
+            (10, 10),
+            (10, 100),
+            (7, 0),
+        ];
+
+        for &(total, max_per_chunk) in cases {
+            let listener = TcpListener::bind(("127.0.0.1", 0)).await.expect("bind");
+            let port = listener.local_addr().expect("addr").port();
+            let expected = chunk_ranges(total, max_per_chunk).len();
+            let server = tokio::spawn(serve_until_idle(listener, expected));
+
+            let cfg = ClickHouseConfig {
+                host: "127.0.0.1".into(),
+                http_port: port,
+                timeout: Duration::from_secs(10),
+                acquire_timeout: Duration::from_secs(5),
+                max_in_flight: 64,
+                ..ClickHouseConfig::default()
+            };
+            let pool = ClickHousePool::connect_without_ping(cfg).expect("build");
+
+            let rows: Vec<Value> = (0..total).map(|i| serde_json::json!({"n": i})).collect();
+            pool.insert_batch("valid_table", &rows, BatchInsertOptions { max_rows_per_chunk: max_per_chunk })
+                .await
+                .expect("insert_batch should succeed");
+
+            let observed = server.await.expect("server join");
+            assert_eq!(
+                observed, expected,
+                "total={total} max_per_chunk={max_per_chunk}: expected {expected} HTTP requests, got {observed}"
+            );
+        }
+    }
 }
