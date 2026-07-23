@@ -1599,18 +1599,16 @@ mod tests {
         assert_eq!(price.to_string(), "0");
 
         // 负价格（某些场景）
-        let price = Decimal::try_new(-100, 2).unwrap();
+        let neg: i128 = -100;
+        let price = Decimal::try_new(neg, 2).unwrap();
         assert_eq!(price.to_string(), "-1");
     }
 
     #[test]
     fn crud_batch_insert_chunk_partitioning() {
         // 模拟 5 个 tick 分 2 行一批 → 3 个 chunk (2+2+1)
-        let points: Vec<Tick> = (0..5)
-            .map(|i| sample_tick("BTC", (i + 1) * 1_000_000))
-            .collect();
-        let chunks =
-            build_insert_sql_chunks("ticks", &points, TsPrecision::Ns, 2).unwrap();
+        let points: Vec<Tick> = (0..5).map(|i| sample_tick("BTC", (i + 1) * 1_000_000)).collect();
+        let chunks = build_insert_sql_chunks("ticks", &points, TsPrecision::Ns, 2).unwrap();
         assert_eq!(chunks.len(), 3);
         // 每个 chunk 必须含 VALUES
         for (i, c) in chunks.iter().enumerate() {
@@ -1650,7 +1648,8 @@ mod tests {
     #[test]
     fn crud_select_count_row_parse() {
         // 模拟 SELECT COUNT(*) 返回
-        let json = r#"{"code":0,"column_meta":[["count(*)","BIGINT","8"]],"data":[["4200"]],"rows":1}"#;
+        let json =
+            r#"{"code":0,"column_meta":[["count(*)","BIGINT","8"]],"data":[["4200"]],"rows":1}"#;
         let result: TaosExecResult = parse_taos_json(json).unwrap();
         assert_eq!(result.rows.len(), 1);
         assert_eq!(result.rows[0][0], "4200");
@@ -1679,34 +1678,22 @@ mod tests {
     #[test]
     fn crud_query_row_count_limit() {
         // max_query_rows=0 应拒绝
-        let cfg = TaosConfig {
-            max_query_rows: 0,
-            ..TaosConfig::default()
-        };
+        let cfg = TaosConfig { max_query_rows: 0, ..TaosConfig::default() };
         assert!(cfg.validate().is_err());
 
         // max_query_rows ≤ HARD_MAX 必须接受
-        let cfg = TaosConfig {
-            max_query_rows: 100,
-            ..TaosConfig::default()
-        };
+        let cfg = TaosConfig { max_query_rows: 100, ..TaosConfig::default() };
         assert!(cfg.validate().is_ok());
     }
 
     #[test]
     fn crud_sql_byte_limit_enforced() {
         // batch_max_bytes=0 应拒绝
-        let cfg = TaosConfig {
-            batch_max_bytes: 0,
-            ..TaosConfig::default()
-        };
+        let cfg = TaosConfig { batch_max_bytes: 0, ..TaosConfig::default() };
         assert!(cfg.validate().is_err());
 
-        // 合���值
-        let cfg = TaosConfig {
-            batch_max_bytes: 1024,
-            ..TaosConfig::default()
-        };
+        // 合法值
+        let cfg = TaosConfig { batch_max_bytes: 1024, ..TaosConfig::default() };
         assert!(cfg.validate().is_ok());
     }
 
@@ -1715,10 +1702,10 @@ mod tests {
         // 写入同一 ts+symbol 两次 → 不应 panic，视为 upsert
         let tick = sample_tick("BTC", 1_000_000);
         let chunks =
-            build_insert_sql_chunks("ticks", std::slice::from_ref(&tick), TsPrecision::Ns, 1).unwrap();
+            build_insert_sql_chunks("ticks", std::slice::from_ref(&tick), TsPrecision::Ns, 1)
+                .unwrap();
         assert_eq!(chunks.len(), 1);
-        let chunks2 =
-            build_insert_sql_chunks("ticks", &[tick], TsPrecision::Ns, 1).unwrap();
+        let chunks2 = build_insert_sql_chunks("ticks", &[tick], TsPrecision::Ns, 1).unwrap();
         // 两次生成的 SQL 应相同（确定性）
         assert_eq!(chunks, chunks2);
     }

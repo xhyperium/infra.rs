@@ -14,7 +14,7 @@ use std::time::{Duration, Instant};
 use canonical::Tick;
 use contracts::TimeSeriesStore;
 use decimalx::{Decimal, Price};
-use taosx::{TaosPool, TaosConfig};
+use taosx::{TaosConfig, TaosPool};
 
 fn tick(ts: i64, sym: &str) -> Tick {
     Tick {
@@ -33,8 +33,14 @@ async fn main() {
     let pool = {
         let cfg = TaosConfig::from_env();
         match tokio::time::timeout(Duration::from_secs(5), TaosPool::connect(cfg)).await {
-            Ok(Ok(p)) => { prec = p.precision(); p }
-            _ => { eprintln!("QUERY_SCALE: skipped (no taos)"); return; }
+            Ok(Ok(p)) => {
+                prec = p.precision();
+                p
+            }
+            _ => {
+                eprintln!("QUERY_SCALE: skipped (no taos)");
+                return;
+            }
         }
     };
 
@@ -46,7 +52,8 @@ async fn main() {
     let base_ts = prec.to_nanos(prec.from_nanos(base_ts));
 
     // Sizes to test: 0 (empty), 10, 100, 1K, 10K
-    let sizes: Vec<usize> = if quick { vec![0, 10, 100, 1_000] } else { vec![0, 10, 100, 1_000, 10_000] };
+    let sizes: Vec<usize> =
+        if quick { vec![0, 10, 100, 1_000] } else { vec![0, 10, 100, 1_000, 10_000] };
     let runs = if quick { 2usize } else { 3usize };
 
     eprintln!("QUERY_SCALE: table={table} precision={prec:?} sizes={sizes:?}");
@@ -69,7 +76,10 @@ async fn main() {
     }
 
     eprintln!("{:-^66}", "");
-    eprintln!("| {:<8} | {:>8} | {:>8} | {:>8} | {:>12} |", "rows", "min(ms)", "avg(ms)", "max(ms)", "per-row(us)");
+    eprintln!(
+        "| {:<8} | {:>8} | {:>8} | {:>8} | {:>12} |",
+        "rows", "min(ms)", "avg(ms)", "max(ms)", "per-row(us)"
+    );
     eprintln!("|{:-<10}|{:-<10}|{:-<10}|{:-<10}|{:-<14}|", "", "", "", "", "");
 
     for &size in &sizes {
@@ -84,14 +94,15 @@ async fn main() {
         let min = latencies.first().unwrap();
         let max = latencies.last().unwrap();
         let avg = latencies.iter().sum::<Duration>() / runs as u32;
-        let per_row_us = if size > 0 {
-            avg.as_micros() as f64 / size as f64
-        } else {
-            0.0
-        };
-        eprintln!("| {:<8} | {:>8.2} | {:>8.2} | {:>8.2} | {:>12.1} |",
-            size, min.as_secs_f64() * 1000.0, avg.as_secs_f64() * 1000.0,
-            max.as_secs_f64() * 1000.0, per_row_us);
+        let per_row_us = if size > 0 { avg.as_micros() as f64 / size as f64 } else { 0.0 };
+        eprintln!(
+            "| {:<8} | {:>8.2} | {:>8.2} | {:>8.2} | {:>12.1} |",
+            size,
+            min.as_secs_f64() * 1000.0,
+            avg.as_secs_f64() * 1000.0,
+            max.as_secs_f64() * 1000.0,
+            per_row_us
+        );
     }
 
     eprintln!("{:-^66}", "");

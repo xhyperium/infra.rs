@@ -33,14 +33,9 @@ struct KlineRow {
 impl KlineRow {
     fn to_tick(&self, symbol: &str, prec: taosx::TsPrecision) -> Tick {
         let ts = prec.to_nanos(prec.from_nanos(self.open_time_ms * 1_000_000));
-        let price = Decimal::try_new((self.close * 100.0) as i128, 2)
-            .unwrap_or_else(|_| Decimal::try_new(0, 2).unwrap());
-        Tick {
-            symbol: symbol.into(),
-            bid: Price::new(price),
-            ask: Price::new(price),
-            ts,
-        }
+        let scaled = (self.close * 100.0) as i128;
+        let price = Decimal::try_new(scaled, 2).unwrap_or_else(|_| Decimal::try_new(0, 2).unwrap());
+        Tick { symbol: symbol.into(), bid: Price::new(price), ask: Price::new(price), ts }
     }
 }
 
@@ -55,7 +50,9 @@ fn read_kline_csv(path: &str, max_rows: Option<usize>) -> Vec<KlineRow> {
     for line in reader.lines() {
         let line = line.unwrap();
         let fields: Vec<&str> = line.split(',').collect();
-        if fields.len() < 6 { continue; }
+        if fields.len() < 6 {
+            continue;
+        }
 
         rows.push(KlineRow {
             open_time_ms: fields[0].parse().unwrap_or(0),
@@ -63,7 +60,9 @@ fn read_kline_csv(path: &str, max_rows: Option<usize>) -> Vec<KlineRow> {
         });
 
         if let Some(max) = max_rows {
-            if rows.len() >= max { break; }
+            if rows.len() >= max {
+                break;
+            }
         }
     }
     rows
@@ -83,12 +82,12 @@ async fn main() {
 
     // --- 1. Connect ---
     let start = Instant::now();
-    let pool = TaosPool::connect_from_env().await
+    let pool = TaosPool::connect_from_env()
+        .await
         .expect("connect to TDengine (set FOUNDATIONX_TAOSX_* env)");
     let prec = pool.precision();
     let db = "market_binance";
-    pool.exec_sql(&format!("CREATE DATABASE IF NOT EXISTS `{db}` PRECISION 'ns'"))
-        .await.unwrap();
+    pool.exec_sql(&format!("CREATE DATABASE IF NOT EXISTS `{db}` PRECISION 'ns'")).await.unwrap();
     pool.exec_sql(&format!("USE `{db}`")).await.unwrap();
     println!("\n1. CONNECT: ok ({:?}) precision={prec:?}", start.elapsed());
 
@@ -96,10 +95,8 @@ async fn main() {
     let data_root = "/home/workspace/data/binance_futures/merged";
     let btc_csv = format!("{data_root}/BTCUSDT/1h.csv");
     let eth_csv = format!("{data_root}/ETHUSDT/1h.csv");
-    let datasets: Vec<(&str, &str, &str)> = vec![
-        ("BTCUSDT", "1h", &btc_csv),
-        ("ETHUSDT", "1h", &eth_csv),
-    ];
+    let datasets: Vec<(&str, &str, &str)> =
+        vec![("BTCUSDT", "1h", &btc_csv), ("ETHUSDT", "1h", &eth_csv)];
 
     let total_start = Instant::now();
     let mut total_inserts = 0u64;
@@ -145,7 +142,10 @@ async fn main() {
                         }
                     }
                 }
-                Err(e) => { eprintln!("  chunk error: {e}"); total_errors += 1; }
+                Err(e) => {
+                    eprintln!("  chunk error: {e}");
+                    total_errors += 1;
+                }
             }
             offset += batch_size;
         }
@@ -157,7 +157,12 @@ async fn main() {
         if let Ok(r) = pool.exec_sql(&format!("SELECT COUNT(*) FROM `{table}`")).await {
             total_queries += 1;
             let row_count = r.rows.len();
-            println!("  QUERY: SELECT COUNT(*) -> {} ({} rows) ({:?})", row_count, if row_count > 0 { "ok" } else { "empty" }, s.elapsed());
+            println!(
+                "  QUERY: SELECT COUNT(*) -> {} ({} rows) ({:?})",
+                row_count,
+                if row_count > 0 { "ok" } else { "empty" },
+                s.elapsed()
+            );
         }
 
         // --- 2e. QUERY range summary ---
@@ -191,7 +196,9 @@ async fn main() {
         // Insert a marker row with future timestamp, then delete it
         let future_ts = (std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos() as i64).unwrap_or(0)) + 3_600_000_000_000; // +1h
+            .map(|d| d.as_nanos() as i64)
+            .unwrap_or(0))
+            + 3_600_000_000_000; // +1h
         let marker_ts = prec.to_nanos(prec.from_nanos(future_ts));
         let marker_tick = Tick {
             symbol: "DELETE_TEST".into(),
@@ -229,7 +236,9 @@ async fn main() {
     // --- 5. Final summary ---
     let elapsed = total_start.elapsed();
     println!("\n=== SUMMARY ===");
-    println!("  inserts={total_inserts} queries={total_queries} updates={total_updates} deletes={total_deletes} errors={total_errors}");
+    println!(
+        "  inserts={total_inserts} queries={total_queries} updates={total_updates} deletes={total_deletes} errors={total_errors}"
+    );
     println!("  total elapsed={elapsed:?}");
 
     // --- 6. Cleanup ---

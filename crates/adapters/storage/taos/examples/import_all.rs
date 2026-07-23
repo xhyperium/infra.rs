@@ -16,10 +16,21 @@ use decimalx::{Decimal, Price};
 use taosx::{TaosPool, build_insert_sql_chunks};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum DataKind { Kline, MarkPrice, IndexPrice, PremiumIndex, FundingRate }
+enum DataKind {
+    Kline,
+    MarkPrice,
+    IndexPrice,
+    PremiumIndex,
+    FundingRate,
+}
 
 impl DataKind {
-    fn price_field_index(&self) -> usize { match self { Self::FundingRate => 2, _ => 4 } }
+    fn price_field_index(&self) -> usize {
+        match self {
+            Self::FundingRate => 2,
+            _ => 4,
+        }
+    }
     fn table_prefix(&self) -> &'static str {
         match self {
             Self::Kline => "st_kline",
@@ -32,11 +43,17 @@ impl DataKind {
 }
 
 fn detect_kind(path: &str) -> DataKind {
-         if path.contains("markPriceKlines")   { DataKind::MarkPrice }
-    else if path.contains("indexPriceKlines")  { DataKind::IndexPrice }
-    else if path.contains("premiumIndexKlines"){ DataKind::PremiumIndex }
-    else if path.contains("fundingRate")       { DataKind::FundingRate }
-    else                                        { DataKind::Kline }
+    if path.contains("markPriceKlines") {
+        DataKind::MarkPrice
+    } else if path.contains("indexPriceKlines") {
+        DataKind::IndexPrice
+    } else if path.contains("premiumIndexKlines") {
+        DataKind::PremiumIndex
+    } else if path.contains("fundingRate") {
+        DataKind::FundingRate
+    } else {
+        DataKind::Kline
+    }
 }
 
 fn extract_symbol_interval(path: &str) -> (String, String) {
@@ -57,7 +74,8 @@ async fn main() {
 
     // --- Connect ---
     let start = Instant::now();
-    let pool = TaosPool::connect_from_env().await
+    let pool = TaosPool::connect_from_env()
+        .await
         .expect("connect to TDengine (set FOUNDATIONX_TAOSX_* env)");
     let prec = pool.precision();
     let db = "market_binance";
@@ -72,8 +90,9 @@ async fn main() {
         if let Ok(entries) = std::fs::read_dir(dir) {
             for e in entries.flatten() {
                 let p = e.path();
-                if p.is_dir() { walk(&p.to_string_lossy(), out); }
-                else if p.extension().is_some_and(|e| e == "csv") {
+                if p.is_dir() {
+                    walk(&p.to_string_lossy(), out);
+                } else if p.extension().is_some_and(|e| e == "csv") {
                     out.push(p.to_string_lossy().to_string());
                 }
             }
@@ -103,7 +122,9 @@ async fn main() {
         if let Ok(file) = File::open(path) {
             for line in BufReader::new(file).lines().map_while(Result::ok) {
                 let fields: Vec<&str> = line.split(',').collect();
-                if fields.len() < kind.price_field_index() + 2 { continue; }
+                if fields.len() < kind.price_field_index() + 2 {
+                    continue;
+                }
                 let open_time_ms: i64 = fields[0].parse().unwrap_or(0);
                 let price_idx = kind.price_field_index();
                 let close: f64 = fields[price_idx].parse().unwrap_or(0.0);
@@ -120,15 +141,22 @@ async fn main() {
              (ts TIMESTAMP, bid NCHAR(64), ask NCHAR(64)) \
              TAGS (symbol NCHAR(16))"
         );
-        if pool.exec_sql(&ddl).await.is_err() { total_errors += 1; continue; }
+        if pool.exec_sql(&ddl).await.is_err() {
+            total_errors += 1;
+            continue;
+        }
 
         // Convert to Ticks and batch INSERT
-        let ticks: Vec<Tick> = rows.iter().map(|(t, c)| {
-            let price = Decimal::try_new((*c * 100.0) as i128, 2)
-                .unwrap_or_else(|_| Decimal::try_new(0, 2).unwrap());
-            let ts = prec.to_nanos(prec.from_nanos(*t * 1_000_000));
-            Tick { symbol: symbol.clone(), bid: Price::new(price), ask: Price::new(price), ts }
-        }).collect();
+        let ticks: Vec<Tick> = rows
+            .iter()
+            .map(|(t, c)| {
+                let scaled = (*c * 100.0) as i128;
+                let price =
+                    Decimal::try_new(scaled, 2).unwrap_or_else(|_| Decimal::try_new(0, 2).unwrap());
+                let ts = prec.to_nanos(prec.from_nanos(*t * 1_000_000));
+                Tick { symbol: symbol.clone(), bid: Price::new(price), ask: Price::new(price), ts }
+            })
+            .collect();
 
         let mut offset = 0;
         let mut file_inserted: u64 = 0;
@@ -152,7 +180,10 @@ async fn main() {
         total_errors += file_errors;
 
         let status = if file_errors == 0 { "OK" } else { "ERR" };
-        println!("[{file_count:>3}/{:<3}] {status} {table:>40} rows={csv_rows:>10} chunks={file_inserted:>5} err={file_errors}", csv_files.len() - file_count as usize);
+        println!(
+            "[{file_count:>3}/{:<3}] {status} {table:>40} rows={csv_rows:>10} chunks={file_inserted:>5} err={file_errors}",
+            csv_files.len() - file_count as usize
+        );
 
         // Verify with COUNT(*) query
         let count_sql = format!("SELECT COUNT(*) FROM `{table}`");

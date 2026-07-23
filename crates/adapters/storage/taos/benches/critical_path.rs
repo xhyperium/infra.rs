@@ -12,7 +12,7 @@ use std::time::{Duration, Instant};
 use canonical::Tick;
 use contracts::TimeSeriesStore;
 use decimalx::{Decimal, Price};
-use taosx::{TaosPool, TaosConfig, build_insert_sql_chunks, TsPrecision};
+use taosx::{TaosConfig, TaosPool, TsPrecision, build_insert_sql_chunks};
 
 fn now_ts(prec: TsPrecision) -> i64 {
     let ns = std::time::SystemTime::now()
@@ -33,9 +33,9 @@ fn tick_1ms(ts: i64) -> Tick {
 
 fn read_rss_kb() -> Option<u64> {
     std::fs::read_to_string("/proc/self/status").ok().and_then(|s| {
-        s.lines().find(|l| l.starts_with("VmRSS:")).and_then(|l| {
-            l.split_whitespace().nth(1)?.parse::<u64>().ok()
-        })
+        s.lines()
+            .find(|l| l.starts_with("VmRSS:"))
+            .and_then(|l| l.split_whitespace().nth(1)?.parse::<u64>().ok())
     })
 }
 
@@ -52,7 +52,10 @@ async fn main() {
     let cfg = TaosConfig::from_env();
     let pool = match tokio::time::timeout(Duration::from_secs(5), TaosPool::connect(cfg)).await {
         Ok(Ok(p)) => p,
-        _ => { eprintln!("CRITICAL_BENCH: skipped (no taos)"); return; }
+        _ => {
+            eprintln!("CRITICAL_BENCH: skipped (no taos)");
+            return;
+        }
     };
     eprintln!("CRITICAL_BENCH: connect={:?}", start.elapsed());
 
@@ -68,10 +71,15 @@ async fn main() {
         let start = Instant::now();
         let mut ok = 0;
         for _ in 0..n {
-            if pool.ping().await.is_ok() { ok += 1; }
+            if pool.ping().await.is_ok() {
+                ok += 1;
+            }
         }
         let elapsed = start.elapsed();
-        eprintln!("    ping: iters={n} ok={ok} total={elapsed:?} per_iter={:?}", elapsed / n.max(1) as u32);
+        eprintln!(
+            "    ping: iters={n} ok={ok} total={elapsed:?} per_iter={:?}",
+            elapsed / n.max(1) as u32
+        );
     }
 
     // --- 2. health ---
@@ -80,10 +88,17 @@ async fn main() {
         let start = Instant::now();
         let mut ok = 0;
         for _ in 0..n {
-            if let Ok(h) = pool.health().await { if h.ready { ok += 1; } }
+            if let Ok(h) = pool.health().await {
+                if h.ready {
+                    ok += 1;
+                }
+            }
         }
         let elapsed = start.elapsed();
-        eprintln!("    health: iters={n} ok={ok} total={elapsed:?} per_iter={:?}", elapsed / n.max(1) as u32);
+        eprintln!(
+            "    health: iters={n} ok={ok} total={elapsed:?} per_iter={:?}",
+            elapsed / n.max(1) as u32
+        );
     }
 
     // --- 3. write_series (single tick) ---
@@ -93,10 +108,15 @@ async fn main() {
         let mut ok = 0;
         for _ in 0..n {
             let t = tick_1ms(ts);
-            if pool.write_series(&table, vec![t]).await.is_ok() { ok += 1; }
+            if pool.write_series(&table, vec![t]).await.is_ok() {
+                ok += 1;
+            }
         }
         let elapsed = start.elapsed();
-        eprintln!("    write_series: iters={n} ok={ok} total={elapsed:?} per_iter={:?}", elapsed / n.max(1) as u32);
+        eprintln!(
+            "    write_series: iters={n} ok={ok} total={elapsed:?} per_iter={:?}",
+            elapsed / n.max(1) as u32
+        );
     }
 
     // --- 4. query_series ---
@@ -105,10 +125,15 @@ async fn main() {
         let start = Instant::now();
         let mut ok = 0;
         for _ in 0..n {
-            if pool.query_series(&table, ts, ts + 1000).await.is_ok() { ok += 1; }
+            if pool.query_series(&table, ts, ts + 1000).await.is_ok() {
+                ok += 1;
+            }
         }
         let elapsed = start.elapsed();
-        eprintln!("    query_series: iters={n} ok={ok} total={elapsed:?} per_iter={:?}", elapsed / n.max(1) as u32);
+        eprintln!(
+            "    query_series: iters={n} ok={ok} total={elapsed:?} per_iter={:?}",
+            elapsed / n.max(1) as u32
+        );
     }
 
     // --- 5. exec_sql (raw) ---
@@ -117,34 +142,49 @@ async fn main() {
         let start = Instant::now();
         let mut ok = 0;
         for _ in 0..n {
-            if pool.exec_sql("SELECT SERVER_VERSION()").await.is_ok() { ok += 1; }
+            if pool.exec_sql("SELECT SERVER_VERSION()").await.is_ok() {
+                ok += 1;
+            }
         }
         let elapsed = start.elapsed();
-        eprintln!("    exec_sql: iters={n} ok={ok} total={elapsed:?} per_iter={:?}", elapsed / n.max(1) as u32);
+        eprintln!(
+            "    exec_sql: iters={n} ok={ok} total={elapsed:?} per_iter={:?}",
+            elapsed / n.max(1) as u32
+        );
     }
 
     // --- 6. write_batch (chunked, multi-symbol) ---
     eprintln!("-- 6. write_batch_chunked ({bn} symbols)");
     let symbols: Vec<String> = (0..bn).map(|i| format!("S{}", i)).collect();
-    let ticks: Vec<Tick> = symbols.iter().map(|s| {
-        let mut t = tick_1ms(ts);
-        t.symbol = s.clone();
-        t
-    }).collect();
+    let ticks: Vec<Tick> = symbols
+        .iter()
+        .map(|s| {
+            let mut t = tick_1ms(ts);
+            t.symbol = s.clone();
+            t
+        })
+        .collect();
     {
         let start = Instant::now();
         let mut ok = 0;
         for _ in 0..n {
-            let chunks = build_insert_sql_chunks(&table, &ticks, prec, 500)
-                .unwrap_or_default();
+            let chunks = build_insert_sql_chunks(&table, &ticks, prec, 500).unwrap_or_default();
             let mut all_ok = true;
             for sql in &chunks {
-                if pool.exec_sql(sql).await.is_err() { all_ok = false; break; }
+                if pool.exec_sql(sql).await.is_err() {
+                    all_ok = false;
+                    break;
+                }
             }
-            if all_ok { ok += 1; }
+            if all_ok {
+                ok += 1;
+            }
         }
         let elapsed = start.elapsed();
-        eprintln!("    write_batch_chunked: iters={n} ok={ok} total={elapsed:?} per_iter={:?}", elapsed / n.max(1) as u32);
+        eprintln!(
+            "    write_batch_chunked: iters={n} ok={ok} total={elapsed:?} per_iter={:?}",
+            elapsed / n.max(1) as u32
+        );
     }
 
     // --- 7. write_batch_idempotent ---
@@ -153,10 +193,15 @@ async fn main() {
         let start = Instant::now();
         let mut ok = 0;
         for _ in 0..n {
-            if pool.write_batch_idempotent(&table, &ticks).await.is_ok() { ok += 1; }
+            if pool.write_batch_idempotent(&table, &ticks).await.is_ok() {
+                ok += 1;
+            }
         }
         let elapsed = start.elapsed();
-        eprintln!("    write_batch_idempotent: iters={n} ok={ok} total={elapsed:?} per_iter={:?}", elapsed / n.max(1) as u32);
+        eprintln!(
+            "    write_batch_idempotent: iters={n} ok={ok} total={elapsed:?} per_iter={:?}",
+            elapsed / n.max(1) as u32
+        );
     }
 
     // --- 8. metrics_prometheus ---
@@ -166,10 +211,15 @@ async fn main() {
         let mut ok = 0;
         for _ in 0..n {
             let s = pool.metrics_prometheus();
-            if !s.is_empty() { ok += 1; }
+            if !s.is_empty() {
+                ok += 1;
+            }
         }
         let elapsed = start.elapsed();
-        eprintln!("    metrics: iters={n} ok={ok} total={elapsed:?} per_iter={:?}", elapsed / n.max(1) as u32);
+        eprintln!(
+            "    metrics: iters={n} ok={ok} total={elapsed:?} per_iter={:?}",
+            elapsed / n.max(1) as u32
+        );
     }
 
     // --- 9. write+query roundtrip ---
@@ -180,10 +230,16 @@ async fn main() {
         for _ in 0..n {
             let t = tick_1ms(ts);
             if pool.write_series(&table, vec![t]).await.is_ok()
-                && pool.query_series(&table, ts, ts + 1000).await.is_ok() { ok += 1; }
+                && pool.query_series(&table, ts, ts + 1000).await.is_ok()
+            {
+                ok += 1;
+            }
         }
         let elapsed = start.elapsed();
-        eprintln!("    write+query: iters={n} ok={ok} total={elapsed:?} per_iter={:?}", elapsed / n.max(1) as u32);
+        eprintln!(
+            "    write+query: iters={n} ok={ok} total={elapsed:?} per_iter={:?}",
+            elapsed / n.max(1) as u32
+        );
     }
 
     // --- 10. close ---
@@ -199,8 +255,13 @@ async fn main() {
     let _ = pool.close().await;
 
     let mem_after = read_rss_kb();
-    if let (Some(before), Some(after_conn), Some(after)) = (mem_before, mem_after_connect, mem_after) {
-        eprintln!("CRITICAL_BENCH: mem VmRSS before={before}kB after_connect={after_conn}kB after_all={after}kB delta={}kB", after.saturating_sub(before));
+    if let (Some(before), Some(after_conn), Some(after)) =
+        (mem_before, mem_after_connect, mem_after)
+    {
+        eprintln!(
+            "CRITICAL_BENCH: mem VmRSS before={before}kB after_connect={after_conn}kB after_all={after}kB delta={}kB",
+            after.saturating_sub(before)
+        );
     }
     eprintln!("CRITICAL_BENCH: done");
 }
