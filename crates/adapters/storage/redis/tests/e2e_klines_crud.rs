@@ -308,7 +308,7 @@ async fn e2e_klines_structures_streams_multi() {
         Some(first.raw.as_slice())
     );
 
-    // Streams：每根 K 线一条
+    // Streams：每根 K 线一条（自动 id）+ 一条显式 id（xadd_with_id 公共面）
     let mut last_id = "0-0".to_owned();
     for r in rows.iter().take(16) {
         let id = client
@@ -317,7 +317,25 @@ async fn e2e_klines_structures_streams_multi() {
             .expect("xadd");
         last_id = id;
     }
-    assert!(client.xlen(&stream).await.expect("xlen") >= 16);
+    // 基于最后自动 id 构造更大显式 id，保证单调
+    let ms: u128 = last_id
+        .split('-')
+        .next()
+        .and_then(|s| s.parse::<u128>().ok())
+        .unwrap_or(1u128)
+        .saturating_add(1);
+    let fixed = format!("{ms}-0");
+    let got = client
+        .xadd_with_id(
+            &stream,
+            &fixed,
+            &[("ot", rows[0].open_time.as_bytes()), ("row", rows[0].raw.as_slice())],
+        )
+        .await
+        .expect("xadd_with_id");
+    assert_eq!(got, fixed);
+    last_id = got;
+    assert!(client.xlen(&stream).await.expect("xlen") >= 17);
     let entries = client.xrange(&stream, "-", "+", Some(20)).await.expect("xrange");
     assert!(entries.len() >= 16);
     let more = client.xread(&stream, "0-0", Some(20)).await.expect("xread");

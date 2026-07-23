@@ -159,6 +159,12 @@ async fn bench_streams(client: &RedisClient, prefix: &str, iters: usize) {
     for _ in 0..10 {
         let _ = client.xadd(&s, &[("f", b"v")]).await;
     }
+    // 预热 + 一次显式 id 公共面（xadd_with_id）
+    let base_ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(1);
+    let _ = client.xadd_with_id(&s, &format!("{}-0", base_ms), &[("f", b"fixed")]).await;
     let t0 = Instant::now();
     for i in 0..iters {
         client.xadd(&s, &[("i", format!("{i}").as_bytes())]).await.expect("xadd");
@@ -167,7 +173,7 @@ async fn bench_streams(client: &RedisClient, prefix: &str, iters: usize) {
     let _ = client.xrange(&s, "-", "+", Some(10)).await.expect("xrange");
     let elapsed = t0.elapsed();
     println!(
-        "streams xadd iters={iters} elapsed={elapsed:?} ops≈{:.0}/s",
+        "streams xadd(+xadd_with_id) iters={iters} elapsed={elapsed:?} ops≈{:.0}/s",
         iters as f64 / elapsed.as_secs_f64()
     );
     let _ = client.delete(&s).await;

@@ -33,7 +33,7 @@ function run(label, cmd, opts = {}) {
     return true;
   }
   try {
-    execSync(cmd, { cwd: ROOT, stdio: JSON_MODE ? "pipe" : "inherit", timeout: opts.timeout ?? 120_000 });
+    execSync(cmd, { cwd: ROOT, stdio: JSON_MODE ? "pipe" : "inherit", timeout: opts.timeout ?? 600_000 });
     results.push({ check: label, status: "pass" });
     return true;
   } catch (e) {

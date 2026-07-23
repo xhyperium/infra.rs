@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.15] — 2026-07-23
+
+### Fixed
+
+- **`xadd_with_id` 全路径覆盖**：离线空 fields/空 id Invalid + probe I/O；live 显式 id 往返；e2e K 线一条；bench 预热调用
+
 ## [0.3.14] — 2026-07-23
 
 ### Fixed

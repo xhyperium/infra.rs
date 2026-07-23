@@ -4,6 +4,9 @@
 
 - **liveness**：进程存活即可
 - **readiness**：调用池/客户端 `health`/`ping`（有 deadline）
+- **库内自验证**：`NatsValidator::validate(CheckLevel::*)` 或
+  `cargo run -p natsx --example nats_verify`（输出四态 JSON 报告；
+  不构成 package stable 证明；`kv_watch` 仍为 NO-GO）
 
 ## 故障
 

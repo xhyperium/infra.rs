@@ -359,11 +359,33 @@ async fn it_streams_and_multi_exec() {
     let k1 = format!("{p}tx1");
     let k2 = format!("{p}tx2");
 
+    // 校验路径：空 fields / 空 id → Invalid（在任意写之前）
+    let err_fields = client.xadd_with_id(&stream, "1-0", &[]).await.expect_err("empty fields");
+    assert_eq!(err_fields.kind(), ErrorKind::Invalid);
+    let err_id = client.xadd_with_id(&stream, "", &[("f", b"v")]).await.expect_err("empty id");
+    assert_eq!(err_id.kind(), ErrorKind::Invalid);
+
+    // 自动 id + 显式单调 id（空流上 1-0 / 2-0 可复现）
     let id = client.xadd(&stream, &[("sym", b"BTC"), ("px", b"1")]).await.expect("xadd");
     assert!(!id.is_empty());
-    assert!(client.xlen(&stream).await.expect("xlen") >= 1);
+    // 取自动 id 的 ms 部分 +1，保证显式 id 严格更大
+    let ms: u128 = id
+        .split('-')
+        .next()
+        .and_then(|s| s.parse::<u128>().ok())
+        .unwrap_or(1u128)
+        .saturating_add(1);
+    let fixed_id = format!("{ms}-0");
+    let id2 = client
+        .xadd_with_id(&stream, &fixed_id, &[("sym", b"ETH"), ("px", b"2")])
+        .await
+        .expect("xadd_with_id");
+    assert_eq!(id2, fixed_id, "server must honor explicit stream id");
+
+    assert!(client.xlen(&stream).await.expect("xlen") >= 2);
     let range = client.xrange(&stream, "-", "+", Some(10)).await.expect("xrange");
     assert!(range.iter().any(|e| e.id == id));
+    assert!(range.iter().any(|e| e.id == id2));
     let read = client.xread(&stream, "0-0", Some(10)).await.expect("xread");
     assert!(!read.is_empty());
     // XREAD BLOCK：从 0-0 应立即返回已有条目（block 预算走 with_conn_budget）
@@ -372,7 +394,7 @@ async fn it_streams_and_multi_exec() {
         .await
         .expect("xread_block");
     assert!(!blocked.is_empty(), "xread_block should return existing stream entries");
-    assert_eq!(client.xdel(&stream, &[&id]).await.expect("xdel"), 1);
+    assert_eq!(client.xdel(&stream, &[&id, &id2]).await.expect("xdel"), 2);
 
     let vals = client
         .multi_exec(&[

@@ -4,7 +4,7 @@
 
 ### Fixed（skeptic：pub API 行为测试与 stats 路径）
 
-- `AtLeastOnceConsumer::{nack_keep_pending, drop_pending_unacked, is_terminated}` 离线 unit 后端 + live 集成
+- AtLeastOnceConsumer：nack 保留 pending、drop pending 并终止会话、is_terminated；离线 unit + live
 - `KafkaEventBus::with_group` 构造与 live publish 路径
 - `KafkaValidator::with_config` Basic skip 行为（离线 + live）
 - `publish_timeouts` / `publish_cancelled` 与 `record_*` 同源单测 + 关闭竞态集成
@@ -13,7 +13,6 @@
 ### Boundary
 
 - NO-GO 不变；package stable 未宣称
-
 
 ## [0.3.7] — 2026-07-23
 

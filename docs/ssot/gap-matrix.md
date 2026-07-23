@@ -6,7 +6,7 @@
 | Domain | Draft DoD P0 | Current | Deferred (not OBJECTIVE / not stable) |
 |--------|--------------|---------|----------------------------------------|
 | postgresx | Pool+query+tx+TLS | **done** + Repository + 远程 Require live（CA+SNI）+ deadline + Migrator+COPY+mTLS+**selfcheck §6.1**+live (`0.3.12`) | 无限流式 COPY / read-replica / package stable / 服务端强制 mTLS live / down migration |
-| redisx | Pool+KV+structures+Streams+tx+live | **done** 全公开 API + selfcheck + live/E2E/bench (`0.3.14`) | Cluster/Sentinel/TLS live（无 env）/ package stable / PubSub NO-GO |
+| redisx | Pool+KV+structures+Streams+tx+live | **done** 全公开 API + selfcheck + live/E2E/bench (`0.3.15`) | Cluster/Sentinel/TLS live（无 env）/ package stable / PubSub NO-GO |
 | postgresx | Pool+query+tx+TLS | **done** + Repository + 远程 Require live（CA+SNI）+ deadline + Migrator+COPY+mTLS+**selfcheck §6.1**+live + 合同文档对齐 (`0.3.13`) | 无限流式 COPY / read-replica / package stable / 服务端强制 mTLS live / down migration / channel binding |
 | kafkax | Producer pool + EventBus | **done** + headers/key/stats + selfcheck + 生产矩阵 (`0.3.8`) | SCRAM 成功路径/group/rebalance/native EOS/DLQ/Part2 OOS/24h 默认 soak |
 | natsx | Core NATS EventBus | **done** + JetStream durable pull/显式确认 + 同客户端重启恢复 3/3 (`0.3.2`) | 断线窗口无回放 / NKey / Cluster/HA / 自动 DLQ / KV·Object 全量 |
