@@ -228,5 +228,28 @@
     "evidence/**",
     "node_modules/**",
     "target/**"
+  ],
+  "words": [
+    "blpop",
+    "hdel",
+    "hget",
+    "hgetall",
+    "hset",
+    "keepalive",
+    "lpop",
+    "lpush",
+    "lrange",
+    "rpush",
+    "sadd",
+    "sismember",
+    "srem",
+    "xadd",
+    "xdel",
+    "xlen",
+    "xrange",
+    "xread",
+    "zadd",
+    "zrem",
+    "zscore"
   ]
 }
