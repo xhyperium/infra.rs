@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.8] — 2026-07-23
+
+### Fixed（skeptic：pub API 行为测试与 stats 路径）
+
+- `AtLeastOnceConsumer::{nack_keep_pending, drop_pending_unacked, is_terminated}` 离线 unit 后端 + live 集成
+- `KafkaEventBus::with_group` 构造与 live publish 路径
+- `KafkaValidator::with_config` Basic skip 行为（离线 + live）
+- `publish_timeouts` / `publish_cancelled` 与 `record_*` 同源单测 + 关闭竞态集成
+- 完整 `kafkax-api-coverage` 映射（禁止 type_name 剧场）
+
+### Boundary
+
+- NO-GO 不变；package stable 未宣称
+
+
 ## [0.3.7] — 2026-07-23
 
 ### Added（gap 清零：headers / key / stats）

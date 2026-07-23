@@ -53,7 +53,8 @@ pub struct KafkaPool {
 
 struct PoolInner {
     config: KafkaConfig,
-    client: Client,
+    /// 生产路径始终为 `Some`；`#[cfg(test)]` stats stub 可为 `None`。
+    client: Option<Client>,
     published: AtomicU64,
     publish_failed: AtomicU64,
     publish_timeouts: AtomicU64,
@@ -95,7 +96,7 @@ impl KafkaPool {
         Ok(Self {
             inner: Arc::new(PoolInner {
                 config,
-                client,
+                client: Some(client),
                 published: AtomicU64::new(0),
                 publish_failed: AtomicU64::new(0),
                 publish_timeouts: AtomicU64::new(0),
@@ -105,6 +106,24 @@ impl KafkaPool {
                 lifecycle: Lifecycle::new(),
             }),
         })
+    }
+
+    /// 单测用：仅统计/生命周期可用的 stub pool（无 broker Client）。
+    #[cfg(test)]
+    pub(crate) fn stats_stub(config: KafkaConfig) -> Self {
+        Self {
+            inner: Arc::new(PoolInner {
+                config,
+                client: None,
+                published: AtomicU64::new(0),
+                publish_failed: AtomicU64::new(0),
+                publish_timeouts: AtomicU64::new(0),
+                publish_cancelled: AtomicU64::new(0),
+                topics_ensured: AtomicU64::new(0),
+                topics_deleted: AtomicU64::new(0),
+                lifecycle: Lifecycle::new(),
+            }),
+        }
     }
 
     /// 从环境变量连接。
@@ -119,9 +138,16 @@ impl KafkaPool {
     }
 
     /// 底层 client。
+    ///
+    /// # Panics
+    ///
+    /// 测试用 stats stub（无 client）上调用会 panic；生产 `connect` 路径永非 stub。
     #[must_use]
     pub fn client(&self) -> &Client {
-        &self.inner.client
+        self.inner
+            .client
+            .as_ref()
+            .expect("kafkax: stats stub pool 无 rskafka Client；请使用 KafkaPool::connect")
     }
 
     /// 共享 producer 句柄。
@@ -147,7 +173,7 @@ impl KafkaPool {
             }
             result = tokio::time::timeout(
                 self.inner.config.operation_timeout,
-                self.inner.client.list_topics(),
+                self.client().list_topics(),
             ) => result,
         } {
             Err(error) => {
@@ -188,8 +214,7 @@ impl KafkaPool {
         let _operation = self.start_operation()?;
         let mut shutdown = self.shutdown_receiver();
         let ctrl = self
-            .inner
-            .client
+            .client()
             .controller_client()
             .map_err(|error| map_kafka_err("kafkax controller", error))?;
         match tokio::select! {
@@ -228,8 +253,7 @@ impl KafkaPool {
         let _operation = self.start_operation()?;
         let mut shutdown = self.shutdown_receiver();
         let ctrl = self
-            .inner
-            .client
+            .client()
             .controller_client()
             .map_err(|error| map_kafka_err("kafkax controller", error))?;
         match tokio::select! {
@@ -326,7 +350,7 @@ impl KafkaPool {
             }
             result = tokio::time::timeout(
                 self.inner.config.operation_timeout,
-                self.inner.client.partition_client(topic, partition, UnknownTopicHandling::Retry),
+                self.client().partition_client(topic, partition, UnknownTopicHandling::Retry),
             ) => {
                 result
                     .map_err(|error| {
@@ -486,5 +510,44 @@ mod tests {
         ] {
             assert!(!is_topic_already_exists_error(message), "不应误判为已存在: {message}");
         }
+    }
+
+    #[test]
+    fn publish_timeout_and_cancel_counters_increment_via_record_path() {
+        // 与 producer::publish_record 超时/关闭分支调用同一 record_* 入口
+        let pool = KafkaPool::stats_stub(KafkaConfig::default());
+        assert_eq!(pool.stats().publish_timeouts, 0);
+        assert_eq!(pool.stats().publish_cancelled, 0);
+        assert_eq!(pool.stats().publish_failed, 0);
+
+        pool.record_publish_timeout();
+        let s1 = pool.stats();
+        assert_eq!(s1.publish_timeouts, 1);
+        assert_eq!(s1.publish_failed, 1);
+        assert_eq!(s1.publish_cancelled, 0);
+
+        pool.record_publish_cancelled();
+        let s2 = pool.stats();
+        assert_eq!(s2.publish_cancelled, 1);
+        assert_eq!(s2.publish_failed, 2);
+        assert_eq!(s2.publish_timeouts, 1);
+
+        pool.record_publish_ok();
+        assert_eq!(pool.stats().published, 1);
+        pool.record_topic_ensured();
+        pool.record_topic_deleted();
+        let s3 = pool.stats();
+        assert_eq!(s3.topics_ensured, 1);
+        assert_eq!(s3.topics_deleted, 1);
+    }
+
+    #[tokio::test]
+    async fn close_marks_stats_closed_and_rejects_new_ops() {
+        let pool = KafkaPool::stats_stub(KafkaConfig::default());
+        assert!(!pool.stats().closed);
+        pool.close(Duration::from_millis(200)).await.expect("close");
+        assert!(pool.stats().closed);
+        let err = pool.ensure_open().expect_err("closed");
+        assert_eq!(err.kind(), ErrorKind::Cancelled);
     }
 }

@@ -193,5 +193,47 @@ mod public_api_surface {
                 err.kind()
             ),
         }
+
+        // EventBus::with_group / new + ALO bus：真实 pub 构造（stats stub 无 broker）
+        let stub = KafkaPool::stats_stub(KafkaConfig::default());
+        let bus = KafkaEventBus::with_group(stub.clone(), "surface-group-tag");
+        assert!(!bus.pool().stats().closed);
+        let bus2 = KafkaEventBus::new(stub.clone());
+        assert!(!bus2.pool().stats().closed);
+        let alo_bus = KafkaAtLeastOnceBus::new(
+            stub.clone(),
+            Arc::clone(&store) as Arc<dyn OffsetCommitStore>,
+        );
+        assert!(!alo_bus.pool().stats().closed);
+        assert_eq!(alo_bus.store().committed("t", 0).await.expect("s"), Some(4));
+
+        // selfcheck with_config 行为：skip 列表写入并可读取
+        let mut sc = selfcheck::KafkaSelfCheckConfig::default();
+        sc.skip.insert("kafka.basic.metadata".into());
+        let v = selfcheck::KafkaValidator::new(stub.clone()).with_config(sc);
+        assert!(v.config().is_skipped("kafka.basic.metadata"));
+        assert_eq!(selfcheck::KafkaValidator::static_catalog().len(), 9);
+        assert_eq!(v.pool().stats().publish_timeouts, 0);
+
+        // ALO nack / drop / is_terminated 公共方法（unit 后端，无 broker）
+        let mut alo = AtLeastOnceConsumer::for_unit_test(
+            Arc::clone(&store) as Arc<dyn OffsetCommitStore>,
+            "alo-surface",
+            0,
+            Some(KafkaMessage {
+                topic: "alo-surface".into(),
+                partition: 0,
+                offset: 11,
+                payload: Bytes::from_static(b"p"),
+                key: None,
+                headers: Default::default(),
+                timestamp: None,
+            }),
+        );
+        assert!(!alo.is_terminated());
+        alo.nack_keep_pending();
+        assert_eq!(alo.pending().map(|m| m.offset), Some(11));
+        alo.drop_pending_unacked();
+        assert!(alo.is_terminated());
     }
 }

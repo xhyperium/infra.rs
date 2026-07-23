@@ -17,9 +17,16 @@ use crate::message::KafkaMessage;
 use crate::offset::OffsetCommitStore;
 use crate::pool::KafkaPool;
 
+/// 底层消费源：生产路径为 live consumer；单测可注入 unit 后端。
+enum ConsumerBackend {
+    Live(KafkaConsumer),
+    #[cfg(test)]
+    Unit,
+}
+
 /// At-least-once 分区消费者。
 pub struct AtLeastOnceConsumer {
-    inner: KafkaConsumer,
+    inner: ConsumerBackend,
     store: Arc<dyn OffsetCommitStore>,
     topic: String,
     partition: i32,
@@ -45,7 +52,32 @@ impl AtLeastOnceConsumer {
             cfg.from_beginning = false;
         }
         let inner = pool.consumer(cfg).await?;
-        Ok(Self { inner, store, topic, partition, pending: None, terminated: false })
+        Ok(Self {
+            inner: ConsumerBackend::Live(inner),
+            store,
+            topic,
+            partition,
+            pending: None,
+            terminated: false,
+        })
+    }
+
+    /// 单测用：注入 pending / 状态机（**无 broker**，不构造真实 Client）。
+    #[cfg(test)]
+    pub(crate) fn for_unit_test(
+        store: Arc<dyn OffsetCommitStore>,
+        topic: impl Into<String>,
+        partition: i32,
+        pending: Option<KafkaMessage>,
+    ) -> Self {
+        Self {
+            inner: ConsumerBackend::Unit,
+            store,
+            topic: topic.into(),
+            partition,
+            pending,
+            terminated: false,
+        }
     }
 
     /// topic。
@@ -76,13 +108,17 @@ impl AtLeastOnceConsumer {
         if let Some(m) = &self.pending {
             return Some(Ok(m.clone()));
         }
-        match self.inner.recv().await {
-            Some(Ok(m)) => {
-                self.pending = Some(m.clone());
-                Some(Ok(m))
-            }
-            Some(Err(e)) => Some(Err(e)),
-            None => None,
+        match &mut self.inner {
+            ConsumerBackend::Live(c) => match c.recv().await {
+                Some(Ok(m)) => {
+                    self.pending = Some(m.clone());
+                    Some(Ok(m))
+                }
+                Some(Err(e)) => Some(Err(e)),
+                None => None,
+            },
+            #[cfg(test)]
+            ConsumerBackend::Unit => None,
         }
     }
 
@@ -92,12 +128,16 @@ impl AtLeastOnceConsumer {
         if let Some(m) = &self.pending {
             return Ok(Some(m.clone()));
         }
-        match self.inner.recv_timeout(timeout).await? {
-            Some(m) => {
-                self.pending = Some(m.clone());
-                Ok(Some(m))
-            }
-            None => Ok(None),
+        match &mut self.inner {
+            ConsumerBackend::Live(c) => match c.recv_timeout(timeout).await? {
+                Some(m) => {
+                    self.pending = Some(m.clone());
+                    Ok(Some(m))
+                }
+                None => Ok(None),
+            },
+            #[cfg(test)]
+            ConsumerBackend::Unit => Ok(None),
         }
     }
 
@@ -204,66 +244,72 @@ mod tests {
     use super::*;
     use crate::offset::MemoryOffsetStore;
     use bytes::Bytes;
+    use kernel::ErrorKind;
+
+    fn sample_msg(offset: i64) -> KafkaMessage {
+        KafkaMessage {
+            topic: "orders".into(),
+            partition: 0,
+            offset,
+            payload: Bytes::from_static(b"a"),
+            key: None,
+            headers: Default::default(),
+            timestamp: None,
+        }
+    }
 
     #[tokio::test]
     async fn commit_advances_without_commit_stays() {
         let store = MemoryOffsetStore::new().shared();
         assert!(resolve_start_offset(store.as_ref(), "t", 0).await.expect("r").is_none());
-
-        // 模拟交付 offset=7 并 ack → next=8
         store.commit("t", 0, 7).await.expect("ack");
         assert_eq!(resolve_start_offset(store.as_ref(), "t", 0).await.expect("r"), Some(8));
-
-        // 未再 commit：保持 8
         assert_eq!(store.committed("t", 0).await.expect("c"), Some(8));
     }
 
     #[tokio::test]
-    async fn without_ack_store_unchanged() {
+    async fn nack_keep_pending_preserves_pending_and_store() {
         let store = MemoryOffsetStore::new().shared();
-        // 模拟 pending 持有 offset=3 但未 ack
-        let pending = KafkaMessage {
-            topic: "t".into(),
-            partition: 0,
-            offset: 3,
-            payload: Bytes::from_static(b"x"),
-            key: None,
-            headers: Default::default(),
-            timestamp: None,
-        };
-        // 未调用 store.commit
-        assert!(store.committed("t", 0).await.expect("c").is_none());
-        // 若“断线”，start 仍为 None / 旧值 → 会重投
-        let start = resolve_start_offset(store.as_ref(), "t", 0).await.expect("r");
-        assert!(start.is_none());
-        // 手动 ack 语义
-        store.commit(&pending.topic, pending.partition, pending.offset).await.expect("ack");
-        assert_eq!(store.committed("t", 0).await.expect("c"), Some(4));
+        let msg = sample_msg(9);
+        let mut c = AtLeastOnceConsumer::for_unit_test(
+            Arc::clone(&store) as Arc<dyn OffsetCommitStore>,
+            "orders",
+            0,
+            Some(msg),
+        );
+        assert_eq!(c.topic(), "orders");
+        assert_eq!(c.partition(), 0);
+        assert!(!c.is_terminated());
+        assert_eq!(c.pending().map(|m| m.offset), Some(9));
+        c.nack_keep_pending();
+        assert!(!c.is_terminated());
+        assert_eq!(c.pending().map(|m| m.offset), Some(9));
+        assert!(store.committed("orders", 0).await.expect("c").is_none());
+        let again = c.recv().await.expect("some").expect("ok");
+        assert_eq!(again.offset, 9);
+        c.ack().await.expect("ack after nack");
+        assert!(c.pending().is_none());
+        assert_eq!(store.committed("orders", 0).await.expect("c"), Some(10));
     }
 
     #[tokio::test]
-    async fn pending_gate_logic() {
-        // 不连 broker：直接构造状态机字段验证
+    async fn drop_pending_unacked_terminates_session() {
         let store = MemoryOffsetStore::new().shared();
-        let msg = KafkaMessage {
-            topic: "orders".into(),
-            partition: 0,
-            offset: 1,
-            payload: Bytes::from_static(b"a"),
-            key: None,
-            headers: Default::default(),
-            timestamp: None,
-        };
-        // recv 语义：放入 pending
-        let mut pending = Some(msg);
-        assert!(pending.is_some());
-        // 再次 recv 返回同一条
-        let again = pending.clone().expect("p");
-        assert_eq!(again.offset, 1);
-        // ack
-        let m = pending.take().expect("pending");
-        store.commit(&m.topic, m.partition, m.offset).await.expect("ack");
-        assert!(pending.is_none());
-        assert_eq!(store.committed("orders", 0).await.expect("c"), Some(2));
+        let mut c = AtLeastOnceConsumer::for_unit_test(
+            Arc::clone(&store) as Arc<dyn OffsetCommitStore>,
+            "orders",
+            0,
+            Some(sample_msg(3)),
+        );
+        c.drop_pending_unacked();
+        assert!(c.is_terminated());
+        assert!(c.pending().is_none());
+        assert!(store.committed("orders", 0).await.expect("c").is_none());
+        let err = c.recv().await.expect("err some").expect_err("terminated");
+        assert_eq!(err.kind(), ErrorKind::Cancelled);
+        let ack_err = c.ack().await.expect_err("ack after drop");
+        assert_eq!(ack_err.kind(), ErrorKind::Cancelled);
+        let to = c.recv_timeout(Duration::from_millis(10)).await.expect_err("to");
+        assert_eq!(to.kind(), ErrorKind::Cancelled);
     }
 }
