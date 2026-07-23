@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | Plan | `PLAN-TESTKIT-002-v1-complete` |
-| Source | `xhyper-testkit-complete-spec.md` §0–§25 |
+| Source | `spec/spec.md` §0–§25 |
 | 日期 | 2026-07-14 |
 
 图例：`OK` · `PARTIAL` · `WRONG` · `ABSENT` · `N/A`
