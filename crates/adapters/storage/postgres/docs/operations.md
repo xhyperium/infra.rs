@@ -91,9 +91,17 @@ cargo bench -p postgresx --bench query_hot_path
 - 业务路径优先 `with_transaction`（自动终结）
 - 避免跨 `.await` 长时间占用事务（占连接）
 
-## 非目标（本版本）
+## 非目标 / 仍 OPEN（本版本）
 
-- 迁移工具 / schema 所有权
-- COPY 批量
+**已落地（勿再标为缺口）**：有界 COPY、Migrator verify/apply、自定义 CA/SNI、
+mTLS 客户端证书、selfcheck §6.1。
+
+仍未承诺：
+
+- 无限流式 COPY / cursor / 二进制 COPY 高级选项
+- down migration（仅 forward verify/apply）
 - 读写分离 / 只读副本路由
-- 自定义 CA / mTLS
+- 服务端强制 mTLS 的 live 联调（部署依赖）
+- channel binding（SCRAM-PLUS）
+- HA 故障切换 / multi-host
+- package stable / crates.io

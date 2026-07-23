@@ -6,8 +6,8 @@
 | SSOT | `.agents/ssot/adapters/storage/postgres/`（**非** `postgresx` 目录） |
 | 实现 | `crates/adapters/storage/postgres` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.12` |
-| 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地**；dev live + 远程 Require TLS + deadline + **raw fail-closed live** 已跑通；mTLS 客户端身份已落地；**§6.1 selfcheck 自验证** Basic+RW+Full live 通过；**未**宣称 package stable / 服务端强制 mTLS 全网 live |
+| version | `0.3.13` |
+| 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地**；dev live + 远程 Require TLS + deadline + **raw fail-closed live** 已跑通；mTLS 客户端身份已落地；**§6.1 selfcheck 自验证** Basic+RW+Full live 通过；**SSOT/crate 合同文档已对齐 0.3.12+ 能力**；**未**宣称 package stable / 服务端强制 mTLS 全网 live |
 
 ## 结论摘要
 
@@ -29,7 +29,7 @@
 | deadline 实验 | `tests/deadline_conformance.rs` + `scripts/postgres-deadline-conformance.mjs` |
 | bench | `benches/query_hot_path.rs` |
 | 原 OBJECTIVE DEFER | **PASS**（prod Repository / SSL require 路径 / resiliencx） |
-| 仍 OPEN / DEFER | 无限流式 COPY / read-replica / package stable；mTLS 服务端强制 live（部署依赖）；down migration |
+| 仍 OPEN / DEFER | 无限流式 COPY / read-replica / package stable；mTLS 服务端强制 live（部署依赖）；down migration；channel binding |
 
 ## 对齐矩阵
 
@@ -57,6 +57,7 @@
 | POSTGRESX-20 | mTLS 客户端证书配置 | PASS | cert+key 成对；离线 openssl 构建 + fail-closed；服务端强制 mTLS live 依赖部署 |
 | POSTGRESX-21 | Migrator verify/apply | PASS | advisory lock + checksum；live verify/apply/漂移 |
 | POSTGRESX-22 | LIB-SELFCHECK §6.1 自验证 | PASS | `selfcheck` catalog 11 项；live Basic+RW+Full；replication_lag 默认可 Skip |
+| POSTGRESX-23 | SSOT/crate 合同文档与 0.3.12+ 实现对齐 | PASS | dual-spec + `docs/标准.md` / operations / goal 已同步；OPEN 诚实保留 |
 
 ## 本轮验证（2026-07-23）
 

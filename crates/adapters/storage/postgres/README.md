@@ -1,13 +1,16 @@
 # postgresx
 
 Postgres 存储适配：**生产连接池 / 参数化 SQL 为默认导出**。
-当前 workspace 版本为 `0.3.12`（foundation DoD 闭合）；`publish = false`，
+当前 workspace 版本为 `0.3.13`（foundation DoD 闭合）；`publish = false`，
 **未宣称** package stable / crates.io。
 
 | 面 | 说明 |
 |----|------|
 | 生产默认 | `PostgresConfig` + `PostgresPool` + `PgConnection` / `PgTransaction` |
 | contracts | `PgTxRunner`（真实 BEGIN/COMMIT/ROLLBACK **边界**；SQL 请用 `with_transaction`） |
+| Migrator / COPY | verify/apply + 有界 COPY IN/OUT（默认 16 MiB） |
+| TLS | 远程 Require + 可选 CA/SNI + mTLS 客户端证书 |
+| selfcheck | `postgresx::selfcheck`（LIB-SELFCHECK §6.1 `postgres.*`） |
 | deadline | pool acquire 与 SQL/事务终结内部有界；调用侧超时丢弃连接 |
 | scaffold | feature `scaffold`：`PostgresAdapter` / `ObservingPostgresAdapter`（内存，非生产） |
 
@@ -46,12 +49,14 @@ pool.close();
 
 ## 测试
 
-最终本地结果：52 passed + 6 ignored；ignored live 测试需要外部 PostgreSQL，不作为默认 CI 通过证据。
+默认 `cargo test -p postgresx` 离线绿灯；live / selfcheck 需外部 PostgreSQL（`#[ignore]`），
+不作为默认 CI 通过证据。
 
 ```bash
-cargo test -p postgresx
+cargo test -p postgresx --lib
 cargo test -p postgresx --features scaffold
-cargo test -p postgresx --test live_postgres -- --ignored
+cargo test -p postgresx --test live_postgres -- --ignored --test-threads=1
+cargo test -p postgresx --test live_selfcheck -- --ignored --test-threads=1
 node scripts/postgres-deadline-conformance.mjs
 cargo bench -p postgresx --bench query_hot_path
 ```
