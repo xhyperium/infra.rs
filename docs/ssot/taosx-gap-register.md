@@ -42,4 +42,6 @@
 | N-09 | 自动 DOUBLE 迁移 | SUPERSEDED | fail-closed DESCRIBE；运维迁移 |
 | N-10 | 无限子表 | SUPERSEDED | 编码有界 + hint 配置 |
 
-**未完成计数：0**
+## 未完成计数
+
+0
