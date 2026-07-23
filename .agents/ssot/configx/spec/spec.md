@@ -162,8 +162,9 @@ git diff --check 3cd29a942710c0fb42f3f6bc05e3c31570acad47 -- \
 - 显式 outcome 区分 Changed / TimedOut / Closed，兼容 Option API 保留。
 - active / complete spec 须 `cmp` 一致，文档只声明进程内手动 reload。
 
-上述实现与本地机器证据已形成；治理修正后候选已重冻，本地独立 reviewer 已完成实现/证据审查，
-独立 verifier 已完成技术/证据初验。本次纯状态 delta 不改变受审源码/测试。GitHub 固定提交 CI
+上述实现与本地机器证据已形成。`f904ecd` 的关闭状态/零时限优先级回归修复在 rebase 后等价为
+`eba66fb`；先前 Codex `review --base main` 已审该实现内容且无 finding。rebased fixed HEAD 已完成
+完整门禁；最终独立 verifier 因治理措辞阻断，待本次纯文档修正后复核。GitHub 新 HEAD CI
 artifact 与发布流程仍 pending，因此本规范不构成发布 PASS。
 
 ## 7. 开放决策

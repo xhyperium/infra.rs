@@ -6,7 +6,8 @@
 | Complete copy | `.agents/ssot/configx/spec/xhyper-configx-complete-spec.md`（必须 `cmp` 一致） |
 | 本仓实现 | `crates/configx` · package/lib `configx` · version `0.1.2` |
 | Round baseline | `3cd29a942710c0fb42f3f6bc05e3c31570acad47` |
-| 当前结论 | 候选已重冻；本地 reviewer 完成、verifier 技术/证据初验完成；GitHub CI/交付 pending，不宣称 Production Ready |
+| 最终 Review base | `origin/main@630f03d5db5739a89933fe921d7615841fde3789`（rebase 后固定基线） |
+| 当前结论 | `f904ecd` 实现内容已审且无 finding，rebase 后等价为 `eba66fb`；fixed HEAD 完整门禁已通过；最终独立 verifier 待文档修正后复核；GitHub 新 HEAD CI/审批 pending，不宣称 Production Ready |
 
 ## 能力裁定
 

@@ -5,7 +5,7 @@
 | 日期 | 2026-07-23 |
 | Beads | `infra-2d9.9` |
 | 战役历史起点 | `3cd29a942710c0fb42f3f6bc05e3c31570acad47` |
-| 最终 Review base | `origin/main@5fe242cefc873117d024f0d09f8ad5cbf449d2ec` |
+| 最终 Review base | `origin/main@630f03d5db5739a89933fe921d7615841fde3789`（rebase 后固定基线） |
 | 当前版本 | `0.1.2`（root 已完成 PATCH bump） |
 | 候选状态 | 治理修正后候选已重冻；本地 reviewer 完成，verifier 技术/证据初验完成 |
 

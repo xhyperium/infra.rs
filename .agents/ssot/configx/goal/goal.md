@@ -1,6 +1,6 @@
 # configx — Goal
 
-> 状态：确定性加强已完成，治理修正后候选已重冻；本地 reviewer 完成，verifier 技术/证据初验完成。
+> 状态：rebase 后 fixed HEAD 已完成完整门禁；最终独立 verifier 因治理措辞阻断，待本次纯文档修正后复核。
 
 ## 目标
 
@@ -14,10 +14,10 @@ secret 诊断不泄露，等待受总 deadline 限界，并为 poison、timeout 
 | 原子 reload / 脱敏 / 有界等待实现 | 已完成 Round 2 加固 |
 | 行覆盖率 100% | root 串行 `1166 / 1166`（100.0000%），exit 0 |
 | 并发测试确定性加强 | 已完成；phase hook + Barrier 连续 100 轮通过 |
-| 本地独立 reviewer | 已完成实现/证据审查；纯状态 delta 不改变受审源码/测试 |
-| 独立 verifier | 已完成技术/证据初验 |
+| Codex `review --base main` | 已审 `f904ecd` 修复内容，无 finding；rebase 后等价提交为 `eba66fb` |
+| 最终独立 verifier | 治理措辞阻断；待本次纯文档修正后复核，未宣称完成 |
 | active / complete spec 同构 | 本轮 writer 复验 |
-| GitHub 固定提交 CI artifact | Pending |
-| PR、维护者审批与合并 | Pending |
+| GitHub 新 HEAD CI artifact | Pending（需重跑） |
+| PR、维护者审批与合并 | Pending（新 HEAD 需重跑/重新确认） |
 
 完成条件不包含自动文件监控、远端配置中心、后台 runtime、类型化 schema、secret 托管或 package stable。

@@ -1,6 +1,6 @@
 # configx — Retrospective
 
-> 状态：本地技术/证据审查阶段复盘完成；GitHub 交付与发布复盘 pending。
+> 状态：rebased fixed HEAD 完整门禁已通过；最终独立 verifier、GitHub 交付与发布复盘 pending。
 
 ## 已验证的改进
 
@@ -11,6 +11,7 @@
 
 ## 尚未形成的结论
 
-治理修正后候选已重冻，本地独立 reviewer 已完成实现/证据审查，独立 verifier 已完成技术/证据初验；
-本次纯状态 delta 不改变受审源码/测试。GitHub 固定提交 CI artifact、PR 审批、合并、tag/发布仍
+`f904ecd` 的关闭状态/零时限优先级回归修复在 rebase 后等价为 `eba66fb`；先前 Codex
+`review --base main` 已审该实现内容且无 finding。rebased fixed HEAD 已完成完整门禁，但最终
+独立 verifier 因治理措辞阻断，待本次纯文档修正后复核。GitHub 新 HEAD CI artifact、PR 审批、合并、tag/发布仍
 pending。现有证据不能扩大为自动 watcher、远端配置产品可靠性、Production Ready 或 package stable。

@@ -1,7 +1,7 @@
 # configx — Test
 
-> 状态：确定性加强与本地 reviewer 实现/证据审查已完成；独立 verifier 已完成技术/证据初验。
-> 本次纯状态 delta 不改变受审源码/测试；GitHub 固定提交 CI artifact pending。
+> 状态：rebase 后 fixed HEAD 完整门禁已通过；`f904ecd` 的关闭状态/零时限优先级回归修复
+> 在 rebase 后等价为 `eba66fb`。最终独立 verifier 待本次纯文档修正后复核；GitHub 新 HEAD CI artifact pending。
 
 测试覆盖批量中点不可见、reload 只见完整旧/新快照、加载/校验失败保留旧值、poison 显式失败、
 secret Debug 与 parse 错误脱敏、generation 溢出、reload/state 锁边界、真实伪通知与显式 wait outcome。

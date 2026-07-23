@@ -15,6 +15,7 @@
 `secret:` 只控制诊断脱敏，不提供加密、权限控制或 secret 托管。File / Env 只在显式调用时加载，
 没有自动 watcher 或后台生命周期。
 
-第三轮不扩展能力；代码 owner 已完成并发测试确定性加强。治理修正后候选已重冻，本地独立 reviewer
-已完成实现/证据审查，独立 verifier 已完成技术/证据初验；本次纯状态 delta 不改变受审源码/测试。
-GitHub 固定提交 CI artifact、PR、维护者审批、合并、tag/发布仍 pending。
+第三轮不扩展能力；代码 owner 已完成并发测试确定性加强。`f904ecd` 的关闭状态/零时限优先级回归
+修复在 rebase 后等价为 `eba66fb`；先前 Codex `review --base main` 已审该实现内容且无 finding。
+rebased fixed HEAD 已完成完整门禁；最终独立 verifier 因治理措辞阻断，待本次纯文档修正后复核。
+GitHub 新 HEAD CI artifact、PR、维护者审批、合并、tag/发布仍 pending。
