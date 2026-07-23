@@ -244,4 +244,33 @@ mod tests {
         ));
         assert!(calls.load(Ordering::SeqCst) >= 1, "xread_block 必须进入池连接路径");
     }
+
+    #[tokio::test]
+    async fn xadd_with_id_empty_fields_invalid() {
+        let client = RedisPool::test_probe(Arc::new(AtomicUsize::new(0))).client();
+        let err = client.xadd_with_id("s", "1-0", &[]).await.expect_err("empty fields");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn xadd_with_id_empty_id_invalid() {
+        let client = RedisPool::test_probe(Arc::new(AtomicUsize::new(0))).client();
+        let err = client.xadd_with_id("s", "  ", &[("f", b"v")]).await.expect_err("empty id");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        let err2 = client.xadd_with_id("s", "", &[("f", b"v")]).await.expect_err("empty id2");
+        assert_eq!(err2.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn xadd_with_id_hits_driver() {
+        let calls = Arc::new(AtomicUsize::new(0));
+        let client = RedisPool::test_probe(calls.clone()).client();
+        let err =
+            client.xadd_with_id("s", "1700000000000-0", &[("f", b"v")]).await.expect_err("probe");
+        assert!(matches!(
+            err.kind(),
+            ErrorKind::Transient | ErrorKind::Unavailable | ErrorKind::Internal
+        ));
+        assert!(calls.load(Ordering::SeqCst) >= 1, "xadd_with_id 必须进入池连接路径");
+    }
 }

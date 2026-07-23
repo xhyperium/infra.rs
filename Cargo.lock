@@ -2219,7 +2219,7 @@ dependencies = [
 
 [[package]]
 name = "redisx"
-version = "0.3.14"
+version = "0.3.15"
 dependencies = [
  "async-trait",
  "bytes",
