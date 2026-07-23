@@ -1767,7 +1767,7 @@ checksum = "7c87def4c32ab89d880effc9e097653c8da5d6ef28e6b539d313baaacfbafcbe"
 
 [[package]]
 name = "ossx"
-version = "0.3.3"
+version = "0.4.1"
 dependencies = [
  "async-trait",
  "base64",
@@ -1776,6 +1776,8 @@ dependencies = [
  "contract-testkit",
  "contracts",
  "criterion",
+ "futures-core",
+ "futures-util",
  "hmac 0.12.1",
  "kernel",
  "reqwest",
@@ -1783,6 +1785,7 @@ dependencies = [
  "sha1",
  "thiserror 2.0.19",
  "tokio",
+ "tracing",
  "url",
 ]
 
@@ -2904,7 +2907,7 @@ dependencies = [
 
 [[package]]
 name = "testkit"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "kernel",
  "proptest",

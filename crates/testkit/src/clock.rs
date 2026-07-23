@@ -48,6 +48,9 @@ pub enum ManualClockError {
     /// 状态锁同步失败（poison 在控制路径上报告；`monotonic` 读取走恢复策略）。
     #[error("手动时钟状态锁同步失败")]
     Synchronization,
+    /// domain 分配器已耗尽：`u64::MAX` 个独立时钟实例不足以覆盖测试生命周期。
+    #[error("手动时钟 domain 分配器已耗尽（>2^64 独立实例）")]
+    DomainExhaustion,
 }
 
 /// 某一时刻的一致快照（同锁临界区读取）。
@@ -93,10 +96,28 @@ pub struct ManualClock {
 }
 
 impl ManualClock {
+    /// 为每个实例分配独立的 [`ClockDomain`]。
+    ///
+    /// # Panics
+    ///
+    /// 分配器耗尽时 panic（测试环境中 >2^64 个独立实例为不可达状态）。
     fn next_domain() -> ClockDomain {
+        Self::try_next_domain().expect("ManualClock domain 分配器已耗尽（>2^64 独立实例）")
+    }
+
+    /// 公共 seam：显式检查分配器耗尽而非 panic。
+    ///
+    /// # Errors
+    ///
+    /// 分配器耗尽时返回 [`ManualClockError::DomainExhaustion`]。
+    pub fn try_next_domain() -> Result<ClockDomain, ManualClockError> {
         use std::sync::atomic::{AtomicU64, Ordering};
         static NEXT: AtomicU64 = AtomicU64::new(100);
-        ClockDomain::from_raw(NEXT.fetch_add(1, Ordering::Relaxed))
+        let prev = NEXT.fetch_add(1, Ordering::Relaxed);
+        if prev == u64::MAX {
+            return Err(ManualClockError::DomainExhaustion);
+        }
+        Ok(ClockDomain::from_raw(prev))
     }
 
     /// 以初始墙钟构造；单调起点为 0。每个实例拥有独立 [`ClockDomain`]。
@@ -590,5 +611,20 @@ mod unit_tests {
         let c = ManualClock::new(Timestamp::from_unix_nanos(1));
         let d = c.domain();
         assert_eq!(c.monotonic().domain(), d);
+    }
+
+    /// 验证 domain 分配器耗尽时 `try_next_domain` 返回 `Err(DomainExhaustion)`
+    /// 且 `DomainExhaustion` error 有非空 Display。
+    #[test]
+    fn domain_exhaustion_error_is_typed_and_display_non_empty() {
+        let err = ManualClockError::DomainExhaustion;
+        let msg = err.to_string();
+        assert!(msg.contains("domain") || msg.contains("域"), "{msg}");
+        assert!(!msg.is_empty());
+        // 与其他 variant 互斥（防 Display 复制粘贴）
+        assert_ne!(msg, ManualClockError::WallOverflow.to_string());
+        assert_ne!(msg, ManualClockError::MonotonicOverflow.to_string());
+        assert_ne!(msg, ManualClockError::MonotonicRegression.to_string());
+        assert_ne!(msg, ManualClockError::Synchronization.to_string());
     }
 }
