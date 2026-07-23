@@ -14,7 +14,7 @@ name = "contract_testkit"
 [dependencies]
 async-trait = { workspace = true }
 bytes = { workspace = true }
-canonical = { path = "../../types/canonical", version = "0.1.2" }
+canonical = { path = "../../types/canonical", version = "0.1.2", package = "xhyper-canonical" }
 contracts = { path = "../../contracts", version = "0.1.4" }
 decimalx = { path = "../../types/decimal", version = "0.1.4" }
 futures-core = { workspace = true }
