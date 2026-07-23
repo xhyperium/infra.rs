@@ -8,7 +8,7 @@
 | postgresx | Pool+query+tx+TLS | **done** + Repository + 远程 Require live（CA+SNI）+ deadline + Migrator+COPY+mTLS+**selfcheck §6.1**+live (`0.3.12`) | 无限流式 COPY / read-replica / package stable / 服务端强制 mTLS live / down migration |
 | redisx | Pool+KV+structures+Streams+tx+live | **done** 全公开 API + selfcheck + live/E2E/bench (`0.3.15`) | Cluster/Sentinel/TLS live（无 env）/ package stable / PubSub NO-GO |
 | postgresx | Pool+query+tx+TLS | **done** + Repository + 远程 Require live（CA+SNI）+ deadline + Migrator+COPY+mTLS+**selfcheck §6.1**+live + 合同文档对齐 (`0.3.13`) | 无限流式 COPY / read-replica / package stable / 服务端强制 mTLS live / down migration / channel binding |
-| kafkax | Producer pool + EventBus | **done** + headers/key/stats + selfcheck + 生产矩阵 (`0.3.8`) | SCRAM 成功路径/group/rebalance/native EOS/DLQ/Part2 OOS/24h 默认 soak |
+| kafkax | Producer pool + EventBus | **done** + headers/key/stats + selfcheck + 生产矩阵 (`0.3.9`) | SCRAM 成功路径/group/rebalance/native EOS/DLQ/Part2 OOS/24h 默认 soak |
 | natsx | Core NATS EventBus | **done** + JetStream durable pull/显式确认 + 同客户端重启恢复 3/3 (`0.3.2`) | 断线窗口无回放 / NKey / Cluster/HA / 自动 DLQ / KV·Object 全量 |
 | ossx | ObjectStore put/get | **done** + 有界 multipart/retry/orphan 补偿 (`0.3.2`) | lifecycle / STS / TB 流式对象 |
 | clickhousex | Analytics insert+select | **done** + HTTPS/PEM CA + insert_batch + 有界池 (`0.3.2`) | 真实集群 TLS / mTLS / native 9000 / cluster 运维 |

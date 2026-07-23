@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/adapters/storage/kafka/` |
 | 实现 | `crates/adapters/storage/kafka` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.8` |
+| version | `0.3.9` |
 | 结论 | **AMO、单 owner 应用 ALO、TLS+CA+SASL/PLAIN 有隔离 broker 与真 secrets live 证据**；生产测试矩阵（离线+集成+bench+故障重建）已落地；group/rebalance/自动重连/native EOS **NO-GO**；Part2 量化栈 **OOS**；**未**宣称 package stable |
 
 ## 语义矩阵
@@ -74,7 +74,7 @@ cargo test -p kafkax --test live_event_bus -- --ignored --nocapture
 - `kafkax::selfcheck` 已落地 §6.2 catalog（9 IDs）；`group_lag`/`isr_health` NO-GO Skipped。
 - 库内自验证 ≠ tools/verifyctl；未宣称 package stable。
 
-## gap 清零（0.3.7）
+## gap 清零（0.3.9）
 
 | 项 | 状态 |
 |----|------|
