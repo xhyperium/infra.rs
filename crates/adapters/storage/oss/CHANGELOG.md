@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.4.0] — 2026-07-23
+
+### Added
+
+- `OssPool` — 共享连接池（Arc + Semaphore + Atomic 指标），OssClient 保留向下兼容
+- `CredentialProvider` trait + `StaticCredentialProvider` + STS token 支持
+- 流式上传 `put_stream()` — 自动 multipart + 并发 part 上传
+- 流式下载 `get_stream()` — Range/If-Match/If-None-Match + ByteStream
+- `head()` — HEAD 请求获取 ObjectMeta（size/etag/checksum/content_type）
+- SSE-S3 服务端加密（`x-oss-server-side-encryption: AES256`）
+- 预签名 URL（`presign_url()` + `PresignOptions`）
+- 健康检查 `health()` + 池统计 `stats()`
+- `ObjectKey` / `ObjectMeta` / `ByteStream` / `UploadOptions` / `DownloadOptions` 类型
+- `live_object_store.rs` — 12 项全 API 面 E2E 测试（真实阿里云 OSS 通过）
+
+### Changed
+
+- 版本 MINOR 0.3.3 → 0.4.0
+- `byte_stream_from_bytes()` 辅助函数
+- Content-Length header 强制发送（修复空对象 PUT）
+
+### Boundaries
+
+- package stable 未宣称；crates.io 未发布
+- lifecycle / STS 临时凭证轮换 / 流式 TB 对象与 checksum 仍 OPEN
+
 ## [0.3.3] — 2026-07-23
 
 ### Added
@@ -33,17 +59,3 @@
 ### Changed
 
 - 版本 PATCH 0.3.0 → 0.3.1
-
-## [Unreleased]
-
-### Added
-
-- 生产 `OssClient`：reqwest + OSS Signature V1
-- `OssConfig` / Builder / `from_env`（`FOUNDATIONX_OSSX_*`）
-- `delete_object`；`Debug` 脱敏
-- live `#[ignore]` 测：`infra-draft/` 前缀 put/get/delete
-- 微基准 `put_get`（配置 + 签名）
-
-### Changed
-
-- 默认路径为生产客户端；scaffold `OssAdapter` 移至 feature `scaffold`

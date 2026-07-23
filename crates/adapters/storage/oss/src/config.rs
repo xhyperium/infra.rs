@@ -75,6 +75,10 @@ pub struct OssConfig {
     pub max_buffer_bytes: usize,
     /// 错误响应体读取上限。
     pub max_error_body_bytes: usize,
+    /// STS 临时安全令牌（可选）。
+    pub security_token: Option<String>,
+    /// 是否启用 SSE-S3 服务端加密。
+    pub sse_enabled: bool,
 }
 
 impl fmt::Debug for OssConfig {
@@ -217,6 +221,8 @@ pub struct OssConfigBuilder {
     max_object_bytes: Option<usize>,
     max_buffer_bytes: Option<usize>,
     max_error_body_bytes: Option<usize>,
+    security_token: Option<String>,
+    sse_enabled: Option<bool>,
 }
 
 impl OssConfigBuilder {
@@ -299,6 +305,20 @@ impl OssConfigBuilder {
         self
     }
 
+    /// 设置 STS 临时安全令牌（可选）。
+    #[must_use]
+    pub fn security_token(mut self, value: impl Into<String>) -> Self {
+        self.security_token = Some(value.into());
+        self
+    }
+
+    /// 设置是否启用 SSE-S3 加密（默认 false）。
+    #[must_use]
+    pub fn sse_enabled(mut self, value: bool) -> Self {
+        self.sse_enabled = Some(value);
+        self
+    }
+
     /// 构建并校验。
     pub fn build(self) -> XResult<OssConfig> {
         let cfg = OssConfig {
@@ -318,6 +338,8 @@ impl OssConfigBuilder {
             max_object_bytes: self.max_object_bytes.unwrap_or(DEFAULT_MAX_OBJECT_BYTES),
             max_buffer_bytes: self.max_buffer_bytes.unwrap_or(DEFAULT_MAX_BUFFER_BYTES),
             max_error_body_bytes: self.max_error_body_bytes.unwrap_or(DEFAULT_MAX_ERROR_BODY_BYTES),
+            security_token: self.security_token,
+            sse_enabled: self.sse_enabled.unwrap_or(false),
         };
         cfg.validate()?;
         Ok(cfg)
