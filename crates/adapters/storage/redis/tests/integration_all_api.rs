@@ -8,7 +8,7 @@
 
 use std::time::Duration;
 
-use contracts::KeyValueStore;
+use contracts::{KeyValueStore, PubSub};
 use kernel::ErrorKind;
 use redisx::selfcheck::{CheckLevel, CheckStatus, RedisValidator};
 use redisx::{RedisClient, RedisConfig, RedisLiveKv, RedisPool};
@@ -196,4 +196,106 @@ async fn it_connect_from_url_compat() {
     let pool = RedisPool::connect(cfg).await.expect("connect");
     pool.ping().await.expect("ping");
     let _ = pool.close(Duration::from_secs(2)).await;
+}
+
+#[tokio::test]
+#[ignore = "requires live Redis via FOUNDATIONX_REDISX_*"]
+async fn it_retry_budget_get_set_live() {
+    use resiliencx::RetryBudget;
+
+    let client = RedisClient::connect_from_env()
+        .await
+        .expect("connect")
+        .with_retry_budget(RetryBudget::new(8), 3);
+    assert!(client.has_retry_budget());
+    let key = format!("{}budget", prefix());
+    client.set(&key, b"budget-v".to_vec(), None).await.expect("set with client budget");
+    assert_eq!(
+        client.get(&key).await.expect("get with client budget").as_deref(),
+        Some(b"budget-v".as_slice())
+    );
+
+    let budget = RetryBudget::new(4);
+    client
+        .set_with_budget(&key, b"explicit".to_vec(), None, &budget, 2)
+        .await
+        .expect("set_with_budget");
+    assert_eq!(
+        client.get_with_budget(&key, &budget, 2).await.expect("get_with_budget").as_deref(),
+        Some(b"explicit".as_slice())
+    );
+    // 相对 TTL + multi attempt → fail-closed before driver
+    let err = client
+        .set_with_budget(&key, b"ttl".to_vec(), Some(Duration::from_secs(30)), &budget, 3)
+        .await
+        .expect_err("relative TTL multi-attempt");
+    assert_eq!(err.kind(), ErrorKind::Invalid);
+    let _ = client.delete(&key).await;
+}
+
+#[tokio::test]
+#[ignore = "requires live Redis + feature pubsub"]
+async fn it_result_message_stream_and_facade() {
+    #[cfg(feature = "pubsub")]
+    {
+        use futures_util::StreamExt;
+        use redisx::{RedisPubSub, RedisPubSubFacade};
+        use tokio::time::timeout;
+
+        let cfg = RedisConfig::from_env().expect("cfg");
+        let channel = format!("redisx-it-{}-result", std::process::id());
+
+        // result stream：消息后可继续等到断开 Err（本测只收一条 Ok）
+        let session =
+            RedisPubSub::connect_config(cfg.clone(), [channel.clone()]).await.expect("sub");
+        let mut stream = session.into_result_message_stream().expect("result stream");
+
+        let publisher =
+            RedisPubSub::connect_config(cfg.clone(), Vec::<String>::new()).await.expect("pub");
+        let payload = b"result-stream-payload";
+        publisher.publish(&channel, payload).await.expect("publish");
+
+        let msg = timeout(Duration::from_secs(3), stream.next())
+            .await
+            .expect("timeout")
+            .expect("stream ended")
+            .expect("Ok message");
+        assert_eq!(msg.payload.as_ref(), payload);
+
+        // Facade：pub_message + sub_channel
+        let facade = RedisPubSubFacade::connect(cfg).await.expect("facade");
+        let ch2 = format!("redisx-it-{}-facade", std::process::id());
+        let mut sub = facade.sub_channel(&ch2).await.expect("facade sub");
+        facade.pub_message(&ch2, bytes::Bytes::from_static(b"facade-hi")).await.expect("pub");
+        let got = timeout(Duration::from_secs(3), sub.next())
+            .await
+            .expect("facade timeout")
+            .expect("facade msg");
+        assert_eq!(got.payload.as_ref(), b"facade-hi");
+    }
+    #[cfg(not(feature = "pubsub"))]
+    {
+        panic!("run with --features pubsub");
+    }
+}
+
+#[tokio::test]
+#[ignore = "requires live Redis via FOUNDATIONX_REDISX_*"]
+async fn it_selfcheck_json_report_and_cancel() {
+    use redisx::selfcheck::{RedisSelfCheckConfig, ValidationContext};
+
+    let client = RedisClient::connect_from_env().await.expect("connect");
+    let v = RedisValidator::new(client.clone());
+    let json = v.run_json(CheckLevel::Basic).await.expect("json");
+    assert!(json.contains("\"module\": \"redisx\"") || json.contains("\"module\":\"redisx\""));
+    assert!(json.contains("redisx.basic.ping"));
+    let report: serde_json::Value = serde_json::from_str(&json).expect("parse json");
+    assert_eq!(report["module"], "redisx");
+
+    // cancel 路径：不 panic、项均为 Skipped
+    let ctx = ValidationContext::new(RedisSelfCheckConfig::default());
+    ctx.cancel.cancel();
+    let cancelled = v.run_with_context(&ctx, CheckLevel::ReadWrite).await;
+    assert!(cancelled.passed);
+    assert!(cancelled.items.iter().all(|i| i.status == CheckStatus::Skipped));
 }

@@ -2215,7 +2215,7 @@ dependencies = [
 
 [[package]]
 name = "redisx"
-version = "0.3.11"
+version = "0.3.12"
 dependencies = [
  "async-trait",
  "bytes",
@@ -2227,6 +2227,7 @@ dependencies = [
  "redis",
  "resiliencx",
  "serde",
+ "serde_json",
  "tokio",
 ]
 
