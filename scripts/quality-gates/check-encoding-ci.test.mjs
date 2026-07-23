@@ -128,6 +128,12 @@ try {
 } finally { if (tmpDir) cleanup(tmpDir); }
 
 // 1e. 含 U+FFFD 的文件（已损坏的 UTF-8）
+// file --mime-encoding 会认作 utf-8；CI 步骤 2 必须用字节扫描拦截
+function hasFffd(filePath) {
+  const raw = readFileSync(filePath);
+  return raw.includes(Buffer.from([0xef, 0xbf, 0xbd]));
+}
+
 try {
   tmpDir = makeTempDir();
   const f = join(tmpDir, "corrupt.md");
@@ -136,13 +142,8 @@ try {
     Buffer.from([0xef, 0xbf, 0xbd]),
   ]));
   const r = ciEncodingCheck(f);
-  // U+FFFD 是有效的 UTF-8 字符，file 会识别为 utf-8
-  // 所以 CI 门禁不拦截 U+FFFD，由 hook 和 fix-encoding 脚本处理
-  if (r.pass) {
-    ok(true, `U+FFFD 文件被识别为 ${r.encoding}（CI 不拦截，由 hook 处理）`);
-  } else {
-    ok(true, `U+FFFD 文件被检测为 ${r.encoding}`);
-  }
+  ok(r.pass === true, `U+FFFD 对 file 仍为 ${r.encoding}（L1 放行）`);
+  ok(hasFffd(f) === true, "L2 字节扫描必须检出 U+FFFD");
 } finally { if (tmpDir) cleanup(tmpDir); }
 
 // ── §2 CI case 分支模拟 ───────────────────────────────

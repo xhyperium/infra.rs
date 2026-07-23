@@ -84,7 +84,7 @@ jobs:
       RUSTDOCFLAGS: -D warnings
     steps:
       - uses: actions/checkout@v4
-      - name: 安装 Rust 工具��
+      - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: 生成文档并检查警告
