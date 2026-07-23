@@ -28,3 +28,7 @@
 
 固定摘要只证明其明确场景；不得外推 group/rebalance/自动重连/HA/native EOS。
 失败日志必须先脱敏再展示；secrets 仅环境变量注入。
+## 2026-07-23 生产测试矩阵
+- `tests/prod_offline.rs` + `tests/prod_reliability.rs`
+- `node scripts/kafka-prod-matrix.mjs --fault-restart` PASS
+

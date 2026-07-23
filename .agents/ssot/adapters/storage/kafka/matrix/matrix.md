@@ -15,3 +15,6 @@
 | S-11 | group / rebalance / 自动重连 / native EOS / schema registry / SCRAM·OAuth·mTLS | **NO-GO** | rskafka 边界；见 evidence/kafkax-10pass-matrix.md |
 | S-12 | draft Part2 量化栈 | **OOS** | embedded / io-uring / µs 热路径等不在本仓 |
 | S-13 | 十轮 draft 对照收敛 | PASS | `evidence/kafkax-10pass-matrix.md` |
+| S-14 | 生产测试矩阵（离线+集成+bench） | PASS | `tests/prod_*` · `scripts/kafka-prod-matrix.mjs` · `docs/测试矩阵-生产发布.md` |
+| S-15 | 7×24 soak 默认门禁 | **OOS/可选** | `KAFKAX_SOAK_SECONDS`；非合并强制 |
+| S-16 | group rebalance / native EOS 测试 | **NO-GO** | 无能力；fail-closed 锚定在 prod_offline |
