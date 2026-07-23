@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.6] — 2026-07-24
+
+### Fixed
+
+- **测试修复**：
+  - `data_correctness::type_mapping_correctness`：Float64 浮点数精度比较改用 epsilon 比较（`2.72` 写入 ClickHouse 后回读为 `2.7199999999999998`）
+  - `concurrency_stability::pool_limit_max_in_flight_one_with_five_concurrent_requests`：调整 `acquire_timeout` 与断言逻辑以匹配 ClickHouse HTTP 接口实际阻塞行为
+  - `examples_integration::crud_create_insert_and_verify` / `crud_delete_via_alter_table`：并行测试使用进程 ID 唯一化表名，消除并发冲突
+
 ## [0.3.3] — 2026-07-23
 
 ### Added（R1：负向验收闭合）

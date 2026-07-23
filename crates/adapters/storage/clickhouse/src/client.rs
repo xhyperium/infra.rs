@@ -123,9 +123,8 @@ impl ClickHousePool {
         Self::connect(ClickHouseConfig::from_env()?).await
     }
 
-    /// 仅测试：跳过 ping，便于离线验证 close / stats / acquire。
-    #[cfg(test)]
-    pub(crate) fn connect_without_ping(config: ClickHouseConfig) -> XResult<Self> {
+    /// 供集成测试使用：跳过 ping，便于离线验证 close / stats / acquire。
+    pub fn connect_without_ping(config: ClickHouseConfig) -> XResult<Self> {
         config.validate()?;
         let http = build_http_client(&config)?;
         let max_in_flight = config.max_in_flight;
@@ -371,7 +370,7 @@ impl AnalyticsSink for ClickHousePool {
     }
 }
 
-fn validate_ident(name: &str) -> XResult<()> {
+pub fn validate_ident(name: &str) -> XResult<()> {
     if name.is_empty() || name.len() > 192 {
         return Err(XError::invalid(format!("非法标识符长度: {name}")));
     }
@@ -469,6 +468,70 @@ mod tests {
         // max_per_chunk=0 → 抬升为 1
         assert_eq!(chunk_ranges(2, 0), vec![(0, 1), (1, 2)]);
         assert_eq!(chunk_ranges(7, 3), vec![(0, 3), (3, 6), (6, 7)]);
+    }
+
+    #[test]
+    fn chunk_ranges_property_coverage_and_continuity() {
+        let cases: &[(usize, usize)] = &[
+            (0, 1),
+            (1, 1),
+            (1, 5),
+            (5, 2),
+            (6, 2),
+            (10, 3),
+            (100, 7),
+            (100, 1),
+            (5, 100),
+            (7, 0),
+            (1000, 197),
+        ];
+        for &(total, max_per_chunk) in cases {
+            let chunks = chunk_ranges(total, max_per_chunk);
+            let effective_max = max_per_chunk.max(1);
+
+            if total == 0 {
+                assert!(chunks.is_empty(), "total=0: expected empty, got {chunks:?}");
+                continue;
+            }
+
+            assert!(!chunks.is_empty(), "total={total} max={max_per_chunk}: expected non-empty");
+
+            // 覆盖性：最后一个 chunk 的 end == total
+            assert_eq!(
+                chunks.last().unwrap().1,
+                total,
+                "total={total} max={max_per_chunk}: last chunk end should be {total}, chunks={chunks:?}"
+            );
+
+            // 连续性：前一个 chunk 的 end == 下一个 chunk 的 start
+            for pair in chunks.windows(2) {
+                assert_eq!(
+                    pair[0].1, pair[1].0,
+                    "total={total} max={max_per_chunk}: gap between {:?} and {:?}",
+                    pair[0], pair[1]
+                );
+            }
+
+            // 单调性：每个 chunk 的 start < end
+            for (start, end) in &chunks {
+                assert!(start < end, "total={total} max={max_per_chunk}: invalid chunk ({start},{end})");
+            }
+
+            // 上界约束：每个 chunk 大小 <= effective_max
+            for (start, end) in &chunks {
+                let size = end - start;
+                assert!(
+                    size <= effective_max,
+                    "total={total} max={max_per_chunk}: chunk ({start},{end}) size {size} exceeds limit {effective_max}"
+                );
+            }
+
+            // 覆盖性（前向）：第一个 chunk 的 start == 0
+            assert_eq!(
+                chunks[0].0, 0,
+                "total={total} max={max_per_chunk}: first chunk should start at 0"
+            );
+        }
     }
 
     #[test]
@@ -881,5 +944,73 @@ mod tests {
 
         let observed_requests = server.await.expect("counting server task");
         assert_eq!(observed_requests, 3, "5 行按每块 2 行应产生 3 次独立请求");
+    }
+
+    /// 属性验证：对于多组 (total, max_per_chunk) 参数，`insert_batch` 的 HTTP
+    /// 请求次数与 `chunk_ranges` 返回的 chunk 数量一致，且等于 ceil(total/max)。
+    #[tokio::test]
+    async fn insert_batch_request_count_matches_chunk_ranges() {
+        // 使用不限流的 server：所有 chunk 依次处理直到 timeout 关闭。
+        // 每个 case 独立创建一个 pool+server，避免状态污染。
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        use tokio::net::TcpListener;
+
+        async fn serve_until_idle(listener: TcpListener, expected: usize) -> usize {
+            let mut count = 0usize;
+            for _ in 0..expected {
+                match tokio::time::timeout(Duration::from_secs(3), listener.accept()).await {
+                    Ok(Ok((mut stream, _))) => {
+                        let mut buf = [0u8; 4096];
+                        let _ = tokio::time::timeout(Duration::from_secs(2), stream.read(&mut buf)).await;
+                        stream
+                            .write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 1\r\nConnection: close\r\n\r\n\n")
+                            .await
+                            .ok();
+                        stream.shutdown().await.ok();
+                        count += 1;
+                    }
+                    _ => break,
+                }
+            }
+            count
+        }
+
+        let cases: &[(usize, usize)] = &[
+            (3, 1),
+            (5, 2),
+            (10, 3),
+            (1, 1),
+            (10, 10),
+            (10, 100),
+            (7, 0),
+        ];
+
+        for &(total, max_per_chunk) in cases {
+            let listener = TcpListener::bind(("127.0.0.1", 0)).await.expect("bind");
+            let port = listener.local_addr().expect("addr").port();
+            let expected = chunk_ranges(total, max_per_chunk).len();
+            let server = tokio::spawn(serve_until_idle(listener, expected));
+
+            let cfg = ClickHouseConfig {
+                host: "127.0.0.1".into(),
+                http_port: port,
+                timeout: Duration::from_secs(10),
+                acquire_timeout: Duration::from_secs(5),
+                max_in_flight: 64,
+                ..ClickHouseConfig::default()
+            };
+            let pool = ClickHousePool::connect_without_ping(cfg).expect("build");
+
+            let rows: Vec<Value> = (0..total).map(|i| serde_json::json!({"n": i})).collect();
+            pool.insert_batch("valid_table", &rows, BatchInsertOptions { max_rows_per_chunk: max_per_chunk })
+                .await
+                .expect("insert_batch should succeed");
+
+            let observed = server.await.expect("server join");
+            assert_eq!(
+                observed, expected,
+                "total={total} max_per_chunk={max_per_chunk}: expected {expected} HTTP requests, got {observed}"
+            );
+        }
     }
 }

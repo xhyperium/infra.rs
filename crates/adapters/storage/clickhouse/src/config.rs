@@ -8,6 +8,16 @@ use kernel::{XError, XResult};
 
 /// ClickHouse HTTP 客户端配置。
 ///
+/// ```
+/// use clickhousex::ClickHouseConfig;
+///
+/// let cfg = ClickHouseConfig::default();
+/// assert_eq!(cfg.host, "127.0.0.1");
+/// assert_eq!(cfg.http_port, 8123);
+/// assert_eq!(cfg.base_url(), "http://127.0.0.1:8123");
+/// assert!(cfg.validate().is_ok());
+/// ```
+///
 /// 环境变量前缀：`FOUNDATIONX_CLICKHOUSEX_`
 /// - `HOST`（默认 `127.0.0.1`）
 /// - `HTTP_PORT`（默认 `8123`；兼容别名 `PORT`）
