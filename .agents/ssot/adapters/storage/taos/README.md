@@ -2,9 +2,9 @@
 
 > 实现 / 代码唯一位置：`crates/adapters/storage/taos`  
 > **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-taosx-complete-spec.md](spec/xhyper-taosx-complete-spec.md)  
-> **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
+> **Source Goal**：见 [goal/goal.md](goal/goal.md) — Production-default 全 API 面已落地（0.3.10）  
 > **布局**：对齐 [`.agents/ssot/kernel/`](../../../kernel)（[AGENTS.md](../../../../../AGENTS.md) §2）  
-> **状态**：布局已对齐 kernel · 战役内容未宣称闭合
+> **状态**：布局已对齐 kernel · gap 未完成 0 · Production-default REST 全 API 面闭合
 
 ## infra.rs 本仓落地（#188–#191）
 
