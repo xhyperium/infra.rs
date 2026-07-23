@@ -1929,7 +1929,7 @@ dependencies = [
 
 [[package]]
 name = "postgresx"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "async-trait",
  "contracts",
@@ -1937,6 +1937,7 @@ dependencies = [
  "kernel",
  "resiliencx",
  "rustls",
+ "rustls-pemfile",
  "rustls-pki-types",
  "tokio",
  "tokio-postgres",

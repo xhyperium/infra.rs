@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.7] — 2026-07-23
+
+### Added
+
+- TLS 可选 `tls_ca_file` / `FOUNDATIONX_POSTGRESX_TLS_CA_FILE`：webpki 公共根叠加 PEM 企业/自签 CA（仍强制校验）
+- TLS 可选 `tls_server_name` / `FOUNDATIONX_POSTGRESX_TLS_SERVER_NAME`：host 为 IP 时 `hostaddr` + SNI 分离
+- 远程 Require live 证据：自签证书 + SNI 对真实主机 9/9 通过
+
+### Boundaries
+
+- mTLS 客户端证书、package stable **未承诺**
+
 ## [0.3.6] — 2026-07-23
 
 ### Added

@@ -46,6 +46,7 @@
         "gitmessage",
         "goalctl",
         "hmac",
+        "hostaddr",
         "httpdate",
         "hyperliquid",
         "impls",

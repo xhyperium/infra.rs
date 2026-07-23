@@ -9,9 +9,13 @@
 //! - `FOUNDATIONX_POSTGRESX_SSLMODE`（`disable` / `prefer` / `require`）
 //! - 可选：`FOUNDATIONX_POSTGRESX_MAX_POOL_SIZE`、`FOUNDATIONX_POSTGRESX_APPLICATION_NAME`
 //! - `FOUNDATIONX_POSTGRESX_ACQUIRE_TIMEOUT_MS` / `OPERATION_TIMEOUT_MS`
+//! - 可选 TLS：`FOUNDATIONX_POSTGRESX_TLS_CA_FILE`（PEM 额外根/服务端证书）
+//! - 可选 TLS：`FOUNDATIONX_POSTGRESX_TLS_SERVER_NAME`（SNI/证书名；连接 host 为 IP 时使用）
 
 use std::env;
 use std::fmt;
+use std::net::IpAddr;
+use std::path::PathBuf;
 use std::time::Duration;
 
 use kernel::{XError, XResult};
@@ -25,7 +29,7 @@ pub const DEFAULT_PORT: u16 = 5432;
 /// TLS / SSL 模式。
 ///
 /// - [`SslMode::Disable`]：`NoTls`
-/// - [`SslMode::Prefer`] / [`SslMode::Require`]：rustls（webpki-roots）
+/// - [`SslMode::Prefer`] / [`SslMode::Require`]：rustls（webpki-roots + 可选额外 CA）
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum SslMode {
     /// 不使用 TLS。
@@ -86,6 +90,13 @@ pub struct PostgresConfig {
     pub acquire_timeout: Duration,
     /// SQL 与事务终结操作的调用侧截止时间；同时下发为服务端 `statement_timeout`。
     pub operation_timeout: Duration,
+    /// 额外 PEM CA / 服务端证书文件（叠加 webpki 公共根；**非** insecure 旁路）。
+    pub tls_ca_file: Option<PathBuf>,
+    /// TLS SNI / 证书校验名。
+    ///
+    /// 当 [`Self::host`] 为 IP 且证书 CN/SAN 为 DNS 名时设置；建池时使用
+    /// `hostaddr=IP` + `host=server_name` 以保证连接地址与证书名分离。
+    pub tls_server_name: Option<String>,
     /// 原始 `DATABASE_URL` 兼容字段；建池不直接消费此字段。
     ///
     /// 仅用于一个迁移周期的源码兼容。调用方修改后，`validate` 会核对其与结构化字段
@@ -109,6 +120,8 @@ impl fmt::Debug for PostgresConfig {
             .field("connect_timeout", &self.connect_timeout)
             .field("acquire_timeout", &self.acquire_timeout)
             .field("operation_timeout", &self.operation_timeout)
+            .field("tls_ca_file", &self.tls_ca_file)
+            .field("tls_server_name", &self.tls_server_name)
             .field("database_url", &self.database_url.as_ref().map(|_| "<redacted>"))
             .finish()
     }
@@ -147,6 +160,12 @@ impl PostgresConfig {
             env_duration_ms("FOUNDATIONX_POSTGRESX_ACQUIRE_TIMEOUT_MS", Duration::from_secs(5))?;
         let operation_timeout =
             env_duration_ms("FOUNDATIONX_POSTGRESX_OPERATION_TIMEOUT_MS", Duration::from_secs(10))?;
+        let tls_ca_file = env::var("FOUNDATIONX_POSTGRESX_TLS_CA_FILE")
+            .ok()
+            .filter(|s| !s.trim().is_empty())
+            .map(PathBuf::from);
+        let tls_server_name =
+            env::var("FOUNDATIONX_POSTGRESX_TLS_SERVER_NAME").ok().filter(|s| !s.trim().is_empty());
 
         Ok(Self {
             host,
@@ -160,6 +179,8 @@ impl PostgresConfig {
             connect_timeout: Some(Duration::from_secs(10)),
             acquire_timeout,
             operation_timeout,
+            tls_ca_file,
+            tls_server_name,
             database_url: None,
         })
     }
@@ -219,6 +240,12 @@ impl PostgresConfig {
             env_duration_ms("FOUNDATIONX_POSTGRESX_ACQUIRE_TIMEOUT_MS", Duration::from_secs(5))?;
         let operation_timeout =
             env_duration_ms("FOUNDATIONX_POSTGRESX_OPERATION_TIMEOUT_MS", Duration::from_secs(10))?;
+        let tls_ca_file = env::var("FOUNDATIONX_POSTGRESX_TLS_CA_FILE")
+            .ok()
+            .filter(|s| !s.trim().is_empty())
+            .map(PathBuf::from);
+        let tls_server_name =
+            env::var("FOUNDATIONX_POSTGRESX_TLS_SERVER_NAME").ok().filter(|s| !s.trim().is_empty());
 
         Ok(Self {
             host,
@@ -232,6 +259,8 @@ impl PostgresConfig {
             connect_timeout: pg.get_connect_timeout().copied().or(Some(Duration::from_secs(10))),
             acquire_timeout,
             operation_timeout,
+            tls_ca_file,
+            tls_server_name,
             database_url: Some(url.to_string()),
         })
     }
@@ -247,7 +276,19 @@ impl PostgresConfig {
         let mut cfg = deadpool_postgres::Config::new();
         // DATABASE_URL 在入口处只解析一次；此处始终从已校验字段重建配置，避免
         // 原始 URL 的 sslmode 与公开字段被分别修改后产生策略/执行不一致。
-        cfg.host = Some(self.host.clone());
+        //
+        // TLS：若配置了 tls_server_name 且 host 为 IP，则 hostaddr=IP、host=server_name，
+        // 使 SNI/证书校验名与 TCP 目标分离（自签/企业证书常见场景）。
+        if let Some(server_name) = self.tls_server_name.as_deref().filter(|s| !s.is_empty()) {
+            if let Ok(ip) = self.host.parse::<IpAddr>() {
+                cfg.hostaddr = Some(ip);
+                cfg.host = Some(server_name.to_owned());
+            } else {
+                cfg.host = Some(server_name.to_owned());
+            }
+        } else {
+            cfg.host = Some(self.host.clone());
+        }
         cfg.port = Some(self.port);
         cfg.dbname = Some(self.database.clone());
         cfg.user = Some(self.user.clone());
@@ -308,6 +349,16 @@ impl PostgresConfig {
             return Err(XError::invalid(
                 "远程 PostgreSQL 必须使用 sslmode=require；disable/prefer 仅允许本机",
             ));
+        }
+        if let Some(path) = &self.tls_ca_file {
+            if path.as_os_str().is_empty() {
+                return Err(XError::invalid("PostgresConfig.tls_ca_file 不能为空路径"));
+            }
+        }
+        if let Some(name) = &self.tls_server_name {
+            if name.trim().is_empty() {
+                return Err(XError::invalid("PostgresConfig.tls_server_name 不能为空"));
+            }
         }
         self.validate_database_url_consistency()?;
         Ok(())
@@ -410,6 +461,8 @@ pub struct PostgresConfigBuilder {
     connect_timeout: Option<Duration>,
     acquire_timeout: Option<Duration>,
     operation_timeout: Option<Duration>,
+    tls_ca_file: Option<PathBuf>,
+    tls_server_name: Option<String>,
 }
 
 impl PostgresConfigBuilder {
@@ -490,6 +543,20 @@ impl PostgresConfigBuilder {
         self
     }
 
+    /// 额外 PEM CA 文件路径。
+    #[must_use]
+    pub fn tls_ca_file(mut self, path: impl Into<PathBuf>) -> Self {
+        self.tls_ca_file = Some(path.into());
+        self
+    }
+
+    /// TLS SNI / 证书校验服务器名。
+    #[must_use]
+    pub fn tls_server_name(mut self, name: impl Into<String>) -> Self {
+        self.tls_server_name = Some(name.into());
+        self
+    }
+
     /// 完成构建并校验。
     #[allow(deprecated)] // Builder 构造一个迁移周期内保留的空兼容字段
     pub fn build(self) -> XResult<PostgresConfig> {
@@ -507,6 +574,8 @@ impl PostgresConfigBuilder {
             connect_timeout: self.connect_timeout.or(Some(Duration::from_secs(10))),
             acquire_timeout: self.acquire_timeout.unwrap_or(Duration::from_secs(5)),
             operation_timeout: self.operation_timeout.unwrap_or(Duration::from_secs(10)),
+            tls_ca_file: self.tls_ca_file,
+            tls_server_name: self.tls_server_name,
             database_url: None,
         };
         cfg.validate()?;
@@ -576,6 +645,25 @@ mod tests {
         let dbg = format!("{cfg:?}");
         assert!(dbg.contains("***"));
         assert!(!dbg.contains("secret"));
+    }
+
+    #[test]
+    fn tls_server_name_with_ip_host_sets_hostaddr() {
+        let cfg = PostgresConfig::builder()
+            .host("84.247.154.45")
+            .database("postgres")
+            .user("postgres")
+            .sslmode(SslMode::Require)
+            .tls_server_name("X-16v-64g")
+            .build()
+            .expect("cfg");
+        let dp = cfg.to_deadpool_config();
+        assert_eq!(dp.host.as_deref(), Some("X-16v-64g"));
+        assert_eq!(
+            dp.hostaddr,
+            Some("84.247.154.45".parse().expect("ip")),
+            "IP 必须走 hostaddr，SNI 走 host"
+        );
     }
 
     #[test]
