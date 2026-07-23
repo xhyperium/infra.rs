@@ -1,7 +1,7 @@
 [package]
 name = "clickhousex"
 description = "clickhouse storage adapter (AnalyticsSink; HTTP production client)"
-version = "0.3.6"
+version = "0.3.5"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
