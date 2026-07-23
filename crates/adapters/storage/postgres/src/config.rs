@@ -11,6 +11,7 @@
 //! - `FOUNDATIONX_POSTGRESX_ACQUIRE_TIMEOUT_MS` / `OPERATION_TIMEOUT_MS`
 //! - 可选 TLS：`FOUNDATIONX_POSTGRESX_TLS_CA_FILE`（PEM 额外根/服务端证书）
 //! - 可选 TLS：`FOUNDATIONX_POSTGRESX_TLS_SERVER_NAME`（SNI/证书名；连接 host 为 IP 时使用）
+//! - 可选 mTLS：`FOUNDATIONX_POSTGRESX_TLS_CLIENT_CERT` + `TLS_CLIENT_KEY`（必须成对）
 
 use std::env;
 use std::fmt;
@@ -97,6 +98,10 @@ pub struct PostgresConfig {
     /// 当 [`Self::host`] 为 IP 且证书 CN/SAN 为 DNS 名时设置；建池时使用
     /// `hostaddr=IP` + `host=server_name` 以保证连接地址与证书名分离。
     pub tls_server_name: Option<String>,
+    /// mTLS 客户端证书 PEM 路径（须与 [`Self::tls_client_key`] 成对）。
+    pub tls_client_cert: Option<PathBuf>,
+    /// mTLS 客户端私钥 PEM 路径（须与 [`Self::tls_client_cert`] 成对）。
+    pub tls_client_key: Option<PathBuf>,
     /// 原始 `DATABASE_URL` 兼容字段；建池不直接消费此字段。
     ///
     /// 仅用于一个迁移周期的源码兼容。调用方修改后，`validate` 会核对其与结构化字段
@@ -122,6 +127,11 @@ impl fmt::Debug for PostgresConfig {
             .field("operation_timeout", &self.operation_timeout)
             .field("tls_ca_file", &self.tls_ca_file)
             .field("tls_server_name", &self.tls_server_name)
+            .field("tls_client_cert", &self.tls_client_cert)
+            .field(
+                "tls_client_key",
+                &self.tls_client_key.as_ref().map(|_| PathBuf::from("<redacted>")),
+            )
             .field("database_url", &self.database_url.as_ref().map(|_| "<redacted>"))
             .finish()
     }
@@ -166,6 +176,14 @@ impl PostgresConfig {
             .map(PathBuf::from);
         let tls_server_name =
             env::var("FOUNDATIONX_POSTGRESX_TLS_SERVER_NAME").ok().filter(|s| !s.trim().is_empty());
+        let tls_client_cert = env::var("FOUNDATIONX_POSTGRESX_TLS_CLIENT_CERT")
+            .ok()
+            .filter(|s| !s.trim().is_empty())
+            .map(PathBuf::from);
+        let tls_client_key = env::var("FOUNDATIONX_POSTGRESX_TLS_CLIENT_KEY")
+            .ok()
+            .filter(|s| !s.trim().is_empty())
+            .map(PathBuf::from);
 
         Ok(Self {
             host,
@@ -181,6 +199,8 @@ impl PostgresConfig {
             operation_timeout,
             tls_ca_file,
             tls_server_name,
+            tls_client_cert,
+            tls_client_key,
             database_url: None,
         })
     }
@@ -246,6 +266,14 @@ impl PostgresConfig {
             .map(PathBuf::from);
         let tls_server_name =
             env::var("FOUNDATIONX_POSTGRESX_TLS_SERVER_NAME").ok().filter(|s| !s.trim().is_empty());
+        let tls_client_cert = env::var("FOUNDATIONX_POSTGRESX_TLS_CLIENT_CERT")
+            .ok()
+            .filter(|s| !s.trim().is_empty())
+            .map(PathBuf::from);
+        let tls_client_key = env::var("FOUNDATIONX_POSTGRESX_TLS_CLIENT_KEY")
+            .ok()
+            .filter(|s| !s.trim().is_empty())
+            .map(PathBuf::from);
 
         Ok(Self {
             host,
@@ -261,6 +289,8 @@ impl PostgresConfig {
             operation_timeout,
             tls_ca_file,
             tls_server_name,
+            tls_client_cert,
+            tls_client_key,
             database_url: Some(url.to_string()),
         })
     }
@@ -358,6 +388,19 @@ impl PostgresConfig {
         if let Some(name) = &self.tls_server_name {
             if name.trim().is_empty() {
                 return Err(XError::invalid("PostgresConfig.tls_server_name 不能为空"));
+            }
+        }
+        match (&self.tls_client_cert, &self.tls_client_key) {
+            (None, None) => {}
+            (Some(cert), Some(key)) => {
+                if cert.as_os_str().is_empty() || key.as_os_str().is_empty() {
+                    return Err(XError::invalid("PostgresConfig.tls_client_cert/key 不能为空路径"));
+                }
+            }
+            _ => {
+                return Err(XError::invalid(
+                    "PostgresConfig mTLS 需要同时设置 tls_client_cert 与 tls_client_key",
+                ));
             }
         }
         self.validate_database_url_consistency()?;
@@ -463,6 +506,8 @@ pub struct PostgresConfigBuilder {
     operation_timeout: Option<Duration>,
     tls_ca_file: Option<PathBuf>,
     tls_server_name: Option<String>,
+    tls_client_cert: Option<PathBuf>,
+    tls_client_key: Option<PathBuf>,
 }
 
 impl PostgresConfigBuilder {
@@ -557,6 +602,20 @@ impl PostgresConfigBuilder {
         self
     }
 
+    /// mTLS 客户端证书 PEM。
+    #[must_use]
+    pub fn tls_client_cert(mut self, path: impl Into<PathBuf>) -> Self {
+        self.tls_client_cert = Some(path.into());
+        self
+    }
+
+    /// mTLS 客户端私钥 PEM。
+    #[must_use]
+    pub fn tls_client_key(mut self, path: impl Into<PathBuf>) -> Self {
+        self.tls_client_key = Some(path.into());
+        self
+    }
+
     /// 完成构建并校验。
     #[allow(deprecated)] // Builder 构造一个迁移周期内保留的空兼容字段
     pub fn build(self) -> XResult<PostgresConfig> {
@@ -576,6 +635,8 @@ impl PostgresConfigBuilder {
             operation_timeout: self.operation_timeout.unwrap_or(Duration::from_secs(10)),
             tls_ca_file: self.tls_ca_file,
             tls_server_name: self.tls_server_name,
+            tls_client_cert: self.tls_client_cert,
+            tls_client_key: self.tls_client_key,
             database_url: None,
         };
         cfg.validate()?;
@@ -664,6 +725,20 @@ mod tests {
             Some("84.247.154.45".parse().expect("ip")),
             "IP 必须走 hostaddr，SNI 走 host"
         );
+    }
+
+    #[test]
+    fn mtls_requires_paired_client_identity() {
+        let err = PostgresConfig::builder()
+            .host("127.0.0.1")
+            .database("db")
+            .user("u")
+            .sslmode(SslMode::Require)
+            .tls_client_cert("/tmp/only.crt")
+            .build()
+            .expect_err("cert only");
+        assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+        assert!(err.context().contains("tls_client_cert"));
     }
 
     #[test]

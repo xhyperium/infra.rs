@@ -1,5 +1,6 @@
 # releases/
 
+- `0.3.10` mTLS 客户端身份：[0.3.10.md](./0.3.10.md)
 - `0.3.9` acquire_with + 有界 COPY：[0.3.9.md](./0.3.9.md)
 - `0.3.8` raw fail-closed live：[0.3.8.md](./0.3.8.md)
 - `0.3.7` 远程 TLS live（CA+SNI）：[0.3.7.md](./0.3.7.md)
