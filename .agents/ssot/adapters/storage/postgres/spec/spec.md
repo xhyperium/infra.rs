@@ -1,6 +1,6 @@
 # `postgresx` 当前实现规范
 
-状态：当前 `0.3.6` 实现合同（`deadpool-postgres` + `tokio-postgres` 默认真实路径）。
+状态：当前 `0.3.7` 实现合同（`deadpool-postgres` + `tokio-postgres` 默认真实路径）。
 **未宣称 package stable。**
 
 ## 0. 权威与范围
@@ -73,19 +73,16 @@ cmp .agents/ssot/adapters/storage/postgres/spec/spec.md \
 
 ## 5. OPEN / NO-GO
 
-自定义 CA/mTLS、迁移/COPY、隔离级别策略、read replica、跨资源事务、HA 故障切换与
+mTLS 客户端证书、迁移/COPY、隔离级别策略、read replica、跨资源事务、HA 故障切换与
 package stable 均未承诺。
 
+- **可选自定义 CA 与 SNI（0.3.7 已落地）**：`tls_ca_file` / `tls_server_name` 叠加 webpki
+  公共根；远程自签 Require live 已通过（仍强制证书校验，无 insecure 旁路）。
 - **channel binding（`tls-server-end-point`）与 SCRAM-PLUS：未实现。**
   `MakeRustlsConnect` 的 `TlsStream::channel_binding()` 恒返回 `ChannelBinding::none()`；
   当前仅支持普通 SCRAM-SHA-256，服务端要求 channel binding 时将无法完成认证。
-  这是隐性假设，不是回归；后续若要支持需绑定 rustls 握手导出的 TLS 材料。
-- **deprecated raw client/pool 隔离（`raw_exposed` 强制脱池、独立关闭隔离池）：
-  代码路径 `CODE PASS`；deadline 固定镜像实验 **本轮已通过**（`scripts/postgres-deadline-conformance.mjs`）。**
-  `raw_exposed` 状态转换仍依赖真实 `deadpool_postgres::Object`，无独立离线单测；
+- **deprecated raw client/pool 隔离**：代码路径 `CODE PASS`；deadline 固定镜像实验已通过。
   不得把 raw 逃逸面升格为 package stable 证据。
-- **远程 TLS 握手 live：OPEN。** 本轮 live 使用 dev loopback `sslmode=disable`；
-  Require 路径有离线构造与拒绝连接单测，但未在本轮对远程主机做握手 live。
 
 追溯：`crates/adapters/storage/postgres/{src,tests}`、
 `scripts/postgres-deadline-conformance.mjs`、`docs/ssot/postgresx-ssot-alignment.md`、

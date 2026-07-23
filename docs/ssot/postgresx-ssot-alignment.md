@@ -6,8 +6,8 @@
 | SSOT | `.agents/ssot/adapters/storage/postgres/`（**非** `postgresx` 目录） |
 | 实现 | `crates/adapters/storage/postgres` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.6` |
-| 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地**；dev live（`#[ignore]`）与固定镜像 deadline conformance **本轮已跑通**；**未**宣称远程 TLS 握手 live 或 package stable |
+| version | `0.3.7` |
+| 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地**；dev live + **远程 Require TLS live（自签 CA + SNI）** + deadline conformance 已跑通；**未**宣称 package stable / mTLS |
 
 ## 结论摘要
 
@@ -28,7 +28,7 @@
 | deadline 实验 | `tests/deadline_conformance.rs` + `scripts/postgres-deadline-conformance.mjs` |
 | bench | `benches/query_hot_path.rs` |
 | 原 OBJECTIVE DEFER | **PASS**（prod Repository / SSL require 路径 / resiliencx） |
-| 仍 OPEN / DEFER | 远程 TLS live 握手；COPY / migrations / read-replica / package stable |
+| 仍 OPEN / DEFER | mTLS 客户端证书；COPY / migrations / read-replica / package stable |
 
 ## 对齐矩阵
 
@@ -44,7 +44,7 @@
 | POSTGRESX-8 | SSOT 11 层 | PASS | `.agents/ssot/adapters/storage/postgres/` |
 | POSTGRESX-9 | package stable | OPEN | 禁止宣称；`publish = false` |
 | POSTGRESX-10 | 生产 Repository | PASS | `src/repository.rs` + live roundtrip |
-| POSTGRESX-11 | SSL require 路径 | CODE PASS / TLS live OPEN | `src/tls.rs` + pool Prefer/Require；**未**宣称远程握手 live |
+| POSTGRESX-11 | SSL require 路径 + 远程 live | PASS | rustls + 可选 CA/SNI；远程自签 Require live 已通过（`TLS_CA_FILE` + `TLS_SERVER_NAME`） |
 | POSTGRESX-12 | resiliencx 接入 | PASS | `src/resilience.rs` + live wrapper |
 | POSTGRESX-13 | pool/SQL deadline 与连接隔离 | PASS | 固定摘要 Postgres 17 实验通过 |
 | POSTGRESX-14 | 取消/abort 与事务 Failed 状态 | PASS | `src/{conn,tx}.rs` + deadline_conformance live |

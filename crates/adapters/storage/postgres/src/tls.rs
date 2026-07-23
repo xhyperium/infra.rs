@@ -1,9 +1,11 @@
 //! rustls TLS 连接器：实现 `tokio_postgres::tls::{MakeTlsConnect, TlsConnect}`。
 //!
-//! 根证书来自 webpki-roots；强制证书校验（无 insecure 旁路）。
+//! 默认根证书来自 webpki-roots；可叠加 PEM 企业/自签 CA。
+//! **始终**做证书校验（无 insecure / 跳过校验旁路）。
 
 use std::future::Future;
 use std::io;
+use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -27,11 +29,48 @@ fn ensure_crypto_provider() {
 
 /// 构建带 webpki 根证书的 rustls `ClientConfig`。
 pub fn build_client_config() -> XResult<ClientConfig> {
+    build_client_config_with_ca(None)
+}
+
+/// 构建 rustls `ClientConfig`：webpki 公共根 + 可选额外 PEM CA 文件。
+///
+/// `extra_ca_pem` 可含一到多张 PEM 证书（企业根或自签服务端证书）。
+/// 文件上限 1 MiB；解析失败 fail-closed。
+pub fn build_client_config_with_ca(extra_ca_pem: Option<&Path>) -> XResult<ClientConfig> {
     ensure_crypto_provider();
-    let mut root_store = rustls::RootCertStore::empty();
-    root_store.roots = webpki_roots::TLS_SERVER_ROOTS.to_vec();
+    let mut root_store =
+        rustls::RootCertStore::from_iter(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
+    if let Some(path) = extra_ca_pem {
+        load_extra_ca_pem(path, &mut root_store)?;
+    }
     let config = ClientConfig::builder().with_root_certificates(root_store).with_no_client_auth();
     Ok(config)
+}
+
+fn load_extra_ca_pem(path: &Path, roots: &mut rustls::RootCertStore) -> XResult<()> {
+    let metadata = std::fs::metadata(path)
+        .map_err(|error| XError::invalid("postgresx: 无法检查 TLS CA 文件").with_source(error))?;
+    if !metadata.is_file() {
+        return Err(XError::invalid("postgresx: TLS CA 路径必须是普通文件"));
+    }
+    if metadata.len() > 1024 * 1024 {
+        return Err(XError::invalid("postgresx: TLS CA 文件不得超过 1 MiB"));
+    }
+    let file = std::fs::File::open(path)
+        .map_err(|error| XError::invalid("postgresx: 无法读取 TLS CA 文件").with_source(error))?;
+    let mut reader = std::io::BufReader::new(file);
+    let certificates = rustls_pemfile::certs(&mut reader)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| XError::invalid("postgresx: TLS CA PEM 解析失败").with_source(error))?;
+    if certificates.is_empty() {
+        return Err(XError::invalid("postgresx: TLS CA 文件中没有证书"));
+    }
+    for certificate in certificates {
+        roots
+            .add(certificate)
+            .map_err(|error| XError::invalid("postgresx: TLS CA 证书无效").with_source(error))?;
+    }
+    Ok(())
 }
 
 /// deadpool / tokio-postgres 可用的 rustls `MakeTlsConnect` 实现。
@@ -47,11 +86,28 @@ impl MakeRustlsConnect {
         Ok(Self { connector: TlsConnector::from(Arc::new(config)) })
     }
 
+    /// webpki 公共根 + 可选额外 PEM CA。
+    pub fn with_webpki_and_ca(extra_ca_pem: Option<&Path>) -> XResult<Self> {
+        let config = build_client_config_with_ca(extra_ca_pem)?;
+        Ok(Self::from_config(config))
+    }
+
+    /// 从路径加载额外 CA（便捷封装）。
+    pub fn with_ca_file(path: impl AsRef<Path>) -> XResult<Self> {
+        Self::with_webpki_and_ca(Some(path.as_ref()))
+    }
+
     /// 从既有 `ClientConfig` 构建。
     #[must_use]
     pub fn from_config(config: ClientConfig) -> Self {
         ensure_crypto_provider();
         Self { connector: TlsConnector::from(Arc::new(config)) }
+    }
+
+    /// 诊断：是否附带了路径参数（仅供测试/文档，不暴露密钥材料）。
+    #[must_use]
+    pub fn supports_extra_ca_path(path: Option<&PathBuf>) -> bool {
+        path.is_some()
     }
 
     /// 为指定域名构造一次 `TlsConnect`（SNI / 证书校验用）。
@@ -215,5 +271,23 @@ mod tests {
         // 读取常量防止 dead_code，并与模块级 const assert 双锚。
         let enabled = CHANNEL_BINDING_ENABLED;
         assert!(!enabled, "SCRAM-PLUS / channel binding 未实现");
+    }
+
+    #[test]
+    fn extra_ca_missing_file_fails_closed() {
+        let err = build_client_config_with_ca(Some(Path::new("/no/such/postgresx-ca.pem")))
+            .expect_err("missing ca");
+        assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+    }
+
+    #[test]
+    fn extra_ca_empty_file_fails_closed() {
+        let dir = std::env::temp_dir().join(format!("postgresx-empty-ca-{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+        let path = dir.join("empty.pem");
+        std::fs::write(&path, b"").expect("write");
+        let err = build_client_config_with_ca(Some(&path)).expect_err("empty ca");
+        assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
