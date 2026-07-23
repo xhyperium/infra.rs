@@ -154,10 +154,12 @@ node scripts/self-test.mjs --hooks --lint-only
 
 | 仓库 | 编码修复 | 钩子 | CI 门禁 | 测试 | U+FFFD | 状态 |
 |------|---------|------|---------|------|--------|------|
-| `macro_data.rs` | ✅ | ✅ | ✅ | ✅ 154 | 0 | 完成 |
-| `market_data.rs` | ✅ | ✅ | ✅ | ✅ | 跟进 | 完成（L2 阻断后须清零） |
+| `macro_data.rs` | ✅ | ✅ | ✅ L1+L2 | ✅ | 0 | 完成 |
+| `market_data.rs` | ✅ | ✅ | ✅ L1+L2 | ✅ | 0 | 完成 |
 | `infra.rs` | ✅ | ✅ | ✅ L1+L2 阻断 | ✅ | 0 | 完成 |
-| `standard_template.rs` | ✅ | ✅ | ✅ | ✅ | 0 | 完成 |
+| `standard_template.rs` | ✅ | ✅ | ✅ L1+L2 | ✅ | 0 | 完成 |
+| `xhyper.rs` | ✅ | ✅ | ✅ utf8-encoding | ✅ | 0 | 完成 |
+| `ZoneCNH` | ✅ | ✅ | ✅ utf8-encoding | ✅ | 0 | 完成 |
 
 ### 防护体系组成
 
