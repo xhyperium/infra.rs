@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.10] — 2026-07-23
+
+### Added
+
+- **自验证 `redisx::selfcheck`**（LIB-SELFCHECK-SPEC / `.cargo/draft/verifyctl.md` §6.5）
+  - 模型：`CheckLevel` / `CheckStatus` / `CheckItem` / `ValidationReport` / `CheckDescriptor`
+  - `RedisValidator` + `Validatable`：catalog 11 项；Basic / ReadWrite / Full 级别与短路
+  - 资源命名 `_sc:{token}:*` + TTL 兜底；配置 skip / baseline / memory 阈值
+  - 检查：`ping`、`set_get_del`、`ttl_semantics`、`data_structures`、`pipeline`、`multi_exec`、`lua_cas`、`pubsub`（feature）、`dist_lock`、`memory_pressure`、`cluster_slots`（非 Cluster → Skipped）
+
+### Boundaries
+
+- **不是** `tools/verifyctl`（Goal Contract 变更验证）
+- **未**实现跨模块 `SelfValidator`、HTTP 探针、Prometheus 导出
+- Cluster / Sentinel / TLS live 仍 OPEN；未宣称 package stable
+
 ## [0.3.9] — 2026-07-23
 
 ### Added

@@ -9,6 +9,7 @@
 //! - resilience：基于 resiliencx 的重试包装
 //! - feature `pubsub`：`RedisPubSub` / `RedisPubSubFacade`（含 `into_result_message_stream`）
 //! - 池指标：[`RedisPool::metrics_snapshot`] / [`RedisMetricsSnapshot`]
+//! - 自验证：[`selfcheck`]（LIB-SELFCHECK-SPEC §6.5 redisx 目录）
 //!
 //! ## Scaffold（可选）
 //!
@@ -27,6 +28,7 @@ mod error_map;
 mod ext;
 mod pool;
 mod resilience;
+pub mod selfcheck;
 
 pub use client::RedisClient;
 pub use config::{RedisConfig, RedisConfigBuilder, RedisMode};

@@ -1,6 +1,6 @@
 # redisx docs
 
-**Package**：`redisx` · **版本**：`0.3.9` 未发布候选 ·
+**Package**：`redisx` · **版本**：`0.3.10` 未发布候选 ·
 **角色**：生产 Redis 客户端（P0 KV）+ 可选 scaffold
 
 | 文档 | 路径 |
