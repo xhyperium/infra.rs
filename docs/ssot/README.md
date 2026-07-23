@@ -67,6 +67,21 @@
 
 上级索引：[docs/README.md](../README.md)。
 
+## 同步流程（强制）
+
+修改对齐文档前 **必须** 先拉取最新 origin，避免 origin 新提交覆盖本地更改：
+
+```bash
+git pull --rebase origin main
+```
+
+之后再编辑 `*-ssot-alignment.md` 或 `gap-matrix.md`，最后：
+
+```bash
+git add docs/ssot/
+SKIP_VERSION_CHECK=1 git commit -m "docs(ssot): sync alignment to current state"
+```
+
 ## 变更（近期）
 
 | 日期 | 说明 |
