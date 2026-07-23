@@ -4,7 +4,8 @@
 //!
 //! - [`RedisConfig`] / [`RedisConfigBuilder`]：私有字段配置（Standalone / Cluster / Sentinel + TLS）
 //! - [`RedisPool`]：双后端（`ConnectionManager` | `ClusterConnection`）+ Semaphore 背压 + `close`
-//! - [`RedisClient`]：KV 扩展 + [`contracts::KeyValueStore`]
+//! - [`RedisClient`]：KV 扩展 + 调用级 deadline + [`contracts::KeyValueStore`]
+//! - 扩展：`pipeline_set` / `eval_script` / 带 fencing 的 `lock_*`
 //! - resilience：基于 resiliencx 的重试包装
 //! - feature `pubsub`：`RedisPubSub` / `RedisPubSubFacade`
 //!
@@ -22,12 +23,14 @@
 mod client;
 mod config;
 mod error_map;
+mod ext;
 mod pool;
 mod resilience;
 
 pub use client::RedisClient;
 pub use config::{RedisConfig, RedisConfigBuilder, RedisMode};
 pub use error_map::{map_redis_error, map_redis_result};
+pub use ext::RedisLock;
 pub use pool::{RedisPool, RedisPoolStats};
 pub use resilience::{
     RedisAtomicity, RedisOperation, RedisRetryConfig, RedisRetrySafety, with_budget,

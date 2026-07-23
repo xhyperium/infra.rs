@@ -74,3 +74,9 @@ CI：`.github/workflows/redisx-live.yml`（service redis；可用 `REDIS_URL`）
 - Cluster / Sentinel Pub/Sub 路由与重订阅
 - Streams / 分布式锁完整合同
 - 自动重试相对 TTL 写入、返回值敏感写入或 PUBLISH
+
+## 分布式锁（0.3.8）
+
+- `lock_acquire(key, ttl)` → `RedisLock { token, fence }`
+- 释放/续租用 Lua compare-and-*；**关键写必须携带并校验 fence 单调性**
+- Redis 锁不是正确性银弹；见 draft §1.3

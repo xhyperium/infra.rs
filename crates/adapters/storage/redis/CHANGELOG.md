@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.8] — 2026-07-23
+
+### Added
+
+- **调用级总 deadline**：`RedisClient::with_call_deadline`；排队（acquire）计入总预算
+- **字节别名**：`get_bytes` / `set_bytes`
+- **扩展**：`pipeline_set`、`eval_script`、带 fencing 的 `lock_acquire` / `lock_release` / `lock_extend`（`RedisLock`）
+- workspace `redis` 启用 `script` feature（Lua）
+- live：deadline/bytes、pipeline+锁 fencing（`#[ignore]`）
+
+### Boundaries
+
+- Cluster / Sentinel / TLS live 仍 OPEN
+- 锁不提供「锁即正确」业务保证；关键写须使用 `fence`
+- 未宣称 package stable
+
 ## [0.3.7] — 2026-07-23
 
 ### Added

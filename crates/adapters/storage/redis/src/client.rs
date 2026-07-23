@@ -19,17 +19,21 @@ use crate::resilience::{RedisOperation, with_automatic_budget, with_budget_async
 /// `Clone` 只共享底层池引用；所有命令受池级 Semaphore 与超时约束。
 /// 可选 [`RetryBudget`]：配置后按显式 [`RetrySafety`] 分类路由。只读与幂等操作可以重试；
 /// 结果不明的副作用操作在多次尝试进入 driver 前 fail-closed。
+///
+/// 可选调用级总 deadline（[`Self::with_call_deadline`]）：排队 + 命令共享同一预算。
 #[derive(Clone, Debug)]
 pub struct RedisClient {
     pool: RedisPool,
     /// 可选重试预算（与 `budget_max_attempts` 一起启用）。
     budget: Option<Arc<RetryBudget>>,
     budget_max_attempts: u32,
+    /// 调用级总 deadline（含 acquire 排队）；`None` 时使用池配置的分离超时。
+    call_deadline: Option<Duration>,
 }
 
 impl RedisClient {
     pub(crate) fn from_pool(pool: RedisPool) -> Self {
-        Self { pool, budget: None, budget_max_attempts: 3 }
+        Self { pool, budget: None, budget_max_attempts: 3, call_deadline: None }
     }
 
     /// 注入 [`RetryBudget`]：后续操作按各自 [`RetrySafety`] 走 resiliencx 异步安全路由。
@@ -40,10 +44,36 @@ impl RedisClient {
         self
     }
 
+    /// 设置调用级总 deadline（排队时间计入；见 draft §2.4 / §2.6）。
+    #[must_use]
+    pub fn with_call_deadline(mut self, total: Duration) -> Self {
+        self.call_deadline = Some(total);
+        self
+    }
+
     /// 是否已配置重试预算。
     #[must_use]
     pub fn has_retry_budget(&self) -> bool {
         self.budget.is_some()
+    }
+
+    /// 是否已配置调用级总 deadline。
+    #[must_use]
+    pub fn has_call_deadline(&self) -> bool {
+        self.call_deadline.is_some()
+    }
+
+    /// 池连接执行：有总 deadline 时走 [`RedisPool::with_conn_total_deadline`]。
+    pub(crate) async fn with_pool_conn<F, Fut, T>(&self, f: F) -> XResult<T>
+    where
+        F: FnOnce(crate::pool::RedisBackend) -> Fut,
+        Fut: Future<Output = XResult<T>>,
+    {
+        if let Some(total) = self.call_deadline {
+            self.pool.with_conn_total_deadline(total, f).await
+        } else {
+            self.pool.with_conn(f).await
+        }
     }
 
     /// 兼容旧 `RedisLiveKv::connect(url)`：从 URL 建池并返回客户端。
@@ -73,29 +103,39 @@ impl RedisClient {
     /// 单次 `GET` I/O（无 budget 环）。
     async fn get_once(&self, key: &str) -> XResult<Option<Vec<u8>>> {
         let key = key.to_owned();
-        self.pool
-            .with_conn(|mut conn| async move {
-                let v: Option<Vec<u8>> = map_redis_result(conn.get(key).await)?;
-                Ok(v)
-            })
-            .await
+        self.with_pool_conn(|mut conn| async move {
+            let v: Option<Vec<u8>> = map_redis_result(conn.get(key).await)?;
+            Ok(v)
+        })
+        .await
     }
 
     /// 单次 `SET` I/O（无 budget 环）。
     async fn set_once(&self, key: &str, val: Vec<u8>, ttl: Option<Duration>) -> XResult<()> {
         validate_ttl(ttl)?;
         let key = key.to_owned();
-        self.pool
-            .with_conn(move |mut conn| async move {
-                if let Some(ttl) = ttl {
-                    let ms = duration_to_millis(ttl)?;
-                    let _: () = map_redis_result(conn.pset_ex(key, val, ms).await)?;
-                } else {
-                    let _: () = map_redis_result(conn.set(key, val).await)?;
-                }
-                Ok(())
-            })
-            .await
+        self.with_pool_conn(move |mut conn| async move {
+            if let Some(ttl) = ttl {
+                let ms = duration_to_millis(ttl)?;
+                let _: () = map_redis_result(conn.pset_ex(key, val, ms).await)?;
+            } else {
+                let _: () = map_redis_result(conn.set(key, val).await)?;
+            }
+            Ok(())
+        })
+        .await
+    }
+
+    /// 二进制安全 `GET`（与 [`Self::get`] 相同，draft 命名别名）。
+    #[inline]
+    pub async fn get_bytes(&self, key: &str) -> XResult<Option<Vec<u8>>> {
+        self.get(key).await
+    }
+
+    /// 二进制安全 `SET`（与 [`Self::set`] 相同，draft 命名别名）。
+    #[inline]
+    pub async fn set_bytes(&self, key: &str, val: Vec<u8>, ttl: Option<Duration>) -> XResult<()> {
+        self.set(key, val, ttl).await
     }
 
     /// `GET`；缺失返回 `Ok(None)`。空字节串视为合法值。
@@ -179,12 +219,11 @@ impl RedisClient {
     /// 单次 `DEL` I/O（无 budget 环）。
     async fn delete_once(&self, key: &str) -> XResult<bool> {
         let key = key.to_owned();
-        self.pool
-            .with_conn(|mut conn| async move {
-                let n: i64 = map_redis_result(conn.del(key).await)?;
-                Ok(n > 0)
-            })
-            .await
+        self.with_pool_conn(|mut conn| async move {
+            let n: i64 = map_redis_result(conn.del(key).await)?;
+            Ok(n > 0)
+        })
+        .await
     }
 
     /// `DEL`；返回是否删除了 key。未配置 budget 时执行一次；多次尝试的 budget 会在 driver
@@ -212,12 +251,11 @@ impl RedisClient {
     /// 单次 `EXISTS` I/O（无 budget 环）。
     async fn exists_once(&self, key: &str) -> XResult<bool> {
         let key = key.to_owned();
-        self.pool
-            .with_conn(|mut conn| async move {
-                let n: i64 = map_redis_result(conn.exists(key).await)?;
-                Ok(n > 0)
-            })
-            .await
+        self.with_pool_conn(|mut conn| async move {
+            let n: i64 = map_redis_result(conn.exists(key).await)?;
+            Ok(n > 0)
+        })
+        .await
     }
 
     /// `EXISTS`。配置 budget 时经 resiliencx 重试。
@@ -244,14 +282,13 @@ impl RedisClient {
         let ms =
             i64::try_from(duration_to_millis(ttl)?).map_err(|_| XError::invalid("TTL 过大"))?;
         let key = key.to_owned();
-        self.pool
-            .with_conn(move |mut conn| async move {
-                let n: i64 = map_redis_result(
-                    redis::cmd("PEXPIRE").arg(&key).arg(ms).query_async(&mut conn).await,
-                )?;
-                Ok(n > 0)
-            })
-            .await
+        self.with_pool_conn(move |mut conn| async move {
+            let n: i64 = map_redis_result(
+                redis::cmd("PEXPIRE").arg(&key).arg(ms).query_async(&mut conn).await,
+            )?;
+            Ok(n > 0)
+        })
+        .await
     }
 
     /// `PEXPIRE`；key 不存在返回 `Ok(false)`。未配置 budget 时执行一次；多次尝试的 budget
@@ -279,21 +316,20 @@ impl RedisClient {
     /// 单次 `PTTL` I/O（无 budget 环）。
     async fn ttl_once(&self, key: &str) -> XResult<Option<Duration>> {
         let key = key.to_owned();
-        self.pool
-            .with_conn(|mut conn| async move {
-                let ms: i64 =
-                    map_redis_result(redis::cmd("PTTL").arg(&key).query_async(&mut conn).await)?;
-                if ms == -2 {
-                    Err(XError::missing(format!("redis key 不存在: {key}")))
-                } else if ms == -1 {
-                    Ok(None)
-                } else if ms < 0 {
-                    Err(XError::internal(format!("redis PTTL 异常: {ms}")))
-                } else {
-                    Ok(Some(Duration::from_millis(ms as u64)))
-                }
-            })
-            .await
+        self.with_pool_conn(|mut conn| async move {
+            let ms: i64 =
+                map_redis_result(redis::cmd("PTTL").arg(&key).query_async(&mut conn).await)?;
+            if ms == -2 {
+                Err(XError::missing(format!("redis key 不存在: {key}")))
+            } else if ms == -1 {
+                Ok(None)
+            } else if ms < 0 {
+                Err(XError::internal(format!("redis PTTL 异常: {ms}")))
+            } else {
+                Ok(Some(Duration::from_millis(ms as u64)))
+            }
+        })
+        .await
     }
 
     /// `PTTL`：
@@ -325,12 +361,11 @@ impl RedisClient {
             return Ok(Vec::new());
         }
         let owned: Vec<String> = keys.iter().map(|k| (*k).to_owned()).collect();
-        self.pool
-            .with_conn(|mut conn| async move {
-                let vals: Vec<Option<Vec<u8>>> = map_redis_result(conn.get(owned).await)?;
-                Ok(vals)
-            })
-            .await
+        self.with_pool_conn(|mut conn| async move {
+            let vals: Vec<Option<Vec<u8>>> = map_redis_result(conn.get(owned).await)?;
+            Ok(vals)
+        })
+        .await
     }
 
     /// `MGET`。配置 budget 时经 resiliencx 重试。
@@ -361,12 +396,11 @@ impl RedisClient {
         }
         let owned: Vec<(String, Vec<u8>)> =
             items.iter().map(|(k, v)| ((*k).to_owned(), (*v).to_vec())).collect();
-        self.pool
-            .with_conn(|mut conn| async move {
-                let _: () = map_redis_result(conn.mset(&owned).await)?;
-                Ok(())
-            })
-            .await
+        self.with_pool_conn(|mut conn| async move {
+            let _: () = map_redis_result(conn.mset(&owned).await)?;
+            Ok(())
+        })
+        .await
     }
 
     /// `MSET`（无 TTL；需要 TTL 请逐条 `set`）。配置 budget 时按幂等语义重试。
@@ -586,5 +620,30 @@ mod tests {
             .expect_err("ttl 0");
         // validate_ttl 在 set_once 内；budget 路由会调用闭包 → set_once → Invalid
         assert_eq!(err.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn call_deadline_zero_fails_before_driver() {
+        let driver_calls = Arc::new(AtomicUsize::new(0));
+        let client =
+            RedisPool::test_probe(driver_calls.clone()).client().with_call_deadline(Duration::ZERO);
+        assert!(client.has_call_deadline());
+        let err = client.get("k").await.expect_err("deadline 0");
+        assert_eq!(err.kind(), ErrorKind::DeadlineExceeded);
+        assert_eq!(driver_calls.load(Ordering::SeqCst), 0);
+    }
+
+    #[tokio::test]
+    async fn get_bytes_set_bytes_delegate() {
+        let driver_calls = Arc::new(AtomicUsize::new(0));
+        let client = RedisPool::test_probe(driver_calls.clone())
+            .client()
+            .with_retry_budget(RetryBudget::new(1), 0);
+        // 零 attempts：在 driver 前拒绝，证明别名走同一 set/get 路径
+        let err = client.set_bytes("k", b"v".to_vec(), None).await.expect_err("alias set");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        let err = client.get_bytes("k").await.expect_err("alias get");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        assert_eq!(driver_calls.load(Ordering::SeqCst), 0);
     }
 }

@@ -254,18 +254,63 @@ impl RedisPool {
     }
 
     /// 获取命令连接许可并执行异步闭包（计入 in-flight / 超时）。
+    ///
+    /// 使用配置的 `acquire_timeout` + `command_timeout`（二者独立，不共享总预算）。
     pub(crate) async fn with_conn<F, Fut, T>(&self, f: F) -> XResult<T>
     where
         F: FnOnce(RedisBackend) -> Fut,
         Fut: Future<Output = XResult<T>>,
     {
-        let _permit = self.acquire().await?;
+        self.with_conn_inner(None, f).await
+    }
+
+    /// 在**调用级总 deadline**内完成排队 + 命令（draft §2.4 / §2.6）。
+    ///
+    /// 排队（acquire）时间计入 `total`；剩余时间再与 `command_timeout` 取 min 作为命令预算。
+    pub(crate) async fn with_conn_total_deadline<F, Fut, T>(
+        &self,
+        total: Duration,
+        f: F,
+    ) -> XResult<T>
+    where
+        F: FnOnce(RedisBackend) -> Fut,
+        Fut: Future<Output = XResult<T>>,
+    {
+        if total.is_zero() {
+            return Err(XError::deadline_exceeded("redis 调用总 deadline 为 0"));
+        }
+        self.with_conn_inner(Some(total), f).await
+    }
+
+    async fn with_conn_inner<F, Fut, T>(&self, total: Option<Duration>, f: F) -> XResult<T>
+    where
+        F: FnOnce(RedisBackend) -> Fut,
+        Fut: Future<Output = XResult<T>>,
+    {
+        let start = Instant::now();
+        let acquire_budget = match total {
+            Some(t) => t.min(self.inner.acquire_timeout),
+            None => self.inner.acquire_timeout,
+        };
+        let _permit = self.acquire_with_timeout(acquire_budget).await?;
         if self.is_closed() {
             return Err(XError::unavailable("redis 连接池已关闭"));
         }
+        let command_budget = match total {
+            Some(t) => {
+                let rem = t.saturating_sub(start.elapsed());
+                if rem.is_zero() {
+                    return Err(XError::deadline_exceeded(
+                        "redis 排队耗尽调用总 deadline（acquire 计入总预算）",
+                    ));
+                }
+                rem.min(self.inner.command_timeout)
+            }
+            None => self.inner.command_timeout,
+        };
         self.inner.in_flight.fetch_add(1, Ordering::SeqCst);
         let conn = self.inner.backend.clone();
-        let result = timeout(self.inner.command_timeout, f(conn)).await;
+        let result = timeout(command_budget, f(conn)).await;
         self.inner.in_flight.fetch_sub(1, Ordering::SeqCst);
         match result {
             Ok(inner) => inner,
@@ -273,13 +318,15 @@ impl RedisPool {
         }
     }
 
-    async fn acquire(&self) -> XResult<OwnedSemaphorePermit> {
+    async fn acquire_with_timeout(&self, budget: Duration) -> XResult<OwnedSemaphorePermit> {
         if self.is_closed() {
             return Err(XError::unavailable("redis 连接池已关闭"));
         }
+        if budget.is_zero() {
+            return Err(XError::deadline_exceeded("redis 获取 in-flight 许可预算为 0"));
+        }
         self.inner.waiters.fetch_add(1, Ordering::SeqCst);
-        let result =
-            timeout(self.inner.acquire_timeout, self.inner.sem.clone().acquire_owned()).await;
+        let result = timeout(budget, self.inner.sem.clone().acquire_owned()).await;
         self.inner.waiters.fetch_sub(1, Ordering::SeqCst);
         match result {
             Ok(Ok(permit)) => {
