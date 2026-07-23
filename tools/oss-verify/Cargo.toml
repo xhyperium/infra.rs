@@ -1,0 +1,37 @@
+[package]
+name = "oss-verify"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+description = "OSS 独立自验证工具 — 连接检测 / API 全量覆盖 / 结构化报告"
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+name = "oss_verify"
+path = "src/lib.rs"
+
+[[bin]]
+name = "oss-verify"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+ossx = { path = "../../crates/adapters/storage/oss", version = "0.4.0" }
+kernel = { path = "../../crates/kernel", version = "0.3.1" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+bytes = { workspace = true }
+futures-util = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[lints]
+workspace = true

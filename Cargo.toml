@@ -25,6 +25,7 @@ members = [
   "crates/adapters/storage/clickhouse",
   "tools/goalctl",
   "tools/verifyctl",
+  "tools/oss-verify",
 ]
 
 [workspace.package]

@@ -1764,8 +1764,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c87def4c32ab89d880effc9e097653c8da5d6ef28e6b539d313baaacfbafcbe"
 
 [[package]]
+name = "oss-verify"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "clap",
+ "futures-util",
+ "kernel",
+ "ossx",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "ossx"
-version = "0.3.3"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "base64",
@@ -1774,6 +1793,8 @@ dependencies = [
  "contract-testkit",
  "contracts",
  "criterion",
+ "futures-core",
+ "futures-util",
  "hmac 0.12.1",
  "kernel",
  "reqwest",
@@ -1781,6 +1802,7 @@ dependencies = [
  "sha1",
  "thiserror 2.0.19",
  "tokio",
+ "tracing",
  "url",
 ]
 
