@@ -7,6 +7,8 @@ TDengine 时序适配器 — `contracts::TimeSeriesStore`（`Tick.ts` = 纳秒 e
 | **默认** | `TaosPool` / `TaosClient`（REST `:6041`） | **是** |
 | `TransportMode::NativeWs` | `/rest/ws` 握手/关闭可达性探测；SQL 仍 REST | 部分 |
 | `taosx::selfcheck` | LIB-SELFCHECK-SPEC §6.7 模块自验证 | 运维/CD |
+| `WriteBatcher` / `TaosQueryStream` / `TmqConsumer` | 批写 / 流查 / TMQ 闭环 | 是 |
+| `run_soak` / `metrics_prometheus` | soak 与指标导出 | 运维 |
 | `feature = "scaffold"` | `TaosAdapter` 内存 HashMap | 否 |
 
 ## 配置

@@ -33,14 +33,12 @@ async fn live_selfcheck_full_rest() {
     let pool = TaosPool::connect_from_env().await.expect("connect");
     let report = TaosValidator::new(pool).run(CheckLevel::Full).await;
     for item in &report.items {
-        if item.id == "taos.full.tmq_subscribe" {
-            assert_eq!(item.status, CheckStatus::Skipped, "{item:?}");
-            continue;
-        }
         assert!(
             matches!(item.status, CheckStatus::Passed | CheckStatus::Degraded),
             "unexpected {item:?}"
         );
     }
     assert!(report.passed, "failed items: {:?}", report.items);
+    assert!(report.items.iter().any(|i| i.id == "taos.full.tmq_subscribe"
+        && matches!(i.status, CheckStatus::Passed | CheckStatus::Degraded)));
 }

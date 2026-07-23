@@ -138,6 +138,12 @@ pub struct TaosConfig {
     pub max_query_rows: usize,
     /// 关闭时等待在途请求排空的 deadline。
     pub close_timeout: Duration,
+    /// 备用主机列表（主 `host` 失败时按序尝试；HA-lite 故障转移）。
+    pub hosts: Vec<String>,
+    /// 幂等写默认最大重试次数（含首次；1 = 不重试）。
+    pub write_max_attempts: u32,
+    /// 每逻辑 stable 允许的最大子表基数提示（超过记 metrics/拒绝；0 = 不限制）。
+    pub max_subtables_hint: usize,
 }
 
 impl fmt::Debug for TaosConfig {
@@ -159,6 +165,9 @@ impl fmt::Debug for TaosConfig {
             .field("max_response_bytes", &self.max_response_bytes)
             .field("max_query_rows", &self.max_query_rows)
             .field("close_timeout", &self.close_timeout)
+            .field("hosts", &self.hosts)
+            .field("write_max_attempts", &self.write_max_attempts)
+            .field("max_subtables_hint", &self.max_subtables_hint)
             .finish()
     }
 }
@@ -182,6 +191,9 @@ impl Default for TaosConfig {
             max_response_bytes: 8 * 1024 * 1024,
             max_query_rows: 10_000,
             close_timeout: Duration::from_secs(5),
+            hosts: Vec::new(),
+            write_max_attempts: 1,
+            max_subtables_hint: 0,
         }
     }
 }
@@ -252,6 +264,17 @@ impl TaosConfig {
         if let Ok(v) = std::env::var("FOUNDATIONX_TAOSX_CLOSE_TIMEOUT_MS") {
             cfg.close_timeout = Duration::from_millis(v.parse::<u64>().unwrap_or(0));
         }
+        if let Ok(v) = std::env::var("FOUNDATIONX_TAOSX_HOSTS") {
+            // 逗号分隔备用主机
+            cfg.hosts =
+                v.split(',').map(str::trim).filter(|s| !s.is_empty()).map(str::to_owned).collect();
+        }
+        if let Ok(v) = std::env::var("FOUNDATIONX_TAOSX_WRITE_MAX_ATTEMPTS") {
+            cfg.write_max_attempts = v.parse().unwrap_or(1).max(1);
+        }
+        if let Ok(v) = std::env::var("FOUNDATIONX_TAOSX_MAX_SUBTABLES_HINT") {
+            cfg.max_subtables_hint = v.parse().unwrap_or(0);
+        }
         cfg
     }
 
@@ -293,6 +316,14 @@ impl TaosConfig {
         if !valid_host(&self.host) || self.port == 0 {
             return Err(XError::invalid("taos host/port 非法"));
         }
+        for h in &self.hosts {
+            if !valid_host(h) {
+                return Err(XError::invalid(format!("taos 备用 host 非法: {h}")));
+            }
+        }
+        if self.write_max_attempts == 0 {
+            return Err(XError::invalid("write_max_attempts 必须 ≥ 1"));
+        }
         if !self.database.is_empty() && !valid_ident(&self.database) {
             return Err(XError::invalid("taos database 标识符非法"));
         }
@@ -313,8 +344,27 @@ impl TaosConfig {
     /// REST SQL 端点：`http(s)://host:port/rest/sql`。
     #[must_use]
     pub fn rest_sql_url(&self) -> String {
+        self.rest_sql_url_for(&self.host)
+    }
+
+    /// 指定主机的 REST SQL 端点。
+    #[must_use]
+    pub fn rest_sql_url_for(&self, host: &str) -> String {
         let scheme = if self.tls { "https" } else { "http" };
-        format!("{scheme}://{}:{}/rest/sql", url_host(&self.host), self.port)
+        format!("{scheme}://{}:{}/rest/sql", url_host(host), self.port)
+    }
+
+    /// 连接尝试主机序列：主 host + hosts 备用。
+    #[must_use]
+    pub fn endpoint_hosts(&self) -> Vec<String> {
+        let mut v = Vec::with_capacity(1 + self.hosts.len());
+        v.push(self.host.clone());
+        for h in &self.hosts {
+            if !v.iter().any(|x| x == h) {
+                v.push(h.clone());
+            }
+        }
+        v
     }
 
     /// 带 database 路径的 REST URL。

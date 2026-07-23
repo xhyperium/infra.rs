@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.9] — 2026-07-23
+
+### Added
+
+- **流式查询** `TaosQueryStream` / `query_series_stream`
+- **异步批写** `WriteBatcher`（push/flush/close）
+- **幂等重试** `RetryPolicy` + `write_batch_idempotent`
+- **TMQ 闭环** `TmqConsumer`（CREATE TOPIC 可降级为源表水位轮询）
+- **Prometheus 文本** `TaosMetricsSnapshot::to_prometheus_text` / `metrics_prometheus`
+- **WS SQL 短会话** `exec_sql_ws`；**Native TCP 探测** `probe_native_tcp`
+- **HA-lite** `TaosConfig.hosts` 故障转移
+- **soak** `run_soak` → `/home/workspace/data/taosx/soak`（`TAOSX_SOAK_SECS`）
+- 测试：`integration_all_api` / `e2e_klines` / `live_selfcheck` Full（tmq 可 PASS）
+- bench：`api_matrix`
+- gap 清零表：`docs/ssot/taosx-gap-register.md`（未完成=0）
+
+### Boundaries
+
+- 档次 **Production-default**（`publish=false`）；**不**宣告 crates.io package-stable
+- CREATE TOPIC 无权限时 TMQ 降级为源表轮询（selfcheck 仍可闭环）
+- 24h soak 用 `TAOSX_SOAK_SECS=86400` 外挂调度；默认短时
+
 ## [0.3.8] — 2026-07-23
 
 ### Added
