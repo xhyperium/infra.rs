@@ -141,4 +141,63 @@ mod tests {
         let mapped = map_redis_result::<()>(Err(err)).expect_err("err");
         assert_eq!(mapped.kind(), ErrorKind::Transient);
     }
+
+    #[test]
+    fn maps_try_again_and_io_to_transient() {
+        let try_again = redis::RedisError::from((redis::ErrorKind::TryAgain, "try again"));
+        assert_eq!(map_redis_error(try_again).kind(), ErrorKind::Transient);
+        let io = redis::RedisError::from((redis::ErrorKind::IoError, "broken pipe"));
+        assert_eq!(map_redis_error(io).kind(), ErrorKind::Transient);
+    }
+
+    #[test]
+    fn maps_master_down_and_readonly_cluster_to_unavailable() {
+        let master = redis::RedisError::from((redis::ErrorKind::MasterDown, "master down"));
+        assert_eq!(map_redis_error(master).kind(), ErrorKind::Unavailable);
+        let ro = redis::RedisError::from((redis::ErrorKind::ReadOnly, "READONLY"));
+        assert_eq!(map_redis_error(ro).kind(), ErrorKind::Unavailable);
+        let empty = redis::RedisError::from((redis::ErrorKind::EmptySentinelList, "no sentinels"));
+        assert_eq!(map_redis_error(empty).kind(), ErrorKind::Unavailable);
+    }
+
+    #[test]
+    fn maps_ask_and_cross_slot_to_transient() {
+        let ask = redis::RedisError::from((redis::ErrorKind::Ask, "ASK 3999 127.0.0.1:7001"));
+        assert_eq!(map_redis_error(ask).kind(), ErrorKind::Transient);
+        let cross = redis::RedisError::from((redis::ErrorKind::CrossSlot, "CROSSSLOT"));
+        assert_eq!(map_redis_error(cross).kind(), ErrorKind::Transient);
+    }
+
+    #[test]
+    fn maps_type_error_to_internal() {
+        let err = redis::RedisError::from((redis::ErrorKind::TypeError, "WRONGTYPE"));
+        assert_eq!(map_redis_error(err).kind(), ErrorKind::Internal);
+    }
+
+    #[test]
+    fn maps_response_tryagain_readonly_and_other() {
+        let tryagain = redis::RedisError::from((redis::ErrorKind::ResponseError, "TRYAGAIN later"));
+        assert_eq!(map_redis_error(tryagain).kind(), ErrorKind::Transient);
+        let readonly =
+            redis::RedisError::from((redis::ErrorKind::ResponseError, "READONLY You can't write"));
+        assert_eq!(map_redis_error(readonly).kind(), ErrorKind::Unavailable);
+        let other = redis::RedisError::from((redis::ErrorKind::ResponseError, "ERR something"));
+        assert_eq!(map_redis_error(other).kind(), ErrorKind::Internal);
+    }
+
+    #[test]
+    fn maps_extension_auth_loading_and_other() {
+        let auth = redis::RedisError::from((redis::ErrorKind::ExtensionError, "WRONGPASS invalid"));
+        assert_eq!(map_redis_error(auth).kind(), ErrorKind::Unavailable);
+        let loading = redis::RedisError::from((redis::ErrorKind::ExtensionError, "LOADING dump"));
+        assert_eq!(map_redis_error(loading).kind(), ErrorKind::Transient);
+        let other = redis::RedisError::from((redis::ErrorKind::ExtensionError, "EXT custom"));
+        assert_eq!(map_redis_error(other).kind(), ErrorKind::Internal);
+    }
+
+    #[test]
+    fn maps_client_error_to_invalid() {
+        let err = redis::RedisError::from((redis::ErrorKind::ClientError, "client"));
+        assert_eq!(map_redis_error(err).kind(), ErrorKind::Invalid);
+    }
 }

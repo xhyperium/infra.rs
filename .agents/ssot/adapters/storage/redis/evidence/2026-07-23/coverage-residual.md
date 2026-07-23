@@ -4,7 +4,8 @@
 
 | 命令 | Lines Cover |
 |------|-------------|
-| `cargo llvm-cov -p redisx --lib --summary-only`（仅离线 lib 测试） | **67.41%** |
+| `cargo llvm-cov -p redisx --lib --summary-only`（0.3.6 基线离线） | **67.41%** |
+| `cargo llvm-cov -p redisx --lib --summary-only`（0.3.7 补测后离线） | **71.35%**（`error_map` **99.22%**） |
 | `cargo llvm-cov -p redisx --lib --tests --features pubsub -- --include-ignored`（+ 真实 Redis live） | **79.49%** |
 
 证据文件（scratch 会话）：`redisx-coverage.txt` / `redisx-coverage-with-live.txt`。

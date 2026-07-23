@@ -532,4 +532,59 @@ mod tests {
         assert_eq!(err.kind(), ErrorKind::Invalid);
         assert_eq!(driver_calls.load(Ordering::SeqCst), 0);
     }
+
+    #[test]
+    fn duration_to_millis_rejects_sub_ms_and_accepts_ms() {
+        let err = duration_to_millis(Duration::from_nanos(500)).unwrap_err();
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        assert_eq!(duration_to_millis(Duration::from_millis(1)).unwrap(), 1);
+        assert_eq!(duration_to_millis(Duration::from_secs(2)).unwrap(), 2000);
+    }
+
+    #[test]
+    fn ttl_ok_and_probe_client_shape() {
+        validate_ttl(Some(Duration::from_millis(10))).unwrap();
+        let client = RedisPool::test_probe(Arc::new(AtomicUsize::new(0))).client();
+        assert!(!client.has_retry_budget());
+        assert!(client.endpoint().contains("测试"));
+        let with_budget = client.with_retry_budget(RetryBudget::new(3), 2);
+        assert!(with_budget.has_retry_budget());
+        assert_eq!(with_budget.pool().stats().open, 1);
+    }
+
+    #[tokio::test]
+    async fn unsafe_side_effect_ops_reject_multi_attempt_before_driver() {
+        let driver_calls = Arc::new(AtomicUsize::new(0));
+        let client = RedisPool::test_probe(driver_calls.clone())
+            .client()
+            .with_retry_budget(RetryBudget::new(5), 3);
+
+        let del_err = client.delete("k").await.expect_err("DEL multi-attempt");
+        assert_eq!(del_err.kind(), ErrorKind::Invalid);
+
+        let exp_err =
+            client.expire("k", Duration::from_secs(1)).await.expect_err("PEXPIRE multi-attempt");
+        assert_eq!(exp_err.kind(), ErrorKind::Invalid);
+
+        let set_ttl_err = client
+            .set("k", b"v".to_vec(), Some(Duration::from_secs(1)))
+            .await
+            .expect_err("relative TTL SET multi-attempt");
+        assert_eq!(set_ttl_err.kind(), ErrorKind::Invalid);
+
+        assert_eq!(driver_calls.load(Ordering::SeqCst), 0, "不安全副作用不得进入 probe driver");
+    }
+
+    #[tokio::test]
+    async fn set_with_budget_ttl_zero_rejects_before_route() {
+        let driver_calls = Arc::new(AtomicUsize::new(0));
+        let client = RedisPool::test_probe(driver_calls.clone()).client();
+        let budget = RetryBudget::new(2);
+        let err = client
+            .set_with_budget("k", b"v".to_vec(), Some(Duration::ZERO), &budget, 1)
+            .await
+            .expect_err("ttl 0");
+        // validate_ttl 在 set_once 内；budget 路由会调用闭包 → set_once → Invalid
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+    }
 }
