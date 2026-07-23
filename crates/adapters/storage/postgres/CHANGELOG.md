@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.10] — 2026-07-23
+
+### Added
+
+- mTLS：`tls_client_cert` / `tls_client_key`（env：`FOUNDATIONX_POSTGRESX_TLS_CLIENT_CERT` / `TLS_CLIENT_KEY`，必须成对）
+- `build_client_config_with_options` / `MakeRustlsConnect::with_options`
+- 离线：成对校验、缺文件 fail-closed、openssl 自签身份可构建 rustls ClientConfig
+
+### Boundaries
+
+- 服务端强制 mTLS 的 live 联调依赖部署侧证书；本仓不内置测试 CA 服务端
+- migrations / package stable / 无限流式 COPY 仍 OPEN/DEFER
+
 ## [0.3.9] — 2026-07-23
 
 ### Added

@@ -1,6 +1,6 @@
 # `postgresx` 当前实现规范
 
-状态：当前 `0.3.9` 实现合同（`deadpool-postgres` + `tokio-postgres` 默认真实路径）。
+状态：当前 `0.3.10` 实现合同（`deadpool-postgres` + `tokio-postgres` 默认真实路径）。
 **未宣称 package stable。**
 
 ## 0. 权威与范围
@@ -73,10 +73,10 @@ cmp .agents/ssot/adapters/storage/postgres/spec/spec.md \
 
 ## 5. OPEN / NO-GO
 
-mTLS 客户端证书、无限流式 COPY、迁移、隔离级别策略、read replica、跨资源事务、HA 故障切换与
+无限流式 COPY、迁移、隔离级别策略、read replica、跨资源事务、HA 故障切换与
 package stable 均未承诺。
 
-- **可选自定义 CA 与 SNI（0.3.9 已落地）**：`tls_ca_file` / `tls_server_name` 叠加 webpki
+- **可选自定义 CA 与 SNI（0.3.10 已落地）**：`tls_ca_file` / `tls_server_name` 叠加 webpki
   公共根；远程自签 Require live 已通过（仍强制证书校验，无 insecure 旁路）。
 - **channel binding（`tls-server-end-point`）与 SCRAM-PLUS：未实现。**
   `MakeRustlsConnect` 的 `TlsStream::channel_binding()` 恒返回 `ChannelBinding::none()`；

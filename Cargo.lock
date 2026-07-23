@@ -1929,7 +1929,7 @@ dependencies = [
 
 [[package]]
 name = "postgresx"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "async-trait",
  "bytes",

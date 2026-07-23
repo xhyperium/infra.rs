@@ -29,7 +29,7 @@ fn ensure_crypto_provider() {
 
 /// 构建带 webpki 根证书的 rustls `ClientConfig`。
 pub fn build_client_config() -> XResult<ClientConfig> {
-    build_client_config_with_ca(None)
+    build_client_config_with_options(None, None, None)
 }
 
 /// 构建 rustls `ClientConfig`：webpki 公共根 + 可选额外 PEM CA 文件。
@@ -37,14 +37,78 @@ pub fn build_client_config() -> XResult<ClientConfig> {
 /// `extra_ca_pem` 可含一到多张 PEM 证书（企业根或自签服务端证书）。
 /// 文件上限 1 MiB；解析失败 fail-closed。
 pub fn build_client_config_with_ca(extra_ca_pem: Option<&Path>) -> XResult<ClientConfig> {
+    build_client_config_with_options(extra_ca_pem, None, None)
+}
+
+/// 构建 rustls `ClientConfig`：公共根 + 可选 CA + 可选 mTLS 客户端证书/私钥。
+///
+/// - `client_cert` / `client_key` 必须同时提供或同时缺省
+/// - 私钥支持 PKCS#8 / RSA / EC PEM；失败 fail-closed
+/// - **无** insecure / 跳过服务端证书校验的旁路
+pub fn build_client_config_with_options(
+    extra_ca_pem: Option<&Path>,
+    client_cert: Option<&Path>,
+    client_key: Option<&Path>,
+) -> XResult<ClientConfig> {
     ensure_crypto_provider();
     let mut root_store =
         rustls::RootCertStore::from_iter(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
     if let Some(path) = extra_ca_pem {
         load_extra_ca_pem(path, &mut root_store)?;
     }
-    let config = ClientConfig::builder().with_root_certificates(root_store).with_no_client_auth();
-    Ok(config)
+    let builder = ClientConfig::builder().with_root_certificates(root_store);
+    match (client_cert, client_key) {
+        (None, None) => Ok(builder.with_no_client_auth()),
+        (Some(cert_path), Some(key_path)) => {
+            let certs = load_client_certs(cert_path)?;
+            let key = load_client_private_key(key_path)?;
+            builder.with_client_auth_cert(certs, key).map_err(|error| {
+                XError::invalid("postgresx: 客户端证书/私钥与 rustls 不兼容").with_source(error)
+            })
+        }
+        (Some(_), None) | (None, Some(_)) => {
+            Err(XError::invalid("postgresx: mTLS 需要同时设置 tls_client_cert 与 tls_client_key"))
+        }
+    }
+}
+
+fn load_client_certs(path: &Path) -> XResult<Vec<rustls_pki_types::CertificateDer<'static>>> {
+    let metadata = std::fs::metadata(path)
+        .map_err(|error| XError::invalid("postgresx: 无法检查客户端证书文件").with_source(error))?;
+    if !metadata.is_file() {
+        return Err(XError::invalid("postgresx: 客户端证书路径必须是普通文件"));
+    }
+    if metadata.len() > 1024 * 1024 {
+        return Err(XError::invalid("postgresx: 客户端证书文件不得超过 1 MiB"));
+    }
+    let file = std::fs::File::open(path)
+        .map_err(|error| XError::invalid("postgresx: 无法读取客户端证书").with_source(error))?;
+    let mut reader = std::io::BufReader::new(file);
+    let certs =
+        rustls_pemfile::certs(&mut reader).collect::<Result<Vec<_>, _>>().map_err(|error| {
+            XError::invalid("postgresx: 客户端证书 PEM 解析失败").with_source(error)
+        })?;
+    if certs.is_empty() {
+        return Err(XError::invalid("postgresx: 客户端证书文件中没有证书"));
+    }
+    Ok(certs)
+}
+
+fn load_client_private_key(path: &Path) -> XResult<rustls_pki_types::PrivateKeyDer<'static>> {
+    let metadata = std::fs::metadata(path)
+        .map_err(|error| XError::invalid("postgresx: 无法检查客户端私钥文件").with_source(error))?;
+    if !metadata.is_file() {
+        return Err(XError::invalid("postgresx: 客户端私钥路径必须是普通文件"));
+    }
+    if metadata.len() > 1024 * 1024 {
+        return Err(XError::invalid("postgresx: 客户端私钥文件不得超过 1 MiB"));
+    }
+    let file = std::fs::File::open(path)
+        .map_err(|error| XError::invalid("postgresx: 无法读取客户端私钥").with_source(error))?;
+    let mut reader = std::io::BufReader::new(file);
+    rustls_pemfile::private_key(&mut reader)
+        .map_err(|error| XError::invalid("postgresx: 客户端私钥 PEM 解析失败").with_source(error))?
+        .ok_or_else(|| XError::invalid("postgresx: 客户端私钥文件中没有私钥"))
 }
 
 fn load_extra_ca_pem(path: &Path, roots: &mut rustls::RootCertStore) -> XResult<()> {
@@ -89,6 +153,16 @@ impl MakeRustlsConnect {
     /// webpki 公共根 + 可选额外 PEM CA。
     pub fn with_webpki_and_ca(extra_ca_pem: Option<&Path>) -> XResult<Self> {
         let config = build_client_config_with_ca(extra_ca_pem)?;
+        Ok(Self::from_config(config))
+    }
+
+    /// webpki 公共根 + 可选 CA + 可选 mTLS 客户端身份。
+    pub fn with_options(
+        extra_ca_pem: Option<&Path>,
+        client_cert: Option<&Path>,
+        client_key: Option<&Path>,
+    ) -> XResult<Self> {
+        let config = build_client_config_with_options(extra_ca_pem, client_cert, client_key)?;
         Ok(Self::from_config(config))
     }
 
@@ -288,6 +362,54 @@ mod tests {
         std::fs::write(&path, b"").expect("write");
         let err = build_client_config_with_ca(Some(&path)).expect_err("empty ca");
         assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn mtls_requires_both_cert_and_key() {
+        let err =
+            build_client_config_with_options(None, Some(Path::new("/tmp/only-cert.pem")), None)
+                .expect_err("cert only");
+        assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+        assert!(err.context().contains("同时设置"));
+    }
+
+    #[test]
+    fn mtls_missing_files_fail_closed() {
+        let err = build_client_config_with_options(
+            None,
+            Some(Path::new("/no/such/client.crt")),
+            Some(Path::new("/no/such/client.key")),
+        )
+        .expect_err("missing");
+        assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+    }
+
+    #[test]
+    fn mtls_self_signed_pair_builds_client_config() {
+        // 使用 openssl 生成临时自签身份；环境无 openssl 时跳过
+        let Ok(status) = std::process::Command::new("openssl").arg("version").status() else {
+            return;
+        };
+        if !status.success() {
+            return;
+        }
+        let dir = std::env::temp_dir().join(format!("postgresx-mtls-{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+        let cert = dir.join("client.crt");
+        let key = dir.join("client.key");
+        let openssl_status = std::process::Command::new("openssl")
+            .args(["req", "-x509", "-newkey", "rsa:2048", "-keyout"])
+            .arg(&key)
+            .arg("-out")
+            .arg(&cert)
+            .args(["-days", "1", "-nodes", "-subj", "/CN=postgresx-mtls-test"])
+            .status()
+            .expect("openssl");
+        assert!(openssl_status.success(), "openssl 生成客户端证书失败");
+        let cfg = build_client_config_with_options(None, Some(&cert), Some(&key))
+            .expect("mTLS client config");
+        let _ = MakeRustlsConnect::from_config(cfg);
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
