@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.3] — 2026-07-23
+
+### Added
+
+- `tests/oss_conformance.rs`：401/403 经完整重试链路不重试；operation deadline 超时不残留；无界配置拒绝（loopback HTTP，离线）
+
+### Boundaries
+
+- 真实 OSS 多区域/跨账号/生命周期策略 live 未在本轮扩展
+- 未宣称 package stable
+
 ## [0.3.2] — 2026-07-23
 
 ### Changed

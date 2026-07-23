@@ -1,4 +1,15 @@
-# Changelog — postgresx
+# Changelog
+
+## [0.3.5] — 2026-07-23
+
+### Added
+
+- 抽取 `channel_binding_policy`：显式锚定「无 channel binding / 无 SCRAM-PLUS」合同，离线单测可复核
+- SSOT 诚实声明：`raw_exposed` 隔离证据仅 live-only；channel binding 未实现
+
+### Boundaries
+
+- 自定义 CA/mTLS、迁移/COPY、HA 故障切换、package stable **未承诺**
 
 ## [0.3.4] — 未发布（2026-07-23 候选）
 

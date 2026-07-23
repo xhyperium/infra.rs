@@ -1,6 +1,6 @@
 # redisx 实现规范
 
-状态：当前 `0.3.4` active 合同。生产默认命令通道已实现；package stable、真实 Cluster、
+状态：当前 `0.3.5` active 合同。生产默认命令通道已实现；package stable、真实 Cluster、
 Sentinel、TLS 与拓扑故障切换均未宣称通过。
 
 ## 1. 职责与范围
@@ -73,3 +73,9 @@ cmp .agents/ssot/adapters/storage/redis/spec/spec.md \
 
 真实 Cluster / Sentinel / TLS live 未执行时，对应矩阵保持 OPEN；不得以编译、构造测试、连接
 拒绝测试或 ignored 入口替代真实拓扑证据。
+
+## 7. 三轮加固（0.3.5）错误分类锚点
+
+- `map_redis_error` 必须稳定映射：LOADING/IO→Transient；认证→Unavailable；ClusterDown→Unavailable；
+  MOVED/ASK→Transient；ExecAbort→Conflict；NoScript→Missing。
+- **OPEN 不变**：真实 Cluster / Sentinel / TLS live。

@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.3] — 2026-07-23
+
+### Added（R1–R3 生产路径 fail-closed 与可测性）
+
+- 抽取 `validate_consumer_config`：空 topic / 负 partition 在 broker I/O **前**拒绝，并有离线单测
+- 抽取 `generate_anonymous_group_id`：EventBus 匿名 group 嵌入 prefix/seq/pid，单测锁定格式与序号隔离
+- 抽取 `is_topic_already_exists_error`：`create_topic` 幂等分类可离线覆盖，避免鉴权/网络失败误判为已存在
+
+### Boundaries
+
+- native group EOS、事务 exactly-once、Schema Registry **仍 NO-GO**
+- 本轮未宣称 package stable / 真实集群 TLS 全量 live 闭合
+
 ## [0.3.2] — 2026-07-22
 
 ### 新增

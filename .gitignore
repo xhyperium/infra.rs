@@ -56,6 +56,10 @@ target
 !.env.example
 !.env.template
 
+# live 密钥注入脚本生成的临时 .env 输出（如 storage7x.env、foundationx.env）；
+# 覆盖不以点号开头、但以 .env 结尾的文件名
+*.env
+
 # Certificate / Key files
 *.pem
 *.key

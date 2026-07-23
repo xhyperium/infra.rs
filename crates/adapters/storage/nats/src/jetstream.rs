@@ -372,9 +372,7 @@ impl JetStream {
     ///
     /// `timeout` 为零时返回 `Invalid`。
     pub fn with_operation_timeout(mut self, timeout: Duration) -> XResult<Self> {
-        if timeout.is_zero() {
-            return Err(XError::invalid("natsx jetstream: operation_timeout 必须大于零"));
-        }
+        validate_operation_timeout(timeout)?;
         self.operation_timeout = timeout;
         Ok(self)
     }
@@ -526,6 +524,14 @@ pub fn validate_stream_name(name: &str) -> XResult<()> {
     Ok(())
 }
 
+/// 校验 JetStream 操作截止时间：必须严格大于零（fail-closed）。
+pub fn validate_operation_timeout(timeout: Duration) -> XResult<()> {
+    if timeout.is_zero() {
+        return Err(XError::invalid("natsx jetstream: operation_timeout 必须大于零"));
+    }
+    Ok(())
+}
+
 /// 校验 durable / consumer 名（同 stream 规则）。
 pub fn validate_consumer_name(name: &str) -> XResult<()> {
     validate_stream_name(name)
@@ -547,6 +553,23 @@ mod tests {
             let error = validate_stream_name(invalid).expect_err("非法 stream 名必须失败");
             assert_eq!(error.kind(), ErrorKind::Invalid);
         }
+    }
+
+    #[test]
+    fn operation_timeout_zero_is_rejected_offline() {
+        let err = validate_operation_timeout(Duration::ZERO).expect_err("零 timeout 必须拒绝");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        assert!(err.context().contains("operation_timeout"));
+        validate_operation_timeout(Duration::from_millis(1)).expect("正 timeout 必须通过");
+    }
+
+    #[test]
+    fn validate_consumer_name_rejects_wildcards_like_stream() {
+        for invalid in ["", "a.b", "x*y", "a>b", "has space"] {
+            let err = validate_consumer_name(invalid).expect_err("非法 consumer 名");
+            assert_eq!(err.kind(), ErrorKind::Invalid);
+        }
+        validate_consumer_name("worker_1").expect("合法 consumer");
     }
 
     #[test]

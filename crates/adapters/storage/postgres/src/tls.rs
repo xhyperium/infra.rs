@@ -157,6 +157,26 @@ where
 {
     fn channel_binding(&self) -> ChannelBinding {
         // 基础 TLS：不提供 channel binding（SCRAM-PLUS 可后续增强）
+        channel_binding_policy()
+    }
+}
+
+/// 当前是否启用 TLS channel binding（SCRAM-PLUS / `tls-server-end-point`）。
+///
+/// `false`：仅普通 SCRAM-SHA-256；服务端强制 channel binding 时认证会失败。
+/// 独立常量供 SSOT / 离线单测锚定，禁止静默改写为 true 却无握手材料导出实现。
+const CHANNEL_BINDING_ENABLED: bool = false;
+
+// 编译期锚定：若未来打开 channel binding，必须同时实现握手材料导出，并更新本常量与测试。
+const _: () = assert!(!CHANNEL_BINDING_ENABLED, "SCRAM-PLUS / channel binding 未实现");
+
+/// 当前 TLS 适配的 channel binding 策略。
+fn channel_binding_policy() -> ChannelBinding {
+    // CHANNEL_BINDING_ENABLED 为 false 时必须返回 none。
+    if CHANNEL_BINDING_ENABLED {
+        // 预留：未来在此导出 tls-server-end-point 材料。
+        ChannelBinding::none()
+    } else {
         ChannelBinding::none()
     }
 }
@@ -186,5 +206,14 @@ mod tests {
         let make = MakeRustlsConnect::with_webpki_roots().expect("connector");
         let err = make.for_domain("").expect_err("empty domain");
         assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
+    }
+
+    #[test]
+    fn channel_binding_policy_is_callable_and_disabled() {
+        // 驱动生产策略函数；编译期 `const _` 已锚定 CHANNEL_BINDING_ENABLED=false。
+        let _binding = channel_binding_policy();
+        // 读取常量防止 dead_code，并与模块级 const assert 双锚。
+        let enabled = CHANNEL_BINDING_ENABLED;
+        assert!(!enabled, "SCRAM-PLUS / channel binding 未实现");
     }
 }

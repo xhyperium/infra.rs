@@ -61,6 +61,21 @@ struct PoolInner {
 /// 池上的工作句柄（与 [`ClickHousePool`] 等价，便于命名区分）。
 pub type ClickHouseClient = ClickHousePool;
 
+/// 解析 ClickHouse 默认 `TabSeparated` 查询文本为行列。
+///
+/// 跳过空行；按 tab 分列。纯函数，供 `query_rows` 与单测共用，避免测试侧重实现。
+#[must_use]
+pub fn parse_tab_separated_rows(text: &str) -> Vec<Vec<String>> {
+    let mut rows = Vec::new();
+    for line in text.lines() {
+        if line.is_empty() {
+            continue;
+        }
+        rows.push(line.split('\t').map(str::to_string).collect());
+    }
+    rows
+}
+
 /// 计算分块范围：`(start, end)` 半开区间。
 ///
 /// 纯函数，供单测驱动具体 chunk 尺寸。
@@ -175,14 +190,7 @@ impl ClickHousePool {
     /// 按行拆分查询结果（TabSeparated 默认）。
     pub async fn query_rows(&self, sql: &str) -> XResult<Vec<Vec<String>>> {
         let text = self.query_text(sql).await?;
-        let mut rows = Vec::new();
-        for line in text.lines() {
-            if line.is_empty() {
-                continue;
-            }
-            rows.push(line.split('\t').map(str::to_string).collect());
-        }
-        Ok(rows)
+        Ok(parse_tab_separated_rows(&text))
     }
 
     /// 以 `JSONEachRow` 批量插入。
@@ -574,5 +582,304 @@ mod tests {
         let pool = ClickHousePool::connect_without_ping(cfg).expect("build");
         assert_eq!(pool.config().max_idle_per_host, 3);
         assert_eq!(pool.config().max_in_flight, 4);
+    }
+
+    fn local_pool(max_in_flight: usize) -> ClickHousePool {
+        let cfg = ClickHouseConfig {
+            host: "127.0.0.1".into(),
+            http_port: 1,
+            timeout: Duration::from_millis(200),
+            acquire_timeout: Duration::from_millis(200),
+            max_in_flight,
+            ..ClickHouseConfig::default()
+        };
+        ClickHousePool::connect_without_ping(cfg).expect("build")
+    }
+
+    // R1：insert_json_each_row / insert_batch 的标识符校验必须在发出任何 HTTP
+    // 请求之前 fail-closed；用未 ping 的 pool（http_port=1 必然连接失败）证明
+    // 校验错误优先于网络错误返回。
+    #[tokio::test]
+    async fn insert_json_each_row_rejects_invalid_table_before_network() {
+        let pool = local_pool(1);
+        let err = pool
+            .insert_json_each_row("1bad", &[serde_json::json!({"a": 1})])
+            .await
+            .expect_err("非法表名必须拒绝");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn insert_json_each_row_rejects_non_object_row() {
+        let pool = local_pool(1);
+        let err = pool
+            .insert_json_each_row("valid_table", &[serde_json::json!(["not", "an", "object"])])
+            .await
+            .expect_err("非 object 行必须拒绝");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        assert!(err.context().contains("object"));
+    }
+
+    #[tokio::test]
+    async fn insert_json_each_row_empty_rows_short_circuits_without_network() {
+        // http_port=1 若真的发起网络请求会失败；空 rows 必须在此之前返回 Ok。
+        let pool = local_pool(1);
+        pool.insert_json_each_row("valid_table", &[]).await.expect("空 rows 必须直接成功");
+    }
+
+    #[tokio::test]
+    async fn insert_batch_rejects_invalid_table_before_chunking() {
+        let pool = local_pool(1);
+        let err = pool
+            .insert_batch("a;drop", &[serde_json::json!({"a": 1})], BatchInsertOptions::default())
+            .await
+            .expect_err("非法表名必须在分块前拒绝");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn insert_batch_empty_rows_short_circuits_without_network() {
+        let pool = local_pool(1);
+        pool.insert_batch("valid_table", &[], BatchInsertOptions::default())
+            .await
+            .expect("空 rows 必须直接成功");
+    }
+
+    // 驱动真实 `parse_tab_separated_rows`（query_rows 生产路径共用），禁止测试侧重实现。
+    #[test]
+    fn parse_tab_separated_rows_skips_blank_lines_and_splits_tabs() {
+        let rows = parse_tab_separated_rows("a\tb\n\nc\td\te\n");
+        assert_eq!(
+            rows,
+            vec![
+                vec!["a".to_string(), "b".to_string()],
+                vec!["c".to_string(), "d".to_string(), "e".to_string()]
+            ]
+        );
+        assert!(parse_tab_separated_rows("").is_empty());
+        assert!(parse_tab_separated_rows("\n\n\n").is_empty());
+    }
+
+    #[test]
+    fn map_http_error_covers_not_found_conflict_and_server_error_branches() {
+        // 404 → Missing（无 server_code）
+        let not_found = map_http_error(StatusCode::NOT_FOUND, b"");
+        assert_eq!(not_found.kind(), ErrorKind::Missing);
+
+        // TABLE_ALREADY_EXISTS（57）→ Conflict
+        let conflict =
+            map_http_error(StatusCode::BAD_REQUEST, b"Code: 57. DB::Exception: already exists");
+        assert_eq!(conflict.kind(), ErrorKind::Conflict);
+
+        // UNKNOWN_DATABASE（81）→ Missing
+        let unknown_db =
+            map_http_error(StatusCode::BAD_REQUEST, b"Code: 81. DB::Exception: unknown db");
+        assert_eq!(unknown_db.kind(), ErrorKind::Missing);
+
+        // 5xx → Transient（服务端错误应可重试）
+        let server_error = map_http_error(StatusCode::INTERNAL_SERVER_ERROR, b"boom");
+        assert_eq!(server_error.kind(), ErrorKind::Transient);
+
+        let unavailable = map_http_error(StatusCode::SERVICE_UNAVAILABLE, b"");
+        assert_eq!(unavailable.kind(), ErrorKind::Transient);
+
+        // FORBIDDEN 与 UNAUTHORIZED 同归 Unavailable（认证/授权失败）
+        let forbidden = map_http_error(StatusCode::FORBIDDEN, b"denied");
+        assert_eq!(forbidden.kind(), ErrorKind::Unavailable);
+
+        // 未知 4xx 且无匹配 server_code → Invalid（SQL/参数问题的默认归类）
+        let other_client_error = map_http_error(StatusCode::BAD_REQUEST, b"Code: 999. unknown");
+        assert_eq!(other_client_error.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn read_error_prefix_is_bounded_to_capture_limit() {
+        // 构造超过 ERROR_RESPONSE_CAPTURE_LIMIT（4096）的响应体，证明
+        // read_error_prefix 截断在边界处而不会无界读取或丢失边界内数据。
+        let oversized_marker = "Code: 60. DB::Exception: ";
+        let filler = "x".repeat(ERROR_RESPONSE_CAPTURE_LIMIT * 2);
+        let body = format!("{oversized_marker}{filler}");
+        assert!(body.len() > ERROR_RESPONSE_CAPTURE_LIMIT);
+
+        let (port, server) = spawn_one_response("400 Bad Request", body.clone()).await;
+        let cfg = ClickHouseConfig {
+            host: "127.0.0.1".into(),
+            http_port: port,
+            timeout: Duration::from_secs(2),
+            acquire_timeout: Duration::from_secs(2),
+            ..ClickHouseConfig::default()
+        };
+        let error = match ClickHousePool::connect(cfg).await {
+            Err(error) => error,
+            Ok(_) => panic!("超限响应必须仍被拒绝"),
+        };
+        // 错误上下文只保留状态码与 server_code，超限正文永不进入错误。
+        assert!(!error.to_string().contains(&filler));
+        assert!(error.context().contains("server_code=60"));
+        server.await.expect("HTTP server task");
+    }
+
+    async fn spawn_one_response(status: &str, body: String) -> (u16, tokio::task::JoinHandle<()>) {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        use tokio::net::TcpListener;
+
+        let listener = TcpListener::bind(("127.0.0.1", 0)).await.expect("绑定临时 HTTP 端口");
+        let port = listener.local_addr().expect("读取临时 HTTP 地址").port();
+        let status = status.to_owned();
+        let server = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.expect("接受 HTTP 连接");
+            let mut request = vec![0u8; 16 * 1024];
+            let _ = tokio::time::timeout(Duration::from_secs(2), stream.read(&mut request))
+                .await
+                .expect("读取请求不得超时")
+                .expect("读取 HTTP 请求");
+            let response = format!(
+                "HTTP/1.1 {status}\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            );
+            stream.write_all(response.as_bytes()).await.expect("写 HTTP 响应");
+            stream.shutdown().await.expect("关闭 HTTP 流");
+        });
+        (port, server)
+    }
+
+    // ── R2：对抗验证 / 边界回归 ──────────────────────────────────
+
+    /// 起一个会挂起 `hold` 时长才回应的一次性 HTTP 服务：用于占住唯一的
+    /// in-flight 许可，逼迫第二个并发请求走 `acquire_timeout` 分支。
+    async fn spawn_slow_response(hold: Duration) -> (u16, tokio::task::JoinHandle<()>) {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        use tokio::net::TcpListener;
+
+        let listener = TcpListener::bind(("127.0.0.1", 0)).await.expect("绑定临时 HTTP 端口");
+        let port = listener.local_addr().expect("读取临时 HTTP 地址").port();
+        let server = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.expect("接受 HTTP 连接");
+            let mut request = vec![0u8; 16 * 1024];
+            let _ = tokio::time::timeout(Duration::from_secs(5), stream.read(&mut request))
+                .await
+                .expect("读取请求不得超时")
+                .expect("读取 HTTP 请求");
+            tokio::time::sleep(hold).await;
+            stream
+                .write_all(
+                    b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\nConnection: close\r\n\r\n1\n",
+                )
+                .await
+                .expect("写 HTTP 响应");
+            stream.shutdown().await.expect("关闭 HTTP 流");
+        });
+        (port, server)
+    }
+
+    /// 背压边界：`max_in_flight=1` 时，第一个请求占住唯一许可并长时间挂起，
+    /// 第二个并发请求必须在 `acquire_timeout` 后收到 `DeadlineExceeded`，
+    /// 而不是无限等待或被静默丢弃。
+    #[tokio::test]
+    async fn second_request_times_out_waiting_for_the_only_permit() {
+        let hold = Duration::from_secs(3);
+        let (port, server) = spawn_slow_response(hold).await;
+        let cfg = ClickHouseConfig {
+            host: "127.0.0.1".into(),
+            http_port: port,
+            timeout: Duration::from_secs(10),
+            acquire_timeout: Duration::from_millis(200),
+            max_in_flight: 1,
+            ..ClickHouseConfig::default()
+        };
+        let pool = ClickHousePool::connect_without_ping(cfg).expect("build");
+
+        let first = {
+            let pool = pool.clone();
+            tokio::spawn(async move { pool.query_text("SELECT 1").await })
+        };
+        // 给第一个请求足够时间先拿到唯一许可，再发第二个请求。
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        let second_err = pool.query_text("SELECT 1").await.expect_err("第二个请求必须超时");
+        assert_eq!(second_err.kind(), ErrorKind::DeadlineExceeded);
+        assert!(second_err.context().contains("max=1"));
+
+        let first_result = first.await.expect("first task join");
+        assert!(first_result.is_ok(), "第一个请求应最终成功: {first_result:?}");
+        server.await.expect("HTTP server task");
+    }
+
+    /// 起一个记录累计收到多少个独立 HTTP 请求的服务端；每个请求均回应
+    /// `200 OK` 的最小 body，用于验证 `insert_batch` 真正发出多次独立
+    /// POST（而非把所有 chunk 拼进一次请求）。
+    async fn spawn_counting_server(
+        expected_requests: usize,
+    ) -> (u16, tokio::task::JoinHandle<usize>) {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        use tokio::net::TcpListener;
+
+        let listener = TcpListener::bind(("127.0.0.1", 0)).await.expect("绑定临时 HTTP 端口");
+        let port = listener.local_addr().expect("读取临时 HTTP 地址").port();
+        let server = tokio::spawn(async move {
+            let mut count = 0usize;
+            for _ in 0..expected_requests {
+                let (mut stream, _) = listener.accept().await.expect("接受 HTTP 连接");
+                let mut request = Vec::with_capacity(4096);
+                loop {
+                    let mut chunk = [0_u8; 1024];
+                    let read =
+                        tokio::time::timeout(Duration::from_secs(5), stream.read(&mut chunk))
+                            .await
+                            .expect("读取请求不得超时")
+                            .expect("读取 HTTP 请求");
+                    if read == 0 {
+                        break;
+                    }
+                    request.extend_from_slice(&chunk[..read]);
+                    let headers = String::from_utf8_lossy(&request);
+                    let Some(header_end) = headers.find("\r\n\r\n") else { continue };
+                    let content_length = headers[..header_end]
+                        .lines()
+                        .find_map(|line| {
+                            line.strip_prefix("content-length:")
+                                .or_else(|| line.strip_prefix("Content-Length:"))
+                        })
+                        .and_then(|value| value.trim().parse::<usize>().ok())
+                        .unwrap_or(0);
+                    if request.len() >= header_end + 4 + content_length {
+                        break;
+                    }
+                }
+                count += 1;
+                stream
+                    .write_all(
+                        b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 1\r\nConnection: close\r\n\r\n\n",
+                    )
+                    .await
+                    .expect("写 HTTP 响应");
+                stream.shutdown().await.expect("关闭 HTTP 流");
+            }
+            count
+        });
+        (port, server)
+    }
+
+    /// `insert_batch` 按 `max_rows_per_chunk` 分块后必须对每个 chunk 发出
+    /// 一次独立的 HTTP POST；5 行、每 chunk 2 行应产生 3 次请求（2+2+1）。
+    #[tokio::test]
+    async fn insert_batch_sends_one_http_request_per_chunk() {
+        let (port, server) = spawn_counting_server(3).await;
+        let cfg = ClickHouseConfig {
+            host: "127.0.0.1".into(),
+            http_port: port,
+            timeout: Duration::from_secs(5),
+            acquire_timeout: Duration::from_secs(5),
+            ..ClickHouseConfig::default()
+        };
+        let pool = ClickHousePool::connect_without_ping(cfg).expect("build");
+
+        let rows: Vec<Value> = (0..5).map(|i| serde_json::json!({"n": i})).collect();
+        pool.insert_batch("valid_table", &rows, BatchInsertOptions { max_rows_per_chunk: 2 })
+            .await
+            .expect("分块插入必须成功");
+
+        let observed_requests = server.await.expect("counting server task");
+        assert_eq!(observed_requests, 3, "5 行按每块 2 行应产生 3 次独立请求");
     }
 }

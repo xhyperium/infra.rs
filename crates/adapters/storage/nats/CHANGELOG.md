@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.3] — 2026-07-23
+
+### Added
+
+- 抽取 `validate_operation_timeout`：JetStream 操作截止时间零值 fail-closed，离线单测锚定
+- `validate_consumer_name` 通配/空白拒绝补齐专项单测
+- live/ignore：`with_operation_timeout(0)` 不污染上下文；`get_pull_consumer` 非法名/缺失目标负向路径
+
+### Boundaries
+
+- Core 断线窗口回放、Cluster/HA **仍 NO-GO**
+- 未宣称 package stable
+
 ## [0.3.2] — 2026-07-22
 
 ### 新增

@@ -93,4 +93,52 @@ mod tests {
         let x = map_redis_error(err);
         assert_eq!(x.kind(), ErrorKind::Invalid);
     }
+
+    #[test]
+    fn maps_cluster_down_to_unavailable() {
+        let err = redis::RedisError::from((redis::ErrorKind::ClusterDown, "cluster down"));
+        assert_eq!(map_redis_error(err).kind(), ErrorKind::Unavailable);
+    }
+
+    #[test]
+    fn maps_moved_to_transient() {
+        let err = redis::RedisError::from((redis::ErrorKind::Moved, "MOVED 3999 127.0.0.1:7001"));
+        assert_eq!(map_redis_error(err).kind(), ErrorKind::Transient);
+    }
+
+    #[test]
+    fn maps_exec_abort_to_conflict() {
+        let err = redis::RedisError::from((redis::ErrorKind::ExecAbortError, "EXECABORT"));
+        assert_eq!(map_redis_error(err).kind(), ErrorKind::Conflict);
+    }
+
+    #[test]
+    fn maps_no_script_to_missing() {
+        let err = redis::RedisError::from((redis::ErrorKind::NoScriptError, "NOSCRIPT"));
+        assert_eq!(map_redis_error(err).kind(), ErrorKind::Missing);
+    }
+
+    #[test]
+    fn maps_response_loading_text_to_transient() {
+        let err =
+            redis::RedisError::from((redis::ErrorKind::ResponseError, "LOADING Redis is loading"));
+        assert_eq!(map_redis_error(err).kind(), ErrorKind::Transient);
+    }
+
+    #[test]
+    fn maps_response_noauth_to_unavailable() {
+        let err = redis::RedisError::from((
+            redis::ErrorKind::ResponseError,
+            "NOAUTH Authentication required",
+        ));
+        assert_eq!(map_redis_error(err).kind(), ErrorKind::Unavailable);
+    }
+
+    #[test]
+    fn map_redis_result_preserves_ok_and_err_paths() {
+        assert_eq!(map_redis_result(Ok(7usize)).expect("ok"), 7);
+        let err = redis::RedisError::from((redis::ErrorKind::IoError, "io"));
+        let mapped = map_redis_result::<()>(Err(err)).expect_err("err");
+        assert_eq!(mapped.kind(), ErrorKind::Transient);
+    }
 }

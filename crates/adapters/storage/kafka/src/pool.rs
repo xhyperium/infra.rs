@@ -187,8 +187,7 @@ impl KafkaPool {
             }
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => {
-                let s = error.to_string().to_ascii_lowercase();
-                if s.contains("exist") || s.contains("already") || s.contains("topic_already") {
+                if is_topic_already_exists_error(&error.to_string()) {
                     Ok(())
                 } else {
                     Err(map_kafka_err("kafkax create_topic", error))
@@ -315,6 +314,15 @@ fn validate_topic_request(topic: &str, partitions: i32, replication: i16) -> XRe
     Ok(())
 }
 
+/// 判断 `create_topic` 的错误文本是否表示「topic 已存在」（幂等语义，非失败）。
+///
+/// `rskafka` 未对该场景暴露结构化错误类型，只能按驱动错误文本分类；
+/// 因此本函数独立、可离线单测，避免误将其他失败（如鉴权、网络）误判为已存在。
+fn is_topic_already_exists_error(message: &str) -> bool {
+    let s = message.to_ascii_lowercase();
+    s.contains("exist") || s.contains("already") || s.contains("topic_already")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -360,6 +368,30 @@ mod tests {
             let error = validate_topic_request(topic, partitions, replication)
                 .expect_err("非法 topic 请求必须在 broker I/O 前失败");
             assert_eq!(error.kind(), ErrorKind::Invalid);
+        }
+    }
+
+    #[test]
+    fn topic_already_exists_matches_known_broker_phrasings() {
+        for message in [
+            "Topic already exists",
+            "TOPIC_ALREADY_EXISTS",
+            "error creating topic: already present",
+            "duplicate: topic exist on broker",
+        ] {
+            assert!(is_topic_already_exists_error(message), "应识别为已存在: {message}");
+        }
+    }
+
+    #[test]
+    fn topic_already_exists_rejects_unrelated_failures() {
+        for message in [
+            "connection refused",
+            "not authorized to access topic",
+            "network timeout while contacting controller",
+            "invalid replication factor",
+        ] {
+            assert!(!is_topic_already_exists_error(message), "不应误判为已存在: {message}");
         }
     }
 }

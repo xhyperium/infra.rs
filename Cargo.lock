@@ -413,7 +413,7 @@ checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 
 [[package]]
 name = "clickhousex"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1421,7 +1421,7 @@ dependencies = [
 
 [[package]]
 name = "kafkax"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1590,7 +1590,7 @@ dependencies = [
 
 [[package]]
 name = "natsx"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "async-nats",
  "async-trait",
@@ -1764,7 +1764,7 @@ checksum = "7c87def4c32ab89d880effc9e097653c8da5d6ef28e6b539d313baaacfbafcbe"
 
 [[package]]
 name = "ossx"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "async-trait",
  "base64",
@@ -1929,7 +1929,7 @@ dependencies = [
 
 [[package]]
 name = "postgresx"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "async-trait",
  "contracts",
@@ -2209,7 +2209,7 @@ dependencies = [
 
 [[package]]
 name = "redisx"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "async-trait",
  "bytes",
@@ -2851,7 +2851,7 @@ dependencies = [
 
 [[package]]
 name = "taosx"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "async-trait",
  "canonical",

@@ -1,6 +1,6 @@
 # taosx 实现规范
 
-状态：当前 `0.3.2` 实现合同（REST SQL + WS 可达性探测；真实后端测试默认 `#[ignore]`）。**未宣称 package stable。**
+状态：当前 `0.3.3` 实现合同（REST SQL + WS 可达性探测；真实后端测试默认 `#[ignore]`）。**未宣称 package stable。**
 
 ## 0. 权威、职责与非目标
 
@@ -88,3 +88,10 @@ node scripts/taos-live-conformance.mjs
 ```
 
 人工外部服务入口仍保留 `tests/live_smoke.rs` 且默认 ignored；ignored/未运行不得记为 PASS。
+
+## 7. 三轮加固（0.3.3）类型化错误与边界
+
+- `query_series` 缺表空集仅依赖 `ErrorKind::Missing`（`map_taos_code`），禁止依赖驱动文案子串。
+- 配置精度与探测精度不一致时 `connect` 必须 `Invalid` fail-closed。
+- 离线 `tests/taos_conformance.rs` 覆盖明文远程拒绝、响应上界、schema 冲突、close/背压。
+- **未宣称** package stable。

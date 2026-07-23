@@ -66,4 +66,25 @@ mod tests {
         a.sink("e", Bytes::from_static(b"p")).await.expect("sink");
         assert_eq!(a.event_count().expect("count"), 1);
     }
+
+    // R1：多次 sink 必须累加而不是覆盖，且 name/endpoint 访问器与构造参数一致。
+    #[tokio::test]
+    async fn sink_accumulates_multiple_events_and_exposes_identity() {
+        let a = ClickHouseAdapter::new("custom-name", "http://example.invalid:8123");
+        assert_eq!(a.name(), "custom-name");
+        assert_eq!(a.endpoint(), "http://example.invalid:8123");
+
+        for i in 0..5 {
+            a.sink(&format!("event-{i}"), Bytes::from(format!("payload-{i}"))).await.expect("sink");
+        }
+        assert_eq!(a.event_count().expect("count"), 5);
+    }
+
+    #[tokio::test]
+    async fn local_defaults_to_expected_endpoint() {
+        let a = ClickHouseAdapter::local();
+        assert_eq!(a.name(), "clickhouse-local");
+        assert_eq!(a.endpoint(), "http://127.0.0.1:8123");
+        assert_eq!(a.event_count().expect("count"), 0);
+    }
 }

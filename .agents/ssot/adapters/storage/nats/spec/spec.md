@@ -1,6 +1,6 @@
 # natsx 实现规范
 
-状态：当前 `0.3.2` 实现合同（`async-nats 0.50` 默认真实路径；Core 与 JetStream 语义分层）。**未宣称 package stable。**
+状态：当前 `0.3.3` 实现合同（`async-nats 0.50` 默认真实路径；Core 与 JetStream 语义分层）。**未宣称 package stable。**
 
 ## 0. 权威、职责与范围
 
@@ -91,3 +91,9 @@ Cluster/HA/TLS/exactly-once 结论。
 
 追溯：`crates/adapters/storage/nats/{Cargo.toml,src,tests/broker_conformance.rs,tests/reconnect_conformance.rs}`、
 `scripts/nats-reconnect-conformance.mjs`、`docs/ssot/natsx-ssot-alignment.md`。
+
+## 7. 三轮加固（0.3.3）显式 fail-closed 条款
+
+- `validate_operation_timeout`：零截止时间必须 `Invalid`，不得静默采用默认值。
+- `validate_stream_name` / `validate_consumer_name`：空白与通配符（`.` `*` `>`）禁止。
+- **NO-GO 不变**：Core 断线窗口回放、Cluster/HA、package stable。

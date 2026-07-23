@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.5] — 2026-07-23
+
+### Added
+
+- `error_map`：ClusterDown/MOVED/ExecAbort/NoScript/Response LOADING·NOAUTH 与 `map_redis_result` 路径补齐离线单测，锁定可重试/不可用/冲突/缺失分类
+
+### Boundaries
+
+- 真实 Cluster / Sentinel / TLS live **仍 OPEN**
+- 未宣称 package stable
+
 ## [0.3.4] — 未发布（2026-07-23 候选）
 
 ### Changed
