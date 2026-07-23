@@ -36,8 +36,10 @@ Agent 与人类编写本仓 Rust 代码时，至少遵守：
 | 语言 | 组织 `language.md` 强制中文；§4.5 为本仓落地；§4.6 STE 仅英文可选层 |
 | 脚本 | §4.8 仅 ESM `.mjs` |
 | 门禁 | [§5](./05-quality-gates.md) `cargo deny`、宪章校验脚本等 |
+| 错误 / unsafe / 并发 / 性能 / 依赖 / 测试 / 日志 / 序列化 | [rust-dev-rules.md](../governance/rust-dev-rules.md) 本仓落地与加严清单 |
 
-落地索引：[docs/governance/README.md](../governance/README.md)。
+落地索引：[docs/governance/README.md](../governance/README.md)。  
+Rust 日常开发速查（本仓）：[rust-dev-rules.md](../governance/rust-dev-rules.md)。
 
 ## 4.1 格式
 
