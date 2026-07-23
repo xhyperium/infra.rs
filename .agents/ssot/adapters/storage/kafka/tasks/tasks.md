@@ -34,3 +34,12 @@
 - [ ] package stable 证据包（若 Lead 启动）
 - [ ] Part2 量化栈（**OOS**）
 - [ ] 7×24 默认 soak 门禁（可选 `KAFKAX_SOAK_SECONDS`）
+
+## 2026-07-23 gap 清零（0.3.7）
+
+- [x] headers 公共面 / PublishRecord / publish_with_key / partition_for_key
+- [x] KafkaPoolStats 细项（timeouts/cancelled/topics_*）
+- [x] selfcheck ordering_headers 同源 shipped 路径
+- [x] 全 pub API offline + e2e 分层测试
+- [x] NO-GO 项 CLOSED（Skipped / fail-closed / 文档）
+- [x] SSOT version 对齐 0.3.7
