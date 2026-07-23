@@ -13,12 +13,24 @@
 |------|------|
 | liveness | 进程 / 任务存活（应用侧） |
 | readiness | `pool.ping()` 成功且 `stats().open == 1` |
-| diagnostics | `stats()` + 脱敏 `endpoint()`（低频） |
+| diagnostics | `stats()` + `metrics_snapshot()` + 脱敏 `endpoint()`（低频） |
 
-## 指标建议（低基数）
+## 指标（0.3.9）
 
-- `redisx_inflight` / `redisx_waiters` / `redisx_open`
-- 命令计数与延迟：按 `operation` + `outcome`，**禁止** key / channel / 完整 endpoint
+内置进程内累计（`RedisPool::metrics_snapshot` → `RedisMetricsSnapshot`）：
+
+| 字段 | 含义 |
+|------|------|
+| `commands_ok` | `with_conn*` 闭包 `Ok` |
+| `commands_err` | 闭包 `Err` |
+| `commands_timeout` | 命令预算耗尽 / 总 deadline 在 acquire 后耗尽 |
+| `acquire_timeout` | 排队 acquire 超时（含 0 预算） |
+| `rejected_closed` | 池已关闭拒绝 |
+
+**不是** OpenTelemetry / Prometheus 导出器；宿主可采样后导出。建议低基数：
+
+- `redisx_inflight` / `redisx_waiters` / `redisx_open`（来自 `stats()`）
+- 命令计数：按 `outcome`，**禁止** key / channel / 完整 endpoint
 
 ## 故障行为
 
@@ -52,6 +64,7 @@
 - Standalone 继承相同端点、ACL、db、TLS、连接超时和响应超时。
 - Cluster / Sentinel 当前返回 `Invalid`，不得降级到 Standalone 或把 Sentinel 种子当 master。
 - 断线重订阅与消息必达没有实现证据，维持 NO-GO。
+- `into_message_stream`：断线静默结束；`into_result_message_stream`：末尾一次 `Err(Unavailable)`（0.3.9）。
 
 ## Live 验证
 
@@ -72,8 +85,9 @@ CI：`.github/workflows/redisx-live.yml`（service redis；可用 `REDIS_URL`）
 
 - 真实 Cluster / Sentinel / TLS live 与故障切换
 - Cluster / Sentinel Pub/Sub 路由与重订阅
-- Streams / 分布式锁完整合同
+- Streams / 分布式锁「业务正确」完整合同（fencing 令牌已有，不宣称 package stable）
 - 自动重试相对 TTL 写入、返回值敏感写入或 PUBLISH
+- OTel / Prometheus 内置导出
 
 ## 分布式锁（0.3.8）
 

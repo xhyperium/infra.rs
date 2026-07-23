@@ -7,8 +7,8 @@
 | 路径裁决 | **不**新增 `.agents/ssot/adapters/storage/redisx/`；目录名 `redis` 对齐 storage×7，package 名 `redisx` |
 | 实现 | `crates/adapters/storage/redis` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.8`（deadline/pipeline/锁；`0.3.7` 覆盖率；`0.3.6` #281 P0） |
-| 结论 | **Standalone P0+ 生产默认客户端**（deadline / pipeline / fencing 锁）；Cluster / Sentinel / TLS live **OPEN**；**禁止** package stable / Draft 全文 DoD |
+| version | `0.3.9`（metrics + result pubsub stream；`0.3.8` deadline/pipeline/锁） |
+| 结论 | **Standalone P0+ 生产默认客户端**（deadline / pipeline / fencing 锁 / 池 metrics）；Cluster / Sentinel / TLS live **OPEN**；**禁止** package stable / Draft 全文 DoD |
 
 ## 结论摘要
 
@@ -23,7 +23,7 @@
 | live | `tests/live_kv.rs` · `live_kv_conformance.rs` · `live_pubsub_conformance.rs`（`#[ignore]`，需真实 Redis） |
 | bench | `benches/kv_hot_path.rs` |
 | Pub/Sub | Standalone only；重连/必达 **NO-GO** |
-| Draft 全量 100% | **未达成**（P2–P4 + 指标/总 deadline/secret provider 等 OPEN） |
+| Draft 全量 100% | **未达成**（P2–P4 + secret provider / Cluster live 等 OPEN；池 metrics 与 result stream 已在 0.3.9） |
 
 ## 对齐矩阵
 
@@ -32,7 +32,7 @@
 | REDISX-1 | workspace member | PASS | `cargo metadata -p redisx` |
 | REDISX-2 | 生产默认导出 | PASS | `src/lib.rs` |
 | REDISX-3 | from_env | PASS | config · `FOUNDATIONX_REDISX_*` |
-| REDISX-4 | 离线测试 | PASS | default lib **49 passed**；pubsub **54 passed**（live ignored） |
+| REDISX-4 | 离线测试 | PASS | default + pubsub lib 离线全绿（live ignored） |
 | REDISX-5 | live Standalone KV | PASS | live_kv 5 + conformance 2 在真实 Redis 下 `--ignored` 通过（2026-07-23） |
 | REDISX-6 | bench 有界 | PASS | `benches/kv_hot_path.rs` |
 | REDISX-7 | crate docs | PASS | docs/usage · config · operations |
@@ -53,6 +53,8 @@
 | REDISX-22 | get_bytes/set_bytes | PASS | 别名 → get/set |
 | REDISX-23 | pipeline_set | PASS | 管道批量 SET；跨 slot 非原子 |
 | REDISX-24 | Lua + fencing 锁 | PASS | `eval_script` / `lock_*`；关键写须 fence；非 package stable |
+| REDISX-25 | 池累计 metrics | PASS | `metrics_snapshot`；非 OTel exporter |
+| REDISX-26 | Pub/Sub result stream | PASS | `into_result_message_stream`；断线一次 Err；无重连 |
 
 ## 10 轮审查与 gap 证据
 

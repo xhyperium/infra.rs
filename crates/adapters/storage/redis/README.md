@@ -4,9 +4,10 @@
 
 - 调用级 deadline：`client.with_call_deadline(Duration::from_secs(2))`
 - 扩展：`pipeline_set` / `eval_script` / `lock_acquire`（fencing）
+- 池指标：`pool.metrics_snapshot()` → `RedisMetricsSnapshot`
+- Pub/Sub 结果流：`session.into_result_message_stream()`（断线一次 `Err`）
 
-当前 workspace 版本为 `0.3.8` 未发布候选；`0.3.3` 为 main 既有历史；`publish = false`，
-不代表已经发布。
+当前 workspace 版本为 `0.3.9` 未发布候选；`publish = false`，不代表已经发布。
 
 | 模式 | 类型 | 生产？ |
 |------|------|--------|
@@ -75,12 +76,9 @@ pool.close(Duration::from_secs(2)).await?;
 公开 `RedisOperation::Set` 同时覆盖无 TTL SET 与相对 TTL PSETEX，枚举本身无法携带 TTL 参数，
 因此保守保持 `AmbiguousWrite`；真实 client 路由按 `ttl` 参数细分，不以该粗粒度值覆盖参数语义。
 
-最终本地测试为 51 passed + 8 ignored；ignored live 项需要外部 Redis。
+最终本地测试以 `cargo test -p redisx --features pubsub --lib` 为准；ignored live 项需要外部 Redis。
 
 模块级旧 `with_budget*` / `with_retry*` 为 unchecked compatibility，不得作为新生产默认。
-
-- 调用级 deadline：`client.with_call_deadline(Duration::from_secs(2))`
-- 扩展：`pipeline_set` / `eval_script` / `lock_acquire`（fencing）
 
 旧 `with_budget_async` 委托统一 unchecked core，预算耗尽返回标准 budget 错误并记录刚失败的
 attempt（从 1 起），但仍不会校验 `RetrySafety`。
