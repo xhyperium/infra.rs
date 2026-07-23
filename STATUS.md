@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-23T08:24:59Z
+> **生成时间**：2026-07-23T08:28:59Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -57,7 +57,7 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `binancex` | `crates/adapters/exchange/binance` | adapter | 7/7 | ✅ 1i+u | 1965 | · | `active` | **98%** ████████ | [✓](docs/ssot/adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx` | adapter | 7/7 | ✅ 1i+u | 1699 | · | `active` | **98%** ████████ | [✓](docs/ssot/adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse` | adapter | 7/7 | ✅ 3i+u | 1324 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/clickhousex-ssot-alignment.md) |
-| `kafkax` | `crates/adapters/storage/kafka` | adapter | 7/7 | ✅ 8i+u | 4481 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/kafkax-ssot-alignment.md) |
+| `kafkax` | `crates/adapters/storage/kafka` | adapter | 7/7 | ✅ 8i+u | 4480 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/kafkax-ssot-alignment.md) |
 | `natsx` | `crates/adapters/storage/nats` | adapter | 7/7 | ✅ 3i+u | 2017 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/natsx-ssot-alignment.md) |
 | `ossx` | `crates/adapters/storage/oss` | adapter | 7/7 | ✅ 2i+u | 2607 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/ossx-ssot-alignment.md) |
 | `postgresx` | `crates/adapters/storage/postgres` | adapter | 7/7 | ✅ 3i+u | 5562 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/postgresx-ssot-alignment.md) |
