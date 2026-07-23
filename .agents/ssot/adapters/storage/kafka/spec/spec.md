@@ -1,6 +1,6 @@
 # kafkax 实现规范
 
-状态：当前 `0.3.2` 实现合同（纯 Rust `rskafka 0.6` 默认真实路径；broker conformance 为显式运行的 `#[ignore]` 测试）。**未宣称 package stable。**
+状态：当前 `0.3.3` 实现合同（纯 Rust `rskafka 0.6` 默认真实路径；broker conformance 为显式运行的 `#[ignore]` 测试）。**未宣称 package stable。**
 
 ## 0. 权威与范围
 
@@ -74,3 +74,10 @@ Kafka 场景必须证明：
 
 追溯：`crates/adapters/storage/kafka/{Cargo.toml,src,tests/broker_conformance.rs,tests/tls_sasl_conformance.rs}`、
 `scripts/kafka-tls-sasl-conformance.mjs`、`docs/ssot/kafkax-ssot-alignment.md`。
+
+## 7. 三轮加固（0.3.3）显式 fail-closed 条款
+
+- `validate_consumer_config`：空 topic / 负 partition 必须在 broker I/O 前返回 `Invalid`。
+- 匿名 EventBus group id 格式 `{prefix}-{seq}-{pid}`；同进程序号隔离。
+- `create_topic` 幂等仅当错误文本匹配「已存在」语义；鉴权/网络失败不得误判。
+- **NO-GO 不变**：native group EOS、事务 exactly-once、Schema Registry、package stable。

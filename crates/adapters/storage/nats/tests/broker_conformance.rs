@@ -231,6 +231,86 @@ async fn nak_redelivers_and_progress_extends_ack_wait() {
 
 #[tokio::test]
 #[ignore = "需要隔离 NATS JetStream；请通过 scripts/broker-conformance.mjs 运行"]
+async fn with_operation_timeout_zero_fails_closed_without_mutating_context() {
+    let pool = live_pool().await;
+    let jetstream = JetStream::from_pool(&pool);
+    // JetStream 未实现 Debug，避免 expect_err。
+    let error = match jetstream.with_operation_timeout(Duration::ZERO) {
+        Ok(_) => panic!("零 operation_timeout 必须拒绝"),
+        Err(error) => error,
+    };
+    assert_eq!(error.kind(), kernel::ErrorKind::Invalid);
+
+    // 拒绝不消费原始上下文：重新构造并确认原始 timeout 下仍可正常发布。
+    let jetstream = JetStream::from_pool(&pool);
+    let (_stream, _subject) = {
+        let suffix = unique_suffix();
+        let stream = format!("INFRA_TIMEOUT_ZERO_{}", suffix.replace('-', "_"));
+        let subject = format!("infra.conformance.timeout-zero.{suffix}");
+        jetstream
+            .get_or_create_stream(StreamConfig::new(&stream, &subject))
+            .await
+            .expect("创建 stream 验证 jetstream 仍可用");
+        jetstream.publish(&subject, Bytes::from_static(b"still-usable")).await.expect("仍可发布");
+        jetstream.context().delete_stream(&stream).await.expect("删除 stream");
+        (stream, subject)
+    };
+    pool.close().await.expect("关闭 NATS pool");
+}
+
+#[tokio::test]
+#[ignore = "需要隔离 NATS JetStream；请通过 scripts/broker-conformance.mjs 运行"]
+async fn get_pull_consumer_rejects_invalid_names_and_missing_targets() {
+    let pool = live_pool().await;
+    let jetstream = JetStream::from_pool(&pool);
+
+    let stream_error = jetstream
+        .get_pull_consumer("bad.stream.name", "consumer")
+        .await
+        .expect_err("非法 stream 名必须在发起请求前拒绝");
+    assert_eq!(stream_error.kind(), kernel::ErrorKind::Invalid);
+
+    let suffix = unique_suffix();
+    let stream = format!("INFRA_GETPULL_{}", suffix.replace('-', "_"));
+    let subject = format!("infra.conformance.get-pull-consumer.{suffix}");
+    jetstream
+        .get_or_create_stream(StreamConfig::new(&stream, &subject))
+        .await
+        .expect("创建 stream");
+
+    let consumer_name_error = jetstream
+        .get_pull_consumer(&stream, "")
+        .await
+        .expect_err("空 consumer 名必须在发起请求前拒绝");
+    assert_eq!(consumer_name_error.kind(), kernel::ErrorKind::Invalid);
+
+    let missing_stream_error = jetstream
+        .get_pull_consumer("INFRA_GETPULL_DOES_NOT_EXIST", "consumer")
+        .await
+        .expect_err("不存在的 stream 必须返回 Unavailable");
+    assert_eq!(missing_stream_error.kind(), kernel::ErrorKind::Unavailable);
+
+    let missing_consumer_error = jetstream
+        .get_pull_consumer(&stream, "consumer-does-not-exist")
+        .await
+        .expect_err("stream 存在但 consumer 不存在必须返回 Unavailable");
+    assert_eq!(missing_consumer_error.kind(), kernel::ErrorKind::Unavailable);
+
+    let mut cfg = JetStreamConsumerConfig::durable(format!("durable-getpull-{suffix}"));
+    cfg.filter_subject = Some(subject.clone());
+    jetstream.consumer(&stream, cfg.clone()).await.expect("创建 durable consumer");
+    let handle = jetstream
+        .get_pull_consumer(&stream, &cfg.durable_name)
+        .await
+        .expect("已创建的 durable consumer 必须可获取");
+    assert_eq!(handle.cached_info().name, cfg.durable_name);
+
+    jetstream.context().delete_stream(&stream).await.expect("删除 stream");
+    pool.close().await.expect("关闭 NATS pool");
+}
+
+#[tokio::test]
+#[ignore = "需要隔离 NATS JetStream；请通过 scripts/broker-conformance.mjs 运行"]
 async fn max_deliver_and_term_do_not_publish_conventional_dlq_subject() {
     let pool = live_pool().await;
     let (jetstream, stream, subject, consumer, _cfg) =

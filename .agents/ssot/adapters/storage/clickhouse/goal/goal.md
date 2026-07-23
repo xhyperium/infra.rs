@@ -3,11 +3,11 @@
 | 字段 | 值 |
 |------|-----|
 | package | `clickhousex` |
-| version | `0.3.2` |
+| version | `0.3.3` |
 | 标题 | ClickHouse Analytics |
 | 实现 | `crates/adapters/storage/clickhouse` |
-| 战役 | draft SPEC_GOAL → 本仓生产默认路径 |
-| 状态 | **P0 生产入口已落地**（#188–#191）；package stable **未宣称** |
+| 战役 | draft SPEC_GOAL → 本仓生产默认路径 → 三轮加固（负向验收 + 对抗回归） |
+| 状态 | **P0 生产入口已落地**（#188–#191）；三轮加固补齐单测锚点与边界回归；package stable **未宣称** |
 
 ## Outcome
 
@@ -24,6 +24,10 @@
 6. scaffold 仅 `feature = "scaffold"`，禁止当作生产默认
 7. 远程 HTTP、CA/明文冲突与零 deadline 在连接前 fail-closed
 8. HTTP 失败只暴露状态/数字错误码，不回显 SQL、payload 或认证正文
+9. （三轮加固新增）`insert_json_each_row` / `insert_batch` 的表名与行结构校验
+   必须先于网络请求生效，且空 `rows` 短路成功不占用 in-flight 许可
+10. （三轮加固新增）`max_in_flight` 背压等待必须在 `acquire_timeout` 后返回
+    `DeadlineExceeded`，不得无限阻塞或静默丢弃
 
 ## Not in scope
 

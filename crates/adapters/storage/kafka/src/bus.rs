@@ -86,11 +86,16 @@ impl EventBus for KafkaEventBus {
     }
 
     async fn subscribe(&self, topic: &str) -> XResult<BoxStream<'static, BusMessage>> {
-        let group = if let Some(g) = &self.group_id {
-            g.clone()
-        } else {
-            let n = self.sub_seq.fetch_add(1, Ordering::Relaxed);
-            format!("{}-{n}-{}", self.pool.config().event_bus_group_prefix, std::process::id())
+        let group = match &self.group_id {
+            Some(g) => g.clone(),
+            None => {
+                let n = self.sub_seq.fetch_add(1, Ordering::Relaxed);
+                generate_anonymous_group_id(
+                    &self.pool.config().event_bus_group_prefix,
+                    n,
+                    std::process::id(),
+                )
+            }
         };
         let mut cfg = ConsumerConfig::subscribe(topic, group);
         cfg.from_beginning = false;
@@ -123,6 +128,13 @@ impl EventBus for KafkaEventBus {
     }
 }
 
+/// 未显式指定 group 时生成匿名订阅 group id：`{prefix}-{seq}-{pid}`。
+///
+/// 保证同进程内并发订阅互不冲突（`seq` 单调递增），且不同进程重启后不复用旧 group。
+fn generate_anonymous_group_id(prefix: &str, seq: u64, pid: u32) -> String {
+    format!("{prefix}-{seq}-{pid}")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -130,5 +142,18 @@ mod tests {
     #[test]
     fn event_bus_buffer_is_intentionally_bounded() {
         assert_eq!(EVENT_BUS_BUFFER_CAPACITY, 256);
+    }
+
+    #[test]
+    fn anonymous_group_id_embeds_prefix_seq_and_pid() {
+        let group = generate_anonymous_group_id("kafkax-bus", 3, 4242);
+        assert_eq!(group, "kafkax-bus-3-4242");
+    }
+
+    #[test]
+    fn anonymous_group_id_is_distinct_across_sequence_numbers() {
+        let a = generate_anonymous_group_id("kafkax-bus", 0, 100);
+        let b = generate_anonymous_group_id("kafkax-bus", 1, 100);
+        assert_ne!(a, b, "同进程内不同订阅序号必须生成不同 group id");
     }
 }

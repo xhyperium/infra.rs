@@ -1,6 +1,6 @@
 # `postgresx` 当前实现规范
 
-状态：当前 `0.3.3` 实现合同（`deadpool-postgres` + `tokio-postgres` 默认真实路径）。
+状态：当前 `0.3.5` 实现合同（`deadpool-postgres` + `tokio-postgres` 默认真实路径）。
 **未宣称 package stable。**
 
 ## 0. 权威与范围
@@ -75,6 +75,18 @@ cmp .agents/ssot/adapters/storage/postgres/spec/spec.md \
 
 自定义 CA/mTLS、迁移/COPY、隔离级别策略、read replica、跨资源事务、HA 故障切换与
 package stable 均未承诺。
+
+- **channel binding（`tls-server-end-point`）与 SCRAM-PLUS：未实现。**
+  `MakeRustlsConnect` 的 `TlsStream::channel_binding()` 恒返回 `ChannelBinding::none()`；
+  当前仅支持普通 SCRAM-SHA-256，服务端要求 channel binding 时将无法完成认证。
+  这是隐性假设，不是回归；后续若要支持需绑定 rustls 握手导出的 TLS 材料。
+- **deprecated raw client/pool 隔离（`raw_exposed` 强制脱池、独立关闭隔离池）：
+  代码路径 `CODE PASS`，但验证证据仅来自 live-only 场景。**
+  `raw_exposed` 状态转换（deprecated `client()`/`client_mut()` → 污染标记 → `begin()`
+  拒绝、`Drop` 强制脱池）必须持有真实 `deadpool_postgres::Object`才能触发，
+  该类型只能通过实际连接池获取，无法离线单测构造；本仓覆盖来自
+  `tests/deadline_conformance.rs`（`#[ignore]`），本轮未运行真实 PostgreSQL 容器，
+  不得据此宣称 LIVE 已验证。
 
 追溯：`crates/adapters/storage/postgres/{src,tests/deadline_conformance.rs}`、
 `scripts/postgres-deadline-conformance.mjs`、`docs/ssot/postgresx-ssot-alignment.md`。

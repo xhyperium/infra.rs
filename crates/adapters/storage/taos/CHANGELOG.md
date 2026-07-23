@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.3] — 2026-07-23
+
+### Changed
+
+- `query_series` 缺表空集路径改为依赖类型化 `ErrorKind::Missing`（`map_taos_code`），去掉驱动文案子串匹配
+
+### Added
+
+- 精度配置与探测结果不一致时 `connect` fail-closed 单测
+- 缺表 Missing vs 非 Missing 错误传播对抗单测
+- `tests/taos_conformance.rs`：远程明文拒绝、响应上界、schema 冲突、close/背压等离线边界
+
+### Boundaries
+
+- 未宣称 package stable / 真实集群 HA
+
+
 ## [0.3.2] — 2026-07-23
 
 ### Changed

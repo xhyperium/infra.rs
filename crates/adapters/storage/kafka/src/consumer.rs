@@ -86,12 +86,7 @@ pub struct KafkaConsumer {
 
 impl KafkaConsumer {
     pub(crate) async fn connect(pool: KafkaPool, cfg: ConsumerConfig) -> XResult<Self> {
-        if cfg.topic.trim().is_empty() {
-            return Err(XError::invalid("kafkax: consumer topic 不能为空"));
-        }
-        if cfg.partition < 0 {
-            return Err(XError::invalid("kafkax: consumer partition 不能为负"));
-        }
+        validate_consumer_config(&cfg)?;
         let client = Arc::new(pool.partition_client(&cfg.topic, cfg.partition).await?);
         let start = cfg.resolve_start_offset();
         let mut stream = StreamConsumerBuilder::new(client, start).build();
@@ -159,6 +154,17 @@ impl Drop for KafkaConsumer {
     }
 }
 
+/// 在发起 broker I/O 前校验消费配置的形状（fail-closed）。
+fn validate_consumer_config(cfg: &ConsumerConfig) -> XResult<()> {
+    if cfg.topic.trim().is_empty() {
+        return Err(XError::invalid("kafkax: consumer topic 不能为空"));
+    }
+    if cfg.partition < 0 {
+        return Err(XError::invalid("kafkax: consumer partition 不能为负"));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -185,5 +191,28 @@ mod tests {
     #[test]
     fn consumer_buffer_is_intentionally_bounded() {
         assert_eq!(CONSUMER_BUFFER_CAPACITY, 64);
+    }
+
+    #[test]
+    fn validate_consumer_config_rejects_empty_topic_before_broker_io() {
+        let cfg = ConsumerConfig::subscribe("   ", "g");
+        let error = validate_consumer_config(&cfg).expect_err("空 topic 必须在 broker I/O 前失败");
+        assert_eq!(error.kind(), kernel::ErrorKind::Invalid);
+        assert!(error.context().contains("topic"));
+    }
+
+    #[test]
+    fn validate_consumer_config_rejects_negative_partition_before_broker_io() {
+        let cfg = ConsumerConfig::assign("t", -1, "g");
+        let error =
+            validate_consumer_config(&cfg).expect_err("负 partition 必须在 broker I/O 前失败");
+        assert_eq!(error.kind(), kernel::ErrorKind::Invalid);
+        assert!(error.context().contains("partition"));
+    }
+
+    #[test]
+    fn validate_consumer_config_accepts_well_formed_config() {
+        let cfg = ConsumerConfig::assign("orders", 0, "g");
+        validate_consumer_config(&cfg).expect("形状合法的配置必须通过校验");
     }
 }

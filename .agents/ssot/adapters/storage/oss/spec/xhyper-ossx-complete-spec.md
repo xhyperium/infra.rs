@@ -1,6 +1,6 @@
 # ossx 实现规范
 
-> 状态：当前 `0.3.2` 实现合同。默认路径为 reqwest + OSS V1 真实客户端；live 测试仍
+> 状态：当前 `0.3.3` 实现合同。默认路径为 reqwest + OSS V1 真实客户端；live 测试仍
 > `#[ignore]`，**未宣称 package stable**。
 
 ## 1. 范围与证据边界
@@ -79,3 +79,9 @@ cargo test -p ossx --test live_object_store -- --ignored --nocapture
 
 默认 CI 不读取凭据、不访问生产环境。STS、lifecycle、流式 TB 对象、checksum 与 package stable
 不属于本版本完成声明。
+
+## 7. 三轮加固（0.3.3）对抗证据
+
+- 401/403 经完整重试链路不重试（`tests/oss_conformance.rs`，loopback）。
+- operation deadline 超时不残留请求；无界资源配置在校验阶段拒绝。
+- **未宣称** package stable / 多区域 HA。

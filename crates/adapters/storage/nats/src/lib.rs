@@ -34,7 +34,7 @@ pub use config::{DEFAULT_URL, NatsConfig, TlsPolicy, url_is_loopback};
 pub use jetstream::{
     JetStream, JetStreamConsumer, JetStreamConsumerConfig, JetStreamDelivery,
     JetStreamDeliveryMetadata, PullConsumerConfig, StreamConfig, validate_consumer_name,
-    validate_stream_name,
+    validate_operation_timeout, validate_stream_name,
 };
 pub use pool::{NatsHealth, NatsMessage, NatsPool, NatsPoolStats, NatsSubscription};
 

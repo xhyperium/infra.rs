@@ -228,9 +228,10 @@ impl TaosPool {
         Self::connect(TaosConfig::from_env()).await
     }
 
-    /// 仅测试：跳过 ping / native 探测。
-    #[cfg(test)]
-    pub(crate) fn connect_without_ping(config: TaosConfig) -> XResult<Self> {
+    /// 离线/单测构造：校验配置并构建 HTTP 池，**跳过** ping 与 native 探测。
+    ///
+    /// 用于驱动 fail-closed 与背压路径，无需真实 TDengine。生产入口请使用 [`Self::connect`]。
+    pub fn connect_without_ping(config: TaosConfig) -> XResult<Self> {
         config.validate()?;
         let http = reqwest::Client::builder()
             .timeout(config.timeout)
@@ -610,12 +611,9 @@ impl TimeSeriesStore for TaosPool {
         let r = match self.exec_sql(&sql).await {
             Ok(r) => r,
             Err(e) => {
-                // 表不存在时返回空集，便于首次查询
-                let msg = format!("{e}");
-                if msg.contains("Table does not exist")
-                    || msg.contains("not exist")
-                    || msg.contains("0x2603")
-                {
+                // 表不存在时返回空集，便于首次查询；依赖 map_taos_code 的类型化
+                // ErrorKind::Missing，而非对驱动错误文案做脆弱字符串匹配。
+                if e.kind() == kernel::ErrorKind::Missing {
                     return Ok(Vec::new());
                 }
                 return Err(e);
@@ -993,6 +991,27 @@ mod tests {
         port
     }
 
+    /// 依序为多个连续请求（各自独立连接，`Connection: close`）返回预设 JSON body。
+    ///
+    /// 用于驱动 `connect()` 内部 `CREATE DATABASE` → 精度探测 → `ping` 的多步 REST 序列。
+    async fn serve_sequence(bodies: Vec<&'static str>) -> u16 {
+        let listener = TcpListener::bind(("127.0.0.1", 0)).await.expect("bind");
+        let port = listener.local_addr().expect("addr").port();
+        tokio::spawn(async move {
+            for body in bodies {
+                let (mut stream, _) = listener.accept().await.expect("accept");
+                let mut request = [0u8; 4096];
+                let _ = stream.read(&mut request).await.expect("read request");
+                let response = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                stream.write_all(response.as_bytes()).await.expect("write response");
+            }
+        });
+        port
+    }
+
     #[tokio::test]
     async fn response_limit_applies_to_success_and_error_bodies() {
         for (status, chunked) in [("200 OK", true), ("500 Internal Server Error", false)] {
@@ -1045,5 +1064,52 @@ mod tests {
             .await
             .expect_err("custom row cap");
         assert_eq!(batch_error.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn connect_rejects_configured_precision_mismatch() {
+        // 序列：CREATE DATABASE（无 use_db） → 精度探测（information_schema）。
+        // 数据库实际精度为 "us"，但配置显式声明 Ms，必须 fail-closed 而不是静默采用探测值。
+        let create_db_body = r#"{"code":0,"column_meta":[],"data":[],"rows":0}"#;
+        let precision_body =
+            r#"{"code":0,"column_meta":[["precision","VARCHAR",8]],"data":[["us"]],"rows":1}"#;
+        let port = serve_sequence(vec![create_db_body, precision_body]).await;
+        let cfg = TaosConfig {
+            port,
+            database: "infra_draft".into(),
+            precision: Some(TsPrecision::Ms),
+            timeout: Duration::from_secs(2),
+            ..TaosConfig::default()
+        };
+        // TaosPool 未 derive Debug，match 而非 expect_err/unwrap_err 取错误分支。
+        match TaosPool::connect(cfg).await {
+            Ok(_) => panic!("precision mismatch must fail-closed"),
+            Err(error) => assert_eq!(error.kind(), ErrorKind::Invalid),
+        }
+    }
+
+    #[tokio::test]
+    async fn query_series_missing_table_relies_on_typed_error_kind_not_message_text() {
+        // DESCRIBE 与 SELECT 均返回 TDengine「表不存在」错误码（0x2603 = 9731），
+        // map_taos_code 必须把它类型化为 ErrorKind::Missing，
+        // query_series 据此返回空集，而不是依赖对错误文案做子串匹配。
+        let describe_error = r#"{"code":9731,"desc":"Table does not exist"}"#;
+        let port = serve_response("200 OK", describe_error, false).await;
+        let cfg = TaosConfig { port, timeout: Duration::from_secs(2), ..TaosConfig::default() };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        let rows = pool.query_series("missing_table", 0, 1).await.expect("missing table => empty");
+        assert!(rows.is_empty());
+    }
+
+    #[tokio::test]
+    async fn query_series_propagates_non_missing_describe_errors() {
+        // DESCRIBE 失败但错误码不是「表不存在」语义时，必须原样传播错误，
+        // 不能被误判为空表而静默吞掉。
+        let internal_error = r#"{"code":-1,"desc":"internal driver failure"}"#;
+        let port = serve_response("200 OK", internal_error, false).await;
+        let cfg = TaosConfig { port, timeout: Duration::from_secs(2), ..TaosConfig::default() };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        let error = pool.query_series("some_table", 0, 1).await.expect_err("must propagate");
+        assert_eq!(error.kind(), ErrorKind::Internal);
     }
 }
