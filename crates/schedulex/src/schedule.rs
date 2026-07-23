@@ -159,14 +159,13 @@ pub fn cron_matches(parsed: &CronParsed, now_ms: u64) -> bool {
             now_ms % *every_ms == 0
         }
         CronParsed::MinuteMatch { every_n, exact } => {
-            let minute_index = (now_ms / 60_000) as u32;
-            let minute_of_hour = minute_index % 60;
+            let minute_of_hour = (now_ms / 60_000) % 60;
             if let Some(ex) = exact {
-                return minute_of_hour == *ex;
+                return minute_of_hour == u64::from(*ex);
             }
             match every_n {
                 None => true,
-                Some(n) if *n > 0 => minute_of_hour % *n == 0,
+                Some(n) if *n > 0 => minute_of_hour % u64::from(*n) == 0,
                 Some(_) => false,
             }
         }
@@ -228,5 +227,16 @@ mod tests {
         assert!(!cron_matches(&CronParsed::EveryMs { every_ms: 0 }, 0));
         // every_n == 0 防御 false
         assert!(!cron_matches(&CronParsed::MinuteMatch { every_n: Some(0), exact: None }, 0));
+
+        // 先在 u64 中取模，避免逻辑分钟超过 u32 后截断并错误命中。
+        let beyond_u32_minutes = (u64::from(u32::MAX) + 1) * 60_000;
+        assert!(!cron_matches(
+            &CronParsed::MinuteMatch { every_n: None, exact: Some(0) },
+            beyond_u32_minutes
+        ));
+        assert!(cron_matches(
+            &CronParsed::MinuteMatch { every_n: None, exact: Some(16) },
+            beyond_u32_minutes
+        ));
     }
 }

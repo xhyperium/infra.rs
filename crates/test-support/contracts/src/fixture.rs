@@ -5,6 +5,12 @@ use crate::failure::ContractFailure;
 const MAX_NAMESPACE_LEN: usize = 32;
 const MAX_RESOURCE_LEN: usize = 63;
 
+fn is_portable_identifier(value: &str) -> bool {
+    let mut bytes = value.bytes();
+    bytes.next().is_some_and(|byte| byte.is_ascii_lowercase())
+        && bytes.all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_')
+}
+
 /// 跨后端可复用的确定性 fixture 前缀。
 ///
 /// 为兼容对象 key、消息 channel 与未引用的 SQL identifier，名称必须以 ASCII
@@ -34,12 +40,7 @@ impl FixtureNamespace {
                 format!("fixture 命名空间长度不得超过 {MAX_NAMESPACE_LEN}"),
             ));
         }
-        let bytes = value.as_bytes();
-        if !bytes[0].is_ascii_lowercase()
-            || bytes[1..]
-                .iter()
-                .any(|byte| !(byte.is_ascii_lowercase() || byte.is_ascii_digit() || *byte == b'_'))
-        {
+        if !is_portable_identifier(&value) {
             return Err(ContractFailure::new(
                 "FixtureNamespace",
                 "portable_identifier",
@@ -61,13 +62,7 @@ impl FixtureNamespace {
     ///
     /// 后缀不满足可移植标识符规则或最终资源名超过 63 字节时返回 [`ContractFailure`]。
     pub fn resource(&self, suffix: &str) -> Result<String, ContractFailure> {
-        let bytes = suffix.as_bytes();
-        if bytes.is_empty()
-            || !bytes[0].is_ascii_lowercase()
-            || !bytes[1..]
-                .iter()
-                .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || *byte == b'_')
-        {
+        if !is_portable_identifier(suffix) {
             return Err(ContractFailure::new(
                 "FixtureNamespace",
                 "portable_suffix",
@@ -102,7 +97,17 @@ mod tests {
 
     #[test]
     fn rejects_empty_long_or_nonportable_namespace() {
-        for value in ["", &"a".repeat(MAX_NAMESPACE_LEN + 1), "Upper", "with-dash", "a\n"] {
+        for value in [
+            "",
+            &"a".repeat(MAX_NAMESPACE_LEN + 1),
+            "Upper",
+            "1name",
+            "_name",
+            "aUpper",
+            "with-dash",
+            "a\n",
+            "aé",
+        ] {
             let failure = FixtureNamespace::new(value).expect_err("非法 fixture 必须被拒绝");
             assert_eq!(failure.contract, "FixtureNamespace");
         }
@@ -111,7 +116,7 @@ mod tests {
     #[test]
     fn rejects_nonportable_or_oversized_resource_suffix() {
         let fixture = FixtureNamespace::new("a".repeat(MAX_NAMESPACE_LEN)).expect("fixture 应合法");
-        for suffix in ["", "Upper", "with-dash"] {
+        for suffix in ["", "Upper", "1suffix", "_suffix", "aUpper", "with-dash", "aé"] {
             let failure = fixture.resource(suffix).expect_err("非法后缀必须被拒绝");
             assert_eq!(failure.contract, "FixtureNamespace");
             assert_eq!(failure.case, "portable_suffix");

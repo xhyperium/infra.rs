@@ -37,6 +37,10 @@ impl JobRunner {
     }
 
     /// 校验并注册 job + schedule；失败不改变 runner，重复 ID 完整覆盖旧状态。
+    ///
+    /// # Errors
+    ///
+    /// Job ID 或公开可构造的 [`Schedule`] 状态无效时返回 [`ScheduleError`]。
     pub fn add(&mut self, job: Job, schedule: Schedule) -> Result<(), ScheduleError> {
         crate::validate_task_id(job.id.as_str())?;
         validate_schedule(&schedule)?;
@@ -95,6 +99,10 @@ impl JobRunner {
     /// 返回成功触发次数；单个 job 错误按执行顺序记入错误列表、推进触发状态，
     /// 其他 job 继续。大跨度 tick 每个 job 最多执行一次，不补跑错过的间隔。
     /// `now_ms` 小于上次 tick 时不执行也不推进。Job panic 不捕获，当前 tick 状态不保证。
+    ///
+    /// # Panics
+    ///
+    /// 任一 Job callback panic 时原样传播，并中止当前 tick；此前 Job 的状态可能已经推进。
     pub fn tick(&mut self, now_ms: u64) -> TickResult {
         if self.last_tick_ms.is_some_and(|last_tick_ms| now_ms < last_tick_ms) {
             return TickResult::default();

@@ -1,5 +1,16 @@
 # Changelog — contract-testkit
 
+## 0.1.3 — 2026-07-23
+
+### Added
+
+- `portable` / `closed_point` / `snapshot` 再导出模块，分层可移植与 profile suite。
+- `tests/fixture_suites.rs`：fixture 命名空间可移植规则扩展覆盖。
+
+### Changed
+
+- `FixtureNamespace` 标识符校验提取为统一 helper，并加强非法输入矩阵。
+
 ## 0.1.2 — 2026-07-22
 
 ## 0.1.2 — 2026-07-23
