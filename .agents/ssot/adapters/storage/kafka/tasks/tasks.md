@@ -43,3 +43,10 @@
 - [x] 全 pub API offline + e2e 分层测试
 - [x] NO-GO 项 CLOSED（Skipped / fail-closed / 文档）
 - [x] SSOT version 对齐 0.3.7
+
+## 2026-07-23 G-STATS-01 严格（0.3.9）
+
+- [x] shipped `limited_produce_await` / `apply_limited_produce_outcome`
+- [x] 单测严格 timeout/cancel 计数（禁止仅 record_*）
+- [x] 集成 strict cancelled|timeouts（禁止 OR published|failed）
+- [x] SSOT / adapters-ssot / matrix S-20 对齐 0.3.9
