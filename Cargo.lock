@@ -190,7 +190,6 @@ version = "0.3.2"
 dependencies = [
  "async-trait",
  "bytes",
- "canonical",
  "contracts",
  "decimalx",
  "futures-core",
@@ -202,6 +201,7 @@ dependencies = [
  "sha2 0.10.9",
  "tokio",
  "transportx",
+ "xhyper-canonical",
  "xhyper-kernel",
 ]
 
@@ -281,15 +281,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "canonical"
-version = "0.1.2"
-dependencies = [
- "decimalx",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -482,12 +473,12 @@ version = "0.1.4"
 dependencies = [
  "async-trait",
  "bytes",
- "canonical",
  "contracts",
  "decimalx",
  "futures-core",
  "futures-util",
  "tokio",
+ "xhyper-canonical",
  "xhyper-kernel",
 ]
 
@@ -498,13 +489,13 @@ dependencies = [
  "async-trait",
  "binancex",
  "bytes",
- "canonical",
  "contract-testkit",
  "decimalx",
  "futures-core",
  "okxx",
  "thiserror 2.0.19",
  "tokio",
+ "xhyper-canonical",
  "xhyper-kernel",
 ]
 
@@ -1709,7 +1700,6 @@ dependencies = [
  "async-trait",
  "base64",
  "bytes",
- "canonical",
  "contracts",
  "decimalx",
  "futures-core",
@@ -1721,6 +1711,7 @@ dependencies = [
  "sha2 0.10.9",
  "tokio",
  "transportx",
+ "xhyper-canonical",
  "xhyper-kernel",
 ]
 
@@ -2862,7 +2853,6 @@ name = "taosx"
 version = "0.3.10"
 dependencies = [
  "async-trait",
- "canonical",
  "chrono",
  "contract-testkit",
  "contracts",
@@ -2875,6 +2865,7 @@ dependencies = [
  "tokio",
  "tokio-tungstenite",
  "tracing",
+ "xhyper-canonical",
  "xhyper-kernel",
 ]
 
@@ -3730,6 +3721,15 @@ name = "writeable"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ffae5123b2d3fc086436f8834ae3ab053a283cfac8fe0a0b8eaae044768a4c4"
+
+[[package]]
+name = "xhyper-canonical"
+version = "0.1.3"
+dependencies = [
+ "decimalx",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "xhyper-kernel"
