@@ -26,6 +26,7 @@
 //! - `replication_lag` 在 `replica_check=false` 或无副本时为 `Skipped`
 //! - 自检表命名 `_self_check_{token}`，运行结束主动 DROP
 //! - **未**实现跨模块 `SelfValidator` 调度器 / HTTP 探针 / Prometheus 导出器
+//! - 规格版本：LIB-SELFCHECK-SPEC v1.0.0（draft verifyctl.md）
 
 mod config;
 mod context;
