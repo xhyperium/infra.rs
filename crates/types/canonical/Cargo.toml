@@ -1,5 +1,5 @@
 [package]
-name = "canonical"
+name = "xhyper-canonical"
 version = "0.1.2"
 edition.workspace = true
 rust-version.workspace = true
@@ -25,3 +25,6 @@ workspace = true
 [[bench]]
 name = "hot_path"
 harness = false
+
+[lib]
+name = "canonical"

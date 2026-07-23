@@ -197,12 +197,12 @@ dependencies = [
  "futures-util",
  "hex",
  "hmac 0.12.1",
- "kernel",
  "serde",
  "serde_json",
  "sha2 0.10.9",
  "tokio",
  "transportx",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -254,12 +254,12 @@ dependencies = [
  "evidence",
  "futures-core",
  "futures-util",
- "kernel",
  "natsx",
  "observex",
  "redisx",
  "thiserror 2.0.19",
  "tokio",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -419,7 +419,6 @@ dependencies = [
  "bytes",
  "contract-testkit",
  "contracts",
- "kernel",
  "reqwest",
  "rustls",
  "rustls-pemfile",
@@ -429,6 +428,7 @@ dependencies = [
  "tokio-rustls",
  "tracing",
  "url",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -461,7 +461,7 @@ dependencies = [
 name = "configx"
 version = "0.1.2"
 dependencies = [
- "kernel",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -487,8 +487,8 @@ dependencies = [
  "decimalx",
  "futures-core",
  "futures-util",
- "kernel",
  "tokio",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -502,10 +502,10 @@ dependencies = [
  "contract-testkit",
  "decimalx",
  "futures-core",
- "kernel",
  "okxx",
  "thiserror 2.0.19",
  "tokio",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -716,10 +716,10 @@ name = "decimalx"
 version = "0.1.4"
 dependencies = [
  "bigdecimal",
- "kernel",
  "proptest",
  "serde",
  "serde_json",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1429,7 +1429,6 @@ dependencies = [
  "contracts",
  "futures-core",
  "futures-util",
- "kernel",
  "rskafka",
  "rustls",
  "rustls-pemfile",
@@ -1438,17 +1437,7 @@ dependencies = [
  "tracing",
  "url",
  "webpki-roots 0.26.11",
-]
-
-[[package]]
-name = "kernel"
-version = "0.3.1"
-dependencies = [
- "loom",
- "proptest",
- "serde",
- "static_assertions",
- "thiserror 2.0.19",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1599,12 +1588,12 @@ dependencies = [
  "contracts",
  "futures-core",
  "futures-util",
- "kernel",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
  "url",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1707,10 +1696,10 @@ name = "observex"
 version = "0.1.2"
 dependencies = [
  "contracts",
- "kernel",
  "thiserror 2.0.19",
  "tracing",
  "tracing-subscriber",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1727,12 +1716,12 @@ dependencies = [
  "futures-util",
  "hex",
  "hmac 0.12.1",
- "kernel",
  "serde",
  "serde_json",
  "sha2 0.10.9",
  "tokio",
  "transportx",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1777,13 +1766,13 @@ dependencies = [
  "contracts",
  "criterion",
  "hmac 0.12.1",
- "kernel",
  "reqwest",
  "resiliencx",
  "sha1",
  "thiserror 2.0.19",
  "tokio",
  "url",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1939,7 +1928,6 @@ dependencies = [
  "contracts",
  "deadpool-postgres",
  "futures-util",
- "kernel",
  "resiliencx",
  "rustls",
  "rustls-pemfile",
@@ -1952,6 +1940,7 @@ dependencies = [
  "tokio-rustls",
  "tracing",
  "webpki-roots 0.26.11",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -2227,13 +2216,13 @@ dependencies = [
  "contracts",
  "futures-core",
  "futures-util",
- "kernel",
  "redis",
  "resiliencx",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -2318,8 +2307,8 @@ version = "0.1.2"
 dependencies = [
  "async-trait",
  "contracts",
- "kernel",
  "tokio",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -2880,13 +2869,13 @@ dependencies = [
  "decimalx",
  "futures-core",
  "futures-util",
- "kernel",
  "reqwest",
  "serde",
  "serde_json",
  "tokio",
  "tokio-tungstenite",
  "tracing",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -2906,10 +2895,10 @@ dependencies = [
 name = "testkit"
 version = "0.1.3"
 dependencies = [
- "kernel",
  "proptest",
  "static_assertions",
  "thiserror 2.0.19",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -3264,11 +3253,11 @@ dependencies = [
  "bytes",
  "futures-util",
  "httpdate",
- "kernel",
  "reqwest",
  "thiserror 2.0.19",
  "tokio",
  "tokio-tungstenite",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -3741,6 +3730,17 @@ name = "writeable"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ffae5123b2d3fc086436f8834ae3ab053a283cfac8fe0a0b8eaae044768a4c4"
+
+[[package]]
+name = "xhyper-kernel"
+version = "0.3.2"
+dependencies = [
+ "loom",
+ "proptest",
+ "serde",
+ "static_assertions",
+ "thiserror 2.0.19",
+]
 
 [[package]]
 name = "yoke"
