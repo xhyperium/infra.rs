@@ -2,6 +2,7 @@
 
 use async_trait::async_trait;
 use bytes::Bytes;
+#[allow(deprecated, reason = "测试兼容别名 tx_kv_set 的错误面")]
 use contracts::{
     EventBus, KeyValueStore, LiveContractProfile, LiveHandles, TxContext, TxRunner, bus_publish,
     kv_set_then_commit_separate_resources, publish_without_delivery_attestation, tx_kv_set,
@@ -199,6 +200,7 @@ async fn separate_resource_helper_exposes_commit_failure_without_claiming_atomic
 }
 
 #[tokio::test]
+#[allow(deprecated, reason = "显式验证兼容别名 tx_kv_set 错误面")]
 async fn compatibility_aliases_preserve_the_accurate_helpers_error_surface() {
     let publish_error = bus_publish(&FailingBus, "orders", Bytes::from_static(b"payload"))
         .await
