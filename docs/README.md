@@ -46,6 +46,8 @@
 | [编码与语言约定.md](governance/编码与语言约定.md) | UTF-8 与中文/英文文档语言约定 |
 | [ASD-STE100.md](governance/ASD-STE100.md) | 英文技术文档受控语言（STE）落地指南 |
 | [quant-dev-spec.md](governance/quant-dev-spec.md) | 量化开发领域专项规范 |
+| [rust-dev-rules.md](governance/rust-dev-rules.md) | Rust 开发规则补充（错误/unsafe/并发/性能/依赖/测试/日志/序列化） |
+| [项目开发规则.md](governance/项目开发规则.md) | 开发规则总览（文档/工程/复用/门禁） |
 
 相关根文档：[CONSTITUTION.md](../CONSTITUTION.md)（兼容索引 → [`constitution/`](constitution/)）、[ARCHITECTURE.md](../ARCHITECTURE.md)。
 
