@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.11] — 2026-07-23
+
+### Added
+
+- `Migrator` / `Migration`：advisory lock + SHA-256 checksum 历史表 `infra_schema_migrations`
+- 默认 [`Migrator::verify`] 仅校验（不自动 DDL）；[`Migrator::apply`] 显式应用 pending
+- `PgConnection::batch_execute`（受信任多语句脚本）
+- live：`live_migrator_verify_apply_checksum`
+
+### Boundaries
+
+- 无 down migration / 多环境编排 UI
+- package stable / read-replica / 无限流式 COPY 仍 OPEN
+
 ## [0.3.10] — 2026-07-23
 
 ### Added

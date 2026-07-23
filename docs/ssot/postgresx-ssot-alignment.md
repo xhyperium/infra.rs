@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/adapters/storage/postgres/`（**非** `postgresx` 目录） |
 | 实现 | `crates/adapters/storage/postgres` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.10` |
+| version | `0.3.11` |
 | 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地**；dev live + 远程 Require TLS + deadline + **raw fail-closed live** 已跑通；mTLS 客户端身份已落地；**未**宣称 package stable / 服务端强制 mTLS 全网 live |
 
 ## 结论摘要
@@ -24,11 +24,11 @@
 | resiliencx | `with_retry_sync` / `with_retry_async` |
 | contracts | `TxRunner` + 生产 `Repository` |
 | 环境变量 | `FOUNDATIONX_POSTGRESX_{HOST,PORT,DATABASE,USER,PASSWORD,SSLMODE,TLS_CA_FILE,TLS_SERVER_NAME,TLS_CLIENT_CERT,TLS_CLIENT_KEY}` 或 `DATABASE_URL` |
-| live | `tests/live_postgres.rs`（11 cases，`#[ignore]`） |
+| live | `tests/live_postgres.rs`（12 cases，`#[ignore]`） |
 | deadline 实验 | `tests/deadline_conformance.rs` + `scripts/postgres-deadline-conformance.mjs` |
 | bench | `benches/query_hot_path.rs` |
 | 原 OBJECTIVE DEFER | **PASS**（prod Repository / SSL require 路径 / resiliencx） |
-| 仍 OPEN / DEFER | 无限流式 COPY / migrations / read-replica / package stable；mTLS 服务端强制 live（部署依赖） |
+| 仍 OPEN / DEFER | 无限流式 COPY / read-replica / package stable；mTLS 服务端强制 live（部署依赖）；down migration |
 
 ## 对齐矩阵
 
@@ -38,7 +38,7 @@
 | POSTGRESX-2 | 生产默认导出 | PASS | `src/lib.rs` |
 | POSTGRESX-3 | from_env | PASS | config |
 | POSTGRESX-4 | 离线测试 | PASS | unit tests 全绿 |
-| POSTGRESX-5 | live 入口 + 本轮 dev 结果 | PASS | `tests/live_postgres.rs` 11/11 with secrets inject |
+| POSTGRESX-5 | live 入口 + 本轮 dev 结果 | PASS | `tests/live_postgres.rs` 12/12 with secrets inject |
 | POSTGRESX-6 | bench 有界 | PASS | `benches/query_hot_path.rs`（200 iters 完成） |
 | POSTGRESX-7 | crate docs | PASS | docs/* |
 | POSTGRESX-8 | SSOT 11 层 | PASS | `.agents/ssot/adapters/storage/postgres/` |
@@ -54,6 +54,7 @@
 | POSTGRESX-18 | acquire_with | PASS | `pool.acquire_with` + live |
 | POSTGRESX-19 | 有界 COPY IN/OUT | PASS | `copy_in_bytes`/`copy_out_bytes` + live TEMP 往返 |
 | POSTGRESX-20 | mTLS 客户端证书配置 | PASS | cert+key 成对；离线 openssl 构建 + fail-closed；服务端强制 mTLS live 依赖部署 |
+| POSTGRESX-21 | Migrator verify/apply | PASS | advisory lock + checksum；live verify/apply/漂移 |
 
 ## 本轮验证（2026-07-23）
 
