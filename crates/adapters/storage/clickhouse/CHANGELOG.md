@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.3.6] — 2026-07-23
+
+### Added（测试套件收敛）
+
+- **schema_integrity.rs**（29 tests）：DDL 约束验证（MergeTree 引擎/分区/排序键）、列类型与数量一致性、数据级非空/非负约束、`Config::validate` 10 项失败路径、`validate_ident` 8 项、端口别名 4 种组合
+- **属性测试**：`chunk_ranges_property_coverage_and_continuity`（11 组参数，5 属性）、`insert_batch_request_count_matches_chunk_ranges`（7 组，HTTP 计数验证）
+- **doc tests**（5 tests）：配置校验、标识符校验、chunk_ranges、parse_tab_separated_rows
+- **PR template**（`.github/PULL_REQUEST_TEMPLATE/clickhousex.md`）：测试矩阵 + 安全合同清单
+- **CI release workflow**（`.github/workflows/clickhousex-release.yml`）
+- **Release script**（`scripts/clickhousex-release.mjs`）
+
+### Test Summary
+
+| 测试目标 | 命令 | 测试数 |
+|----------|------|--------|
+| lib 单元（默认） | `cargo test -p clickhousex` | 29 |
+| lib 单元（+scaffold） | `cargo test -p clickhousex --features scaffold` | 32 |
+| schema_integrity | `cargo test -p clickhousex --test schema_integrity -- --test-threads=1` | 29 |
+| security_failures | `cargo test -p clickhousex --test security_failures` | 3 |
+| https_conformance | `cargo test -p clickhousex --test https_conformance` | 1（`#[ignore]`） |
+| live_smoke | `cargo test -p clickhousex --test live_smoke -- --ignored` | 2（`#[ignore]`） |
+| doc tests | `cargo test -p clickhousex --doc` | 5 |
+| **总计** | `cargo test -p clickhousex --all-targets -- --test-threads=1` | **69** |
+
+### Changed
+
+- `connect_without_ping`：`#[cfg(test)] pub(crate)` → `pub`（集成测试需要）
+- `validate_ident`：`fn` → `pub fn`，加入 crate 公开导出
+- 版本号 0.3.4 → 0.3.6
+
 ## [0.3.4] — 2026-07-24
 
 ### Fixed
@@ -57,7 +87,7 @@
 - 版本 PATCH 0.3.0 → 0.3.1
 - `connect` 使用配置的 `pool_max_idle_per_host`；请求经 Semaphore 背压
 
-## [Unreleased]
+## [0.3.0] — 2026-07-21
 
 ### Added
 
