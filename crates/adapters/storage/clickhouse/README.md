@@ -49,20 +49,37 @@ pool.close().await?;
 
 ## 测试
 
+### 离线测试（无需 ClickHouse）
+
 ```bash
-cargo test -p clickhousex
-cargo test -p clickhousex --features scaffold
-# live（需本机 ClickHouse + 密码）
-export FOUNDATIONX_CLICKHOUSEX_PASSWORD='***'
-cargo test -p clickhousex --test live_smoke -- --ignored --nocapture
+cargo test -p clickhousex                         # 29 lib 单元（默认 feature）
+cargo test -p clickhousex --features scaffold      # 32 lib 单元（含 3 adapter）
+cargo test -p clickhousex --doc                    # 5 doc tests
+```
+
+### 集成测试（需本机 ClickHouse :8123）
+
+| 测试文件 | 命令 | 测试数 |
+|----------|------|--------|
+| `schema_integrity.rs` | `cargo test -p clickhousex --test schema_integrity -- --test-threads=1` | 29 |
+| `security_failures.rs` | `cargo test -p clickhousex --test security_failures` | 3 |
+| `https_conformance.rs` | `cargo test -p clickhousex --test https_conformance` | 1（`#[ignore]`） |
+| `live_smoke.rs` | `cargo test -p clickhousex --test live_smoke -- --ignored` | 2（`#[ignore]`） |
+
+### 全量运行
+
+```bash
+# 全部 69 项测试
+cargo test -p clickhousex --all-targets -- --test-threads=1
+
+# HTTPS conformance 实验
 node scripts/clickhouse-https-conformance.mjs
 ```
 
 ## Bench
 
 ```bash
-cargo run -p clickhousex --bench hot_path -- --quick
-FOUNDATIONX_CLICKHOUSEX_PASSWORD='***' cargo run -p clickhousex --bench hot_path -- --live --quick
+cargo bench -p clickhousex --bench hot_path
 ```
 
 文档：[docs/usage.md](docs/usage.md) · [docs/config.md](docs/config.md) · [docs/operations.md](docs/operations.md)
