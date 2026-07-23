@@ -12,8 +12,10 @@ use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use bytes::Bytes;
+use contracts::EventBus;
+use kafkax::selfcheck::{CheckLevel, CheckStatus, KafkaSelfCheckConfig, KafkaValidator};
 use kafkax::{
-    AtLeastOnceConsumer, ConsumerConfig, KafkaConfig, KafkaPool, MemoryOffsetStore,
+    AtLeastOnceConsumer, ConsumerConfig, KafkaConfig, KafkaEventBus, KafkaPool, MemoryOffsetStore,
     OffsetCommitStore, encode_bus_id,
 };
 use kernel::ErrorKind;
@@ -260,6 +262,122 @@ async fn observability_stats_increment_on_publish() {
     assert!(health.ready, "{}", health.detail);
     let _ = pool.close(Duration::from_secs(3)).await;
     assert!(pool.stats().closed);
+}
+
+/// §7 关闭竞态：在途 produce 应走 cancel/timeout 计数（与 record_publish_* 同源）。
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+#[ignore = "需要 Kafka；kafka-prod-matrix.mjs"]
+async fn stats_cancel_or_timeout_increment_on_close_during_publish() {
+    let pool = Arc::new(pool().await);
+    let topic = format!("infra-prod-stats-cancel-{}", unique_suffix());
+    pool.ensure_topic(&topic, 1, 1).await.expect("topic");
+    tokio::time::sleep(Duration::from_millis(200)).await;
+
+    let before = pool.stats();
+    let pool_c = Arc::clone(&pool);
+    let closer = tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(20)).await;
+        let _ = pool_c.close(Duration::from_secs(3)).await;
+    });
+
+    let mut handles = Vec::new();
+    for i in 0..32 {
+        let p = Arc::clone(&pool);
+        let t = topic.clone();
+        handles.push(tokio::spawn(async move {
+            p.producer().publish(&t, Bytes::from(format!("c-{i}"))).await
+        }));
+    }
+    for h in handles {
+        let _ = h.await;
+    }
+    let _ = closer.await;
+    let after = pool.stats();
+    assert!(after.closed, "pool 应已关闭");
+    let progressed = after.published > before.published
+        || after.publish_cancelled > before.publish_cancelled
+        || after.publish_timeouts > before.publish_timeouts
+        || after.publish_failed > before.publish_failed;
+    assert!(
+        progressed,
+        "关闭竞态应推进 published/cancelled/timeouts/failed 之一: before={before:?} after={after:?}"
+    );
+}
+
+/// EventBus::with_group 真实 publish/subscribe 路径。
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[ignore = "需要 Kafka；kafka-prod-matrix.mjs"]
+async fn event_bus_with_group_publish_subscribe() {
+    let pool = pool().await;
+    let topic = format!("infra-prod-bus-g-{}", unique_suffix());
+    pool.ensure_topic(&topic, 1, 1).await.expect("topic");
+    tokio::time::sleep(Duration::from_millis(200)).await;
+
+    let bus = KafkaEventBus::with_group(pool.clone(), format!("prod-g-{}", unique_suffix()));
+    bus.publish(&topic, Bytes::from_static(b"with-group-payload")).await.expect("pub");
+
+    // 直接 consumer 从最新前一条读回
+    let mut c = pool
+        .consumer(ConsumerConfig::assign(&topic, 0, format!("cg-{}", unique_suffix())))
+        .await
+        .expect("c");
+    let deadline = Instant::now() + Duration::from_secs(15);
+    let mut got = None;
+    while Instant::now() < deadline {
+        if let Ok(Some(m)) = c.recv_timeout(Duration::from_secs(1)).await {
+            if m.payload.as_ref() == b"with-group-payload" {
+                got = Some(m);
+                break;
+            }
+        }
+    }
+    assert!(got.is_some(), "with_group EventBus publish 应可被消费");
+    let _ = pool.close(Duration::from_secs(3)).await;
+}
+
+/// ALO nack / drop_pending / is_terminated 在真实 consumer 上的行为。
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[ignore = "需要 Kafka；kafka-prod-matrix.mjs"]
+async fn alo_nack_and_drop_pending_on_live_consumer() {
+    let pool = pool().await;
+    let topic = format!("infra-prod-alo-gate-{}", unique_suffix());
+    pool.ensure_topic(&topic, 1, 1).await.expect("topic");
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let d = pool.producer().publish(&topic, Bytes::from_static(b"alo-gate")).await.expect("p");
+
+    let store = MemoryOffsetStore::new().shared();
+    let mut c = AtLeastOnceConsumer::connect(
+        pool.clone(),
+        ConsumerConfig::assign(&topic, 0, "alo-g").with_start_offset(d.offset),
+        Arc::clone(&store) as Arc<dyn OffsetCommitStore>,
+    )
+    .await
+    .expect("alo");
+    let m = c.recv_timeout(Duration::from_secs(10)).await.expect("r").expect("msg");
+    assert_eq!(m.payload.as_ref(), b"alo-gate");
+    c.nack_keep_pending();
+    assert!(!c.is_terminated());
+    assert_eq!(c.pending().map(|x| x.offset), Some(m.offset));
+    c.drop_pending_unacked();
+    assert!(c.is_terminated());
+    let err = c.recv_timeout(Duration::from_millis(50)).await.expect_err("term");
+    assert_eq!(err.kind(), ErrorKind::Cancelled);
+    let _ = pool.close(Duration::from_secs(3)).await;
+}
+
+/// KafkaValidator::with_config 真实 skip 行为。
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[ignore = "需要 Kafka；kafka-prod-matrix.mjs"]
+async fn selfcheck_with_config_skips_metadata() {
+    let pool = pool().await;
+    let mut sc = KafkaSelfCheckConfig::default();
+    sc.skip.insert("kafka.basic.metadata".into());
+    let v = KafkaValidator::new(pool.clone()).with_config(sc);
+    assert!(v.config().is_skipped("kafka.basic.metadata"));
+    let report = v.run(CheckLevel::Basic).await;
+    let meta = report.items.iter().find(|i| i.id == "kafka.basic.metadata").expect("meta");
+    assert_eq!(meta.status, CheckStatus::Skipped, "{meta:?}");
+    let _ = pool.close(Duration::from_secs(3)).await;
 }
 
 /// §2 可选短 soak：受 `KAFKAX_SOAK_SECONDS` 控制（默认 0 跳过）。

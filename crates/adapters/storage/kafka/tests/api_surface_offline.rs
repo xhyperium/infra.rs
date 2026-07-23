@@ -11,11 +11,10 @@ use kafkax::selfcheck::{
     CheckLevel, CheckStatus, KafkaSelfCheckConfig, KafkaValidator, now_rfc3339,
 };
 use kafkax::{
-    AtLeastOnceConsumer, ConsumerConfig, DEFAULT_BROKERS, DEFAULT_SASL_MECHANISM, Delivery,
-    FileOffsetStore, KafkaAtLeastOnceBus, KafkaConfig, KafkaConfigBuilder, KafkaEventBus,
-    KafkaHealth, KafkaMessage, KafkaPool, KafkaPoolStats, MemoryOffsetStore, OffsetCommitStore,
-    ProduceThenCheckpointCoordinator, PublishRecord, encode_bus_id, parse_bus_id,
-    partition_for_key, resolve_start_offset,
+    ConsumerConfig, DEFAULT_BROKERS, DEFAULT_SASL_MECHANISM, Delivery, FileOffsetStore,
+    KafkaConfig, KafkaConfigBuilder, KafkaHealth, KafkaMessage, KafkaPool, KafkaPoolStats,
+    MemoryOffsetStore, OffsetCommitStore, ProduceThenCheckpointCoordinator, PublishRecord,
+    encode_bus_id, parse_bus_id, partition_for_key, resolve_start_offset,
 };
 use kernel::ErrorKind;
 
@@ -104,6 +103,7 @@ async fn offset_store_and_alo_helpers_on_data_dir() {
     let file = FileOffsetStore::new(&path);
     file.commit("t", 0, 5).await.expect("file commit");
     assert_eq!(file.committed("t", 0).await.expect("get"), Some(6));
+    assert_eq!(file.path(), path.as_path());
 
     let mem = MemoryOffsetStore::new().shared();
     mem.commit("t", 1, 2).await.expect("mem");
@@ -115,8 +115,11 @@ async fn offset_store_and_alo_helpers_on_data_dir() {
     let cfg = ConsumerConfig::assign("topic", 0, "g").with_start_offset(3);
     assert_eq!(cfg.start_offset, Some(3));
     assert_eq!(cfg.partition, 0);
+    let sub = ConsumerConfig::subscribe("t2", "g2");
+    assert_eq!(sub.partition, 0);
+    assert!(sub.from_beginning);
 
-    // 类型锚点：ALO bus 可构造（不连 broker）
+    // connect 失败路径：真实 shipped 入口
     let refused = KafkaConfigBuilder::new()
         .brokers("127.0.0.1:1")
         .connect_timeout(Duration::from_millis(80))
@@ -124,7 +127,6 @@ async fn offset_store_and_alo_helpers_on_data_dir() {
         .delivery_timeout(Duration::from_millis(80))
         .build()
         .expect("cfg");
-    // connect 失败路径：真实 shipped 入口
     let err = match KafkaPool::connect(refused).await {
         Ok(_) => panic!("must fail"),
         Err(e) => e,
@@ -133,12 +135,6 @@ async fn offset_store_and_alo_helpers_on_data_dir() {
         err.kind(),
         ErrorKind::Unavailable | ErrorKind::DeadlineExceeded | ErrorKind::Transient
     ));
-
-    // EventBus / ALO 类型存在性 + 构造需要 pool；用 connect_from_env 可能连上，
-    // 离线只测类型名与 ConsumerConfig。
-    let _ = std::any::type_name::<KafkaEventBus>();
-    let _ = std::any::type_name::<KafkaAtLeastOnceBus>();
-    let _ = std::any::type_name::<AtLeastOnceConsumer>();
 
     let _ = std::fs::remove_dir_all(&dir);
 }
