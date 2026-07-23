@@ -48,6 +48,104 @@ pub struct KafkaConfig {
     pub event_bus_group_prefix: String,
 }
 
+/// [`KafkaConfig`] 的链式构建器（校验在 [`KafkaConfigBuilder::build`]）。
+#[derive(Clone, Debug, Default)]
+pub struct KafkaConfigBuilder {
+    inner: KafkaConfig,
+}
+
+impl KafkaConfigBuilder {
+    /// 从默认值开始。
+    #[must_use]
+    pub fn new() -> Self {
+        Self { inner: KafkaConfig::default() }
+    }
+
+    /// bootstrap.servers。
+    #[must_use]
+    pub fn brokers(mut self, brokers: impl Into<String>) -> Self {
+        self.inner.brokers = brokers.into();
+        self
+    }
+
+    /// client.id。
+    #[must_use]
+    pub fn client_id(mut self, client_id: impl Into<String>) -> Self {
+        self.inner.client_id = client_id.into();
+        self
+    }
+
+    /// 启用 SASL/PLAIN 并设置凭据。
+    #[must_use]
+    pub fn sasl_plain(mut self, username: impl Into<String>, password: impl Into<String>) -> Self {
+        self.inner.sasl_mechanism = Some(DEFAULT_SASL_MECHANISM.to_string());
+        self.inner.sasl_username = Some(username.into());
+        self.inner.sasl_password = Some(password.into());
+        self
+    }
+
+    /// 关闭 SASL。
+    #[must_use]
+    pub fn no_sasl(mut self) -> Self {
+        self.inner.sasl_mechanism = None;
+        self.inner.sasl_username = None;
+        self.inner.sasl_password = None;
+        self
+    }
+
+    /// 是否启用 TLS。
+    #[must_use]
+    pub fn tls(mut self, enable: bool) -> Self {
+        self.inner.tls = enable;
+        self
+    }
+
+    /// 追加 PEM CA 文件路径（同时要求 TLS）。
+    #[must_use]
+    pub fn tls_ca_file(mut self, path: impl Into<PathBuf>) -> Self {
+        self.inner.tls_ca_file = Some(path.into());
+        self
+    }
+
+    /// 投递等待超时。
+    #[must_use]
+    pub fn delivery_timeout(mut self, timeout: Duration) -> Self {
+        self.inner.delivery_timeout = timeout;
+        self
+    }
+
+    /// 建连截止时间。
+    #[must_use]
+    pub fn connect_timeout(mut self, timeout: Duration) -> Self {
+        self.inner.connect_timeout = timeout;
+        self
+    }
+
+    /// 元数据/管理操作截止时间。
+    #[must_use]
+    pub fn operation_timeout(mut self, timeout: Duration) -> Self {
+        self.inner.operation_timeout = timeout;
+        self
+    }
+
+    /// EventBus 匿名 group 前缀。
+    #[must_use]
+    pub fn event_bus_group_prefix(mut self, prefix: impl Into<String>) -> Self {
+        self.inner.event_bus_group_prefix = prefix.into();
+        self
+    }
+
+    /// 校验并产出配置。
+    ///
+    /// # Errors
+    ///
+    /// 与 [`KafkaConfig::validate`] 相同。
+    pub fn build(self) -> XResult<KafkaConfig> {
+        self.inner.validate()?;
+        Ok(self.inner)
+    }
+}
+
 impl Default for KafkaConfig {
     fn default() -> Self {
         Self {
@@ -349,5 +447,26 @@ mod tests {
         let empty_client = KafkaConfig { client_id: "  ".into(), ..KafkaConfig::default() };
         let client_error = empty_client.validate().expect_err("空 client_id 必须失败");
         assert_eq!(client_error.kind(), kernel::ErrorKind::Invalid);
+    }
+
+    #[test]
+    fn builder_builds_valid_loopback_config_and_rejects_remote_plaintext() {
+        let ok = KafkaConfigBuilder::new()
+            .brokers("127.0.0.1:9092")
+            .client_id("kafkax-builder")
+            .sasl_plain("user", "secret")
+            .tls(false)
+            .connect_timeout(Duration::from_secs(2))
+            .build()
+            .expect("loopback + PLAIN 应通过");
+        assert_eq!(ok.client_id, "kafkax-builder");
+        assert_eq!(ok.security_protocol(), "SASL_PLAINTEXT");
+
+        let err = KafkaConfigBuilder::new()
+            .brokers("broker.example.com:9092")
+            .tls(false)
+            .build()
+            .expect_err("远程明文必须 fail-closed");
+        assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
     }
 }

@@ -1,4 +1,4 @@
-# Gap Matrix — .cargo/draft → infra.rs (2026-07-22)
+# Gap Matrix — .cargo/draft → infra.rs (2026-07-23)
 
 > **权威快照**：storage×7 OBJECTIVE DEFER 已闭合（生产默认就绪）。  
 > package stable / crates.io **仍未**宣称。
@@ -7,7 +7,7 @@
 |--------|--------------|---------|----------------------------------------|
 | redisx | Pool+KV+timeout+live | **done** + Standalone/PubSub 安全边界 (`0.3.3`) | Cluster/Sentinel/TLS live / Streams full / package stable |
 | postgresx | Pool+query+tx+TLS | **done** + Repository + remote Require 实现 + deadline/隔离 + dev live 9/9 (`0.3.6`) | 远程 TLS 握手 live / 自定义 CA/mTLS / COPY / migrations / read-replica / package stable |
-| kafkax | Producer pool + EventBus | **done** + checkpoint/ALO + TLS/CA/PLAIN 证据 (`0.3.2`) | SCRAM/OAuth/mTLS / group/rebalance / native EOS / DLQ |
+| kafkax | Producer pool + EventBus | **done** + checkpoint/ALO + TLS/CA/PLAIN + 真 secrets live + 十轮矩阵 (`0.3.4`) | SCRAM/OAuth/mTLS / group/rebalance / native EOS / DLQ / Part2 OOS |
 | natsx | Core NATS EventBus | **done** + JetStream durable pull/显式确认 + 同客户端重启恢复 3/3 (`0.3.2`) | 断线窗口无回放 / NKey / Cluster/HA / 自动 DLQ / KV·Object 全量 |
 | ossx | ObjectStore put/get | **done** + 有界 multipart/retry/orphan 补偿 (`0.3.2`) | lifecycle / STS / TB 流式对象 |
 | clickhousex | Analytics insert+select | **done** + HTTPS/PEM CA + insert_batch + 有界池 (`0.3.2`) | 真实集群 TLS / mTLS / native 9000 / cluster 运维 |

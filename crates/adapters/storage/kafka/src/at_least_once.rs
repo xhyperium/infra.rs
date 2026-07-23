@@ -228,6 +228,7 @@ mod tests {
             offset: 3,
             payload: Bytes::from_static(b"x"),
             key: None,
+            timestamp: None,
         };
         // 未调用 store.commit
         assert!(store.committed("t", 0).await.expect("c").is_none());
@@ -249,6 +250,7 @@ mod tests {
             offset: 1,
             payload: Bytes::from_static(b"a"),
             key: None,
+            timestamp: None,
         };
         // recv 语义：放入 pending
         let mut pending = Some(msg);

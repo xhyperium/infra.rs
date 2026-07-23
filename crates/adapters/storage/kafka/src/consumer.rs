@@ -115,6 +115,7 @@ impl KafkaConsumer {
                             offset: record_offset.offset,
                             key: record.key.map(Bytes::from),
                             payload: Bytes::from(record.value.unwrap_or_default()),
+                            timestamp: Some(record.timestamp),
                         })
                     }
                     Err(error) => Err(map_kafka_err("kafkax fetch", error)),

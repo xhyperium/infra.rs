@@ -6,6 +6,8 @@
 
 通过 `from_env()` / `connect_from_env()` 加载。缺省字段见 crate `config` 模块文档。
 
+也可使用 `KafkaConfigBuilder` 链式构建（`build()` 调用 `validate`）。
+
 ## 安全
 
 - SASL 用户名、密码 / AccessKey **不得**写入源码、日志、Debug 明文

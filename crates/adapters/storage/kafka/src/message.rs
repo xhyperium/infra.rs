@@ -1,6 +1,7 @@
 //! Kafka 消息与 `BusMessage.id` 编码。
 
 use bytes::Bytes;
+use chrono::{DateTime, Utc};
 
 /// 编码 `BusMessage.id`：`topic/partition/offset`。
 #[must_use]
@@ -44,6 +45,8 @@ pub struct KafkaMessage {
     pub payload: Bytes,
     /// 可选 key。
     pub key: Option<Bytes>,
+    /// 记录时间戳（broker/record 侧；无 headers 公共面）。
+    pub timestamp: Option<DateTime<Utc>>,
 }
 
 impl KafkaMessage {
@@ -75,5 +78,27 @@ mod tests {
         assert_eq!(t, "a/b");
         assert_eq!(p, 0);
         assert_eq!(o, 1);
+    }
+
+    #[test]
+    fn parse_bus_id_rejects_malformed() {
+        assert!(parse_bus_id("").is_none());
+        assert!(parse_bus_id("onlytopic").is_none());
+        assert!(parse_bus_id("/0/1").is_none());
+        assert!(parse_bus_id("t/x/1").is_none());
+    }
+
+    #[test]
+    fn bus_id_method_matches_encoder() {
+        let msg = KafkaMessage {
+            topic: "t".into(),
+            partition: 2,
+            offset: 9,
+            payload: Bytes::from_static(b"p"),
+            key: Some(Bytes::from_static(b"k")),
+            timestamp: None,
+        };
+        assert_eq!(msg.bus_id(), encode_bus_id("t", 2, 9));
+        assert_eq!(msg.key.as_ref().map(|k| k.as_ref()), Some(&b"k"[..]));
     }
 }

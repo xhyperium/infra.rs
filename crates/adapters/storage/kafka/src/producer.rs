@@ -31,8 +31,9 @@ impl KafkaProducer {
         payload: Bytes,
     ) -> XResult<Delivery> {
         self.pool.ensure_open()?;
-        if topic.trim().is_empty() {
-            return Err(XError::invalid("kafkax: topic 不能为空"));
+        validate_publish_topic(topic)?;
+        if partition < 0 {
+            return Err(XError::invalid("kafkax: partition 不能为负"));
         }
         let client = self.pool.partition_client(topic, partition).await?;
         let _operation = self.pool.start_operation()?;
@@ -68,5 +69,31 @@ impl KafkaProducer {
                 Err(XError::deadline_exceeded("kafkax produce 超时").with_source(error))
             }
         }
+    }
+}
+
+/// 在 broker I/O 前校验 publish topic 形状。
+fn validate_publish_topic(topic: &str) -> XResult<()> {
+    if topic.trim().is_empty() {
+        return Err(XError::invalid("kafkax: topic 不能为空"));
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use kernel::ErrorKind;
+
+    #[test]
+    fn empty_topic_rejected_before_broker_io() {
+        let error = validate_publish_topic("  ").expect_err("空 topic 必须失败");
+        assert_eq!(error.kind(), ErrorKind::Invalid);
+        assert!(error.context().contains("topic"));
+    }
+
+    #[test]
+    fn non_empty_topic_accepted() {
+        validate_publish_topic("orders").expect("合法 topic");
     }
 }
