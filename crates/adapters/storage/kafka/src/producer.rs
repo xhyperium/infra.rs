@@ -127,4 +127,3 @@ mod tests {
         validate_publish_topic("ok").expect("ok");
     }
 }
-
