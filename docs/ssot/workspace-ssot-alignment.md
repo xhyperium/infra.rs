@@ -31,7 +31,7 @@
 | `ossx` | `crates/adapters/storage/oss/` | `ossx` | **0.3.2** ObjectStore + 有界 multipart/retry/orphan 补偿 + dev live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `postgresx` | `crates/adapters/storage/postgres/` | `postgresx` | **0.3.3** Pool/Tx/Repository + TLS 实现；deadline/隔离实验证据 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `redisx` | `crates/adapters/storage/redis/` | `redisx` | **0.3.3** Standalone + 安全 PubSub 边界；Cluster/Sentinel/TLS live OPEN | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
-| `taosx` | `crates/adapters/storage/taos/` | `taosx` | **0.3.2** REST/NCHAR Decimal + WS 探测 + 资源上界 + live | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
+| `taosx` | `crates/adapters/storage/taos/` | `taosx` | **0.3.4** REST/NCHAR Decimal + WS 探测 + 资源上界 + 真实 dev live + 十轮矩阵；package stable NO-GO | [taosx-ssot-alignment.md](./taosx-ssot-alignment.md) · [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `goalctl` | `tools/goalctl/` | `goalctl` | 最小 Goal→Contract CLI（doctor/validate/compile）· #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | `verifyctl` | `tools/verifyctl/` | `verifyctl` | 最小 plan/execute/report CLI · #188 | [tools-ssot-alignment.md](./tools-ssot-alignment.md) |
 | `transportx` | `crates/transport/` | `transportx` | L1 HTTP/WS 传输 | [transport-ssot-alignment.md](./transport-ssot-alignment.md) |
@@ -203,6 +203,7 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 | 2026-07-22 | **#188–#191** draft 生产落地：storage×7 默认客户端 + live/bench；goalctl/verifyctl member；`build-foundationx-env.mjs`；members 表与验证入口同步 |
 | 2026-07-22 | 第 1 轮冻结 24 package/current-state：evidence canonical 顶层；configx/schedulex additive 面；exchange 交易 NO-GO |
 | 2026-07-23 | 第 4 轮深化：bootstrap 正式 KV/EventBus 组合、Kafka TLS/PLAIN、Postgres deadline/隔离、ClickHouse HTTPS 客户端证据；NATS 同客户端重启恢复 3/3，Core 丢消息窗口与 Cluster/HA 保持 NO-GO |
+| 2026-07-23 | **taosx 0.3.4**（#284）：十轮 draft 审查 + 真实 dev live + 有界 bench；members 表版本对齐；SSOT 路径保持 `taos/`（非 `taosx/` 分叉）；package stable NO-GO |
 
 ## 七包双栏（2026-07-22）
 
