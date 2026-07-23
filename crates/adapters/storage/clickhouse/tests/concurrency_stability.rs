@@ -60,6 +60,7 @@ fn make_rows(start: u32, count: u32) -> Vec<Value> {
 
 // ── 测试 1：10 并发任务各写 20 行，最终 count=200 ──────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test(flavor = "multi_thread")]
 async fn concurrent_writes_ten_tasks_insert_correct_row_count() {
     let pool = setup_concurrent_db().await;
@@ -91,6 +92,7 @@ async fn concurrent_writes_ten_tasks_insert_correct_row_count() {
 
 // ─ 测试 2：5 写 + 5 读混合并发，最终 count=100 ──────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test(flavor = "multi_thread")]
 async fn concurrent_read_write_mixed_eventual_consistency() {
     let pool = setup_concurrent_db().await;
@@ -139,6 +141,7 @@ async fn concurrent_read_write_mixed_eventual_consistency() {
 
 // ── 测试 3：max_in_flight=1 时 5 并发，至少 1 成功，其余超时 ──
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test(flavor = "multi_thread")]
 async fn pool_limit_max_in_flight_one_with_five_concurrent_requests() {
     let mut cfg = default_config();
@@ -190,6 +193,7 @@ async fn pool_limit_max_in_flight_one_with_five_concurrent_requests() {
 
 // ── 测试 4：30s 持续操作，无连接泄露 ────────────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test(flavor = "multi_thread")]
 async fn long_running_stability_thirty_seconds_no_leak() {
     let pool = setup_concurrent_db().await;
@@ -231,6 +235,7 @@ async fn long_running_stability_thirty_seconds_no_leak() {
 
 // ── 测试 5：max_in_flight 不同值下的背压行为 ──────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test(flavor = "multi_thread")]
 async fn backpressure_behavior_with_different_max_in_flight() {
     for &max_in_flight in &[2usize, 4] {
@@ -287,6 +292,7 @@ async fn backpressure_behavior_with_different_max_in_flight() {
 
 // ── 测试 6：100 次操作后 in_flight 归零 ─────────────────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test(flavor = "multi_thread")]
 async fn connection_leak_detection_pool_stats_sane_after_operations() {
     let pool = setup_concurrent_db().await;
@@ -312,6 +318,7 @@ async fn connection_leak_detection_pool_stats_sane_after_operations() {
 
 // ── 测试 7：close 后 10 并发全部返回 Unavailable ──────────────
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test(flavor = "multi_thread")]
 async fn closed_pool_all_concurrent_requests_return_unavailable() {
     let pool = setup_concurrent_db().await;
