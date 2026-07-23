@@ -22,7 +22,9 @@ import { spawnSync } from "child_process";
 import {
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
+  statSync,
   writeFileSync,
 } from "fs";
 import { dirname, join, relative } from "path";
@@ -39,9 +41,15 @@ const DEFAULT_PACKAGES = [
   "decimalx",
   "canonical",
   "contracts",
-  "schedulex",
   "contract-testkit",
+  "schedulex",
+  "transportx",
 ];
+
+/** cargo-public-api 不展示 doc(hidden)；对要求隐藏驱动类型的 transportx 补源码门禁。 */
+const HIDDEN_PUBLIC_SOURCE_GUARDS = new Map([
+  ["transportx", join(ROOT, "crates", "transport", "src")],
+]);
 
 const args = process.argv.slice(2);
 
@@ -116,6 +124,47 @@ function toolAvailable() {
     cwd: ROOT,
   });
   return r.status === 0;
+}
+
+function rustFilesUnder(path) {
+  const files = [];
+  for (const entry of readdirSync(path, { withFileTypes: true })) {
+    const child = join(path, entry.name);
+    if (entry.isDirectory()) files.push(...rustFilesUnder(child));
+    else if (entry.isFile() && entry.name.endsWith(".rs")) files.push(child);
+  }
+  return files;
+}
+
+/**
+ * 拒绝 `#[doc(hidden)] pub ...`：隐藏文档不等于非公开 API，且 baseline 工具会漏掉它。
+ */
+function hiddenPublicSourceViolations(packages) {
+  const violations = [];
+  for (const pkg of packages) {
+    const sourceRoot = HIDDEN_PUBLIC_SOURCE_GUARDS.get(pkg);
+    if (!sourceRoot || !existsSync(sourceRoot) || !statSync(sourceRoot).isDirectory()) continue;
+    for (const file of rustFilesUnder(sourceRoot)) {
+      const lines = readFileSync(file, "utf8").split(/\r?\n/);
+      let hiddenAt = null;
+      for (let index = 0; index < lines.length; index++) {
+        const trimmed = lines[index].trim();
+        if (trimmed === "#[doc(hidden)]") {
+          hiddenAt = index + 1;
+          continue;
+        }
+        if (hiddenAt === null || trimmed === "" || trimmed.startsWith("///")) continue;
+        if (trimmed.startsWith("#[")) continue;
+        if (/^pub(?:\([^)]*\))?\s+/.test(trimmed)) {
+          violations.push(
+            `${relative(ROOT, file)}:${hiddenAt}: #[doc(hidden)] 不能掩盖公开项（声明位于第 ${index + 1} 行）`,
+          );
+        }
+        hiddenAt = null;
+      }
+    }
+  }
+  return violations;
 }
 
 function capturePublicApi(pkg) {
@@ -246,6 +295,13 @@ function main() {
       console.log(`${p}\t${rel}\t${existsSync(baselinePath(p)) ? "ok" : "MISSING"}`);
     }
     return 0;
+  }
+
+  const hiddenPublicViolations = hiddenPublicSourceViolations(opts.packages);
+  if (hiddenPublicViolations.length > 0) {
+    console.error("public-api source guard: FAIL");
+    for (const violation of hiddenPublicViolations) console.error(`- ${violation}`);
+    return 1;
   }
 
   if (!toolAvailable()) {

@@ -478,7 +478,7 @@ checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
 
 [[package]]
 name = "contract-testkit"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "async-trait",
  "bytes",
@@ -493,7 +493,7 @@ dependencies = [
 
 [[package]]
 name = "contracts"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "async-trait",
  "binancex",
@@ -2508,7 +2508,7 @@ dependencies = [
 
 [[package]]
 name = "schedulex"
-version = "0.1.3"
+version = "0.1.4"
 
 [[package]]
 name = "scoped-tls"

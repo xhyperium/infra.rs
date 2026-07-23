@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-07-23
+
+### Changed
+
+- `job_runner_public` 增补 MinuteMatch u64 取模回归与中文 expect 文案。
+
 ## [0.1.3] - 2026-07-23
 
 ### Fixed

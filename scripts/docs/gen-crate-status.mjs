@@ -221,6 +221,7 @@ function ssotDocFor(cratePath) {
 function layerOf(cratePath) {
   if (cratePath === "crates/kernel") return "L0";
   if (cratePath === "crates/testkit") return "T0";
+  if (cratePath.startsWith("crates/test-support/")) return "T0";
   if (cratePath.startsWith("crates/types/")) return "types";
   if (cratePath.startsWith("crates/adapters/")) return "adapter";
   if (cratePath === "crates/contracts") return "contracts";

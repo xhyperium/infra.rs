@@ -104,6 +104,7 @@ test("仅 all-features 激活的生产泄漏必须失败", () => {
   assert.equal(result.ok, false);
   assert.equal(result.findings.length, 1);
   assert.equal(result.findings[0].activation, "all-features-only");
+  assert.deepEqual(result.findings[0].featurePath, ["--all-features"]);
   assert.ok(result.findings[0].codes.includes("TESTKIT-GRAPH-005"));
 });
 
@@ -163,6 +164,7 @@ test("真实仓库 CLI 输出结构化 PASS", () => {
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   const output = JSON.parse(result.stdout);
   assert.equal(output.ok, true);
+  assert.deepEqual(output.checkedActivations, ["default", "all-features"]);
   assert.deepEqual(output.findings, []);
 });
 

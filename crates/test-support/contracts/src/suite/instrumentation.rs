@@ -13,13 +13,14 @@ const C: &str = "Instrumentation";
 ///
 /// # Errors
 ///
-/// 当前 smoke 只返回成功；保留 `ContractResult` 以维持 suite 接口一致性。
+/// 当前 smoke 只返回成功；保留 `ContractResult` 以维持兼容接口。该函数不计入
+/// broken implementation kill rate，行为合同只由 [`assert_instrumentation_observed`] 验证。
 pub fn assert_instrumentation(instr: &dyn Instrumentation) -> ContractResult {
     instr.record_retry("place", 1);
     instr.record_circuit_open("place");
     instr.record_circuit_close("place");
-    // 无返回值合同：仅要求可调用。
-    ensure(C, "callable", true, "")
+    // 无返回值合同：仅要求可调用，不伪造永真断言。
+    Ok(())
 }
 
 /// 断言三类 instrumentation 调用能被调用方提供的观察函数看到。

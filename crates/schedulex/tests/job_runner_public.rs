@@ -1,6 +1,6 @@
 //! `JobRunner` 公开 seam 的确定性与失败语义。
 
-use schedulex::{CronParsed, Job, JobRunner, MAX_ID_LEN, Schedule, ScheduleError};
+use schedulex::{CronParsed, Job, JobRunner, MAX_ID_LEN, Schedule, ScheduleError, cron_matches};
 use std::sync::{Arc, Mutex};
 
 #[test]
@@ -36,17 +36,17 @@ fn tick_runs_same_due_set_in_lexical_job_id_order() {
             runner
                 .add(
                     Job::new(id, move || {
-                        calls.lock().expect("calls lock").push(recorded_id.clone());
+                        calls.lock().expect("调用记录锁应可用").push(recorded_id.clone());
                         Ok(())
                     }),
                     Schedule::once(0),
                 )
-                .expect("valid job");
+                .expect("任务应合法");
         }
 
         assert_eq!(runner.tick(0).fired, 3);
         assert_eq!(
-            *calls.lock().expect("calls lock"),
+            *calls.lock().expect("调用记录锁应可用"),
             vec![format!("a-{round:02}"), format!("m-{round:02}"), format!("z-{round:02}"),]
         );
     }
@@ -59,7 +59,7 @@ fn list_meta_is_stable_in_lexical_job_id_order() {
         for prefix in ["z", "a", "m"] {
             runner
                 .add(Job::new(format!("{prefix}-{round:02}"), || Ok(())), Schedule::once(0))
-                .expect("valid job");
+                .expect("任务应合法");
         }
 
         let ids: Vec<String> =
@@ -81,17 +81,17 @@ fn regressed_logical_time_is_ignored_without_advancing_jobs() {
     runner
         .add(
             Job::new("late-registration", move || {
-                *recorded_calls.lock().expect("calls lock") += 1;
+                *recorded_calls.lock().expect("调用记录锁应可用") += 1;
                 Ok(())
             }),
             Schedule::once(50),
         )
-        .expect("valid job");
+        .expect("任务应合法");
 
     assert_eq!(runner.tick(99).fired, 0);
-    assert_eq!(*calls.lock().expect("calls lock"), 0);
+    assert_eq!(*calls.lock().expect("调用记录锁应可用"), 0);
     assert_eq!(runner.tick(100).fired, 1);
-    assert_eq!(*calls.lock().expect("calls lock"), 1);
+    assert_eq!(*calls.lock().expect("调用记录锁应可用"), 1);
 }
 
 #[test]
@@ -103,7 +103,7 @@ fn tick_error_order_matches_execution_order_and_other_jobs_continue() {
         runner
             .add(
                 Job::new(id, move || {
-                    calls.lock().expect("calls lock").push(id);
+                    calls.lock().expect("调用记录锁应可用").push(id);
                     if fails {
                         Err(ScheduleError::JobFailed(format!("{id} 失败")))
                     } else {
@@ -112,17 +112,17 @@ fn tick_error_order_matches_execution_order_and_other_jobs_continue() {
                 }),
                 Schedule::once(0),
             )
-            .expect("valid job");
+            .expect("任务应合法");
     }
 
     let result = runner.tick(0);
     assert_eq!(result.fired, 1);
     let error_ids: Vec<&str> = result.errors.iter().map(|(id, _)| id.as_str()).collect();
     assert_eq!(error_ids, ["a-fail", "z-fail"]);
-    assert_eq!(*calls.lock().expect("calls lock"), ["a-fail", "m-ok", "z-fail"]);
+    assert_eq!(*calls.lock().expect("调用记录锁应可用"), ["a-fail", "m-ok", "z-fail"]);
 
     assert_eq!(runner.tick(0).fired, 0);
-    assert_eq!(calls.lock().expect("calls lock").len(), 3);
+    assert_eq!(calls.lock().expect("调用记录锁应可用").len(), 3);
 }
 
 #[test]
@@ -133,19 +133,19 @@ fn fixed_delay_skips_missed_intervals_instead_of_replaying_them() {
     runner
         .add(
             Job::new("fixed", move || {
-                *recorded_calls.lock().expect("calls lock") += 1;
+                *recorded_calls.lock().expect("调用记录锁应可用") += 1;
                 Ok(())
             }),
-            Schedule::fixed_delay(10).expect("valid fixed delay"),
+            Schedule::fixed_delay(10).expect("固定间隔应合法"),
         )
-        .expect("valid job");
+        .expect("任务应合法");
 
     assert_eq!(runner.tick(0).fired, 1);
     assert_eq!(runner.tick(1_000).fired, 1);
-    assert_eq!(*calls.lock().expect("calls lock"), 2);
+    assert_eq!(*calls.lock().expect("调用记录锁应可用"), 2);
     assert_eq!(runner.tick(1_005).fired, 0);
     assert_eq!(runner.tick(1_010).fired, 1);
-    assert_eq!(*calls.lock().expect("calls lock"), 3);
+    assert_eq!(*calls.lock().expect("调用记录锁应可用"), 3);
 }
 
 #[test]
@@ -158,30 +158,30 @@ fn duplicate_job_id_replaces_callback_schedule_and_runtime_state() {
     runner
         .add(
             Job::new("replace", move || {
-                *recorded_old.lock().expect("old lock") += 1;
+                *recorded_old.lock().expect("原任务锁应可用") += 1;
                 Ok(())
             }),
             Schedule::once(0),
         )
-        .expect("valid old job");
+        .expect("原任务应合法");
     assert_eq!(runner.tick(0).fired, 1);
 
     let recorded_new = Arc::clone(&new_calls);
     runner
         .add(
             Job::new("replace", move || {
-                *recorded_new.lock().expect("new lock") += 1;
+                *recorded_new.lock().expect("新任务锁应可用") += 1;
                 Ok(())
             }),
             Schedule::once(10),
         )
-        .expect("valid replacement");
+        .expect("替换任务应合法");
 
     assert_eq!(runner.active_len(), 1);
     assert_eq!(runner.tick(9).fired, 0);
     assert_eq!(runner.tick(10).fired, 1);
-    assert_eq!(*old_calls.lock().expect("old lock"), 1);
-    assert_eq!(*new_calls.lock().expect("new lock"), 1);
+    assert_eq!(*old_calls.lock().expect("原任务锁应可用"), 1);
+    assert_eq!(*new_calls.lock().expect("新任务锁应可用"), 1);
 }
 
 #[test]
@@ -192,19 +192,19 @@ fn cancel_reports_entry_existence_and_keeps_it_removable() {
     runner
         .add(
             Job::new("cancelled", move || {
-                *recorded_calls.lock().expect("calls lock") += 1;
+                *recorded_calls.lock().expect("调用记录锁应可用") += 1;
                 Ok(())
             }),
             Schedule::once(0),
         )
-        .expect("valid job");
+        .expect("任务应合法");
 
     assert!(runner.cancel("cancelled"));
     assert!(runner.cancel("cancelled"));
     assert!(runner.contains("cancelled"));
     assert_eq!(runner.active_len(), 0);
     assert_eq!(runner.tick(0).fired, 0);
-    assert_eq!(*calls.lock().expect("calls lock"), 0);
+    assert_eq!(*calls.lock().expect("调用记录锁应可用"), 0);
     assert!(runner.remove("cancelled"));
     assert!(!runner.cancel("cancelled"));
 }
@@ -217,18 +217,18 @@ fn cron_every_ms_is_stateful_interval_and_skips_missed_runs() {
     runner
         .add(
             Job::new("interval", move || {
-                *recorded_calls.lock().expect("calls lock") += 1;
+                *recorded_calls.lock().expect("调用记录锁应可用") += 1;
                 Ok(())
             }),
-            Schedule::cron("every:10").expect("valid interval"),
+            Schedule::cron("every:10").expect("间隔表达式应合法"),
         )
-        .expect("valid job");
+        .expect("任务应合法");
 
     assert_eq!(runner.tick(7).fired, 1);
     assert_eq!(runner.tick(16).fired, 0);
     assert_eq!(runner.tick(17).fired, 1);
     assert_eq!(runner.tick(1_007).fired, 1);
-    assert_eq!(*calls.lock().expect("calls lock"), 3);
+    assert_eq!(*calls.lock().expect("调用记录锁应可用"), 3);
 }
 
 #[test]
@@ -239,19 +239,19 @@ fn cron_every_ms_error_and_regressed_tick_preserve_interval_baseline() {
     runner
         .add(
             Job::new("failing-interval", move || {
-                *recorded_calls.lock().expect("calls lock") += 1;
+                *recorded_calls.lock().expect("调用记录锁应可用") += 1;
                 Err(ScheduleError::JobFailed("预期失败".into()))
             }),
-            Schedule::cron("every:10").expect("valid interval"),
+            Schedule::cron("every:10").expect("间隔表达式应合法"),
         )
-        .expect("valid job");
+        .expect("任务应合法");
 
     assert_eq!(runner.tick(7).errors.len(), 1);
     assert!(runner.tick(6).errors.is_empty());
     assert!(runner.tick(8).errors.is_empty());
     assert!(runner.tick(16).errors.is_empty());
     assert_eq!(runner.tick(17).errors.len(), 1);
-    assert_eq!(*calls.lock().expect("calls lock"), 2);
+    assert_eq!(*calls.lock().expect("调用记录锁应可用"), 2);
 }
 
 #[test]
@@ -262,33 +262,80 @@ fn cron_uses_logical_time_and_fires_at_most_once_per_matching_minute() {
     runner
         .add(
             Job::new("cron", move || {
-                *recorded_calls.lock().expect("calls lock") += 1;
+                *recorded_calls.lock().expect("调用记录锁应可用") += 1;
                 Ok(())
             }),
-            Schedule::cron("*/5 * * * *").expect("valid cron"),
+            Schedule::cron("*/5 * * * *").expect("cron 表达式应合法"),
         )
-        .expect("valid job");
+        .expect("任务应合法");
 
     assert_eq!(runner.tick(0).fired, 1);
     assert_eq!(runner.tick(1).fired, 0);
     assert_eq!(runner.tick(5 * 60_000).fired, 1);
     assert_eq!(runner.tick(5 * 60_000 + 59_999).fired, 0);
     assert_eq!(runner.tick(6 * 60_000).fired, 0);
-    assert_eq!(*calls.lock().expect("calls lock"), 2);
+    assert_eq!(*calls.lock().expect("调用记录锁应可用"), 2);
 }
 
 #[test]
-fn job_panic_propagates_to_the_tick_caller() {
+fn cron_minute_match_keeps_u64_epoch_before_modulo() {
+    let beyond_u32_minutes = (u64::from(u32::MAX) + 1) * 60_000;
+    assert!(!cron_matches(
+        &CronParsed::MinuteMatch { every_n: None, exact: Some(0) },
+        beyond_u32_minutes
+    ));
+    assert!(cron_matches(
+        &CronParsed::MinuteMatch { every_n: None, exact: Some(16) },
+        beyond_u32_minutes
+    ));
+}
+
+#[test]
+fn job_panic_propagates_and_stops_later_jobs_in_the_same_tick() {
+    let calls = Arc::new(Mutex::new(Vec::new()));
     let mut runner = JobRunner::new();
+
+    let later_calls = Arc::clone(&calls);
     runner
         .add(
-            Job::new("panic", || -> Result<(), ScheduleError> { panic!("job panic") }),
+            Job::new("z-after", move || {
+                later_calls.lock().expect("调用记录锁应可用").push("z-after");
+                Ok(())
+            }),
             Schedule::once(0),
         )
-        .expect("valid job");
+        .expect("任务应合法");
 
-    let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| runner.tick(0)));
-    assert!(panic.is_err());
+    let panic_calls = Arc::clone(&calls);
+    runner
+        .add(
+            Job::new("m-panic", move || -> Result<(), ScheduleError> {
+                panic_calls.lock().expect("调用记录锁应可用").push("m-panic");
+                panic!("任务 panic")
+            }),
+            Schedule::once(0),
+        )
+        .expect("任务应合法");
+
+    let earlier_calls = Arc::clone(&calls);
+    runner
+        .add(
+            Job::new("a-before", move || {
+                earlier_calls.lock().expect("调用记录锁应可用").push("a-before");
+                Ok(())
+            }),
+            Schedule::once(0),
+        )
+        .expect("任务应合法");
+
+    let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| runner.tick(0)))
+        .expect_err("Job panic 必须传播给 tick 调用方");
+    assert_eq!(panic.downcast_ref::<&str>().copied(), Some("任务 panic"));
+    assert_eq!(
+        *calls.lock().expect("调用记录锁应可用"),
+        vec!["a-before", "m-panic"],
+        "同 tick 中词法顺序位于 panic 之后的 job 不得执行"
+    );
 }
 
 #[test]
@@ -305,10 +352,11 @@ fn schedule_validation_error_details_are_simplified_chinese() {
     ];
 
     for (result, expected) in cases {
-        let ScheduleError::InvalidSchedule(detail) = result.expect_err("must reject") else {
-            panic!("expected invalid schedule")
+        let ScheduleError::InvalidSchedule(detail) = result.expect_err("必须拒绝无效调度")
+        else {
+            panic!("应得到无效调度错误")
         };
-        assert!(detail.contains(expected), "detail={detail:?}, expected={expected:?}");
+        assert!(detail.contains(expected), "错误详情={detail:?}，期望包含={expected:?}");
     }
 }
 
@@ -344,26 +392,26 @@ fn failed_replacement_preserves_existing_job_and_runtime_state() {
     runner
         .add(
             Job::new("stable", move || {
-                *recorded_old.lock().expect("old lock") += 1;
+                *recorded_old.lock().expect("原任务锁应可用") += 1;
                 Ok(())
             })
             .with_name("原任务"),
-            Schedule::fixed_delay(10).expect("valid fixed delay"),
+            Schedule::fixed_delay(10).expect("固定间隔应合法"),
         )
-        .expect("valid job");
+        .expect("任务应合法");
     assert_eq!(runner.tick(0).fired, 1);
 
     let recorded_replacement = Arc::clone(&replacement_calls);
     let error = runner
         .add(
             Job::new("stable", move || {
-                *recorded_replacement.lock().expect("replacement lock") += 1;
+                *recorded_replacement.lock().expect("替换任务锁应可用") += 1;
                 Ok(())
             })
             .with_name("无效替换"),
             Schedule::FixedDelay { every_ms: 0, first_at_ms: 0 },
         )
-        .expect_err("invalid replacement must fail");
+        .expect_err("无效替换必须失败");
     assert!(matches!(error, ScheduleError::InvalidSchedule(_)));
 
     let metadata = runner.list_meta();
@@ -371,14 +419,14 @@ fn failed_replacement_preserves_existing_job_and_runtime_state() {
     assert_eq!(metadata[0].name.as_deref(), Some("原任务"));
     assert_eq!(runner.tick(9).fired, 0);
     assert_eq!(runner.tick(10).fired, 1);
-    assert_eq!(*old_calls.lock().expect("old lock"), 2);
-    assert_eq!(*replacement_calls.lock().expect("replacement lock"), 0);
+    assert_eq!(*old_calls.lock().expect("原任务锁应可用"), 2);
+    assert_eq!(*replacement_calls.lock().expect("替换任务锁应可用"), 0);
 }
 
 #[test]
 fn failed_replacement_preserves_existing_cancellation_state() {
     let mut runner = JobRunner::new();
-    runner.add(Job::new("cancelled", || Ok(())), Schedule::once(0)).expect("valid job");
+    runner.add(Job::new("cancelled", || Ok(())), Schedule::once(0)).expect("任务应合法");
     assert!(runner.cancel("cancelled"));
 
     runner
@@ -389,7 +437,7 @@ fn failed_replacement_preserves_existing_cancellation_state() {
                 parsed: CronParsed::EveryMs { every_ms: 20 },
             },
         )
-        .expect_err("invalid replacement must fail");
+        .expect_err("无效替换必须失败");
 
     assert_eq!(runner.active_len(), 0);
     assert_eq!(runner.tick(0).fired, 0);

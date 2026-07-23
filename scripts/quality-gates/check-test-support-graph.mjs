@@ -45,6 +45,7 @@ function inventoryFindings(metadataInputs) {
         dependencyKind: "config",
         target: null,
         activation: label,
+        featurePath: label === "all-features" ? ["--all-features"] : [],
         dependencyPath: [],
         verdict: "FAIL",
         message: `${label} metadata 缺少完整 resolve.nodes`,
@@ -61,6 +62,7 @@ function inventoryFindings(metadataInputs) {
         dependencyKind: "config",
         target: null,
         activation: label,
+        featurePath: label === "all-features" ? ["--all-features"] : [],
         dependencyPath: [],
         verdict: "FAIL",
         message: `${label} metadata 的 workspace member 缺少 resolve node: ${missingNodes.join(", ")}`,
@@ -87,6 +89,7 @@ function inventoryFindings(metadataInputs) {
         dependencyKind: "config",
         target: null,
         activation: "metadata",
+        featurePath: [],
         dependencyPath: [],
         verdict: "FAIL",
         message: [...problems].join("；"),
@@ -142,6 +145,7 @@ function graphFindings(metadata, activation) {
               dependencyKind: kind,
               target: targetCondition,
               activation,
+              featurePath: activation === "all-features-only" ? ["--all-features"] : [],
               dependencyPath: path,
               verdict: "FAIL",
               message: `${consumer.name} 的 ${kind} 依赖图包含 test-support package ${targetName}`,
@@ -186,7 +190,12 @@ export function inspectTestSupportGraph(defaultMetadata, allFeaturesMetadata) {
   const names = [...supportIds(allFeaturesMetadata, packages)]
     .map((id) => packages.get(id)?.name || id)
     .sort();
-  return { ok: findings.length === 0, testSupportPackages: names, findings };
+  return {
+    ok: findings.length === 0,
+    checkedActivations: ["default", "all-features"],
+    testSupportPackages: names,
+    findings,
+  };
 }
 
 function loadMetadata(allFeatures) {
@@ -236,6 +245,7 @@ function main() {
         JSON.stringify(
           {
             ok: false,
+            checkedActivations: ["default", "all-features"],
             testSupportPackages: [],
             findings: [
               {
@@ -245,6 +255,7 @@ function main() {
                 dependencyKind: "config",
                 target: null,
                 activation: "metadata",
+                featurePath: [],
                 dependencyPath: [],
                 verdict: "FAIL",
                 message,

@@ -21,7 +21,7 @@ async-trait = { workspace = true }
 bytes = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.3" }
+contracts = { path = "../../../contracts", version = "0.1.4" }
 kernel = { path = "../../../kernel", version = "0.3.1" }
 redis = { workspace = true }
 resiliencx = { path = "../../../resiliencx", version = "0.1.2", features = [
@@ -30,7 +30,7 @@ resiliencx = { path = "../../../resiliencx", version = "0.1.2", features = [
 tokio = { workspace = true, features = ["sync", "time", "macros", "rt"] }
 
 [dev-dependencies]
-contract-testkit = { path = "../../../test-support/contracts", version = "0.1.3" }
+contract-testkit = { path = "../../../test-support/contracts", version = "0.1.4" }
 tokio = { workspace = true, features = [
   "rt-multi-thread",
   "macros",
