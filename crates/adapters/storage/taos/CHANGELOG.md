@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.8] — 2026-07-23
+
+### Added
+
+- **自验证 `taosx::selfcheck`**（LIB-SELFCHECK-SPEC / `.cargo/draft/verifyctl.md` §6.7）
+  - 模型：`CheckLevel` / `CheckStatus` / `CheckItem` / `ValidationReport` / `CheckDescriptor`
+  - `TaosValidator` + `Validatable`：catalog 9 项；Basic / ReadWrite / Full 级别与短路
+  - 资源命名 `_sc_{token}` + 运行后 `DROP STABLE`；配置 skip / baseline / expected_precision
+  - 检查：`ping`、`insert_query`、`stable_ddl`、`auto_subtable`、`tag_filter`、`interval_window`、`last_row`、`tmq_subscribe`（Skipped）、`db_config`
+  - live：`tests/live_selfcheck.rs`（默认 ignore）
+
+### Boundaries
+
+- **不是** `tools/verifyctl`（Goal Contract 变更验证）
+- **未**实现跨模块 `SelfValidator`、HTTP 探针、Prometheus 导出
+- `tmq_subscribe` 诚实 Skipped（本 crate 无 TMQ 客户端）
+- HA / Native SQL / 自动幂等重试 / package stable 仍 NO-GO
+
 ## [0.3.7] — 2026-07-23
 
 ### Added

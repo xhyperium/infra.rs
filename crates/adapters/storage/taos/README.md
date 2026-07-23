@@ -6,6 +6,7 @@ TDengine 时序适配器 — `contracts::TimeSeriesStore`（`Tick.ts` = 纳秒 e
 |------|------|--------|
 | **默认** | `TaosPool` / `TaosClient`（REST `:6041`） | **是** |
 | `TransportMode::NativeWs` | `/rest/ws` 握手/关闭可达性探测；SQL 仍 REST | 部分 |
+| `taosx::selfcheck` | LIB-SELFCHECK-SPEC §6.7 模块自验证 | 运维/CD |
 | `feature = "scaffold"` | `TaosAdapter` 内存 HashMap | 否 |
 
 ## 配置
@@ -51,11 +52,28 @@ pool.close().await?;
 时间：合同侧始终纳秒；按库 `precision` 换算后写入。
 Decimal：bid/ask 以 `NCHAR(64+)` 文本落库；存量 `DOUBLE` schema 会 fail-closed。
 
+## 自验证
+
+```rust
+use taosx::selfcheck::{CheckLevel, TaosValidator};
+
+# async fn demo() -> kernel::XResult<()> {
+let pool = taosx::TaosPool::connect_from_env().await?;
+let report = TaosValidator::new(pool).run(CheckLevel::ReadWrite).await;
+assert!(report.passed);
+# Ok(())
+# }
+```
+
+`tmq_subscribe` 当前为 **Skipped**（未实现 TMQ）。详见 CHANGELOG 0.3.8。
+
 ## 测试
 
 ```bash
 cargo test -p taosx
 cargo test -p taosx --features scaffold
+# 自验证 live（需 FOUNDATIONX_TAOSX_PASSWORD）
+# cargo test -p taosx --test live_selfcheck -- --ignored
 # 隔离、固定镜像 digest、动态 loopback 端口（不使用 prod）
 node scripts/taos-live-conformance.mjs
 ```

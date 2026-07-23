@@ -6,8 +6,8 @@
 | SSOT | `.agents/ssot/adapters/storage/taos/`（**禁止**平行 `taosx/` 树） |
 | 实现 | `crates/adapters/storage/taos` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.7` |
-| 结论 | **受限 REST SQL + WS reachability + BatchWriteReport 已落地**；Native SQL / HA / 幂等重试 / package stable **NO-GO** |
+| version | `0.3.8` |
+| 结论 | **受限 REST SQL + health + metrics + selfcheck §6.7 已落地**；Native SQL / HA / 幂等重试 / TMQ / package stable **NO-GO** |
 
 ## 结论摘要
 
@@ -23,7 +23,8 @@
 | 环境变量 | `FOUNDATIONX_TAOSX_{HOST,PORT,USER,PASSWORD,DATABASE,TLS,PRECISION,TRANSPORT,...}` |
 | live | 2026-07-23：真实 dev 凭据 `live_smoke` 2 passed；隔离 Docker runner 亦有归档 |
 | metrics | 进程内有界计数 `TaosMetricsSnapshot`（非 OTLP） |
-| 仍 NO-GO | Native SQL / FFI / WS auth 长会话 / 自动幂等重试 / HA / package stable / 远程 RED 导出 |
+| selfcheck | `taosx::selfcheck`（§6.7 共 9 项；`tmq_subscribe` Skipped） |
+| 仍 NO-GO | Native SQL / FFI / WS auth 长会话 / 自动幂等重试 / HA / package stable / TMQ 客户端 / 远程 RED 导出 |
 
 ## 对齐矩阵
 
@@ -42,6 +43,7 @@
 | TAOSX-17 | 公开 API 表面测试 | PASS | `src/lib.rs` `public_api_surface` |
 | TAOSX-18 | 有界 metrics | PASS | `TaosMetricsSnapshot` / live metrics 冒烟 |
 | TAOSX-19 | health/readiness | PASS | `TaosHealth` / `health` / `liveness` |
+| TAOSX-20 | 模块自验证 | PASS | `taosx::selfcheck` catalog 9；`tmq` 诚实 Skipped |
 | TAOSX-11b | WS live 握手 | PASS | `live_native_ws_handshake`（仍非 SQL 会话） |
 
 ## 诚实边界
@@ -59,6 +61,9 @@ cargo clippy -p taosx --all-targets -- -D warnings
 # 真实 dev live（密钥仅进子进程）
 scripts/live/export-foundationx-env.sh --env dev -- \
   cargo test -p taosx --test live_smoke -- --ignored
+# 自验证 live
+scripts/live/export-foundationx-env.sh --env dev -- \
+  cargo test -p taosx --test live_selfcheck -- --ignored
 # 隔离 Docker live（非 prod）
 node scripts/taos-live-conformance.mjs
 # 有界 bench
