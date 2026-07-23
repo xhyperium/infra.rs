@@ -1,11 +1,24 @@
 # clickhousex
 
+[![version](https://img.shields.io/badge/version-0.3.6-blue)](https://github.com/xhyperium/infra.rs/tree/main/crates/adapters/storage/clickhouse)
+[![tests](https://img.shields.io/badge/tests-69%20passed-brightgreen)](https://github.com/xhyperium/infra.rs/blob/main/.github/workflows/clickhousex-release.yml)
+[![rust](https://img.shields.io/badge/rust-1.85%20edition%202024-orange)](https://www.rust-lang.org/)
+[![security](https://img.shields.io/badge/forbid-unsafe-red)](https://doc.rust-lang.org/nomicon/)
+[![license](https://img.shields.io/badge/license-MIT%2FApache--2.0-lightgrey)](https://github.com/xhyperium/infra.rs)
+
 ClickHouse 分析汇聚适配器 — `contracts::AnalyticsSink`。
 
 | 路径 | 类型 | 生产？ |
 |------|------|--------|
 | **默认** | `ClickHousePool` / `ClickHouseClient`（HTTP `:8123`） | **是** |
 | `feature = "scaffold"` | `ClickHouseAdapter` 内存 Vec | 否 |
+
+| 测试类别 | 文件数 | 测试数 |
+|----------|--------|--------|
+| lib（默认 / +scaffold） | 4 | 29 / 32 |
+| 集成 | 4 | 35 |
+| 文档 | — | 5 |
+| **总计** | **8** | **69** |
 
 ## 配置
 
