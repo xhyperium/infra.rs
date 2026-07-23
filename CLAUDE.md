@@ -80,6 +80,10 @@ cd .worktrees/feat/<id>-<slug>
 - **宪章约束**：语言/编码/文档标准见 `docs/constitution/04-code-standards.md` §4.0、§4.5、§4.6，不可削弱
 - **Rust 全局标准**：组织《Rust 编码规范（完整版）v2.0》——[`xhyperium/.github` `rulesets/rust/RULES.md`](https://github.com/xhyperium/.github/blob/main/rulesets/rust/RULES.md)；本机 `~/.claude/rules/rust.md`（`setup-global-rules.sh`）；本仓仅可加严（§4.0）
 
+- **项目开发规则**：`docs/governance/项目开发规则.md` — DEV-001 优先复用内部库、DEV-002 代码复用、DEV-003 独立复用模块、提交规范、质量门禁
+- **文档组织约定**：报告统一保存至 `docs/report/{YYYY-MM-DD}/`；见 `docs/governance/文档组织约定.md`
+- **存储适配器配置**：clickhousex/kafkax/natsx/ossx/postgresx/redisx/taosx 环境变量规范；见 `docs/governance/storage-adapter-config.md`
+- **Cursor Rules**：`.cursor/rules/project-rules.mdc`（与项目开发规则同步）
 - **最小变更**：只做明确要求的事
 - **保守编辑**：优先小步修改现有文件
 - **SSOT**：技能以 `.claude/skills/` 为准
