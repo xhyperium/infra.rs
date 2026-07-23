@@ -228,6 +228,7 @@ mod tests {
             offset: 3,
             payload: Bytes::from_static(b"x"),
             key: None,
+            headers: Default::default(),
             timestamp: None,
         };
         // 未调用 store.commit
@@ -250,6 +251,7 @@ mod tests {
             offset: 1,
             payload: Bytes::from_static(b"a"),
             key: None,
+            headers: Default::default(),
             timestamp: None,
         };
         // recv 语义：放入 pending
