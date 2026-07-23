@@ -68,3 +68,8 @@ cargo test -p kafkax --test live_event_bus -- --ignored --nocapture
 
 - [adapters-ssot-alignment.md](./adapters-ssot-alignment.md)
 - [gap-matrix.md](./gap-matrix.md)
+
+## 自验证（0.3.6）
+
+- `kafkax::selfcheck` 已落地 §6.2 catalog（9 IDs）；`group_lag`/`isr_health` NO-GO Skipped。
+- 库内自验证 ≠ tools/verifyctl；未宣称 package stable。

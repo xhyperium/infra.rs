@@ -9,10 +9,22 @@
 - [`AtLeastOnceConsumer`](src/at_least_once.rs)：单 owner、应用自管单调 checkpoint
 - [`ProduceThenCheckpointCoordinator`](src/eos.rs)：非原子 produce/checkpoint，存在重复窗口
 - feature `scaffold`：旧内存 `KafkaAdapter` / `MockKafkaBus`
+- [`selfcheck`](src/selfcheck/)：LIB-SELFCHECK-SPEC §6.2 库内自验证（`Basic` / `ReadWrite` / `Full`）
 
 `KafkaPool::close(deadline)` 会先拒绝新操作，再取消 broker I/O 与后台消费任务，并在
 deadline 内等待在途操作释放。consumer/EventBus 使用固定容量队列；慢消费者通过等待
 施加背压，关闭信号可打断等待。该行为不是自动重连或 consumer group 能力。
+
+### 自验证边界
+
+| 组件 | 职责 |
+|------|------|
+| **`kafkax::selfcheck`** | 运行时依赖可用性 / produce-consume 闭环 / Full 子集 |
+| **`tools/verifyctl`** | Goal Contract 变更门禁 CLI（**不是**本模块） |
+
+- catalog 覆盖 §6.2 全部 9 个 `kafka.*` ID；`group_lag` / `isr_health` 为 **Skipped（NO-GO）**
+- `offset_commit` 验证应用层 `OffsetCommitStore`，**非** broker group commit
+- **未**实现跨模块 `SelfValidator` / HTTP 探针；**未**宣称 package stable
 
 详见 [docs/usage.md](docs/usage.md) · [docs/config.md](docs/config.md) · [docs/operations.md](docs/operations.md)。
 
