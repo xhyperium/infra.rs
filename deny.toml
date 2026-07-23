@@ -1,11 +1,19 @@
 # cargo-deny 配置
 # 文档：https://embarkstudios.github.io/cargo-deny/
+#
+# 跨平台说明：
+#   targets 限定当前 CI 的目标 triple；Windows/macOS 平台需在对应
+#   runner 上分别执行 cargo deny check。
+
+[graph]
+all-features = true
+
+targets = [{ triple = "x86_64-unknown-linux-gnu" }]
 
 [advisories]
 db-urls = ["https://github.com/rustsec/advisory-db"]
 yanked = "deny"
 ignore = [
-  # redis 0.27 tls-rustls stack still pulls archived rustls-pemfile wrapper
   { id = "RUSTSEC-2025-0134", reason = "redis 0.27 tls-rustls depends on rustls-pemfile; no safe upgrade until redis bumps" },
 ]
 
@@ -13,7 +21,6 @@ ignore = [
 allow = [
   "MIT",
   "Apache-2.0",
-  "Apache-2.0 WITH LLVM-exception",
   "BSD-3-Clause",
   "CDLA-Permissive-2.0",
   "ISC",
@@ -26,31 +33,15 @@ confidence-threshold = 0.8
 [bans]
 multiple-versions = "deny"
 wildcards = "deny"
-# 第三方驱动栈（async-nats / tokio-postgres / rdkafka-sys / oss 签名）不可避免的双版本
 skip = [
   { name = "getrandom", version = "0.2" },
   { name = "getrandom", version = "0.3" },
-  # redis 0.27 tls-rustls → rustls-native-certs 0.7 dual with async-nats 0.8
   { name = "rustls-native-certs", version = "0.7" },
-  { name = "rustls-pemfile", version = "2" },
   { name = "openssl-probe", version = "0.1" },
-  { name = "core-foundation", version = "0.9" },
-  { name = "security-framework", version = "2" },
-  { name = "security-framework-sys", version = "2" },
-
+  # macOS-only skips (uncomment if building on macOS):
+  #   { name = "core-foundation", version = "0.9" },
+  #   { name = "security-framework", version = "2" },
   { name = "syn", version = "2" },
-  { name = "windows-sys", version = "0.52" },
-  { name = "windows-sys", version = "0.60" },
-  { name = "windows-targets", version = "0.52" },
-  { name = "windows_aarch64_gnullvm", version = "0.52" },
-  { name = "windows_aarch64_msvc", version = "0.52" },
-  { name = "windows_i686_gnu", version = "0.52" },
-  { name = "windows_i686_gnullvm", version = "0.52" },
-  { name = "windows_i686_msvc", version = "0.52" },
-  { name = "windows_x86_64_gnu", version = "0.52" },
-  { name = "windows_x86_64_gnullvm", version = "0.52" },
-  { name = "windows_x86_64_msvc", version = "0.52" },
-  # crypto dual stack: sha2/digest 0.10 (goalctl/ossx/nkeys) vs 0.11 (postgres-protocol)
   { name = "block-buffer", version = "0.10" },
   { name = "const-oid", version = "0.9" },
   { name = "cpufeatures", version = "0.2" },
@@ -58,15 +49,12 @@ skip = [
   { name = "digest", version = "0.10" },
   { name = "hmac", version = "0.12" },
   { name = "sha2", version = "0.10" },
-  # rand dual stack: 0.8/0.9 vs 0.10
   { name = "rand", version = "0.8" },
   { name = "rand", version = "0.9" },
   { name = "rand_chacha", version = "0.3" },
   { name = "rand_chacha", version = "0.9" },
   { name = "rand_core", version = "0.6" },
   { name = "rand_core", version = "0.9" },
-  { name = "r-efi", version = "5" },
-  { name = "wasi", version = "0.11" },
   { name = "webpki-roots", version = "0.26" },
   { name = "thiserror", version = "1" },
   { name = "thiserror-impl", version = "1" },
