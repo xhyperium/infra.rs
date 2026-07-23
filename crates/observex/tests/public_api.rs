@@ -56,3 +56,32 @@ fn public_counting_prefix_normalize() {
     }
     assert_eq!(truncate_op(zh, 4), "配~");
 }
+
+#[test]
+fn public_bounded_exporter_surface() {
+    use observex::{
+        CountingInstrumentation, DEFAULT_BUFFER_CAPACITY, ExportError, ExportingInstrumentation,
+        InMemoryExporter, MAX_OP_BYTES, SpanEvent, TelemetryExporter, sanitize_op,
+    };
+
+    let default = InMemoryExporter::new();
+    assert_eq!(default.stats().capacity_per_signal, DEFAULT_BUFFER_CAPACITY);
+
+    let exporter = InMemoryExporter::with_capacity(1);
+    let event = SpanEvent { name: "one".into(), start_unix_ms: 0, attributes: Vec::new() };
+    exporter.export_spans(std::slice::from_ref(&event)).unwrap();
+    assert_eq!(exporter.export_spans(&[event]), Err(ExportError::BufferFull));
+    assert_eq!(exporter.stats().dropped_spans, 1);
+
+    let op = sanitize_op(&format!("{}\nprivate-suffix", "配".repeat(80)));
+    assert!(op.len() <= MAX_OP_BYTES);
+    assert!(!op.chars().any(char::is_control));
+    assert!(!op.contains("private-suffix"));
+
+    let wrapped = ExportingInstrumentation::new(CountingInstrumentation::new(), exporter);
+    let stats = wrapped.export_stats();
+    assert_eq!(stats.failed_export_calls, 0);
+    assert_eq!(stats.panicked_export_calls, 0);
+    assert_eq!(stats.unconfirmed_spans, 0);
+    assert_eq!(stats.unconfirmed_metrics, 0);
+}

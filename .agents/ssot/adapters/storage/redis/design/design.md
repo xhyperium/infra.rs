@@ -24,7 +24,16 @@ redisx → kernel + contracts（+ 驱动 crate）
 3. 无硬编码生产密钥
 4. 公共 API 中文文档 + 英文标识符
 5. Pub/Sub 复用建池配置；禁止从 env 重建或拓扑降级
-6. 自动预算重试仅用于只读操作；写重试必须显式 opt-in
+6. client 配置 budget 后，`ReadOnly` 与固定输入 `Idempotent` 操作进入安全重试；
+   `UnsafeSideEffect` 的多次尝试在 I/O 前拒绝，PUBLISH 永不自动重试
+
+## 重试分类设计
+
+- GET / EXISTS / PTTL / MGET → `ReadOnly`；无 TTL SET / MSET → `Idempotent`。
+- 相对 TTL SET / DEL / PEXPIRE → `UnsafeSideEffect`；`max_attempts > 1` 在 operation future / driver 前拒绝。
+- PUBLISH → `NeverAutomatic`，不接入自动预算重试。
+- `RedisOperation::Set` 同时代表 SET 与 PSETEX，无法携带 TTL 参数，故查询面保守保持
+  `AmbiguousWrite`；`RedisClient::set` 以实际 `ttl` 参数决定 `Idempotent` 或 `UnsafeSideEffect`。
 
 ## 拓扑与证据
 

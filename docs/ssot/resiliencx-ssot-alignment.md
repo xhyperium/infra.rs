@@ -2,90 +2,83 @@
 
 | 字段 | 值 |
 |------|-----|
-| 日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
+| 日期 | 2026-07-23 · round-03 候选准备 |
 | Active SSOT | `.agents/ssot/resiliencx/spec/spec.md` |
-| 用户路径别名 | `.agent/ssot/resiliencx` → `.agents/ssot/resiliencx` |
-| 实现 | `crates/resiliencx` · package `resiliencx` |
-| 当前版本 | 0.1.1（L1 重试 + 熔断 + 限流；budget PASS）|
+| Complete mirror | `.agents/ssot/resiliencx/spec/xhyper-resiliencx-complete-spec.md`（须 `cmp`） |
+| 实现 | `crates/resiliencx` · package/lib `resiliencx` |
+| 当前版本 | 0.1.2；同一 PR 已 bump 一次，按 R-C2 不重复 bump |
+| 状态 | L1 进程内弹性原语；Internal Ready，非 package stable |
 
-## 结论
+## round-01 需求对齐
 
-| 能力 | 状态 | 证据 |
-|------|------|------|
-| 重试 §2 | **PASS** | `retry.rs` + `tests/retry_contract.rs` |
-| 熔断 | **PASS**（本仓扩展；无墙钟） | `circuit.rs` + unit/public_api |
-| 限流（令牌桶） | **PASS**（本仓扩展；显式 refill） | `rate_limit.rs` + unit/public_api |
-| 舱壁（bulkhead） | **PASS**（并发上限；RAII） | `bulkhead.rs` + unit/public_api |
-| Instrumentation | **PASS** | re-export `contracts::Instrumentation`；禁止 observex |
-| LCOV 行 100% | **PASS** | `cov-gate-100.mjs -p resiliencx` |
-| async wait | **PASS**（#167） | `retry_async` + `AsyncWait`；feature `tokio` → `TokioSleepWait` |
-| budget | **PASS** | `src/budget.rs` · 重试/调用预算 |
-| adapter 接线（redis/pg） | **PASS** | 生产入口：`RedisClient::get/set` + `PostgresPool::execute/query*` 可选 `with_retry_budget`；显式 `*_with_budget` 始终经 `with_budget_async`；helpers 在 `resilience.rs` |
-| 全 9 adapters 统一接线 / package stable | **OPEN** | 本轮关闭 redis+pg 最小 wire；其余 adapter 按需跟进 |
-| Agent L5 | **未填** | — |
+| 需求 | 状态 | 实现与证据 |
+|------|------|------------|
+| 显式 RetrySafety | **PASS** | `RetryContext` + `RetrySafety` + safe sync/async 入口；多次尝试拒绝 `UnsafeSideEffect` |
+| 保留低层兼容 API | **PASS** | 旧 sync/async retry API 保留；rustdoc/README 明确其不做 safety 校验 |
+| 整次 async deadline | **PASS** | feature `tokio` 的 `retry_async_with_deadline`；覆盖 operation + retry + wait |
+| deadline 错误映射 | **PASS** | timeout → `XError::deadline_exceeded`；测试成功与超时路径 |
+| cancellation 边界 | **PASS** | SSOT/README/API 明确 cooperative cancellation 不撤销已发生副作用 |
+| async budget parity | **PASS** | `retry_async_with_budget` / `retry_async_safe` 可消费预算；耗尽统一标准错误 |
+| attempt 观测一致性 | **PASS** | `call_with_retry_budget` 与其他 retry 均记录刚失败 attempt，从 1 起 |
+| Bulkhead poison 容量恢复 | **PASS** | poisoned inner 恢复并 clear poison；permit drop 后槽位可复用测试 |
+| 调用方 seed jitter | **PASS** | `RetryContext::with_jitter_seed` 接入实际 safe sync/async/deadline；另有纯计算 helper |
+| attempt-only jitter 边界 | **PASS** | 明确不具备抗群聚保证 |
+| active/complete spec | **PASS** | 两份 current-state spec 同构；以 `cmp` 为门禁 |
+| findings | **PASS** | `.agents/ssot/resiliencx/plan/round-01-findings.md` |
 
-## 诚实边界（非目标）
+## 当前能力
 
-| 领域 | 说明 |
-|------|------|
-| 弹性范围 | L1 最小弹性面（重试 / 熔断 / 限流 / 舱壁）；不宣称完整弹性平台 |
-| 熔断策略 | 本地无墙钟判定；不提供分布式熔断 / 跨进程协调 |
-| 限流 | 令牌桶无自动补充（仅显式 `refill`）；不提供动态速率调整 |
-| 舱壁（bulkhead） | 仅并发上限 RAII；不提供队列 / 超时舱壁 |
-| Package stability | **未宣称 package stable** |
-| 基础设施层级 | L1 最小；不提供 chaos-engineering / 弹性实验 |
+| 能力 | 状态 | 诚实边界 |
+|------|------|----------|
+| 有限同步/异步重试 | PASS | 仅 retryable 错误；生产新接线使用显式 safety 入口 |
+| 重试预算 | PASS | 本地共享令牌；不是动态或分布式预算 |
+| 退避/jitter | PASS | seed 由调用方管理；非加密 RNG |
+| 熔断 | PASS | 本地无墙钟；按拒绝次数推进 HalfOpen |
+| 限流 | PASS | 本地令牌桶；显式 refill；不足立即拒绝 |
+| 舱壁 | PASS | 本地并发计数；满载立即拒绝；无队列/等待 deadline |
+| async deadline | PASS（feature `tokio`） | cooperative cancellation，不撤销外部副作用 |
+| Package stability | **未宣称** | 无 crates.io / stable API 承诺 |
 
-## OBJECTIVE 处置（2026-07-22 defer-close）
+## Round 3 Adapter safety 候选
 
-| 项 | 前状态 | 现状态 | 证据 |
-|----|--------|--------|------|
-| budget | DEFER | **PASS** | `crates/resiliencx/src/budget.rs` |
-| 接入 adapters | DEFER | **PASS（redisx + postgresx 生产 I/O）** | `client.rs`/`pool.rs` 入口 + `resilience.rs` async budget；测 `get_set_with_budget_*` / `execute_with_budget_*` |
+| 项 | 当前事实 | 裁决 |
+|---|---|---|
+| Generic Adapter budget | 新增 sync/async `_safe` 入口，首次 operation 前校验 `RetrySafety` | 本地 reviewer 审查完成；verifier 技术/证据初验完成 |
+| Legacy API | `call_with_retry_budget`、未带 safe 的 retry 与 adapter wrapper 均为 unchecked compatibility | 本地 reviewer 审查完成 |
+| Redis client | GET/EXISTS/PTTL/MGET 为 ReadOnly；无 TTL SET/MSET 为 Idempotent；相对 TTL SET/DEL/PEXPIRE 为 UnsafeSideEffect；PUBLISH 不自动重试 | 实现完成；live I/O 未在本地执行 |
+| Postgres pool | 当前没有 budget 字段或自动接线；只提供显式 safety wrapper | 诚实更正；不虚构生产接线 |
 
-## 熔断合同（本仓）
+治理修正后候选已重冻；本地 reviewer 已完成实现/证据审查，独立 verifier 已完成技术/证据初验；
+本次纯状态 delta 不改变受审源码/测试。GitHub CI/交付与发布动作仍 pending，release 继续 BLOCKED。
 
-- 状态：`Closed` / `Open` / `HalfOpen`
-- `failure_threshold` 连续失败 → Open + `record_circuit_open`
-- Open 下累计拒绝 `open_to_half_open_after_rejects` 次 → HalfOpen（**非**墙钟冷却）
-- HalfOpen 连续成功 `success_threshold` → Closed + `record_circuit_close`；失败 → Open
-- 配置阈值为 0 → `Invalid`；Open 拒绝 → `Unavailable`
+## 生产误用红线
 
-## 限流合同（本仓）
+- `RetrySafety` 是调用方声明，不是闭包幂等性的静态证明。
+- 低层兼容 retry API 不执行 safety 校验，不能作为新生产接线的默认入口。
+- async deadline 不能替代幂等键、事务或补偿；已经发生的外部副作用不会自动撤销。
+- attempt-only jitter 会在相同配置实例间同相，不具备抗群聚保证。
+- 本地 `try_acquire` / `try_enter` 是立即拒绝原语，不提供公平排队、跨进程配额或自动墙钟补充。
+- STATUS/结构完成度不等于 Production Ready 或 package stable。
 
-- 满桶起步；`try_acquire(n)` 不足 → `Unavailable`（不部分扣减）
-- `refill(n)` 不超过 capacity；**不**按时间自动补充
-
-## 舱壁合同（本仓）
-
-- `max_concurrent >= 1`；否则 `Invalid`
-- `try_enter` / `call`：在途达上限 → `Unavailable("bulkhead full")`
-- `BulkheadPermit` drop 归还槽位（含错误路径）
-- **无**排队、**无**超时等待
-
-## 验证
+## 验收
 
 ```bash
-cargo test -p resiliencx --all-targets
-cargo test -p resiliencx --features tokio --all-targets
-cargo test -p redisx -p postgresx --all-targets
-cargo clippy -p resiliencx --all-targets -- -D warnings
-node scripts/quality-gates/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
-cargo tree -p resiliencx -i observex  # 须无匹配
+cargo fmt --all --check
+cargo test -p resiliencx --all-features --all-targets
+cargo clippy -p resiliencx --all-features --all-targets -- -D warnings
+cmp .agents/ssot/resiliencx/spec/spec.md \
+    .agents/ssot/resiliencx/spec/xhyper-resiliencx-complete-spec.md
 ```
 
-## 双栏落地（2026-07-22 · STATUS 100% structure）
+详细发现、选择与残余风险：`.agents/ssot/resiliencx/plan/round-01-findings.md`、
+`.agents/ssot/resiliencx/plan/round-02-findings.md` 与 `.agents/ssot/resiliencx/plan/round-03-findings.md`。
 
-| 标尺 | 状态 |
-|------|------|
-| STATUS 结构完成度 | **100%**（layout+tests+content；非 Production Ready） |
-| 声明面生产硬化 | 公共 API 集成测 + 热路径 bench + `docs/` 红线；**cov-gate-100 行覆盖** |
-| 非宣称 | **禁止** workspace Production Ready / Agent L5 / 全 adapters 统一 resiliency 产品 |
+第 2 轮独立代码/规格复审通过；此前 root 串行覆盖率 994/994 是本轮 Adapter safety 补丁前基线。
+首次当前树 coverage 为 1106/1116（99.1039%）；缺失行为测试补齐后，root 串行复验为
+1156/1156、zeros 0、100.0000%、退出码 0。治理修正后候选已重冻，本地 reviewer 完成、verifier
+技术/证据初验完成；GitHub 固定提交 CI artifact、PR/审批/合并仍 pending，因此本文件不构成发布批准。
 
-自验证：`cargo test -p resiliencx --all-targets`；`node scripts/quality-gates/cov-gate-100.mjs -p resiliencx`。
-
-## 变更记录
-
-| 日期 | 说明 |
-|------|------|
-| 2026-07-22 | **defer-close**：budget + redis/pg resilience wire PASS |
-| 2026-07-22 | **skeptic-fix**：budget 从 helper 升到 redis/pg 生产 `get/set/execute/query` 入口 |
+最新固定 review 又修改了 unchecked generic async budget core 与 Redis 零 attempts 路由，因此
+1156/1156 是本次修复前基线；root 最终串行重跑为 1208/1208、zeros 0、100.0000%、退出码 0。
+三包最终测试为 resiliencx 84 passed、postgresx 52 passed + 6 ignored、redisx 51 passed + 8 ignored；
+postgresx/redisx 当前版本均为 0.3.4，0.3.3 保留为 main 历史。

@@ -1,5 +1,7 @@
 # redisx 使用说明
 
+当前文档对应 `redisx 0.3.4` 未发布候选；`0.3.3` 为 main 历史。
+
 ## 生产入口
 
 ```rust
@@ -48,6 +50,19 @@ let cfg = RedisConfig::builder()
 
 `RedisLiveKv` = `RedisClient`。旧测试可继续 `RedisLiveKv::connect(url)`。
 
+## 重试预算安全分类
+
+`RedisClient::with_retry_budget` 的生产路径显式分类：GET/EXISTS/PTTL/MGET 为只读，无 TTL SET 与
+MSET 为幂等，DEL/PEXPIRE/相对 TTL SET 保守视为不安全副作用。不安全操作配置多次尝试时会在
+首次 I/O future 前返回 `Invalid`，不会静默执行一次后再失败。
+
+`max_attempts` 不做 `max(1)` 归一化：传 0 时 GET 与 SET/DEL 等路由均在 operation future 构造和
+driver I/O 前返回 `Invalid`。
+
+模块级 `with_budget_safe` / `with_budget_async_safe` 可供自定义组合显式传入 `RetrySafety`；旧未带
+`safe` 的 budget/retry wrapper 仅为 unchecked compatibility。
+旧 `with_budget_async` 虽共享统一 budget 错误与失败 attempt 观测 core，仍不执行 safety 校验。
+
 ## Scaffold（非生产）
 
 ```bash
@@ -72,6 +87,13 @@ display endpoint，端点只从配置脱敏派生。
 
 ## 重试
 
-`client.with_retry_budget(...)` 仅让 GET / EXISTS / PTTL / MGET 自动重试。SET / DEL /
-PEXPIRE / MSET 默认单次执行，因为超时或断连时写入可能已经生效。只有
-`set_with_budget(...)` 是明确的写重试 opt-in，调用方必须接受 TTL 重置与结果不确定风险。
+配置 `client.with_retry_budget(...)` 后：
+
+- GET / EXISTS / PTTL / MGET 按 `ReadOnly` 对 Transient 失败使用预算重试；
+- 无 TTL SET 与 MSET 按固定输入 `Idempotent` 使用预算重试；
+- 相对 TTL SET、DEL、PEXPIRE 按 `UnsafeSideEffect`，`max_attempts > 1` 时在 operation future / driver
+  I/O 前返回 `Invalid`，单次尝试仍允许；
+- PUBLISH 不自动重试。
+
+`RedisOperation::Set` 是不携带 TTL 参数的粗粒度查询面，保守保持 `AmbiguousWrite`；client 的 SET
+路径按实际 `ttl` 参数细分。超时或断连仍可能发生在服务端已执行命令之后，安全分类不等于结果确认。

@@ -3,7 +3,7 @@
 //! **无墙钟、无排队超时**——满载时立即 `Unavailable`；许可用 RAII 归还（含 panic unwind）。
 
 use kernel::{XError, XResult};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 /// 舱壁配置。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -28,10 +28,20 @@ pub struct Bulkhead {
 }
 
 impl Bulkhead {
+    fn lock_state(&self) -> MutexGuard<'_, u32> {
+        match self.state.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => {
+                self.state.clear_poison();
+                poisoned.into_inner()
+            }
+        }
+    }
+
     /// 构造舱壁；`max_concurrent == 0` → Invalid。
     pub fn new(config: BulkheadConfig) -> XResult<Self> {
         if config.max_concurrent == 0 {
-            return Err(XError::invalid("bulkhead max_concurrent must be >= 1"));
+            return Err(XError::invalid("舱壁 max_concurrent 必须大于或等于 1"));
         }
         Ok(Self { max_concurrent: config.max_concurrent, state: Mutex::new(0) })
     }
@@ -45,14 +55,14 @@ impl Bulkhead {
     /// 当前在途数（观测/测试）。
     #[must_use]
     pub fn in_flight(&self) -> u32 {
-        *self.state.lock().expect("bulkhead lock")
+        *self.lock_state()
     }
 
     /// 尝试获取许可；满载 → `Unavailable("bulkhead full")`。
     pub fn try_enter(self: &Arc<Self>) -> XResult<BulkheadPermit> {
-        let mut g = self.state.lock().map_err(|_| XError::unavailable("bulkhead lock poisoned"))?;
+        let mut g = self.lock_state();
         if *g >= self.max_concurrent {
-            return Err(XError::unavailable("bulkhead full"));
+            return Err(XError::unavailable("舱壁容量已满"));
         }
         *g = g.saturating_add(1);
         drop(g);
@@ -74,9 +84,8 @@ pub struct BulkheadPermit {
 
 impl Drop for BulkheadPermit {
     fn drop(&mut self) {
-        if let Ok(mut g) = self.owner.state.lock() {
-            *g = g.saturating_sub(1);
-        }
+        let mut g = self.owner.lock_state();
+        *g = g.saturating_sub(1);
     }
 }
 
@@ -137,5 +146,21 @@ mod tests {
         drop(p2);
         drop(p3);
         assert_eq!(b.in_flight(), 0);
+    }
+
+    #[test]
+    fn poisoned_state_does_not_leak_permit_capacity() {
+        let b = Arc::new(Bulkhead::new(BulkheadConfig { max_concurrent: 1 }).expect("舱壁"));
+        let permit = b.try_enter().expect("获取许可");
+
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _guard = b.state.lock().expect("获取内部状态锁");
+            panic!("注入舱壁状态毒锁");
+        }));
+
+        drop(permit);
+        assert_eq!(b.in_flight(), 0);
+        let recovered = b.try_enter().expect("毒锁恢复后容量应可再次使用");
+        drop(recovered);
     }
 }

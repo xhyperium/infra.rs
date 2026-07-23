@@ -171,7 +171,7 @@ pub fn map_pool_error(err: deadpool_postgres::PoolError) -> XError {
             XError::invariant("postgres 连接池未配置 runtime".to_string())
         }
         deadpool_postgres::PoolError::PostCreateHook(e) => {
-            XError::unavailable(format!("postgres post-create hook: {e}"))
+            XError::unavailable(format!("postgres 连接创建后钩子失败: {e}"))
         }
     }
 }

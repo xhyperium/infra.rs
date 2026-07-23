@@ -13,4 +13,7 @@
 | draft | [../plan/infra-rs-draft-spec-goal.md](../plan/infra-rs-draft-spec-goal.md) |
 | 对齐 | `docs/ssot/redisx-ssot-alignment.md` |
 
+当前最终本地测试为 51 passed + 8 ignored；ignored live 项需要外部 Redis。候选曾冻结；治理修正后
+最终 SHA 待重冻，当前没有最终 SHA 的 reviewer/verifier 或 CI artifact。
+
 有新的验证输出时按 `YYYY-MM-DD/` 建日目录归档。

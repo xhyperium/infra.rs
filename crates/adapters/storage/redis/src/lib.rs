@@ -31,7 +31,8 @@ pub use error_map::{map_redis_error, map_redis_result};
 pub use pool::{RedisPool, RedisPoolStats};
 pub use resilience::{
     RedisAtomicity, RedisOperation, RedisRetryConfig, RedisRetrySafety, with_budget,
-    with_budget_async, with_budget_async_noop, with_budget_noop, with_retry_async,
+    with_budget_async, with_budget_async_noop, with_budget_async_safe, with_budget_async_safe_noop,
+    with_budget_noop, with_budget_safe, with_budget_safe_noop, with_retry_async,
     with_retry_async_no_wait, with_retry_sync,
 };
 

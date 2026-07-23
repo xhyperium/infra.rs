@@ -1,6 +1,6 @@
 # observex docs
 
-**Package**：`xhyper-observex` · **lib**：`observex` · **角色**：L1 TracingInstrumentation 最小面
+**Package / lib**：`observex` / `observex` · **版本**：`0.1.2` · **角色**：L1 tracing + 有界进程内 sink
 
 本目录存放 **crate 级**设计 / 契约补充 / 迁移笔记。
 不替代 rustdoc；不重复仓库根治理文档（见分层边界 `crates/AGENTS.md`）。

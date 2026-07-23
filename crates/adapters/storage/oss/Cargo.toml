@@ -22,7 +22,7 @@ contracts = { path = "../../../contracts", version = "0.1.2" }
 hmac = { workspace = true }
 kernel = { path = "../../../kernel", version = "0.3.1" }
 reqwest = { workspace = true }
-resiliencx = { path = "../../../resiliencx", version = "0.1.1", features = [
+resiliencx = { path = "../../../resiliencx", version = "0.1.2", features = [
   "tokio",
 ] }
 sha1 = { workspace = true }

@@ -1,5 +1,6 @@
 //! 可克隆的 Redis 命令客户端（共享 [`RedisPool`]）。
 
+use std::future::Future;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -7,17 +8,17 @@ use async_trait::async_trait;
 use contracts::KeyValueStore;
 use kernel::{XError, XResult};
 use redis::AsyncCommands;
-use resiliencx::RetryBudget;
+use resiliencx::{RetryBudget, RetrySafety};
 
 use crate::error_map::map_redis_result;
 use crate::pool::RedisPool;
-use crate::resilience::{RedisOperation, with_automatic_budget, with_budget_async_noop};
+use crate::resilience::{RedisOperation, with_automatic_budget, with_budget_async_safe_noop};
 
 /// 生产 Redis KV 客户端。
 ///
 /// `Clone` 只共享底层池引用；所有命令受池级 Semaphore 与超时约束。
-/// 可选 [`RetryBudget`]：配置后仅只读操作自动重试。写操作因响应丢失时结果不确定，
-/// 默认只执行一次；调用方只能通过明确命名的写重试 API 显式选择副作用风险。
+/// 可选 [`RetryBudget`]：配置后按显式 [`RetrySafety`] 分类路由。只读与幂等操作可以重试；
+/// 结果不明的副作用操作在多次尝试进入 driver 前 fail-closed。
 #[derive(Clone, Debug)]
 pub struct RedisClient {
     pool: RedisPool,
@@ -31,13 +32,11 @@ impl RedisClient {
         Self { pool, budget: None, budget_max_attempts: 3 }
     }
 
-    /// 注入 [`RetryBudget`]：后续只读操作走 resiliencx 异步重试。
-    ///
-    /// `set` / `delete` / `expire` / `mset` 不会自动重试。
+    /// 注入 [`RetryBudget`]：后续操作按各自 [`RetrySafety`] 走 resiliencx 异步安全路由。
     #[must_use]
     pub fn with_retry_budget(mut self, budget: RetryBudget, max_attempts: u32) -> Self {
         self.budget = Some(Arc::new(budget));
-        self.budget_max_attempts = max_attempts.max(1);
+        self.budget_max_attempts = max_attempts;
         self
     }
 
@@ -119,7 +118,7 @@ impl RedisClient {
         .await
     }
 
-    /// 显式 budget 的 `GET`：始终经 [`crate::with_budget_async_noop`] 驱动真实 I/O。
+    /// 显式 budget 的 `GET`：以 [`RetrySafety::ReadOnly`] 驱动真实 I/O。
     pub async fn get_with_budget(
         &self,
         key: &str,
@@ -128,7 +127,7 @@ impl RedisClient {
     ) -> XResult<Option<Vec<u8>>> {
         let this = self.clone();
         let key = key.to_owned();
-        with_budget_async_noop(budget, max_attempts, "redis.get", || {
+        route_with_budget(budget, max_attempts, RetrySafety::ReadOnly, "redis.get", || {
             let this = this.clone();
             let key = key.clone();
             async move { this.get_once(&key).await }
@@ -142,29 +141,21 @@ impl RedisClient {
     /// - `ttl = Some(0)` 或 `< 1ms`：[`XError::invalid`]；
     /// - 其余：使用毫秒精度 `PSETEX`。
     ///
-    /// 即使已 [`Self::with_retry_budget`]，写入仍只执行一次。Redis 单命令在服务端原子，
-    /// 但超时或断连后客户端不能判断写入是否已经生效。
+    /// 若已 [`Self::with_retry_budget`]，无 TTL 的固定值写入按幂等语义路由；相对 TTL 写入因
+    /// 超时或断连后结果未知，在多次尝试进入 driver 前 fail-closed。
     pub async fn set(&self, key: &str, val: Vec<u8>, ttl: Option<Duration>) -> XResult<()> {
-        let this = self.clone();
-        let key = key.to_owned();
-        with_automatic_budget(
-            RedisOperation::Set,
-            self.budget.as_deref(),
-            self.budget_max_attempts,
-            "redis.set",
-            || {
-                let this = this.clone();
-                let key = key.clone();
-                let val = val.clone();
-                async move { this.set_once(&key, val, ttl).await }
-            },
-        )
-        .await
+        if let Some(budget) = self.budget.as_ref() {
+            return self
+                .set_with_budget(key, val, ttl, budget.as_ref(), self.budget_max_attempts)
+                .await;
+        }
+        self.set_once(key, val, ttl).await
     }
 
-    /// 显式 budget 的 `SET`：调用方选择承担不确定写入的重复副作用风险。
+    /// 显式 budget 的 `SET`：无 TTL 时为幂等；相对 TTL 保守视为不安全副作用。
     ///
-    /// `PSETEX` 的 value + TTL 在服务端是单命令原子；若响应丢失，重试会重新开始 TTL。
+    /// `PSETEX` 的 value + TTL 在服务端是单命令原子；若响应丢失，重试会重新开始 TTL，
+    /// 因此多次尝试会在操作前被拒绝。
     pub async fn set_with_budget(
         &self,
         key: &str,
@@ -175,7 +166,8 @@ impl RedisClient {
     ) -> XResult<()> {
         let this = self.clone();
         let key = key.to_owned();
-        with_budget_async_noop(budget, max_attempts, "redis.set", || {
+        let safety = set_retry_safety(ttl);
+        route_with_budget(budget, max_attempts, safety, "redis.set", || {
             let this = this.clone();
             let key = key.clone();
             let val = val.clone();
@@ -195,22 +187,26 @@ impl RedisClient {
             .await
     }
 
-    /// `DEL`；返回是否删除了 key。始终只执行一次，避免重试把首次成功改写成 `false`。
+    /// `DEL`；返回是否删除了 key。未配置 budget 时执行一次；多次尝试的 budget 会在 driver
+    /// 前被拒绝，避免重试把首次成功改写成 `false`。
     pub async fn delete(&self, key: &str) -> XResult<bool> {
-        let this = self.clone();
-        let key = key.to_owned();
-        with_automatic_budget(
-            RedisOperation::Delete,
-            self.budget.as_deref(),
-            self.budget_max_attempts,
-            "redis.del",
-            || {
-                let this = this.clone();
-                let key = key.clone();
-                async move { this.delete_once(&key).await }
-            },
-        )
-        .await
+        if let Some(budget) = self.budget.as_ref() {
+            let this = self.clone();
+            let key = key.to_owned();
+            return route_with_budget(
+                budget,
+                self.budget_max_attempts,
+                RetrySafety::UnsafeSideEffect,
+                "redis.del",
+                || {
+                    let this = this.clone();
+                    let key = key.clone();
+                    async move { this.delete_once(&key).await }
+                },
+            )
+            .await;
+        }
+        self.delete_once(key).await
     }
 
     /// 单次 `EXISTS` I/O（无 budget 环）。
@@ -258,22 +254,26 @@ impl RedisClient {
             .await
     }
 
-    /// `PEXPIRE`；key 不存在返回 `Ok(false)`。始终只执行一次，避免重试重置 TTL 起点。
+    /// `PEXPIRE`；key 不存在返回 `Ok(false)`。未配置 budget 时执行一次；多次尝试的 budget
+    /// 会在 driver 前被拒绝，避免重试重置 TTL 起点。
     pub async fn expire(&self, key: &str, ttl: Duration) -> XResult<bool> {
-        let this = self.clone();
-        let key = key.to_owned();
-        with_automatic_budget(
-            RedisOperation::Expire,
-            self.budget.as_deref(),
-            self.budget_max_attempts,
-            "redis.expire",
-            || {
-                let this = this.clone();
-                let key = key.clone();
-                async move { this.expire_once(&key, ttl).await }
-            },
-        )
-        .await
+        if let Some(budget) = self.budget.as_ref() {
+            let this = self.clone();
+            let key = key.to_owned();
+            return route_with_budget(
+                budget,
+                self.budget_max_attempts,
+                RetrySafety::UnsafeSideEffect,
+                "redis.expire",
+                || {
+                    let this = this.clone();
+                    let key = key.clone();
+                    async move { this.expire_once(&key, ttl).await }
+                },
+            )
+            .await;
+        }
+        self.expire_once(key, ttl).await
     }
 
     /// 单次 `PTTL` I/O（无 budget 环）。
@@ -369,30 +369,33 @@ impl RedisClient {
             .await
     }
 
-    /// `MSET`（无 TTL；需要 TTL 请逐条 `set`）。始终只执行一次。
+    /// `MSET`（无 TTL；需要 TTL 请逐条 `set`）。配置 budget 时按幂等语义重试。
     ///
     /// 原子性只在 Standalone 或 Cluster 同一 hash slot 的单条命令边界成立；本客户端不承诺
     /// 跨 slot 原子性。
     pub async fn mset(&self, items: &[(&str, &[u8])]) -> XResult<()> {
-        let this = self.clone();
-        let owned: Vec<(String, Vec<u8>)> =
-            items.iter().map(|(key, value)| ((*key).to_owned(), (*value).to_vec())).collect();
-        with_automatic_budget(
-            RedisOperation::Mset,
-            self.budget.as_deref(),
-            self.budget_max_attempts,
-            "redis.mset",
-            || {
-                let this = this.clone();
-                let owned = owned.clone();
-                async move {
-                    let refs: Vec<(&str, &[u8])> =
-                        owned.iter().map(|(key, value)| (key.as_str(), value.as_slice())).collect();
-                    this.mset_once(&refs).await
-                }
-            },
-        )
-        .await
+        if let Some(budget) = self.budget.as_ref() {
+            let this = self.clone();
+            let owned: Vec<(String, Vec<u8>)> =
+                items.iter().map(|(k, v)| ((*k).to_owned(), (*v).to_vec())).collect();
+            return route_with_budget(
+                budget,
+                self.budget_max_attempts,
+                RetrySafety::Idempotent,
+                "redis.mset",
+                || {
+                    let this = this.clone();
+                    let owned = owned.clone();
+                    async move {
+                        let refs: Vec<(&str, &[u8])> =
+                            owned.iter().map(|(k, v)| (k.as_str(), v.as_slice())).collect();
+                        this.mset_once(&refs).await
+                    }
+                },
+            )
+            .await;
+        }
+        self.mset_once(items).await
     }
 }
 
@@ -416,6 +419,24 @@ fn validate_ttl(ttl: Option<Duration>) -> XResult<()> {
     }
 }
 
+async fn route_with_budget<F, Fut, T>(
+    budget: &RetryBudget,
+    max_attempts: u32,
+    safety: RetrySafety,
+    op: &str,
+    f: F,
+) -> XResult<T>
+where
+    F: FnMut() -> Fut,
+    Fut: Future<Output = XResult<T>>,
+{
+    with_budget_async_safe_noop(budget, max_attempts, safety, op, f).await
+}
+
+fn set_retry_safety(ttl: Option<Duration>) -> RetrySafety {
+    if ttl.is_some() { RetrySafety::UnsafeSideEffect } else { RetrySafety::Idempotent }
+}
+
 fn duration_to_millis(d: Duration) -> XResult<u64> {
     let ms = d.as_millis();
     if ms == 0 {
@@ -428,6 +449,7 @@ fn duration_to_millis(d: Duration) -> XResult<u64> {
 mod tests {
     use super::*;
     use kernel::ErrorKind;
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     #[test]
     fn ttl_zero_is_invalid() {
@@ -452,5 +474,62 @@ mod tests {
         let budget = RetryBudget::new(2);
         assert_eq!(budget.remaining(), 2);
         assert!(!budget.is_exhausted());
+    }
+
+    #[test]
+    fn set_retry_safety_is_conservative_for_relative_ttl() {
+        assert_eq!(set_retry_safety(None), RetrySafety::Idempotent);
+        assert_eq!(set_retry_safety(Some(Duration::from_secs(1))), RetrySafety::UnsafeSideEffect);
+    }
+
+    #[tokio::test]
+    async fn get_route_zero_attempts_rejects_before_driver_future() {
+        let budget = RetryBudget::new(1);
+        let constructed = std::cell::Cell::new(0u32);
+        let err = route_with_budget(&budget, 0, RetrySafety::ReadOnly, "redis.get", || {
+            constructed.set(constructed.get() + 1);
+            async { Ok::<_, XError>(Some(Vec::<u8>::new())) }
+        })
+        .await
+        .expect_err("零次 GET 必须在 driver future 前拒绝");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        assert_eq!(constructed.get(), 0);
+    }
+
+    #[tokio::test]
+    async fn set_route_zero_attempts_rejects_before_driver_future() {
+        let budget = RetryBudget::new(1);
+        let constructed = std::cell::Cell::new(0u32);
+        let err = route_with_budget(&budget, 0, RetrySafety::Idempotent, "redis.set", || {
+            constructed.set(constructed.get() + 1);
+            async { Ok::<_, XError>(()) }
+        })
+        .await
+        .expect_err("零次 SET 必须在 driver future 前拒绝");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        assert_eq!(constructed.get(), 0);
+    }
+
+    #[tokio::test]
+    async fn configured_zero_attempts_get_does_not_call_driver() {
+        let driver_calls = Arc::new(AtomicUsize::new(0));
+        let client = RedisPool::test_probe(driver_calls.clone())
+            .client()
+            .with_retry_budget(RetryBudget::new(1), 0);
+        let err = client.get("key").await.expect_err("零次 GET 必须提前拒绝");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        assert_eq!(driver_calls.load(Ordering::SeqCst), 0);
+    }
+
+    #[tokio::test]
+    async fn configured_zero_attempts_set_does_not_call_driver() {
+        let driver_calls = Arc::new(AtomicUsize::new(0));
+        let client = RedisPool::test_probe(driver_calls.clone())
+            .client()
+            .with_retry_budget(RetryBudget::new(1), 0);
+        let err =
+            client.set("key", b"value".to_vec(), None).await.expect_err("零次 SET 必须提前拒绝");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+        assert_eq!(driver_calls.load(Ordering::SeqCst), 0);
     }
 }

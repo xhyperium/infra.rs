@@ -82,6 +82,7 @@ mod tests {
     use async_trait::async_trait;
     use bytes::Bytes;
     use futures_core::stream::BoxStream;
+    use futures_util::StreamExt;
     use kernel::XResult;
 
     struct Probe;
@@ -134,6 +135,13 @@ mod tests {
             .publish("topic", Bytes::new())
             .await
             .expect("publish");
+        let mut subscription = set
+            .event_bus()
+            .expect("event bus contract")
+            .subscribe("topic")
+            .await
+            .expect("subscribe");
+        assert!(subscription.next().await.is_none());
         assert!(set.kv_arc().is_some());
         assert!(set.event_bus_arc().is_some());
     }

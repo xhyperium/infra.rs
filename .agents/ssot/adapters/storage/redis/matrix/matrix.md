@@ -15,4 +15,4 @@
 | S-11 | Sentinel 命令路径 | OPEN | 代码/离线失败测试存在；真实 Sentinel/failover 未运行 |
 | S-12 | TLS 安全路径 | OPEN | secure 构造测试存在；真实 TLS 握手未运行 |
 | S-13 | Pub/Sub 配置同源 | PASS | 复用建池 config；Cluster/Sentinel 失败关闭测试 |
-| S-14 | 重试/原子性合同 | PASS | `RedisOperation` + non-retryable / 写禁自动重试测试 |
+| S-14 | 重试/原子性合同 | PASS | client 参数细分：ReadOnly、无 TTL SET/MSET Idempotent、相对 TTL SET/DEL/PEXPIRE UnsafeSideEffect、PUBLISH NeverAutomatic |

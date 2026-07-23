@@ -1,110 +1,135 @@
 # observex 实现规范
 
-状态：当前 `0.1.1` 最小实现与 ADR-005 差距的 active 验收合同
+状态：active；当前 `0.1.2` 候选已重冻，本地 reviewer 完成、verifier 技术/证据初验完成；
+GitHub CI/交付 pending，非 package stable
 
-- Package / lib：`observex` / `observex`（别名 `xhyper-observex` 仅作废弃兼容标签 / dual-mirror 文件名）
-- Implementation snapshot：`b0934baa`（2026-07-15）
-- Document commit：`e0b98df4`
-- Verified at：`e0b98df4`（相关实现路径未变化）
-- Candidate：[SPEC-INFRA-OBSERVEX-002](../../../draft/observex-complete-spec.md)（Draft，非权威，不覆盖本文）
+- Package / lib：`observex` / `observex`
+- 路径：`crates/observex`
+- 当前版本：`0.1.2`
+- 发布：`false`
+- 机器证据：本轮新树 root 串行覆盖率 `942 / 942`、zeros 0、100.0000%、exit 0
 
-## 0. 文档定位与裁定边界
+## 0. 裁定边界
 
-本文使用 **证据（Evidence）**、**推论（Inference）**、**未知（Unknown）** 区分当前事实、最低验收
-解释和待评审事项；服从 XLib spec v0.2 与 ADR-005。代码与 Approved ADR 不一致时，必须记录差距，
-不能把现状静默升级为架构批准。
+本文区分本仓已验证事实与开放能力。源码存在或本文标记 PASS 只表示对应的进程内行为已落地，
+不表示 OpenTelemetry、生产可观测平台或 package stable。
 
-## 1. 定位、职责与非目标
+## 1. 定位与非目标
 
-- **证据**：`observex` 位于 `crates/observex`，是 L1 tracing/metrics 统一封装，依赖
-  `kernel`、`contracts`，目标包括 OpenTelemetry 导出并实现
-  `contracts::Instrumentation`（XLib spec §4.4）。
-- **证据**：当前实现只把三类事件写入 `tracing::info!`；没有 OpenTelemetry exporter、缓冲、flush
-  或 shutdown。
-- **证据**：ADR-005 指定具体实现名 `ObservexInstrumentation`，当前代码公开的名称是
-  `TracingInstrumentation`。行为接口已实现，但命名尚未对齐 Approved ADR。
+observex 是 L1 tracing/metrics 封装，实现 `contracts::Instrumentation`。当前有两类实现面：
 
-非目标：业务审计（属于 `evidence`；别名 `xhyper-evidence` 已废弃）、重试/熔断策略、全局组装，以及让其他 L1 直接依赖本 crate。
+1. `TracingInstrumentation`：把 retry/circuit 事件写入 `tracing::info!`。
+2. `ExportingInstrumentation<I, E>`：先调用 inner，再同步调用自定义 `TelemetryExporter`；
+   `InMemoryExporter` 是该接口的有界进程内 sink。
 
-## 2. 位置、依赖与版本
+当前数据模型不是 OpenTelemetry API/SDK 或语义约定，不实现 OTLP、远端导出、持久化、采样、
+异步批处理、timeout 或资源/trace 上下文。业务审计属于 evidence；重试和熔断策略属于 resiliencx。
 
-| 项目 | 当前事实 | 合同 |
-| --- | --- | --- |
-| 路径 | `crates/observex` | L1 Infra |
-| 版本 | `0.1.1` | 独立维护；每次只允许 `x.y.z → x.y.(z+1)` |
-| 普通依赖 | `kernel`（别名 `xhyper-kernel` 已废弃）, `contracts`（别名 `xhyper-contracts` 已废弃）, `tracing` | 前两者符合 spec；`tracing` 是当前后端 |
-| feature | 无 | exporter/runtime feature 尚未裁定 |
+## 2. 依赖与 feature
 
-`kernel` 当前仅以保留导入存在，没有直接参与公开行为。OpenTelemetry SDK、导出协议、runtime、
-资源属性和配置入口仍为 **未知**。
+| 项 | 当前事实 |
+| --- | --- |
+| 普通依赖 | `kernel`、`contracts`、`thiserror`、`tracing` |
+| 测试依赖 | `tracing-subscriber` |
+| 默认 feature | 空 |
+| async runtime / OTEL SDK | 无 |
 
-## 3. 当前公开 API（代码事实）
+`kernel` 当前为依赖信封保留导入；记录行为由 contracts trait 与 tracing 提供。
+
+## 3. 公开 API
 
 | API | 当前语义 |
 | --- | --- |
-| `TracingInstrumentation` | 零字段公开类型；实现 `Debug + Default + Clone + Copy` |
-| `TracingInstrumentation::new() -> Self` | 创建该零字段实现 |
-| `Instrumentation::record_retry` | `tracing::info!` 记录 `op`、`attempt` 和 `"retry"` |
-| `Instrumentation::record_circuit_open` | `tracing::info!` 记录 `op` 和 `"circuit_open"` |
-| `Instrumentation::record_circuit_close` | `tracing::info!` 记录 `op` 和 `"circuit_close"` |
+| `TracingInstrumentation` | 零字段 `Debug + Default + Clone + Copy`；实现 `Instrumentation` |
+| `ObservexInstrumentation` | `TracingInstrumentation` 的 ADR 兼容别名 |
+| `PrefixedInstrumentation<I>` | 给清理后的 op 增加受限前缀，再下传 |
+| `CountingInstrumentation` | 进程内测试计数；不是生产 metrics |
+| `sanitize_op` / `MAX_OP_BYTES` | 统一清理，最大 128 UTF-8 字节 |
+| `TelemetryExporter` | 同步自定义 exporter trait |
+| `InMemoryExporter` | 有界进程内 sink |
+| `ExportingInstrumentation<I, E>` | 同步调用 inner 与 exporter |
+| `InMemoryExporterStats` | 同一锁下的容量、buffered、flushed、dropped、shutdown 快照 |
+| `ExportingInstrumentationStats` | exporter failed/panicked/unconfirmed 原子诊断快照 |
 
-当前没有 `ObservexInstrumentation`、构造配置、subscriber 安装、metric handle、exporter、flush 或 shutdown
-API。ADR-005 的命名差距须通过代码重命名/兼容别名修复，或先修订 ADR；本文不替代该决定。
+## 4. op 治理
 
-## 4. 行为、不变量与差距
+所有真实记录路径必须使用同一 `sanitize_op` 结果：
 
-1. **证据——解耦**：实现 contracts trait；resiliencx 无需依赖 observex。
-2. **证据——事件映射**：三个 trait 方法各产生对应的 info event；没有 subscriber 时调用仍不 panic。
-3. **证据——同步热路径**：方法为同步调用，当前没有显式 I/O、队列或锁。
-4. **推论——失败隔离**：观测调用不得改变被观测业务结果；未来 exporter 失败也须保持此边界。
-5. **推论——基数与敏感性**：`op` 必须来自受控集合，不得直接使用订单号、用户输入、secret、PII
-   或完整 URL；当前代码未强制这一点。
-6. **未知——导出合同**：指标名、单位、标签、span 事件、采样、缓冲满策略和 OpenTelemetry 映射。
+- trim；
+- 移除 Unicode control 字符；
+- 结果为空时回落 `"_"`；
+- 超过 128 UTF-8 字节时，在字符边界截断并追加 `~`。
 
-当前 `tracing::info!` 实现满足 trait 行为的最小演示，但不等于已经完成 spec §4.4 的 OpenTelemetry
-导出目标，也不证明生产级有界性或丢弃策略。
+该清理仅限制资源占用与控制字符注入。它不检测 PII、secret，也不验证 allowlist；调用方仍必须
+让 `op` 来自稳定、低基数且不含敏感值的受控词汇。不得把本清理宣称为脱敏闭环。
 
-## 5. 错误、并发与生命周期
+## 5. 缓冲、满载与统计
 
-- `TracingInstrumentation` 为零字段 Copy 类型，可在线程间共享；trait 自身要求 `Send + Sync`。
-- 当前记录 API 不返回错误，subscriber/exporter 状态对调用方不可见；没有 flush/shutdown 生命周期。
-- **未知**：初始化失败、缓冲满、exporter 重试、flush timeout、关闭错误及递归诊断策略。
-- 未来实现不得在同步热路径无界阻塞，也不得因观测失败 panic 或覆盖业务错误。
+- `InMemoryExporter::new/default` 对 span 与 metric 分别提供 1024 个槽位。
+- `with_capacity(n)` 设置每类信号各自独立的容量；`0` 拒绝所有非空批次。
+- 单次 `export_spans` 或 `export_metrics` 容量不足时整批拒绝，原缓冲不变，返回
+  `ExportError::BufferFull`，并按整批事件数累计对应 dropped。
+- span 与 metric 是独立调用，跨信号不提供事务原子性。
+- `stats()` 在同一 mutex 临界区读取一致性状态；各兼容访问器返回相同状态的单项投影。
+- flushed/dropped 在 `usize` 表示范围内精确；溢出时字段饱和并设置 `counters_saturated`，
+  此后对应值只能解释为下界。
+- dropped 只统计容量拒绝；shutdown 拒绝返回 `Shutdown`，不重复计入容量 dropped。
+- 容量按事件数计算，不限制直接 exporter 调用中单个事件字段的字节数。
 
-## 6. 测试合同
+## 6. flush、shutdown 与失败边界
 
-当前测试只证明：三个方法可调用且不 panic、Default/new 可构造、trait object 可用、Clone/Copy 行为可用。
-当前版本至少运行：
+- `flush()` 把当前 buffered 数累计到 flushed 并清空；它只表示进程内处置，不表示持久化。
+- 首次 `shutdown()` 在同一 mutex 临界区执行 flush-and-close；重复调用返回成功且统计不变。
+- shutdown 返回后 export/flush 返回 `ExportError::Shutdown`。
+- `ExportingInstrumentation` 先调用 inner；exporter 返回的 `ExportError` 与 unwind panic 均被内化，
+  不改变记录调用的返回，并累计 failed/panicked/unconfirmed 诊断；`panic=abort` 不可捕获。
+- `unconfirmed_spans/metrics` 只表示失败调用涉及、交付状态未知且 wrapper 不重试；exporter 可能
+  在返回 Err 或 unwind 前已有部分副作用，不得把 unconfirmed 宣称为实际 dropped。
+- `flush` / `shutdown` 的普通 exporter 错误原样返回，unwind panic 转为 `ExportError::Panicked`。
+- `TelemetryExporter` 是同步非阻塞接口。实现必须快速返回，不得等待外部 I/O 或无界阻塞；
+  违反合同的第三方实现仍会阻塞调用线程。
+- 诊断计数原子饱和更新，并以短临界区提供多字段一致快照；`counters_saturated` 表示数值只能作为下界。
+- `InMemoryExporter` 从 poisoned mutex 恢复内部状态；这是本实现行为，不扩展到泛型 exporter。
 
-```text
-cargo test -p observex（别名 xhyper-observex 已废弃，不可用于 -p）
-cargo check -p observex --all-targets
+## 7. 并发不变量
+
+`InMemoryExporter` 用单一 mutex 线性化 export、flush 和 shutdown。任意时刻每类 buffered
+不超过容量；单事件并发容量测试中，accepted buffered/flushed 与 capacity dropped 必须守恒。
+shutdown 与 export 竞态由持锁顺序决定，shutdown 返回后不得再成功接受事件。
+
+## 8. 测试与验收
+
+最低验证：
+
+```bash
+cargo fmt --all --check
+cargo test -p observex --all-targets
 cargo clippy -p observex --all-targets -- -D warnings
-cargo fmt -- --check
-cargo xtl lint-deps
+cmp .agents/ssot/observex/spec/spec.md \
+    .agents/ssot/observex/spec/xhyper-observex-complete-spec.md
 ```
 
-尚缺：捕获并断言 tracing event 字段、受控基数、敏感值处理、并发记录，以及 exporter/flush/shutdown
-测试（相关 API 获批后）。还须证明 resiliencx 的 Cargo 图中没有 observex。
+测试必须覆盖：
 
-## 7. 验收标准与开放决策
+- 控制字符、空值、恶意长 op 与 UTF-8 1/2/边界字节预算；
+- 默认/显式/零容量、恰满、超限整批拒绝、flush 后复用与 dropped 精确计数；
+- 并发容量守恒；
+- shutdown 自动 flush 计数、幂等及关闭后拒绝；
+- exporter `Err` / unwind panic 不改变 inner 记录和正常返回，并产生诊断；
+- flush/shutdown unwind panic 转换及简中错误 Display。
 
-- [ ] 当前依赖、`TracingInstrumentation` API 和测试与源码一致。
-- [ ] ADR-005 的 `ObservexInstrumentation` 命名通过代码兼容或 ADR 修订解决。
-- [ ] 文档不把 tracing info 事件宣称为已完成的 OpenTelemetry 导出。
-- [ ] bootstrap 注入链落地后证明 observex 与 resiliencx 无直接依赖。
-- [ ] 每次版本更新仅执行 `x.y.z → x.y.(z+1)`，兼容性治理独立执行。
+## 9. 开放项
 
-仍需裁定：类型命名迁移；SDK/exporter；metric 名称、单位和标签；span API；采样；缓冲/丢弃；
-初始化、flush/shutdown；测试 exporter。
+OpenTelemetry SDK/OTLP、远端持久化、异步队列、timeout、采样、PII/secret 检测、op allowlist、
+完整事件信封与服务级运维 SLO 均为 OPEN，不得由当前进程内测试推断为已交付。
 
-## 8. 可追溯性
+## 10. 追溯
 
-| 合同 | 来源 |
+| 合同 | 证据 |
 | --- | --- |
-| 职责、依赖、OpenTelemetry 目标 | XLib spec §4.4 |
-| Instrumentation 签名 | XLib spec §4.3；`crates/contracts/src/lib.rs` |
-| 具体实现命名与注入 | ADR-005 |
-| 当前 tracing 实现与测试 | `crates/observex/src/lib.rs` |
-| 当前依赖与版本 | `crates/observex/Cargo.toml` |
-| 版本更新规则 | Constitution §7.3；XLib spec §5 |
+| Instrumentation 签名 | `crates/contracts/src/lib.rs` |
+| op 清理 | `crates/observex/src/ops.rs` |
+| tracing 记录 | `crates/observex/src/lib.rs` |
+| 有界 sink 与生命周期 | `crates/observex/src/export.rs` |
+| 公开/失败/并发测试 | `crates/observex/src/*.rs`、`crates/observex/tests/` |
+| 本仓裁定 | `docs/ssot/observex-ssot-alignment.md` |

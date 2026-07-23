@@ -72,7 +72,7 @@ impl RedisPubSub {
         let endpoint = cfg.display_endpoint();
         let info = pubsub_connection_info(&cfg)?;
         let client = redis::Client::open(info)
-            .map_err(|e| XError::unavailable(format!("redis pubsub client: {e}")))?;
+            .map_err(|e| XError::unavailable(format!("redis PubSub 客户端创建失败: {e}")))?;
 
         let manager_config = redis::aio::ConnectionManagerConfig::new()
             .set_connection_timeout(cfg.connect_timeout())

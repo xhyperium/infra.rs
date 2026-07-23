@@ -1,6 +1,6 @@
 # configx docs
 
-**Package**：`xhyper-configx` · **lib**：`configx` · **角色**：L1 内存字符串 KV
+**Package / lib**：`configx` / `configx` · **版本**：`0.1.2` · **角色**：L1 进程内字符串配置组件
 
 本目录存放 **crate 级**设计 / 契约补充 / 迁移笔记。
 不替代 rustdoc；不重复仓库根治理文档（见分层边界 `crates/AGENTS.md`）。
@@ -24,3 +24,5 @@
 ## 公开 API 说明
 
 详见 [API.md](./API.md)（公开消费面 + 最小用法）。
+
+文档中的 reload 均指调用方显式触发的进程内操作；不表示自动文件 watcher 或远端配置中心。

@@ -1,6 +1,12 @@
 # Changelog — postgresx
 
-## [0.3.3] — 2026-07-22
+## [0.3.4] — 未发布（2026-07-23 候选）
+
+- 在 `0.3.3` main 历史基础上收敛最新 Adapter safety / unchecked compatibility 合同与回归证据。
+- 最终本地测试为 52 passed + 6 ignored；ignored live 测试不冒充默认 CI 证据。
+- 候选曾冻结；治理修正后最终 SHA、reviewer/verifier、CI 与发布均 pending。
+
+## [0.3.3] — 未发布（2026-07-23 候选）
 
 ### Added
 
@@ -22,6 +28,14 @@
 
 - 远程 `sslmode=disable/prefer` fail-closed；仅 `require` 可连接远程主机
 - SQL / 事务错误保留 source；COMMIT 超时明确为结果未知
+- 新增显式 `RetrySafety` 的 sync/async budget wrapper；任意 SQL 默认不被假定为只读或幂等
+- 明确 `PostgresPool` 当前没有 budget 自动接线，旧无 safety helper 为 unchecked compatibility
+- legacy `with_budget_async` 委托 resiliencx unchecked generic async core，统一标准 budget 错误与
+  从 1 起的失败 attempt 观测；兼容入口仍不校验 `RetrySafety`
+
+### Version
+
+- root 已按 R-C2 将 `postgresx 0.3.2` bump 至 `0.3.3`；当前仍是未发布候选，未创建 tag 或发布制品
 
 ## [0.3.2] — 2026-07-22
 
@@ -32,7 +46,7 @@
 
 ## [0.3.1] — 2026-07-22
 
-### Added
+### 新增
 
 - **TLS Require/Prefer**：`MakeRustlsConnect`（rustls + webpki-roots）实现
   `tokio_postgres::tls::MakeTlsConnect`
@@ -40,23 +54,7 @@
   `ensure_table()` + 参数化 `find`/`save`
 - **resiliencx**：`with_retry_sync` / `with_retry_async` / `with_retry_async_no_wait`
 
-### Changed
+### 变更
 
 - 版本 `0.3.0` → `0.3.1`
 - `SslMode::Require` 不再在建池前以 Invalid 拒绝；走真实 rustls 连接器
-
-## Unreleased
-
-### Added
-
-- 生产默认面：`PostgresConfig` / `PostgresConfigBuilder` / `SslMode`
-  - 环境：`FOUNDATIONX_POSTGRESX_*`；`DATABASE_URL` 优先覆盖
-- `PostgresPool`：`connect` / `acquire` / `execute` / `query` / `query_one` /
-  `query_opt` / `with_transaction` / `begin` / `health` / `stats` / `close`
-- `PgConnection` / `PgTransaction`（`TxStatus::{Active,Committed,RolledBack,Failed}`；
-  `TxState` 为 deprecated 兼容视图）
-- SQLSTATE → `kernel::ErrorKind` 映射与单元测试
-- `PgTxRunner`：`contracts::TxRunner` 真实事务边界（诚实限制：无 SQL 句柄）
-- feature `scaffold`：原 `PostgresAdapter` / `ObservingPostgresAdapter`
-- live `#[ignore]` 测试与 `benches/query_hot_path.rs`（harness = false）
-- 文档：`docs/usage.md` / `config.md` / `operations.md`

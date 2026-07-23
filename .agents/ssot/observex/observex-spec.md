@@ -6,4 +6,4 @@
 > 布局对齐：`.agents/ssot/kernel/`（见 `.agents/ssot/AGENTS.md` §2）。
 
 - 入口：[`spec/spec.md`](spec/spec.md)
-- 双镜像：[`spec/observex-complete-spec.md`](spec/observex-complete-spec.md)（须 `cmp` 同构）
+- 双镜像：[`spec/xhyper-observex-complete-spec.md`](spec/xhyper-observex-complete-spec.md)（须 `cmp` 同构）

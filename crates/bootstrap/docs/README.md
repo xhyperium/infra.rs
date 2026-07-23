@@ -1,6 +1,6 @@
 # bootstrap docs
 
-**Package**：`xhyper-bootstrap` · **lib**：`bootstrap` · **角色**：L1 唯一组合根
+**Package / lib**：`bootstrap` / `bootstrap` · **版本**：`0.3.3` · **角色**：L1 唯一组合根
 
 本目录存放 **crate 级**设计 / 契约补充 / 迁移笔记。
 不替代 rustdoc；不重复仓库根治理文档（见分层边界 `crates/AGENTS.md`）。

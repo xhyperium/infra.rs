@@ -3,8 +3,11 @@
 use kernel::{ErrorKind, XError};
 use resiliencx::{
     Backoff, Bulkhead, BulkheadConfig, CircuitBreaker, CircuitConfig, CircuitState, NoWait,
-    NoopInstrumentation, RateLimitConfig, RateLimiter, RecordingWait, RetryConfig, ThreadSleepWait,
-    Wait, apply_deterministic_jitter, retry_delay_ms, retry_fn_with_wait, retry_ok,
+    NoopInstrumentation, RateLimitConfig, RateLimiter, RecordingWait, RetryBudget, RetryConfig,
+    RetryContext, RetrySafety, ThreadSleepWait, Wait, apply_deterministic_jitter,
+    apply_seeded_jitter, call_with_retry_budget_async, call_with_retry_budget_async_safe,
+    call_with_retry_budget_safe, retry_delay_ms, retry_delay_ms_with_seed, retry_fn_safe,
+    retry_fn_with_wait, retry_ok,
 };
 use std::sync::Arc;
 
@@ -69,4 +72,76 @@ fn circuit_config_accessor_and_noop_instr() {
     let mut op = || Ok(retry_ok(1u8));
     let out = retry_fn_with_wait(&rcfg, &instr, "n", &NoWait, &mut op).unwrap();
     let _ = out;
+}
+
+#[test]
+fn caller_seed_can_decorrelate_jitter() {
+    let cfg = RetryConfig {
+        max_attempts: 3,
+        base_delay_ms: 1_000,
+        backoff: Backoff::Constant,
+        jitter_bps: 5_000,
+    };
+
+    assert_ne!(retry_delay_ms_with_seed(&cfg, 1, 7), retry_delay_ms_with_seed(&cfg, 1, 8));
+    assert_ne!(apply_seeded_jitter(1_000, 5_000, 1, 7), 0);
+
+    let wait = RecordingWait::new();
+    let mut calls = 0u32;
+    let mut operation = || {
+        calls += 1;
+        if calls == 1 { Err(XError::transient("重试")) } else { Ok(retry_ok(())) }
+    };
+    retry_fn_safe(
+        RetryContext::new(&cfg, RetrySafety::ReadOnly, &NoopInstrumentation, "seeded.read")
+            .with_jitter_seed(7),
+        &wait,
+        &mut operation,
+    )
+    .expect("seeded 安全重试");
+    assert_eq!(wait.delays(), vec![retry_delay_ms_with_seed(&cfg, 1, 7)]);
+}
+
+#[tokio::test]
+async fn generic_adapter_budget_safe_surface() {
+    let budget = RetryBudget::new(1);
+    assert_eq!(
+        call_with_retry_budget_safe(
+            &budget,
+            1,
+            RetrySafety::UnsafeSideEffect,
+            "adapter.once",
+            &NoopInstrumentation,
+            || Ok(7u8),
+        )
+        .expect("单次不安全操作可执行"),
+        7
+    );
+
+    assert_eq!(
+        call_with_retry_budget_async_safe(
+            &budget,
+            2,
+            RetrySafety::ReadOnly,
+            "adapter.read",
+            &NoopInstrumentation,
+            || async { Ok(9u8) },
+        )
+        .await
+        .expect("只读异步操作可执行"),
+        9
+    );
+
+    assert_eq!(
+        call_with_retry_budget_async(
+            &budget,
+            1,
+            "adapter.unchecked.once",
+            &NoopInstrumentation,
+            || async { Ok(11u8) },
+        )
+        .await
+        .expect("unchecked 兼容面保持 generic 返回值"),
+        11
+    );
 }

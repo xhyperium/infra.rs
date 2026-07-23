@@ -119,7 +119,7 @@ impl PostgresPool {
 
     fn ensure_open(&self) -> XResult<()> {
         if self.closed.load(Ordering::Acquire) {
-            Err(XError::unavailable("PostgresPool 已 close".to_string()))
+            Err(XError::unavailable("Postgres 连接池已关闭".to_string()))
         } else {
             Ok(())
         }
@@ -209,7 +209,7 @@ impl PostgresPool {
         let row = conn.query_one("SELECT 1", &[]).await?;
         let v: i32 = row.try_get(0).map_err(map_tokio_error)?;
         if v != 1 {
-            return Err(XError::unavailable(format!("health 检查异常结果: {v}")));
+            return Err(XError::unavailable(format!("健康检查异常结果: {v}")));
         }
         Ok(())
     }

@@ -1,24 +1,52 @@
 # resiliencx 公开 API
 
-**角色**：重试/熔断/限流/舱壁
+本文对应 `resiliencx 0.1.2` 的进程内公开消费面。
 
 ## 公开消费面
 
 | 能力 | API |
 |------|-----|
-| 重试 | `RetryConfig` / `retry_fn` / `retry_fn_with_wait` / `Wait` / `NoWait` / `RecordingWait` / `ThreadSleepWait` |
+| 生产安全同步重试 | `RetryContext` / `RetrySafety` / `retry_fn_safe` |
+| 生产安全异步重试 | `RetryContext` / `retry_async_safe` / `AsyncWait` |
+| 生产安全 Adapter budget | `call_with_retry_budget_safe` / `call_with_retry_budget_async_safe` |
+| 整次 deadline | `retry_async_with_deadline`（feature `tokio`） |
+| 重试预算 | `RetryBudget` / `budget_exhausted_error` |
+| Unchecked 兼容面 | `call_with_retry_budget` / `call_with_retry_budget_async` / `retry_fn` / `retry_fn_with_wait` / `retry_fn_with_budget` / `retry_fn_with_wait_budget` / `retry_async` / `retry_async_with_budget` |
+| 退避与 jitter | `RetryConfig` / `Backoff` / `retry_delay_ms_with_seed` / `apply_seeded_jitter` |
+| 等待 | `Wait` / `AsyncWait` / `NoWait` / `RecordingWait` / `ThreadSleepWait` / `TokioSleepWait` |
 | 熔断 | `CircuitBreaker` / `CircuitConfig` / `CircuitState` |
 | 限流 | `RateLimiter` / `RateLimitConfig` |
 | 舱壁 | `Bulkhead` / `BulkheadConfig` / `BulkheadPermit` |
 | 观测 | `NoopInstrumentation` / re-export `Instrumentation` |
 
-## 最小用法
+## 选择规则
 
-```rust
-use resiliencx::{NoopInstrumentation, RetryConfig, retry_fn, retry_ok, retry_downcast};
+1. 新的装箱生产接线使用 `retry_fn_safe` / `retry_async_safe`；generic Adapter 使用
+   `call_with_retry_budget_safe` / `call_with_retry_budget_async_safe`。
+2. `max_attempts > 1` 时只能声明 `ReadOnly` 或 `Idempotent`；`UnsafeSideEffect` 会在首次调用前拒绝。
+3. `RetrySafety` 由调用方保证，不能替代幂等键、事务或领域级重复检测。
+4. 使用 `RetryContext::with_budget` 与 `with_jitter_seed` 组合可选策略；caller seed 进入实际退避。
+5. feature `tokio` 下需要总 deadline 时使用 `retry_async_with_deadline`；超时只取消 future 的继续轮询，
+   不保证撤销已经发生的副作用。
+6. 上表完整列出的 unchecked compatibility 入口不执行副作用安全校验；只能用于已在更高层完成
+   safety 验证的兼容组合，不能称为安全重试。
+7. budget 在每次真正 retry 前消耗；耗尽统一返回 `budget_exhausted_error()`。
+8. attempt-only jitter 不抗群聚；多实例生产接线使用调用方 seed 入口。
 
-let cfg = RetryConfig::fixed(2, 0);
-let mut op = || Ok(retry_ok(1u8));
-let v = retry_downcast::<u8>(retry_fn(&cfg, &NoopInstrumentation, "op", &mut op).unwrap()).unwrap();
-assert_eq!(v, 1);
-```
+async budget 使用 reservation：退避前 reserve，完成后 commit；future 在退避中被 drop 时 RAII refund。
+无 wait 的 generic Adapter async 入口在 retry operation future 已构造/轮询后取消，视为 attempt 已发起，
+已消费预算不退还。
+
+## Adapter 分类
+
+- Redis client：GET/EXISTS/PTTL/MGET=`ReadOnly`；无 TTL SET/MSET=`Idempotent`；
+  DEL/PEXPIRE/相对 TTL SET=`UnsafeSideEffect`。
+- Postgres：当前 pool 无 budget 自动接线。safe wrapper 要求调用方显式 safety；任意 SQL 默认不能证明
+  只读或幂等，应保守使用 `UnsafeSideEffect`，多次尝试因此在首次 future 前拒绝。
+- 两 adapter 的旧 `with_budget*` / `with_retry*` wrapper 是 unchecked compatibility。
+
+## 本地原语边界
+
+`CircuitBreaker`、`RateLimiter`、`Bulkhead` 都只维护本进程状态。
+`try_acquire` / `try_enter` 是立即成功或立即 `Unavailable` 的接口，不提供排队、公平性、
+跨进程配额、墙钟 refill 或自动超时。

@@ -66,6 +66,11 @@
 
 - 新增源文件前先声明在本文档中
 - 同时创建对应的投影规则或对齐文档
+- 各域三轮生产加固允许在既有 `plan/` 下新增
+  `round-01-findings.md`、`round-02-findings.md`、`round-03-findings.md`；
+  文件只记录本轮发现、修复、验证与残余边界，不替代 active `spec/spec.md`
+- 上述轮次证据必须同步到对应 `docs/ssot/*-ssot-alignment.md`，且不得把
+  “结构完成”表述为 package stable、完整平台或远端生产能力
 
 ### R5: 废除与迁移
 
@@ -131,6 +136,7 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v2.2.1 | 2026-07-23 | 在 v2.2.0 current-state 基线上声明域级三轮 findings 证据文件约定；清理重复域目录清单 |
 | v2.2.0 | 2026-07-22 | 唯一化顶层 evidence current-state 入口；冻结 24 package 与 configx/schedulex/exchange 当前边界 |
 | v2.1.0 | 2026-07-21 | **展平 SSOT 结构**：移除 `infra/` 子目录；bootstrap/configx/gate/observex/resiliencx/schedulex/testkitx/transport 直接位于 `.agents/ssot/` 根 |
 | v2.0.0 | 2026-07-21 | **彻底本仓化**：`.agents/ssot` 不再表述为外仓镜像；清除外仓路径字面量；R6/R7/清单重写 |

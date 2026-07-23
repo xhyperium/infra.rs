@@ -89,7 +89,7 @@ impl ObservingPostgresAdapter {
         Ok(self
             .durable
             .lock()
-            .map_err(|e| XError::internal(format!("durable lock poisoned: {e}")))?
+            .map_err(|e| XError::internal(format!("持久状态锁已污染: {e}")))?
             .len())
     }
 
@@ -139,7 +139,7 @@ impl TxContext for MockTxContext {
             let mut g = self
                 .durable
                 .lock()
-                .map_err(|e| XError::internal(format!("durable lock poisoned: {e}")))?;
+                .map_err(|e| XError::internal(format!("持久状态锁已污染: {e}")))?;
             for (k, v) in staged {
                 g.insert(k, v);
             }
@@ -166,7 +166,7 @@ impl Repository<Record, String> for ObservingPostgresAdapter {
         Ok(self
             .durable
             .lock()
-            .map_err(|e| XError::internal(format!("durable lock poisoned: {e}")))?
+            .map_err(|e| XError::internal(format!("持久状态锁已污染: {e}")))?
             .get(&id)
             .cloned())
     }
@@ -175,7 +175,7 @@ impl Repository<Record, String> for ObservingPostgresAdapter {
         // 直接写 durable（非事务路径）；事务写入请用 MockTxContext::stage_save
         self.durable
             .lock()
-            .map_err(|e| XError::internal(format!("durable lock poisoned: {e}")))?
+            .map_err(|e| XError::internal(format!("持久状态锁已污染: {e}")))?
             .insert(entity.id.clone(), entity.clone());
         Ok(())
     }

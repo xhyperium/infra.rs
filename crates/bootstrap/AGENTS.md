@@ -7,8 +7,8 @@
 - **R3.1 豁免边界**：本 crate 是 workspace 唯一允许「知道全局」的组合根；其它 L1 不得复制此模式作为业务依赖。
 - **ADR-016**：typed composition（`PlatformContext` / `AppContext` / `BootstrappedApp`）；**禁止** runtime gate / 字符串 Service Locator。
 - **ADR-005 注入链**：
-  - trait：`xhyper-contracts`（`Instrumentation`）
-  - 默认实现：`xhyper-observex`（`TracingInstrumentation`）
+  - trait：package/lib `contracts`（`Instrumentation`）
+  - 默认实现：package/lib `observex`（`TracingInstrumentation`）
   - 静默：`NoopInstrumentation`（本 crate）
   - 消费方（resiliencx 等）只依赖 contracts，禁止依赖 observex
 - `ContractStoreSet` 只允许固定正式 contracts 槽位；禁止演化为通用 Service Locator 或跨资源事务协调器。

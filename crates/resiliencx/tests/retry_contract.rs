@@ -2,8 +2,9 @@
 
 use kernel::{ErrorKind, XError};
 use resiliencx::{
-    Backoff, Instrumentation, NoopInstrumentation, RecordingWait, RetryConfig, retry_delay_ms,
-    retry_downcast, retry_fn, retry_fn_with_wait, retry_ok,
+    Backoff, Instrumentation, NoopInstrumentation, RecordingWait, RetryConfig, RetryContext,
+    RetrySafety, retry_delay_ms, retry_downcast, retry_fn, retry_fn_safe, retry_fn_with_wait,
+    retry_ok,
 };
 use std::sync::{Arc, Mutex};
 
@@ -204,4 +205,54 @@ fn retry_downcast_type_mismatch_is_invalid() {
 fn retry_ok_roundtrip() {
     let v = retry_ok("hello".to_string());
     assert_eq!(retry_downcast::<String>(v).expect("ty"), "hello");
+}
+
+#[test]
+fn safe_retry_rejects_unsafe_side_effect_before_first_attempt() {
+    let cfg = RetryConfig::fixed(2, 0);
+    let mut calls = 0u32;
+    let mut op = || {
+        calls += 1;
+        Ok(retry_ok(()))
+    };
+
+    let err = retry_fn_safe(
+        RetryContext::new(&cfg, RetrySafety::UnsafeSideEffect, &NoopInstrumentation, "charge"),
+        &resiliencx::NoWait,
+        &mut op,
+    )
+    .expect_err("不安全副作用不得自动重试");
+
+    assert_eq!(err.kind(), ErrorKind::Invalid);
+    assert_eq!(calls, 0);
+}
+
+#[test]
+fn safe_retry_allows_read_only_and_single_unsafe_attempt() {
+    let mut read = || Ok(retry_ok(7u8));
+    let value = retry_fn_safe(
+        RetryContext::new(
+            &RetryConfig::fixed(2, 0),
+            RetrySafety::ReadOnly,
+            &NoopInstrumentation,
+            "read",
+        ),
+        &resiliencx::NoWait,
+        &mut read,
+    )
+    .expect("只读操作可重试");
+    assert_eq!(retry_downcast::<u8>(value).expect("类型"), 7);
+
+    let mut write_once = || Ok(retry_ok(()));
+    retry_fn_safe(
+        RetryContext::new(
+            &RetryConfig::fixed(1, 0),
+            RetrySafety::UnsafeSideEffect,
+            &NoopInstrumentation,
+            "write.once",
+        ),
+        &resiliencx::NoWait,
+        &mut write_once,
+    )
+    .expect("单次不安全副作用不发生自动重试");
 }

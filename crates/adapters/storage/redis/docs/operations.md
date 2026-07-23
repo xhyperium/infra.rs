@@ -34,15 +34,17 @@
 
 | 操作 | 自动预算重试 | 原子性边界 | 失败后含义 |
 |------|--------------|------------|------------|
-| GET / EXISTS / PTTL / MGET | 仅 Transient | 单命令；MGET 仅单节点/同 slot | 可安全重读 |
-| SET / PSETEX | 否；`set_with_budget` 为显式 opt-in | value + TTL 单命令原子 | 响应丢失时可能已写入；重试会重置 TTL |
-| DEL | 否 | 单命令原子 | 响应丢失时可能已删除；重试返回值会漂移 |
-| PEXPIRE | 否 | 单命令原子 | 响应丢失时可能已生效；重试会重置 TTL 起点 |
-| MSET | 否 | Standalone/Cluster 同 slot 单命令 | 不承诺跨 slot 原子性 |
-| PUBLISH | 否 | 无可靠投递原子性 | 不重试，避免重复消息；仍可能丢消息 |
+| GET / EXISTS / PTTL / MGET | budget 下仅 Transient；`ReadOnly` | 单命令；MGET 仅单节点/同 slot | 可安全重读 |
+| 无 TTL SET | budget 下仅 Transient；`Idempotent` | 单命令原子 | 固定 key/value 可重放；响应仍可能丢失 |
+| 相对 TTL SET / PSETEX | 多次尝试在 I/O 前拒绝；单次允许 | value + TTL 单命令原子 | 重试会重置 TTL 起点 |
+| DEL | 多次尝试在 I/O 前拒绝；单次允许 | 单命令原子 | 重试会使返回值漂移 |
+| PEXPIRE | 多次尝试在 I/O 前拒绝；单次允许 | 单命令原子 | 重试会重置 TTL 起点 |
+| MSET | budget 下仅 Transient；`Idempotent` | Standalone/Cluster 同 slot 单命令 | 固定输入可重放；不承诺跨 slot 原子性 |
+| PUBLISH | 不自动重试 | 无可靠投递原子性 | 避免自动重复消息；仍可能丢消息 |
 
-`RedisOperation::{retry_safety,atomicity}` 是上述合同的可测试代码入口。超时只说明客户端未收到
-确定结果，不能证明 Redis 未执行写命令。
+`RedisOperation::{retry_safety,atomicity}` 是粗粒度可测试入口。`RedisOperation::Set` 无法携带 TTL
+参数，故保持 `AmbiguousWrite`；`RedisClient::set` 按 `ttl = None` / `Some(_)` 分别选择
+`Idempotent` / `UnsafeSideEffect`。超时只说明客户端未收到确定结果，不能证明 Redis 未执行写命令。
 
 ## Pub/Sub 拓扑
 
@@ -71,4 +73,4 @@ CI：`.github/workflows/redisx-live.yml`（service redis；可用 `REDIS_URL`）
 - 真实 Cluster / Sentinel / TLS live 与故障切换
 - Cluster / Sentinel Pub/Sub 路由与重订阅
 - Streams / 分布式锁完整合同
-- 默认自动重试非幂等写
+- 自动重试相对 TTL 写入、返回值敏感写入或 PUBLISH

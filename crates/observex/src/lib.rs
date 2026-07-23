@@ -1,9 +1,9 @@
-//! observex —— L1 tracing/metrics 封装（SPEC 0.1.0 / ADR-005）。
+//! observex —— L1 tracing/metrics 封装（SPEC 0.1.2 / ADR-005）。
 //!
 //! [`TracingInstrumentation`] 实现 [`contracts::Instrumentation`]。
 //! 另有 [`PrefixedInstrumentation`]、[`CountingInstrumentation`]（本地验证）。
-//! [`export`] 提供 OTEL-**compatible** 进程内导出面（[`TelemetryExporter`] /
-//! [`InMemoryExporter`] / [`ExportingInstrumentation`]），**不是**完整 OpenTelemetry SDK。
+//! [`export`] 提供自定义的有界进程内 sink（[`TelemetryExporter`] /
+//! [`InMemoryExporter`] / [`ExportingInstrumentation`]）。它不是 OpenTelemetry API/SDK，也不实现 OTLP。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -17,10 +17,12 @@ mod ops;
 mod policy;
 mod surface;
 pub use export::{
-    ExportError, ExportingInstrumentation, InMemoryExporter, MetricEvent, SpanEvent,
-    TelemetryExporter,
+    DEFAULT_BUFFER_CAPACITY, ExportError, ExportingInstrumentation, ExportingInstrumentationStats,
+    InMemoryExporter, InMemoryExporterStats, MetricEvent, SpanEvent, TelemetryExporter,
 };
-pub use ops::{is_friendly_op, join_op_segments, op_depth, op_leaf, sanitize_op, truncate_op};
+pub use ops::{
+    MAX_OP_BYTES, is_friendly_op, join_op_segments, op_depth, op_leaf, sanitize_op, truncate_op,
+};
 pub use policy::{
     ObservabilityTier, allows_production_observability_claim, claims_otel_export_complete,
     counting_is_production_metrics, policy_summary, tier_counting, tier_tracing,
@@ -47,12 +49,15 @@ pub type ObservexInstrumentation = TracingInstrumentation;
 
 impl Instrumentation for TracingInstrumentation {
     fn record_retry(&self, op: &str, attempt: u32) {
+        let op = sanitize_op(op);
         tracing::info!(op = op, attempt = attempt, "retry");
     }
     fn record_circuit_open(&self, op: &str) {
+        let op = sanitize_op(op);
         tracing::info!(op = op, "circuit_open");
     }
     fn record_circuit_close(&self, op: &str) {
+        let op = sanitize_op(op);
         tracing::info!(op = op, "circuit_close");
     }
 }
@@ -68,7 +73,9 @@ impl<I> PrefixedInstrumentation<I> {
     /// 构造。
     #[must_use]
     pub fn new(prefix: impl Into<String>, inner: I) -> Self {
-        Self { prefix: prefix.into(), inner }
+        let prefix = prefix.into();
+        let prefix = if prefix.is_empty() { prefix } else { sanitize_op(&prefix) };
+        Self { prefix, inner }
     }
     /// 内层。
     #[must_use]
@@ -76,7 +83,8 @@ impl<I> PrefixedInstrumentation<I> {
         &self.inner
     }
     fn qualify(&self, op: &str) -> String {
-        if self.prefix.is_empty() { op.to_string() } else { format!("{}.{}", self.prefix, op) }
+        let op = sanitize_op(op);
+        if self.prefix.is_empty() { op } else { sanitize_op(&format!("{}.{}", self.prefix, op)) }
     }
 }
 
@@ -167,17 +175,17 @@ pub fn normalize_op(op: &str) -> &str {
     if op.is_empty() { "_" } else { op }
 }
 
-/// normalize 后 retry。
+/// 清理并限制 `op` 后 retry。
 pub fn record_retry_normalized(instr: &dyn Instrumentation, op: &str, attempt: u32) {
-    instr.record_retry(normalize_op(op), attempt);
+    instr.record_retry(&sanitize_op(op), attempt);
 }
-/// normalize 后 open。
+/// 清理并限制 `op` 后 open。
 pub fn record_circuit_open_normalized(instr: &dyn Instrumentation, op: &str) {
-    instr.record_circuit_open(normalize_op(op));
+    instr.record_circuit_open(&sanitize_op(op));
 }
-/// normalize 后 close。
+/// 清理并限制 `op` 后 close。
 pub fn record_circuit_close_normalized(instr: &dyn Instrumentation, op: &str) {
-    instr.record_circuit_close(normalize_op(op));
+    instr.record_circuit_close(&sanitize_op(op));
 }
 
 #[cfg(test)]
@@ -284,10 +292,25 @@ mod tests {
     }
 
     #[test]
+    fn tracing_record_paths_sanitize_untrusted_op() {
+        let suffix = "must-not-reach-tracing";
+        let malicious = format!("{}\n{suffix}", "配".repeat(80));
+        let expected = sanitize_op(&format!("api.{malicious}"));
+        let out = with_capture(|| {
+            let p = PrefixedInstrumentation::new("api", TracingInstrumentation::new());
+            p.record_retry(&malicious, 1);
+        });
+        assert!(expected.len() <= MAX_OP_BYTES);
+        assert!(!expected.chars().any(char::is_control));
+        assert!(out.contains(&expected));
+        assert!(!out.contains(suffix));
+    }
+
+    #[test]
     fn policy_is_honest() {
         assert!(!claims_otel_export_complete());
         assert!(!counting_is_production_metrics());
-        assert!(policy_summary().contains("otel-export-surface"));
+        assert!(policy_summary().contains("bounded-sink=in-process"));
     }
 
     #[test]

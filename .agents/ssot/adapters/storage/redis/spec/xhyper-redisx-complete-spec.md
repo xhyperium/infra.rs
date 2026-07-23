@@ -1,6 +1,6 @@
 # redisx 实现规范
 
-状态：当前 `0.3.3` active 合同。生产默认命令通道已实现；package stable、真实 Cluster、
+状态：当前 `0.3.4` active 合同。生产默认命令通道已实现；package stable、真实 Cluster、
 Sentinel、TLS 与拓扑故障切换均未宣称通过。
 
 ## 1. 职责与范围
@@ -36,15 +36,19 @@ I/O 前返回 `Invalid`；禁止静默降级到静态 Standalone 节点或把 Se
 
 | 操作 | 自动重试 | 原子性边界 | 响应丢失风险 |
 |------|----------|------------|--------------|
-| GET / EXISTS / PTTL / MGET | 仅 Transient + budget | 单命令；MGET 仅单节点/同 slot | 可安全重读 |
-| SET / PSETEX | 默认否；仅 `set_with_budget` 显式 opt-in | value + TTL 单命令原子 | 可能已写入；重试重置 TTL |
-| DEL | 否 | 单命令原子 | 可能已删除；重试返回值漂移 |
-| PEXPIRE | 否 | 单命令原子 | 可能已生效；重试重置 TTL 起点 |
-| MSET | 否 | Standalone/Cluster 同 slot 单命令 | 跨 slot 不承诺原子性 |
-| PUBLISH | 否 | 无可靠投递原子性 | 重试可能重复消息，仍可能丢消息 |
+| GET / EXISTS / PTTL / MGET | 配置 budget 时仅对 Transient 失败按预算安全重试 | 单命令；MGET 仅单节点/同 slot | `ReadOnly`，可安全重读 |
+| 无 TTL SET | 配置 budget 时按预算安全重试 | 单命令原子 | 固定 key/value 为 `Idempotent`；响应仍可能丢失 |
+| 相对 TTL SET / PSETEX | `max_attempts > 1` 时在 I/O 前拒绝；单次允许 | value + TTL 单命令原子 | 重试会重置 TTL 起点，按 `UnsafeSideEffect` 处理 |
+| DEL | `max_attempts > 1` 时在 I/O 前拒绝；单次允许 | 单命令原子 | 重试会使返回值漂移，按 `UnsafeSideEffect` 处理 |
+| PEXPIRE | `max_attempts > 1` 时在 I/O 前拒绝；单次允许 | 单命令原子 | 重试会重置 TTL 起点，按 `UnsafeSideEffect` 处理 |
+| MSET | 配置 budget 时按预算安全重试 | Standalone/Cluster 同 slot 单命令 | 固定输入为 `Idempotent`；跨 slot 不承诺原子性 |
+| PUBLISH | 不自动重试 | 无可靠投递原子性 | 重试可能重复消息，仍可能丢消息 |
 
-`RedisOperation::{retry_safety,atomicity}` 是可测试合同。客户端 deadline/断连只表示没有收到
-确定响应，不能证明服务端未执行写命令。非 retryable 错误只能尝试一次且不得消耗 retry budget。
+`RedisOperation::{retry_safety,atomicity}` 是可测试的粗粒度合同。`RedisOperation::Set` 同时代表无 TTL
+SET 与相对 TTL PSETEX，无法表达参数差异，因此保守保持 `AmbiguousWrite`；真实 `RedisClient::set`
+按 `ttl` 参数细分：`None` 使用 `Idempotent`，`Some(_)` 使用 `UnsafeSideEffect`。客户端 deadline/断连
+只表示没有收到确定响应，不能证明服务端未执行写命令。非 retryable 错误只能尝试一次且不得消耗
+retry budget；PUBLISH 不进入自动预算重试。
 
 ## 5. 安全边界
 
@@ -64,6 +68,8 @@ node scripts/quality-gates/check-workspace-deps.mjs
 cmp .agents/ssot/adapters/storage/redis/spec/spec.md \
   .agents/ssot/adapters/storage/redis/spec/xhyper-redisx-complete-spec.md
 ```
+
+当前最终本地结果：51 passed + 8 ignored；ignored live 测试需要外部 Redis，不作为默认 CI 通过证据。
 
 真实 Cluster / Sentinel / TLS live 未执行时，对应矩阵保持 OPEN；不得以编译、构造测试、连接
 拒绝测试或 ignored 入口替代真实拓扑证据。

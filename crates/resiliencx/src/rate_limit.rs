@@ -1,6 +1,6 @@
 //! 令牌桶限流（**无墙钟**——调用方显式 [`RateLimiter::refill`]，便于确定性测试）。
 //!
-//! - `try_acquire(n)`：有足够令牌则扣减；否则 `XError::unavailable("rate limited")`
+//! - `try_acquire(n)`：有足够令牌则扣减；否则返回 `Unavailable`
 //! - `refill(n)`：补充令牌，不超过 `capacity`
 
 use kernel::{XError, XResult};
@@ -29,7 +29,7 @@ impl RateLimiter {
     /// 构造满桶实例；`capacity == 0` → Invalid。
     pub fn new(config: RateLimitConfig) -> XResult<Self> {
         if config.capacity == 0 {
-            return Err(XError::invalid("rate limit capacity must be >= 1"));
+            return Err(XError::invalid("限流器 capacity 必须大于或等于 1"));
         }
         Ok(Self { capacity: config.capacity, tokens: config.capacity })
     }
@@ -55,7 +55,7 @@ impl RateLimiter {
             return Ok(());
         }
         if self.tokens < n {
-            return Err(XError::unavailable("rate limited"));
+            return Err(XError::unavailable("请求已被限流"));
         }
         self.tokens -= n;
         Ok(())

@@ -1,6 +1,7 @@
 # postgresx docs
 
-**Package**：`postgresx` · **lib**：`postgresx` · **角色**：Postgres 生产连接池 + SQL API
+**Package**：`postgresx` · **lib**：`postgresx` · **版本**：`0.3.4` 未发布候选 ·
+**角色**：Postgres 生产连接池 + SQL API
 
 ## 入口
 
