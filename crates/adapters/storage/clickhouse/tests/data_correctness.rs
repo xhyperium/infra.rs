@@ -29,9 +29,7 @@ async fn setup_db() -> ClickHousePool {
         .expect("创建测试数据库");
     pool.close().await.expect("关闭");
 
-    ClickHousePool::connect(default_config())
-        .await
-        .expect("连接到测试数据库")
+    ClickHousePool::connect(default_config()).await.expect("连接到测试数据库")
 }
 
 // ── 测试 1：类型映射正确性 ──────────────────────────────────────
@@ -94,9 +92,7 @@ async fn type_mapping_correctness() {
         "col_unicode": "你好世界🌍 emoji test",
         "col_special": special_chars,
     });
-    pool.insert_json_each_row(&table, &[row])
-        .await
-        .expect("插入类型测试数据");
+    pool.insert_json_each_row(&table, &[row]).await.expect("插入类型测试数据");
 
     // 查询并验证各字段
     let sql = format!(
@@ -149,9 +145,7 @@ async fn type_mapping_correctness() {
     // 验证特殊字符
     assert_eq!(r[17], special_chars);
 
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .expect("清理");
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理");
     pool.close().await.expect("关闭");
 }
 
@@ -181,34 +175,20 @@ async fn datetime_precision() {
         "dt3": ts3,
         "dt6": ts6,
     });
-    pool.insert_json_each_row(&table, &[row])
-        .await
-        .expect("插入时间数据");
+    pool.insert_json_each_row(&table, &[row]).await.expect("插入时间数据");
 
     // 查询
-    let sql = format!(
-        "SELECT dt3, dt6 FROM {table} WHERE id = 1 FORMAT TabSeparated"
-    );
+    let sql = format!("SELECT dt3, dt6 FROM {table} WHERE id = 1 FORMAT TabSeparated");
     let text = pool.query_text(&sql).await.expect("查询时间数据");
     let parts: Vec<&str> = text.trim().split('\t').collect();
 
     // DateTime64(3): 预期 2024-01-15 10:30:45.123
-    assert!(
-        parts[0].contains(".123"),
-        "DateTime64(3) 应精确到毫秒: {}",
-        parts[0]
-    );
+    assert!(parts[0].contains(".123"), "DateTime64(3) 应精确到毫秒: {}", parts[0]);
 
     // DateTime64(6): 预期 2024-01-15 10:30:45.123456
-    assert!(
-        parts[1].contains(".123456"),
-        "DateTime64(6) 应精确到微秒: {}",
-        parts[1]
-    );
+    assert!(parts[1].contains(".123456"), "DateTime64(6) 应精确到微秒: {}", parts[1]);
 
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .expect("清理");
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理");
     pool.close().await.expect("关闭");
 }
 
@@ -249,9 +229,7 @@ async fn json_roundtrip() {
         "id": 1,
         "data": complex_json.to_string(),
     });
-    pool.insert_json_each_row(&table, &[row])
-        .await
-        .expect("插入 JSON 数据");
+    pool.insert_json_each_row(&table, &[row]).await.expect("插入 JSON 数据");
 
     // 读回
     let sql = format!("SELECT data FROM {table} WHERE id = 1 FORMAT TabSeparated");
@@ -260,8 +238,6 @@ async fn json_roundtrip() {
 
     assert_eq!(parsed, complex_json, "JSON 往返应保持精度");
 
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .expect("清理");
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理");
     pool.close().await.expect("关闭");
 }

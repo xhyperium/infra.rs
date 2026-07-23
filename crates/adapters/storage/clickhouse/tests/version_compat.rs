@@ -7,8 +7,16 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 // env_helpers: wrap unsafe set_var/remove_var for Rust 2024
-fn set_env(k: &str, v: &str) { unsafe { std::env::set_var(k, v); } }
-fn remove_env(k: &str) { unsafe { std::env::remove_var(k); } }
+fn set_env(k: &str, v: &str) {
+    unsafe {
+        std::env::set_var(k, v);
+    }
+}
+fn remove_env(k: &str) {
+    unsafe {
+        std::env::remove_var(k);
+    }
+}
 
 use clickhousex::{ClickHouseConfig, ClickHousePool};
 use kernel::ErrorKind;
@@ -90,16 +98,11 @@ async fn clickhouse_version_contains_dots() {
 #[tokio::test]
 async fn create_table_if_not_exists_is_idempotent() {
     let db = "gap_zero_ddl";
-    let pool = ClickHousePool::connect(ClickHouseConfig {
-        database: db.into(),
-        ..ch_cfg()
-    })
-    .await
-    .expect("connect");
+    let pool = ClickHousePool::connect(ClickHouseConfig { database: db.into(), ..ch_cfg() })
+        .await
+        .expect("connect");
 
-    let _ = pool
-        .execute(&format!("CREATE DATABASE IF NOT EXISTS {db}"))
-        .await;
+    let _ = pool.execute(&format!("CREATE DATABASE IF NOT EXISTS {db}")).await;
 
     let sql = "CREATE TABLE IF NOT EXISTS ddl_idem (x UInt8) ENGINE = MergeTree ORDER BY x";
     pool.execute(sql).await.expect("首次建表");
@@ -113,16 +116,11 @@ async fn create_table_if_not_exists_is_idempotent() {
 #[tokio::test]
 async fn create_or_replace_table() {
     let db = "gap_zero_replace";
-    let pool = ClickHousePool::connect(ClickHouseConfig {
-        database: db.into(),
-        ..ch_cfg()
-    })
-    .await
-    .expect("connect");
+    let pool = ClickHousePool::connect(ClickHouseConfig { database: db.into(), ..ch_cfg() })
+        .await
+        .expect("connect");
 
-    let _ = pool
-        .execute(&format!("CREATE DATABASE IF NOT EXISTS {db}"))
-        .await;
+    let _ = pool.execute(&format!("CREATE DATABASE IF NOT EXISTS {db}")).await;
 
     pool.execute("CREATE OR REPLACE TABLE rep_t (val String) ENGINE = MergeTree ORDER BY val")
         .await
@@ -142,22 +140,15 @@ async fn create_or_replace_table() {
 #[tokio::test]
 async fn alter_table_add_column() {
     let db = "gap_zero_alter";
-    let pool = ClickHousePool::connect(ClickHouseConfig {
-        database: db.into(),
-        ..ch_cfg()
-    })
-    .await
-    .expect("connect");
+    let pool = ClickHousePool::connect(ClickHouseConfig { database: db.into(), ..ch_cfg() })
+        .await
+        .expect("connect");
 
-    let _ = pool
-        .execute(&format!("CREATE DATABASE IF NOT EXISTS {db}"))
-        .await;
+    let _ = pool.execute(&format!("CREATE DATABASE IF NOT EXISTS {db}")).await;
 
-    pool.execute(
-        "CREATE TABLE IF NOT EXISTS alt_tab (id UInt8) ENGINE = MergeTree ORDER BY id",
-    )
-    .await
-    .expect("建表");
+    pool.execute("CREATE TABLE IF NOT EXISTS alt_tab (id UInt8) ENGINE = MergeTree ORDER BY id")
+        .await
+        .expect("建表");
 
     pool.execute("ALTER TABLE alt_tab ADD COLUMN IF NOT EXISTS name String")
         .await
@@ -171,27 +162,18 @@ async fn alter_table_add_column() {
 #[tokio::test]
 async fn drop_table_if_exists() {
     let db = "gap_zero_drop";
-    let pool = ClickHousePool::connect(ClickHouseConfig {
-        database: db.into(),
-        ..ch_cfg()
-    })
-    .await
-    .expect("connect");
+    let pool = ClickHousePool::connect(ClickHouseConfig { database: db.into(), ..ch_cfg() })
+        .await
+        .expect("connect");
 
-    let _ = pool
-        .execute(&format!("CREATE DATABASE IF NOT EXISTS {db}"))
-        .await;
+    let _ = pool.execute(&format!("CREATE DATABASE IF NOT EXISTS {db}")).await;
 
     pool.execute("CREATE TABLE IF NOT EXISTS drp_me (x UInt8) ENGINE = MergeTree ORDER BY x")
         .await
         .expect("建表");
-    pool.execute("DROP TABLE IF EXISTS drp_me")
-        .await
-        .expect("删表");
+    pool.execute("DROP TABLE IF EXISTS drp_me").await.expect("删表");
     // 二次删除不报错
-    pool.execute("DROP TABLE IF EXISTS drp_me")
-        .await
-        .expect("二次 DROP IF EXISTS 也应成功");
+    pool.execute("DROP TABLE IF EXISTS drp_me").await.expect("二次 DROP IF EXISTS 也应成功");
 
     // 清理
     let _ = pool.execute(&format!("DROP DATABASE IF EXISTS {db}")).await;
@@ -278,30 +260,21 @@ fn invalid_env_variables_cause_errors() {
 
 #[test]
 fn empty_host_validate_fails() {
-    let cfg = ClickHouseConfig {
-        host: String::new(),
-        ..ClickHouseConfig::default()
-    };
+    let cfg = ClickHouseConfig { host: String::new(), ..ClickHouseConfig::default() };
     let err = cfg.validate().expect_err("空 host 必须失败");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
 
 #[test]
 fn whitespace_only_host_validate_fails() {
-    let cfg = ClickHouseConfig {
-        host: "  ".into(),
-        ..ClickHouseConfig::default()
-    };
+    let cfg = ClickHouseConfig { host: "  ".into(), ..ClickHouseConfig::default() };
     let err = cfg.validate().expect_err("空白 host 必须失败");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
 
 #[tokio::test]
 async fn zero_max_in_flight_connect_fails() {
-    let cfg = ClickHouseConfig {
-        max_in_flight: 0,
-        ..ClickHouseConfig::default()
-    };
+    let cfg = ClickHouseConfig { max_in_flight: 0, ..ClickHouseConfig::default() };
     let err = match ClickHousePool::connect(cfg).await {
         Ok(_) => panic!("零 max_in_flight 必须失败"),
         Err(e) => e,

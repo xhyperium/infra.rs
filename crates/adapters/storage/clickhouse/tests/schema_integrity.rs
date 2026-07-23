@@ -7,8 +7,16 @@ use std::time::Duration;
 const BINANCE_DB: &str = "binance_futures";
 
 // env_helpers: wrap unsafe set_var/remove_var for Rust 2024
-fn set_env(k: &str, v: &str) { unsafe { std::env::set_var(k, v); } }
-fn remove_env(k: &str) { unsafe { std::env::remove_var(k); } }
+fn set_env(k: &str, v: &str) {
+    unsafe {
+        std::env::set_var(k, v);
+    }
+}
+fn remove_env(k: &str) {
+    unsafe {
+        std::env::remove_var(k);
+    }
+}
 
 fn live_cfg() -> ClickHouseConfig {
     ClickHouseConfig {
