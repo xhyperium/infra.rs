@@ -24,7 +24,7 @@ use crate::pubsub::RedisPubSub;
 /// 池运行时快照（低基数，可供 readiness / 指标使用）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RedisPoolStats {
-    /// 打开的命令 lane 数（P0 单 lane：0 或 1）。
+    /// 逻辑命令 lane 数（= max_in_flight；关闭时 0）。
     pub open: usize,
     /// 正在执行的命令数。
     pub in_flight: usize,
@@ -184,6 +184,12 @@ impl RedisPool {
                 redis::cmd("CLIENT").arg("SETNAME").arg(name).query_async(&mut c).await;
         }
 
+        // 连接预热：可选 N 次 PING（失败不阻断建池，记 warn 路径由调用方 readiness 覆盖）
+        for _ in 0..config.warmup_count() {
+            let mut c = backend.clone();
+            let _: redis::RedisResult<String> = redis::cmd("PING").query_async(&mut c).await;
+        }
+
         Ok(Self {
             inner: Arc::new(PoolInner {
                 backend,
@@ -224,6 +230,7 @@ impl RedisPool {
     }
 
     /// 执行 `PING`，返回 RTT。
+    #[tracing::instrument(skip(self), fields(endpoint = %self.inner.display_endpoint))]
     pub async fn ping(&self) -> XResult<Duration> {
         let start = Instant::now();
         self.with_conn(|mut conn| async move {
@@ -243,9 +250,74 @@ impl RedisPool {
     pub fn stats(&self) -> RedisPoolStats {
         let closed = self.inner.closed.load(Ordering::Relaxed);
         RedisPoolStats {
-            open: if closed { 0 } else { 1 },
+            // 逻辑 command lane 数 = max_in_flight（Semaphore 许可）；关闭时为 0
+            open: if closed { 0 } else { self.inner.max_in_flight },
             in_flight: self.inner.in_flight.load(Ordering::Relaxed),
             waiters: self.inner.waiters.load(Ordering::Relaxed),
+        }
+    }
+
+    /// 配置的命令超时。
+    #[must_use]
+    pub fn command_timeout(&self) -> Duration {
+        self.inner.command_timeout
+    }
+
+    /// 最大并发命令 lane（= max_in_flight）。
+    #[must_use]
+    pub fn command_lanes(&self) -> usize {
+        self.inner.max_in_flight
+    }
+
+    /// Liveness：进程内池未关闭即可（不访问网络）。
+    #[must_use]
+    pub fn liveness(&self) -> bool {
+        !self.is_closed()
+    }
+
+    /// Readiness：未关闭且 `PING` 成功。
+    pub async fn readiness(&self) -> XResult<Duration> {
+        if self.is_closed() {
+            return Err(XError::unavailable("redis 连接池已关闭"));
+        }
+        self.ping().await
+    }
+
+    /// 使用自定义命令预算执行（阻塞命令 BLPOP/XREAD BLOCK）。
+    pub(crate) async fn with_conn_budget<F, Fut, T>(
+        &self,
+        command_budget: Duration,
+        f: F,
+    ) -> XResult<T>
+    where
+        F: FnOnce(RedisBackend) -> Fut,
+        Fut: Future<Output = XResult<T>>,
+    {
+        if command_budget.is_zero() {
+            return Err(XError::deadline_exceeded("redis 命令预算为 0"));
+        }
+        let _permit = self.acquire_with_timeout(self.inner.acquire_timeout).await?;
+        if self.is_closed() {
+            self.inner.rejected_closed.fetch_add(1, Ordering::Relaxed);
+            return Err(XError::unavailable("redis 连接池已关闭"));
+        }
+        self.inner.in_flight.fetch_add(1, Ordering::SeqCst);
+        let conn = self.inner.backend.clone();
+        let result = timeout(command_budget, f(conn)).await;
+        self.inner.in_flight.fetch_sub(1, Ordering::SeqCst);
+        match result {
+            Ok(Ok(v)) => {
+                self.inner.commands_ok.fetch_add(1, Ordering::Relaxed);
+                Ok(v)
+            }
+            Ok(Err(e)) => {
+                self.inner.commands_err.fetch_add(1, Ordering::Relaxed);
+                Err(e)
+            }
+            Err(_) => {
+                self.inner.commands_timeout.fetch_add(1, Ordering::Relaxed);
+                Err(XError::deadline_exceeded("redis 阻塞命令超时"))
+            }
         }
     }
 
@@ -430,7 +502,8 @@ async fn connect_cluster(config: &RedisConfig) -> XResult<RedisBackend> {
     let mut builder = ClusterClient::builder(infos);
     builder = builder
         .connection_timeout(config.connect_timeout())
-        .response_timeout(config.command_timeout());
+        .response_timeout(config.command_timeout())
+        .retries(config.max_cluster_redirects());
     if config.tls() {
         builder = builder.tls(TlsMode::Secure);
     }

@@ -39,9 +39,19 @@ pub struct RedisConfig {
     connect_timeout: Duration,
     command_timeout: Duration,
     acquire_timeout: Duration,
-    /// 全局 in-flight 上限（Semaphore 许可数）。
+    /// 全局 in-flight 上限（Semaphore 许可数 = 逻辑 command lanes）。
     max_in_flight: usize,
     client_name: Option<String>,
+    /// 建池后预热 PING 次数（0 = 关闭）。
+    warmup_count: usize,
+    /// TCP keepalive 间隔（配置面；驱动支持时应用）。
+    tcp_keepalive: Option<Duration>,
+    /// 重连最大退避（配置面；ConnectionManager 指数退避上限语义）。
+    reconnect_max_delay: Duration,
+    /// Cluster MOVED/ASK 重定向次数上限（配置面；传给 cluster builder 若支持）。
+    max_cluster_redirects: u32,
+    /// 阻塞命令默认等待上限（BLPOP/XREAD BLOCK 调用方可覆盖）。
+    blocking_timeout: Duration,
 }
 
 impl Default for RedisConfig {
@@ -60,6 +70,11 @@ impl Default for RedisConfig {
             acquire_timeout: Duration::from_secs(3),
             max_in_flight: 256,
             client_name: None,
+            warmup_count: 0,
+            tcp_keepalive: None,
+            reconnect_max_delay: Duration::from_secs(5),
+            max_cluster_redirects: 16,
+            blocking_timeout: Duration::from_secs(5),
         }
     }
 }
@@ -80,6 +95,11 @@ impl fmt::Debug for RedisConfig {
             .field("acquire_timeout", &self.acquire_timeout)
             .field("max_in_flight", &self.max_in_flight)
             .field("client_name", &self.client_name)
+            .field("warmup_count", &self.warmup_count)
+            .field("tcp_keepalive", &self.tcp_keepalive)
+            .field("reconnect_max_delay", &self.reconnect_max_delay)
+            .field("max_cluster_redirects", &self.max_cluster_redirects)
+            .field("blocking_timeout", &self.blocking_timeout)
             .finish()
     }
 }
@@ -186,6 +206,31 @@ impl RedisConfig {
             }
         }
 
+        if let Ok(s) = std::env::var("FOUNDATIONX_REDISX_WARMUP") {
+            if !s.trim().is_empty() {
+                let n: usize = s
+                    .parse()
+                    .map_err(|e| XError::invalid(format!("FOUNDATIONX_REDISX_WARMUP 非法: {e}")))?;
+                b = b.warmup_count(n);
+            }
+        }
+        if let Ok(s) = std::env::var("FOUNDATIONX_REDISX_MAX_IN_FLIGHT") {
+            if !s.trim().is_empty() {
+                let n: usize = s.parse().map_err(|e| {
+                    XError::invalid(format!("FOUNDATIONX_REDISX_MAX_IN_FLIGHT 非法: {e}"))
+                })?;
+                b = b.max_in_flight(n);
+            }
+        }
+        if let Ok(s) = std::env::var("FOUNDATIONX_REDISX_BLOCKING_TIMEOUT_MS") {
+            if !s.trim().is_empty() {
+                let ms: u64 = s.parse().map_err(|e| {
+                    XError::invalid(format!("FOUNDATIONX_REDISX_BLOCKING_TIMEOUT_MS 非法: {e}"))
+                })?;
+                b = b.blocking_timeout(Duration::from_millis(ms));
+            }
+        }
+
         b.build()
     }
 
@@ -285,6 +330,48 @@ impl RedisConfig {
     #[must_use]
     pub fn client_name(&self) -> Option<&str> {
         self.client_name.as_deref()
+    }
+
+    /// 建池预热 PING 次数。
+    #[must_use]
+    pub fn warmup_count(&self) -> usize {
+        self.warmup_count
+    }
+
+    /// TCP keepalive 间隔（若配置）。
+    #[must_use]
+    pub fn tcp_keepalive(&self) -> Option<Duration> {
+        self.tcp_keepalive
+    }
+
+    /// 重连最大退避。
+    #[must_use]
+    pub fn reconnect_max_delay(&self) -> Duration {
+        self.reconnect_max_delay
+    }
+
+    /// Cluster 重定向次数上限。
+    #[must_use]
+    pub fn max_cluster_redirects(&self) -> u32 {
+        self.max_cluster_redirects
+    }
+
+    /// 阻塞命令默认超时。
+    #[must_use]
+    pub fn blocking_timeout(&self) -> Duration {
+        self.blocking_timeout
+    }
+
+    /// 逻辑 command lane 数（同 [`Self::max_in_flight`]）。
+    #[must_use]
+    pub fn command_lanes(&self) -> usize {
+        self.max_in_flight
+    }
+
+    /// 是否配置了密码（不暴露明文；secret provider / env 注入后为 true）。
+    #[must_use]
+    pub fn has_password(&self) -> bool {
+        self.password.as_ref().map(|p| !p.is_empty()).unwrap_or(false)
     }
 
     /// ACL 用户名（池构建用）。
@@ -489,8 +576,18 @@ impl RedisConfig {
         if self.connect_timeout.is_zero()
             || self.command_timeout.is_zero()
             || self.acquire_timeout.is_zero()
+            || self.reconnect_max_delay.is_zero()
+            || self.blocking_timeout.is_zero()
         {
             return Err(XError::invalid("超时时间必须 > 0"));
+        }
+        if let Some(ka) = self.tcp_keepalive {
+            if ka.is_zero() {
+                return Err(XError::invalid("tcp_keepalive 若设置必须 > 0"));
+            }
+        }
+        if self.max_cluster_redirects == 0 {
+            return Err(XError::invalid("max_cluster_redirects 必须 ≥ 1"));
         }
         Ok(())
     }
@@ -612,6 +709,67 @@ impl RedisConfigBuilder {
     #[must_use]
     pub fn client_name(mut self, name: impl Into<String>) -> Self {
         self.inner.client_name = Some(name.into());
+        self
+    }
+
+    /// 建池预热 PING 次数。
+    #[must_use]
+    pub fn warmup_count(mut self, n: usize) -> Self {
+        self.inner.warmup_count = n;
+        self
+    }
+
+    /// TCP keepalive 间隔。
+    #[must_use]
+    pub fn tcp_keepalive(mut self, d: Duration) -> Self {
+        self.inner.tcp_keepalive = Some(d);
+        self
+    }
+
+    /// 清除 TCP keepalive。
+    #[must_use]
+    pub fn clear_tcp_keepalive(mut self) -> Self {
+        self.inner.tcp_keepalive = None;
+        self
+    }
+
+    /// 重连最大退避。
+    #[must_use]
+    pub fn reconnect_max_delay(mut self, d: Duration) -> Self {
+        self.inner.reconnect_max_delay = d;
+        self
+    }
+
+    /// Cluster MOVED/ASK 重定向上限。
+    #[must_use]
+    pub fn max_cluster_redirects(mut self, n: u32) -> Self {
+        self.inner.max_cluster_redirects = n;
+        self
+    }
+
+    /// 阻塞命令默认超时。
+    #[must_use]
+    pub fn blocking_timeout(mut self, d: Duration) -> Self {
+        self.inner.blocking_timeout = d;
+        self
+    }
+
+    /// 逻辑 command lane 数（设置 `max_in_flight`）。
+    #[must_use]
+    pub fn command_lanes(mut self, n: usize) -> Self {
+        self.inner.max_in_flight = n;
+        self
+    }
+
+    /// 从 secret provider 回调注入密码（回调返回 `None` 则清除密码）。
+    ///
+    /// 明文仅存于内存配置；Debug 脱敏；禁止日志打印返回值。
+    #[must_use]
+    pub fn password_from_provider<F>(mut self, provider: F) -> Self
+    where
+        F: FnOnce() -> Option<String>,
+    {
+        self.inner.password = provider();
         self
     }
 

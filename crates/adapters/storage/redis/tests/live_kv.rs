@@ -29,7 +29,9 @@ async fn live_pool_ping_and_stats() {
     let rtt = pool.ping().await.expect("ping");
     assert!(rtt < Duration::from_secs(5));
     let st = pool.stats();
-    assert_eq!(st.open, 1);
+    // open = 逻辑 command lanes（= max_in_flight）；关闭前应 ≥ 1
+    assert!(st.open >= 1, "open lanes={}", st.open);
+    assert_eq!(st.open, pool.command_lanes());
     assert_eq!(st.in_flight, 0);
     let metrics = pool.metrics_snapshot();
     assert!(metrics.commands_ok >= 1, "ping should count as ok: {metrics:?}");

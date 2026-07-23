@@ -11,7 +11,7 @@ use std::time::Duration;
 use contracts::{KeyValueStore, PubSub};
 use kernel::ErrorKind;
 use redisx::selfcheck::{CheckLevel, CheckStatus, RedisValidator};
-use redisx::{RedisClient, RedisConfig, RedisLiveKv, RedisPool};
+use redisx::{RedisClient, RedisConfig, RedisLiveKv, RedisPool, TxCmd};
 
 fn prefix() -> String {
     format!("redisx-it:{}:", std::process::id())
@@ -38,9 +38,11 @@ async fn it_config_pool_client_lifecycle() {
     assert!(!ep.is_empty());
 
     let pool = RedisPool::connect(cfg).await.expect("connect");
-    let rtt = pool.ping().await.expect("ping");
+    assert!(pool.liveness());
+    let rtt = pool.readiness().await.expect("readiness");
     assert!(rtt < Duration::from_secs(3));
-    assert_eq!(pool.stats().open, 1);
+    assert!(pool.stats().open >= 1, "lanes={}", pool.stats().open);
+    assert_eq!(pool.command_lanes(), pool.stats().open);
     assert!(pool.metrics_snapshot().commands_ok >= 1);
 
     let client = pool.client().with_call_deadline(Duration::from_secs(10));
@@ -311,4 +313,179 @@ async fn it_selfcheck_json_report_and_cancel() {
     let cancelled = v.run_with_context(&ctx, CheckLevel::ReadWrite).await;
     assert!(cancelled.passed);
     assert!(cancelled.items.iter().all(|i| i.status == CheckStatus::Skipped));
+}
+
+#[tokio::test]
+#[ignore = "requires live Redis via FOUNDATIONX_REDISX_*"]
+async fn it_data_structures_hash_list_set_zset() {
+    let client = RedisClient::connect_from_env().await.expect("connect");
+    let p = prefix();
+    let h = format!("{p}hash");
+    let l = format!("{p}list");
+    let s = format!("{p}set");
+    let z = format!("{p}zset");
+
+    assert!(client.hset(&h, "f1", b"v1".to_vec()).await.expect("hset"));
+    assert_eq!(client.hget(&h, "f1").await.expect("hget").as_deref(), Some(b"v1".as_slice()));
+    let all = client.hgetall(&h).await.expect("hgetall");
+    assert!(all.iter().any(|(k, v)| k == "f1" && v.as_slice() == b"v1"));
+    assert_eq!(client.hdel(&h, &["f1"]).await.expect("hdel"), 1);
+
+    assert!(client.lpush(&l, b"a".to_vec()).await.expect("lpush") >= 1);
+    assert!(client.rpush(&l, b"b".to_vec()).await.expect("rpush") >= 2);
+    let range = client.lrange(&l, 0, -1).await.expect("lrange");
+    assert!(range.len() >= 2);
+    let _ = client.lpop(&l).await.expect("lpop");
+
+    assert_eq!(client.sadd(&s, b"m1".to_vec()).await.expect("sadd"), 1);
+    assert!(client.sismember(&s, b"m1").await.expect("sismember"));
+    assert_eq!(client.srem(&s, b"m1").await.expect("srem"), 1);
+
+    assert_eq!(client.zadd(&z, b"zm".to_vec(), 3.5).await.expect("zadd"), 1);
+    assert_eq!(client.zscore(&z, b"zm").await.expect("zscore"), Some(3.5));
+    assert_eq!(client.zrem(&z, b"zm").await.expect("zrem"), 1);
+
+    for k in [&h, &l, &s, &z] {
+        let _ = client.delete(k).await;
+    }
+}
+
+#[tokio::test]
+#[ignore = "requires live Redis via FOUNDATIONX_REDISX_*"]
+async fn it_streams_and_multi_exec() {
+    let client = RedisClient::connect_from_env().await.expect("connect");
+    let p = prefix();
+    let stream = format!("{p}stream");
+    let k1 = format!("{p}tx1");
+    let k2 = format!("{p}tx2");
+
+    let id = client.xadd(&stream, &[("sym", b"BTC"), ("px", b"1")]).await.expect("xadd");
+    assert!(!id.is_empty());
+    assert!(client.xlen(&stream).await.expect("xlen") >= 1);
+    let range = client.xrange(&stream, "-", "+", Some(10)).await.expect("xrange");
+    assert!(range.iter().any(|e| e.id == id));
+    let read = client.xread(&stream, "0-0", Some(10)).await.expect("xread");
+    assert!(!read.is_empty());
+    assert_eq!(client.xdel(&stream, &[&id]).await.expect("xdel"), 1);
+
+    let vals = client
+        .multi_exec(&[
+            TxCmd::Set { key: k1.clone(), value: b"a".to_vec() },
+            TxCmd::Set { key: k2.clone(), value: b"b".to_vec() },
+            TxCmd::Incr { key: format!("{p}cnt") },
+        ])
+        .await
+        .expect("multi_exec");
+    assert_eq!(vals.len(), 3);
+    assert_eq!(client.get(&k1).await.expect("g1").as_deref(), Some(b"a".as_slice()));
+    client.multi_set(&[(&k1, b"A2"), (&k2, b"B2")]).await.expect("multi_set");
+    assert_eq!(client.get(&k2).await.expect("g2").as_deref(), Some(b"B2".as_slice()));
+
+    // SCRIPT LOAD + EVALSHA
+    let (sha, v) = client
+        .script_load_and_eval("return ARGV[1]", &[], &[b"sha-ok"])
+        .await
+        .expect("script load");
+    assert!(!sha.is_empty());
+    match v {
+        redis::Value::BulkString(b) => assert_eq!(b.as_slice(), b"sha-ok"),
+        other => panic!("unexpected {other:?}"),
+    }
+    let v2 = client.eval_sha(&sha, &[], &[b"again"]).await.expect("eval_sha");
+    match v2 {
+        redis::Value::BulkString(b) => assert_eq!(b.as_slice(), b"again"),
+        other => panic!("unexpected {other:?}"),
+    }
+
+    for k in [&stream, &k1, &k2, &format!("{p}cnt")] {
+        let _ = client.delete(k).await;
+    }
+}
+
+#[tokio::test]
+#[ignore = "requires live Redis via FOUNDATIONX_REDISX_*"]
+async fn it_config_hardenings_and_topology_probe() {
+    // 硬化配置面可构造；真实 Cluster/Sentinel/TLS 仅当 env 提供
+    let base = RedisConfig::from_env().expect("env");
+    let mut b = RedisConfig::builder()
+        .addr(base.addr())
+        .db(base.db())
+        .tls(base.tls())
+        .mode(base.mode())
+        .warmup_count(1)
+        .command_lanes(8)
+        .max_cluster_redirects(8)
+        .blocking_timeout(Duration::from_secs(2))
+        .reconnect_max_delay(Duration::from_secs(2))
+        .tcp_keepalive(Duration::from_secs(30))
+        .connect_timeout(base.connect_timeout())
+        .command_timeout(base.command_timeout())
+        .acquire_timeout(base.acquire_timeout())
+        .password_from_provider(|| {
+            std::env::var("FOUNDATIONX_REDISX_PASSWORD").ok().filter(|s| !s.is_empty())
+        });
+    if let Ok(u) = std::env::var("FOUNDATIONX_REDISX_USERNAME") {
+        if !u.is_empty() {
+            b = b.username(u);
+        }
+    }
+    let hardened = b.build().expect("hardened cfg");
+    assert_eq!(hardened.warmup_count(), 1);
+    assert_eq!(hardened.command_lanes(), 8);
+    assert!(hardened.tcp_keepalive().is_some());
+    let pool = RedisPool::connect(hardened).await.expect("connect hardened");
+    assert!(pool.liveness());
+    pool.ping().await.expect("ping");
+    assert_eq!(pool.stats().open, 8);
+    let _ = pool.close(Duration::from_secs(2)).await;
+
+    // 拓扑探测：无 Cluster/Sentinel/TLS env 时诚实 soft-skip（不伪绿）
+    let mode = std::env::var("FOUNDATIONX_REDISX_MODE").unwrap_or_else(|_| "standalone".into());
+    let tls = std::env::var("FOUNDATIONX_REDISX_TLS").unwrap_or_else(|_| "false".into());
+    if mode.eq_ignore_ascii_case("cluster") {
+        let cfg = RedisConfig::from_env().expect("cluster env");
+        assert_eq!(cfg.mode(), redisx::RedisMode::Cluster);
+        let p = RedisPool::connect(cfg).await.expect("cluster live");
+        p.ping().await.expect("cluster ping");
+        let _ = p.close(Duration::from_secs(2)).await;
+    } else if mode.eq_ignore_ascii_case("sentinel") {
+        let cfg = RedisConfig::from_env().expect("sentinel env");
+        assert_eq!(cfg.mode(), redisx::RedisMode::Sentinel);
+        let p = RedisPool::connect(cfg).await.expect("sentinel live");
+        p.ping().await.expect("sentinel ping");
+        let _ = p.close(Duration::from_secs(2)).await;
+    } else {
+        eprintln!("topology soft-skip: MODE={mode} TLS={tls} (no Cluster/Sentinel live env)");
+    }
+    if tls.eq_ignore_ascii_case("true") || tls == "1" {
+        let cfg = RedisConfig::from_env().expect("tls env");
+        assert!(cfg.tls());
+        let p = RedisPool::connect(cfg).await.expect("tls live");
+        p.ping().await.expect("tls ping");
+        let _ = p.close(Duration::from_secs(2)).await;
+    } else {
+        eprintln!("tls soft-skip: FOUNDATIONX_REDISX_TLS={tls}");
+    }
+}
+
+#[tokio::test]
+#[ignore = "requires live Redis via FOUNDATIONX_REDISX_*"]
+async fn it_blpop_timeout_none() {
+    let client = RedisClient::connect_from_env().await.expect("connect");
+    let key = format!("{}blpop-empty", prefix());
+    let _ = client.delete(&key).await;
+    // 1s 阻塞等待，空 list → None（或 deadline，均非 panic）
+    let got = client.blpop(&key, Duration::from_secs(1)).await;
+    match got {
+        Ok(None) => {}
+        Ok(Some(_)) => panic!("unexpected element"),
+        Err(e) => {
+            // 部分环境把阻塞截止映射为 DeadlineExceeded
+            assert!(
+                matches!(e.kind(), ErrorKind::DeadlineExceeded | ErrorKind::Transient),
+                "kind={:?}",
+                e.kind()
+            );
+        }
+    }
 }

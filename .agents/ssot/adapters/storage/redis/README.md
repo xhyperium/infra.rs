@@ -4,7 +4,7 @@
 > **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-redisx-complete-spec.md](spec/xhyper-redisx-complete-spec.md)  
 > **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
 > **布局**：对齐 [`.agents/ssot/kernel/`](../../../kernel)（[AGENTS.md](../../../../../AGENTS.md) §2）  
-> **状态**：`redisx **0.3.12**` Standalone P0+ + selfcheck §6.5 + live/E2E；package stable **未宣称**
+> **状态**：`redisx **0.3.13**` Standalone P0+ + selfcheck §6.5 + live/E2E；全公开 API 已落地；package stable **未宣称**
 
 ## infra.rs 本仓落地
 
@@ -32,10 +32,10 @@
 | Plan | [plan/plan.md](plan/plan.md) | 入口；战役文件可并列于 plan/ |
 | Tasks | [tasks/tasks.md](tasks/tasks.md) | 入口 / 占位 |
 | Prompt | [prompt/prompt.md](prompt/prompt.md) | 入口 / 占位 |
-| **Code** | **`crates/adapters/storage/redis`** | 实现不在 `.agents/ssot/` · **0.3.12** |
+| **Code** | **`crates/adapters/storage/redis`** | 实现不在 `.agents/ssot/` · **0.3.13** |
 | Test | [test/test.md](test/test.md) | 离线 lib 绿；live/E2E `#[ignore]`；见 alignment |
 | Review | [review/review.md](review/review.md) | 历史制品；当前以 PR #281–#306 为准 |
-| Release | [release/release.md](release/release.md) | 历史候选；当前 crate version **0.3.12** |
+| Release | [release/release.md](release/release.md) | 历史候选；当前 crate version **0.3.13** |
 | Retrospective | [retrospective/retrospective.md](retrospective/retrospective.md) | 入口 / 占位 |
 
 ## 横切

@@ -5,13 +5,13 @@
 
 | Domain | Draft DoD P0 | Current | Deferred (not OBJECTIVE / not stable) |
 |--------|--------------|---------|----------------------------------------|
-| redisx | Pool+KV+timeout+live | **done** Standalone P0+ + selfcheck §6.5 + live/E2E (`0.3.12`) | Cluster/Sentinel/TLS live / Streams full / package stable |
+| redisx | Pool+KV+structures+Streams+tx+live | **done** 全公开 API + selfcheck + live/E2E/bench (`0.3.13`) | Cluster/Sentinel/TLS live（无 env）/ package stable / PubSub NO-GO |
 | postgresx | Pool+query+tx+TLS | **done** + Repository + 远程 Require live（CA+SNI）+ deadline + Migrator+COPY+mTLS+**selfcheck §6.1**+live (`0.3.12`) | 无限流式 COPY / read-replica / package stable / 服务端强制 mTLS live / down migration |
 | kafkax | Producer pool + EventBus | **done** + 生产测试矩阵 offline/reliability/bench/fault (`0.3.5`) | SCRAM 成功路径/group/rebalance/native EOS/DLQ/Part2 OOS/24h 默认 soak |
 | natsx | Core NATS EventBus | **done** + JetStream durable pull/显式确认 + 同客户端重启恢复 3/3 (`0.3.2`) | 断线窗口无回放 / NKey / Cluster/HA / 自动 DLQ / KV·Object 全量 |
 | ossx | ObjectStore put/get | **done** + 有界 multipart/retry/orphan 补偿 (`0.3.2`) | lifecycle / STS / TB 流式对象 |
 | clickhousex | Analytics insert+select | **done** + HTTPS/PEM CA + insert_batch + 有界池 (`0.3.2`) | 真实集群 TLS / mTLS / native 9000 / cluster 运维 |
-| taosx | TimeSeries write+query | **done** Production-default 全 API + selfcheck Full + e2e/bench (`0.3.10`)；gap 未完成=0 | —（见 taosx-gap-register SUPERSEDED 行） |
+| taosx | TimeSeries write+query | **done** Production-default 全 API + selfcheck Full + e2e/bench (`0.3.9`)；gap 未完成=0 | —（见 taosx-gap-register SUPERSEDED 行） |
 | goalctl | Goal→Contract digest | **done** | full multi-module authority plane |
 | verifyctl | plan+execute+run-result | **done** | full V0–V3 gate matrix |
 
