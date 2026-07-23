@@ -49,6 +49,78 @@ pub struct TaosPoolStats {
     pub closed: bool,
 }
 
+/// 批量写入结果报告（行数与 chunk 计数）。
+///
+/// - 全部成功：`failed == 0` 且 `accepted == 请求行数`。
+/// - 中途失败：通过 [`BatchWritePartialError`] 带回**已成功提交**的 `accepted`，
+///   与仍未提交的 `failed`；**不**自动重试（幂等重试仍为 NO-GO）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct BatchWriteReport {
+    /// 已成功提交的行数。
+    pub accepted: usize,
+    /// 未提交行数（含失败 chunk 及其后未尝试行）。
+    pub failed: usize,
+    /// 成功 chunk 数。
+    pub chunks_ok: usize,
+    /// 计划 chunk 总数。
+    pub chunks_total: usize,
+}
+
+impl BatchWriteReport {
+    /// 是否整批完成且无失败行。
+    #[must_use]
+    pub fn is_complete(&self) -> bool {
+        self.failed == 0 && self.chunks_ok == self.chunks_total
+    }
+}
+
+/// 批量写入部分成功错误：报告与根因一并返回。
+#[derive(Debug)]
+pub struct BatchWritePartialError {
+    /// 失败瞬间的可定位报告。
+    pub report: BatchWriteReport,
+    /// 驱动/传输错误。
+    pub source: XError,
+}
+
+impl std::fmt::Display for BatchWritePartialError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "write_batch 部分成功 accepted={} failed={} chunks_ok={}/{}: {}",
+            self.report.accepted,
+            self.report.failed,
+            self.report.chunks_ok,
+            self.report.chunks_total,
+            self.source
+        )
+    }
+}
+
+impl std::error::Error for BatchWritePartialError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.source)
+    }
+}
+
+impl From<BatchWritePartialError> for XError {
+    fn from(value: BatchWritePartialError) -> Self {
+        let kind = value.source.kind();
+        let message = value.to_string();
+        match kind {
+            kernel::ErrorKind::Invalid => XError::invalid(message),
+            kernel::ErrorKind::Missing => XError::missing(message),
+            kernel::ErrorKind::Conflict => XError::conflict(message),
+            kernel::ErrorKind::Transient => XError::transient(message),
+            kernel::ErrorKind::Unavailable => XError::unavailable(message),
+            kernel::ErrorKind::Cancelled => XError::cancelled(message),
+            kernel::ErrorKind::DeadlineExceeded => XError::deadline_exceeded(message),
+            kernel::ErrorKind::Invariant => XError::invariant(message),
+            _ => XError::internal(message),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 struct RawResponse {
     code: i32,
@@ -103,8 +175,14 @@ pub fn build_insert_sql_chunks(
     prec: TsPrecision,
     max_rows: usize,
 ) -> XResult<Vec<String>> {
-    build_insert_sql_chunks_with_limits(table, points, prec, max_rows, HARD_MAX_BATCH_BYTES)
+    Ok(build_insert_sql_chunks_with_limits(table, points, prec, max_rows, HARD_MAX_BATCH_BYTES)?
+        .into_iter()
+        .map(|(sql, _)| sql)
+        .collect())
 }
+
+/// 单个 SQL chunk 及其行数。
+type SqlChunk = (String, usize);
 
 fn build_insert_sql_chunks_with_limits(
     table: &str,
@@ -112,7 +190,7 @@ fn build_insert_sql_chunks_with_limits(
     prec: TsPrecision,
     max_rows: usize,
     max_bytes: usize,
-) -> XResult<Vec<String>> {
+) -> XResult<Vec<SqlChunk>> {
     validate_stable_ident(table)?;
     if max_rows == 0 || max_rows > HARD_MAX_BATCH_ROWS {
         return Err(XError::invalid(format!("max_rows 必须为 1..={HARD_MAX_BATCH_ROWS}")));
@@ -143,7 +221,7 @@ fn build_insert_sql_chunks_with_limits(
             .and_then(|length| length.checked_add(row.len()))
             .ok_or_else(|| XError::invalid("批量 SQL 字节数溢出"))?;
         if rows > 0 && (rows >= max_rows || next_len > max_bytes) {
-            out.push(sql);
+            out.push((sql, rows));
             sql = String::from(INSERT_PREFIX);
             rows = 0;
         }
@@ -161,7 +239,7 @@ fn build_insert_sql_chunks_with_limits(
         rows += 1;
     }
     if rows > 0 {
-        out.push(sql);
+        out.push((sql, rows));
     }
     Ok(out)
 }
@@ -317,9 +395,20 @@ impl TaosPool {
 
     /// 显式批量写入：按 `max_rows` 分块 INSERT。
     ///
-    /// 空 `points` → `Ok(())`。
+    /// 空 `points` → `Ok(())`。任一片失败 → `Err`（可能已有部分行提交）。
     pub async fn write_batch(&self, table: &str, points: &[Tick]) -> XResult<()> {
-        self.write_batch_chunked(table, points, self.inner.config.batch_max_rows).await
+        self.write_batch_report(table, points).await.map(|_| ())
+    }
+
+    /// 批量写入并返回 [`BatchWriteReport`]。
+    ///
+    /// 中途失败时错误由 [`BatchWritePartialError`] 映射为 `XError`，文案含 accepted/failed。
+    pub async fn write_batch_report(
+        &self,
+        table: &str,
+        points: &[Tick],
+    ) -> XResult<BatchWriteReport> {
+        self.write_batch_chunked_report(table, points, self.inner.config.batch_max_rows).await
     }
 
     /// 带自定义 chunk 大小的批量写入。
@@ -329,32 +418,116 @@ impl TaosPool {
         points: &[Tick],
         max_rows: usize,
     ) -> XResult<()> {
-        validate_stable_ident(table)?;
+        self.write_batch_chunked_report(table, points, max_rows).await.map(|_| ())
+    }
+
+    /// 带自定义 chunk 大小的批量写入，返回结构化报告。
+    ///
+    /// 空 `points` → `accepted=0` 的完整报告。不自动重试已提交 chunk。
+    pub async fn write_batch_chunked_report(
+        &self,
+        table: &str,
+        points: &[Tick],
+        max_rows: usize,
+    ) -> XResult<BatchWriteReport> {
+        match self.write_batch_chunked_outcome(table, points, max_rows).await {
+            Ok(report) => Ok(report),
+            Err(partial) => Err(partial.into()),
+        }
+    }
+
+    /// 与 [`Self::write_batch_chunked_report`] 相同，但部分成功时返回结构化
+    /// [`BatchWritePartialError`]（含准确 `accepted`/`failed`），而非仅字符串化 `XError`。
+    pub async fn write_batch_chunked_outcome(
+        &self,
+        table: &str,
+        points: &[Tick],
+        max_rows: usize,
+    ) -> Result<BatchWriteReport, BatchWritePartialError> {
+        validate_stable_ident(table).map_err(|source| BatchWritePartialError {
+            report: BatchWriteReport {
+                accepted: 0,
+                failed: points.len(),
+                chunks_ok: 0,
+                chunks_total: 0,
+            },
+            source,
+        })?;
         if points.is_empty() {
-            return Ok(());
+            return Ok(BatchWriteReport::default());
         }
         if max_rows == 0 || max_rows > self.inner.config.batch_max_rows {
-            return Err(XError::invalid(format!(
-                "max_rows 必须为 1..={}（配置上限）",
-                self.inner.config.batch_max_rows
-            )));
+            return Err(BatchWritePartialError {
+                report: BatchWriteReport {
+                    accepted: 0,
+                    failed: points.len(),
+                    chunks_ok: 0,
+                    chunks_total: 0,
+                },
+                source: XError::invalid(format!(
+                    "max_rows 必须为 1..={}（配置上限）",
+                    self.inner.config.batch_max_rows
+                )),
+            });
         }
-        self.ensure_stable(table).await?;
+        if let Err(source) = self.ensure_stable(table).await {
+            return Err(BatchWritePartialError {
+                report: BatchWriteReport {
+                    accepted: 0,
+                    failed: points.len(),
+                    chunks_ok: 0,
+                    chunks_total: 0,
+                },
+                source,
+            });
+        }
         let prec = self.precision();
-        let chunks = build_insert_sql_chunks_with_limits(
+        let chunks = match build_insert_sql_chunks_with_limits(
             table,
             points,
             prec,
             max_rows,
             self.inner.config.batch_max_bytes,
-        )?;
-        for sql in chunks {
-            let r = self.exec_sql(&sql).await?;
-            if r.code != 0 {
-                return Err(map_taos_code(r.code, "write_batch 失败"));
+        ) {
+            Ok(c) => c,
+            Err(source) => {
+                return Err(BatchWritePartialError {
+                    report: BatchWriteReport {
+                        accepted: 0,
+                        failed: points.len(),
+                        chunks_ok: 0,
+                        chunks_total: 0,
+                    },
+                    source,
+                });
+            }
+        };
+        let chunks_total = chunks.len();
+        let mut accepted = 0usize;
+        let mut chunks_ok = 0usize;
+        for (sql, row_count) in chunks {
+            match self.exec_sql(&sql).await {
+                Ok(r) if r.code == 0 => {
+                    accepted += row_count;
+                    chunks_ok += 1;
+                }
+                Ok(r) => {
+                    let failed = points.len().saturating_sub(accepted);
+                    return Err(BatchWritePartialError {
+                        report: BatchWriteReport { accepted, failed, chunks_ok, chunks_total },
+                        source: map_taos_code(r.code, "write_batch 失败"),
+                    });
+                }
+                Err(source) => {
+                    let failed = points.len().saturating_sub(accepted);
+                    return Err(BatchWritePartialError {
+                        report: BatchWriteReport { accepted, failed, chunks_ok, chunks_total },
+                        source,
+                    });
+                }
             }
         }
-        Ok(())
+        Ok(BatchWriteReport { accepted, failed: 0, chunks_ok, chunks_total })
     }
 
     /// 关闭池。
@@ -1064,6 +1237,66 @@ mod tests {
             .await
             .expect_err("custom row cap");
         assert_eq!(batch_error.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn write_batch_report_partial_failure_exposes_accepted_rows() {
+        // 序列：ensure_stable CREATE + DESCRIBE + chunk0 OK + chunk1 FAIL
+        let create_ok = r#"{"code":0,"column_meta":[],"data":[],"rows":0}"#;
+        let describe_ok = concat!(
+            r#"{"code":0,"column_meta":[["field","VARCHAR",16],["type","VARCHAR",16],["length","VARCHAR",8]],"#,
+            r#""data":[["ts","TIMESTAMP","8"],["bid","NCHAR","64"],["ask","NCHAR","64"]],"rows":3}"#
+        );
+        let insert_ok = r#"{"code":0,"column_meta":[],"data":[],"rows":0,"affected_rows":1}"#;
+        let insert_fail = r#"{"code":-1,"desc":"injected write failure"}"#;
+        let port = serve_sequence(vec![create_ok, describe_ok, insert_ok, insert_fail]).await;
+        let cfg = TaosConfig {
+            port,
+            database: String::new(),
+            batch_max_rows: 1,
+            timeout: Duration::from_secs(2),
+            ..TaosConfig::default()
+        };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        let points = vec![sample_tick("BTC", 1_000_000), sample_tick("ETH", 2_000_000)];
+        match pool.write_batch_chunked_outcome("ticks", &points, 1).await {
+            Ok(_) => panic!("second chunk must fail"),
+            Err(partial) => {
+                assert_eq!(partial.report.accepted, 1);
+                assert_eq!(partial.report.failed, 1);
+                assert_eq!(partial.report.chunks_ok, 1);
+                assert_eq!(partial.report.chunks_total, 2);
+                assert!(!partial.report.is_complete());
+                let as_xerror: XError = partial.into();
+                let text = as_xerror.to_string();
+                assert!(text.contains("accepted=1"), "{text}");
+                assert!(text.contains("failed=1"), "{text}");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn write_batch_report_full_success() {
+        let create_ok = r#"{"code":0,"column_meta":[],"data":[],"rows":0}"#;
+        let describe_ok = concat!(
+            r#"{"code":0,"column_meta":[["field","VARCHAR",16],["type","VARCHAR",16],["length","VARCHAR",8]],"#,
+            r#""data":[["ts","TIMESTAMP","8"],["bid","NCHAR","64"],["ask","NCHAR","64"]],"rows":3}"#
+        );
+        let insert_ok = r#"{"code":0,"column_meta":[],"data":[],"rows":0}"#;
+        let port = serve_sequence(vec![create_ok, describe_ok, insert_ok]).await;
+        let cfg = TaosConfig {
+            port,
+            database: String::new(),
+            batch_max_rows: 10,
+            timeout: Duration::from_secs(2),
+            ..TaosConfig::default()
+        };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        let report =
+            pool.write_batch_report("ticks", &[sample_tick("BTC", 1)]).await.expect("full write");
+        assert_eq!(report.accepted, 1);
+        assert_eq!(report.failed, 0);
+        assert!(report.is_complete());
     }
 
     #[tokio::test]

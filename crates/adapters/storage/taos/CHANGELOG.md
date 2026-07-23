@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.5] — 2026-07-23
+
+### Added
+
+- `BatchWriteReport` / `BatchWritePartialError`：多 chunk 写入可定位 accepted/failed
+- `write_batch_report` / `write_batch_chunked_report` / `write_batch_chunked_outcome`
+- 部分成功单测：第二 chunk 失败时 `accepted=1` 结构化报告
+
+### Changed
+
+- `write_batch` / `write_batch_chunked` 仍返回 `()`，内部委托报告 API
+- 公开 API 表面测试注入假密码验证 Debug 脱敏（N-1）
+
+### Boundaries
+
+- **不**自动重试已提交 chunk（幂等重试仍 NO-GO）
+- 不宣称 package stable / Native SQL / HA
+
 ## [0.3.4] — 2026-07-23
 
 ### Added

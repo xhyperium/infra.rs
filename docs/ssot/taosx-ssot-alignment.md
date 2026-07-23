@@ -6,15 +6,15 @@
 | SSOT | `.agents/ssot/adapters/storage/taos/`（**禁止**平行 `taosx/` 树） |
 | 实现 | `crates/adapters/storage/taos` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.4` |
-| 结论 | **受限 REST SQL + WS reachability 已落地**；Native SQL / HA / 幂等重试 / package stable **NO-GO** |
+| version | `0.3.5` |
+| 结论 | **受限 REST SQL + WS reachability + BatchWriteReport 已落地**；Native SQL / HA / 幂等重试 / package stable **NO-GO** |
 
 ## 结论摘要
 
 | 问题 | 状态 |
 |------|------|
 | 生产默认面 | `TaosPool / TaosClient` REST（6041） |
-| batch write | `write_batch` / `write_batch_chunked` / `build_insert_sql_chunks` |
+| batch write | `write_batch*` / `write_batch_*report` / `BatchWriteReport` / `build_insert_sql_chunks` |
 | WS | `TransportMode::NativeWs` + `connect_native_ws`（仅握手/关闭探测；SQL 始终 REST） |
 | Decimal | NCHAR(64+) 文本往返；DESCRIBE 拒绝存量 DOUBLE schema |
 | 资源 | response / SQL batch / query rows / in-flight / close drain 均有硬上限 |
@@ -31,11 +31,12 @@
 | TAOSX-1–8 | member…SSOT | PASS | `.agents/ssot/adapters/storage/taos/` |
 | TAOSX-9 | package stable | OPEN | 禁止宣称 |
 | TAOSX-10 | 批量写 | PASS | `write_batch*` / `build_insert_sql_chunks` |
+| TAOSX-10b | 部分成功报告 | PASS | `BatchWriteReport` / `write_batch_chunked_outcome`；无自动重试 |
 | TAOSX-11 | WS reachability | PARTIAL | `src/native.rs`；不执行 SQL、不证明认证 |
 | TAOSX-12 | 资源/close | PASS | 硬上限 + RAII/drain/取消测试 |
 | TAOSX-13 | Decimal 无损 | PASS | NCHAR schema gate + scale=18 离线/live |
 | TAOSX-14 | Native SQL / FFI / HA | NO-GO | 无实现、无证据 |
-| TAOSX-15 | 幂等自动重试 | NO-GO | 多 chunk 部分成功语义未闭合 |
+| TAOSX-15 | 幂等自动重试 | NO-GO | 报告可定位，但**不**自动重试 |
 | TAOSX-16 | 十轮审查矩阵 | PASS | `docs/report/2026-07-23/taosx-ten-round-review.md` |
 | TAOSX-17 | 公开 API 表面测试 | PASS | `src/lib.rs` `public_api_surface` |
 
