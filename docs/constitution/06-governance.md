@@ -55,11 +55,24 @@ cd .worktrees/feat/my-feature
 - Session 钩子提供硬门禁与告警；**即使钩子未启用，本条款仍有效**——Agent 须自觉遵守
 - 紧急绕过仅限人工 maintainer 设置 `INFRA_WORKTREE_BYPASS=1`，并事后记录
 
-### 6.0.7 一句话
+### 6.0.7 PR 审查过期规则
+
+**`dismiss_stale_reviews_on_push: true`** — 向 PR 分支执行 force push 后，已有审查批准将自动作废。
+
+- **触发条件**：对已批准的 PR 分支执行 `git push --force` / `git push --force-with-lease` 或 `git rebase` 后强制推送
+- **效果**：PR 状态变为 `REVIEW_REQUIRED`，合并被阻断
+- **适用场景**：
+  - `git rebase origin/main` 后强制推送（常见于解决合并冲突）
+  - 修改提交历史（squash / amend / reorder）后强制推送
+- **应对**：通知审查者重新审批；建议在 force push 前与审查者协调，或在同步 main 时优先使用 merge 以保留审查状态
+
+**实际操作案例（2026-07-23）**：kafkax 0.4.0 PR（#354）在 cherry-pick 解决冲突后执行 `git push --force`，导致 `REVIEW_REQUIRED`，需重新获取 `@xhyperium/maintainers` 审批。
+
+### 6.0.8 一句话
 
 > **先对齐 main，再开分支；先 PR 进 main，再谈完成。**
 
-### 6.0.8 分支保护验证
+### 6.0.9 分支保护验证
 
 分支保护已启用 `enforce_admins` 测试，并记录于本宪章：
 

@@ -7,7 +7,7 @@
 | 实现 | `crates/adapters/storage/kafka` |
 | 战役 | draft SPEC_GOAL → 本仓生产默认路径 |
 | 状态 | **P0 生产入口已落地**；十轮矩阵已收敛；package stable **未宣称** |
-| version | `0.3.9` |
+| version | `0.4.0` |
 
 ## Outcome
 

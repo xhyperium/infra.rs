@@ -18,6 +18,7 @@
         "bitget",
         "blpop",
         "BTCUSDT",
+        "ETHUSDT",
         "bybit",
         "bytechainx",
         "bytemuck",

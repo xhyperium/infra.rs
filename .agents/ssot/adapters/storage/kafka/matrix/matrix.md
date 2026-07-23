@@ -22,3 +22,4 @@
 | S-18 | headers/key 公共 produce/consume | PASS | `PublishRecord` / `KafkaMessage::headers`（0.3.7） |
 | S-19 | pool stats 扩展 | PASS | timeouts/cancelled/topics_ensured/deleted |
 | S-20 | produce cancel/timeout 严格计数 | PASS | `limited_produce_await` + 集成 strict（0.3.9 G-STATS-01） |
+| S-21 | 0.4.0 里程碑闭合 | PASS | 九轮 PATCH 迭代完结；可交付面全量证据；gap-zero + G-STATS-01 |
