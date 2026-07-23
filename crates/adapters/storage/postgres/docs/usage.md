@@ -1,6 +1,6 @@
 # postgresx 用法
 
-**Package**：`postgresx` `0.3.10`（`publish = false`） · 默认导出为**生产 SQL / 连接池 API**。
+**Package**：`postgresx` `0.3.11`（`publish = false`） · 默认导出为**生产 SQL / 连接池 API**。
 
 ## 最小示例
 
@@ -113,4 +113,14 @@ pool.query_one("SELECT * FROM t WHERE id = $1", &[&id]).await?;
 // 同一连接上：CREATE TEMP + COPY IN/OUT
 // pool.copy_in_bytes / conn.copy_in_bytes
 // 默认单次载荷上限 16 MiB；超时脱池
+```
+
+## Migration（显式 apply）
+
+```rust
+use postgresx::{Migration, Migrator};
+
+// 启动默认：verify 仅校验 checksum，不自动 DDL
+// migrator.verify().await?;
+// 运维显式：migrator.apply().await?;
 ```

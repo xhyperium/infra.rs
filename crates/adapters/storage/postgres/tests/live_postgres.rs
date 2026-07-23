@@ -320,3 +320,52 @@ async fn live_acquire_with_and_copy_roundtrip() {
 
     pool.close();
 }
+
+#[tokio::test]
+#[ignore = "requires live Postgres; run with --ignored when available"]
+async fn live_migrator_verify_apply_checksum() {
+    use postgresx::{Migration, Migrator};
+
+    let pool = PostgresPool::connect(&live_config()).await.expect("connect");
+    let suffix = std::process::id();
+    let table = format!("postgresx_mig_{suffix}");
+    let version = 10_000 + i64::from((suffix % 1000) as u32);
+
+    let _ =
+        pool.execute("DELETE FROM infra_schema_migrations WHERE version = $1", &[&version]).await;
+    let _ = pool.execute(&format!("DROP TABLE IF EXISTS {table}"), &[]).await;
+
+    let m1 = Migration::new(
+        version,
+        format!("live_mig_{suffix}_t"),
+        format!("CREATE TABLE IF NOT EXISTS {table} (id int PRIMARY KEY);"),
+    )
+    .expect("m1");
+    let migrator = Migrator::new(pool.clone(), vec![m1]).expect("migrator");
+
+    let st = migrator.verify().await.expect("verify pending ok");
+    assert!(st.is_boot_ok());
+    assert!(st.pending.contains(&version));
+
+    let report = migrator.apply().await.expect("apply");
+    assert!(report.applied_now.contains(&version));
+    assert!(report.status.pending.is_empty());
+
+    let report2 = migrator.apply().await.expect("re-apply");
+    assert!(report2.applied_now.is_empty());
+
+    let bad = Migration::new(
+        version,
+        format!("live_mig_{suffix}_t"),
+        format!("CREATE TABLE IF NOT EXISTS {table} (id int PRIMARY KEY, x int);"),
+    )
+    .expect("bad");
+    let migrator_bad = Migrator::new(pool.clone(), vec![bad]).expect("bad migrator");
+    let err = migrator_bad.verify().await.expect_err("checksum");
+    assert_eq!(err.kind(), kernel::ErrorKind::Conflict);
+
+    let _ = pool.execute(&format!("DROP TABLE IF EXISTS {table}"), &[]).await;
+    let _ =
+        pool.execute("DELETE FROM infra_schema_migrations WHERE version = $1", &[&version]).await;
+    pool.close();
+}

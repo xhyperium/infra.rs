@@ -9,6 +9,7 @@
 //! - [`PgConnection`] / [`PgTransaction`]（准确状态 [`TxStatus`]；旧 [`TxState`] 迁移兼容）
 //! - [`PgTxRunner`]：`contracts::TxRunner` 边界适配（**不**传 SQL 句柄，见模块文档）
 //! - [`PgRepository`] / [`PgRecord`]：生产 `contracts::Repository`
+//! - [`Migrator`]：advisory lock + checksum；默认 [`Migrator::verify`] 不自动 DDL
 //! - [`MakeRustlsConnect`]：`SslMode::Prefer` / `Require` 的 rustls TLS
 //! - [`with_retry_sync`] / [`with_retry_async`]：resiliencx 重试
 //! - SQLSTATE → [`kernel::ErrorKind`] 映射：[`error_kind_from_sqlstate`]
@@ -28,6 +29,7 @@
 mod config;
 mod conn;
 mod error;
+mod migration;
 mod pool;
 mod repository;
 mod resilience;
@@ -47,6 +49,10 @@ pub use conn::{DEFAULT_COPY_IN_MAX_BYTES, DEFAULT_COPY_OUT_MAX_BYTES, PgConnecti
 pub use error::{
     TransactionRollbackFailure, error_kind_from_sqlstate, map_pool_error, map_tokio_error,
     xerror_from_sqlstate,
+};
+pub use migration::{
+    AppliedMigration, ChecksumMismatch, MIGRATION_LOCK_KEY1, MIGRATION_LOCK_KEY2, Migration,
+    MigrationReport, MigrationStatus, Migrator, SCHEMA_MIGRATIONS_TABLE, ensure_boot_ok,
 };
 pub use pool::{PoolStats, PostgresPool};
 pub use repository::{PgRecord, PgRepository};
