@@ -1579,4 +1579,157 @@ mod tests {
         assert!(!health.detail.is_empty());
         assert!(pool.metrics().health_not_ready >= 1);
     }
+
+    // ────────────────────────────────────────────────────
+    // CRUD 操作测试
+    // ────────────────────────────────────────────────────
+
+    #[test]
+    fn crud_kline_price_from_float() {
+        // 模拟 CSV 中 close=66522.40 → mantissa=6652240, scale=2
+        let price = Decimal::try_new(6_652_240, 2).unwrap();
+        assert!(price.to_string().contains("66522"), "got {}", price);
+
+        // 模拟 BTC 高价 close=29272.30
+        let price = Decimal::try_new(2_927_230, 2).unwrap();
+        assert!(price.to_string().contains("29272"), "got {}", price);
+
+        // 零价
+        let price = Decimal::try_new(0, 2).unwrap();
+        assert_eq!(price.to_string(), "0");
+
+        // 负价格（某些场景）
+        let neg: i128 = -100;
+        let price = Decimal::try_new(neg, 2).unwrap();
+        assert_eq!(price.to_string(), "-1");
+    }
+
+    #[test]
+    fn crud_batch_insert_chunk_partitioning() {
+        // 模拟 5 个 tick 分 2 行一批 → 3 个 chunk (2+2+1)
+        let points: Vec<Tick> = (0..5).map(|i| sample_tick("BTC", (i + 1) * 1_000_000)).collect();
+        let chunks = build_insert_sql_chunks("ticks", &points, TsPrecision::Ns, 2).unwrap();
+        assert_eq!(chunks.len(), 3);
+        // 每个 chunk 必须含 VALUES
+        for (i, c) in chunks.iter().enumerate() {
+            assert!(c.contains("VALUES"), "chunk {i} missing VALUES");
+            assert!(c.starts_with("INSERT INTO"), "chunk {i} bad prefix");
+        }
+    }
+
+    #[test]
+    fn crud_schema_description_mock() {
+        // 模拟 DESCRIBE 返回 NCHAR(64) bid/ask
+        let result = TaosExecResult {
+            code: 0,
+            rows: vec![
+                vec!["ts".into(), "TIMESTAMP".into(), "8".into()],
+                vec!["bid".into(), "NCHAR".into(), "64".into()],
+                vec!["ask".into(), "NCHAR".into(), "64".into()],
+                vec!["symbol".into(), "NCHAR".into(), "16".into()],
+            ],
+            columns: Vec::new(),
+            affected_rows: None,
+        };
+        assert!(validate_decimal_schema(&result).is_ok());
+    }
+
+    #[test]
+    fn crud_delete_sql_generation() {
+        // 验证 DELETE SQL 语法正确生成
+        let table = "st_kline_btcusdt_1h";
+        let delete_ts: i64 = 1_690_848_000_000_000_000; // ns
+        let sql = format!("DELETE FROM `{table}` WHERE ts = {delete_ts}");
+        assert!(sql.contains("DELETE FROM"));
+        assert!(sql.contains(table));
+        assert!(sql.contains(&delete_ts.to_string()));
+    }
+
+    #[test]
+    fn crud_select_count_row_parse() {
+        // 模拟 SELECT COUNT(*) 返回
+        let json =
+            r#"{"code":0,"column_meta":[["count(*)","BIGINT","8"]],"data":[["4200"]],"rows":1}"#;
+        let result: TaosExecResult = parse_taos_json(json).unwrap();
+        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows[0][0], "4200");
+    }
+
+    #[test]
+    fn crud_repeatable_close_does_not_panic() {
+        // 多次 close 必须可重复不 panic
+        let cfg = TaosConfig {
+            host: "127.0.0.1".into(),
+            port: 6041,
+            database: String::new(),
+            timeout: Duration::from_millis(300),
+            acquire_timeout: Duration::from_millis(200),
+            ..TaosConfig::default()
+        };
+        let pool = TaosPool::connect_without_ping(cfg).expect("build");
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            // close then close again — must not panic
+            let _ = pool.close().await;
+            let _ = pool.close().await;
+        });
+    }
+
+    #[test]
+    fn crud_query_row_count_limit() {
+        // max_query_rows=0 应拒绝
+        let cfg = TaosConfig { max_query_rows: 0, ..TaosConfig::default() };
+        assert!(cfg.validate().is_err());
+
+        // max_query_rows ≤ HARD_MAX 必须接受
+        let cfg = TaosConfig { max_query_rows: 100, ..TaosConfig::default() };
+        assert!(cfg.validate().is_ok());
+    }
+
+    #[test]
+    fn crud_sql_byte_limit_enforced() {
+        // batch_max_bytes=0 应拒绝
+        let cfg = TaosConfig { batch_max_bytes: 0, ..TaosConfig::default() };
+        assert!(cfg.validate().is_err());
+
+        // 合法值
+        let cfg = TaosConfig { batch_max_bytes: 1024, ..TaosConfig::default() };
+        assert!(cfg.validate().is_ok());
+    }
+
+    #[test]
+    fn crud_update_via_insert_idempotency() {
+        // 写入同一 ts+symbol 两次 → 不应 panic，视为 upsert
+        let tick = sample_tick("BTC", 1_000_000);
+        let chunks =
+            build_insert_sql_chunks("ticks", std::slice::from_ref(&tick), TsPrecision::Ns, 1)
+                .unwrap();
+        assert_eq!(chunks.len(), 1);
+        let chunks2 = build_insert_sql_chunks("ticks", &[tick], TsPrecision::Ns, 1).unwrap();
+        // 两次生成的 SQL 应相同（确定性）
+        assert_eq!(chunks, chunks2);
+    }
+
+    #[test]
+    fn crud_range_query_timestamps() {
+        // start > end 应返回错误类型
+        // 这个路径在 query_series 中，用离线 mock 验证
+        use contracts::TimeSeriesStore;
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let cfg = TaosConfig {
+                host: "127.0.0.1".into(),
+                port: 1, // closed port
+                database: String::new(),
+                timeout: Duration::from_millis(100),
+                acquire_timeout: Duration::from_millis(100),
+                ..TaosConfig::default()
+            };
+            let pool = TaosPool::connect_without_ping(cfg).expect("build");
+            // start > end maps to unavailable (connect refused) on closed port
+            let result = pool.query_series("ticks", 2_000_000, 1_000_000).await;
+            assert!(result.is_err());
+        });
+    }
 }

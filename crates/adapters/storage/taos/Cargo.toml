@@ -41,5 +41,19 @@ harness = false
 name = "api_matrix"
 harness = false
 
+[[bench]]
+name = "critical_path"
+harness = false
+
+[[bench]]
+name = "query_scale"
+harness = false
+
+[[example]]
+name = "btc_eth_crud"
+
+[[example]]
+name = "import_all"
+
 [lints]
 workspace = true
