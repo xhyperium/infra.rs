@@ -27,13 +27,17 @@ pub use adapter::TaosAdapter;
 #[cfg(test)]
 mod public_api_surface {
     use super::*;
+    use std::time::Duration;
 
-    /// 默认 feature crate-root 导出均被单元测试点名。
+    /// 默认 feature crate-root 导出：类型、常量、自由函数均被点名。
     #[test]
     fn default_exports_named() {
-        let _cfg = TaosConfig::default();
+        let cfg = TaosConfig::default();
         let _ = TsPrecision::Ms;
+        let _ = TsPrecision::Us;
+        let _ = TsPrecision::Ns;
         let _ = TransportMode::Rest;
+        let _ = TransportMode::NativeWs;
         let result = TaosExecResult {
             code: 0,
             rows: vec![vec!["1".into()]],
@@ -41,10 +45,21 @@ mod public_api_surface {
             affected_rows: Some(1),
         };
         assert_eq!(result.code, 0);
-        assert_eq!(build_native_ws_url(&_cfg), "ws://127.0.0.1:6041/rest/ws");
-        validate_mode(&_cfg).expect("mode");
+        assert_eq!(result.rows.len(), 1);
+        assert_eq!(build_native_ws_url(&cfg), "ws://127.0.0.1:6041/rest/ws");
+        validate_mode(&cfg).expect("mode");
         let empty = build_insert_sql_chunks("t", &[], TsPrecision::Ms, 10).unwrap();
         assert!(empty.is_empty());
+
+        // 硬上限常量被引用（防止死导出）；运行时求和避免 clippy assertions_on_constants
+        let hard_sum = HARD_MAX_IN_FLIGHT
+            + HARD_MAX_BATCH_BYTES
+            + HARD_MAX_BATCH_ROWS
+            + HARD_MAX_RESPONSE_BYTES
+            + HARD_MAX_QUERY_ROWS
+            + HARD_MAX_CLOSE_TIMEOUT.as_millis() as usize;
+        assert!(hard_sum > 1_000);
+
         fn assert_type<T: ?Sized>() {}
         assert_type::<TaosClient>();
         assert_type::<TaosPool>();
@@ -52,5 +67,63 @@ mod public_api_surface {
         assert_type::<TaosExecResult>();
         assert_type::<TaosPoolStats>();
         assert_type::<TransportMode>();
+        assert_type::<TsPrecision>();
+    }
+
+    /// `TaosConfig` 公开方法与 URL 构造。
+    #[test]
+    fn config_public_methods_exercised() {
+        let cfg = TaosConfig::default();
+        assert_eq!(cfg.rest_sql_url(), "http://127.0.0.1:6041/rest/sql");
+        assert!(cfg.rest_sql_db_url().contains("/rest/sql/"));
+        assert_eq!(cfg.native_ws_url(), "ws://127.0.0.1:6041/rest/ws");
+        cfg.validate().expect("default validate");
+
+        assert_eq!(TsPrecision::parse("ms"), Some(TsPrecision::Ms));
+        assert_eq!(TsPrecision::parse("us"), Some(TsPrecision::Us));
+        assert_eq!(TsPrecision::parse("ns"), Some(TsPrecision::Ns));
+        assert_eq!(TsPrecision::Ms.from_nanos(1_000_000), 1);
+        assert_eq!(TsPrecision::Ms.to_nanos(1), 1_000_000);
+        assert_eq!(TransportMode::parse("rest"), Some(TransportMode::Rest));
+        assert_eq!(TransportMode::parse("ws"), Some(TransportMode::NativeWs));
+
+        let debug = format!("{cfg:?}");
+        assert!(debug.contains("password: \"***\"") || debug.contains("***"));
+        assert!(!debug.contains("s3cret"));
+    }
+
+    /// `from_env` 在无变量时回到默认，且不 panic。
+    #[test]
+    fn config_from_env_defaults_when_unset() {
+        // 不注入密钥；仅验证 API 可调用且默认值合法。
+        let cfg = TaosConfig::from_env();
+        assert!(!cfg.host.is_empty());
+        assert_eq!(cfg.port, 6041);
+    }
+
+    /// 池公开同步面：`connect_without_ping` / `client` / `config` / `precision` / `stats` / `is_closed`。
+    #[test]
+    fn pool_sync_surface_methods() {
+        let cfg = TaosConfig::default();
+        let pool = TaosPool::connect_without_ping(cfg).expect("offline build");
+        let client: TaosClient = pool.client();
+        assert_eq!(client.config().host, "127.0.0.1");
+        assert_eq!(pool.precision(), TsPrecision::Ms);
+        let stats = pool.stats();
+        assert_eq!(stats.in_flight, 0);
+        assert!(!stats.closed);
+        assert!(!pool.is_closed());
+    }
+
+    /// crate-root 导出的 `connect_native_ws` 必须被点名（Rest 模式应 Invalid）。
+    #[tokio::test]
+    async fn connect_native_ws_export_is_exercised() {
+        let cfg = TaosConfig {
+            transport: TransportMode::Rest,
+            timeout: Duration::from_millis(100),
+            ..TaosConfig::default()
+        };
+        let err = connect_native_ws(&cfg).await.expect_err("rest mode must fail");
+        assert_eq!(err.kind(), kernel::ErrorKind::Invalid);
     }
 }

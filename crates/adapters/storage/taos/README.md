@@ -63,10 +63,14 @@ node scripts/taos-live-conformance.mjs
 ## Bench
 
 ```bash
-cargo run -p taosx --bench hot_path -- --quick
-FOUNDATIONX_TAOSX_PASSWORD='***' cargo run -p taosx --bench hot_path -- --live --quick
+# 有界 bench（需 FOUNDATIONX_TAOSX_* 或本机 REST）
+scripts/live/export-foundationx-env.sh --env dev -- \
+  cargo bench -p taosx --bench hot_path -- --quick
 ```
 
-文档：[docs/usage.md](docs/usage.md) · [docs/config.md](docs/config.md) · [docs/operations.md](docs/operations.md)
+文档：[docs/usage.md](docs/usage.md) · [docs/config.md](docs/config.md) · [docs/operations.md](docs/operations.md)  
+对齐：[docs/ssot/taosx-ssot-alignment.md](../../../../docs/ssot/taosx-ssot-alignment.md)  
+十轮审查：`docs/report/2026-07-23/taosx-ten-round-review.md`
 
-Native SQL / FFI、WS 认证长会话、自动幂等重试与 HA/Cluster 均为 NO-GO。
+Native SQL / FFI、WS 认证长会话、自动幂等重试、HA/Cluster 与 package stable 均为 **NO-GO**。  
+SSOT 路径：`.agents/ssot/adapters/storage/taos/`（**不**另建 `taosx/`）。

@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.4] — 2026-07-23
+
+### Added
+
+- 公开 API 表面测试扩面：crate-root 常量、`TaosConfig` URL/`from_env`、池同步面方法全点名
+- 十轮 draft 审查与最终缺口矩阵：`docs/report/2026-07-23/taosx-ten-round-review.md`
+- 真实 dev live 证据（`export-foundationx-env` + `live_smoke` 2/2）与 SSOT matrix S-5b
+
+### Changed
+
+- SSOT 对齐文档 version 与 package 同步为 `0.3.4`；明确 **不** 另建 `adapters/storage/taosx/` SSOT 树
+- crate docs 补充真实配置 live / 有界 bench 命令（密钥仅环境注入）
+
+### Boundaries
+
+- 仍不宣称 package stable / Native SQL / HA / 幂等自动重试 / 24h soak
+
 ## [0.3.3] — 2026-07-23
 
 ### Changed

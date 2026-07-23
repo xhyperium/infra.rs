@@ -65,7 +65,7 @@ version                         storage 独立版本；postgres `0.3.6`；redis 
 | `.agents/ssot/adapters/storage/oss` | `crates/adapters/storage/oss` | `ossx` | **`0.3.3`** ObjectStore + 有界 multipart/retry/orphan 补偿；dev live PASS |
 | `.agents/ssot/adapters/storage/postgres` | `crates/adapters/storage/postgres` | `postgresx` | **`0.3.6`** Pool/Tx/Repository + 远程 TLS 路径；dev live 9/9 + deadline conformance；远程 TLS live / package stable OPEN |
 | `.agents/ssot/adapters/storage/redis` | `crates/adapters/storage/redis` | `redisx` | **`0.3.5`** Standalone + 安全 PubSub 边界；Cluster/Sentinel/TLS live OPEN |
-| `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **`0.3.3`** REST/NCHAR Decimal + WS 探测 + 资源上界；固定 digest live PASS |
+| `.agents/ssot/adapters/storage/taos` | `crates/adapters/storage/taos` | `taosx` | **`0.3.4`** REST/NCHAR Decimal + WS 探测 + 资源上界；真实 dev live + 十轮矩阵 PASS；package stable NO-GO |
 验证（本仓权威命令）：
 
 ```bash
