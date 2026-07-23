@@ -2,25 +2,27 @@
 
 > 实现 / 代码唯一位置：`crates/transport`  
 > **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-transportx-complete-spec.md](spec/xhyper-transportx-complete-spec.md)  
-> **Source Goal**：见 [goal/goal.md](goal/goal.md) — maintenance IN PROGRESS
+> **Source Goal**：见 [goal/goal.md](goal/goal.md) — `0.1.4` **IMPLEMENTED CANDIDATE**
 > **布局**：对齐 [`.agents/ssot/kernel/`](../kernel/)（[AGENTS.md](../../../AGENTS.md) §2）  
-> **状态**：`0.1.3` maintenance 执行中；M3/企业 PKI/业务 live 未宣称
+> **状态**：实现与本地 workspace 门禁已运行；固定代码证据由
+> [`manifest.json`](../../../evidence/testkit/2026-07-23-infra-2d9.10/manifest.json) 绑定；
+> PR CI、独立终审、人工批准与 merge 均为 OPEN
 
 ## 11 层映射
 
 | 管线层 | 路径 | 状态 |
 |--------|------|------|
-| Goal | [goal/goal.md](goal/goal.md) | 入口存在 · 未宣称 AC 闭合 |
-| Spec | [spec/spec.md](spec/spec.md) | **SSOT 入口**（布局迁移） |
-| Design | [design/design.md](design/design.md) | maintenance 设计 |
-| Plan | [plan/plan.md](plan/plan.md) | 入口；战役文件可并列于 plan/ |
-| Tasks | [tasks/tasks.md](tasks/tasks.md) | 入口 / 占位 |
-| Prompt | [prompt/prompt.md](prompt/prompt.md) | 入口 / 占位 |
+| Goal | [goal/goal.md](goal/goal.md) | 候选目标 |
+| Spec | [spec/spec.md](spec/spec.md) | **active SSOT** |
+| Design | [design/design.md](design/design.md) | 候选设计 |
+| Plan | [plan/plan.md](plan/plan.md) | 三轮收敛计划 |
+| Tasks | [tasks/tasks.md](tasks/tasks.md) | 本地完成 + 交付待办 |
+| Prompt | [prompt/prompt.md](prompt/prompt.md) | 最终交付上下文 |
 | **Code** | **`crates/transport`** | 实现不在 `.agents/ssot/` |
-| Test | [test/test.md](test/test.md) | maintenance 测试策略 |
-| Review | [review/review.md](review/review.md) | 验证前 NOT PASS |
-| Release | [release/release.md](release/release.md) | 验证前 BLOCKED |
-| Retrospective | [retrospective/retrospective.md](retrospective/retrospective.md) | 入口 / 占位 |
+| Test | [test/test.md](test/test.md) | 本地证据由 manifest 绑定 |
+| Review | [review/review.md](review/review.md) | PENDING |
+| Release | [release/release.md](release/release.md) | NOT RELEASED |
+| Retrospective | [retrospective/retrospective.md](retrospective/retrospective.md) | 候选阶段复盘 |
 
 ## 横切
 

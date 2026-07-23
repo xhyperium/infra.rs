@@ -11,16 +11,24 @@ use transportx::{
     TransportError, TungsteniteWsConnector, WsConnector, is_sensitive_header_name,
 };
 
-fn spawn_stalling_chunked_server(first_chunk: &'static [u8]) -> SocketAddr {
+fn spawn_stalling_chunked_server(
+    first_chunk: &'static [u8],
+    second_chunk: &'static [u8],
+) -> SocketAddr {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let addr = listener.local_addr().unwrap();
     thread::spawn(move || {
         let (mut stream, _) = listener.accept().unwrap();
-        let mut buf = [0u8; 4096];
+        let mut buf = [0_u8; 4096];
         let _ = stream.read(&mut buf);
         stream.write_all(b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n").unwrap();
         stream.write_all(format!("{:X}\r\n", first_chunk.len()).as_bytes()).unwrap();
         stream.write_all(first_chunk).unwrap();
+        stream.write_all(b"\r\n").unwrap();
+        stream.flush().unwrap();
+        thread::sleep(Duration::from_millis(20));
+        stream.write_all(format!("{:X}\r\n", second_chunk.len()).as_bytes()).unwrap();
+        stream.write_all(second_chunk).unwrap();
         stream.write_all(b"\r\n").unwrap();
         stream.flush().unwrap();
         thread::sleep(Duration::from_secs(2));
@@ -86,33 +94,45 @@ fn http_request_debug_redacts_secrets_and_body() {
 }
 
 #[test]
-fn request_and_proxy_debug_redact_url_userinfo_and_all_query_values() {
-    let secret_url = "https://alice:login-secret@api.example/v1/orders?symbol=BTCUSDT&cursor=a%2Fb&token=query-secret&Signature=sig-secret";
-    let req =
+fn request_and_proxy_debug_only_expose_safe_url_origin() {
+    let secret_url = "https://alice:login-secret@api.example:8443/path-credential/query-secret?no-value-query-key&token=query-secret#fragment-secret";
+    let request =
         HttpRequest { method: "GET".into(), url: secret_url.into(), headers: vec![], body: None };
-    let req_debug = format!("{req:?}");
-    assert!(req_debug.contains("api.example/v1/orders"));
-    assert!(req_debug.contains("symbol=***"));
-    assert!(req_debug.contains("cursor=***"));
-    for leaked in ["alice", "login-secret", "BTCUSDT", "a%2Fb", "query-secret", "sig-secret"] {
-        assert!(!req_debug.contains(leaked), "URL secret leaked: {req_debug}");
+    let request_debug = format!("{request:?}");
+    assert!(request_debug.contains("https://api.example:8443"));
+    for leaked in [
+        "alice",
+        "login-secret",
+        "path-credential",
+        "no-value-query-key",
+        "query-secret",
+        "fragment-secret",
+    ] {
+        assert!(!request_debug.contains(leaked), "请求 URL 泄漏敏感值：{request_debug}");
     }
 
     let proxy = ProxyConfig::new(secret_url);
     let proxy_debug = format!("{proxy:?}");
-    assert!(proxy_debug.contains("api.example/v1/orders"));
-    assert!(proxy_debug.contains("symbol=***"));
-    for leaked in ["alice", "login-secret", "BTCUSDT", "a%2Fb", "query-secret", "sig-secret"] {
-        assert!(!proxy_debug.contains(leaked), "proxy URL secret leaked: {proxy_debug}");
+    assert!(proxy_debug.contains("https://api.example:8443"));
+    for leaked in [
+        "alice",
+        "login-secret",
+        "path-credential",
+        "no-value-query-key",
+        "query-secret",
+        "fragment-secret",
+    ] {
+        assert!(!proxy_debug.contains(leaked), "代理 URL 泄漏敏感值：{proxy_debug}");
     }
 }
 
 #[test]
 fn invalid_url_debug_is_fail_closed() {
     let raw = "not a url?token=must-not-leak";
-    let req = HttpRequest { method: "GET".into(), url: raw.into(), headers: vec![], body: None };
-    let debug = format!("{req:?}");
-    assert!(!debug.contains("must-not-leak"), "invalid URL leaked: {debug}");
+    let request =
+        HttpRequest { method: "GET".into(), url: raw.into(), headers: vec![], body: None };
+    let debug = format!("{request:?}");
+    assert!(!debug.contains("must-not-leak"), "无效 URL 泄漏敏感值：{debug}");
     assert!(debug.contains("<invalid-url-redacted>"));
 
     let opaque = HttpRequest {
@@ -122,16 +142,16 @@ fn invalid_url_debug_is_fail_closed() {
         body: None,
     };
     let debug = format!("{opaque:?}");
-    assert!(!debug.contains("opaque-secret"), "opaque URL leaked: {debug}");
+    assert!(!debug.contains("opaque-secret"), "不透明 URL 泄漏敏感值：{debug}");
     assert!(debug.contains("<invalid-url-redacted>"));
 }
 
 #[test]
 fn disabled_sni_is_rejected_instead_of_silently_ignored() {
     let tls = TlsConfig { mode: TlsMode::SystemRoots, sni: false };
-    let err = ReqwestHttpDriver::with_tls(tls).expect_err("未接线的 SNI=false 必须 fail-closed");
-    assert!(matches!(err, TransportError::ProtocolViolation(_)), "got {err:?}");
-    assert!(err.to_string().contains("SNI"));
+    let error = ReqwestHttpDriver::with_tls(tls).expect_err("未接线的 SNI=false 必须关闭失败");
+    assert!(matches!(error, TransportError::ProtocolViolation(_)), "实际错误：{error:?}");
+    assert!(error.to_string().contains("SNI"));
 }
 
 #[test]
@@ -203,9 +223,9 @@ async fn response_body_over_limit_fail_closed() {
 
 #[tokio::test]
 async fn chunked_response_stops_at_first_cumulative_overflow() {
-    let addr = spawn_stalling_chunked_server(b"123456789");
+    let addr = spawn_stalling_chunked_server(b"12345", b"6789");
     let driver =
-        ReqwestHttpDriver::with_limits(Some(Duration::from_secs(5)), 8, 1024).expect("driver");
+        ReqwestHttpDriver::with_limits(Some(Duration::from_secs(5)), 8, 1024).expect("驱动可构造");
     let result = tokio::time::timeout(
         Duration::from_millis(500),
         driver.execute(HttpRequest {
@@ -217,10 +237,13 @@ async fn chunked_response_stops_at_first_cumulative_overflow() {
     )
     .await
     .expect("累计越界后必须立即中止，不能等待 chunked 响应结束");
-    let err = result.expect_err("chunked body must be rejected");
+    let error = result.expect_err("chunked 响应体必须被拒绝");
     assert!(
-        matches!(err, TransportError::PayloadTooLarge { kind: "response_body", limit: 8, got: 9 }),
-        "unexpected {err:?}"
+        matches!(
+            error,
+            TransportError::PayloadTooLarge { kind: "response_body", limit: 8, got: 9 }
+        ),
+        "实际错误：{error:?}"
     );
 }
 
@@ -258,14 +281,27 @@ async fn ws_send_frame_over_limit_fail_closed() {
 
 #[tokio::test]
 async fn ws_connect_timeout_maps_to_connect_timeout() {
-    // 不可路由地址：连接会挂起直至超时（黑洞 10.255.255.1 常见用于此）
-    let connector = TungsteniteWsConnector::with_limits(Duration::from_millis(200), 1024);
-    let result = connector.connect("ws://10.255.255.1:9/").await;
+    use tokio::net::TcpListener;
+
+    // TCP 已在本地建立，但服务端永不返回 WebSocket 握手，精确覆盖握手 deadline。
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let (accepted_tx, accepted_rx) = tokio::sync::oneshot::channel();
+    let server = tokio::spawn(async move {
+        let (_stream, _) = listener.accept().await.unwrap();
+        let _ = accepted_tx.send(());
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    });
+
+    let connector = TungsteniteWsConnector::with_limits(Duration::from_millis(100), 1024);
+    let result = connector.connect(&format!("ws://{addr}/")).await;
     let err = match result {
         Ok(_) => panic!("expected connect failure"),
         Err(e) => e,
     };
-    assert!(matches!(err, TransportError::ConnectTimeout | TransportError::Io(_)), "got {err:?}");
+    accepted_rx.await.expect("服务端必须已接受本地 TCP 连接");
+    server.abort();
+    assert!(matches!(err, TransportError::ConnectTimeout), "实际错误：{err:?}");
 }
 
 #[test]

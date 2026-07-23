@@ -3,13 +3,28 @@
 本文件记录 transportx 的用户可见变更，遵循 [Keep a Changelog](https://keepachangelog.com/)。
 版本号以对应 `Cargo.toml` 的 `[package] version` 为准。
 
-## [Unreleased]
+## [未发布]
 
-### Added
+### 新增
 
 - 真实 `benches/hot_path`（`cargo bench -- --quick` 可测）
 - 公开 API 集成覆盖扩展（`tests/public_api_surface.rs` 等）
 - `docs/API.md`：公开消费面与最小用法
+
+## [0.1.4] — 2026-07-23
+
+### 安全与修复
+
+- URL Debug 收紧为仅保留 scheme/host/显式 port；path、query 名和值、userinfo 与
+  fragment 全部 fail-closed 脱敏。
+- 兼容 `HttpClientPool::new` 对无效配置 fail-fast panic；`try_new` 保持可恢复错误。
+- 删除仅供测试的隐藏 public mapper/锁投毒钩子，避免泄漏 reqwest/tungstenite 私有边界。
+- WS 未收到 Close frame 的断连精确映射为 `ConnectionClosed { clean: false }`。
+- 补齐 factory error/unwind、锁中毒、超时与异常 EOF 的确定性回归测试。
+
+### 状态
+
+- M3、企业 PKI/mTLS、WS 企业 TLS 与完整业务 live 仍 NO-GO。
 
 ## [0.1.3] — 2026-07-23
 
