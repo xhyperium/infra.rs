@@ -88,4 +88,3 @@ assert!(d.offset >= 0);
 
 背压：consumer/EventBus 有界队列；produce 受 `delivery_timeout` 约束；超时计入 `KafkaPoolStats::publish_timeouts`。
 无独立 librdkafka 本地 buffer 旋钮（rskafka 路径）。
-
