@@ -1,0 +1,111 @@
+name: postgresx 离线测试
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "crates/adapters/storage/postgres/**"
+      - "crates/contracts/**"
+      - "crates/kernel/**"
+      - "crates/resiliencx/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/postgresx-offline.yml"
+  pull_request:
+    paths:
+      - "crates/adapters/storage/postgres/**"
+      - "crates/contracts/**"
+      - "crates/kernel/**"
+      - "crates/resiliencx/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/postgresx-offline.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lib-test:
+    name: 库测试（lib）
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - name: 缓存
+        uses: Swatinem/rust-cache@v2
+      - name: cargo test --lib
+        run: cargo test -p postgresx --lib
+
+  integration-test:
+    name: 集成测试（离线）
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - name: 缓存
+        uses: Swatinem/rust-cache@v2
+      - name: cargo test --tests (跳过 ignored)
+        run: cargo test -p postgresx --tests
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: 缓存
+        uses: Swatinem/rust-cache@v2
+      - name: cargo clippy
+        run: cargo clippy -p postgresx --all-targets -- -D warnings
+
+  bench-check:
+    name: Bench 编译检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - name: 缓存
+        uses: Swatinem/rust-cache@v2
+      - name: cargo check --benches
+        run: cargo check -p postgresx --benches
+
+  tracing-feature:
+    name: Tracing feature 检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+      - name: 缓存
+        uses: Swatinem/rust-cache@v2
+      - name: cargo test --features tracing
+        run: cargo test -p postgresx --lib --features tracing
+
+  fmt:
+    name: 格式检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: cargo fmt --check
+        run: cargo fmt -p postgresx -- --check
