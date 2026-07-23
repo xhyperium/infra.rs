@@ -69,11 +69,17 @@
 
 ## 同步流程（强制）
 
-修改对齐文档前 **必须** 先拉取最新 origin，避免 origin 新提交覆盖本地更改：
+修改对齐文档前 **必须** 先拉取最新 origin 并处理冲突：
 
 ```bash
+# 方式 A：一键脚本（推荐）
+node scripts/docs/sync-ssot-docs.mjs
+
+# 方式 B：手动
 git pull --rebase origin main
 ```
+
+拉取后如有冲突，脚本会列出冲突文件及解决步骤。
 
 之后再编辑 `*-ssot-alignment.md` 或 `gap-matrix.md`，最后：
 
