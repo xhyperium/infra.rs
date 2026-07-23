@@ -336,19 +336,19 @@ impl IntegrationHarness {
                 Ok(snapshot) => snapshot,
                 Err((snapshot, source)) => {
                     let detail = source.to_string();
-                    records.push(failure_record(
-                        name.clone(),
-                        StepOutcome::ObservationFailed,
-                        detail.clone(),
-                        snapshot,
-                        None,
-                    ));
-                    return Err(terminate(
-                        self.clock,
-                        records,
+                    records.push(StepRecord {
+                        name: name.clone(),
+                        outcome: StepOutcome::ObservationFailed,
+                        detail: Some(detail.clone()),
+                        before_snapshot: snapshot,
+                        after_snapshot: None,
+                    });
+                    let report = HarnessReport { clock: self.clock, records };
+                    return Err(HarnessRunError::new(
                         name,
                         HarnessFailureKind::ObservationFailed,
                         detail,
+                        report,
                         Some(source),
                     ));
                 }
@@ -356,53 +356,37 @@ impl IntegrationHarness {
             let result = catch_unwind(AssertUnwindSafe(|| (pending.run)(&self.clock)));
             let after = observe_snapshot(&self.clock);
             match result {
-                Ok(Ok(())) => match after {
-                    Ok(after_snapshot) => records.push(StepRecord {
+                Ok(Ok(())) => {
+                    if let Err((snapshot, source)) = after {
+                        let detail = source.to_string();
+                        records.push(StepRecord {
+                            name: name.clone(),
+                            outcome: StepOutcome::ObservationFailed,
+                            detail: Some(detail.clone()),
+                            before_snapshot: Some(before),
+                            after_snapshot: snapshot,
+                        });
+                        let report = HarnessReport { clock: self.clock, records };
+                        return Err(HarnessRunError::new(
+                            name,
+                            HarnessFailureKind::ObservationFailed,
+                            detail,
+                            report,
+                            Some(source),
+                        ));
+                    }
+                    records.push(StepRecord {
                         name,
                         outcome: StepOutcome::Passed,
                         detail: None,
                         before_snapshot: Some(before),
-                        after_snapshot: Some(after_snapshot),
-                    }),
-                    Err((snapshot, source)) => {
-                        let detail = source.to_string();
-                        records.push(failure_record(
-                            name.clone(),
-                            StepOutcome::ObservationFailed,
-                            detail.clone(),
-                            Some(before),
-                            snapshot,
-                        ));
-                        return Err(terminate(
-                            self.clock,
-                            records,
-                            name,
-                            HarnessFailureKind::ObservationFailed,
-                            detail,
-                            Some(source),
-                        ));
-                    }
-                },
+                        after_snapshot: after.ok(),
+                    });
+                }
                 Ok(Err(source)) => {
                     let mut detail = source.to_string();
-                    match after {
-                        Ok(snapshot) => {
-                            records.push(failure_record(
-                                name.clone(),
-                                StepOutcome::Failed,
-                                detail.clone(),
-                                Some(before),
-                                Some(snapshot),
-                            ));
-                            return Err(terminate(
-                                self.clock,
-                                records,
-                                name,
-                                HarnessFailureKind::Failed,
-                                detail,
-                                Some(source),
-                            ));
-                        }
+                    let (failure, after_snapshot, source) = match after {
+                        Ok(snapshot) => (HarnessFailureKind::Failed, Some(snapshot), source),
                         Err((snapshot, observation)) => {
                             detail.push_str("；终态观测失败: ");
                             detail.push_str(&observation.to_string());
@@ -410,102 +394,46 @@ impl IntegrationHarness {
                                 observation,
                                 preceding: source,
                             });
-                            records.push(failure_record(
-                                name.clone(),
-                                StepOutcome::ObservationFailed,
-                                detail.clone(),
-                                Some(before),
-                                snapshot,
-                            ));
-                            return Err(terminate(
-                                self.clock,
-                                records,
-                                name,
-                                HarnessFailureKind::ObservationFailed,
-                                detail,
-                                Some(combined),
-                            ));
+                            (HarnessFailureKind::ObservationFailed, snapshot, combined)
                         }
-                    }
+                    };
+                    let kind = failure.outcome();
+                    records.push(StepRecord {
+                        name: name.clone(),
+                        outcome: kind,
+                        detail: Some(detail.clone()),
+                        before_snapshot: Some(before),
+                        after_snapshot,
+                    });
+                    let report = HarnessReport { clock: self.clock, records };
+                    return Err(HarnessRunError::new(name, failure, detail, report, Some(source)));
                 }
                 Err(payload) => {
                     let mut detail = panic_detail(payload.as_ref());
-                    match after {
-                        Ok(snapshot) => {
-                            records.push(failure_record(
-                                name.clone(),
-                                StepOutcome::Panicked,
-                                detail.clone(),
-                                Some(before),
-                                Some(snapshot),
-                            ));
-                            return Err(terminate(
-                                self.clock,
-                                records,
-                                name,
-                                HarnessFailureKind::Panicked,
-                                detail,
-                                None,
-                            ));
-                        }
+                    let (failure, after_snapshot, source) = match after {
+                        Ok(snapshot) => (HarnessFailureKind::Panicked, Some(snapshot), None),
                         Err((snapshot, observation)) => {
                             detail.push_str("；终态观测失败: ");
                             detail.push_str(&observation.to_string());
-                            records.push(failure_record(
-                                name.clone(),
-                                StepOutcome::ObservationFailed,
-                                detail.clone(),
-                                Some(before),
-                                snapshot,
-                            ));
-                            return Err(terminate(
-                                self.clock,
-                                records,
-                                name,
-                                HarnessFailureKind::ObservationFailed,
-                                detail,
-                                Some(observation),
-                            ));
+                            (HarnessFailureKind::ObservationFailed, snapshot, Some(observation))
                         }
-                    }
+                    };
+                    let kind = failure.outcome();
+                    records.push(StepRecord {
+                        name: name.clone(),
+                        outcome: kind,
+                        detail: Some(detail.clone()),
+                        before_snapshot: Some(before),
+                        after_snapshot,
+                    });
+                    let report = HarnessReport { clock: self.clock, records };
+                    return Err(HarnessRunError::new(name, failure, detail, report, source));
                 }
             }
         }
 
         Ok(HarnessReport { clock: self.clock, records })
     }
-}
-
-// ── 私有 helper：消除终止分支的重复组装 ──────────────────────────────────
-
-/// 构造单步失败记录（提取 6 处重复的 `StepRecord { ... }` 模式）。
-fn failure_record(
-    name: String,
-    outcome: StepOutcome,
-    detail: String,
-    before: Option<ManualClockSnapshot>,
-    after: Option<ManualClockSnapshot>,
-) -> StepRecord {
-    StepRecord {
-        name,
-        outcome,
-        detail: Some(detail),
-        before_snapshot: before,
-        after_snapshot: after,
-    }
-}
-
-/// 组装 HarnessReport 并包装为 HarnessRunError（提取 6 处终止分支的重复模式）。
-fn terminate(
-    clock: ManualClock,
-    records: Vec<StepRecord>,
-    name: String,
-    kind: HarnessFailureKind,
-    detail: String,
-    source: Option<BoxError>,
-) -> HarnessRunError {
-    let report = HarnessReport { clock, records };
-    HarnessRunError::new(name, kind, detail, report, source)
 }
 
 fn observe_snapshot(
