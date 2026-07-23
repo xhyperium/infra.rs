@@ -109,12 +109,15 @@ impl KafkaConsumer {
                 let output = match item {
                     Ok((record_offset, _high_watermark)) => {
                         let record = record_offset.record;
+                        let headers =
+                            record.headers.into_iter().map(|(k, v)| (k, Bytes::from(v))).collect();
                         Ok(KafkaMessage {
                             topic: topic.clone(),
                             partition,
                             offset: record_offset.offset,
                             key: record.key.map(Bytes::from),
                             payload: Bytes::from(record.value.unwrap_or_default()),
+                            headers,
                             timestamp: Some(record.timestamp),
                         })
                     }

@@ -17,13 +17,21 @@ use crate::error_map::map_kafka_err;
 use crate::lifecycle::{Lifecycle, OperationGuard, wait_for_shutdown};
 use crate::producer::KafkaProducer;
 
-/// 池统计。
-#[derive(Debug, Clone, Copy, Default)]
+/// 池统计（低基数；覆盖 shipped 热路径）。
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct KafkaPoolStats {
     /// 成功 publish 次数。
     pub published: u64,
-    /// publish 失败次数。
+    /// publish 失败次数（含 broker 错误；不含超时/取消分类）。
     pub publish_failed: u64,
+    /// produce delivery 超时次数。
+    pub publish_timeouts: u64,
+    /// produce 因 pool 关闭被取消次数。
+    pub publish_cancelled: u64,
+    /// `ensure_topic` 成功次数（含 already-exists 幂等成功）。
+    pub topics_ensured: u64,
+    /// `delete_topic` 成功次数（含 missing 幂等成功）。
+    pub topics_deleted: u64,
     /// 是否已关闭。
     pub closed: bool,
 }
@@ -48,6 +56,10 @@ struct PoolInner {
     client: Client,
     published: AtomicU64,
     publish_failed: AtomicU64,
+    publish_timeouts: AtomicU64,
+    publish_cancelled: AtomicU64,
+    topics_ensured: AtomicU64,
+    topics_deleted: AtomicU64,
     lifecycle: Lifecycle,
 }
 
@@ -86,6 +98,10 @@ impl KafkaPool {
                 client,
                 published: AtomicU64::new(0),
                 publish_failed: AtomicU64::new(0),
+                publish_timeouts: AtomicU64::new(0),
+                publish_cancelled: AtomicU64::new(0),
+                topics_ensured: AtomicU64::new(0),
+                topics_deleted: AtomicU64::new(0),
                 lifecycle: Lifecycle::new(),
             }),
         })
@@ -153,6 +169,10 @@ impl KafkaPool {
         KafkaPoolStats {
             published: self.inner.published.load(Ordering::Relaxed),
             publish_failed: self.inner.publish_failed.load(Ordering::Relaxed),
+            publish_timeouts: self.inner.publish_timeouts.load(Ordering::Relaxed),
+            publish_cancelled: self.inner.publish_cancelled.load(Ordering::Relaxed),
+            topics_ensured: self.inner.topics_ensured.load(Ordering::Relaxed),
+            topics_deleted: self.inner.topics_deleted.load(Ordering::Relaxed),
             closed: self.inner.lifecycle.is_closed(),
         }
     }
@@ -185,9 +205,13 @@ impl KafkaPool {
             Err(error) => {
                 Err(XError::deadline_exceeded("kafkax create_topic 超时").with_source(error))
             }
-            Ok(Ok(())) => Ok(()),
+            Ok(Ok(())) => {
+                self.record_topic_ensured();
+                Ok(())
+            }
             Ok(Err(error)) => {
                 if is_topic_already_exists_error(&error.to_string()) {
+                    self.record_topic_ensured();
                     Ok(())
                 } else {
                     Err(map_kafka_err("kafkax create_topic", error))
@@ -221,10 +245,14 @@ impl KafkaPool {
             Err(error) => {
                 Err(XError::deadline_exceeded("kafkax delete_topic 超时").with_source(error))
             }
-            Ok(Ok(())) => Ok(()),
+            Ok(Ok(())) => {
+                self.record_topic_deleted();
+                Ok(())
+            }
             Ok(Err(error)) => {
                 let text = error.to_string();
                 if is_topic_missing_error(&text) {
+                    self.record_topic_deleted();
                     Ok(())
                 } else {
                     Err(map_kafka_err("kafkax delete_topic", error))
@@ -258,6 +286,24 @@ impl KafkaPool {
 
     pub(crate) fn record_publish_err(&self) {
         self.inner.publish_failed.fetch_add(1, Ordering::Relaxed);
+    }
+
+    pub(crate) fn record_publish_timeout(&self) {
+        self.inner.publish_timeouts.fetch_add(1, Ordering::Relaxed);
+        self.inner.publish_failed.fetch_add(1, Ordering::Relaxed);
+    }
+
+    pub(crate) fn record_publish_cancelled(&self) {
+        self.inner.publish_cancelled.fetch_add(1, Ordering::Relaxed);
+        self.inner.publish_failed.fetch_add(1, Ordering::Relaxed);
+    }
+
+    pub(crate) fn record_topic_ensured(&self) {
+        self.inner.topics_ensured.fetch_add(1, Ordering::Relaxed);
+    }
+
+    pub(crate) fn record_topic_deleted(&self) {
+        self.inner.topics_deleted.fetch_add(1, Ordering::Relaxed);
     }
 
     pub(crate) async fn partition_client(
