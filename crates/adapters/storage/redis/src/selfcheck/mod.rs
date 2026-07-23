@@ -25,6 +25,7 @@
 //! - `cluster_slots` 在非 Cluster 拓扑为 `Skipped`
 //! - `pubsub` 检查需 feature `pubsub`
 //! - **未**实现跨模块 `SelfValidator` 调度器 / HTTP 探针 / Prometheus 导出器
+//! - 提供 `ValidationReport::to_json_string` / `RedisValidator::run_json` 作为 §10 JSON 通道
 
 mod config;
 mod context;

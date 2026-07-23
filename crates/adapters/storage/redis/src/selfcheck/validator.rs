@@ -71,6 +71,35 @@ impl RedisValidator {
         self.validate(&ctx, level).await
     }
 
+    /// 使用显式上下文（可注入 cancel / 固定 token）。
+    pub async fn run_with_context(
+        &self,
+        ctx: &ValidationContext,
+        level: CheckLevel,
+    ) -> ValidationReport {
+        self.validate(ctx, level).await
+    }
+
+    /// 执行并返回 JSON 报告字符串。
+    pub async fn run_json(&self, level: CheckLevel) -> Result<String, String> {
+        self.run(level).await.to_json_string()
+    }
+
+    /// §6.5 规范检查项 ID 列表（顺序固定，供 catalog 对齐）。
+    pub const SPEC_CHECK_IDS: &'static [&'static str] = &[
+        "redisx.basic.ping",
+        "redisx.rw.set_get_del",
+        "redisx.full.ttl_semantics",
+        "redisx.full.data_structures",
+        "redisx.full.pipeline",
+        "redisx.full.multi_exec",
+        "redisx.full.lua_cas",
+        "redisx.full.pubsub",
+        "redisx.full.dist_lock",
+        "redisx.full.memory_pressure",
+        "redisx.full.cluster_slots",
+    ];
+
     /// 静态 catalog（§6.5）。
     #[must_use]
     pub fn static_catalog() -> Vec<CheckDescriptor> {
@@ -769,10 +798,32 @@ mod tests {
     fn catalog_matches_spec_count() {
         let cat = RedisValidator::static_catalog();
         assert_eq!(cat.len(), 11);
+        assert_eq!(cat.len(), RedisValidator::SPEC_CHECK_IDS.len());
+        let ids: Vec<&str> = cat.iter().map(|d| d.id.as_str()).collect();
+        assert_eq!(ids, RedisValidator::SPEC_CHECK_IDS);
         assert!(cat.iter().all(|d| d.id.starts_with("redisx.")));
         assert_eq!(cat.iter().filter(|d| d.level == CheckLevel::Basic).count(), 1);
         assert_eq!(cat.iter().filter(|d| d.level == CheckLevel::ReadWrite).count(), 1);
         assert_eq!(cat.iter().filter(|d| d.level == CheckLevel::Full).count(), 9);
+    }
+
+    #[tokio::test]
+    async fn cancel_before_run_skips_all_without_panic() {
+        let pool = RedisPool::test_probe(Arc::new(AtomicUsize::new(0)));
+        let v = RedisValidator::new(pool.client());
+        let ctx = ValidationContext::new(RedisSelfCheckConfig::default());
+        ctx.cancel.cancel();
+        let report = v.run_with_context(&ctx, CheckLevel::Full).await;
+        assert!(report.passed, "Skipped 不计 Failed: {:?}", report.items);
+        assert!(
+            report.items.iter().all(|i| i.status == CheckStatus::Skipped),
+            "cancel 后应全部 Skipped: {:?}",
+            report.items
+        );
+        assert_eq!(report.items.len(), 11);
+        let json = report.to_json_string().expect("json");
+        assert!(json.contains("redisx.basic.ping"));
+        assert!(json.contains("skipped"));
     }
 
     #[tokio::test]
