@@ -21,8 +21,8 @@ bytes = { workspace = true }
 chrono = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.5", package = "xhyper-contracts" }
-kernel = { path = "../../../kernel", version = "0.3.2", package = "xhyper-kernel" }
+contracts = { path = "../../../contracts", version = "0.1.4" }
+kernel = { path = "../../../kernel", version = "0.3.1" }
 rskafka = { workspace = true }
 serde = { workspace = true }
 rustls = { workspace = true }
