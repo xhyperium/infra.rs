@@ -26,7 +26,7 @@ bytes = { workspace = true }
 futures-core = { workspace = true }
 futures-util = { workspace = true }
 natsx = { path = "../adapters/storage/nats", version = "0.3.4" }
-redisx = { path = "../adapters/storage/redis", version = "0.3.14" }
+redisx = { path = "../adapters/storage/redis", version = "0.3.15" }
 tokio = { workspace = true }
 
 [lints]
