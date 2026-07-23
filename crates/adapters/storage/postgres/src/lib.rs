@@ -70,8 +70,7 @@ pub use tls::{
     MakeRustlsConnect, build_client_config, build_client_config_with_ca,
     build_client_config_with_options,
 };
-#[allow(deprecated)] // crate root 保留旧三态一个迁移周期
-pub use tx::{PgTransaction, TxState, TxStatus};
+pub use tx::{PgTransaction, TxStatus};
 
 #[cfg(feature = "scaffold")]
 pub use adapter::{PostgresAdapter, Record};
