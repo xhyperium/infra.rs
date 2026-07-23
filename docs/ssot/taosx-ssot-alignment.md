@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/adapters/storage/taos/`（**禁止**平行 `taosx/` 树） |
 | 实现 | `crates/adapters/storage/taos` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.5` |
+| version | `0.3.6` |
 | 结论 | **受限 REST SQL + WS reachability + BatchWriteReport 已落地**；Native SQL / HA / 幂等重试 / package stable **NO-GO** |
 
 ## 结论摘要
@@ -22,7 +22,8 @@
 | contracts | `TimeSeriesStore`（ts 纳秒 epoch） |
 | 环境变量 | `FOUNDATIONX_TAOSX_{HOST,PORT,USER,PASSWORD,DATABASE,TLS,PRECISION,TRANSPORT,...}` |
 | live | 2026-07-23：真实 dev 凭据 `live_smoke` 2 passed；隔离 Docker runner 亦有归档 |
-| 仍 NO-GO | Native SQL / FFI / WS auth 长会话 / 自动幂等重试 / HA / package stable |
+| metrics | 进程内有界计数 `TaosMetricsSnapshot`（非 OTLP） |
+| 仍 NO-GO | Native SQL / FFI / WS auth 长会话 / 自动幂等重试 / HA / package stable / 远程 RED 导出 |
 
 ## 对齐矩阵
 
@@ -39,6 +40,8 @@
 | TAOSX-15 | 幂等自动重试 | NO-GO | 报告可定位，但**不**自动重试 |
 | TAOSX-16 | 十轮审查矩阵 | PASS | `docs/report/2026-07-23/taosx-ten-round-review.md` |
 | TAOSX-17 | 公开 API 表面测试 | PASS | `src/lib.rs` `public_api_surface` |
+| TAOSX-18 | 有界 metrics | PASS | `TaosMetricsSnapshot` / live metrics 冒烟 |
+| TAOSX-11b | WS live 握手 | PASS | `live_native_ws_handshake`（仍非 SQL 会话） |
 
 ## 诚实边界
 

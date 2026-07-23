@@ -34,6 +34,7 @@ pool.close().await?;
 | `TaosExecResult` / `TaosPoolStats` | 执行结果与池统计 |
 | `BatchWriteReport` / `BatchWritePartialError` | 批量写 accepted/failed 报告 |
 | `write_batch_report` / `write_batch_chunked_outcome` | 结构化批量写（无自动重试） |
+| `TaosMetricsSnapshot` / `ws_probe_totals` | 进程内有界操作计数 |
 | `build_insert_sql_chunks` | 纯函数批 SQL 切分 |
 | `build_native_ws_url` / `connect_native_ws` / `validate_mode` | WS 探测（非 SQL 会话） |
 

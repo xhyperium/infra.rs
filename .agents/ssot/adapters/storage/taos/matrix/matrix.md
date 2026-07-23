@@ -2,7 +2,7 @@
 
 | 字段 | 值 |
 |------|-----|
-| package | `taosx` `0.3.5` |
+| package | `taosx` `0.3.6` |
 | 审计 | 2026-07-23 |
 
 | ID | 条款 | 状态 | 证据 |
@@ -24,3 +24,5 @@
 | S-14 | 十轮审查矩阵 | PASS | `docs/report/2026-07-23/taosx-ten-round-review.md` |
 | S-15 | 公开 API 表面 100% 点名 | PASS | `public_api_surface` + 行为测试 |
 | S-16 | 批量部分成功报告 | PASS | `BatchWriteReport` / `write_batch_chunked_outcome`（无自动重试） |
+| S-17 | 有界 metrics 快照 | PASS | `TaosMetricsSnapshot` / `metrics()` |
+| S-18 | Native WS live 握手 | PASS | live_smoke；SQL 仍 REST |

@@ -19,6 +19,7 @@ use tracing::debug;
 use crate::config::{
     HARD_MAX_BATCH_BYTES, HARD_MAX_BATCH_ROWS, TaosConfig, TransportMode, TsPrecision,
 };
+use crate::metrics::{OpCounters, TaosMetricsSnapshot};
 use crate::native;
 
 const CLOSED_BIT: usize = 1usize << (usize::BITS - 1);
@@ -147,6 +148,7 @@ struct PoolInner {
     sem: Arc<Semaphore>,
     state: AtomicUsize,
     drained: Notify,
+    metrics: OpCounters,
 }
 
 struct RequestGuard {
@@ -272,6 +274,7 @@ impl TaosPool {
                 sem: Arc::new(Semaphore::new(max_in_flight)),
                 state: AtomicUsize::new(0),
                 drained: Notify::new(),
+                metrics: OpCounters::new(),
             }),
         };
 
@@ -327,6 +330,7 @@ impl TaosPool {
                 sem: Arc::new(Semaphore::new(max_in_flight)),
                 state: AtomicUsize::new(0),
                 drained: Notify::new(),
+                metrics: OpCounters::new(),
             }),
         })
     }
@@ -358,6 +362,12 @@ impl TaosPool {
         }
     }
 
+    /// 进程内有界操作计数快照（含进程级 WS 探测累计）。
+    #[must_use]
+    pub fn metrics(&self) -> TaosMetricsSnapshot {
+        self.inner.metrics.snapshot()
+    }
+
     /// 是否已关闭。
     #[must_use]
     pub fn is_closed(&self) -> bool {
@@ -366,11 +376,20 @@ impl TaosPool {
 
     /// `SELECT SERVER_VERSION()`。
     pub async fn ping(&self) -> XResult<()> {
-        let r = self.exec_sql("SELECT SERVER_VERSION()").await?;
-        if r.code != 0 {
-            return Err(XError::unavailable(format!("taos ping code={}", r.code)));
+        match self.exec_sql("SELECT SERVER_VERSION()").await {
+            Ok(r) if r.code == 0 => {
+                self.inner.metrics.inc_ping_ok();
+                Ok(())
+            }
+            Ok(r) => {
+                self.inner.metrics.inc_ping_err();
+                Err(XError::unavailable(format!("taos ping code={}", r.code)))
+            }
+            Err(e) => {
+                self.inner.metrics.inc_ping_err();
+                Err(e)
+            }
         }
-        Ok(())
     }
 
     /// 在配置 database 上下文执行 SQL。
@@ -454,6 +473,7 @@ impl TaosPool {
             source,
         })?;
         if points.is_empty() {
+            self.inner.metrics.inc_write_ok();
             return Ok(BatchWriteReport::default());
         }
         if max_rows == 0 || max_rows > self.inner.config.batch_max_rows {
@@ -513,6 +533,7 @@ impl TaosPool {
                 }
                 Ok(r) => {
                     let failed = points.len().saturating_sub(accepted);
+                    self.inner.metrics.inc_write_err();
                     return Err(BatchWritePartialError {
                         report: BatchWriteReport { accepted, failed, chunks_ok, chunks_total },
                         source: map_taos_code(r.code, "write_batch 失败"),
@@ -520,6 +541,7 @@ impl TaosPool {
                 }
                 Err(source) => {
                     let failed = points.len().saturating_sub(accepted);
+                    self.inner.metrics.inc_write_err();
                     return Err(BatchWritePartialError {
                         report: BatchWriteReport { accepted, failed, chunks_ok, chunks_total },
                         source,
@@ -527,6 +549,7 @@ impl TaosPool {
                 }
             }
         }
+        self.inner.metrics.inc_write_ok();
         Ok(BatchWriteReport { accepted, failed: 0, chunks_ok, chunks_total })
     }
 
@@ -603,13 +626,23 @@ impl TaosPool {
 
     async fn exec_sql_raw(&self, sql: &str, use_db: bool) -> XResult<TaosExecResult> {
         if sql.len() > self.inner.config.batch_max_bytes {
+            self.inner.metrics.inc_sql_err();
             return Err(XError::invalid(format!(
                 "SQL 请求超过 batch_max_bytes={} 字节",
                 self.inner.config.batch_max_bytes
             )));
         }
         let _guard = self.acquire().await?;
-        self.exec_sql_raw_inner(sql, use_db).await
+        match self.exec_sql_raw_inner(sql, use_db).await {
+            Ok(r) => {
+                self.inner.metrics.inc_sql_ok();
+                Ok(r)
+            }
+            Err(e) => {
+                self.inner.metrics.inc_sql_err();
+                Err(e)
+            }
+        }
     }
 
     async fn exec_sql_raw_inner(&self, sql: &str, use_db: bool) -> XResult<TaosExecResult> {
@@ -759,6 +792,17 @@ impl TimeSeriesStore for TaosPool {
     }
 
     async fn query_series(&self, table: &str, start: i64, end: i64) -> XResult<Vec<Tick>> {
+        let result = self.query_series_inner(table, start, end).await;
+        match &result {
+            Ok(_) => self.inner.metrics.inc_query_ok(),
+            Err(_) => self.inner.metrics.inc_query_err(),
+        }
+        result
+    }
+}
+
+impl TaosPool {
+    async fn query_series_inner(&self, table: &str, start: i64, end: i64) -> XResult<Vec<Tick>> {
         validate_stable_ident(table)?;
         if start > end {
             return Err(XError::invalid("query_series: start > end"));
@@ -1297,6 +1341,9 @@ mod tests {
         assert_eq!(report.accepted, 1);
         assert_eq!(report.failed, 0);
         assert!(report.is_complete());
+        let m = pool.metrics();
+        assert!(m.write_ok >= 1, "write_ok={m:?}");
+        assert!(m.sql_ok >= 1, "sql_ok={m:?}");
     }
 
     #[tokio::test]
