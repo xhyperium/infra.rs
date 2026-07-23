@@ -38,9 +38,10 @@
 
 - [ ] `cargo fmt -p clickhousex -- --check` 通过
 - [ ] `cargo clippy -p clickhousex --all-targets --all-features -- -D warnings` 通过
-- [ ] `cargo test -p clickhousex` 通过（32 lib + 2 scaffold）
-- [ ] `cargo test -p clickhousex --features scaffold --test schema_integrity` 通过
+- [ ] `cargo test -p clickhousex` 通过（29 lib，默认 feature）
+- [ ] `cargo test -p clickhousex --features scaffold` 通过（32 lib，含 3 adapter）
 - [ ] `cargo test -p clickhousex --test schema_integrity -- --test-threads=1` 通过（29 tests）
+- [ ] `cargo test -p clickhousex --test security_failures` 通过（3 tests）
 - [ ] `cargo test -p clickhousex --doc` 通过（5 doc tests）
 - [ ] `node scripts/quality-gates/check-workspace-deps.mjs` 通过
 - [ ] `node scripts/fix-encoding.mjs --check crates/adapters/storage/clickhouse/` 通过
@@ -48,15 +49,18 @@
 
 ### 测试矩阵
 
-<!-- 列出受影响的测试文件及其结果 -->
+<!-- 填上实际通过的测试数，如 "29 / 29 passed" -->
 
-| 测试文件 | 测试数 | 类型 | 结果 |
-|----------|--------|------|------|
-| `src/lib.rs` + `src/client.rs` + `src/config.rs` + `src/adapter.rs` | 32 | lib 单元（3 scaffold） | ... / 32 |
-| `tests/schema_integrity.rs` | 29 | DDL / config / ident / port | ... / 29 |
-| `tests/security_failures.rs` | 3 | HTTP 脱敏 | ... / 3 |
-| `tests/https_conformance.rs` | 1 | TLS CA（`#[ignore]`） | ... / 1 |
-| `tests/live_smoke.rs` | 2 | 真实 CH 烟测（`#[ignore]`） | ... / 2 |
+| 测试目标 | 命令 | 测试数 | 结果 |
+|----------|------|--------|------|
+| lib 单元 | `cargo test -p clickhousex` | 29 | / 29 passed |
+| lib + scaffold | `cargo test -p clickhousex --features scaffold` | 32 | / 32 passed |
+| schema_integrity | `cargo test -p clickhousex --test schema_integrity -- --test-threads=1` | 29 | / 29 passed |
+| security_failures | `cargo test -p clickhousex --test security_failures` | 3 | / 3 passed |
+| https_conformance | `cargo test -p clickhousex --test https_conformance` | 1 | / 1 ignored |
+| live_smoke | `cargo test -p clickhousex --test live_smoke` | 2 | / 2 ignored |
+| doc tests | `cargo test -p clickhousex --doc` | 5 | / 5 passed |
+| **总计** | | **69** | **64 active + 3 ignored + 2 doc** |
 | **总计** | **67** | **64 active + 3 ignored** | |
 
 ### 安全合同
