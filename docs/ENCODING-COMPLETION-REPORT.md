@@ -26,7 +26,7 @@
 | 层级 | 工具 | 时机 | 阻断 | CR 比率 |
 |------|------|------|------|------|
 | Pre-tool 钩子 | `encoding-check.mjs` | Write/Edit 前（含写入载荷） | ✅ | — |
-| Post-tool 巡检 | `encoding-batch-check.mjs` | Write/Edit 后 | ❌ | — |
+| Post-tool 巡检 | `encoding-batch-check.mjs` | Write/Edit 后 | ✅ 脚本 exit 2 | — |
 | CI 门禁（编码） | `validation.yml` L1 | PR 提交 | ✅ | — |
 | CI 门禁（U+FFFD） | `validation.yml` L2 | PR 提交 | ✅ 阻断 | — |
 
@@ -98,6 +98,7 @@ docs/CI.md                                # CI 工作流指引
 ## 9. 后续行动
 
 - [x] `infra.rs` U+FFFD 清零 + L2 阻断 + Pre-tool 载荷校验（2026-07-23）
-- [ ] `market_data.rs` 残留文件修复
+- [x] `infra.rs` Post-tool 批量巡检默认阻断（2026-07-23）
+- [x] `market_data.rs` 本地复扫 U+FFFD = 0（报告旧值已过期）
 - [ ] 定期 CI 门禁审计
-- [ ] 可选：Post-tool 巡检对 `docs/**` 升级为阻断
+- [ ] 其它仓（market_data 等）同步 L2 阻断策略（仍可能仅警告）

@@ -118,7 +118,7 @@ node scripts/self-test.mjs --hooks --lint-only
 | 层级 | 工具 | 时机 | 阻断 |
 |------|------|------|------|
 | Pre-Tool | `encoding-check.mjs` | Write/Edit 操作前（含写入载荷） | ✅ 阻断 |
-| Post-Tool | `encoding-batch-check.mjs` | Write/Edit 操作后 | ❌ 安静警告 |
+| Post-Tool | `encoding-batch-check.mjs` | Write/Edit 操作后（扫描变更文件） | ✅ 脚本 exit 2（settings 无 `\|\| exit 2`，符合 hooks 门禁；`ENCODING_BATCH_STRICT=false` 可降级） |
 | CI 门禁 | `validation.yml` utf8-encoding | PR 提交时 | ✅ 非 UTF-8 与 U+FFFD 均阻断 |
 
 ---
@@ -164,7 +164,7 @@ node scripts/self-test.mjs --hooks --lint-only
 | 层级 | 工具 | 时机 | 阻断 |
 |------|------|------|------|
 | Pre-Tool 钩子 | `encoding-check.mjs` | Write/Edit 前（校验写入载荷） | ✅ |
-| Post-Tool 巡检 | `encoding-batch-check.mjs` | Write/Edit 后 | ❌ |
+| Post-Tool 巡检 | `encoding-batch-check.mjs` | Write/Edit 后（变更文件） | ✅ 脚本 exit 2（非 settings fail-closed） |
 | CI 门禁（编码） | `validation.yml` L1 | PR 时 | ✅ |
 | CI 门禁（U+FFFD） | `validation.yml` L2 | PR 时 | ✅ 阻断 |
 | 修复脚本 | `fix-encoding.mjs --check/--fix` | 按需 | check 遇 U+FFFD exit 1 |
