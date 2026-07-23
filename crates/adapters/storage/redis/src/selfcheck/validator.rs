@@ -691,12 +691,10 @@ return 0
                     )
                 })
                 .await;
-            match probe {
-                Err(_) => return CheckOutcome::Skip("非 Cluster 拓扑".into()),
-                Ok(s) if !s.contains("cluster_state:") => {
+            if let Ok(s) = &probe {
+                if !s.contains("cluster_state:") {
                     return CheckOutcome::Skip("非 Cluster 拓扑".into());
                 }
-                Ok(_) => {}
             }
         }
 
