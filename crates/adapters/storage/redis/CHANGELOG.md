@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- **编译错误修复**：
+  - `selfcheck/validator.rs`：`CheckOutcome::Skip(...)` 后多余分号导致 `cfg(not(feature = "pubsub"))` 分支返回 `()` 而非 `CheckOutcome`；Cluster 探测 match 分支类型不匹配改为 `if let`
+  - `tests/integration_all_api.rs`：补齐缺失的 `use contracts::PubSub` 导入
+
 ## [0.3.15] — 2026-07-23
 
 ### Fixed

@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- **Clippy 警告修复**：
+  - `migration.rs`：`a.last().map_or(true, ...)` 简化为 `is_none_or`
+  - `pool.rs`：移除无意义的 `let _ = this.health().await?;` 绑定
+  - `tls.rs`：`CHANNEL_BINDING_ENABLED` 常量断言改为 `const { assert!(...) }`
+
 ## [0.3.13] — 2026-07-23
 
 ### Changed
