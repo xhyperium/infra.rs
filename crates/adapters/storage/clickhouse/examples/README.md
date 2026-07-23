@@ -5,17 +5,17 @@
 ## 前置条件
 
 - 本机 ClickHouse 运行在 `127.0.0.1:8123`
-- 密码: `iCEOuptIx40EduvGOKX73rfY`（dev 环境）
-- 数据源: `/home/workspace/data/binance_futures/merged/`
+- 密码通过环境变量提供（例如 `CLICKHOUSE_PASSWORD`，勿写入仓库）
+- 数据源：本地期货 K 线合并目录（示例默认路径见各 example 源码）
 
 ## 示例列表
 
 | 文件 | 说明 | 命令 |
 |------|------|------|
-| `ddl_schema.rs` | 创建 binance_futures 数据库和 K 线表 | `cargo run -p clickhousex --example ddl_schema` |
+| `ddl_schema.rs` | 创建 `binance_futures` 数据库和 K 线表 | `cargo run -p clickhousex --example ddl_schema` |
 | `import_klines.rs` | 批量导入 BTC/ETH K 线 CSV 数据 | `cargo run -p clickhousex --example import_klines -- --all` |
 | `crud_operations.rs` | CREATE/READ/UPDATE/DELETE 完整示例 | `cargo run -p clickhousex --example crud_operations` |
-| `analytics_queries.rs` | OHLCV 聚合/移动平均线/波动率/资金费率分析 | `cargo run -p clickhousex --example analytics_queries` |
+| `analytics_queries.rs` | 开高低收成交量聚合 / 移动平均 / 波动率 / 资金费率分析 | `cargo run -p clickhousex --example analytics_queries` |
 
 ## 快速开始
 
@@ -35,13 +35,13 @@ cargo run -p clickhousex --example analytics_queries
 
 ## 数据结构
 
-### K 线表 (klines_{1m,5m,15m,1h,4h,1d})
+### K 线表 (`klines_1m` / `5m` / `15m` / `1h` / `4h` / `1d`)
 
 | 列 | 类型 | 说明 |
 |----|------|------|
 | open_time | UInt64 | K 线开始时间（毫秒 UTC） |
 | symbol | String | 交易对 |
-| open/high/low/close | Float64 | OHLC 价格 |
+| open/high/low/close | Float64 | 开高低收价格 |
 | volume | Float64 | 成交量 |
 | close_time | UInt64 | K 线结束时间（毫秒） |
 | quote_volume | Float64 | 成交额（USDT） |
@@ -62,5 +62,5 @@ cargo run -p clickhousex --example analytics_queries
 
 | Symbol | 1m | 5m | 15m | 1h | 4h | 1d | funding |
 |--------|-----|------|------|------|------|------|---------|
-| BTCUSDT | 1,563,840 | 312,768 | 104,256 | 26,064 | 6,516 | 1,086 | 3,196 |
-| ETHUSDT | 1,563,840 | 312,768 | 104,256 | 26,064 | 6,516 | 1,086 | 3,196 |
+| `BTCUSDT` | 1,563,840 | 312,768 | 104,256 | 26,064 | 6,516 | 1,086 | 3,196 |
+| `ETHUSDT` | 1,563,840 | 312,768 | 104,256 | 26,064 | 6,516 | 1,086 | 3,196 |

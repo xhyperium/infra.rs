@@ -83,5 +83,5 @@ cargo test -p kafkax --test live_event_bus -- --ignored --nocapture
 | stats 字段 | PASS（timeouts/cancelled/topics_*） |
 | G-STATS-01 严格计数 | PASS（`limited_produce_await` 两臂 + 集成 strict；0.3.9） |
 | selfcheck ordering_headers | PASS（header 透传） |
-| 0.4.0 里程碑 | CLOSED | 九轮 PATCH 完结；可交付面全量证据；NO-GO/OOS 不变 |
+| 0.4.0 里程碑 | CLOSED（九轮 PATCH 完结；可交付面全量证据；NO-GO/OOS 不变） |
 | group/rebalance/EOS/SCRAM/HA/stable | CLOSED-NO-GO |
