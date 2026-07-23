@@ -7,35 +7,38 @@
 | 路径裁决 | **不**新增 `.agents/ssot/adapters/storage/redisx/`；目录名 `redis` 对齐 storage×7，package 名 `redisx` |
 | 实现 | `crates/adapters/storage/redis` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.12`（E2E soft-skip / budget+result-stream live / selfcheck cancel+JSON） |
-| 结论 | **Standalone P0+ 生产默认客户端** + **selfcheck 模块 DoD（redisx 本地）**；残余仅环境/产品边界 OPEN/NO-GO（见下表） |
+| version | **`0.3.12`**（#306 gap-zero；前序 #305 / #300 / #291 / #285 / #281） |
+| 结论 | **Standalone P0+ 生产默认客户端** + **selfcheck 模块 DoD（redisx 本地 §6.5）**；残余仅环境/产品边界 OPEN/NO-GO（见下表） |
 
 ## 结论摘要
 
 | 问题 | 状态 |
 |------|------|
-| 生产默认面 | `RedisPool / RedisClient / RedisConfig` |
-| 模式 | 三种命令连接代码路径存在；仅 Standalone 有 KV/PubSub live 证据 |
-| TLS | secure 构造路径 PASS；真实 TLS 握手 OPEN；默认配置 `tls=false`（dev 明文 opt-in） |
+| 生产默认面 | `RedisPool` / `RedisClient` / `RedisConfig` / 扩展 API / `selfcheck` |
+| 模式 | 三种命令连接代码路径存在；仅 Standalone 有 KV/PubSub/selfcheck live 证据 |
+| TLS | secure 构造路径 PASS；真实 TLS 握手 **OPEN**；默认 `tls=false`（dev 明文 opt-in） |
 | resiliencx | budget 下只读 + 无 TTL SET/MSET 幂等重试；相对 TTL SET/DEL/PEXPIRE 多试前拒绝；PUBLISH 不自动重试 |
-| contracts | `contracts::KeyValueStore`（+ 可选 pubsub） |
-| 环境变量 | `FOUNDATIONX_REDISX_{ADDR,USERNAME,PASSWORD,DB,TLS,MODE,NODES,SENTINEL_MASTER}` |
-| live | `integration_all_api` · `e2e_klines_crud` · `live_*`（`#[ignore]`；secrets 注入；E2E 无数据 soft-skip） |
+| contracts | `contracts::KeyValueStore`（+ 可选 `PubSub` / `RedisPubSubFacade`） |
+| 环境变量 | `FOUNDATIONX_REDISX_{ADDR,USERNAME,PASSWORD,DB,TLS,MODE,NODES,SENTINEL_MASTER}`；或 `REDIS_URL` |
+| live 套件 | `integration_all_api` · `e2e_klines_crud` · `live_kv` · `live_kv_conformance` · `live_pubsub_conformance` · `live_selfcheck`（`#[ignore]`） |
+| 凭据注入 | `scripts/live/export-foundationx-env.sh --env dev`（ZoneCNH `secrets/env/dev.md`；不回显密码） |
+| E2E 数据 | `/home/workspace/data/binance_futures/merged/**`；可用 `REDISX_DATA_ROOT` / `REDISX_E2E_CSV` / `REDISX_E2E_ROWS`；**无数据 soft-skip** |
 | bench | `kv_hot_path` · `api_matrix` |
-| Pub/Sub | Standalone only；重连/必达 **NO-GO** |
-| Draft 全量 100% | **未宣称**（跨模块 runner / Cluster·TLS live / package stable 等仍 OPEN；见残余表） |
+| Pub/Sub | Standalone only；feature `pubsub`；重连/必达 **NO-GO** |
+| selfcheck | `redisx::selfcheck`：§6.5 **11** ID；短路；cancel→Skipped；`to_json_string` / `run_json` |
+| Draft 全量 100% | **未宣称**（跨模块 runner / Cluster·TLS live / package stable 等仍 OPEN） |
 
 ## 对齐矩阵
 
 | ID | 条款 | 状态 | 本仓证据 |
 |----|------|------|----------|
 | REDISX-1 | workspace member | PASS | `cargo metadata -p redisx` |
-| REDISX-2 | 生产默认导出 | PASS | `src/lib.rs` |
-| REDISX-3 | from_env | PASS | config · `FOUNDATIONX_REDISX_*` |
-| REDISX-4 | 离线测试 | PASS | default + pubsub lib 离线全绿（live ignored） |
-| REDISX-5 | live Standalone KV | PASS | live_kv 5 + conformance 2 在真实 Redis 下 `--ignored` 通过（2026-07-23） |
-| REDISX-6 | bench 有界 | PASS | `benches/kv_hot_path.rs` |
-| REDISX-7 | crate docs | PASS | docs/usage · config · operations |
+| REDISX-2 | 生产默认导出 | PASS | `src/lib.rs` + `selfcheck` |
+| REDISX-3 | from_env | PASS | config · `FOUNDATIONX_REDISX_*` / `REDIS_URL` |
+| REDISX-4 | 离线测试 | PASS | `--lib --features pubsub` **83** passed（2026-07-23） |
+| REDISX-5 | live Standalone KV | PASS | `live_kv` + `live_kv_conformance` + `integration_all_api` |
+| REDISX-6 | bench 有界 | PASS | `benches/kv_hot_path.rs` · `api_matrix.rs` |
+| REDISX-7 | crate docs | PASS | docs/usage · config · operations · CHANGELOG |
 | REDISX-8 | SSOT 目录 | PASS | `.agents/ssot/adapters/storage/redis/`（非 `redisx/`） |
 | REDISX-9 | package stable | OPEN | 禁止宣称 |
 | REDISX-10 | Cluster 模式 live | OPEN | 代码路径 + 拒绝连接测试；无真实 Cluster 拓扑 |
@@ -46,22 +49,22 @@
 | REDISX-15 | Pub/Sub 重连/必达 | NO-GO | Redis Pub/Sub 不承诺可靠投递；无 resubscribe live |
 | REDISX-16 | 种子 URL 脱敏 | PASS | Debug / endpoint 负向测试 |
 | REDISX-17 | Draft P0 可宣称 bar | PASS | Standalone 生产默认 KV 客户端（有界） |
-| REDISX-18 | Draft 全文 DoD | OPEN | 见 evidence gap-matrix-v0 |
-| REDISX-19 | 行覆盖率 100% | OPEN / 残余已文档 | 离线 lib 约 **71%**；+live 约 **79.5%**；`error_map` 约 **99%**；见 [coverage-residual.md](../../.agents/ssot/adapters/storage/redis/evidence/2026-07-23/coverage-residual.md) |
-| REDISX-20 | 交付可追溯 | PASS | [delivery-record.md](../../.agents/ssot/adapters/storage/redis/evidence/2026-07-23/delivery-record.md) · PR #281 / #285 |
+| REDISX-18 | Draft 全文 DoD | OPEN | 跨模块 SelfValidator/HTTP/Prometheus/testcontainers 框架层 OOS |
+| REDISX-19 | 行覆盖率 100% | OPEN / 残余已文档 | 离线 lib 约 **71%**；+live 约 **79.5%**；见 [coverage-residual.md](../../.agents/ssot/adapters/storage/redis/evidence/2026-07-23/coverage-residual.md) |
+| REDISX-20 | 交付可追溯 | PASS | [delivery-record.md](../../.agents/ssot/adapters/storage/redis/evidence/2026-07-23/delivery-record.md) · PR #281–#306 |
 | REDISX-21 | 调用级总 deadline | PASS | `with_call_deadline`；acquire 计入总预算 |
 | REDISX-22 | get_bytes/set_bytes | PASS | 别名 → get/set |
-| REDISX-23 | pipeline_set | PASS | 管道批量 SET；跨 slot 非原子 |
-| REDISX-24 | Lua + fencing 锁 | PASS | `eval_script` / `lock_*`；关键写须 fence；非 package stable |
+| REDISX-23 | pipeline_set | PASS | 管道批量 SET；跨 slot 非原子；大批量建议分块 |
+| REDISX-24 | Lua + fencing 锁 | PASS | `eval_script` / `lock_*`；关键写须 fence |
 | REDISX-25 | 池累计 metrics | PASS | `metrics_snapshot`；非 OTel exporter |
-| REDISX-26 | Pub/Sub result stream | PASS | live `it_result_message_stream_and_facade`；断线一次 Err；无重连 |
-| REDISX-27 | 自验证 selfcheck | PASS | §6.5 11 ID；短路；cancel→Skipped；`to_json_string`/`run_json` |
-| REDISX-28 | 全量 API live 集成 | PASS | `integration_all_api`：pool/KV/lua/lock/pubsub/budget/selfcheck |
-| REDISX-29 | data E2E CRUD | PASS | `e2e_klines_crud` + `/home/workspace/data`；无数据 soft-skip |
+| REDISX-26 | Pub/Sub result stream | PASS | live `it_result_message_stream_and_facade`；断线一次 Err |
+| REDISX-27 | 自验证 selfcheck | PASS | §6.5 11 ID；短路；cancel→Skipped；JSON 报告 |
+| REDISX-28 | 全量 API live 集成 | PASS | `integration_all_api`（pool/KV/lua/lock/pubsub/budget/selfcheck） |
+| REDISX-29 | data E2E CRUD | PASS | `e2e_klines_crud` + `/home/workspace/data` |
 | REDISX-30 | API 基准矩阵 | PASS | `benches/api_matrix.rs` |
 | REDISX-31 | retry-budget live | PASS | `it_retry_budget_get_set_live` |
 | REDISX-32 | PubSubFacade live | PASS | `it_result_message_stream_and_facade` |
-| REDISX-33 | E2E CI 无数据不红 | PASS | `try_load_klines` / soft-skip；`e2e_missing_csv_is_soft_skip_not_panic` |
+| REDISX-33 | E2E CI 无数据不红 | PASS | soft-skip；`e2e_missing_csv_is_soft_skip_not_panic` |
 
 ## 残余 OPEN / NO-GO（不可伪 PASS；actionable 计数 = 0）
 
@@ -75,6 +78,18 @@
 | REDISX-18 | Draft 全文 DoD | 跨模块 SelfValidator/HTTP/Prometheus/testcontainers 框架层 OOS |
 | REDISX-19 | 行覆盖 100% | 残余 Cluster/TLS/OPEN 路径；见 coverage-residual |
 
+## 版本与 PR 轨迹（摘要）
+
+| 版本 | PR | 要点 |
+|------|-----|------|
+| 0.3.6 | #281 | P0 生产客户端冻结 |
+| 0.3.7 | #285 | 覆盖率 / error_map |
+| 0.3.8 | #291 | deadline / pipeline / fencing 锁 |
+| 0.3.9 | #298 | metrics / result stream |
+| 0.3.10 | #300 | selfcheck §6.5 |
+| 0.3.11 | #305 | integration + data E2E + api_matrix |
+| **0.3.12** | **#306** | E2E soft-skip · budget/stream/Facade live · cancel/JSON · CI pubsub |
+
 ## 10 轮审查与 gap 证据
 
 | 产物 | 路径 |
@@ -82,11 +97,12 @@
 | Gap matrix v0 | [evidence/2026-07-23/gap-matrix-v0.md](../../.agents/ssot/adapters/storage/redis/evidence/2026-07-23/gap-matrix-v0.md) |
 | Review pass 1–5 | [evidence/2026-07-23/passes-01-05.md](../../.agents/ssot/adapters/storage/redis/evidence/2026-07-23/passes-01-05.md) |
 | Review pass 6–10 | [evidence/2026-07-23/passes-06-10.md](../../.agents/ssot/adapters/storage/redis/evidence/2026-07-23/passes-06-10.md) |
+| 路径裁决 | [evidence/2026-07-23/ssot-path-decision.md](../../.agents/ssot/adapters/storage/redis/evidence/2026-07-23/ssot-path-decision.md) |
 
 ## 当前重试与原子性矩阵
 
 | 操作 | budget 配置后的合同 | 诚实边界 |
-|---|---|---|
+|------|---------------------|----------|
 | GET / EXISTS / PTTL / MGET | `ReadOnly`；仅 Transient 失败消耗预算重试 | MGET 只承诺单节点/同 slot |
 | 无 TTL SET / MSET | 固定输入 `Idempotent`；仅 Transient 失败消耗预算重试 | 响应丢失仍不等于未执行 |
 | 相对 TTL SET / DEL / PEXPIRE | `UnsafeSideEffect`；`max_attempts > 1` 在 I/O 前拒绝 | 单次允许 |
@@ -96,21 +112,33 @@
 
 ```bash
 # 离线
-cargo test -p redisx --all-targets
+cargo test -p redisx --lib --features pubsub
 cargo test -p redisx --all-targets --features pubsub
 cargo clippy -p redisx --all-targets --features pubsub -- -D warnings
 
-# live（私有 env，勿提交）
-node scripts/live/build-foundationx-env.mjs --env dev --out /tmp/foundationx.env
-set -a && source /tmp/foundationx.env && set +a
-cargo test -p redisx --test live_kv -- --ignored
-cargo test -p redisx --test live_kv_conformance -- --ignored
-cargo test -p redisx --features pubsub --test live_pubsub_conformance -- --ignored
-cargo bench -p redisx --bench kv_hot_path
+# live（secrets 注入；勿打印密码；推荐 export-foundationx-env）
+scripts/live/export-foundationx-env.sh --env dev -- \
+  cargo test -p redisx --features pubsub \
+    --test integration_all_api --test e2e_klines_crud --test live_selfcheck \
+    -- --ignored --test-threads=1
+
+# 可选：兼容旧 live 入口
+scripts/live/export-foundationx-env.sh --env dev -- \
+  cargo test -p redisx --features pubsub --test live_kv -- --ignored
+
+# 基准
+scripts/live/export-foundationx-env.sh --env dev -- \
+  cargo bench -p redisx --bench api_matrix
+
+# E2E 无数据 soft-skip（CI）
+REDISX_DATA_ROOT=/nonexistent cargo test -p redisx --test e2e_klines_crud -- --ignored
 ```
+
+CI：`.github/workflows/redisx-live.yml`（service Redis；`--features pubsub`；无本地 data 时 E2E soft-skip）。
 
 ## 相关
 
 - 总览：[workspace-ssot-alignment.md](./workspace-ssot-alignment.md)
 - adapters 汇总：[adapters-ssot-alignment.md](./adapters-ssot-alignment.md)
 - Draft 入库快照：`.agents/ssot/adapters/storage/redis/plan/infra-rs-draft-spec-goal.md`
+- LIB-SELFCHECK 规格：`.cargo/draft/verifyctl.md` §6.5
