@@ -18,16 +18,21 @@ use kafkax::{
 };
 
 fn data_root() -> PathBuf {
-    let dir = PathBuf::from("/home/workspace/data").join(format!(
+    let stamp = format!(
         "kafkax-gap-zero-e2e-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_nanos())
             .unwrap_or(0)
-    ));
-    std::fs::create_dir_all(&dir).expect("create data dir");
-    dir
+    );
+    let preferred = PathBuf::from("/home/workspace/data").join(&stamp);
+    if std::fs::create_dir_all(&preferred).is_ok() {
+        return preferred;
+    }
+    let fallback = std::env::temp_dir().join(&stamp);
+    std::fs::create_dir_all(&fallback).expect("create temp data dir");
+    fallback
 }
 
 #[tokio::test]

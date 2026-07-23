@@ -20,17 +20,22 @@ use kafkax::{
 use kernel::ErrorKind;
 
 fn data_dir() -> PathBuf {
-    let base = PathBuf::from("/home/workspace/data");
-    let dir = base.join(format!(
+    let stamp = format!(
         "kafkax-gap-zero-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_nanos())
             .unwrap_or(0)
-    ));
-    let _ = std::fs::create_dir_all(&dir);
-    dir
+    );
+    // 优先项目数据盘；CI 无权限时回退 std::env::temp_dir
+    let preferred = PathBuf::from("/home/workspace/data").join(&stamp);
+    if std::fs::create_dir_all(&preferred).is_ok() {
+        return preferred;
+    }
+    let fallback = std::env::temp_dir().join(&stamp);
+    std::fs::create_dir_all(&fallback).expect("create temp data dir");
+    fallback
 }
 
 #[test]
