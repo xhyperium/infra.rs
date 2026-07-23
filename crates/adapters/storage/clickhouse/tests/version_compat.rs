@@ -78,6 +78,7 @@ fn ch_cfg() -> ClickHouseConfig {
 // 版本检测
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn clickhouse_version_is_detectable() {
     let pool = ClickHousePool::connect(ch_cfg()).await.expect("connect");
@@ -85,6 +86,7 @@ async fn clickhouse_version_is_detectable() {
     assert!(!text.trim().is_empty());
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn clickhouse_version_contains_dots() {
     let pool = ClickHousePool::connect(ch_cfg()).await.expect("connect");
@@ -96,6 +98,7 @@ async fn clickhouse_version_contains_dots() {
 // DDL 兼容性
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn create_table_if_not_exists_is_idempotent() {
     let db = "gap_zero_ddl";
@@ -114,6 +117,7 @@ async fn create_table_if_not_exists_is_idempotent() {
     let _ = pool.execute(&format!("DROP DATABASE IF EXISTS {db}")).await;
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn create_or_replace_table() {
     let db = "gap_zero_replace";
@@ -138,6 +142,7 @@ async fn create_or_replace_table() {
     let _ = pool.execute(&format!("DROP DATABASE IF EXISTS {db}")).await;
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn alter_table_add_column() {
     let db = "gap_zero_alter";
@@ -160,6 +165,7 @@ async fn alter_table_add_column() {
     let _ = pool.execute(&format!("DROP DATABASE IF EXISTS {db}")).await;
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn drop_table_if_exists() {
     let db = "gap_zero_drop";
@@ -273,6 +279,7 @@ fn whitespace_only_host_validate_fails() {
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn zero_max_in_flight_connect_fails() {
     let cfg = ClickHouseConfig { max_in_flight: 0, ..ClickHouseConfig::default() };

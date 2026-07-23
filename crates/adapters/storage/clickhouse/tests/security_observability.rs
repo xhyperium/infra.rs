@@ -152,6 +152,7 @@ fn clickhouseconfig_debug_fields_visible_except_password() {
 // 安全测试 — 标识符注入防护（通过 insert_json_each_row 间接测试）
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn insert_rejects_injection_patterns() {
     let (port, server) = spawn_one_response("200 OK", "1\n".into()).await;
@@ -251,6 +252,7 @@ fn port_zero_is_invalid() {
 // 可观测性测试 — 池统计
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn pool_stats_reflect_initial_state() {
     let (port, server) = spawn_one_response("200 OK", "1\n".into()).await;
@@ -260,6 +262,7 @@ async fn pool_stats_reflect_initial_state() {
     server.await.expect("mock server task");
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn pool_stats_after_close() {
     let (port, server) = spawn_one_response("200 OK", "1\n".into()).await;
@@ -280,6 +283,7 @@ async fn pool_stats_after_close() {
 // 可观测性测试 — 错误类型
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_invalid_on_bad_table_name() {
     let (port, server) = spawn_one_response("200 OK", "1\n".into()).await;
@@ -293,6 +297,7 @@ async fn error_invalid_on_bad_table_name() {
     server.await.expect("mock server task");
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_unavailable_on_closed_pool() {
     let (port, server) = spawn_one_response("200 OK", "1\n".into()).await;
@@ -304,6 +309,7 @@ async fn error_unavailable_on_closed_pool() {
     server.await.expect("mock server task");
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_deadline_exceeded_on_short_timeout() {
     let hold = Duration::from_secs(3);
@@ -322,6 +328,7 @@ async fn error_deadline_exceeded_on_short_timeout() {
     server.await.expect("mock server task");
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_context_for_max_in_flight() {
     // max_in_flight=1，第一次请求占用许可，第二次请求在 acquire 超时时返回
@@ -357,6 +364,7 @@ async fn error_context_for_max_in_flight() {
 // 可观测性测试 — 错误分类（需要 ClickHouse）
 // ══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_classification_missing() {
     let pool = ClickHousePool::connect(live_ch_config()).await.expect("connect");
@@ -379,6 +387,7 @@ async fn error_classification_missing() {
     let _ = pool.execute("DROP DATABASE IF EXISTS gap_zero_missing_test").await;
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_classification_conflict_duplicate_table() {
     let db = "gap_zero_conflict";
@@ -412,6 +421,7 @@ async fn error_classification_conflict_duplicate_table() {
 // 可观测性测试 — 错误分类（离线 mock）
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_classification_transient_5xx() {
     let (port, server) = spawn_one_response("500 Internal Server Error", "boom".into()).await;
@@ -423,6 +433,7 @@ async fn error_classification_transient_5xx() {
     server.await.expect("mock server task");
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn error_classification_unavailable_403() {
     let (port, server) = spawn_one_response("403 Forbidden", "denied".into()).await;

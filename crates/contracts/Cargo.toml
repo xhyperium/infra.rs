@@ -1,5 +1,5 @@
 [package]
-name = "contracts"
+name = "xhyper-contracts"
 version = "0.1.4"
 edition.workspace = true
 rust-version.workspace = true
@@ -12,8 +12,8 @@ publish = true
 name = "contracts"
 
 [dependencies]
-kernel = { path = "../kernel", version = "0.3.1" }
-canonical = { path = "../types/canonical", version = "0.1.2" }
+kernel = { path = "../kernel", version = "0.3.1", package = "xhyper-kernel" }
+canonical = { path = "../types/canonical", version = "0.1.2", package = "xhyper-canonical" }
 async-trait = { workspace = true }
 bytes = { workspace = true }
 futures-core = { workspace = true }

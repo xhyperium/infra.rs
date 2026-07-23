@@ -16,10 +16,10 @@ scaffold = []
 [dependencies]
 async-trait = { workspace = true }
 bytes = { workspace = true }
-contracts = { path = "../../../contracts", version = "0.1.4" }
+contracts = { path = "../../../contracts", version = "0.1.4", package = "xhyper-contracts" }
 deadpool-postgres = { workspace = true }
 futures-util = { workspace = true }
-kernel = { path = "../../../kernel", version = "0.3.1" }
+kernel = { path = "../../../kernel", version = "0.3.1" , package = "xhyper-kernel"}
 resiliencx = { path = "../../../resiliencx", version = "0.1.2", features = [
   "tokio",
 ] }

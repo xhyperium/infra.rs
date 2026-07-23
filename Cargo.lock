@@ -190,19 +190,19 @@ version = "0.3.2"
 dependencies = [
  "async-trait",
  "bytes",
- "canonical",
- "contracts",
  "decimalx",
  "futures-core",
  "futures-util",
  "hex",
  "hmac 0.12.1",
- "kernel",
  "serde",
  "serde_json",
  "sha2 0.10.9",
  "tokio",
  "transportx",
+ "xhyper-canonical",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -250,16 +250,16 @@ version = "0.3.3"
 dependencies = [
  "async-trait",
  "bytes",
- "contracts",
- "evidence",
  "futures-core",
  "futures-util",
- "kernel",
  "natsx",
  "observex",
  "redisx",
  "thiserror 2.0.19",
  "tokio",
+ "xhyper-contracts",
+ "xhyper-evidence",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -281,15 +281,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "canonical"
-version = "0.1.2"
-dependencies = [
- "decimalx",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -418,8 +409,6 @@ dependencies = [
  "async-trait",
  "bytes",
  "contract-testkit",
- "contracts",
- "kernel",
  "reqwest",
  "rustls",
  "rustls-pemfile",
@@ -429,6 +418,8 @@ dependencies = [
  "tokio-rustls",
  "tracing",
  "url",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -458,13 +449,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "configx"
-version = "0.1.2"
-dependencies = [
- "kernel",
-]
-
-[[package]]
 name = "const-oid"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -482,30 +466,13 @@ version = "0.1.4"
 dependencies = [
  "async-trait",
  "bytes",
- "canonical",
- "contracts",
  "decimalx",
  "futures-core",
  "futures-util",
- "kernel",
  "tokio",
-]
-
-[[package]]
-name = "contracts"
-version = "0.1.4"
-dependencies = [
- "async-trait",
- "binancex",
- "bytes",
- "canonical",
- "contract-testkit",
- "decimalx",
- "futures-core",
- "kernel",
- "okxx",
- "thiserror 2.0.19",
- "tokio",
+ "xhyper-canonical",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -716,10 +683,10 @@ name = "decimalx"
 version = "0.1.2"
 dependencies = [
  "bigdecimal",
- "kernel",
  "proptest",
  "serde",
  "serde_json",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -818,13 +785,6 @@ checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "evidence"
-version = "0.1.1"
-dependencies = [
- "sha2 0.10.9",
 ]
 
 [[package]]
@@ -962,21 +922,6 @@ dependencies = [
  "memchr",
  "pin-project-lite",
  "slab",
-]
-
-[[package]]
-name = "generator"
-version = "0.8.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3b854b0e584ead1a33f18b2fcad7cf7be18b3875c78816b753639aa501513ae"
-dependencies = [
- "cc",
- "cfg-if",
- "libc",
- "log",
- "rustversion",
- "windows-link",
- "windows-result",
 ]
 
 [[package]]
@@ -1426,10 +1371,8 @@ dependencies = [
  "async-trait",
  "bytes",
  "chrono",
- "contracts",
  "futures-core",
  "futures-util",
- "kernel",
  "rskafka",
  "rustls",
  "rustls-pemfile",
@@ -1438,17 +1381,8 @@ dependencies = [
  "tracing",
  "url",
  "webpki-roots 0.26.11",
-]
-
-[[package]]
-name = "kernel"
-version = "0.3.1"
-dependencies = [
- "loom",
- "proptest",
- "serde",
- "static_assertions",
- "thiserror 2.0.19",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1506,19 +1440,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
-name = "loom"
-version = "0.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "419e0dc8046cb947daa77eb95ae174acfbddb7673b4151f56d1eed8e93fbfaca"
-dependencies = [
- "cfg-if",
- "generator",
- "scoped-tls",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "lru-slab"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1541,15 +1462,6 @@ checksum = "6bd8c0d6c6ed0cd30b3652886bb8711dc4bb01d637a68105a3d5158039b418e6"
 dependencies = [
  "cc",
  "libc",
-]
-
-[[package]]
-name = "matchers"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1525a2a28c7f4fa0fc98bb91ae755d1e2d1505079e05539e35bc876b5d65ae9"
-dependencies = [
- "regex-automata",
 ]
 
 [[package]]
@@ -1596,15 +1508,15 @@ dependencies = [
  "async-nats",
  "async-trait",
  "bytes",
- "contracts",
  "futures-core",
  "futures-util",
- "kernel",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
  "url",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1620,15 +1532,6 @@ dependencies = [
  "log",
  "rand 0.8.7",
  "signatory",
-]
-
-[[package]]
-name = "nu-ansi-term"
-version = "0.50.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
-dependencies = [
- "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1706,11 +1609,11 @@ dependencies = [
 name = "observex"
 version = "0.1.2"
 dependencies = [
- "contracts",
- "kernel",
  "thiserror 2.0.19",
  "tracing",
  "tracing-subscriber",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1720,19 +1623,19 @@ dependencies = [
  "async-trait",
  "base64",
  "bytes",
- "canonical",
- "contracts",
  "decimalx",
  "futures-core",
  "futures-util",
  "hex",
  "hmac 0.12.1",
- "kernel",
  "serde",
  "serde_json",
  "sha2 0.10.9",
  "tokio",
  "transportx",
+ "xhyper-canonical",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1774,12 +1677,10 @@ dependencies = [
  "bytes",
  "chrono",
  "contract-testkit",
- "contracts",
  "criterion",
  "futures-core",
  "futures-util",
  "hmac 0.12.1",
- "kernel",
  "reqwest",
  "resiliencx",
  "sha1",
@@ -1787,6 +1688,8 @@ dependencies = [
  "tokio",
  "tracing",
  "url",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -1939,10 +1842,8 @@ version = "0.3.13"
 dependencies = [
  "async-trait",
  "bytes",
- "contracts",
  "deadpool-postgres",
  "futures-util",
- "kernel",
  "resiliencx",
  "rustls",
  "rustls-pemfile",
@@ -1955,6 +1856,8 @@ dependencies = [
  "tokio-rustls",
  "tracing",
  "webpki-roots 0.26.11",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -2227,16 +2130,16 @@ dependencies = [
  "async-trait",
  "bytes",
  "contract-testkit",
- "contracts",
  "futures-core",
  "futures-util",
- "kernel",
  "redis",
  "resiliencx",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -2320,9 +2223,9 @@ name = "resiliencx"
 version = "0.1.2"
 dependencies = [
  "async-trait",
- "contracts",
- "kernel",
  "tokio",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -2525,12 +2428,6 @@ dependencies = [
 [[package]]
 name = "schedulex"
 version = "0.1.4"
-
-[[package]]
-name = "scoped-tls"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1cf6437eb19a8f4a6cc0f7dca544973b0b78843adbfeb3683d1a94a0024a294"
 
 [[package]]
 name = "scopeguard"
@@ -2876,20 +2773,20 @@ name = "taosx"
 version = "0.3.10"
 dependencies = [
  "async-trait",
- "canonical",
  "chrono",
  "contract-testkit",
- "contracts",
  "decimalx",
  "futures-core",
  "futures-util",
- "kernel",
  "reqwest",
  "serde",
  "serde_json",
  "tokio",
  "tokio-tungstenite",
  "tracing",
+ "xhyper-canonical",
+ "xhyper-contracts",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -2909,10 +2806,10 @@ dependencies = [
 name = "testkit"
 version = "0.1.3"
 dependencies = [
- "kernel",
  "proptest",
  "static_assertions",
  "thiserror 2.0.19",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -3227,18 +3124,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a"
 dependencies = [
  "once_cell",
- "valuable",
-]
-
-[[package]]
-name = "tracing-log"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee855f1f400bd0e5c02d150ae5de3840039a3f54b025156404e34c23c03f47c3"
-dependencies = [
- "log",
- "once_cell",
- "tracing-core",
 ]
 
 [[package]]
@@ -3247,16 +3132,9 @@ version = "0.3.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb7f578e5945fb242538965c2d0b04418d38ec25c79d160cd279bf0731c8d319"
 dependencies = [
- "matchers",
- "nu-ansi-term",
- "once_cell",
- "regex-automata",
  "sharded-slab",
- "smallvec",
  "thread_local",
- "tracing",
  "tracing-core",
- "tracing-log",
 ]
 
 [[package]]
@@ -3267,11 +3145,11 @@ dependencies = [
  "bytes",
  "futures-util",
  "httpdate",
- "kernel",
  "reqwest",
  "thiserror 2.0.19",
  "tokio",
  "tokio-tungstenite",
+ "xhyper-kernel",
 ]
 
 [[package]]
@@ -3391,23 +3269,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
-name = "valuable"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba73ea9cf16a25df0c8caa16c51acb937d5712a8429db78a3ee29d5dcacd3a65"
-
-[[package]]
 name = "verifyctl"
 version = "0.1.0"
 dependencies = [
  "clap",
- "evidence",
  "hex",
  "serde",
  "serde_json",
  "sha2 0.10.9",
  "tempfile",
  "thiserror 2.0.19",
+ "xhyper-evidence",
 ]
 
 [[package]]
@@ -3744,6 +3616,56 @@ name = "writeable"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ffae5123b2d3fc086436f8834ae3ab053a283cfac8fe0a0b8eaae044768a4c4"
+
+[[package]]
+name = "xhyper-canonical"
+version = "0.1.2"
+dependencies = [
+ "decimalx",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "xhyper-configx"
+version = "0.1.2"
+dependencies = [
+ "xhyper-kernel",
+]
+
+[[package]]
+name = "xhyper-contracts"
+version = "0.1.4"
+dependencies = [
+ "async-trait",
+ "binancex",
+ "bytes",
+ "contract-testkit",
+ "decimalx",
+ "futures-core",
+ "okxx",
+ "thiserror 2.0.19",
+ "tokio",
+ "xhyper-canonical",
+ "xhyper-kernel",
+]
+
+[[package]]
+name = "xhyper-evidence"
+version = "0.1.1"
+dependencies = [
+ "sha2 0.10.9",
+]
+
+[[package]]
+name = "xhyper-kernel"
+version = "0.3.1"
+dependencies = [
+ "proptest",
+ "serde",
+ "static_assertions",
+ "thiserror 2.0.19",
+]
 
 [[package]]
 name = "yoke"

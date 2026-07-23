@@ -1,12 +1,11 @@
 [package]
-name = "kernel"
+name = "xhyper-kernel"
 description = "infra.rs L0 kernel: opaque XError/ErrorKind, Clock/Timestamp, ShutdownSignal (SPEC-KERNEL-002)"
 version = "0.3.1"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-# 本仓不向 crates.io 再发布；与 testkit 一致显式关闭
 publish = true
 
 [lib]
@@ -15,22 +14,14 @@ name = "kernel"
 [dependencies]
 thiserror = { workspace = true }
 
-# loom：仅在 RUSTFLAGS='--cfg loom' 构建时链接（库内 lifecycle 切换并发原语）
-# 非 feature：符合 §3.4 default=[]；正常生产构建不拉 loom
-[target.'cfg(loom)'.dependencies]
-loom = { workspace = true }
-
 [dev-dependencies]
-# SPEC-KERNEL-002 §3.3 / §11：测试合同依赖（不进生产 / 不进公开 API）
 proptest = { workspace = true }
-serde = { workspace = true }             # 仅用于 §11.4 负向面（assert !Serialize/!Deserialize）
+serde = { workspace = true }
 static_assertions = { workspace = true }
 
 [features]
-# SPEC-KERNEL-002 §3.4：不允许任何 feature；显式 default=[] 满足字面合同
 default = []
 
-# SPEC-KERNEL-002 §4：继承 workspace lints（含 loom unexpected_cfgs）
 [lints]
 workspace = true
 

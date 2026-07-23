@@ -18,7 +18,7 @@ panicking-ops = []
 
 [dependencies]
 # path + version：满足 cargo-deny bans.wildcards=deny（禁止裸 path 通配依赖）
-kernel = { path = "../../kernel", version = "0.3.1" }
+kernel = { path = "../../kernel", version = "0.3.1" , package = "xhyper-kernel"}
 serde = { workspace = true }
 
 [dev-dependencies]

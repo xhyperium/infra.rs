@@ -34,6 +34,7 @@ fn live_cfg() -> ClickHouseConfig {
 // DDL 约束 — 引擎 / 分区 / 排序键
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn all_tables_use_mergetree_engine() {
     let pool = ClickHousePool::connect(live_cfg()).await.expect("connect");
@@ -56,6 +57,7 @@ async fn all_tables_use_mergetree_engine() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn klines_tables_use_monthly_partition() {
     let pool = ClickHousePool::connect(live_cfg()).await.expect("connect");
@@ -72,6 +74,7 @@ async fn klines_tables_use_monthly_partition() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn klines_order_by_symbol_and_open_time() {
     let pool = ClickHousePool::connect(live_cfg()).await.expect("connect");
@@ -92,6 +95,7 @@ async fn klines_order_by_symbol_and_open_time() {
 // 列名与类型
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn klines_columns_have_correct_names_and_types() {
     let pool = ClickHousePool::connect(live_cfg()).await.expect("connect");
@@ -131,6 +135,7 @@ async fn klines_columns_have_correct_names_and_types() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn all_klines_tables_have_same_column_count() {
     let pool = ClickHousePool::connect(live_cfg()).await.expect("connect");
@@ -156,6 +161,7 @@ async fn all_klines_tables_have_same_column_count() {
 // 数据级约束 — 非空、无非法值
 // ═══════════════════════════════════════════════════════════════
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn ordering_columns_are_non_null() {
     let pool = ClickHousePool::connect(live_cfg()).await.expect("connect");
@@ -173,6 +179,7 @@ async fn ordering_columns_are_non_null() {
     pool.close().await.ok();
 }
 
+#[ignore = "requires live ClickHouse"]
 #[tokio::test]
 async fn ohlc_values_are_non_negative() {
     let pool = ClickHousePool::connect(live_cfg()).await.expect("connect");
