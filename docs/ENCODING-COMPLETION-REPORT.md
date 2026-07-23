@@ -25,10 +25,10 @@
 
 | 层级 | 工具 | 时机 | 阻断 | CR 比率 |
 |------|------|------|------|------|
-| Pre-tool 钩子 | `encoding-check.mjs` | Write/Edit 前 | ✅ | — |
+| Pre-tool 钩子 | `encoding-check.mjs` | Write/Edit 前（含写入载荷） | ✅ | — |
 | Post-tool 巡检 | `encoding-batch-check.mjs` | Write/Edit 后 | ❌ | — |
 | CI 门禁（编码） | `validation.yml` L1 | PR 提交 | ✅ | — |
-| CI 门禁（U+FFFD） | `validation.yml` L2 | PR 提交 | ❌ 警告 | — |
+| CI 门禁（U+FFFD） | `validation.yml` L2 | PR 提交 | ✅ 阻断 | — |
 
 ### 部署文件清单
 
@@ -72,12 +72,12 @@ docs/CI.md                                # CI 工作流指引
 
 | 仓库 | U+FFFD | 说明 |
 |------|--------|------|
-| `market_data.rs` | 7 | `coinbase/src/lib.rs` 注释 + 测试文件注释 |
-| `infra.rs` | 271 | 62 个 `docs/` 和 `crates/*/docs/` 文档模板 |
+| `market_data.rs` | 跟进 | 历史注释残留，L2 阻断后需清零 |
+| `infra.rs` | **0** | 2026-07-23：workflow 步骤名 + 治理文档清零；L2 升级为阻断 |
 | `macro_data.rs` | 0 | 无残留 |
 | `standard_template.rs` | 0 | 无残留 |
 
-残留均为历史文档模板中的非关键注释，CI 门禁已部署可自动检测并提示修复命令。
+`infra.rs` 已将 U+FFFD 从「警告」升级为 CI **阻断**；`fix-encoding.mjs --check` 遇 U+FFFD 亦 `exit 1`。
 
 ## 7. CI 验证
 
@@ -97,6 +97,7 @@ docs/CI.md                                # CI 工作流指引
 
 ## 9. 后续行动
 
-- [ ] `infra.rs` 文档模板编码修复（271 U+FFFD）
-- [ ] `market_data.rs` 残留文件修复（7 U+FFFD）
+- [x] `infra.rs` U+FFFD 清零 + L2 阻断 + Pre-tool 载荷校验（2026-07-23）
+- [ ] `market_data.rs` 残留文件修复
 - [ ] 定期 CI 门禁审计
+- [ ] 可选：Post-tool 巡检对 `docs/**` 升级为阻断

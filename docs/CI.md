@@ -38,12 +38,13 @@
 失败行为：❌ PR 阻塞
 ```
 
-#### 步骤 2：U+FFFD 替换字符扫描（警告）
+#### 步骤 2：U+FFFD 替换字符扫描（阻断）
 
 ```text
-检测工具：grep -P '\xef\xbf\xbd'
+检测工具：grep -aFq $'\xef\xbf\xbd'（字节 EF BF BD）
+扫描范围：*.md / *.rs / *.toml / *.yml / *.yaml / *.mjs / *.js / *.json / *.sh / *.txt
 通过标准：无匹配
-失败行为：⚠️ 仅警告，不阻断
+失败行为：❌ PR 阻塞
 ```
 
 ### 排除规则
@@ -75,22 +76,22 @@ node scripts/fix-encoding.mjs --fix
 iconv -f gbk -t utf-8 文件路径 > /tmp/fixed && mv /tmp/fixed 文件路径
 ```
 
-#### CI 报 `⚠️ 含 U+FFFD 替换字符`
+#### CI 报 `❌ 含 U+FFFD 替换字符`
 
-**原因**：文件曾在 GBK→UTF-8 转换中部分损坏。
+**原因**：文件曾在错误解码/Agent 写入中插入 U+FFFD（``）；语义已丢失，无法可靠自动还原。
 
 **修复**：
 
 ```bash
-# 方式 1：脚本修复
-node scripts/fix-encoding.mjs --fix
+# 1) 定位
+node scripts/fix-encoding.mjs --check
 
-# 方式 2：从 GBK 原始版本恢复（如有）
-python3 -c "
-with open('文件','rb') as f: data = f.read()
-text = data.decode('gbk')
-with open('文件','w',encoding='utf-8') as f: f.write(text)
-"
+# 2) 优先从 git 历史恢复干净版本
+git log -p -- 路径 | less
+# 或按上下文重写中文（不要只删除 U+FFFD）
+
+# 3) 若整文件仍是 GBK 原始字节（非 U+FFFD），可尝试：
+iconv -f gbk -t utf-8 文件路径 > /tmp/fixed && mv /tmp/fixed 文件路径
 ```
 
 #### 不应检测的二进制文件被误报
@@ -116,9 +117,9 @@ node scripts/self-test.mjs --hooks --lint-only
 
 | 层级 | 工具 | 时机 | 阻断 |
 |------|------|------|------|
-| Pre-Tool | `encoding-check.mjs` | Write/Edit 操作前 | ✅ 阻断 |
+| Pre-Tool | `encoding-check.mjs` | Write/Edit 操作前（含写入载荷） | ✅ 阻断 |
 | Post-Tool | `encoding-batch-check.mjs` | Write/Edit 操作后 | ❌ 安静警告 |
-| CI 门禁 | `validation.yml` utf8-encoding | PR 提交时 | ✅ 阻断（编码）/⚠️ 警告（U+FFFD） |
+| CI 门禁 | `validation.yml` utf8-encoding | PR 提交时 | ✅ 非 UTF-8 与 U+FFFD 均阻断 |
 
 ---
 
@@ -141,7 +142,7 @@ node scripts/self-test.mjs --hooks --lint-only
 | 症状 | 工作流 | 原因 | 解决 |
 |------|--------|------|------|
 | `❌ 非 UTF-8 文件` | validation | GBK 编码 | `iconv` 或 `fix-encoding.mjs` |
-| `⚠️ U+FFFD 替换字符` | validation | 编码残留 | `fix-encoding.mjs --fix` |
+| `❌ U+FFFD 替换字符` | validation | 编码损坏 | 按上下文重写 / git 历史恢复 |
 | `cargo fmt` 失败 | quality | 格式不合规 | `cargo fmt --all` |
 | `clippy -D warnings` 失败 | quality | 代码静态警告 | 修复 clippy 警告 |
 | self-test 语法失败 | self-test | 脚本缺少 shebang/语法错误 | 修复脚本 |
@@ -154,19 +155,19 @@ node scripts/self-test.mjs --hooks --lint-only
 | 仓库 | 编码修复 | 钩子 | CI 门禁 | 测试 | U+FFFD | 状态 |
 |------|---------|------|---------|------|--------|------|
 | `macro_data.rs` | ✅ | ✅ | ✅ | ✅ 154 | 0 | 完成 |
-| `market_data.rs` | ✅ | ✅ | ✅ | ✅ | 7 | 完成 |
-| `infra.rs` | ✅ | ✅ | ✅ | ✅ | 271 | 完成 |
+| `market_data.rs` | ✅ | ✅ | ✅ | ✅ | 跟进 | 完成（L2 阻断后须清零） |
+| `infra.rs` | ✅ | ✅ | ✅ L1+L2 阻断 | ✅ | 0 | 完成 |
 | `standard_template.rs` | ✅ | ✅ | ✅ | ✅ | 0 | 完成 |
 
 ### 防护体系组成
 
 | 层级 | 工具 | 时机 | 阻断 |
 |------|------|------|------|
-| Pre-Tool 钩子 | `encoding-check.mjs` | Write/Edit 前 | ✅ |
+| Pre-Tool 钩子 | `encoding-check.mjs` | Write/Edit 前（校验写入载荷） | ✅ |
 | Post-Tool 巡检 | `encoding-batch-check.mjs` | Write/Edit 后 | ❌ |
 | CI 门禁（编码） | `validation.yml` L1 | PR 时 | ✅ |
-| CI 门禁（U+FFFD） | `validation.yml` L2 | PR 时 | ❌ 警告 |
-| 修复脚本 | `fix-encoding.mjs --fix` | 按需 | — |
+| CI 门禁（U+FFFD） | `validation.yml` L2 | PR 时 | ✅ 阻断 |
+| 修复脚本 | `fix-encoding.mjs --check/--fix` | 按需 | check 遇 U+FFFD exit 1 |
 
 ### 新增仓库部署步骤
 
