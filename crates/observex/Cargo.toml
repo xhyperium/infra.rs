@@ -13,7 +13,7 @@ name = "observex"
 
 [dependencies]
 # SPEC §2：kernel 依赖信封（预留，当前热路径不引用）
-kernel = { path = "../kernel", version = "0.3.1" }
+kernel = { package = "xhyper-kernel", path = "../kernel", version = "0.3.1" }
 # package contracts · lib name contracts
 contracts = { path = "../contracts", version = "0.1.4" }
 thiserror = { workspace = true }
