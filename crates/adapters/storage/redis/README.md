@@ -6,8 +6,9 @@
 - 扩展：`pipeline_set` / `eval_script` / `lock_acquire`（fencing）
 - 池指标：`pool.metrics_snapshot()` → `RedisMetricsSnapshot`
 - Pub/Sub 结果流：`session.into_result_message_stream()`（断线一次 `Err`）
+- 自验证：`RedisValidator::new(client).run(CheckLevel::ReadWrite)`（§6.5）
 
-当前 workspace 版本为 `0.3.9` 未发布候选；`publish = false`，不代表已经发布。
+当前 workspace 版本为 `0.3.10` 未发布候选；`publish = false`，不代表已经发布。
 
 | 模式 | 类型 | 生产？ |
 |------|------|--------|

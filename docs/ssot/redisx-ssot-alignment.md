@@ -7,8 +7,8 @@
 | 路径裁决 | **不**新增 `.agents/ssot/adapters/storage/redisx/`；目录名 `redis` 对齐 storage×7，package 名 `redisx` |
 | 实现 | `crates/adapters/storage/redis` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.9`（metrics + result pubsub stream；`0.3.8` deadline/pipeline/锁） |
-| 结论 | **Standalone P0+ 生产默认客户端**（deadline / pipeline / fencing 锁 / 池 metrics）；Cluster / Sentinel / TLS live **OPEN**；**禁止** package stable / Draft 全文 DoD |
+| version | `0.3.10`（selfcheck §6.5；`0.3.9` metrics/stream） |
+| 结论 | **Standalone P0+ 生产默认客户端** + **自验证 catalog**；Cluster / Sentinel / TLS live **OPEN**；**禁止** package stable / Draft 全文 DoD |
 
 ## 结论摘要
 
@@ -55,6 +55,7 @@
 | REDISX-24 | Lua + fencing 锁 | PASS | `eval_script` / `lock_*`；关键写须 fence；非 package stable |
 | REDISX-25 | 池累计 metrics | PASS | `metrics_snapshot`；非 OTel exporter |
 | REDISX-26 | Pub/Sub result stream | PASS | `into_result_message_stream`；断线一次 Err；无重连 |
+| REDISX-27 | 自验证 selfcheck | PASS | `redisx::selfcheck` §6.5 11 项；短路/skip/catalog；非 tools/verifyctl |
 
 ## 10 轮审查与 gap 证据
 
