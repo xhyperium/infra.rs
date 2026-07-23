@@ -694,7 +694,7 @@ return 0
             match probe {
                 Err(_) => CheckOutcome::Skip("非 Cluster 拓扑".into()),
                 Ok(s) if !s.contains("cluster_state:") => {
-                    CheckOutcome::Skip("非 Cluster 拓扑".into());
+                    return CheckOutcome::Skip("非 Cluster 拓扑".into());
                 }
                 Ok(_) => {}
             }
