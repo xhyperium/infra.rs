@@ -17,5 +17,5 @@
 - [x] response/batch/query/in-flight/close 硬上界与离线测试
 - [x] 固定 digest 隔离 live conformance 入口
 - [ ] Native SQL / WS 认证长会话 / 全超表治理 / HA 集群
-- [ ] 自动幂等重试与部分批次失败后的重复写语义
+- [x] 自动幂等重试与部分批次失败后的重复写语义（0.3.9 `RetryPolicy` + `write_batch_idempotent`）
 - [ ] package stable 证据包（若 Lead 启动）

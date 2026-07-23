@@ -23,7 +23,7 @@
 //! ## 诚实边界
 //!
 //! - 需要可达 TDengine REST；`connect_without_ping` + 不可达地址用于短路/catalog 单测
-//! - `tmq_subscribe` 当前 **Skipped**（本 crate 未实现 TMQ）
+//! - `tmq_subscribe` 已实现（`TmqConsumer`，live selfcheck Full 验证）
 //! - 自检超级表命名 `_sc_{token}`，运行结束主动 `DROP STABLE`
 //! - **未**实现跨模块 `SelfValidator` 调度器 / HTTP 探针 / Prometheus 导出器
 

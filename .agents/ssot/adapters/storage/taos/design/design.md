@@ -25,7 +25,7 @@ taosx → kernel + contracts（+ 驱动 crate）
 3. 无硬编码生产密钥
 4. 公共 API 中文文档 + 英文标识符
 5. Decimal 只以 NCHAR(64+) 文本落库；存量 DOUBLE schema 拒绝
-6. Native SQL、自动幂等重试与 HA 无证据保持 NO-GO
+6. Native SQL、HA 集群全矩阵与 package stable 保持 NO-GO；幂等重试（`RetryPolicy`）与 HA-lite（`hosts`）已有 live 证据
 
 ## 参考
 

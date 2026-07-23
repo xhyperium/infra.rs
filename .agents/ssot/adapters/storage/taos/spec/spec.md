@@ -1,6 +1,8 @@
 # taosx 实现规范
 
-状态：当前 `0.3.7` 实现合同（REST SQL + WS 可达性探测；真实后端测试默认 `#[ignore]`）。**未宣称 package stable。**
+状态：当前 `0.3.10` 实现合同（REST SQL、WS 短会话 SQL、
+TMQ 消费、幂等重试、异步批写、流式查询、selfcheck Full、metrics；
+真实后端测试默认 `#[ignore]`）。**未宣称 package stable。**
 
 ## 0. 权威、职责与非目标
 
@@ -10,21 +12,26 @@
 当前真实边界：
 
 - SQL、建库、建表、写入与查询全部经 HTTP(S) `POST /rest/sql`。
-- `TransportMode::NativeWs` 只对 `/rest/ws` 做有 deadline 的握手及关闭探测；不执行 SQL，
-  不证明 WS 认证、长会话、TMQ 或原生 6030 能力。
+- `TransportMode::NativeWs` 支持 `/rest/ws` 短会话 SQL（`exec_sql_ws` + `probe_native_tcp`），
+  不证明 WS 长会话认证或原生 6030 能力。
 - scaffold 仅为可选进程内测试实现，不是默认生产路径。
-- Native SQL、FFI、HA/Cluster、迁移治理、自动幂等重试与 package stable 均为 **NO-GO / OPEN**。
+- Native SQL、FFI、HA/Cluster 全矩阵、迁移治理与 package stable 均为 **NO-GO / OPEN**。
+- 幂等重试（`RetryPolicy` + `write_batch_idempotent`）与 HA-lite（`hosts` 故障转移）已在 0.3.9 实现。
 
 ## 1. Cargo、版本与公开面
 
-版本 `0.3.7`，package `taosx`，默认 feature 为空；可选 feature 仅 `scaffold`。
+版本 `0.3.10`，package `taosx`，默认 feature 为空；可选 feature 仅 `scaffold`。
 
 公开生产面：
 
 - `TaosConfig` / `TransportMode` / `TsPrecision`
 - `TaosPool`（别名 `TaosClient`）/ `TaosPoolStats`
 - `build_insert_sql_chunks`
-- `build_native_ws_url` / `connect_native_ws`（仅 reachability probe）
+- `build_native_ws_url` / `connect_native_ws` / `exec_sql_ws`
+- `WriteBatcher`
+- `TaosQueryStream`
+- `TmqConsumer`
+- `RetryPolicy` / `write_batch_idempotent`
 - 编译期硬上限常量 `HARD_MAX_*`
 
 ## 2. 安全与资源合同
@@ -35,7 +42,7 @@
 - 远程地址必须启用 TLS，且用户名与密码均非空；host 中的 scheme、userinfo、路径、查询和片段拒绝。
 - REST 客户端禁止 redirect，避免 Basic Auth 跨端点传播或 HTTPS 降级。
 - 密码仅从配置/环境注入，`Debug` 固定脱敏；错误和日志不得输出密码。
-- Native WS 探测不证明认证成功；远程 WSS 生产认证仍为 OPEN。
+- Native WS 探测不证明认证成功；远程 WSS 长会话认证仍为 NO-GO。
 
 ### 2.2 Decimal 精度
 
@@ -65,8 +72,10 @@
 
 ## 3. 重试与一致性边界
 
-本 crate 不做内部自动重试。多 chunk 写入发生部分成功时，调用方不得把整批盲目重试视为已证明幂等。
-TDengine 更新/去重策略、operation-id 与故障后重复写证据均未闭合，因此幂等重试为 **NO-GO**。
+本 crate 提供 `RetryPolicy` + `write_batch_idempotent` 整批幂等重试。
+调用方可通过重试策略在部分批次失败后安全重试。
+TDengine 更新/去重策略、operation-id 与故障后重复写证据未闭合；
+多 chunk 写入的内部自动重试仍为 **NO-GO**。
 
 ## 4. 测试与证据
 
