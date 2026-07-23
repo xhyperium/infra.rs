@@ -40,7 +40,7 @@
 | REDISX-1 | workspace member | PASS | `cargo metadata -p redisx` |
 | REDISX-2 | 生产默认导出 | PASS | `src/lib.rs` + `selfcheck` |
 | REDISX-3 | from_env | PASS | config · `FOUNDATIONX_REDISX_*` / `REDIS_URL` |
-| REDISX-4 | 离线测试 | PASS | `--lib --features pubsub` **83** passed（2026-07-23） |
+| REDISX-4 | 离线测试 | PASS | `--lib` 90 passed / `--features pubsub` 96 passed（2026-07-23） |
 | REDISX-5 | live Standalone KV | PASS | `live_kv` + `live_kv_conformance` + `integration_all_api` |
 | REDISX-6 | bench 有界 | PASS | `benches/kv_hot_path.rs` · `api_matrix.rs` |
 | REDISX-7 | crate docs | PASS | docs/usage · config · operations · CHANGELOG |

@@ -547,7 +547,7 @@ return 0
         #[cfg(not(feature = "pubsub"))]
         {
             let _ = ctx;
-            return CheckOutcome::Skip("feature `pubsub` 未启用".into());
+            CheckOutcome::Skip("feature `pubsub` 未启用".into());
         }
         #[cfg(feature = "pubsub")]
         {
@@ -692,9 +692,9 @@ return 0
                 })
                 .await;
             match probe {
-                Err(_) => return CheckOutcome::Skip("非 Cluster 拓扑".into()),
+                Err(_) => CheckOutcome::Skip("非 Cluster 拓扑".into()),
                 Ok(s) if !s.contains("cluster_state:") => {
-                    return CheckOutcome::Skip("非 Cluster 拓扑".into());
+                    CheckOutcome::Skip("非 Cluster 拓扑".into());
                 }
                 Ok(_) => {}
             }

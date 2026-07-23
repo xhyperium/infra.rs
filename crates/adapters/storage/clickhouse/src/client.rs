@@ -123,9 +123,8 @@ impl ClickHousePool {
         Self::connect(ClickHouseConfig::from_env()?).await
     }
 
-    /// 仅测试：跳过 ping，便于离线验证 close / stats / acquire。
-    #[cfg(test)]
-    pub(crate) fn connect_without_ping(config: ClickHouseConfig) -> XResult<Self> {
+    /// 供集成测试使用：跳过 ping，便于离线验证 close / stats / acquire。
+    pub fn connect_without_ping(config: ClickHouseConfig) -> XResult<Self> {
         config.validate()?;
         let http = build_http_client(&config)?;
         let max_in_flight = config.max_in_flight;
@@ -371,7 +370,7 @@ impl AnalyticsSink for ClickHousePool {
     }
 }
 
-fn validate_ident(name: &str) -> XResult<()> {
+pub fn validate_ident(name: &str) -> XResult<()> {
     if name.is_empty() || name.len() > 192 {
         return Err(XError::invalid(format!("非法标识符长度: {name}")));
     }

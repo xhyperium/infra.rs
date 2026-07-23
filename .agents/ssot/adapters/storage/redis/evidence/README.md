@@ -18,9 +18,9 @@
 
 | 项 | 结果 |
 |----|------|
-| version | `0.3.6` |
-| offline default | ~49 passed + live ignored |
-| offline pubsub | ~54 passed + live ignored |
+| version | `0.3.15` |
+| offline default | 90 passed + live ignored |
+| offline pubsub | 96 passed + live ignored |
 | live Standalone | KV 5 + conformance 2 + pubsub 1 passed（真实 Redis） |
 | Cluster/Sentinel/TLS live | OPEN |
 | package stable | 禁止宣称 |

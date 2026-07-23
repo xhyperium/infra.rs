@@ -1,6 +1,6 @@
 # redisx 实现规范
 
-状态：当前 `0.3.5` active 合同。生产默认命令通道已实现；package stable、真实 Cluster、
+状态：当前 `0.3.15` 实现合同。生产默认命令通道、数据结构、Streams、事务、selfcheck 均已实现；package stable、真实 Cluster、
 Sentinel、TLS 与拓扑故障切换均未宣称通过。
 
 ## 1. 职责与范围
@@ -69,7 +69,7 @@ cmp .agents/ssot/adapters/storage/redis/spec/spec.md \
   .agents/ssot/adapters/storage/redis/spec/xhyper-redisx-complete-spec.md
 ```
 
-当前最终本地结果：51 passed + 8 ignored；ignored live 测试需要外部 Redis，不作为默认 CI 通过证据。
+当前离线门禁结果：90 passed（96 with pubsub）；live 测试需要外部 Redis，默认 ignored。
 
 真实 Cluster / Sentinel / TLS live 未执行时，对应矩阵保持 OPEN；不得以编译、构造测试、连接
 拒绝测试或 ignored 入口替代真实拓扑证据。

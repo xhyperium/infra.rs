@@ -8,7 +8,7 @@
 
 use std::time::Duration;
 
-use contracts::{KeyValueStore, PubSub};
+use contracts::KeyValueStore;
 use kernel::ErrorKind;
 use redisx::selfcheck::{CheckLevel, CheckStatus, RedisValidator};
 use redisx::{RedisClient, RedisConfig, RedisLiveKv, RedisPool, TxCmd};
