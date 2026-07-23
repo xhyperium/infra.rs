@@ -1,6 +1,6 @@
 # postgresx 用法
 
-**Package**：`postgresx` `0.3.9`（`publish = false`） · 默认导出为**生产 SQL / 连接池 API**。
+**Package**：`postgresx` `0.3.10`（`publish = false`） · 默认导出为**生产 SQL / 连接池 API**。
 
 ## 最小示例
 

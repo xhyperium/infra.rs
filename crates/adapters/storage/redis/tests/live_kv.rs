@@ -31,10 +31,14 @@ async fn live_pool_ping_and_stats() {
     let st = pool.stats();
     assert_eq!(st.open, 1);
     assert_eq!(st.in_flight, 0);
+    let metrics = pool.metrics_snapshot();
+    assert!(metrics.commands_ok >= 1, "ping should count as ok: {metrics:?}");
     pool.close(Duration::from_secs(2)).await.expect("close");
     assert!(pool.is_closed());
     let err = pool.ping().await.expect_err("closed");
     assert_eq!(err.kind(), ErrorKind::Unavailable);
+    let after = pool.metrics_snapshot();
+    assert!(after.rejected_closed >= 1, "closed reject counted: {after:?}");
 }
 
 #[tokio::test]

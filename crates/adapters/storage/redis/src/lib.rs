@@ -7,7 +7,8 @@
 //! - [`RedisClient`]：KV 扩展 + 调用级 deadline + [`contracts::KeyValueStore`]
 //! - 扩展：`pipeline_set` / `eval_script` / 带 fencing 的 `lock_*`
 //! - resilience：基于 resiliencx 的重试包装
-//! - feature `pubsub`：`RedisPubSub` / `RedisPubSubFacade`
+//! - feature `pubsub`：`RedisPubSub` / `RedisPubSubFacade`（含 `into_result_message_stream`）
+//! - 池指标：[`RedisPool::metrics_snapshot`] / [`RedisMetricsSnapshot`]
 //!
 //! ## Scaffold（可选）
 //!
@@ -31,7 +32,7 @@ pub use client::RedisClient;
 pub use config::{RedisConfig, RedisConfigBuilder, RedisMode};
 pub use error_map::{map_redis_error, map_redis_result};
 pub use ext::RedisLock;
-pub use pool::{RedisPool, RedisPoolStats};
+pub use pool::{RedisMetricsSnapshot, RedisPool, RedisPoolStats};
 pub use resilience::{
     RedisAtomicity, RedisOperation, RedisRetryConfig, RedisRetrySafety, with_budget,
     with_budget_async, with_budget_async_noop, with_budget_async_safe, with_budget_async_safe_noop,
@@ -71,6 +72,8 @@ mod public_api_surface {
 
         let stats = RedisPoolStats { open: 0, in_flight: 0, waiters: 0 };
         assert_eq!(stats.open, 0);
+        let metrics = RedisMetricsSnapshot::default();
+        assert_eq!(metrics.commands_ok, 0);
 
         fn assert_type<T: ?Sized>() {}
         assert_type::<RedisClient>();
@@ -79,6 +82,7 @@ mod public_api_surface {
         assert_type::<RedisConfig>();
         assert_type::<RedisConfigBuilder>();
         assert_type::<RedisPoolStats>();
+        assert_type::<RedisMetricsSnapshot>();
         assert_type::<RedisOperation>();
         assert_type::<RedisRetrySafety>();
         assert_type::<RedisAtomicity>();

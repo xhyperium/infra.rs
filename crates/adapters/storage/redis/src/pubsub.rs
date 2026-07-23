@@ -118,6 +118,9 @@ impl RedisPubSub {
     }
 
     /// 取出消息流（只能调用一次）。
+    ///
+    /// 底层连接断开时流**静默结束**（无错误项）。需要感知断线请用
+    /// [`Self::into_result_message_stream`]。
     pub fn into_message_stream(mut self) -> XResult<BoxStream<'static, BusMessage>> {
         let stream =
             self.stream.take().ok_or_else(|| XError::invariant("PubSub stream 已被取走"))?;
@@ -131,6 +134,29 @@ impl RedisPubSub {
             }
         });
         Ok(Box::pin(mapped))
+    }
+
+    /// 取出 `Result` 消息流（只能调用一次）。
+    ///
+    /// 每条消息为 `Ok(BusMessage)`；底层 Pub/Sub 连接结束（断线 / 对端关闭）时，
+    /// 在末尾**恰好一次**产出 `Err(Unavailable)`，避免静默 EOF。
+    ///
+    /// **不**提供可靠投递或自动重连；断线后调用方应重建会话。
+    pub fn into_result_message_stream(
+        mut self,
+    ) -> XResult<BoxStream<'static, XResult<BusMessage>>> {
+        let stream =
+            self.stream.take().ok_or_else(|| XError::invariant("PubSub stream 已被取走"))?;
+        let seq = Arc::clone(&self.seq);
+        let mapped = stream.map(move |msg| {
+            let id = seq.fetch_add(1, Ordering::Relaxed).to_string();
+            let payload = Bytes::copy_from_slice(msg.get_payload_bytes());
+            Ok(BusMessage { id, payload })
+        });
+        let with_disconnect = mapped.chain(futures_util::stream::once(async {
+            Err(XError::unavailable("redis pubsub 连接已断开"))
+        }));
+        Ok(Box::pin(with_disconnect))
     }
 }
 
@@ -284,5 +310,14 @@ mod tests {
         .await
         .expect_err("legacy explicit config must preserve fail-closed topology");
         assert_eq!(err.kind(), ErrorKind::Invalid);
+    }
+
+    #[test]
+    fn result_stream_api_is_named_on_type() {
+        // 编译期存在性 + 文档约束：双入口语义在 rustdoc 中区分
+        fn _assert_methods(_: fn(RedisPubSub) -> XResult<BoxStream<'static, BusMessage>>) {}
+        fn _assert_result(_: fn(RedisPubSub) -> XResult<BoxStream<'static, XResult<BusMessage>>>) {}
+        _assert_methods(RedisPubSub::into_message_stream);
+        _assert_result(RedisPubSub::into_result_message_stream);
     }
 }

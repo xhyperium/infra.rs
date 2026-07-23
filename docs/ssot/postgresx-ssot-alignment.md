@@ -6,8 +6,8 @@
 | SSOT | `.agents/ssot/adapters/storage/postgres/`（**非** `postgresx` 目录） |
 | 实现 | `crates/adapters/storage/postgres` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.9` |
-| 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地**；dev live + 远程 Require TLS + deadline + **raw fail-closed live** 已跑通；**未**宣称 package stable / mTLS |
+| version | `0.3.10` |
+| 结论 | **生产默认池/Tx/Repository/TLS 实现路径已落地**；dev live + 远程 Require TLS + deadline + **raw fail-closed live** 已跑通；mTLS 客户端身份已落地；**未**宣称 package stable / 服务端强制 mTLS 全网 live |
 
 ## 结论摘要
 
@@ -23,12 +23,12 @@
 | 旧逃逸面 | deprecated raw client 使用后强制脱池；raw pool 返回关闭的独立隔离池 |
 | resiliencx | `with_retry_sync` / `with_retry_async` |
 | contracts | `TxRunner` + 生产 `Repository` |
-| 环境变量 | `FOUNDATIONX_POSTGRESX_{HOST,PORT,DATABASE,USER,PASSWORD,SSLMODE,TLS_CA_FILE,TLS_SERVER_NAME}` 或 `DATABASE_URL` |
+| 环境变量 | `FOUNDATIONX_POSTGRESX_{HOST,PORT,DATABASE,USER,PASSWORD,SSLMODE,TLS_CA_FILE,TLS_SERVER_NAME,TLS_CLIENT_CERT,TLS_CLIENT_KEY}` 或 `DATABASE_URL` |
 | live | `tests/live_postgres.rs`（11 cases，`#[ignore]`） |
 | deadline 实验 | `tests/deadline_conformance.rs` + `scripts/postgres-deadline-conformance.mjs` |
 | bench | `benches/query_hot_path.rs` |
 | 原 OBJECTIVE DEFER | **PASS**（prod Repository / SSL require 路径 / resiliencx） |
-| 仍 OPEN / DEFER | mTLS 客户端证书；无限流式 COPY / migrations / read-replica / package stable |
+| 仍 OPEN / DEFER | 无限流式 COPY / migrations / read-replica / package stable；mTLS 服务端强制 live（部署依赖） |
 
 ## 对齐矩阵
 
@@ -53,6 +53,7 @@
 | POSTGRESX-17 | Release 候选身份 | OPEN | package stable 未宣称；本轮交付为内部 foundation 闭合 |
 | POSTGRESX-18 | acquire_with | PASS | `pool.acquire_with` + live |
 | POSTGRESX-19 | 有界 COPY IN/OUT | PASS | `copy_in_bytes`/`copy_out_bytes` + live TEMP 往返 |
+| POSTGRESX-20 | mTLS 客户端证书配置 | PASS | cert+key 成对；离线 openssl 构建 + fail-closed；服务端强制 mTLS live 依赖部署 |
 
 ## 本轮验证（2026-07-23）
 

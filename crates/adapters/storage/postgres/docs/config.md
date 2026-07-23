@@ -17,6 +17,8 @@
 | `FOUNDATIONX_POSTGRESX_OPERATION_TIMEOUT_MS` | SQL/事务截止时间，默认 `10000` | 否 |
 | `FOUNDATIONX_POSTGRESX_TLS_CA_FILE` | 额外 PEM CA/服务端证书路径（叠加 webpki 公共根） | 否 |
 | `FOUNDATIONX_POSTGRESX_TLS_SERVER_NAME` | TLS SNI/证书校验名（host 为 IP 且证书为 DNS CN 时必填） | 否 |
+| `FOUNDATIONX_POSTGRESX_TLS_CLIENT_CERT` | mTLS 客户端证书 PEM | 与 KEY 成对 |
+| `FOUNDATIONX_POSTGRESX_TLS_CLIENT_KEY` | mTLS 客户端私钥 PEM | 与 CERT 成对 |
 
 加载入口：`PostgresConfig::from_env()`。
 
@@ -43,7 +45,7 @@ export DATABASE_URL='postgres://app:***@127.0.0.1:5432/app?sslmode=disable'
 - 远程地址必须 `require`，否则连接前 `Invalid`
 - `require` 使用 rustls + webpki 公共根；可通过 `TLS_CA_FILE` **叠加**企业/自签 PEM（仍强制校验，无 insecure 旁路）
 - host 为 IP 且证书 CN/SAN 为 DNS 名时，设置 `TLS_SERVER_NAME`（内部 `hostaddr=IP` + `host=server_name`）
-- 本版仍不支持 mTLS 客户端证书
+- mTLS：提供 CERT+KEY 成对 PEM；仍强制校验服务端证书（无 insecure）
 
 ## 安全
 
