@@ -134,6 +134,7 @@ GRANT ALL ON foundationx_ts TO foundationx_dev;
 ### Kafka 本地开发
 
 本地未安装 Kafka。开发依赖可：
+
 1. 使用 `docker-compose` 启动单节点 Kafka + Zookeeper
 2. 或安装 `kafka-server` 包并配置 SASL PLAIN 认证
 
