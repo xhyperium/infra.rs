@@ -23,7 +23,7 @@ pub struct KafkaProducer {
 
 /// produce 在 shutdown / delivery 超时 / 完成 之间的有界等待结果。
 ///
-/// 由 [`limited_produce_await`] 产生；[`publish_record`] 与单测共用此路径更新 stats。
+/// 由 [`limited_produce_await`] 产生；[`KafkaProducer::publish_record`] 与单测共用此路径更新 stats。
 #[derive(Debug)]
 pub(crate) enum LimitedProduceAwait<T, E> {
     /// pool 关闭抢先。
@@ -58,7 +58,7 @@ where
 
 /// 将 [`limited_produce_await`] 结果映射为 `Delivery` / 错误，并递增对应 pool stats。
 ///
-/// 与 `publish_record` 在 produce 阶段使用同一套计数语义。
+/// 与 [`KafkaProducer::publish_record`] 在 produce 阶段使用同一套计数语义。
 pub(crate) fn apply_limited_produce_outcome<E>(
     pool: &KafkaPool,
     partition: i32,

@@ -8,7 +8,6 @@
 - 单测严格断言：timeout 臂 → `publish_timeouts+`；cancel 臂 → `publish_cancelled+`（禁止 OR published/failed）
 - 集成：`stats_cancel_or_timeout_increment_on_close_during_publish` 改为严格 cancelled|timeouts；matrix 注入 `KAFKAX_DOCKER_CONTAINER` 支持 pause 超时路径
 
-
 ## [0.3.8] — 2026-07-23
 
 ### Fixed（skeptic：pub API 行为测试与 stats 路径）
