@@ -3,6 +3,10 @@
 > **来源**：`.cargo/draft/taosx_SPEC_GOAL.md`（原 gitignored 草稿；现入库 SSOT）
 > **入库原因**：draft 战役合同进入本仓 SSOT，供实现对照；**≠** package stable
 > **本仓落地**：见 `docs/ssot/adapters-ssot-alignment.md` 与 PR #188–#191
+>
+> **过时声明（2026-07-23）**：§2.1「仅 HashMap scaffold」已过时；当前默认路径为 REST
+> 生产客户端 `TaosPool`/`TaosClient`（见 `docs/ssot/taosx-ssot-alignment.md` 与十轮审查）。
+> 后半量化交易全底座、Native SQL、HA、package stable 仍为 OUT-OF-SCOPE / NO-GO。
 
 ---
 

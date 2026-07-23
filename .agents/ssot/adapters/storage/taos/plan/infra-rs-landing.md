@@ -10,7 +10,9 @@
 | 凭据 | 隔离容器每次生成临时随机密码且不输出；外部服务仅 `FOUNDATIONX_*`，禁止入库 |
 | PR | #188 · #189 · #190 · #191 |
 | 对齐 | [docs/ssot/adapters-ssot-alignment.md](../../../../../docs/ssot/adapters-ssot-alignment.md) |
+| package 版本 | `0.3.4` |
 | package stable | **未宣称** |
+| SSOT 路径 | `adapters/storage/taos/`（**不**另建 `taosx/`） |
 
 ## 硬限制
 
