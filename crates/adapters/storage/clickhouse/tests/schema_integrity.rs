@@ -7,8 +7,16 @@ use std::time::Duration;
 const BINANCE_DB: &str = "binance_futures";
 
 // env_helpers: wrap unsafe set_var/remove_var for Rust 2024
-fn set_env(k: &str, v: &str) { unsafe { std::env::set_var(k, v); } }
-fn remove_env(k: &str) { unsafe { std::env::remove_var(k); } }
+fn set_env(k: &str, v: &str) {
+    unsafe {
+        std::env::set_var(k, v);
+    }
+}
+fn remove_env(k: &str) {
+    unsafe {
+        std::env::remove_var(k);
+    }
+}
 
 fn live_cfg() -> ClickHouseConfig {
     ClickHouseConfig {
@@ -304,24 +312,18 @@ fn ident_accepts_valid() {
 // ═══════════════════════════════════════════════════════════════
 
 fn set_envs(fqdn: &str, http: &str, port: &str) {
-    unsafe {
-        let _ = std::env::var("FOUNDATIONX_CLICKHOUSEX_HOST"); // suppress unused
-        set_env("FOUNDATIONX_CLICKHOUSEX_HOST", fqdn);
-        set_env("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT", http);
-        set_env("FOUNDATIONX_CLICKHOUSEX_PORT", port);
-    }
+    let _ = std::env::var("FOUNDATIONX_CLICKHOUSEX_HOST"); // suppress unused
+    set_env("FOUNDATIONX_CLICKHOUSEX_HOST", fqdn);
+    set_env("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT", http);
+    set_env("FOUNDATIONX_CLICKHOUSEX_PORT", port);
 }
 
 unsafe fn remove_port_env() {
-    unsafe {
-        remove_env("FOUNDATIONX_CLICKHOUSEX_PORT");
-    }
+    remove_env("FOUNDATIONX_CLICKHOUSEX_PORT");
 }
 
 unsafe fn remove_http_port_env() {
-    unsafe {
-        remove_env("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT");
-    }
+    remove_env("FOUNDATIONX_CLICKHOUSEX_HTTP_PORT");
 }
 
 #[test]

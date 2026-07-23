@@ -514,7 +514,10 @@ mod tests {
 
             // 单调性：每个 chunk 的 start < end
             for (start, end) in &chunks {
-                assert!(start < end, "total={total} max={max_per_chunk}: invalid chunk ({start},{end})");
+                assert!(
+                    start < end,
+                    "total={total} max={max_per_chunk}: invalid chunk ({start},{end})"
+                );
             }
 
             // 上界约束：每个 chunk 大小 <= effective_max
@@ -961,7 +964,8 @@ mod tests {
                 match tokio::time::timeout(Duration::from_secs(3), listener.accept()).await {
                     Ok(Ok((mut stream, _))) => {
                         let mut buf = [0u8; 4096];
-                        let _ = tokio::time::timeout(Duration::from_secs(2), stream.read(&mut buf)).await;
+                        let _ = tokio::time::timeout(Duration::from_secs(2), stream.read(&mut buf))
+                            .await;
                         stream
                             .write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 1\r\nConnection: close\r\n\r\n\n")
                             .await
@@ -975,15 +979,8 @@ mod tests {
             count
         }
 
-        let cases: &[(usize, usize)] = &[
-            (3, 1),
-            (5, 2),
-            (10, 3),
-            (1, 1),
-            (10, 10),
-            (10, 100),
-            (7, 0),
-        ];
+        let cases: &[(usize, usize)] =
+            &[(3, 1), (5, 2), (10, 3), (1, 1), (10, 10), (10, 100), (7, 0)];
 
         for &(total, max_per_chunk) in cases {
             let listener = TcpListener::bind(("127.0.0.1", 0)).await.expect("bind");
@@ -1002,9 +999,13 @@ mod tests {
             let pool = ClickHousePool::connect_without_ping(cfg).expect("build");
 
             let rows: Vec<Value> = (0..total).map(|i| serde_json::json!({"n": i})).collect();
-            pool.insert_batch("valid_table", &rows, BatchInsertOptions { max_rows_per_chunk: max_per_chunk })
-                .await
-                .expect("insert_batch should succeed");
+            pool.insert_batch(
+                "valid_table",
+                &rows,
+                BatchInsertOptions { max_rows_per_chunk: max_per_chunk },
+            )
+            .await
+            .expect("insert_batch should succeed");
 
             let observed = server.await.expect("server join");
             assert_eq!(

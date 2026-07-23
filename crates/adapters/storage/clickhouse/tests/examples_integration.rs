@@ -44,10 +44,8 @@ async fn ddl_schema_creates_all_tables_and_columns() {
     assert_eq!(tables.len(), 1, "funding_rate should exist");
 
     // 验证列名
-    let cols = pool
-        .query_rows(&format!("DESCRIBE TABLE {BINANCE_DB}.klines_1h"))
-        .await
-        .expect("describe");
+    let cols =
+        pool.query_rows(&format!("DESCRIBE TABLE {BINANCE_DB}.klines_1h")).await.expect("describe");
     let col_names: Vec<&str> = cols.iter().filter_map(|r| r.first().map(|s| s.as_str())).collect();
     assert!(col_names.contains(&"open_time"), "column open_time missing");
     assert!(col_names.contains(&"symbol"), "column symbol missing");
@@ -157,9 +155,7 @@ async fn crud_read_queries_return_data() {
 
     // 验证 query_text
     let text = pool
-        .query_text(&format!(
-            "SELECT count() FROM {BINANCE_DB}.klines_1d WHERE symbol='BTCUSDT'"
-        ))
+        .query_text(&format!("SELECT count() FROM {BINANCE_DB}.klines_1d WHERE symbol='BTCUSDT'"))
         .await
         .expect("count");
     assert!(text.trim().parse::<u64>().unwrap() > 0);
@@ -170,9 +166,7 @@ async fn crud_read_queries_return_data() {
 #[tokio::test]
 async fn crud_create_insert_and_verify() {
     let pool = ClickHousePool::connect(live_cfg("default")).await.expect("connect");
-    pool.execute(&format!("CREATE DATABASE IF NOT EXISTS {TEST_DB}"))
-        .await
-        .expect("create db");
+    pool.execute(&format!("CREATE DATABASE IF NOT EXISTS {TEST_DB}")).await.expect("create db");
     let pool = ClickHousePool::connect(live_cfg(TEST_DB)).await.expect("connect");
 
     // 建测试表
@@ -184,15 +178,11 @@ async fn crud_create_insert_and_verify() {
 
     // INSERT
     let row = json!({"id": 1, "name": "test-row"});
-    pool.insert_json_each_row("crud_test", &[row])
-        .await
-        .expect("insert");
+    pool.insert_json_each_row("crud_test", &[row]).await.expect("insert");
 
     // SELECT 验证
-    let rows = pool
-        .query_rows("SELECT id, name FROM crud_test WHERE id = 1")
-        .await
-        .expect("select");
+    let rows =
+        pool.query_rows("SELECT id, name FROM crud_test WHERE id = 1").await.expect("select");
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0][0], "1");
     assert_eq!(rows[0][1], "test-row");
@@ -204,9 +194,7 @@ async fn crud_create_insert_and_verify() {
 async fn crud_delete_via_alter_table() {
     // 确保 TEST_DB 和表存在 (自给自足, 不依赖其他测试执行顺序)
     let pool = ClickHousePool::connect(live_cfg("default")).await.expect("connect");
-    pool.execute(&format!("CREATE DATABASE IF NOT EXISTS {TEST_DB}"))
-        .await
-        .expect("create db");
+    pool.execute(&format!("CREATE DATABASE IF NOT EXISTS {TEST_DB}")).await.expect("create db");
     let pool = ClickHousePool::connect(live_cfg(TEST_DB)).await.expect("connect");
     pool.execute(
         "CREATE TABLE IF NOT EXISTS crud_test (id UInt64, name String) ENGINE = MergeTree ORDER BY id",
@@ -215,9 +203,7 @@ async fn crud_delete_via_alter_table() {
     .expect("create table");
 
     // 准备测试数据
-    pool.execute("INSERT INTO crud_test VALUES (100, 'to-delete')")
-        .await
-        .ok();
+    pool.execute("INSERT INTO crud_test VALUES (100, 'to-delete')").await.ok();
     let before = pool
         .query_text("SELECT count() FROM crud_test WHERE id = 100")
         .await
@@ -225,16 +211,12 @@ async fn crud_delete_via_alter_table() {
     assert_eq!(before.trim(), "1");
 
     // DELETE
-    pool.execute("ALTER TABLE crud_test DELETE WHERE id = 100")
-        .await
-        .expect("delete");
+    pool.execute("ALTER TABLE crud_test DELETE WHERE id = 100").await.expect("delete");
 
     // 验证删除
     tokio::time::sleep(Duration::from_secs(1)).await; // ClickHouse DELETE mutation is async
-    let after = pool
-        .query_text("SELECT count() FROM crud_test WHERE id = 100")
-        .await
-        .expect("count after");
+    let after =
+        pool.query_text("SELECT count() FROM crud_test WHERE id = 100").await.expect("count after");
     assert_eq!(after.trim(), "0", "row should be deleted");
 
     pool.close().await.ok();
@@ -244,9 +226,7 @@ async fn crud_delete_via_alter_table() {
 async fn crud_cleanup_test_tables() {
     // 确保 TEST_DB 存在 (自给自足)
     let pool = ClickHousePool::connect(live_cfg("default")).await.expect("connect");
-    pool.execute(&format!("CREATE DATABASE IF NOT EXISTS {TEST_DB}"))
-        .await
-        .expect("create db");
+    pool.execute(&format!("CREATE DATABASE IF NOT EXISTS {TEST_DB}")).await.expect("create db");
     let pool = ClickHousePool::connect(live_cfg(TEST_DB)).await.expect("connect");
     pool.execute("DROP TABLE IF EXISTS crud_test").await.ok();
     pool.close().await.ok();
@@ -271,10 +251,7 @@ async fn analytics_ohlcv_aggregation_produces_correct_bars() {
         .await
         .expect("count 5m bars");
     let bar_count: u64 = text.trim().parse().unwrap();
-    assert!(
-        bar_count > 0 && bar_count <= 288,
-        "should have 1-288 5m bars in 24h, got {bar_count}"
-    );
+    assert!(bar_count > 0 && bar_count <= 288, "should have 1-288 5m bars in 24h, got {bar_count}");
 
     pool.close().await.ok();
 }
@@ -348,14 +325,14 @@ async fn import_handles_empty_csv_gracefully() {
     let pool = ClickHousePool::connect(live_cfg(BINANCE_DB)).await.expect("connect");
 
     // 创建临时表测试空批次插入
-    pool.execute("CREATE TABLE IF NOT EXISTS empty_test (id UInt64) ENGINE = MergeTree ORDER BY id")
-        .await
-        .ok();
+    pool.execute(
+        "CREATE TABLE IF NOT EXISTS empty_test (id UInt64) ENGINE = MergeTree ORDER BY id",
+    )
+    .await
+    .ok();
 
     // 空行批量: insert_batch with empty slice
-    let result = pool
-        .insert_batch("empty_test", &[], BatchInsertOptions::default())
-        .await;
+    let result = pool.insert_batch("empty_test", &[], BatchInsertOptions::default()).await;
     assert!(result.is_ok(), "empty batch should succeed");
 
     // 空行单条: insert_json_each_row with empty slice

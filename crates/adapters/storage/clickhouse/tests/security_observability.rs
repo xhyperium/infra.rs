@@ -1,11 +1,12 @@
 //! ClickHouse 安全与可观测性集成测试。
 //!
 //! - Debug 脱敏、配置校验、标识符注入为离线测试。
+#![allow(clippy::while_let_loop)] // mock server accept loops
 //! - 池统计和关闭行为通过 mock HTTP 服务器离线验证。
 //! - 错误分类测试（Missing/Conflict）需要本地 ClickHouse。
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use clickhousex::{ClickHouseConfig, ClickHousePool};
@@ -50,9 +51,8 @@ async fn spawn_fast_then_slow(hold: Duration) -> (u16, tokio::task::JoinHandle<(
                 match tokio::time::timeout(Duration::from_secs(30), listener.accept()).await {
                     Ok(Ok((mut stream, _))) => {
                         let mut buf = [0u8; 4096];
-                        let _ =
-                            tokio::time::timeout(Duration::from_secs(2), stream.read(&mut buf))
-                                .await;
+                        let _ = tokio::time::timeout(Duration::from_secs(2), stream.read(&mut buf))
+                            .await;
                         if first.swap(false, Ordering::SeqCst) {
                             stream
                                 .write_all(
@@ -102,10 +102,7 @@ fn live_ch_config() -> ClickHouseConfig {
 
 /// 本地 ClickHouse 连接配置（指定测试数据库名）。
 fn live_ch_config_with_db(db: &str) -> ClickHouseConfig {
-    ClickHouseConfig {
-        database: db.to_string(),
-        ..live_ch_config()
-    }
+    ClickHouseConfig { database: db.to_string(), ..live_ch_config() }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -114,10 +111,8 @@ fn live_ch_config_with_db(db: &str) -> ClickHouseConfig {
 
 #[test]
 fn debug_redacts_password() {
-    let cfg = ClickHouseConfig {
-        password: "secret-value-xyz".into(),
-        ..ClickHouseConfig::default()
-    };
+    let cfg =
+        ClickHouseConfig { password: "secret-value-xyz".into(), ..ClickHouseConfig::default() };
     let debug = format!("{cfg:?}");
     assert!(debug.contains("***"));
     assert!(!debug.contains("secret-value-xyz"));
@@ -125,10 +120,7 @@ fn debug_redacts_password() {
 
 #[test]
 fn config_debug_does_not_contain_password() {
-    let cfg = ClickHouseConfig {
-        password: "my-secret-pw".into(),
-        ..ClickHouseConfig::default()
-    };
+    let cfg = ClickHouseConfig { password: "my-secret-pw".into(), ..ClickHouseConfig::default() };
     let display = format!("{:?}", cfg);
     assert!(!display.contains("my-secret-pw"));
 }
@@ -166,24 +158,13 @@ async fn insert_rejects_injection_patterns() {
     let pool = ClickHousePool::connect(config_for(port)).await.expect("connect");
     let row = serde_json::json!({"a": 1});
 
-    let patterns = [
-        "a;drop",
-        "1bad",
-        "",
-        "table'; DROP TABLE",
-        "bad-table",
-        "a b",
-    ];
+    let patterns = ["a;drop", "1bad", "", "table'; DROP TABLE", "bad-table", "a b"];
     for pattern in patterns {
         let err = pool
-            .insert_json_each_row(pattern, &[row.clone()])
+            .insert_json_each_row(pattern, std::slice::from_ref(&row))
             .await
             .expect_err(&format!("标识符 {pattern:?} 必须被拒绝"));
-        assert_eq!(
-            err.kind(),
-            ErrorKind::Invalid,
-            "标识符 {pattern:?} 拒绝类型错误"
-        );
+        assert_eq!(err.kind(), ErrorKind::Invalid, "标识符 {pattern:?} 拒绝类型错误");
     }
     server.await.expect("mock server task");
 }
@@ -194,10 +175,8 @@ async fn insert_rejects_injection_patterns() {
 
 #[test]
 fn remote_http_without_tls_is_rejected() {
-    let cfg = ClickHouseConfig {
-        host: "clickhouse.example.com".into(),
-        ..ClickHouseConfig::default()
-    };
+    let cfg =
+        ClickHouseConfig { host: "clickhouse.example.com".into(), ..ClickHouseConfig::default() };
     let err = cfg.validate().expect_err("远程 HTTP 必须被拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
@@ -214,40 +193,29 @@ fn remote_https_passes_validation() {
 
 #[test]
 fn ca_file_without_tls_is_rejected() {
-    let cfg = ClickHouseConfig {
-        tls_ca_file: Some("/tmp/ca.pem".into()),
-        ..ClickHouseConfig::default()
-    };
+    let cfg =
+        ClickHouseConfig { tls_ca_file: Some("/tmp/ca.pem".into()), ..ClickHouseConfig::default() };
     let err = cfg.validate().expect_err("CA 无 TLS 必须被拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
 
 #[test]
 fn zero_timeout_is_rejected() {
-    let cfg = ClickHouseConfig {
-        timeout: Duration::ZERO,
-        ..ClickHouseConfig::default()
-    };
+    let cfg = ClickHouseConfig { timeout: Duration::ZERO, ..ClickHouseConfig::default() };
     let err = cfg.validate().expect_err("零 timeout 必须被拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
 
 #[test]
 fn zero_acquire_timeout_is_rejected() {
-    let cfg = ClickHouseConfig {
-        acquire_timeout: Duration::ZERO,
-        ..ClickHouseConfig::default()
-    };
+    let cfg = ClickHouseConfig { acquire_timeout: Duration::ZERO, ..ClickHouseConfig::default() };
     let err = cfg.validate().expect_err("零 acquire_timeout 必须被拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
 
 #[test]
 fn zero_max_in_flight_is_rejected() {
-    let cfg = ClickHouseConfig {
-        max_in_flight: 0,
-        ..ClickHouseConfig::default()
-    };
+    let cfg = ClickHouseConfig { max_in_flight: 0, ..ClickHouseConfig::default() };
     let err = cfg.validate().expect_err("零 max_in_flight 必须被拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
@@ -267,20 +235,14 @@ fn base_url_does_not_contain_password() {
 
 #[test]
 fn empty_host_is_invalid() {
-    let cfg = ClickHouseConfig {
-        host: String::new(),
-        ..ClickHouseConfig::default()
-    };
+    let cfg = ClickHouseConfig { host: String::new(), ..ClickHouseConfig::default() };
     let err = cfg.validate().expect_err("空 host 必须被拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
 
 #[test]
 fn port_zero_is_invalid() {
-    let cfg = ClickHouseConfig {
-        http_port: 0,
-        ..ClickHouseConfig::default()
-    };
+    let cfg = ClickHouseConfig { http_port: 0, ..ClickHouseConfig::default() };
     let err = cfg.validate().expect_err("端口 0 必须被拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
@@ -400,9 +362,7 @@ async fn error_classification_missing() {
     let pool = ClickHousePool::connect(live_ch_config()).await.expect("connect");
 
     // 先确保测试库存在，再尝试创建 → 预期 Missing 或 Conflict
-    let _ = pool
-        .execute("CREATE DATABASE IF NOT EXISTS gap_zero_missing_test")
-        .await;
+    let _ = pool.execute("CREATE DATABASE IF NOT EXISTS gap_zero_missing_test").await;
     let err = pool
         .execute("CREATE DATABASE gap_zero_missing_test")
         .await
@@ -424,15 +384,11 @@ async fn error_classification_conflict_duplicate_table() {
     let db = "gap_zero_conflict";
     let pool = ClickHousePool::connect(live_ch_config_with_db(db)).await.expect("connect");
 
-    let _ = pool
-        .execute("CREATE DATABASE IF NOT EXISTS gap_zero_conflict")
-        .await;
+    let _ = pool.execute("CREATE DATABASE IF NOT EXISTS gap_zero_conflict").await;
 
-    pool.execute(
-        "CREATE TABLE IF NOT EXISTS ct_test (x UInt8) ENGINE = MergeTree ORDER BY x",
-    )
-    .await
-    .expect("建表");
+    pool.execute("CREATE TABLE IF NOT EXISTS ct_test (x UInt8) ENGINE = MergeTree ORDER BY x")
+        .await
+        .expect("建表");
 
     let err = pool
         .execute("CREATE TABLE ct_test (x UInt8) ENGINE = MergeTree ORDER BY x")
