@@ -68,16 +68,18 @@ docs/CI.md                                # CI 工作流指引
 | `infra.rs` | 防护体系部署 | 0 | 271 残留（文档模板） |
 | `standard_template.rs` | U+FFFD | 1 | 0 |
 
-## 6. 已知残留
+## 6. 已知残留（2026-07-23 终态）
 
-| 仓库 | U+FFFD | 说明 |
-|------|--------|------|
-| `market_data.rs` | 跟进 | 历史注释残留，L2 阻断后需清零 |
-| `infra.rs` | **0** | 2026-07-23：workflow 步骤名 + 治理文档清零；L2 升级为阻断 |
-| `macro_data.rs` | 0 | 无残留 |
-| `standard_template.rs` | 0 | 无残留 |
+| 仓库 | 跟踪文本 U+FFFD | L2 阻断 | Pre/Post hooks | execFileSync |
+|------|-----------------|---------|----------------|--------------|
+| `infra.rs` | **0** | ✅ | ✅ | ✅ |
+| `macro_data.rs` | **0** | ✅（strict + hooks） | ✅ | ✅ |
+| `market_data.rs` | **0** | ✅ | ✅ | ✅ |
+| `standard_template.rs` | **0** | ✅ | ✅ | ✅ |
+| `xhyper.rs` | **0** | ✅（utf8-encoding workflow） | ✅ | ✅ |
+| `ZoneCNH` | **0** | ✅（utf8-encoding workflow） | ✅ | ✅ |
 
-`infra.rs` 已将 U+FFFD 从「警告」升级为 CI **阻断**；`fix-encoding.mjs --check` 遇 U+FFFD 亦 `exit 1`。
+未纳入：`knowledge`（非代码仓形态）、`oh-my-codex`（第三方上游）。
 
 ## 7. CI 验证
 
@@ -97,8 +99,20 @@ docs/CI.md                                # CI 工作流指引
 
 ## 9. 后续行动
 
-- [x] `infra.rs` U+FFFD 清零 + L2 阻断 + Pre-tool 载荷校验（2026-07-23）
-- [x] `infra.rs` Post-tool 批量巡检默认阻断（2026-07-23）
-- [x] `market_data.rs` 本地复扫 U+FFFD = 0（报告旧值已过期）
-- [ ] 定期 CI 门禁审计
-- [ ] 其它仓（market_data 等）同步 L2 阻断策略（仍可能仅警告）
+- [x] `infra.rs` U+FFFD 清零 + L2 阻断 + Pre-tool 载荷校验（#276）
+- [x] `infra.rs` Post-tool 批量巡检默认阻断（#278）
+- [x] 跨仓同步 L2 阻断 + hooks（macro #37 / market #28 / standard #6 / xhyper #852 / ZoneCNH #1797）
+- [x] `execFileSync` 防 shell 注入全仓补丁（infra #289 / macro #38 / market #29 / standard #7 / xhyper #853 / ZoneCNH #1798）
+- [x] 六仓 `origin/main` 跟踪文本 U+FFFD = 0 复验（2026-07-23）
+- [ ] 定期 CI 门禁审计（季度）
+
+## 10. 合并 PR 索引（2026-07-23）
+
+| 仓库 | 主治理 | 安全补丁 |
+|------|--------|----------|
+| infra.rs | #276 #278 | #289 |
+| macro_data.rs | #37 | #38 |
+| market_data.rs | #28 | #29 |
+| standard_template.rs | #6 | #7 |
+| xhyper.rs | #852 | #853 |
+| ZoneCNH | #1797 | #1798 |
