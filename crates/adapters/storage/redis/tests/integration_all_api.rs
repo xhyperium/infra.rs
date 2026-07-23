@@ -24,9 +24,7 @@ async fn it_config_pool_client_lifecycle() {
     let ep = cfg.display_endpoint();
     // CI service Redis 可无密码；有密码时必须脱敏
     if std::env::var("FOUNDATIONX_REDISX_PASSWORD").is_ok()
-        || std::env::var("REDIS_URL")
-            .map(|u| u.contains('@') && u.contains(':'))
-            .unwrap_or(false)
+        || std::env::var("REDIS_URL").map(|u| u.contains('@') && u.contains(':')).unwrap_or(false)
     {
         assert!(
             ep.contains("***") || !ep.contains("://:***"),
