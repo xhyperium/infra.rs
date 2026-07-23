@@ -14,8 +14,12 @@
 
 mod client;
 mod config;
+mod credential;
+mod pool;
+mod presign;
 mod retry;
 mod sign;
+mod types;
 
 pub use client::{
     MAX_MULTIPART_PART_BYTES, MAX_MULTIPART_PARTS, MAX_OBJECT_KEY_BYTES, MIN_MULTIPART_PART_BYTES,
@@ -28,6 +32,9 @@ pub use config::{
     HARD_MAX_ERROR_BODY_BYTES, HARD_MAX_IN_FLIGHT, HARD_MAX_OBJECT_BYTES, OssConfig,
     OssConfigBuilder,
 };
+pub use credential::{CredentialProvider, OssCredentials, StaticCredentialProvider};
+pub use pool::{OssHealth, OssPool, OssPoolStats};
+pub use presign::{PresignOptions, presign_url};
 pub use retry::{
     MAX_RETRY_ATTEMPTS, default_retry_config, is_oss_retryable, with_retry, with_retry_deadline,
     with_retry_default,
@@ -35,6 +42,9 @@ pub use retry::{
 pub use sign::{
     authorization_header, canonicalized_resource, canonicalized_resource_with_subresources,
     sign_v1, split_parts,
+};
+pub use types::{
+    ByteStream, DownloadOptions, ObjectKey, ObjectMeta, UploadOptions, byte_stream_from_bytes,
 };
 
 #[cfg(feature = "scaffold")]
