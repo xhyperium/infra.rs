@@ -5,10 +5,13 @@
 //! - [`RedisConfig`] / [`RedisConfigBuilder`]：私有字段配置（Standalone / Cluster / Sentinel + TLS）
 //! - [`RedisPool`]：双后端（`ConnectionManager` | `ClusterConnection`）+ Semaphore 背压 + `close`
 //! - [`RedisClient`]：KV 扩展 + 调用级 deadline + [`contracts::KeyValueStore`]
-//! - 扩展：`pipeline_set` / `eval_script` / 带 fencing 的 `lock_*`
+//! - 扩展：`pipeline_set` / `eval_script` / `eval_sha` / 带 fencing 的 `lock_*`
+//! - 数据结构：Hash/List/Set/ZSet + `blpop`
+//! - Streams：`xadd` / `xread` / `xrange` / `xlen` / `xdel`
+//! - 事务：`multi_exec` / `multi_set`
 //! - resilience：基于 resiliencx 的重试包装
 //! - feature `pubsub`：`RedisPubSub` / `RedisPubSubFacade`（含 `into_result_message_stream`）
-//! - 池指标：[`RedisPool::metrics_snapshot`] / [`RedisMetricsSnapshot`]
+//! - 池指标 / readiness / liveness：[`RedisPool`]
 //! - 自验证：[`selfcheck`]（LIB-SELFCHECK-SPEC §6.5 redisx 目录）
 //!
 //! ## Scaffold（可选）
@@ -29,6 +32,9 @@ mod ext;
 mod pool;
 mod resilience;
 pub mod selfcheck;
+mod streams;
+mod structures;
+mod transaction;
 
 pub use client::RedisClient;
 pub use config::{RedisConfig, RedisConfigBuilder, RedisMode};
@@ -41,6 +47,8 @@ pub use resilience::{
     with_budget_noop, with_budget_safe, with_budget_safe_noop, with_retry_async,
     with_retry_async_no_wait, with_retry_sync,
 };
+pub use streams::StreamEntry;
+pub use transaction::TxCmd;
 
 /// 兼容旧名称：真实 Redis KV 客户端。
 pub type RedisLiveKv = RedisClient;
@@ -88,11 +96,33 @@ mod public_api_surface {
         assert_type::<RedisOperation>();
         assert_type::<RedisRetrySafety>();
         assert_type::<RedisAtomicity>();
+        assert_type::<StreamEntry>();
+        assert_type::<TxCmd>();
+        assert_type::<RedisLock>();
         assert!(RedisOperation::Get.allows_automatic_retry());
         assert!(!RedisOperation::Set.allows_automatic_retry());
         let _ = map_redis_error;
         let cfg = RedisRetryConfig::fixed(1, 0);
         let v = with_retry_sync(&cfg, "surface", || Ok(1_i32)).expect("retry");
         assert_eq!(v, 1);
+
+        let hardened = RedisConfig::builder()
+            .warmup_count(1)
+            .command_lanes(32)
+            .max_cluster_redirects(8)
+            .blocking_timeout(std::time::Duration::from_secs(2))
+            .reconnect_max_delay(std::time::Duration::from_secs(3))
+            .tcp_keepalive(std::time::Duration::from_secs(30))
+            .password_from_provider(|| Some("secret-test".into()))
+            .build()
+            .expect("hardened");
+        assert_eq!(hardened.warmup_count(), 1);
+        assert_eq!(hardened.command_lanes(), 32);
+        assert_eq!(hardened.max_cluster_redirects(), 8);
+        assert!(hardened.has_password());
+        assert!(hardened.tcp_keepalive().is_some());
+        let dbg = format!("{hardened:?}");
+        assert!(dbg.contains("***"));
+        assert!(!dbg.contains("secret-test"));
     }
 }

@@ -60,6 +60,8 @@ end
 
 impl RedisClient {
     /// 执行 Lua 脚本（固定脚本体 + KEYS/ARGV；禁止拼接不可信输入进脚本源）。
+    ///
+    /// 驱动侧 `Script` 会缓存 SHA 并优先 `EVALSHA`（固定脚本体 → 稳定 SHA）。
     pub async fn eval_script(
         &self,
         script: &str,
@@ -82,6 +84,61 @@ impl RedisClient {
                 inv.arg(a.as_slice());
             }
             map_redis_result(inv.invoke_async(&mut conn).await)
+        })
+        .await
+    }
+
+    /// 先 `SCRIPT LOAD` 再按 SHA 调用（显式固定 SHA 路径；禁止动态拼接脚本）。
+    ///
+    /// 返回 `(sha, value)`；`sha` 可缓存复用 [`Self::eval_sha`]。
+    pub async fn script_load_and_eval(
+        &self,
+        script: &str,
+        keys: &[&str],
+        args: &[&[u8]],
+    ) -> XResult<(String, redis::Value)> {
+        if script.trim().is_empty() {
+            return Err(XError::invalid("redis Lua 脚本不能为空"));
+        }
+        let script_body = script.to_owned();
+        let sha: String = self
+            .with_pool_conn({
+                let body = script_body.clone();
+                move |mut conn: RedisBackend| async move {
+                    let sha: String = map_redis_result(
+                        redis::cmd("SCRIPT").arg("LOAD").arg(body).query_async(&mut conn).await,
+                    )?;
+                    Ok(sha)
+                }
+            })
+            .await?;
+        let value = self.eval_sha(&sha, keys, args).await?;
+        Ok((sha, value))
+    }
+
+    /// `EVALSHA`：仅接受已加载的 SHA；NoScript → [`kernel::ErrorKind::Missing`]。
+    pub async fn eval_sha(
+        &self,
+        sha: &str,
+        keys: &[&str],
+        args: &[&[u8]],
+    ) -> XResult<redis::Value> {
+        if sha.trim().is_empty() {
+            return Err(XError::invalid("EVALSHA sha 不能为空"));
+        }
+        let sha = sha.to_owned();
+        let keys: Vec<String> = keys.iter().map(|k| (*k).to_owned()).collect();
+        let args: Vec<Vec<u8>> = args.iter().map(|a| a.to_vec()).collect();
+        self.with_pool_conn(move |mut conn: RedisBackend| async move {
+            let mut cmd = redis::cmd("EVALSHA");
+            cmd.arg(&sha).arg(keys.len());
+            for k in &keys {
+                cmd.arg(k);
+            }
+            for a in &args {
+                cmd.arg(a.as_slice());
+            }
+            map_redis_result(cmd.query_async(&mut conn).await)
         })
         .await
     }
