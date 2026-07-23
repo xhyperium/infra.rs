@@ -34,6 +34,7 @@
 | [worktree-policy.md](worktree-policy.md) | §6.0.5 | Git Worktree 强制 — 隔离开发环境策略 |
 | [编码与语言约定.md](编码与语言约定.md) | §4.5 | 本仓语言落地 — UTF-8、强制中文 |
 | [文档组织约定.md](文档组织约定.md) | — | 文档目录结构与命名规范 — 报告路径 \\`docs/report/YYYY-MM-DD/\\` |
+| [项目开发规则.md](项目开发规则.md) | — | 开发规则总览 — 文档/工程/版本/worktree/质量门禁速查 |
 | [ASD-STE100.md](ASD-STE100.md) | §4.6 | 英文交付可选指南（须书面豁免；非默认） |
 | [commit-template.md](commit-template.md) | §4.3.3 | 分支与标签 — `.gitmessage` 提交信息模板使用指南 |
 | [credential-baseline.md](credential-baseline.md) | — | 凭据复杂度规范 — 密码强度报告与轮换跟踪 |
