@@ -8,6 +8,7 @@
 - `JetStreamConsumerConfig::command_timeout`：约束确认类 broker 指令
 - Core/JetStream 操作 deadline、有限 reconnect、channel capacity 与连接事件 stats
 - feature `scaffold`：旧内存 `NatsAdapter` / `MockNatsBus`
+- [`validation`](src/validation.rs)：库内自验证（LIB-SELFCHECK；`kv_watch` NO-GO）
 
 ## 配置
 
@@ -56,6 +57,8 @@ cargo test -p natsx
 cargo test -p natsx --features scaffold
 cargo test -p natsx --test live_event_bus -- --ignored
 cargo bench -p natsx --bench hot_path -- --quick
+# live 自验证（需 broker）：
+FOUNDATIONX_NATS_URL=nats://127.0.0.1:4222 cargo run -p natsx --example nats_verify
 node scripts/broker-conformance.mjs
 # 固定镜像、动态端口，同一 client 连续三轮 broker 重启恢复：
 node scripts/nats-reconnect-conformance.mjs

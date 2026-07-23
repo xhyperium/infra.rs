@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.5] — 2026-07-23
+
+### Added
+
+- 库内自验证 `validation`：`NatsValidator` / `CheckLevel` / 四态 `CheckStatus` / `ValidationReport`
+- 对齐 draft `verifyctl.md` §6.3：basic connection、rw pub_sub、full request_reply / queue_group / wildcard / js_stream / js_publish_ack / js_ack_redelivery
+- example：`nats_verify`（live，JSON 报告）
+- `nats.full.kv_watch` 明确 **NO-GO**（async-nats kv feature 未启用；稳定承诺不含 KV）
+
+### Boundaries
+
+- 自验证不是 package stable 证明；Core 断线窗口无回放、Cluster/HA 仍 NO-GO
+
 ## [0.3.4] — 2026-07-23
 
 ### Added
