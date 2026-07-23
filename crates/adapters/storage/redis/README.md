@@ -27,10 +27,20 @@ export FOUNDATIONX_REDISX_PASSWORD=...  # 勿提交
 export FOUNDATIONX_REDISX_DB=0
 
 cargo test -p redisx
-cargo test -p redisx -- --ignored
 cargo test -p redisx --features scaffold
-cargo bench -p redisx --bench kv_hot_path
+
+# live 集成 / E2E / 自检（凭据来自 ZoneCNH secrets，不回显密码）
+scripts/live/export-foundationx-env.sh --env dev -- \
+  cargo test -p redisx --features pubsub \
+    --test integration_all_api --test e2e_klines_crud --test live_selfcheck \
+    -- --ignored --test-threads=1
+
+# 基准
+scripts/live/export-foundationx-env.sh --env dev -- \
+  cargo bench -p redisx --bench api_matrix
 ```
+
+数据 E2E 默认读取 `/home/workspace/data/binance_futures/merged/BTCUSDT/1m.csv`（可用 `REDISX_DATA_ROOT` / `REDISX_E2E_CSV` / `REDISX_E2E_ROWS` 覆盖）。
 
 ```rust
 use redisx::{RedisConfig, RedisPool};

@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.11] — 2026-07-23
+
+### Added
+
+- **集成测试** `tests/integration_all_api.rs`：公开 API 全量 live（pool/KV/pipeline/lua/lock/selfcheck/pubsub）
+- **E2E CRUD** `tests/e2e_klines_crud.rs`：`/home/workspace/data/binance_futures` K 线 CSV → set/get/mset/mget/pipeline/delete
+- **基准** `benches/api_matrix.rs`：ping / set+get / mset+mget / pipeline_set
+
+### Docs
+
+- live 凭据：`scripts/live/export-foundationx-env.sh --env dev`（ZoneCNH `secrets/env/dev.md`，不回显密码）
+
+### Boundaries
+
+- 默认 `#[ignore]`，需真实 Redis + secrets 注入
+- pipeline 大批量建议分块（E2E 默认 32）
+- 未宣称 package stable
+
 ## [0.3.10] — 2026-07-23
 
 ### Added

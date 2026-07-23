@@ -7,7 +7,7 @@
 | 路径裁决 | **不**新增 `.agents/ssot/adapters/storage/redisx/`；目录名 `redis` 对齐 storage×7，package 名 `redisx` |
 | 实现 | `crates/adapters/storage/redis` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.10`（selfcheck §6.5；`0.3.9` metrics/stream） |
+| version | `0.3.11`（全量 live 集成 + data E2E + api_matrix bench） |
 | 结论 | **Standalone P0+ 生产默认客户端** + **自验证 catalog**；Cluster / Sentinel / TLS live **OPEN**；**禁止** package stable / Draft 全文 DoD |
 
 ## 结论摘要
@@ -56,6 +56,9 @@
 | REDISX-25 | 池累计 metrics | PASS | `metrics_snapshot`；非 OTel exporter |
 | REDISX-26 | Pub/Sub result stream | PASS | `into_result_message_stream`；断线一次 Err；无重连 |
 | REDISX-27 | 自验证 selfcheck | PASS | `redisx::selfcheck` §6.5 11 项；短路/skip/catalog；非 tools/verifyctl |
+| REDISX-28 | 全量 API live 集成 | PASS | `tests/integration_all_api.rs`（pool/KV/lua/lock/pubsub/selfcheck） |
+| REDISX-29 | data E2E CRUD | PASS | `tests/e2e_klines_crud.rs` + `/home/workspace/data/binance_futures` |
+| REDISX-30 | API 基准矩阵 | PASS | `benches/api_matrix.rs` |
 
 ## 10 轮审查与 gap 证据
 
