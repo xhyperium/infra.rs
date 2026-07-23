@@ -4,7 +4,6 @@
 > 本规范涵盖:基础编码规范、异步编程规范、Unsafe 使用准则
 > **注意**：本文件为历史/参考长文。本仓强制规则以组织 `rulesets/rust/` + [`.agents/rules/rust-dev-rules.md`](../../.agents/rules/rust-dev-rules.md) 为准。
 
-
 ---
 
 ## 目录
