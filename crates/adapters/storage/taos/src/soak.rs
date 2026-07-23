@@ -75,8 +75,8 @@ pub async fn run_soak(pool: &TaosPool, cfg: SoakConfig) -> XResult<SoakReport> {
         let ts = prec.to_nanos(prec.from_nanos(ts));
         let tick = Tick {
             symbol: symbol.into(),
-            bid: Price::new(Decimal::try_new(100 + (iterations as i128 % 50), 2).expect("bid")),
-            ask: Price::new(Decimal::try_new(101 + (iterations as i128 % 50), 2).expect("ask")),
+            bid: Price::new(decimal_scale2(100, iterations)),
+            ask: Price::new(decimal_scale2(101, iterations)),
             ts,
         };
         match pool.write_series(&cfg.table, vec![tick]).await {
