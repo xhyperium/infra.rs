@@ -472,6 +472,70 @@ mod tests {
     }
 
     #[test]
+    fn chunk_ranges_property_coverage_and_continuity() {
+        let cases: &[(usize, usize)] = &[
+            (0, 1),
+            (1, 1),
+            (1, 5),
+            (5, 2),
+            (6, 2),
+            (10, 3),
+            (100, 7),
+            (100, 1),
+            (5, 100),
+            (7, 0),
+            (1000, 197),
+        ];
+        for &(total, max_per_chunk) in cases {
+            let chunks = chunk_ranges(total, max_per_chunk);
+            let effective_max = max_per_chunk.max(1);
+
+            if total == 0 {
+                assert!(chunks.is_empty(), "total=0: expected empty, got {chunks:?}");
+                continue;
+            }
+
+            assert!(!chunks.is_empty(), "total={total} max={max_per_chunk}: expected non-empty");
+
+            // 覆盖性：最后一个 chunk 的 end == total
+            assert_eq!(
+                chunks.last().unwrap().1,
+                total,
+                "total={total} max={max_per_chunk}: last chunk end should be {total}, chunks={chunks:?}"
+            );
+
+            // 连续性：前一个 chunk 的 end == 下一个 chunk 的 start
+            for pair in chunks.windows(2) {
+                assert_eq!(
+                    pair[0].1, pair[1].0,
+                    "total={total} max={max_per_chunk}: gap between {:?} and {:?}",
+                    pair[0], pair[1]
+                );
+            }
+
+            // 单调性：每个 chunk 的 start < end
+            for (start, end) in &chunks {
+                assert!(start < end, "total={total} max={max_per_chunk}: invalid chunk ({start},{end})");
+            }
+
+            // 上界约束：每个 chunk 大小 <= effective_max
+            for (start, end) in &chunks {
+                let size = end - start;
+                assert!(
+                    size <= effective_max,
+                    "total={total} max={max_per_chunk}: chunk ({start},{end}) size {size} exceeds limit {effective_max}"
+                );
+            }
+
+            // 覆盖性（前向）：第一个 chunk 的 start == 0
+            assert_eq!(
+                chunks[0].0, 0,
+                "total={total} max={max_per_chunk}: first chunk should start at 0"
+            );
+        }
+    }
+
+    #[test]
     fn batch_options_default() {
         let o = BatchInsertOptions::default();
         assert_eq!(o.max_rows_per_chunk, 1000);
