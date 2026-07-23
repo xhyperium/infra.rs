@@ -47,9 +47,7 @@ async fn create_simple_table(pool: &ClickHousePool, prefix: &str) -> String {
          ) ENGINE = MergeTree ORDER BY id"
     );
     pool.execute(&ddl).await.expect("创建测试表");
-    pool.execute(&format!("TRUNCATE TABLE IF EXISTS {table}"))
-        .await
-        .expect("清理测试表");
+    pool.execute(&format!("TRUNCATE TABLE IF EXISTS {table}")).await.expect("清理测试表");
     table
 }
 
@@ -72,9 +70,7 @@ async fn concurrent_writes_ten_tasks_insert_correct_row_count() {
         let pool = pool.clone();
         let table = table.clone();
         let rows = make_rows(t * 20, 20);
-        handles.push(tokio::spawn(async move {
-            pool.insert_json_each_row(&table, &rows).await
-        }));
+        handles.push(tokio::spawn(async move { pool.insert_json_each_row(&table, &rows).await }));
     }
 
     for handle in handles {
@@ -86,9 +82,7 @@ async fn concurrent_writes_ten_tasks_insert_correct_row_count() {
     let count: u64 = count_text.trim().parse().expect("解析行数");
     assert_eq!(count, 200, "10 tasks × 20 rows = 200 total");
 
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .expect("清理测试表");
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理测试表");
     pool.close().await.expect("关闭连接");
 }
 
@@ -105,9 +99,8 @@ async fn concurrent_read_write_mixed_eventual_consistency() {
         let pool = pool.clone();
         let table = table.clone();
         let rows = make_rows(t * 20, 20);
-        writer_handles.push(tokio::spawn(async move {
-            pool.insert_json_each_row(&table, &rows).await
-        }));
+        writer_handles
+            .push(tokio::spawn(async move { pool.insert_json_each_row(&table, &rows).await }));
     }
 
     let mut reader_handles = Vec::new();
@@ -132,9 +125,7 @@ async fn concurrent_read_write_mixed_eventual_consistency() {
     let count: u64 = count_text.trim().parse().expect("解析行数");
     assert_eq!(count, 100, "5 writers × 20 rows = 100 total");
 
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .expect("清理测试表");
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理测试表");
     pool.close().await.expect("关闭连接");
 }
 
@@ -146,9 +137,7 @@ async fn pool_limit_max_in_flight_one_with_five_concurrent_requests() {
     let pool = ClickHousePool::connect(cfg).await.expect("连接");
 
     let hold_pool = pool.clone();
-    let hold = tokio::spawn(async move {
-        hold_pool.execute("SELECT sleep(3)").await
-    });
+    let hold = tokio::spawn(async move { hold_pool.execute("SELECT sleep(3)").await });
 
     tokio::time::sleep(Duration::from_millis(100)).await;
 
@@ -159,9 +148,8 @@ async fn pool_limit_max_in_flight_one_with_five_concurrent_requests() {
 
     for _ in 0..5 {
         let p = pool.clone();
-        handles.push(tokio::spawn(async move {
-            p.execute("SELECT 1").await.map_err(|e| e.kind())
-        }));
+        handles
+            .push(tokio::spawn(async move { p.execute("SELECT 1").await.map_err(|e| e.kind()) }));
     }
 
     for handle in handles {
@@ -175,10 +163,7 @@ async fn pool_limit_max_in_flight_one_with_five_concurrent_requests() {
 
     let _ = hold.await.expect("hold join");
 
-    assert!(
-        ok_count > 0,
-        "至少 1 个请求应成功: ok={ok_count} deadline={deadline_count}"
-    );
+    assert!(ok_count > 0, "至少 1 个请求应成功: ok={ok_count} deadline={deadline_count}");
     assert!(
         deadline_count + other_count >= 3,
         "多数并发应超时: ok={ok_count} deadline={deadline_count}"
@@ -199,9 +184,7 @@ async fn long_running_stability_thirty_seconds_no_leak() {
 
     while start.elapsed() < Duration::from_secs(30) {
         let rows = make_rows((insert_count % 1000) as u32 * 100, 10);
-        pool.insert_json_each_row(&table, &rows)
-            .await
-            .expect("insert");
+        pool.insert_json_each_row(&table, &rows).await.expect("insert");
         let count_sql = format!("SELECT count() FROM {table} FORMAT TabSeparated");
         let _ = pool.query_text(&count_sql).await.expect("count query");
         insert_count += 1;
@@ -215,22 +198,13 @@ async fn long_running_stability_thirty_seconds_no_leak() {
         let vm_rss: Option<u64> = status
             .lines()
             .find(|line| line.starts_with("VmRSS:"))
-            .and_then(|line| {
-                line.split_whitespace()
-                    .nth(1)
-                    .and_then(|v| v.parse::<u64>().ok())
-            });
+            .and_then(|line| line.split_whitespace().nth(1).and_then(|v| v.parse::<u64>().ok()));
         if let Some(rss) = vm_rss {
-            assert!(
-                rss < 500_000,
-                "VmRSS 异常偏高: {rss} kB"
-            );
+            assert!(rss < 500_000, "VmRSS 异常偏高: {rss} kB");
         }
     }
 
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .expect("清理测试表");
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理测试表");
     pool.close().await.expect("关闭连接");
 }
 
@@ -246,22 +220,16 @@ async fn backpressure_behavior_with_different_max_in_flight() {
         let mut hold_handles = Vec::new();
         for _ in 0..hold_count {
             let p = pool.clone();
-            hold_handles.push(tokio::spawn(async move {
-                p.execute("SELECT sleep(3)").await
-            }));
+            hold_handles.push(tokio::spawn(async move { p.execute("SELECT sleep(3)").await }));
         }
 
         tokio::time::sleep(Duration::from_millis(200)).await;
 
         let extra_pool = pool.clone();
-        let extra = tokio::spawn(async move {
-            extra_pool.execute("SELECT 1").await
-        });
+        let extra = tokio::spawn(async move { extra_pool.execute("SELECT 1").await });
 
         let p2 = pool.clone();
-        let overflow = tokio::spawn(async move {
-            p2.execute("SELECT 1").await
-        });
+        let overflow = tokio::spawn(async move { p2.execute("SELECT 1").await });
 
         let overflow_result = overflow.await.expect("overflow join");
         match overflow_result {
@@ -292,9 +260,7 @@ async fn connection_leak_detection_pool_stats_sane_after_operations() {
 
     for i in 0..100u32 {
         let rows = make_rows(i * 10, 10);
-        pool.insert_json_each_row(&table, &rows)
-            .await
-            .expect("insert");
+        pool.insert_json_each_row(&table, &rows).await.expect("insert");
         let count_sql = format!("SELECT count() FROM {table} FORMAT TabSeparated");
         let _ = pool.query_text(&count_sql).await.expect("count query");
     }
@@ -305,9 +271,7 @@ async fn connection_leak_detection_pool_stats_sane_after_operations() {
     assert_eq!(stats.in_flight, 0, "100 次操作后 in_flight 应归零: actual={}", stats.in_flight);
     assert!(!stats.closed, "池不应被关闭");
 
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .expect("清理测试表");
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理测试表");
     pool.close().await.expect("关闭连接");
 }
 
@@ -321,9 +285,8 @@ async fn closed_pool_all_concurrent_requests_return_unavailable() {
 
     for _ in 0..10 {
         let p = pool.clone();
-        handles.push(tokio::spawn(async move {
-            p.execute("SELECT 1").await.map_err(|e| e.kind())
-        }));
+        handles
+            .push(tokio::spawn(async move { p.execute("SELECT 1").await.map_err(|e| e.kind()) }));
     }
 
     for handle in handles {
