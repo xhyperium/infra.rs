@@ -12,15 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **redisx 0.3.8**：调用级 total deadline、pipeline_set、Lua 脚本与 fencing 分布式锁；workspace redis 启用 script feature
-
-
-### Changed
-
 - **redisx 0.3.7**：error_map/client 离线单测补强；交付记录挂 #281 merge SHA；覆盖率残余更新
-
-
-### Changed
-
 - **redisx 0.3.6**：Standalone P0 对齐证据与 10 轮审查冻结；SSOT 路径裁决保持 `adapters/storage/redis/`；真实 Redis live 复验；覆盖率残余诚实文档；Cluster/Sentinel/TLS live 仍 OPEN；禁止 package stable
 - **项目规则统一至 `.agents/rules/`**：自 `docs/governance/` 迁入规则正文（版本、worktree、语言、Rust 开发、复用、存储配置等）；`docs/governance/` 仅保留兼容重定向 stub；更新 AGENTS/CLAUDE/宪章索引与脚本注释中的路径引用
 

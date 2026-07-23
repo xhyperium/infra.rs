@@ -1,6 +1,7 @@
 # redisx
 
 生产默认的异步 Redis 客户端（`contracts::KeyValueStore` + 扩展 API）。
+
 - 调用级 deadline：`client.with_call_deadline(Duration::from_secs(2))`
 - 扩展：`pipeline_set` / `eval_script` / `lock_acquire`（fencing）
 
@@ -77,6 +78,7 @@ pool.close(Duration::from_secs(2)).await?;
 最终本地测试为 51 passed + 8 ignored；ignored live 项需要外部 Redis。
 
 模块级旧 `with_budget*` / `with_retry*` 为 unchecked compatibility，不得作为新生产默认。
+
 - 调用级 deadline：`client.with_call_deadline(Duration::from_secs(2))`
 - 扩展：`pipeline_set` / `eval_script` / `lock_acquire`（fencing）
 
