@@ -36,7 +36,7 @@
 //! - **NO-GO**：group / rebalance / 自动重连 / native EOS / schema registry /
 //!   SCRAM / OAuth / mTLS / package stable
 //! - **OOS**：draft Part2 量化栈（embedded broker / io-uring / µs 热路径 等）
-//! - **0.3.7**：headers/key 公共面与 stats 扩展（gap-zero）
+//! - **0.3.7**：headers/key 公共面与 stats 扩展（gap-zero；PR 合入）
 
 #![forbid(unsafe_code)]
 
