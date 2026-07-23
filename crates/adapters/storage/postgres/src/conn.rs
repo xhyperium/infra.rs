@@ -141,6 +141,25 @@ impl PgConnection {
         }
     }
 
+    /// 执行多语句 SQL（simple query / `batch_execute`）。
+    ///
+    /// 仅用于**受信任**脚本（如 migration）；禁止拼接用户输入。
+    pub async fn batch_execute(&mut self, sql: &str) -> XResult<()> {
+        if sql.trim().is_empty() {
+            return Err(XError::invalid("batch_execute sql 不能为空"));
+        }
+        let guard = self.take_guard()?;
+        match tokio::time::timeout(self.operation_timeout, guard.object()?.batch_execute(sql)).await
+        {
+            Ok(result) => {
+                self.client = Some(guard.release()?);
+                result.map_err(map_tokio_error)
+            }
+            Err(error) => Err(XError::deadline_exceeded("Postgres batch_execute 超时；连接已丢弃")
+                .with_source(error)),
+        }
+    }
+
     /// `COPY ... FROM STDIN`：将 `data` 作为单块写入，返回影响行数。
     ///
     /// - `statement` 必须是完整 `COPY ... FROM STDIN ...` SQL（**禁止**拼接不可信标识符）
