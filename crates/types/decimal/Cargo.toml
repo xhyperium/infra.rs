@@ -6,7 +6,7 @@ rust-version.workspace = true
 description = "/types/ 十进制数值类型（ADR-006/007，spec §4.2）"
 license.workspace = true
 repository.workspace = true
-publish = false
+publish = true
 
 [lib]
 name = "decimalx"
