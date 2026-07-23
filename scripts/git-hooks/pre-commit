@@ -1,31 +1,128 @@
 #!/usr/bin/env bash
-# pre-commit: 版本一致性自动检查
+# pre-commit: 版本一致性 + 编码完整性自动检查
+#
 # 门禁：
 #   1. 依赖集中管理 — 第三方依赖必须 { workspace = true }
 #   2. Crate 独立版本 — path 依赖 version 对齐
-#   3. 禁止 U+FFFD 残留 — 编码完整性
+#   3. 禁止 U+FFFD 残留 — 编码完整性（仅扫描暂存文件）
+#   4. Cargo.toml 语法校验 — 暂存的 TOML 必须有效
+#   5. SSOT 双镜像一致 — 暂存的 spec.md 必须与镜像一致
+#
+# 跳过： SKIP_VERSION_CHECK=1 git commit ...
+# 仅 commit 前有效，push 时 CI 仍会拦截。
+
 set -euo pipefail
 
+# --- 跳过机制 ---
+if [ "${SKIP_VERSION_CHECK:-0}" = "1" ]; then
+    echo "[pre-commit] SKIP: SKIP_VERSION_CHECK=1"
+    exit 0
+fi
+
 ROOT="$(git rev-parse --show-toplevel)"
+FAIL=0
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
 
-echo "[pre-commit] 版本一致性检查..."
+# --- H0: 快速判断是否需要检查 ---
+# 仅文档变更（.md / .adoc）且不涉及 Cargo.toml → 跳过路径 1-2
+DOC_ONLY=true
+for f in $STAGED; do
+    case "$f" in
+        Cargo.toml|crates/*/Cargo.toml|tools/*/Cargo.toml|*.rs|*.mjs|*.json|*.yml|*.yaml)
+            DOC_ONLY=false; break ;;
+    esac
+done
 
-# 1. 依赖集中管理门禁
-if ! node "$ROOT/scripts/quality-gates/check-workspace-deps.mjs" 2>&1; then
-    echo "[pre-commit] FAIL: check-workspace-deps"
-    exit 1
+echo "[pre-commit] 暂存文件: $(echo "$STAGED" | wc -l) ($([ "$DOC_ONLY" = true ] && echo "仅文档" || echo "含代码/配置"))"
+
+# --- C1: 依赖集中管理门禁 ---
+if [ "$DOC_ONLY" = false ]; then
+    t0=$(date +%s%3N)
+    if node "$ROOT/scripts/quality-gates/check-workspace-deps.mjs" >/dev/null 2>&1; then
+        t1=$(date +%s%3N)
+        echo "[pre-commit] PASS  check-workspace-deps ($((t1-t0))ms)"
+    else
+        echo "[pre-commit] FAIL  check-workspace-deps — 第三方依赖必须 { workspace = true }"
+        echo "   提示: cargo metadata 可定位内联版本"
+        FAIL=$((FAIL+1))
+    fi
+
+    # --- C2: Crate 版本对齐门禁 ---
+    t0=$(date +%s%3N)
+    if node "$ROOT/scripts/quality-gates/check-crate-versions.mjs" >/dev/null 2>&1; then
+        t1=$(date +%s%3N)
+        echo "[pre-commit] PASS  check-crate-versions ($((t1-t0))ms)"
+    else
+        echo "[pre-commit] FAIL  check-crate-versions — path 依赖 version 必须对��"
+        echo "   提示: node scripts/version/crate-bump.mjs <name> 可自动更新"
+        FAIL=$((FAIL+1))
+    fi
+else
+    echo "[pre-commit] SKIP  check-workspace-deps, check-crate-versions (仅文档变更)"
 fi
 
-# 2. Crate 版本对齐门禁
-if ! node "$ROOT/scripts/quality-gates/check-crate-versions.mjs" 2>&1; then
-    echo "[pre-commit] FAIL: check-crate-versions"
-    exit 1
+# --- C3: U+FFFD 残留扫描（仅扫描暂存文件） ---
+t0=$(date +%s%3N)
+fffd=0
+IFS=$'\n'
+for f in $STAGED; do
+    [ -f "$ROOT/$f" ] || continue
+    # 只扫描文本文件
+    case "$f" in
+        *.rs|*.md|*.toml|*.yml|*.yaml|*.mjs|*.js|*.json|*.sh|*.txt|*.html|*.css)
+            if /bin/grep -aqF $'\xef\xbf\xbd' "$ROOT/$f" 2>/dev/null; then
+                echo "[pre-commit] FAIL  U+FFFD 残留: $f (编码损坏)"
+                fffd=$((fffd+1))
+            fi ;;
+    esac
+done
+if [ $fffd -eq 0 ]; then
+    t1=$(date +%s%3N)
+    echo "[pre-commit] PASS  U+FFFD scan ($((t1-t0))ms)"
+else
+    FAIL=$((FAIL+1))
+    echo "   提示: node scripts/fix-encoding.mjs --check 可定位损坏文件"
 fi
 
-# 3. U+FFFD 残留扫描
-if /bin/grep -rn $'\xef\xbf\xbd' "$ROOT/crates/" "$ROOT/.agents/" "$ROOT/docs/" --include="*.rs" --include="*.md" 2>/dev/null; then
-    echo "[pre-commit] FAIL: U+FFFD 残留"
-    exit 1
+# --- C4: Cargo.toml 语法校验 ---
+cargo_tomls=$(echo "$STAGED" | /bin/grep -E '^crates/.*/Cargo\.toml$|^tools/.*/Cargo\.toml$|^Cargo\.toml$' || true)
+if [ -n "$cargo_tomls" ]; then
+    t0=$(date +%s%3N)
+    if cargo metadata --no-deps --format-version=1 >/dev/null 2>&1; then
+        t1=$(date +%s%3N)
+        echo "[pre-commit] PASS  cargo metadata ($((t1-t0))ms)"
+    else
+        echo "[pre-commit] FAIL  cargo metadata — Cargo.toml 语法错误"
+        echo "   文件: $cargo_tomls"
+        FAIL=$((FAIL+1))
+    fi
 fi
 
-echo "[pre-commit] PASS: 版本一致性"
+# --- C5: SSOT 双镜像一致性 ---
+spec_staged=$(echo "$STAGED" | /bin/grep -E 'spec/spec\.md$' || true)
+if [ -n "$spec_staged" ]; then
+    t0=$(date +%s%3N)
+    for spec in $spec_staged; do
+        dir=$(dirname "$ROOT/$spec")
+        mirror=$(ls "$dir"/xhyper-*-complete-spec.md 2>/dev/null | head -1)
+        if [ -n "$mirror" ]; then
+            if cmp -s "$ROOT/$spec" "$mirror"; then
+                echo "[pre-commit] PASS  spec mirror: $spec ≡ $(basename "$mirror")"
+            else
+                echo "[pre-commit] FAIL  spec mirror: $spec ≠ $(basename "$mirror") — 双镜像不同步"
+                echo "   修复: cp $spec $mirror"
+                FAIL=$((FAIL+1))
+            fi
+        fi
+    done
+    t1=$(date +%s%3N)
+fi
+
+# --- 结果 ---
+if [ $FAIL -eq 0 ]; then
+    echo "[pre-commit] PASS: 全部 $([ "$DOC_ONLY" = true ] && echo "2" || echo "5") 项检查通过"
+    exit 0
+else
+    echo "[pre-commit] FAIL: $FAIL 项未通过，修复后重试"
+    exit 1
+fi

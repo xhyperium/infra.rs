@@ -4,4 +4,5 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cp "$ROOT/scripts/git-hooks/pre-commit" "$ROOT/.git/hooks/pre-commit"
 chmod +x "$ROOT/.git/hooks/pre-commit"
-echo "pre-commit hook installed"
+echo "pre-commit hook 已安装到 .git/hooks/pre-commit"
+echo "验证: .git/hooks/pre-commit"
