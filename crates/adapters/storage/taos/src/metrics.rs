@@ -1,7 +1,6 @@
-//! 进程内有界操作计数（非 OTLP/Prometheus 导出）。
+//! 进程内有界操作计数 + Prometheus 文本导出。
 //!
 //! 标签仅 operation/outcome 语义，无高基数 symbol/table。
-//! 完整 RED 指标面与远程导出仍为 NO-GO；本模块提供可测的本地快照。
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -50,6 +49,31 @@ impl TaosMetricsSnapshot {
             + self.health_not_ready
             + self.ws_probe_ok
             + self.ws_probe_err
+    }
+
+    /// Prometheus 文本格式（counter；低基数标签）。
+    #[must_use]
+    pub fn to_prometheus_text(&self) -> String {
+        let mut out = String::with_capacity(512);
+        out.push_str("# HELP taosx_ops_total Operation counters\n");
+        out.push_str("# TYPE taosx_ops_total counter\n");
+        for (op, outcome, v) in [
+            ("sql", "ok", self.sql_ok),
+            ("sql", "err", self.sql_err),
+            ("write", "ok", self.write_ok),
+            ("write", "err", self.write_err),
+            ("query", "ok", self.query_ok),
+            ("query", "err", self.query_err),
+            ("ping", "ok", self.ping_ok),
+            ("ping", "err", self.ping_err),
+            ("health", "ready", self.health_ready),
+            ("health", "not_ready", self.health_not_ready),
+            ("ws_probe", "ok", self.ws_probe_ok),
+            ("ws_probe", "err", self.ws_probe_err),
+        ] {
+            out.push_str(&format!("taosx_ops_total{{op=\"{op}\",outcome=\"{outcome}\"}} {v}\n"));
+        }
+        out
     }
 }
 
@@ -165,5 +189,8 @@ mod tests {
         assert_eq!(snap.sql_err, 1);
         assert_eq!(snap.write_ok, 1);
         assert!(snap.total_events() >= 3);
+        let text = snap.to_prometheus_text();
+        assert!(text.contains("taosx_ops_total"));
+        assert!(text.contains("op=\"sql\""));
     }
 }
