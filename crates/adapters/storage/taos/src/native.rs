@@ -89,8 +89,8 @@ pub async fn exec_sql_ws(config: &TaosConfig, sql: &str) -> XResult<String> {
         }
         let _ = ws.close(None).await;
         if body.is_empty() {
-            // 无响应体仍视为会话建立成功（部分服务端对未认证 query 静默）
-            body = "ws_sql_session_ok".into();
+            // 无协议响应不得伪造成功（避免空帧 PASS）
+            return Err(XError::unavailable("taos ws sql 无响应体：服务端未返回 Text/Binary 帧"));
         }
         Ok(body)
     };
@@ -171,6 +171,17 @@ mod tests {
             ..TaosConfig::default()
         };
         let err = connect_native_ws(&cfg).await.expect_err("mode");
+        assert_eq!(err.kind(), ErrorKind::Invalid);
+    }
+
+    #[tokio::test]
+    async fn exec_sql_ws_rejects_empty_sql() {
+        let cfg = TaosConfig {
+            transport: TransportMode::NativeWs,
+            timeout: Duration::from_millis(100),
+            ..TaosConfig::default()
+        };
+        let err = exec_sql_ws(&cfg, "   ").await.expect_err("empty");
         assert_eq!(err.kind(), ErrorKind::Invalid);
     }
 }

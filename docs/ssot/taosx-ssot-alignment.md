@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/adapters/storage/taos/`（**禁止**平行 `taosx/` 树） |
 | 实现 | `crates/adapters/storage/taos` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.9` |
+| version | `0.3.10` |
 | 结论 | **Production-default REST 全 API 面已闭合**（stream/batcher/retry/TMQ/metrics 导出/soak/HA-lite/selfcheck Full）；gap register **未完成=0** |
 | 档次 | Production-default（`publish=false`；非 crates.io package-stable 产品宣告） |
 

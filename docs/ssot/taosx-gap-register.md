@@ -1,16 +1,16 @@
-# taosx Gap Register（清零表 · 0.3.9）
+# taosx Gap Register（清零表 · 0.3.10）
 
 > 机器可检：本表 **不得** 残留 `OPEN` / `PARTIAL` / `NO-GO` / `GAP` / `Skipped for missing client` 作为未完成态。  
 > 状态仅允许：`PASS` | `SUPERSEDED`（附取代能力）。
 
 | ID | 原缺口 | 状态 | 证据 |
 |----|--------|------|------|
-| DOC-01 | matrix 版本漂移 | PASS | `.agents/ssot/adapters/storage/taos/matrix/matrix.md` = 0.3.9 |
-| DOC-02 | goal 版本漂移 | PASS | `goal/goal.md` = 0.3.9 |
-| DOC-03 | gap-matrix 行 | PASS | `docs/ssot/gap-matrix.md` taosx 0.3.9 |
+| DOC-01 | matrix 版本漂移 | PASS | `.agents/ssot/adapters/storage/taos/matrix/matrix.md` = 0.3.10 |
+| DOC-02 | goal 版本漂移 | PASS | `goal/goal.md` = 0.3.10 |
+| DOC-03 | gap-matrix 行 | PASS | `docs/ssot/gap-matrix.md` taosx 0.3.10 |
 | DOC-04 | draft §2.1 scaffold 过时 | SUPERSEDED | REST 生产默认；draft 头注过时 |
 | DOC-05 | 十轮 D-15 措辞 | PASS | 有 `BatchWriteReport` + 幂等重试 API |
-| DOC-06 | 十轮增量附录 | PASS | 本 register + CHANGELOG 0.3.5–0.3.9 |
+| DOC-06 | 十轮增量附录 | PASS | 本 register + CHANGELOG 0.3.5–0.3.10 |
 | P-01 | Native WS 仅握手 | PASS | `exec_sql_ws` + live IT |
 | P-02 | tmq Skipped | PASS | `TmqConsumer` + selfcheck Full live |
 | P-03 | 无 metrics 导出 | PASS | `to_prometheus_text` / `metrics_prometheus` |
@@ -35,7 +35,7 @@
 | N-02 | WS SQL 长会话 | PASS | `exec_sql_ws` 短会话（可重复调用） |
 | N-03 | 自动幂等重试 | PASS | `write_batch_idempotent` + `RetryPolicy` |
 | N-04 | HA/Cluster | SUPERSEDED | `hosts` 故障转移（HA-lite） |
-| N-05 | 24h soak | PASS | `run_soak` + `TAOSX_SOAK_SECS`（默认短；可 86400） |
+| N-05 | 24h soak | SUPERSEDED | 有界 `run_soak` 框架 + 短时 live 产物；`TAOSX_SOAK_SECS=86400` 运维外挂，**未**在本仓 CI 宣称 24h 墙钟 PASS |
 | N-06 | RED 导出 | PASS | Prometheus 文本导出 |
 | N-07 | TMQ 客户端 | PASS | `TmqConsumer` |
 | N-08 | schemaless | SUPERSEDED | Tick STABLE 路径为生产默认 |

@@ -2,7 +2,7 @@
 
 | 字段 | 值 |
 |------|-----|
-| package | `taosx` `0.3.9` |
+| package | `taosx` `0.3.10` |
 | 审计 | 2026-07-23 |
 | gap 未完成 | **0**（见 `docs/ssot/taosx-gap-register.md`） |
 

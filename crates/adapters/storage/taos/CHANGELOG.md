@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.10] — 2026-07-23
+
+### Fixed
+
+- `exec_sql_ws`：空响应不再伪造成功，返回 `Unavailable`
+- integration：TMQ poll / free `exec_sql_ws` 去掉恒真断言
+- gap register N-05：24h soak 标为 SUPERSEDED（短时框架证据，非墙钟 24h PASS）
+
 ## [0.3.9] — 2026-07-23
 
 ### Added
