@@ -1,4 +1,4 @@
-//! Kafka 生产者：等待 broker 确认。
+//! Kafka 生产者：等待 broker 确认（含 key/headers 公共面，gap-zero 0.3.7）。
 
 use bytes::Bytes;
 use chrono::Utc;
@@ -127,3 +127,4 @@ mod tests {
         validate_publish_topic("ok").expect("ok");
     }
 }
+
