@@ -2,6 +2,7 @@
 //!
 //! - **默认**：[`TaosPool`] / [`TaosClient`] REST 生产客户端（端口 6041）。
 //! - **Native WS**：`TransportMode::NativeWs` + native 连通性探测。
+//! - **自验证**：[`selfcheck`]（LIB-SELFCHECK-SPEC §6.7 taos 目录）。
 //! - **feature `scaffold`**：`TaosAdapter` 进程内内存实现（**非**生产）。
 //!
 //! 实现 [`contracts::TimeSeriesStore`]（`Tick.ts` 为纳秒 epoch）。
@@ -12,6 +13,8 @@ mod client;
 mod config;
 mod metrics;
 mod native;
+
+pub mod selfcheck;
 
 pub use client::{
     BatchWritePartialError, BatchWriteReport, TaosClient, TaosExecResult, TaosHealth, TaosPool,
@@ -105,6 +108,10 @@ mod public_api_surface {
         assert_type::<TaosMetricsSnapshot>();
         assert_type::<TaosHealth>();
         let _ = ws_probe_totals();
+        assert_type::<selfcheck::TaosValidator>();
+        assert_type::<selfcheck::ValidationReport>();
+        assert_eq!(selfcheck::MODULE, "taos");
+        assert_eq!(selfcheck::TaosValidator::static_catalog().len(), 9);
     }
 
     /// `from_env` 在无变量时回到默认，且不 panic。
