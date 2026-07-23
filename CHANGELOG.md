@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **crate `docs/README.md` 补齐**：全部 workspace members 的 crate 级文档入口（对齐矩阵 / SSOT 镜像 / 分层边界）
 - **`scripts/gen-docs-status.mjs`**：从 `.github/workflows` 生成 `docs/status/CI_WORKFLOW_MATRIX.generated.md`（支持 `--check`）
 - **`crates/evidence`**：补齐标准 `docs/` + `examples/` 骨架
+- **`docs/governance/文档组织约定.md`**：统一报告保存路径（`docs/report/YYYY-MM-DD/`），明确目录结构与命名规范
+- **`docs/governance/项目开发规则.md`**：开发规则总览，速查文档/工程/版本/worktree/质量门禁各规范
 
 ### Changed
 
