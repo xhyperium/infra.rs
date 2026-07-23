@@ -13,6 +13,7 @@
 //! - [`MakeRustlsConnect`]：`SslMode::Prefer` / `Require` 的 rustls TLS
 //! - [`with_retry_sync`] / [`with_retry_async`]：resiliencx 重试
 //! - SQLSTATE → [`kernel::ErrorKind`] 映射：[`error_kind_from_sqlstate`]
+//! - [`selfcheck`]：LIB-SELFCHECK-SPEC §6.1 模块自验证（`postgres.*` 检查项）
 //!
 //! ## 可选 scaffold
 //!
@@ -34,6 +35,8 @@ mod pool;
 mod repository;
 mod resilience;
 mod runner;
+/// 封装库自验证（draft `verifyctl.md` / LIB-SELFCHECK-SPEC §6.1）。
+pub mod selfcheck;
 mod tls;
 mod tx;
 

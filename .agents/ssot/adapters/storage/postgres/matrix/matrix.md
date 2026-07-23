@@ -2,8 +2,8 @@
 
 | ID | 条款 | 状态 | 证据 |
 |----|------|------|------|
-| S-1 | workspace member `postgresx` | PASS | Cargo.toml `0.3.11` |
-| S-2 | 生产默认导出 | PASS | Pool/Tx/Repository/COPY/Migrator |
+| S-1 | workspace member `postgresx` | PASS | Cargo.toml `0.3.12` |
+| S-2 | 生产默认导出 | PASS | Pool/Tx/Repository/COPY/Migrator/selfcheck |
 | S-3 | from_env / FOUNDATIONX_* | PASS | 含 TLS 全项 |
 | S-4 | 离线测试 | PASS | cargo test -p postgresx |
 | S-5 | live | PASS | tests/live_postgres.rs 12/12 |
@@ -19,3 +19,4 @@
 | S-15 | 有界 COPY | PASS | live |
 | S-16 | mTLS 客户端身份 | PASS | 离线 |
 | S-17 | Migrator verify/apply | PASS | live checksum + advisory lock |
+| S-18 | LIB-SELFCHECK §6.1 自验证 | PASS | selfcheck catalog + live Full |

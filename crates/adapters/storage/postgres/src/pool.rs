@@ -59,6 +59,17 @@ impl std::fmt::Debug for PostgresPool {
 impl PostgresPool {
     /// 按配置建池并验证至少能借出连接。
     pub async fn connect(config: &PostgresConfig) -> XResult<Self> {
+        let this = Self::connect_lazy(config).await?;
+        // 冒烟：借一条连接跑 SELECT 1
+        this.health().await?;
+        Ok(this)
+    }
+
+    /// 按配置建池，**不做** health 冒烟。
+    ///
+    /// 用于自检短路单测（不可达地址）与高级启动路径；生产默认仍应使用
+    /// [`Self::connect`]。首次 `acquire` 可能失败。
+    pub async fn connect_lazy(config: &PostgresConfig) -> XResult<Self> {
         config.validate()?;
 
         let dp_cfg = config.to_deadpool_config();
@@ -93,7 +104,7 @@ impl PostgresPool {
         // 明确 fail-closed，不允许绕过 deadline、回收策略或连接污染防护。
         legacy_inner.close();
 
-        let this = Self {
+        Ok(Self {
             inner: pool,
             legacy_inner,
             closed: Arc::new(AtomicBool::new(false)),
@@ -108,11 +119,7 @@ impl PostgresPool {
             )),
             acquire_timeout: config.acquire_timeout,
             operation_timeout: config.operation_timeout,
-        };
-
-        // 冒烟：借一条连接跑 SELECT 1
-        this.health().await?;
-        Ok(this)
+        })
     }
 
     /// 从环境变量建池（`DATABASE_URL` 或 `FOUNDATIONX_POSTGRESX_*`）。

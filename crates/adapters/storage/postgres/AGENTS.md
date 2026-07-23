@@ -1,6 +1,6 @@
 # postgresx
 
-- **Package / lib / 当前版本**：`postgresx` / `postgresx` / `0.3.11`（`publish = false`；未宣称 package stable）
+- **Package / lib / 当前版本**：`postgresx` / `postgresx` / `0.3.12`（`publish = false`；未宣称 package stable）
 - **默认生产面**：`PostgresPool` / `PostgresConfig` / `PgConnection` / `PgTransaction`
 - 驱动：`deadpool-postgres` + `tokio-postgres`（参数化 SQL only）
 - `PgTxRunner`：真实事务**边界**；业务 SQL 用 `with_transaction`

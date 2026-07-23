@@ -1,6 +1,6 @@
 # postgresx 用法
 
-**Package**：`postgresx` `0.3.11`（`publish = false`） · 默认导出为**生产 SQL / 连接池 API**。
+**Package**：`postgresx` `0.3.12`（`publish = false`） · 默认导出为**生产 SQL / 连接池 API**。
 
 ## 最小示例
 
@@ -123,4 +123,32 @@ use postgresx::{Migration, Migrator};
 // 启动默认：verify 仅校验 checksum，不自动 DDL
 // migrator.verify().await?;
 // 运维显式：migrator.apply().await?;
+```
+
+## 自验证（selfcheck）
+
+对齐 `.cargo/draft/verifyctl.md`（LIB-SELFCHECK-SPEC §6.1）。检查项 ID 使用
+规范 module 名 **`postgres`**（crate 名为 `postgresx`）。
+
+```rust
+use postgresx::selfcheck::{CheckLevel, PostgresValidator};
+
+# async fn demo() -> kernel::XResult<()> {
+let report = PostgresValidator::connect_from_env()
+    .await?
+    .run(CheckLevel::ReadWrite)
+    .await;
+assert!(report.passed); // Degraded 仍 passed
+# Ok(())
+# }
+```
+
+- Basic：`postgres.basic.ping` / `version`
+- ReadWrite：`crud_roundtrip` / `tx_commit` / `tx_rollback`（表 `_self_check_{token}`）
+- Full：batch/jsonb/listen_notify/pool_saturation/pool_recovery；`replication_lag` 默认 Skipped
+- 与 `tools/verifyctl`（变更验证 CLI）**不是**同一系统
+
+```bash
+cargo test -p postgresx --test live_selfcheck -- --ignored --test-threads=1
+cargo run -p postgresx --example selfcheck_report
 ```
