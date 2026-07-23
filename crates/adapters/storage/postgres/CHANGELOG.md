@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.14] — 2026-07-23
+
+### Added
+
+- `tracing` feature：pool（14 处 info/debug）、conn（5 处 trace）、tx（4 处 debug）、migration（2 处 info）全部接入；`--features tracing` 编译通过
+- `runner.rs` 内联单元测试：PgTxRunner 含 Send+Sync、双 commit/rollback 拒绝、run_tx_lifecycle 边界（10 项）
+- 功能 API 全覆盖测试：`tests/functional_api.rs`（57 离线 + 14 live）
+- E2E 工作流测试：`tests/e2e_workflow.rs`（8 项）
+- 集成压力测试：`tests/integration_stress.rs`（2 离线 + 5 live）
+- 边界用例测试：`tests/edge_cases.rs`（2 离线 + 8 live）
+- 全面 benchmarks：`benches/pool_operations.rs`（9 项）、`benches/pool_concurrency.rs`（3 项）、增强 `query_hot_path.rs`（5 维度）
+- Gap 追踪：`docs/ssot/gap-matrix.md` 新增 postgresx 专项追踪（G-7/T-1/T-2 已修复）
+
+### Boundaries
+
+- 离线测试：128 passed / 0 failed；live 测试：50 ignored
+- 仍 OPEN：package stable、流式 COPY、down migration、read-replica、mTLS live、channel binding
+- 仍 DEPRECATED：TxState / database_url / client() / inner() / run_tx_commit_on_ok（一个迁移周期）
+
 ## [0.3.13] — 2026-07-23
 
 ### Changed
