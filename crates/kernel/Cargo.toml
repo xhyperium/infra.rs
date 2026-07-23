@@ -1,7 +1,7 @@
 [package]
-name = "kernel"
+name = "xhyper-kernel"
 description = "infra.rs L0 kernel: opaque XError/ErrorKind, Clock/Timestamp, ShutdownSignal (SPEC-KERNEL-002)"
-version = "0.3.1"
+version = "0.3.2"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -37,3 +37,4 @@ workspace = true
 [[bench]]
 name = "hot_path"
 harness = false
+

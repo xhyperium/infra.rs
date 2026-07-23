@@ -20,7 +20,7 @@ reqwest = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["net", "rt-multi-thread", "macros"] }
 tokio-tungstenite = { workspace = true }
-kernel = { path = "../kernel", version = "0.3.1" }
+kernel = { path = "../kernel", version = "0.3.1", package = "xhyper-kernel" }
 
 [dev-dependencies]
 bytes = { workspace = true }
@@ -35,7 +35,7 @@ tokio = { workspace = true, features = [
   "sync",
 ] }
 tokio-tungstenite = { workspace = true }
-kernel = { path = "../kernel", version = "0.3.1" }
+kernel = { path = "../kernel", version = "0.3.1", package = "xhyper-kernel" }
 
 [features]
 default = []

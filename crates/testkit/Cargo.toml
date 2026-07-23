@@ -12,7 +12,7 @@ repository.workspace = true
 name = "testkit"
 
 [dependencies]
-kernel = { path = "../kernel", version = "0.3.1" }
+kernel = { path = "../kernel", version = "0.3.1", package = "xhyper-kernel" }
 thiserror = { workspace = true }
 
 [dev-dependencies]

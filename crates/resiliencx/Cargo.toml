@@ -18,7 +18,7 @@ tokio = ["dep:tokio"]
 
 [dependencies]
 # path + version：满足 cargo-deny bans.wildcards=deny
-kernel = { path = "../kernel", version = "0.3.1" }
+kernel = { path = "../kernel", version = "0.3.1", package = "xhyper-kernel" }
 contracts = { path = "../contracts", version = "0.1.4" }
 async-trait = { workspace = true }
 tokio = { workspace = true, optional = true, features = ["time"] }
