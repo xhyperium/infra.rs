@@ -53,7 +53,7 @@ lib 入口                        adapters: Error/Result；contracts: ExchangeAd
 实现深度                        storage 声明面见专项；exchange **签名 REST + 公共 WS 解析/注入（交易 NO-GO）**
 标准布局八项                    已齐
 publish                         false（显式）
-version                         storage 独立版本；postgres `0.3.6`；clickhouse `0.3.3`；redis/kafka/nats `0.3.2`
+version                         storage 独立版本；postgres `0.3.6`；redis `0.3.6`；clickhouse `0.3.3`；kafka/nats 见专项
 
 | 镜像路径 | 本仓路径 | package | 本仓状态 |
 |----------|----------|---------|----------|

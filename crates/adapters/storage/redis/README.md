@@ -1,7 +1,7 @@
 # redisx
 
 生产默认的异步 Redis 客户端（`contracts::KeyValueStore` + 扩展 API）。
-当前 workspace 版本为 `0.3.4` 未发布候选；`0.3.3` 为 main 既有历史；`publish = false`，
+当前 workspace 版本为 `0.3.6` 未发布候选；`0.3.3` 为 main 既有历史；`publish = false`，
 不代表已经发布。
 
 | 模式 | 类型 | 生产？ |

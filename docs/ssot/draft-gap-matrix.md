@@ -2,7 +2,7 @@
 
 | Domain | Draft DoD P0 | Current | Target this wave | Deferred (not stable) |
 |--------|--------------|---------|------------------|------------------------|
-| redisx | Pool+KV+timeout+live | production RedisPool + Cluster/Sentinel/TLS/resiliencx | **done** DEFER closed | Streams full |
+| redisx | Pool+KV+timeout+Standalone live | Standalone 生产默认 RedisPool/Client + resiliencx；Cluster/Sentinel/TLS **live OPEN** | **P0 done**（非 package stable / 非 draft 全文） | Streams/锁/Cluster live |
 | postgresx | Pool+query+tx | PostgresPool + Repository + TLS + deadline/隔离 | **done** fixed-image PASS | 自定义 CA/mTLS/COPY/migrations |
 | kafkax | Producer+EventBus | AMO/ALO + TLS/CA/PLAIN | **done** broker + SASL_SSL PASS | SCRAM/OAuth/mTLS/group/rebalance/native EOS/DLQ |
 | natsx | Core EventBus | Core AMO + JetStream durable pull/显式确认 | **done** broker PASS；同客户端恢复连续 3/3 PASS | 超预算后重建/NKey/Cluster/HA/自动 DLQ/JS KV full |

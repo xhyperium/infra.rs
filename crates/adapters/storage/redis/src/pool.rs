@@ -485,12 +485,41 @@ mod tests {
 
     #[tokio::test]
     async fn closed_pool_is_closed_flag() {
-        // 无 Redis 时跳过；有环境则验证 close 状态机
-        let Ok(cfg) = RedisConfig::from_env() else {
-            return;
+        // 路径：
+        // 1) 无 env → from_env 失败（合法离线）
+        // 2) 有 env 但 Redis 不可达 → connect 失败（合法 CI 无服务）
+        // 3) 有 env 且可达 → 验证 close 状态机
+        // 禁止「无任何可观察断言就 return」的 silent pass。
+        let cfg = match RedisConfig::from_env() {
+            Ok(cfg) => cfg,
+            Err(err) => {
+                assert!(
+                    matches!(
+                        err.kind(),
+                        ErrorKind::Invalid | ErrorKind::Unavailable | ErrorKind::Missing
+                    ),
+                    "from_env without Redis env should fail closed, kind={:?}",
+                    err.kind()
+                );
+                return;
+            }
         };
-        let Ok(pool) = RedisPool::connect(cfg).await else {
-            return;
+        let pool = match RedisPool::connect(cfg).await {
+            Ok(pool) => pool,
+            Err(err) => {
+                assert!(
+                    matches!(
+                        err.kind(),
+                        ErrorKind::Unavailable
+                            | ErrorKind::DeadlineExceeded
+                            | ErrorKind::Transient
+                            | ErrorKind::Invalid
+                    ),
+                    "connect failure must be typed, kind={:?}",
+                    err.kind()
+                );
+                return;
+            }
         };
         assert!(!pool.is_closed());
         let _ = pool.stats();
