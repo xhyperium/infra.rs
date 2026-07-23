@@ -9,7 +9,7 @@ use canonical::Tick;
 use contract_testkit::assert_time_series_store;
 use contracts::TimeSeriesStore;
 use decimalx::{Decimal, Price};
-use taosx::{TaosConfig, TaosPool};
+use taosx::{TaosConfig, TaosPool, TransportMode, connect_native_ws, ws_probe_totals};
 
 fn live_config() -> Option<TaosConfig> {
     let password = std::env::var("FOUNDATIONX_TAOSX_PASSWORD").ok()?;
@@ -100,4 +100,32 @@ async fn live_ping() {
     };
     let pool = TaosPool::connect(cfg).await.expect("connect");
     pool.ping().await.expect("ping");
+}
+
+#[tokio::test]
+#[ignore = "requires live TDengine REST WS; set FOUNDATIONX_TAOSX_PASSWORD"]
+async fn live_native_ws_handshake() {
+    let Some(mut cfg) = live_config() else {
+        panic!("FOUNDATIONX_TAOSX_PASSWORD required");
+    };
+    cfg.transport = TransportMode::NativeWs;
+    let before = ws_probe_totals();
+    connect_native_ws(&cfg).await.expect("native ws handshake on live REST /rest/ws");
+    let after = ws_probe_totals();
+    assert!(after.0 > before.0, "ws_probe_ok should increase: before={before:?} after={after:?}");
+}
+
+#[tokio::test]
+#[ignore = "requires live TDengine REST"]
+async fn live_metrics_after_write_query() {
+    let Some(cfg) = live_config() else {
+        panic!("FOUNDATIONX_TAOSX_PASSWORD required");
+    };
+    let pool = TaosPool::connect(cfg).await.expect("connect");
+    let before = pool.metrics();
+    pool.ping().await.expect("ping");
+    let mid = pool.metrics();
+    assert!(mid.ping_ok > before.ping_ok, "ping_ok should increase");
+    assert!(mid.sql_ok > before.sql_ok, "sql_ok should increase");
+    let _ = pool.close().await;
 }

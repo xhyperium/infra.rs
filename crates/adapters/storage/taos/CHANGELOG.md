@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.6] — 2026-07-23
+
+### Added
+
+- `TaosMetricsSnapshot` 与 `TaosPool::metrics()`：sql/write/query/ping 有界计数
+- 进程级 `ws_probe_totals()`；`connect_native_ws` 记成功/失败
+- live：`live_native_ws_handshake` + `live_metrics_after_write_query`
+
+### Boundaries
+
+- 非 OTLP/Prometheus 导出；完整 RED 远程指标仍 NO-GO
+- Native WS 仍仅握手/关闭探测，不执行 SQL
+
 ## [0.3.5] — 2026-07-23
 
 ### Added

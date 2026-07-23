@@ -24,6 +24,8 @@ pub fn validate_mode(config: &TaosConfig) -> XResult<()> {
 ///
 /// 成功时立即关闭连接并返回 `Ok(())`——本阶段仅验证可达性与握手，
 /// 不维持长连接会话。离线环境应返回 `Unavailable` / `DeadlineExceeded`。
+///
+/// 结果会计入进程级 `ws_probe_*` 计数（见 [`crate::ws_probe_totals`]）。
 pub async fn connect_native_ws(config: &TaosConfig) -> XResult<()> {
     validate_mode(config)?;
     if config.transport != TransportMode::NativeWs {
@@ -40,10 +42,12 @@ pub async fn connect_native_ws(config: &TaosConfig) -> XResult<()> {
             .await
             .map_err(|error| XError::unavailable(format!("taos ws 关闭失败: {error}")))
     };
-    match tokio::time::timeout(config.timeout, attempt).await {
+    let result = match tokio::time::timeout(config.timeout, attempt).await {
         Ok(result) => result,
         Err(_) => Err(XError::deadline_exceeded(format!("taos native ws 连接超时: {url}"))),
-    }
+    };
+    crate::metrics::record_ws_probe(result.is_ok());
+    result
 }
 
 #[cfg(test)]

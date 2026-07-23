@@ -10,6 +10,7 @@
 
 mod client;
 mod config;
+mod metrics;
 mod native;
 
 pub use client::{
@@ -20,6 +21,7 @@ pub use config::{
     HARD_MAX_BATCH_BYTES, HARD_MAX_BATCH_ROWS, HARD_MAX_CLOSE_TIMEOUT, HARD_MAX_IN_FLIGHT,
     HARD_MAX_QUERY_ROWS, HARD_MAX_RESPONSE_BYTES, TaosConfig, TransportMode, TsPrecision,
 };
+pub use metrics::{TaosMetricsSnapshot, ws_probe_totals};
 pub use native::{build_native_ws_url, connect_native_ws, validate_mode};
 
 #[cfg(feature = "scaffold")]
@@ -100,6 +102,8 @@ mod public_api_surface {
         fn assert_type<T: ?Sized>() {}
         assert_type::<BatchWriteReport>();
         assert_type::<BatchWritePartialError>();
+        assert_type::<TaosMetricsSnapshot>();
+        let _ = ws_probe_totals();
     }
 
     /// `from_env` 在无变量时回到默认，且不 panic。
