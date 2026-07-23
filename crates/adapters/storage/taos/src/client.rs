@@ -279,7 +279,23 @@ impl TaosPool {
     /// 连接：构建 HTTP 客户端、可选建库、探测精度、ping。
     ///
     /// `TransportMode::NativeWs` 时先做一次原生 WS 握手探测（失败即返回）。
+    /// 主 host 不可用时按 `config.hosts` 顺序故障转移（HA-lite）。
     pub async fn connect(config: TaosConfig) -> XResult<Self> {
+        config.validate()?;
+        let hosts = config.endpoint_hosts();
+        let mut last_err = XError::unavailable("taos 无可用 endpoint");
+        for host in hosts {
+            let mut try_cfg = config.clone();
+            try_cfg.host = host;
+            match Self::connect_one(try_cfg).await {
+                Ok(pool) => return Ok(pool),
+                Err(e) => last_err = e,
+            }
+        }
+        Err(last_err)
+    }
+
+    async fn connect_one(config: TaosConfig) -> XResult<Self> {
         config.validate()?;
 
         if config.transport == TransportMode::NativeWs {
@@ -308,7 +324,7 @@ impl TaosPool {
         };
 
         // REST 路径：确保 database + 精度探测 + ping
-        // NativeWs 探测已完成；仍用 REST 做 SQL（本阶段 WS 仅作连通性 lane）
+        // NativeWs 探测已完成；SQL 默认仍走 REST（可用 `exec_sql_ws` 做 WS 会话）
         if !pool.inner.config.database.is_empty() {
             let db = pool.inner.config.database.clone();
             validate_ident(&db)?;
@@ -522,6 +538,33 @@ impl TaosPool {
         points: &[Tick],
     ) -> XResult<BatchWriteReport> {
         self.write_batch_chunked_report(table, points, self.inner.config.batch_max_rows).await
+    }
+
+    /// 幂等友好写：按配置 `write_max_attempts` 对 Transient/Unavailable 重试整批。
+    ///
+    /// 调用方须保证 `points` 时间戳/标签唯一，避免重复副作用。
+    pub async fn write_batch_idempotent(
+        &self,
+        table: &str,
+        points: &[Tick],
+    ) -> XResult<BatchWriteReport> {
+        use crate::retry::RetryPolicy;
+        let policy = RetryPolicy {
+            max_attempts: self.inner.config.write_max_attempts.max(1),
+            ..RetryPolicy::for_idempotent_write()
+        };
+        policy.run(|| async { self.write_batch_report(table, points).await }).await
+    }
+
+    /// 导出 Prometheus 文本指标。
+    #[must_use]
+    pub fn metrics_prometheus(&self) -> String {
+        self.metrics().to_prometheus_text()
+    }
+
+    /// 通过 Native WS 执行一条 SQL（短会话：握手 → 发送 → 关闭）。
+    pub async fn exec_sql_ws(&self, sql: &str) -> XResult<String> {
+        native::exec_sql_ws(self.config(), sql).await
     }
 
     /// 带自定义 chunk 大小的批量写入。
