@@ -7,7 +7,7 @@ use crate::ScheduleError;
 pub struct JobId(String);
 
 impl JobId {
-    /// 构造（不校验）。
+    /// 构造（不校验；注册到 [`crate::JobRunner`] 时统一校验）。
     #[must_use]
     pub fn new(id: impl Into<String>) -> Self {
         Self(id.into())

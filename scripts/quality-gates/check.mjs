@@ -133,6 +133,11 @@ ok(
   exists("scripts/quality-gates/check-ssot-current-state.mjs"),
   "SSOT current-state 门禁脚本缺失",
 );
+ok(
+  "scripts/quality-gates/check-test-support-graph.mjs",
+  exists("scripts/quality-gates/check-test-support-graph.mjs"),
+  "test-support 生产依赖图门禁脚本缺失",
+);
 
 // crates/ 独立版本 + path version 对齐（VERSIONING.md R-C1/R-C2）
 const crateVersionsCheck = run(
@@ -162,6 +167,16 @@ ok(
   "SSOT current-state 门禁",
   ssotCurrentStateCheck.includes("结果: PASS") && !ssotCurrentStateCheck.includes("FAIL"),
   ssotCurrentStateCheck.slice(0, 500) || "node scripts/quality-gates/check-ssot-current-state.mjs 失败",
+);
+
+const testSupportGraphCheck = run(
+  "node scripts/quality-gates/check-test-support-graph.mjs 2>&1",
+  120000,
+);
+ok(
+  "test-support 生产依赖图门禁",
+  testSupportGraphCheck.includes("PASS") && !testSupportGraphCheck.includes("FAIL"),
+  testSupportGraphCheck.slice(0, 400) || "check-test-support-graph.mjs 失败",
 );
 
 // settings.json nice/timeout/fail-closed 门禁（与 validation.yml settings-hooks job 同源）

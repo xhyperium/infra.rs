@@ -2,6 +2,8 @@
 
 ## 0.1.2 — 2026-07-22
 
+## 0.1.2 — 2026-07-23
+
 ### Added
 
 - ObjectStore / TimeSeriesStore / AnalyticsSink / PubSub 四个 portable core suite
@@ -10,6 +12,15 @@
 - 标准七项布局：`docs/` · `benches/` · `examples/` · `review/` · `releases/`
 - `examples/basic.rs`：Fake KV + Tx suite 最小消费者路径
 - `benches/hot_path`：RecordingInstrumentation + FakeKeyValueStore
+- ObjectStore、TimeSeriesStore、AnalyticsSink、PubSub suite 与确定性 `FixtureNamespace`。
+- 14 trait / 15 case broken implementation 负测矩阵；精确断言 `ContractFailure.contract/case`。
+- `contract-testkit` 公开 API baseline 与 test-support production graph gate。
+- 保留 0.1.1 `assert_event_bus` / `assert_key_value_store` 签名；隔离与可移植 surface 以 additive API 提供。
+
+### Changed
+
+- EventBus / PubSub 新增可移植操作 surface，不声明交付、重放、顺序或次数；旧 EventBus Snapshot/Replay profile 保持兼容。
+- AnalyticsSink / Instrumentation 增加 observer-aware suite，不改变 contracts trait。
 
 ## 0.1.0 — 2026-07-21
 

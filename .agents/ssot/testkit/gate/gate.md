@@ -1,46 +1,48 @@
-# GATE-TESTKIT-002 · 交付门禁
+# Gate — testkit（SPEC-TESTKIT-002）
 
 | 字段 | 值 |
-|---|---|
-| Spec | [spec/spec.md](../spec/spec.md) |
-| Design | [design/design.md](../design/design.md) |
-| Test | [test/test.md](../test/test.md) |
-| 当前 package 版本 | `0.1.3` |
-| 当前裁定 | **GO — `2e6d77d` GATES PASS / `2961afd` REVIEW GO** |
+|------|-----|
+| Plan | [plan/plan.md](../plan/plan.md) |
+| Spec | [spec/spec.md](../spec/spec.md)（**Stable** 2026-07-14） |
+| Design | [design.md](../design/design.md)（索引式 · 权威在 spec §1–§7、§25） |
+| Residual SSOT | [plan/residual-open.md](../plan/residual-open.md) · DEF-001…010 **全 CLOSED** + 1 OPTIONAL |
+| Campaign | **COMPLETE** · ship 2026-07-14 · main@testkit-v0.1.1 · PR #247 #254 #255 |
 
-前一证据候选 `c27b7ce` 的终门禁发现 `thiserror`、panic 首错停止、公开方法测试与并发重叠缺口；
-该候选已经失效。最终状态校正候选 `c4604ce` 的全量机器门禁与 `fff07ea` 独立终审曾通过；
-PR #258 随后发现 testkit 100% 行覆盖门禁缺口，旧 GO 按 failure condition 失效，新候选完成机器门禁与独立重审前保持 REVIEW PENDING。
+| Gate | 状态 | 备注 |
+|------|------|------|
+| Spec Stable | **PASS** | 2026-07-14 |
+| §24 验收主体 | **PASS** | §24.1–.6 ship 时点主体闭合（见 spec §24.0） |
+| version `0.1.1` | **PASS** | package **`xhyper-testkit`** · tag `testkit-v0.1.1` |
+| registry Stable | **PASS** | Stable CLAIMED 2026-07-14（`publish = false`，internal only） |
+| crates.io 发布 | **N/A** | `publish = false`——不发布，无 crates.io 产物 |
+| `cargo test -p testkit -p contract-testkit` | **PASS** | unit / contract / concurrency |
+| property (proptest) | **PASS** | |
+| `cargo mutants -p testkit` | **PASS** | missed=0（caught=12, unviable=18） |
+| `cargo +nightly miri test -p testkit` | **PASS** | |
+| line coverage ≥95% | **PASS** | CI `testkit-quality` |
+| branch coverage ≥90% | **OPTIONAL** | line≥95% 已强制；branch 进 nightly（非阻塞 Stable） |
+| `cargo xtl test-graph-check` | **PASS** | test-support 不进生产图 |
+| archgate TESTKIT-* | **OOS / N/A** | **infra.rs 不移植** archgate / `.architecture`；历史 TESTKIT-* 规则 ID 仅参考。可选机控：结构扫描 / CI job / `test-graph-check`（若落地）— 非 archgate |
 
-## 1. 必须闭合的门禁
+## contract-testkit 0.1.2 候选门禁（2026-07-23）
 
-| Gate | 当前状态 | GO 条件 |
-|---|---|---|
-| G-01 SSOT 一致 | `2e6d77d` PASS / `2961afd` REVIEW GO | spec/design/test/gate/matrix/AGENTS 使用 `testkit`、`0.1.3` 当前事实与同一边界；旧战役文档显式标为历史 |
-| G-02 ManualClock 合同 | `2e6d77d` PASS / `2961afd` REVIEW GO | 单 Mutex、checked、fault、snapshot、poison、独立 domain 全部有新鲜测试 |
-| G-03 Runner typed API | `2e6d77d` PASS / `2961afd` REVIEW GO | 导出 `HarnessReport`、`HarnessRunError`、四态 `StepOutcome`；错误内部状态不含 `Passed`；`StepRecord` 字段私有且 getter 完整 |
-| G-04 Runner fail-closed | `2e6d77d` PASS / `2961afd` REVIEW GO | `step(self)->Self`、`run(self)` 编译期排除重跑/运行后追加；clock fault/panic 返回 terminal error；首错停止 |
-| G-05 无 sentinel | `2e6d77d` PASS / `2961afd` REVIEW GO | 所有 runner/clock 错误路径均不使用 epoch 0、空串或布尔成功掩盖失败 |
-| G-06 图隔离 | `2e6d77d` PASS / `2961afd` REVIEW GO | 仅 dev-dependency 消费；normal production dependents 为零 |
-| G-07 外部边界 | `2e6d77d` PASS / `2961afd` REVIEW GO | crate 无网络/进程/I/O/真实时间；external harness 仍在 tools/CI OOS |
-| G-08 质量门禁 | `2e6d77d` PASS / `2961afd` REVIEW GO | fmt/clippy/test/API surface/相关质量门禁在固定候选上新鲜通过 |
-| G-09 版本同步 | `2e6d77d` PASS / `2961afd` REVIEW GO | 行为变化交付执行 PATCH bump，并同步 Cargo/lock/消费者/CHANGELOG/对齐文/SSOT |
+| Gate | 状态 |
+|------|------|
+| reference suites + 15 broken cases | **stack PASS；待最终主干重放**（[evidence](../evidence/2026-07-23-contract-testkit-stack.md)） |
+| `check-test-support-graph.mjs` default/all-features | **stack PASS；待 CI**（同上） |
+| `contract-testkit` public API baseline | **stack PASS；待 CI**（同上） |
+| 独立 code/spec review | **待执行** |
+| 人工批准、PR 合并、发布 | **BLOCKED / 未发生** |
 
-## 2. Residual
+候选门禁不覆盖 live backend、EventBus/PubSub delivery 或跨资源原子性。
 
-| ID | 状态 | 边界 |
-|---|---|---|
-| `R-CLK-DOMAIN-EXHAUSTION` | OPEN | 唯一性只覆盖单进程生命周期内 allocator 未耗尽；未闭合 typed exhaustion/防回绕前不得扩张声明 |
-| `R-EXTERNAL-HARNESS` | OOS | 真实服务、网络、进程、容器、端口、凭据、故障注入和 CI evidence 归 tools/CI；不是 crate runner 的缺失实现 |
+## Residual OPEN
 
-## 3. GO / NO-GO 规则
+**无阻塞项。** DEF-001…010 全 CLOSED。仅 1 **OPTIONAL**（branch cov ≥90%，line≥95% 已强制）。详见 [plan/residual-open.md](../plan/residual-open.md)。
 
-只有 G-01 至 G-09 全部满足，且固定候选的新鲜 evidence 可追溯时，才可将本轮裁定改为 GO。`R-CLK-DOMAIN-EXHAUSTION` 若未闭合，必须由 reviewer 明确判定其是否阻塞本次版本；不得自行改写为 PASS。
+## 禁止
 
-以下说法始终禁止：
-
-- `testkit` 是 production runtime；
-- package 已发布或 package stable；
-- 历史 evidence 等于本轮 fresh PASS；
-- external harness OOS 等于 crate 内禁止任何 harness；
-- “ManualClock 族四类型”等于 crate 只能导出四个类型。
+- 将 `Stable` 误读为「发布到 crates.io」或「production runtime 就绪」（testkit 是 T0 test-support，`publish=false`，无 production layer）
+- 将「主体闭合」误读为「§24 全勾」——`branch cov ≥90%` 仍 OPTIONAL，不据此宣称额外保证
+- 回退退役宏（`xlib_test!` / `mock!` / `FixtureBuilder` / `provider_capability_contract_tests!`）
+- 把 testkit 装入生产依赖图（`cargo xtl test-graph-check` 必须保持 PASS）

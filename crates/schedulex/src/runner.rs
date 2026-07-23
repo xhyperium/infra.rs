@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::ScheduleError;
 use crate::job::{Job, JobId, JobMeta};
-use crate::schedule::{CronParsed, Schedule, cron_matches};
+use crate::schedule::{CronParsed, Schedule, cron_matches, parse_cron_expr};
 
 struct Entry {
     job: Job,
@@ -20,10 +20,13 @@ struct Entry {
 
 /// 内存 Job 运行器。
 ///
-/// 调用方注入 `now_ms`（可来自测试时钟或墙钟）；核心不读系统时间。
+/// 调用方注入非递减的 `now_ms`；核心不读系统时间。回退的 tick 被忽略。
+/// 同一 tick 内按 `str::cmp` 的 [`JobId`] 字典序执行；单个 Job 错误不会阻断后续 Job，
+/// 但 panic 会传播并中止当前 tick。
 #[derive(Default)]
 pub struct JobRunner {
     entries: HashMap<String, Entry>,
+    last_tick_ms: Option<u64>,
 }
 
 impl JobRunner {
@@ -33,13 +36,10 @@ impl JobRunner {
         Self::default()
     }
 
-    /// 注册 job + schedule；重复 ID 覆盖。
+    /// 校验并注册 job + schedule；失败不改变 runner，重复 ID 完整覆盖旧状态。
     pub fn add(&mut self, job: Job, schedule: Schedule) -> Result<(), ScheduleError> {
-        if let Schedule::FixedDelay { every_ms, .. } = &schedule {
-            if *every_ms == 0 {
-                return Err(ScheduleError::InvalidSchedule("every_ms must be > 0".into()));
-            }
-        }
+        crate::validate_task_id(job.id.as_str())?;
+        validate_schedule(&schedule)?;
         let id = job.id.as_str().to_string();
         self.entries.insert(
             id,
@@ -55,7 +55,7 @@ impl JobRunner {
         Ok(())
     }
 
-    /// 取消；返回是否存在。
+    /// 标记取消；返回条目是否存在（重复取消仍返回 `true`，直至 [`Self::remove`]）。
     pub fn cancel(&mut self, id: &str) -> bool {
         if let Some(e) = self.entries.get_mut(id) {
             e.cancelled = true;
@@ -82,25 +82,34 @@ impl JobRunner {
         self.entries.values().filter(|e| !e.cancelled).count()
     }
 
-    /// 元数据列表。
+    /// 按 `str::cmp` 的 Job ID 字典序返回元数据列表（包含已取消未移除条目）。
     #[must_use]
     pub fn list_meta(&self) -> Vec<JobMeta> {
-        self.entries.values().map(|e| e.job.meta()).collect()
+        let mut metadata: Vec<_> = self.entries.values().map(|e| e.job.meta()).collect();
+        metadata.sort_unstable_by(|left, right| left.id.as_str().cmp(right.id.as_str()));
+        metadata
     }
 
-    /// 推进时钟：运行所有在 `now_ms` 到期的 job。
+    /// 推进逻辑时间：按 `str::cmp` 的 Job ID 字典序运行所有在 `now_ms` 到期的 job。
     ///
-    /// 返回成功触发次数；单个 job 错误记入返回的错误列表（其他 job 继续）。
+    /// 返回成功触发次数；单个 job 错误按执行顺序记入错误列表、推进触发状态，
+    /// 其他 job 继续。大跨度 tick 每个 job 最多执行一次，不补跑错过的间隔。
+    /// `now_ms` 小于上次 tick 时不执行也不推进。Job panic 不捕获，当前 tick 状态不保证。
     pub fn tick(&mut self, now_ms: u64) -> TickResult {
+        if self.last_tick_ms.is_some_and(|last_tick_ms| now_ms < last_tick_ms) {
+            return TickResult::default();
+        }
+        self.last_tick_ms = Some(now_ms);
         let mut fired = 0usize;
         let mut errors = Vec::new();
         // 收集到期 ID，避免双重借用
-        let due: Vec<String> = self
+        let mut due: Vec<String> = self
             .entries
             .iter()
             .filter(|(_, e)| !e.cancelled && is_due(e, now_ms))
             .map(|(id, _)| id.clone())
             .collect();
+        due.sort_unstable();
 
         for id in due {
             // due 来自当前 entries 快照；单线程下 id 必然仍在 map 中
@@ -121,6 +130,23 @@ impl JobRunner {
     }
 }
 
+fn validate_schedule(schedule: &Schedule) -> Result<(), ScheduleError> {
+    match schedule {
+        Schedule::Once { .. } => Ok(()),
+        Schedule::FixedDelay { every_ms: 0, .. } => {
+            Err(ScheduleError::InvalidSchedule("固定间隔 every_ms 必须大于 0".into()))
+        }
+        Schedule::FixedDelay { .. } => Ok(()),
+        Schedule::Cron { expr, parsed } => {
+            let reparsed = parse_cron_expr(expr)?;
+            if &reparsed != parsed {
+                return Err(ScheduleError::InvalidSchedule("cron 表达式与解析结果不一致".into()));
+            }
+            Ok(())
+        }
+    }
+}
+
 impl std::fmt::Debug for JobRunner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("JobRunner")
@@ -135,7 +161,7 @@ impl std::fmt::Debug for JobRunner {
 pub struct TickResult {
     /// 成功执行次数。
     pub fired: usize,
-    /// 失败列表。
+    /// 按 Job ID 执行顺序排列的失败列表。
     pub errors: Vec<(JobId, ScheduleError)>,
 }
 
@@ -153,10 +179,8 @@ fn is_due(entry: &Entry, now_ms: u64) -> bool {
         }
         Schedule::Cron { parsed, .. } => match parsed {
             CronParsed::EveryMs { every_ms } => match entry.last_fire_ms {
-                None => cron_matches(parsed, now_ms) || now_ms == 0,
-                Some(last) => {
-                    now_ms.saturating_sub(last) >= *every_ms && cron_matches(parsed, now_ms)
-                }
+                None => true,
+                Some(last) => now_ms.saturating_sub(last) >= *every_ms,
             },
             CronParsed::MinuteMatch { .. } => {
                 if !cron_matches(parsed, now_ms) {
@@ -310,14 +334,15 @@ mod tests {
                 Schedule::cron("every:10").unwrap(),
             )
             .unwrap();
-        // 首次：last_fire None；now_ms==0 或 cron_matches
+        // 首次：last_fire_ms=None，立即到期；之后按 stateful interval。
         assert_eq!(runner.tick(0).fired, 1);
         assert_eq!(runner.tick(5).fired, 0);
         assert_eq!(runner.tick(10).fired, 1);
 
         let hits2 = Arc::new(Mutex::new(0u32));
         let h2 = Arc::clone(&hits2);
-        runner
+        let mut minute_runner = JobRunner::new();
+        minute_runner
             .add(
                 Job::new("min", move || {
                     *h2.lock().unwrap() += 1;
@@ -327,13 +352,13 @@ mod tests {
             )
             .unwrap();
         // minute 0 at t=0
-        assert!(runner.tick(0).fired >= 1);
+        assert_eq!(minute_runner.tick(0).fired, 1);
         // same minute index → no re-fire for MinuteMatch
         let before = *hits2.lock().unwrap();
-        runner.tick(1);
+        minute_runner.tick(1);
         assert_eq!(*hits2.lock().unwrap(), before);
         // next matching minute (5 min)
-        runner.tick(5 * 60_000);
+        minute_runner.tick(5 * 60_000);
         assert!(*hits2.lock().unwrap() > before);
 
         // exact minute：不匹配时 is_due 走 cron_matches false 分支

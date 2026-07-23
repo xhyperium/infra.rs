@@ -39,3 +39,7 @@
 
 **COMPLETE**。Spec Stable，package quality 达 0.1.1 Stable（`publish=false`，internal only）。§24 验收主体闭合，residual 无阻塞。
 下次审查须以 §24 勾选状态 + residual OPEN 计数 + `cargo test/test-graph-check` 实测为依据；破坏性 API 变更须新 spec 版本。
+
+## 2026-07-23 contract-testkit 维护候选
+
+既有 0.1.1 ship 结论不自动批准 0.1.2。新候选必须独立审查：14 trait / 15 broken case 是否逐项杀死错误、smoke/observed 非承诺是否诚实、FixtureNamespace 是否确定、图门禁是否 fail-closed、公开 API baseline 是否匹配。人工批准与最终 PR 尚未发生，因此 verdict 保持 **PENDING**。

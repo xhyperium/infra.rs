@@ -6,7 +6,7 @@
 //! |------|------|
 //! | [`Schedule::Once`] | 在 `at_ms` 时刻触发一次 |
 //! | [`Schedule::FixedDelay`] | 首次在 `first_at_ms`（默认 0）后，每 `every_ms` 再触发 |
-//! | [`Schedule::Cron`] | **最小子集**：`every:<ms>` 或 5 段 `min hour dom mon dow` 中 **仅分钟** 支持 `*` / `*/N` / 单整数；其余字段须为 `*` |
+//! | [`Schedule::Cron`] | **最小子集**：stateful interval `every:<ms>`，或 5 段 `min hour dom mon dow` 中 **仅分钟** 支持 `*` / `*/N` / 单整数；其余字段须为 `*` |
 //!
 //! 不支持：秒字段、列表/范围、名称月份、时区。
 
@@ -39,12 +39,14 @@ pub enum Schedule {
 /// 解析后的最小 cron。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CronParsed {
-    /// 每 `every_ms` 触发（与 FixedDelay 类似，first=0）。
+    /// 每 `every_ms` 触发；`JobRunner` 首次 tick 立即执行，随后按上次执行时刻计算。
+    ///
+    /// 公开 [`crate::cron_matches`] 仍是无状态 epoch predicate，不能表达此运行时 interval。
     EveryMs {
         /// 间隔。
         every_ms: u64,
     },
-    /// 每分钟墙钟对齐的简化模型：当 `now_ms / 60_000` 满足分钟谓词时触发。
+    /// 每分钟逻辑时间对齐的简化模型：当 `now_ms / 60_000` 满足分钟谓词时触发。
     ///
     /// **注意**：这是逻辑分钟索引，不是真实 UTC 墙钟；便于确定性单测。
     MinuteMatch {
@@ -66,7 +68,7 @@ impl Schedule {
     /// `FixedDelay` 便捷构造（`first_at_ms = 0`）。
     pub fn fixed_delay(every_ms: u64) -> Result<Self, ScheduleError> {
         if every_ms == 0 {
-            return Err(ScheduleError::InvalidSchedule("every_ms must be > 0".into()));
+            return Err(ScheduleError::InvalidSchedule("固定间隔 every_ms 必须大于 0".into()));
         }
         Ok(Self::FixedDelay { every_ms, first_at_ms: 0 })
     }
@@ -87,23 +89,24 @@ impl Schedule {
 pub fn parse_cron_expr(expr: &str) -> Result<CronParsed, ScheduleError> {
     let e = expr.trim();
     if e.is_empty() {
-        return Err(ScheduleError::InvalidSchedule("empty cron expression".into()));
+        return Err(ScheduleError::InvalidSchedule("cron 表达式不能为空".into()));
     }
     if let Some(rest) = e.strip_prefix("every:") {
         let rest = rest.trim();
         let every_ms = if let Some(secs) = rest.strip_suffix('s').or_else(|| rest.strip_suffix('S'))
         {
             let n: u64 = secs.trim().parse().map_err(|_| {
-                ScheduleError::InvalidSchedule(format!("invalid every seconds: {rest}"))
+                ScheduleError::InvalidSchedule(format!("无法解析 every 秒数: {rest}"))
             })?;
             n.checked_mul(1000)
-                .ok_or_else(|| ScheduleError::InvalidSchedule("every duration overflow".into()))?
+                .ok_or_else(|| ScheduleError::InvalidSchedule("every 时长毫秒换算溢出".into()))?
         } else {
-            rest.parse::<u64>()
-                .map_err(|_| ScheduleError::InvalidSchedule(format!("invalid every ms: {rest}")))?
+            rest.parse::<u64>().map_err(|_| {
+                ScheduleError::InvalidSchedule(format!("无法解析 every 毫秒数: {rest}"))
+            })?
         };
         if every_ms == 0 {
-            return Err(ScheduleError::InvalidSchedule("every_ms must be > 0".into()));
+            return Err(ScheduleError::InvalidSchedule("every_ms 必须大于 0".into()));
         }
         return Ok(CronParsed::EveryMs { every_ms });
     }
@@ -111,13 +114,13 @@ pub fn parse_cron_expr(expr: &str) -> Result<CronParsed, ScheduleError> {
     let parts: Vec<&str> = e.split_whitespace().collect();
     if parts.len() != 5 {
         return Err(ScheduleError::InvalidSchedule(format!(
-            "cron must be 5 fields or every:<ms>, got {e:?}"
+            "cron 必须是 5 段或 every:<ms>，实际为 {e:?}"
         )));
     }
     for (i, p) in parts.iter().enumerate().skip(1) {
         if *p != "*" {
             return Err(ScheduleError::InvalidSchedule(format!(
-                "only minute field may be non-*; field {i} is {p:?}"
+                "仅分钟字段允许非 *；第 {i} 段为 {p:?}"
             )));
         }
     }
@@ -128,22 +131,24 @@ pub fn parse_cron_expr(expr: &str) -> Result<CronParsed, ScheduleError> {
     if let Some(n) = min.strip_prefix("*/") {
         let n: u32 = n
             .parse()
-            .map_err(|_| ScheduleError::InvalidSchedule(format!("invalid minute step: {min}")))?;
+            .map_err(|_| ScheduleError::InvalidSchedule(format!("无法解析分钟步长: {min}")))?;
         if n == 0 {
-            return Err(ScheduleError::InvalidSchedule("minute step must be > 0".into()));
+            return Err(ScheduleError::InvalidSchedule("分钟步长必须大于 0".into()));
         }
         return Ok(CronParsed::MinuteMatch { every_n: Some(n), exact: None });
     }
-    let exact: u32 = min
-        .parse()
-        .map_err(|_| ScheduleError::InvalidSchedule(format!("invalid minute: {min}")))?;
+    let exact: u32 =
+        min.parse().map_err(|_| ScheduleError::InvalidSchedule(format!("无法解析分钟: {min}")))?;
     if exact > 59 {
-        return Err(ScheduleError::InvalidSchedule("minute must be 0..=59".into()));
+        return Err(ScheduleError::InvalidSchedule("分钟必须在 0..=59".into()));
     }
     Ok(CronParsed::MinuteMatch { every_n: None, exact: Some(exact) })
 }
 
-/// 判断在 `now_ms` 是否应触发（无状态；FixedDelay 需 runner 跟踪 last_fire）。
+/// 判断 `now_ms` 是否落在表达式的 epoch 对齐点。
+///
+/// 这是无状态 predicate；[`crate::JobRunner`] 的 `every:<ms>` 使用 stateful interval，
+/// 不调用本函数。MinuteMatch 仍用本函数判断逻辑分钟。
 #[must_use]
 pub fn cron_matches(parsed: &CronParsed, now_ms: u64) -> bool {
     match parsed {

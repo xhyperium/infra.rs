@@ -1,175 +1,123 @@
 //! Suite 自测：用本 crate Fake 跑完整 conformance（SPEC-TESTKIT-002 §4.2）。
 
 use async_trait::async_trait;
-use bytes::Bytes;
 use canonical::Tick;
 use contract_testkit::{
     FakeAccountSource, FakeAnalyticsSink, FakeEventBus, FakeExecutionVenue, FakeInstrumentCatalog,
     FakeKeyValueStore, FakeMarketDataSource, FakeObjectStore, FakePubSub, FakeRepository,
-    FakeTimeSeriesStore, FakeTxRunner, FakeVenueTimeSource, RecordingInstrumentation,
-    RecordingTxRunner, assert_account_source, assert_analytics_sink, assert_event_bus,
-    assert_event_bus_surface, assert_execution_venue, assert_instrument_catalog,
-    assert_instrumentation, assert_key_value_store, assert_market_data_source, assert_object_store,
-    assert_pub_sub_surface, assert_repository, assert_time_series_store, assert_tx_runner,
-    assert_venue_time_source, default_symbol_meta, sample_order,
+    FakeTimeSeriesStore, FakeTxRunner, FakeVenueTimeSource, FixtureNamespace,
+    RecordingInstrumentation, RecordingTxRunner, assert_account_source,
+    assert_analytics_sink_callable, assert_analytics_sink_observed, assert_event_bus,
+    assert_event_bus_with_fixture, assert_execution_venue, assert_instrument_catalog,
+    assert_instrumentation, assert_instrumentation_observed, assert_key_value_store,
+    assert_key_value_store_isolated, assert_market_data_source, assert_object_store_with_fixture,
+    assert_pub_sub_smoke, assert_repository, assert_time_series_store_with_fixture,
+    assert_tx_runner, assert_venue_time_source, default_symbol_meta, sample_order,
 };
-use contracts::{
-    AnalyticsSink, BusMessage, ObjectStore, PubSub, TimeSeriesStore, VenueTimeSource,
-    run_tx_lifecycle,
-};
-use decimalx::{Decimal, Price};
-use futures_core::stream::BoxStream;
-use futures_util::StreamExt;
-use kernel::XError;
+use contracts::{TimeSeriesStore, VenueTimeSource, run_tx_lifecycle};
+use kernel::{XError, XResult};
+use std::sync::Mutex;
 
-struct BrokenBatch2;
+#[derive(Default)]
+struct HalfOpenTimeSeriesStore {
+    points: Mutex<Vec<Tick>>,
+}
 
 #[async_trait]
-impl ObjectStore for BrokenBatch2 {
-    async fn put_object(&self, _key: &str, _data: Bytes) -> kernel::XResult<()> {
+impl TimeSeriesStore for HalfOpenTimeSeriesStore {
+    async fn write_series(&self, _table: &str, points: Vec<Tick>) -> XResult<()> {
+        self.points.lock().expect("时序点锁应可用").extend(points);
         Ok(())
     }
 
-    async fn get_object(&self, _key: &str) -> kernel::XResult<Bytes> {
-        Ok(Bytes::from_static(b"wrong"))
-    }
-}
-
-#[async_trait]
-impl TimeSeriesStore for BrokenBatch2 {
-    async fn write_series(&self, _table: &str, _points: Vec<Tick>) -> kernel::XResult<()> {
-        Ok(())
-    }
-
-    async fn query_series(
-        &self,
-        _table: &str,
-        _start: i64,
-        _end: i64,
-    ) -> kernel::XResult<Vec<Tick>> {
-        Ok(Vec::new())
-    }
-}
-
-#[async_trait]
-impl AnalyticsSink for BrokenBatch2 {
-    async fn sink(&self, _event: &str, _payload: Bytes) -> kernel::XResult<()> {
-        Err(XError::unavailable("分析后端不可用"))
-    }
-}
-
-#[async_trait]
-impl PubSub for BrokenBatch2 {
-    async fn pub_message(&self, _channel: &str, _msg: Bytes) -> kernel::XResult<()> {
-        Err(XError::unavailable("发布后端不可用"))
-    }
-
-    async fn sub_channel(&self, _channel: &str) -> kernel::XResult<BoxStream<'static, BusMessage>> {
-        Err(XError::unavailable("订阅后端不可用"))
+    async fn query_series(&self, _table: &str, start: i64, end: i64) -> XResult<Vec<Tick>> {
+        Ok(self
+            .points
+            .lock()
+            .expect("时序点锁应可用")
+            .iter()
+            .filter(|point| point.ts >= start && point.ts < end)
+            .cloned()
+            .collect())
     }
 }
 
 #[tokio::test]
 async fn suite_key_value_store_on_fake() {
     let store = FakeKeyValueStore::new();
-    assert_key_value_store(&store).await.expect("kv suite");
-    assert_eq!(store.len().expect("len"), 1);
+    let fixture = FixtureNamespace::new("ctk_key_value_reference").expect("fixture 应合法");
+    assert_key_value_store(&store).await.expect("兼容 KV suite 应通过");
+    assert_key_value_store_isolated(&store, &fixture).await.expect("隔离 KV suite 应通过");
+    assert_eq!(store.len().expect("应读取长度"), 2);
 }
 
 #[tokio::test]
-async fn suite_event_bus_snapshot_and_portable_surface_on_fake() {
+async fn suite_event_bus_on_fake() {
     let bus = FakeEventBus::new();
-    assert_event_bus(&bus).await.expect("事件总线快照 suite");
-    assert_event_bus_surface(&bus, "surface-orders", Bytes::from_static(b"o3"))
-        .await
-        .expect("事件总线 surface suite");
+    let fixture = FixtureNamespace::new("ctk_event_bus_reference").expect("fixture 应合法");
+    assert_event_bus(&bus).await.expect("快照回放 profile suite 应通过");
+    assert_event_bus_with_fixture(&bus, &fixture).await.expect("可移植总线 surface 应通过");
 }
 
 #[tokio::test]
-async fn suite_batch2_portable_core_on_fakes() {
-    let object = FakeObjectStore::new();
-    assert_object_store(&object, "case-object", Bytes::from_static(b"payload"))
+async fn suite_object_store_on_reference_fake() {
+    let fixture = FixtureNamespace::new("ctk_object_reference").expect("fixture 应合法");
+    assert_object_store_with_fixture(&FakeObjectStore::new(), &fixture)
         .await
-        .expect("对象存储 suite");
-
-    let series = FakeTimeSeriesStore::new();
-    let tick = Tick {
-        symbol: "BTCUSDT".into(),
-        bid: Price::new(Decimal::new(10_000, 2)),
-        ask: Price::new(Decimal::new(10_100, 2)),
-        ts: 1_700_000_000_000_000_000,
-    };
-    assert_time_series_store(&series, "case_series", tick).await.expect("时序存储 suite");
-
-    let analytics = FakeAnalyticsSink::new();
-    assert_analytics_sink(&analytics, "case-event", Bytes::from_static(b"analytics"))
-        .await
-        .expect("分析写入 suite");
-    assert_eq!(analytics.events().expect("读取分析事件").len(), 1);
-
-    let pub_sub = FakePubSub::new();
-    assert_pub_sub_surface(&pub_sub, "case-channel", Bytes::from_static(b"message"))
-        .await
-        .expect("发布订阅 surface suite");
-    let mut published = pub_sub.sub_channel("case-channel").await.expect("读取已发布消息");
-    let message = published.next().await.expect("应记录一条已发布消息");
-    assert_eq!(message.payload, Bytes::from_static(b"message"));
+        .expect("对象存储 suite 应通过");
 }
 
 #[tokio::test]
-async fn suite_batch2_rejects_empty_identifiers_and_backend_failures() {
-    let object = FakeObjectStore::new();
-    assert!(assert_object_store(&object, "", Bytes::from_static(b"x")).await.is_err());
+async fn suite_time_series_store_on_reference_fake() {
+    let fixture = FixtureNamespace::new("ctk_time_series_reference").expect("fixture 应合法");
+    assert_time_series_store_with_fixture(&FakeTimeSeriesStore::new(), &fixture)
+        .await
+        .expect("时序存储 suite 应通过");
 
-    let series = FakeTimeSeriesStore::new();
-    let tick = Tick {
-        symbol: "BTCUSDT".into(),
-        bid: Price::new(Decimal::new(10_000, 2)),
-        ask: Price::new(Decimal::new(10_100, 2)),
-        ts: 1_700_000_000_000_000_000,
-    };
-    assert!(assert_time_series_store(&series, "", tick.clone()).await.is_err());
+    let half_open = HalfOpenTimeSeriesStore::default();
+    assert_time_series_store_with_fixture(&half_open, &fixture)
+        .await
+        .expect("半开区间后端也应通过可移植窗口 suite");
+}
 
-    let analytics = FakeAnalyticsSink::new();
-    assert!(assert_analytics_sink(&analytics, "", Bytes::from_static(b"x")).await.is_err());
-    let pub_sub = FakePubSub::new();
-    assert!(assert_pub_sub_surface(&pub_sub, "", Bytes::from_static(b"x")).await.is_err());
+#[tokio::test]
+async fn analytics_callable_suite_on_reference_fake() {
+    let fixture = FixtureNamespace::new("ctk_analytics_reference").expect("fixture 应合法");
+    let sink = FakeAnalyticsSink::new();
+    assert_analytics_sink_callable(&sink, &fixture).await.expect("分析写入可调用 suite 应通过");
+    assert_analytics_sink_observed(&sink, &fixture, || sink.events())
+        .await
+        .expect("分析写入 observed suite 应通过");
+    let events = sink.events().expect("应读取 Fake 事件");
+    assert_eq!(events.len(), 2);
+    assert_eq!(events[0].0, "ctk_analytics_reference__analytics_event");
+}
 
-    assert!(
-        assert_object_store(&BrokenBatch2, "broken-object", Bytes::from_static(b"expected"))
-            .await
-            .is_err()
-    );
-    assert!(assert_time_series_store(&BrokenBatch2, "broken_series", tick).await.is_err());
-    assert!(
-        assert_analytics_sink(&BrokenBatch2, "broken-event", Bytes::from_static(b"x"))
-            .await
-            .is_err()
-    );
-    assert!(
-        assert_pub_sub_surface(&BrokenBatch2, "broken-channel", Bytes::from_static(b"x"))
-            .await
-            .is_err()
-    );
+#[tokio::test]
+async fn pub_sub_smoke_on_reference_fake() {
+    let fixture = FixtureNamespace::new("ctk_pub_sub_reference").expect("fixture 应合法");
+    assert_pub_sub_smoke(&FakePubSub::new(), &fixture).await.expect("发布订阅 smoke 应通过");
 }
 
 #[tokio::test]
 async fn suite_tx_runner_on_fake_and_recording() {
-    assert_tx_runner(&FakeTxRunner).await.expect("fake tx");
+    assert_tx_runner(&FakeTxRunner).await.expect("Fake 事务 suite 应通过");
 
     let rec = RecordingTxRunner::new();
     let n = run_tx_lifecycle(&rec, || async move { Ok::<_, XError>(1u8) })
         .await
-        .expect("记录事务提交成功");
+        .expect("记录事务应提交");
     assert_eq!(n, 1);
-    assert!(*rec.committed.lock().expect("lock"));
-    assert!(!*rec.rolled_back.lock().expect("lock"));
+    assert!(*rec.committed.lock().expect("提交锁应可用"));
+    assert!(!*rec.rolled_back.lock().expect("回滚锁应可用"));
 
     let rec = RecordingTxRunner::new();
-    let _ =
-        run_tx_lifecycle(&rec, || async move { Err::<(), _>(XError::invalid("业务失败")) }).await;
-    assert!(*rec.rolled_back.lock().expect("lock"));
-    assert!(!*rec.committed.lock().expect("lock"));
+    let err = run_tx_lifecycle(&rec, || async move { Err::<(), _>(XError::invalid("业务失败")) })
+        .await
+        .expect_err("业务失败应回滚");
+    assert!(matches!(err, contracts::TxRunError::Business { .. }));
+    assert!(*rec.rolled_back.lock().expect("回滚锁应可用"));
+    assert!(!*rec.committed.lock().expect("提交锁应可用"));
 }
 
 #[tokio::test]
@@ -188,42 +136,46 @@ async fn suite_repository_on_fake() {
         |a, b| a == b,
     )
     .await
-    .expect("repo suite");
+    .expect("仓储 suite 应通过");
 }
 
 #[test]
 fn suite_instrumentation_on_recording() {
     let rec = RecordingInstrumentation::new();
-    assert_instrumentation(&rec).expect("instr suite");
-    let snap = rec.snapshot().expect("snap");
+    assert_instrumentation(&rec).expect("可观测 smoke 应通过");
+    rec.clear().expect("应清除 smoke 事件");
+    let fixture = FixtureNamespace::new("ctk_instrumentation_reference").expect("fixture 应合法");
+    assert_instrumentation_observed(&rec, &fixture, || rec.snapshot())
+        .expect("可观测 observed suite 应通过");
+    let snap = rec.snapshot().expect("应读取快照");
     assert_eq!(snap.len(), 3);
 }
 
 #[tokio::test]
 async fn suite_market_data_source_on_fake() {
     let src = FakeMarketDataSource;
-    assert_market_data_source(&src, "BTCUSDT").await.expect("mds suite");
+    assert_market_data_source(&src, "BTCUSDT").await.expect("行情源 suite 应通过");
 }
 
 #[tokio::test]
 async fn suite_instrument_catalog_on_fake() {
     let cat = FakeInstrumentCatalog::new().with_symbol(default_symbol_meta("BTCUSDT"));
-    assert_instrument_catalog(&cat, "BTCUSDT").await.expect("catalog suite");
+    assert_instrument_catalog(&cat, "BTCUSDT").await.expect("品种目录 suite 应通过");
 }
 
 #[tokio::test]
 async fn suite_execution_venue_on_fake() {
     let venue = FakeExecutionVenue::new("mock");
     let order = sample_order("1", "BTCUSDT");
-    assert_execution_venue(&venue, &order).await.expect("exec suite");
-    assert_eq!(venue.last_order().expect("last").id, "1");
+    assert_execution_venue(&venue, &order).await.expect("执行场所 suite 应通过");
+    assert_eq!(venue.last_order().expect("应记录最后订单").id, "1");
 }
 
 #[tokio::test]
 async fn suite_account_and_time_on_fake() {
     let acct = FakeAccountSource::new();
-    assert_account_source(&acct).await.expect("account suite");
+    assert_account_source(&acct).await.expect("账户源 suite 应通过");
     let time = FakeVenueTimeSource::new(1_700_000_000_000_000_000);
-    assert_venue_time_source(&time).await.expect("time suite");
-    assert_eq!(time.server_time().await.expect("t"), 1_700_000_000_000_000_000);
+    assert_venue_time_source(&time).await.expect("场所时间源 suite 应通过");
+    assert_eq!(time.server_time().await.expect("应读取服务器时间"), 1_700_000_000_000_000_000);
 }

@@ -28,3 +28,13 @@
 **无阻塞。** DEF-001…010 全 CLOSED。仅 1 OPTIONAL（branch cov ≥90%，line≥95% 已强制），见 [plan/residual-open.md](../plan/residual-open.md)。
 
 **Campaign COMPLETE。破坏性改动走新 spec 版本。**
+
+## Maintenance M-CTK-012（2026-07-23）
+
+| Task | 状态 |
+|------|------|
+| 14 trait reference suites + 15 broken cases | implementation complete；待独立复审 |
+| FixtureNamespace / smoke-observed 语义边界 | implementation complete；待复审 |
+| cargo metadata production graph gate | implementation complete；待 CI |
+| public API baseline / crate version / SSOT | implementation complete；待最终 main 重放 |
+| PR / 人工批准 / 合并 / cleanup | pending |

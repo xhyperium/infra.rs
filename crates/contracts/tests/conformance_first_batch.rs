@@ -1,9 +1,9 @@
 //! First-batch trait 合同套件：委托 `contract-testkit` suite（禁止空断言）。
 
 use contract_testkit::{
-    FakeEventBus, FakeKeyValueStore, FakeRepository, FakeTxRunner, RecordingInstrumentation,
-    RecordingTxRunner, assert_event_bus, assert_instrumentation, assert_key_value_store,
-    assert_repository, assert_tx_runner,
+    FakeEventBus, FakeKeyValueStore, FakeRepository, FakeTxRunner, FixtureNamespace,
+    RecordingInstrumentation, RecordingTxRunner, assert_event_bus, assert_instrumentation,
+    assert_instrumentation_observed, assert_key_value_store, assert_repository, assert_tx_runner,
 };
 use contracts::run_tx_lifecycle;
 use kernel::XError;
@@ -64,5 +64,9 @@ async fn event_bus_publish_subscribe_ids() {
 fn instrumentation_recording_surface() {
     let rec = RecordingInstrumentation::new();
     assert_instrumentation(&rec).expect("instr suite");
+    rec.clear().expect("应清除 smoke 事件");
+    let fixture = FixtureNamespace::new("ctk_contracts_instrumentation").expect("fixture 应合法");
+    assert_instrumentation_observed(&rec, &fixture, || rec.snapshot())
+        .expect("可观测 observed suite 应通过");
     assert_eq!(rec.snapshot().expect("snap").len(), 3);
 }

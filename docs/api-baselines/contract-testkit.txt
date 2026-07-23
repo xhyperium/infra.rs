@@ -1,0 +1,411 @@
+pub mod contract_testkit
+pub enum contract_testkit::InstrEvent
+pub contract_testkit::InstrEvent::CircuitClose
+pub contract_testkit::InstrEvent::CircuitClose::op: alloc::string::String
+pub contract_testkit::InstrEvent::CircuitOpen
+pub contract_testkit::InstrEvent::CircuitOpen::op: alloc::string::String
+pub contract_testkit::InstrEvent::Retry
+pub contract_testkit::InstrEvent::Retry::attempt: u32
+pub contract_testkit::InstrEvent::Retry::op: alloc::string::String
+impl core::clone::Clone for contract_testkit::InstrEvent
+pub fn contract_testkit::InstrEvent::clone(&self) -> contract_testkit::InstrEvent
+impl core::cmp::Eq for contract_testkit::InstrEvent
+impl core::cmp::PartialEq for contract_testkit::InstrEvent
+pub fn contract_testkit::InstrEvent::eq(&self, &contract_testkit::InstrEvent) -> bool
+impl core::fmt::Debug for contract_testkit::InstrEvent
+pub fn contract_testkit::InstrEvent::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for contract_testkit::InstrEvent
+impl core::marker::Freeze for contract_testkit::InstrEvent
+impl core::marker::Send for contract_testkit::InstrEvent
+impl core::marker::Sync for contract_testkit::InstrEvent
+impl core::marker::Unpin for contract_testkit::InstrEvent
+impl core::marker::UnsafeUnpin for contract_testkit::InstrEvent
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::InstrEvent
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::InstrEvent
+pub struct contract_testkit::BackendProfile
+pub contract_testkit::BackendProfile::contracts: contracts::live::LiveContractProfile
+pub contract_testkit::BackendProfile::name: alloc::string::String
+pub contract_testkit::BackendProfile::required_env: alloc::vec::Vec<alloc::string::String>
+pub contract_testkit::BackendProfile::url_env: core::option::Option<alloc::string::String>
+impl contract_testkit::BackendProfile
+pub fn contract_testkit::BackendProfile::is_available(&self) -> bool
+pub fn contract_testkit::BackendProfile::postgres_sql() -> Self
+pub fn contract_testkit::BackendProfile::probe(&self) -> kernel::error::XResult<alloc::string::String>
+pub fn contract_testkit::BackendProfile::probe_with<F>(&self, F) -> kernel::error::XResult<alloc::string::String> where F: core::ops::function::FnMut(&str) -> core::option::Option<alloc::string::String>
+pub fn contract_testkit::BackendProfile::redis_kv() -> Self
+pub fn contract_testkit::BackendProfile::storage_stack() -> Self
+impl core::clone::Clone for contract_testkit::BackendProfile
+pub fn contract_testkit::BackendProfile::clone(&self) -> contract_testkit::BackendProfile
+impl core::cmp::Eq for contract_testkit::BackendProfile
+impl core::cmp::PartialEq for contract_testkit::BackendProfile
+pub fn contract_testkit::BackendProfile::eq(&self, &contract_testkit::BackendProfile) -> bool
+impl core::fmt::Debug for contract_testkit::BackendProfile
+pub fn contract_testkit::BackendProfile::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for contract_testkit::BackendProfile
+impl core::marker::Freeze for contract_testkit::BackendProfile
+impl core::marker::Send for contract_testkit::BackendProfile
+impl core::marker::Sync for contract_testkit::BackendProfile
+impl core::marker::Unpin for contract_testkit::BackendProfile
+impl core::marker::UnsafeUnpin for contract_testkit::BackendProfile
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::BackendProfile
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::BackendProfile
+pub struct contract_testkit::ContractFailure
+pub contract_testkit::ContractFailure::case: &'static str
+pub contract_testkit::ContractFailure::contract: &'static str
+pub contract_testkit::ContractFailure::detail: alloc::string::String
+impl contract_testkit::ContractFailure
+pub fn contract_testkit::ContractFailure::new(&'static str, &'static str, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for contract_testkit::ContractFailure
+pub fn contract_testkit::ContractFailure::clone(&self) -> contract_testkit::ContractFailure
+impl core::cmp::Eq for contract_testkit::ContractFailure
+impl core::cmp::PartialEq for contract_testkit::ContractFailure
+pub fn contract_testkit::ContractFailure::eq(&self, &contract_testkit::ContractFailure) -> bool
+impl core::error::Error for contract_testkit::ContractFailure
+impl core::fmt::Debug for contract_testkit::ContractFailure
+pub fn contract_testkit::ContractFailure::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for contract_testkit::ContractFailure
+pub fn contract_testkit::ContractFailure::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for contract_testkit::ContractFailure
+impl core::marker::Freeze for contract_testkit::ContractFailure
+impl core::marker::Send for contract_testkit::ContractFailure
+impl core::marker::Sync for contract_testkit::ContractFailure
+impl core::marker::Unpin for contract_testkit::ContractFailure
+impl core::marker::UnsafeUnpin for contract_testkit::ContractFailure
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::ContractFailure
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::ContractFailure
+pub struct contract_testkit::FakeAccountSource
+impl contract_testkit::FakeAccountSource
+pub fn contract_testkit::FakeAccountSource::new() -> Self
+pub fn contract_testkit::FakeAccountSource::with_balance(self, decimalx::Money) -> Self
+pub fn contract_testkit::FakeAccountSource::with_position(self, canonical::Position) -> Self
+impl contracts::AccountSource for contract_testkit::FakeAccountSource
+pub fn contract_testkit::FakeAccountSource::query_balance<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<alloc::vec::Vec<decimalx::Money>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn contract_testkit::FakeAccountSource::query_position<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<alloc::vec::Vec<canonical::Position>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl core::default::Default for contract_testkit::FakeAccountSource
+pub fn contract_testkit::FakeAccountSource::default() -> contract_testkit::FakeAccountSource
+impl core::fmt::Debug for contract_testkit::FakeAccountSource
+pub fn contract_testkit::FakeAccountSource::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for contract_testkit::FakeAccountSource
+impl core::marker::Send for contract_testkit::FakeAccountSource
+impl core::marker::Sync for contract_testkit::FakeAccountSource
+impl core::marker::Unpin for contract_testkit::FakeAccountSource
+impl core::marker::UnsafeUnpin for contract_testkit::FakeAccountSource
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeAccountSource
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeAccountSource
+pub struct contract_testkit::FakeAnalyticsSink
+impl contract_testkit::FakeAnalyticsSink
+pub fn contract_testkit::FakeAnalyticsSink::events(&self) -> kernel::error::XResult<alloc::vec::Vec<(alloc::string::String, bytes::bytes::Bytes)>>
+pub fn contract_testkit::FakeAnalyticsSink::new() -> Self
+impl contracts::AnalyticsSink for contract_testkit::FakeAnalyticsSink
+pub fn contract_testkit::FakeAnalyticsSink::sink<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, bytes::bytes::Bytes) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::default::Default for contract_testkit::FakeAnalyticsSink
+pub fn contract_testkit::FakeAnalyticsSink::default() -> contract_testkit::FakeAnalyticsSink
+impl core::fmt::Debug for contract_testkit::FakeAnalyticsSink
+pub fn contract_testkit::FakeAnalyticsSink::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for contract_testkit::FakeAnalyticsSink
+impl core::marker::Send for contract_testkit::FakeAnalyticsSink
+impl core::marker::Sync for contract_testkit::FakeAnalyticsSink
+impl core::marker::Unpin for contract_testkit::FakeAnalyticsSink
+impl core::marker::UnsafeUnpin for contract_testkit::FakeAnalyticsSink
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeAnalyticsSink
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeAnalyticsSink
+pub struct contract_testkit::FakeEventBus
+impl contract_testkit::FakeEventBus
+pub fn contract_testkit::FakeEventBus::new() -> Self
+impl contracts::EventBus for contract_testkit::FakeEventBus
+pub fn contract_testkit::FakeEventBus::publish<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, bytes::bytes::Bytes) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn contract_testkit::FakeEventBus::subscribe<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<futures_core::stream::BoxStream<'static, contracts::BusMessage>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::default::Default for contract_testkit::FakeEventBus
+pub fn contract_testkit::FakeEventBus::default() -> contract_testkit::FakeEventBus
+impl core::fmt::Debug for contract_testkit::FakeEventBus
+pub fn contract_testkit::FakeEventBus::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for contract_testkit::FakeEventBus
+impl core::marker::Send for contract_testkit::FakeEventBus
+impl core::marker::Sync for contract_testkit::FakeEventBus
+impl core::marker::Unpin for contract_testkit::FakeEventBus
+impl core::marker::UnsafeUnpin for contract_testkit::FakeEventBus
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeEventBus
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeEventBus
+pub struct contract_testkit::FakeExecutionVenue
+impl contract_testkit::FakeExecutionVenue
+pub fn contract_testkit::FakeExecutionVenue::last_order(&self) -> core::option::Option<canonical::Order>
+pub fn contract_testkit::FakeExecutionVenue::new(impl core::convert::Into<canonical::VenueId>) -> Self
+impl contracts::ExecutionVenue for contract_testkit::FakeExecutionVenue
+pub fn contract_testkit::FakeExecutionVenue::cancel_order<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 canonical::CancelOrderRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn contract_testkit::FakeExecutionVenue::place_order<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 canonical::Order) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<canonical::OrderAck>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn contract_testkit::FakeExecutionVenue::query_order<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 canonical::CancelOrderRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<canonical::OrderStatus>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn contract_testkit::FakeExecutionVenue::venue_id(&self) -> canonical::VenueId
+impl core::fmt::Debug for contract_testkit::FakeExecutionVenue
+pub fn contract_testkit::FakeExecutionVenue::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for contract_testkit::FakeExecutionVenue
+impl core::marker::Send for contract_testkit::FakeExecutionVenue
+impl core::marker::Sync for contract_testkit::FakeExecutionVenue
+impl core::marker::Unpin for contract_testkit::FakeExecutionVenue
+impl core::marker::UnsafeUnpin for contract_testkit::FakeExecutionVenue
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeExecutionVenue
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeExecutionVenue
+pub struct contract_testkit::FakeInstrumentCatalog
+impl contract_testkit::FakeInstrumentCatalog
+pub fn contract_testkit::FakeInstrumentCatalog::new() -> Self
+pub fn contract_testkit::FakeInstrumentCatalog::with_symbol(self, canonical::SymbolMeta) -> Self
+impl contracts::InstrumentCatalog for contract_testkit::FakeInstrumentCatalog
+pub fn contract_testkit::FakeInstrumentCatalog::symbol_info<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<canonical::SymbolMeta>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::default::Default for contract_testkit::FakeInstrumentCatalog
+pub fn contract_testkit::FakeInstrumentCatalog::default() -> contract_testkit::FakeInstrumentCatalog
+impl core::fmt::Debug for contract_testkit::FakeInstrumentCatalog
+pub fn contract_testkit::FakeInstrumentCatalog::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for contract_testkit::FakeInstrumentCatalog
+impl core::marker::Send for contract_testkit::FakeInstrumentCatalog
+impl core::marker::Sync for contract_testkit::FakeInstrumentCatalog
+impl core::marker::Unpin for contract_testkit::FakeInstrumentCatalog
+impl core::marker::UnsafeUnpin for contract_testkit::FakeInstrumentCatalog
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeInstrumentCatalog
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeInstrumentCatalog
+pub struct contract_testkit::FakeKeyValueStore
+impl contract_testkit::FakeKeyValueStore
+pub fn contract_testkit::FakeKeyValueStore::is_empty(&self) -> kernel::error::XResult<bool>
+pub fn contract_testkit::FakeKeyValueStore::len(&self) -> kernel::error::XResult<usize>
+pub fn contract_testkit::FakeKeyValueStore::new() -> Self
+impl contracts::KeyValueStore for contract_testkit::FakeKeyValueStore
+pub fn contract_testkit::FakeKeyValueStore::get<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<core::option::Option<alloc::vec::Vec<u8>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn contract_testkit::FakeKeyValueStore::set<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, alloc::vec::Vec<u8>, core::option::Option<core::time::Duration>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::default::Default for contract_testkit::FakeKeyValueStore
+pub fn contract_testkit::FakeKeyValueStore::default() -> contract_testkit::FakeKeyValueStore
+impl core::fmt::Debug for contract_testkit::FakeKeyValueStore
+pub fn contract_testkit::FakeKeyValueStore::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for contract_testkit::FakeKeyValueStore
+impl core::marker::Send for contract_testkit::FakeKeyValueStore
+impl core::marker::Sync for contract_testkit::FakeKeyValueStore
+impl core::marker::Unpin for contract_testkit::FakeKeyValueStore
+impl core::marker::UnsafeUnpin for contract_testkit::FakeKeyValueStore
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeKeyValueStore
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeKeyValueStore
+pub struct contract_testkit::FakeMarketDataSource
+impl contracts::MarketDataSource for contract_testkit::FakeMarketDataSource
+pub fn contract_testkit::FakeMarketDataSource::subscribe_orderbook<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<futures_core::stream::BoxStream<'static, canonical::OrderBookSnapshot>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn contract_testkit::FakeMarketDataSource::subscribe_ticks<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<futures_core::stream::BoxStream<'static, canonical::Tick>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn contract_testkit::FakeMarketDataSource::subscribe_trades<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<futures_core::stream::BoxStream<'static, canonical::Trade>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::default::Default for contract_testkit::FakeMarketDataSource
+pub fn contract_testkit::FakeMarketDataSource::default() -> contract_testkit::FakeMarketDataSource
+impl core::fmt::Debug for contract_testkit::FakeMarketDataSource
+pub fn contract_testkit::FakeMarketDataSource::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for contract_testkit::FakeMarketDataSource
+impl core::marker::Send for contract_testkit::FakeMarketDataSource
+impl core::marker::Sync for contract_testkit::FakeMarketDataSource
+impl core::marker::Unpin for contract_testkit::FakeMarketDataSource
+impl core::marker::UnsafeUnpin for contract_testkit::FakeMarketDataSource
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeMarketDataSource
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeMarketDataSource
+pub struct contract_testkit::FakeObjectStore
+impl contract_testkit::FakeObjectStore
+pub fn contract_testkit::FakeObjectStore::is_empty(&self) -> kernel::error::XResult<bool>
+pub fn contract_testkit::FakeObjectStore::len(&self) -> kernel::error::XResult<usize>
+pub fn contract_testkit::FakeObjectStore::new() -> Self
+impl contracts::ObjectStore for contract_testkit::FakeObjectStore
+pub fn contract_testkit::FakeObjectStore::get_object<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<bytes::bytes::Bytes>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn contract_testkit::FakeObjectStore::put_object<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, bytes::bytes::Bytes) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::default::Default for contract_testkit::FakeObjectStore
+pub fn contract_testkit::FakeObjectStore::default() -> contract_testkit::FakeObjectStore
+impl core::fmt::Debug for contract_testkit::FakeObjectStore
+pub fn contract_testkit::FakeObjectStore::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for contract_testkit::FakeObjectStore
+impl core::marker::Send for contract_testkit::FakeObjectStore
+impl core::marker::Sync for contract_testkit::FakeObjectStore
+impl core::marker::Unpin for contract_testkit::FakeObjectStore
+impl core::marker::UnsafeUnpin for contract_testkit::FakeObjectStore
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeObjectStore
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeObjectStore
+pub struct contract_testkit::FakePubSub
+impl contract_testkit::FakePubSub
+pub fn contract_testkit::FakePubSub::new() -> Self
+impl contracts::PubSub for contract_testkit::FakePubSub
+pub fn contract_testkit::FakePubSub::pub_message<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, bytes::bytes::Bytes) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn contract_testkit::FakePubSub::sub_channel<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<futures_core::stream::BoxStream<'static, contracts::BusMessage>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::default::Default for contract_testkit::FakePubSub
+pub fn contract_testkit::FakePubSub::default() -> contract_testkit::FakePubSub
+impl core::fmt::Debug for contract_testkit::FakePubSub
+pub fn contract_testkit::FakePubSub::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for contract_testkit::FakePubSub
+impl core::marker::Send for contract_testkit::FakePubSub
+impl core::marker::Sync for contract_testkit::FakePubSub
+impl core::marker::Unpin for contract_testkit::FakePubSub
+impl core::marker::UnsafeUnpin for contract_testkit::FakePubSub
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakePubSub
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakePubSub
+pub struct contract_testkit::FakeRepository<T, Id>
+impl<T, Id> contract_testkit::FakeRepository<T, Id> where T: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, Id: core::cmp::Eq + core::hash::Hash + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn contract_testkit::FakeRepository<T, Id>::is_empty(&self) -> kernel::error::XResult<bool>
+pub fn contract_testkit::FakeRepository<T, Id>::len(&self) -> kernel::error::XResult<usize>
+pub fn contract_testkit::FakeRepository<T, Id>::new<F>(F) -> Self where F: core::ops::function::Fn(&T) -> Id + core::marker::Send + core::marker::Sync + 'static
+impl<T, Id> contracts::Repository<T, Id> for contract_testkit::FakeRepository<T, Id> where T: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, Id: core::cmp::Eq + core::hash::Hash + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn contract_testkit::FakeRepository<T, Id>::find<'life0, 'async_trait>(&'life0 self, Id) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<core::option::Option<T>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn contract_testkit::FakeRepository<T, Id>::save<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 T) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<T, Id> !core::marker::Freeze for contract_testkit::FakeRepository<T, Id>
+impl<T, Id> core::marker::Send for contract_testkit::FakeRepository<T, Id> where Id: core::marker::Send, T: core::marker::Send
+impl<T, Id> core::marker::Sync for contract_testkit::FakeRepository<T, Id> where Id: core::marker::Send, T: core::marker::Send
+impl<T, Id> core::marker::Unpin for contract_testkit::FakeRepository<T, Id> where Id: core::marker::Unpin, T: core::marker::Unpin
+impl<T, Id> core::marker::UnsafeUnpin for contract_testkit::FakeRepository<T, Id>
+impl<T, Id> !core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeRepository<T, Id>
+impl<T, Id> !core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeRepository<T, Id>
+pub struct contract_testkit::FakeTimeSeriesStore
+impl contract_testkit::FakeTimeSeriesStore
+pub fn contract_testkit::FakeTimeSeriesStore::new() -> Self
+impl contracts::TimeSeriesStore for contract_testkit::FakeTimeSeriesStore
+pub fn contract_testkit::FakeTimeSeriesStore::query_series<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, i64, i64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<alloc::vec::Vec<canonical::Tick>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn contract_testkit::FakeTimeSeriesStore::write_series<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, alloc::vec::Vec<canonical::Tick>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::default::Default for contract_testkit::FakeTimeSeriesStore
+pub fn contract_testkit::FakeTimeSeriesStore::default() -> contract_testkit::FakeTimeSeriesStore
+impl core::fmt::Debug for contract_testkit::FakeTimeSeriesStore
+pub fn contract_testkit::FakeTimeSeriesStore::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for contract_testkit::FakeTimeSeriesStore
+impl core::marker::Send for contract_testkit::FakeTimeSeriesStore
+impl core::marker::Sync for contract_testkit::FakeTimeSeriesStore
+impl core::marker::Unpin for contract_testkit::FakeTimeSeriesStore
+impl core::marker::UnsafeUnpin for contract_testkit::FakeTimeSeriesStore
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeTimeSeriesStore
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeTimeSeriesStore
+pub struct contract_testkit::FakeTxContext
+pub contract_testkit::FakeTxContext::committed: bool
+pub contract_testkit::FakeTxContext::rolled_back: bool
+impl contract_testkit::FakeTxContext
+pub fn contract_testkit::FakeTxContext::new() -> Self
+pub fn contract_testkit::FakeTxContext::with_commit_failure(self) -> Self
+impl contracts::TxContext for contract_testkit::FakeTxContext
+pub fn contract_testkit::FakeTxContext::commit<'life0, 'async_trait>(&'life0 mut self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn contract_testkit::FakeTxContext::rollback<'life0, 'async_trait>(&'life0 mut self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl core::default::Default for contract_testkit::FakeTxContext
+pub fn contract_testkit::FakeTxContext::default() -> contract_testkit::FakeTxContext
+impl core::fmt::Debug for contract_testkit::FakeTxContext
+pub fn contract_testkit::FakeTxContext::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for contract_testkit::FakeTxContext
+impl core::marker::Send for contract_testkit::FakeTxContext
+impl core::marker::Sync for contract_testkit::FakeTxContext
+impl core::marker::Unpin for contract_testkit::FakeTxContext
+impl core::marker::UnsafeUnpin for contract_testkit::FakeTxContext
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeTxContext
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeTxContext
+pub struct contract_testkit::FakeTxRunner
+impl contracts::TxRunner for contract_testkit::FakeTxRunner
+pub fn contract_testkit::FakeTxRunner::begin_tx<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<alloc::boxed::Box<dyn contracts::TxContext>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl core::default::Default for contract_testkit::FakeTxRunner
+pub fn contract_testkit::FakeTxRunner::default() -> contract_testkit::FakeTxRunner
+impl core::fmt::Debug for contract_testkit::FakeTxRunner
+pub fn contract_testkit::FakeTxRunner::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for contract_testkit::FakeTxRunner
+impl core::marker::Send for contract_testkit::FakeTxRunner
+impl core::marker::Sync for contract_testkit::FakeTxRunner
+impl core::marker::Unpin for contract_testkit::FakeTxRunner
+impl core::marker::UnsafeUnpin for contract_testkit::FakeTxRunner
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeTxRunner
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeTxRunner
+pub struct contract_testkit::FakeVenueTimeSource
+pub contract_testkit::FakeVenueTimeSource::now_ns: i64
+impl contract_testkit::FakeVenueTimeSource
+pub fn contract_testkit::FakeVenueTimeSource::new(i64) -> Self
+impl contracts::VenueTimeSource for contract_testkit::FakeVenueTimeSource
+pub fn contract_testkit::FakeVenueTimeSource::server_time<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<i64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl core::clone::Clone for contract_testkit::FakeVenueTimeSource
+pub fn contract_testkit::FakeVenueTimeSource::clone(&self) -> contract_testkit::FakeVenueTimeSource
+impl core::fmt::Debug for contract_testkit::FakeVenueTimeSource
+pub fn contract_testkit::FakeVenueTimeSource::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for contract_testkit::FakeVenueTimeSource
+impl core::marker::Send for contract_testkit::FakeVenueTimeSource
+impl core::marker::Sync for contract_testkit::FakeVenueTimeSource
+impl core::marker::Unpin for contract_testkit::FakeVenueTimeSource
+impl core::marker::UnsafeUnpin for contract_testkit::FakeVenueTimeSource
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FakeVenueTimeSource
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FakeVenueTimeSource
+pub struct contract_testkit::FixtureNamespace(_)
+impl contract_testkit::FixtureNamespace
+pub fn contract_testkit::FixtureNamespace::as_str(&self) -> &str
+pub fn contract_testkit::FixtureNamespace::new(impl core::convert::Into<alloc::string::String>) -> core::result::Result<Self, contract_testkit::ContractFailure>
+pub fn contract_testkit::FixtureNamespace::resource(&self, &str) -> core::result::Result<alloc::string::String, contract_testkit::ContractFailure>
+impl core::clone::Clone for contract_testkit::FixtureNamespace
+pub fn contract_testkit::FixtureNamespace::clone(&self) -> contract_testkit::FixtureNamespace
+impl core::cmp::Eq for contract_testkit::FixtureNamespace
+impl core::cmp::PartialEq for contract_testkit::FixtureNamespace
+pub fn contract_testkit::FixtureNamespace::eq(&self, &contract_testkit::FixtureNamespace) -> bool
+impl core::fmt::Debug for contract_testkit::FixtureNamespace
+pub fn contract_testkit::FixtureNamespace::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for contract_testkit::FixtureNamespace
+pub fn contract_testkit::FixtureNamespace::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::StructuralPartialEq for contract_testkit::FixtureNamespace
+impl core::marker::Freeze for contract_testkit::FixtureNamespace
+impl core::marker::Send for contract_testkit::FixtureNamespace
+impl core::marker::Sync for contract_testkit::FixtureNamespace
+impl core::marker::Unpin for contract_testkit::FixtureNamespace
+impl core::marker::UnsafeUnpin for contract_testkit::FixtureNamespace
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::FixtureNamespace
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::FixtureNamespace
+pub struct contract_testkit::RecordingInstrumentation
+impl contract_testkit::RecordingInstrumentation
+pub fn contract_testkit::RecordingInstrumentation::clear(&self) -> kernel::error::XResult<()>
+pub fn contract_testkit::RecordingInstrumentation::new() -> Self
+pub fn contract_testkit::RecordingInstrumentation::snapshot(&self) -> kernel::error::XResult<alloc::vec::Vec<contract_testkit::InstrEvent>>
+impl contracts::Instrumentation for contract_testkit::RecordingInstrumentation
+pub fn contract_testkit::RecordingInstrumentation::record_circuit_close(&self, &str)
+pub fn contract_testkit::RecordingInstrumentation::record_circuit_open(&self, &str)
+pub fn contract_testkit::RecordingInstrumentation::record_retry(&self, &str, u32)
+impl core::clone::Clone for contract_testkit::RecordingInstrumentation
+pub fn contract_testkit::RecordingInstrumentation::clone(&self) -> contract_testkit::RecordingInstrumentation
+impl core::default::Default for contract_testkit::RecordingInstrumentation
+pub fn contract_testkit::RecordingInstrumentation::default() -> contract_testkit::RecordingInstrumentation
+impl core::fmt::Debug for contract_testkit::RecordingInstrumentation
+pub fn contract_testkit::RecordingInstrumentation::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for contract_testkit::RecordingInstrumentation
+impl core::marker::Send for contract_testkit::RecordingInstrumentation
+impl core::marker::Sync for contract_testkit::RecordingInstrumentation
+impl core::marker::Unpin for contract_testkit::RecordingInstrumentation
+impl core::marker::UnsafeUnpin for contract_testkit::RecordingInstrumentation
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::RecordingInstrumentation
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::RecordingInstrumentation
+pub struct contract_testkit::RecordingTxRunner
+pub contract_testkit::RecordingTxRunner::committed: alloc::sync::Arc<std::sync::poison::mutex::Mutex<bool>>
+pub contract_testkit::RecordingTxRunner::rolled_back: alloc::sync::Arc<std::sync::poison::mutex::Mutex<bool>>
+impl contract_testkit::RecordingTxRunner
+pub fn contract_testkit::RecordingTxRunner::new() -> Self
+impl contracts::TxRunner for contract_testkit::RecordingTxRunner
+pub fn contract_testkit::RecordingTxRunner::begin_tx<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<alloc::boxed::Box<dyn contracts::TxContext>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl core::clone::Clone for contract_testkit::RecordingTxRunner
+pub fn contract_testkit::RecordingTxRunner::clone(&self) -> contract_testkit::RecordingTxRunner
+impl core::default::Default for contract_testkit::RecordingTxRunner
+pub fn contract_testkit::RecordingTxRunner::default() -> Self
+impl core::fmt::Debug for contract_testkit::RecordingTxRunner
+pub fn contract_testkit::RecordingTxRunner::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for contract_testkit::RecordingTxRunner
+impl core::marker::Send for contract_testkit::RecordingTxRunner
+impl core::marker::Sync for contract_testkit::RecordingTxRunner
+impl core::marker::Unpin for contract_testkit::RecordingTxRunner
+impl core::marker::UnsafeUnpin for contract_testkit::RecordingTxRunner
+impl core::panic::unwind_safe::RefUnwindSafe for contract_testkit::RecordingTxRunner
+impl core::panic::unwind_safe::UnwindSafe for contract_testkit::RecordingTxRunner
+pub async fn contract_testkit::assert_account_source(&dyn contracts::AccountSource) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_analytics_sink(&dyn contracts::AnalyticsSink, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_analytics_sink_callable(&dyn contracts::AnalyticsSink, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_analytics_sink_observed<F>(&dyn contracts::AnalyticsSink, &contract_testkit::FixtureNamespace, F) -> contract_testkit::ContractResult where F: core::ops::function::FnOnce() -> kernel::error::XResult<alloc::vec::Vec<(alloc::string::String, bytes::bytes::Bytes)>>
+pub async fn contract_testkit::assert_event_bus(&dyn contracts::EventBus) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_event_bus_surface(&dyn contracts::EventBus, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_event_bus_with_fixture(&dyn contracts::EventBus, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_execution_venue(&dyn contracts::ExecutionVenue, &canonical::Order) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_instrument_catalog(&dyn contracts::InstrumentCatalog, &str) -> contract_testkit::ContractResult
+pub fn contract_testkit::assert_instrumentation(&dyn contracts::Instrumentation) -> contract_testkit::ContractResult
+pub fn contract_testkit::assert_instrumentation_observed<F>(&dyn contracts::Instrumentation, &contract_testkit::FixtureNamespace, F) -> contract_testkit::ContractResult where F: core::ops::function::FnOnce() -> kernel::error::XResult<alloc::vec::Vec<contract_testkit::InstrEvent>>
+pub async fn contract_testkit::assert_key_value_store(&dyn contracts::KeyValueStore) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_key_value_store_isolated(&dyn contracts::KeyValueStore, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_market_data_source(&dyn contracts::MarketDataSource, &str) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_object_store(&dyn contracts::ObjectStore, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_object_store_with_fixture(&dyn contracts::ObjectStore, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_pub_sub_smoke(&dyn contracts::PubSub, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_pub_sub_surface(&dyn contracts::PubSub, &str, bytes::bytes::Bytes) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_repository<T, Id>(&dyn contracts::Repository<T, Id>, T, Id, impl core::ops::function::FnOnce(&mut T), impl core::ops::function::Fn(&T, &T) -> bool) -> contract_testkit::ContractResult where T: core::clone::Clone + core::marker::Send + core::marker::Sync + core::fmt::Debug, Id: core::clone::Clone + core::marker::Send + core::marker::Sync
+pub async fn contract_testkit::assert_time_series_store(&dyn contracts::TimeSeriesStore, &str, canonical::Tick) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_time_series_store_in_window(&dyn contracts::TimeSeriesStore, &str, canonical::Tick, i64, i64) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_time_series_store_with_fixture(&dyn contracts::TimeSeriesStore, &contract_testkit::FixtureNamespace) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_tx_runner(&dyn contracts::TxRunner) -> contract_testkit::ContractResult
+pub async fn contract_testkit::assert_venue_time_source(&dyn contracts::VenueTimeSource) -> contract_testkit::ContractResult
+pub fn contract_testkit::classify_backends(&[contract_testkit::BackendProfile]) -> (alloc::vec::Vec<alloc::string::String>, alloc::vec::Vec<alloc::string::String>)
+pub fn contract_testkit::classify_backends_with(&[contract_testkit::BackendProfile], &std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>) -> (alloc::vec::Vec<alloc::string::String>, alloc::vec::Vec<alloc::string::String>)
+pub fn contract_testkit::default_symbol_meta(&str) -> canonical::SymbolMeta
+pub fn contract_testkit::ensure(&'static str, &'static str, bool, impl core::convert::Into<alloc::string::String>) -> contract_testkit::ContractResult
+pub fn contract_testkit::sample_order(&str, &str) -> canonical::Order
+pub type contract_testkit::ContractResult = core::result::Result<(), contract_testkit::ContractFailure>
