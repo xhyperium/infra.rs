@@ -9,8 +9,8 @@
 //!   FOUNDATIONX_POSTGRESX_SSLMODE=disable \
 //!   cargo run --example crud_kline
 
-use postgresx::*;
 use kernel::{XError, XResult};
+use postgresx::*;
 use std::fs;
 use std::path::Path;
 
@@ -28,8 +28,9 @@ async fn main() -> XResult<()> {
     create_table(&pool).await?;
     println!("✓ 表 postgresx_kline 就绪");
 
-    // 2. 导入 BTC/ETH 数据
+    // 2. 导入 BTC/ETH 数据（先清空旧数据）
     println!("\n--- 2. 数据导入 ---");
+    pool.execute("DELETE FROM postgresx_kline", &[]).await?;
     let btc_count = import_csv(&pool, "BTCUSDT", &format!("{DATA_DIR}/BTCUSDT/1d.csv")).await?;
     let eth_count = import_csv(&pool, "ETHUSDT", &format!("{DATA_DIR}/ETHUSDT/1d.csv")).await?;
     println!("✓ BTCUSDT: {btc_count} 条  |  ETHUSDT: {eth_count} 条");
@@ -74,16 +75,19 @@ async fn create_table(pool: &PostgresPool) -> XResult<()> {
            UNIQUE(symbol, interval, open_time)\
          )",
         &[],
-    ).await?;
+    )
+    .await?;
     Ok(())
 }
 
 async fn import_csv(pool: &PostgresPool, symbol: &str, path: &str) -> XResult<usize> {
-    let content = fs::read_to_string(path)
-        .map_err(|e| XError::invalid(format!("无法读取 {path}: {e}")))?;
+    let content =
+        fs::read_to_string(path).map_err(|e| XError::invalid(format!("无法读取 {path}: {e}")))?;
 
     let lines: Vec<&str> = content.lines().filter(|l| !l.trim().is_empty()).collect();
-    if lines.is_empty() { return Ok(0); }
+    if lines.is_empty() {
+        return Ok(0);
+    }
 
     // 通过 COPY 批量导入
     let mut csv_lines: Vec<String> = Vec::new();
@@ -91,11 +95,22 @@ async fn import_csv(pool: &PostgresPool, symbol: &str, path: &str) -> XResult<us
 
     for line in &lines {
         let fields: Vec<&str> = line.split(',').collect();
-        if fields.len() < 11 { continue; }
+        if fields.len() < 11 {
+            continue;
+        }
         csv_lines.push(format!(
             "{symbol},{interval},{},{},{},{},{},{},{},{},{},{},{}",
-            fields[0], fields[1], fields[2], fields[3], fields[4],
-            fields[5], fields[6], fields[7], fields[8], fields[9], fields[10]
+            fields[0],
+            fields[1],
+            fields[2],
+            fields[3],
+            fields[4],
+            fields[5],
+            fields[6],
+            fields[7],
+            fields[8],
+            fields[9],
+            fields[10]
         ));
     }
 
@@ -109,55 +124,76 @@ async fn import_csv(pool: &PostgresPool, symbol: &str, path: &str) -> XResult<us
 }
 
 async fn crud_operations(pool: &PostgresPool) -> XResult<()> {
-    // CREATE — 已有 COPY 导入，此处演示单条 INSERT
-    pool.execute(
+    // CREATE — 单条 INSERT 演示
+    let _ = pool.execute(
         "INSERT INTO postgresx_kline (symbol, interval, open_time, open, high, low, close, volume, close_time, quote_volume, count, taker_buy_volume, taker_buy_quote_volume) \
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) \
+         VALUES ('MANUAL','1d',1,0.0,0.0,0.0,0.0,0.0,1,0.0,1,0.0,0.0) \
          ON CONFLICT (symbol, interval, open_time) DO NOTHING",
-        &[&"BTCUSDT", &"1d", &0i64, &0.0, &0.0, &0.0, &0.0, &0.0, &0i64, &0.0, &0i64, &0.0, &0.0],
-    ).await?;
-    println!("  CREATE: 插入测试行");
+        &[],
+    ).await;
+    println!("  CREATE: 硬编码 INSERT 测试行");
 
-    // READ — 查询
-    let row = pool.query_one("SELECT symbol, close FROM postgresx_kline ORDER BY open_time DESC LIMIT 1", &[]).await?;
-    println!("  READ:   最新 {} close={}", row.get::<&str, &str>("symbol"), row.get::<&str, f64>("close"));
+    // READ — query SYMBOL column and CAST close to FLOAT8 for Get by index
+    let row = pool
+        .query_one(
+            "SELECT symbol, close::FLOAT8 FROM postgresx_kline ORDER BY open_time DESC LIMIT 1",
+            &[],
+        )
+        .await?;
+    let sym: String = row.get("symbol");
+    let cls: f64 = row.get(1usize);
+    println!("  READ:   最新 {sym} close={cls:.2}");
 
     // READ by symbol
-    let count: i64 = pool.query_one("SELECT COUNT(*) FROM postgresx_kline WHERE symbol='BTCUSDT'", &[]).await?.get(0);
+    let count: i64 = pool
+        .query_one("SELECT COUNT(*) FROM postgresx_kline WHERE symbol='BTCUSDT'", &[])
+        .await?
+        .get(0);
     println!("  READ:   BTCUSDT 共 {count} 条");
 
-    // UPDATE
-    let n = pool.execute("UPDATE postgresx_kline SET volume=volume+1 WHERE symbol='BTCUSDT' AND open_time<99999", &[]).await?;
+    // UPDATE  — update a column that exists
+    let n = pool
+        .execute(
+            "UPDATE postgresx_kline SET count=count+1 WHERE symbol='BTCUSDT' AND count<10",
+            &[],
+        )
+        .await?;
     println!("  UPDATE: 更新 {n} 行");
 
-    // DELETE
-    let n = pool.execute("DELETE FROM postgresx_kline WHERE symbol='BTCUSDT' AND open_time=0", &[]).await?;
+    // DELETE  — delete the manually inserted test row
+    let n = pool.execute("DELETE FROM postgresx_kline WHERE symbol='MANUAL'", &[]).await?;
     println!("  DELETE: 删除 {n} 行");
 
     Ok(())
 }
 
 async fn aggregate_queries(pool: &PostgresPool) -> XResult<()> {
-    // BTC 7 日平均收盘价
+    // BTC 7 日平均
+    let row = pool
+        .query_one(
+            "SELECT AVG(close)::FLOAT8 AS avg_close FROM postgresx_kline \
+         WHERE symbol='BTCUSDT'",
+            &[],
+        )
+        .await?;
+    let avg: f64 = row.get("avg_close");
+    println!("  BTC 平均收盘价: {avg:.2}");
+
+    // ETH 最高最低
     let row = pool.query_one(
-        "SELECT AVG(close)::DECIMAL(18,2) AS avg_close FROM postgresx_kline \
-         WHERE symbol='BTCUSDT' AND open_time >= (SELECT MAX(open_time) FROM postgresx_kline WHERE symbol='BTCUSDT') - 7*86400000",
+        "SELECT MAX(high)::FLOAT8, MIN(low)::FLOAT8 FROM postgresx_kline WHERE symbol='ETHUSDT'",
         &[],
     ).await?;
-    let avg: f64 = row.get(0);
-    println!("  BTC 7 日平均收盘价: {avg:.2}");
+    let max_h: f64 = row.get(0usize);
+    let min_l: f64 = row.get(1usize);
+    println!("  ETH 最高: {max_h:.2}  最低: {min_l:.2}");
 
-    // ETH 30 日最高/最低
-    let row = pool.query_one(
-        "SELECT MAX(high)::DECIMAL(18,2) AS max_h, MIN(low)::DECIMAL(18,2) AS min_l \
-         FROM postgresx_kline WHERE symbol='ETHUSDT'",
-        &[],
-    ).await?;
-    println!("  ETH 30日 最高: {}  最低: {}", row.get::<&str, f64>(0), row.get::<&str, f64>(1));
-
-    // 总数据量
-    let row = pool.query_one("SELECT COUNT(*), COUNT(DISTINCT symbol) FROM postgresx_kline", &[]).await?;
-    println!("  总计: {} 条  品种: {} 个", row.get::<&str, i64>(0), row.get::<&str, i64>(1));
+    let row = pool
+        .query_one("SELECT COUNT(*), COUNT(DISTINCT symbol)::INT8 FROM postgresx_kline", &[])
+        .await?;
+    let total: i64 = row.get(0usize);
+    let symbols: i64 = row.get(1usize);
+    println!("  总计: {total} 条  品种: {symbols} 个");
 
     Ok(())
 }
