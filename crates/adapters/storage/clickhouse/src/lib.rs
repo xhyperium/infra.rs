@@ -4,6 +4,51 @@
 //! - **feature `scaffold`**：`ClickHouseAdapter` 进程内内存实现（**非**生产）。
 //!
 //! 实现 [`contracts::AnalyticsSink`]。
+//!
+//! # 配置校验（离线）
+//!
+//! ```
+//! use std::time::Duration;
+//! use clickhousex::ClickHouseConfig;
+//!
+//! let cfg = ClickHouseConfig::default();
+//! cfg.validate().expect("默认配置应通过校验");
+//!
+//! // 非法配置应被拒绝
+//! let bad = ClickHouseConfig { max_in_flight: 0, ..Default::default() };
+//! assert!(bad.validate().is_err());
+//! ```
+//!
+//! # 标识符校验
+//!
+//! ```
+//! use clickhousex::validate_ident;
+//!
+//! assert!(validate_ident("valid_table").is_ok());
+//! assert!(validate_ident("").is_err());
+//! assert!(validate_ident("1bad").is_err());
+//! assert!(validate_ident("a;drop").is_err());
+//! ```
+//!
+//! # 分块计算
+//!
+//! ```
+//! use clickhousex::chunk_ranges;
+//!
+//! assert_eq!(chunk_ranges(5, 2), vec![(0, 2), (2, 4), (4, 5)]);
+//! assert!(chunk_ranges(0, 10).is_empty());
+//! ```
+//!
+//! # TabSeparated 行解析
+//!
+//! ```
+//! use clickhousex::parse_tab_separated_rows;
+//!
+//! let rows = parse_tab_separated_rows("a\tb\nc\td\n");
+//! assert_eq!(rows, vec![vec!["a", "b"], vec!["c", "d"]]);
+//!
+//! assert!(parse_tab_separated_rows("").is_empty());
+//! ```
 
 #![forbid(unsafe_code)]
 
