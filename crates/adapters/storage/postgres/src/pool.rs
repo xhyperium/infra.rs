@@ -59,7 +59,14 @@ impl std::fmt::Debug for PostgresPool {
 impl PostgresPool {
     /// 按配置建池并验证至少能借出连接。
     pub async fn connect(config: &PostgresConfig) -> XResult<Self> {
+        #[cfg(feature = "tracing")]
+        tracing::info!(target: "postgresx", "connecting to {}:{}/{} user={} sslmode={}", config.host, config.port, config.database, config.user, config.sslmode.as_str());
+
         let this = Self::connect_lazy(config).await?;
+
+        #[cfg(feature = "tracing")]
+        tracing::info!(target: "postgresx", "connected to {}:{}/{} (pool size={})", config.host, config.port, config.database, config.max_pool_size);
+
         // 冒烟：借一条连接跑 SELECT 1
         this.health().await?;
         Ok(this)
@@ -70,6 +77,9 @@ impl PostgresPool {
     /// 用于自检短路单测（不可达地址）与高级启动路径；生产默认仍应使用
     /// [`Self::connect`]。首次 `acquire` 可能失败。
     pub async fn connect_lazy(config: &PostgresConfig) -> XResult<Self> {
+        #[cfg(feature = "tracing")]
+        tracing::info!(target: "postgresx", "connect_lazy to {}:{}/{} user={} sslmode={}", config.host, config.port, config.database, config.user, config.sslmode.as_str());
+
         config.validate()?;
 
         let dp_cfg = config.to_deadpool_config();
@@ -138,6 +148,9 @@ impl PostgresPool {
 
     /// 借出连接（使用配置中的 `acquire_timeout`）。
     pub async fn acquire(&self) -> XResult<PgConnection> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(target: "postgresx", "acquiring connection from pool (deadline={:?})", self.acquire_timeout);
+
         self.acquire_with(self.acquire_timeout).await
     }
 
@@ -145,6 +158,9 @@ impl PostgresPool {
     ///
     /// `deadline` 为零时返回 `Invalid`。超时返回 `DeadlineExceeded`。
     pub async fn acquire_with(&self, deadline: std::time::Duration) -> XResult<PgConnection> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(target: "postgresx", "acquire_with deadline={:?}", deadline);
+
         self.ensure_open()?;
         if deadline.is_zero() {
             return Err(XError::invalid("Postgres acquire_with deadline 必须大于零"));
@@ -160,18 +176,27 @@ impl PostgresPool {
 
     /// 参数化 `EXECUTE`（短借连接）。
     pub async fn execute(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<u64> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(target: "postgresx", param_count = params.len(), "pool.execute");
+
         let mut conn = self.acquire().await?;
         conn.execute(sql, params).await
     }
 
     /// 参数化查询，恰好一行。
     pub async fn query_one(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<Row> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(target: "postgresx", param_count = params.len(), "pool.query_one");
+
         let mut conn = self.acquire().await?;
         conn.query_one(sql, params).await
     }
 
     /// 参数化查询，0..N 行。
     pub async fn query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<Vec<Row>> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(target: "postgresx", param_count = params.len(), "pool.query");
+
         let mut conn = self.acquire().await?;
         conn.query(sql, params).await
     }
@@ -182,6 +207,9 @@ impl PostgresPool {
         sql: &str,
         params: &[&(dyn ToSql + Sync)],
     ) -> XResult<Option<Row>> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(target: "postgresx", param_count = params.len(), "pool.query_opt");
+
         let mut conn = self.acquire().await?;
         conn.query_opt(sql, params).await
     }
@@ -218,14 +246,24 @@ impl PostgresPool {
     where
         F: for<'a> AsyncFnOnce(&'a mut PgTransaction) -> XResult<T>,
     {
+        #[cfg(feature = "tracing")]
+        tracing::info!(target: "postgresx", "transaction begin");
+
         let conn = self.acquire().await?;
         let mut tx = conn.begin().await?;
         match f(&mut tx).await {
             Ok(value) => {
                 tx.commit().await?;
+
+                #[cfg(feature = "tracing")]
+                tracing::info!(target: "postgresx", "transaction committed");
+
                 Ok(value)
             }
             Err(err) => {
+                #[cfg(feature = "tracing")]
+                tracing::warn!(target: "postgresx", error = %err, "transaction rollback");
+
                 // 业务失败：尽力 rollback；双错误仍保留原分类与完整 source chain。
                 match tx.rollback().await {
                     Ok(()) => Err(err),
@@ -243,6 +281,9 @@ impl PostgresPool {
 
     /// 健康检查：`SELECT 1`。
     pub async fn health(&self) -> XResult<()> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(target: "postgresx", "health check");
+
         self.ensure_open()?;
         let mut conn = self.acquire().await?;
         let row = conn.query_one("SELECT 1", &[]).await?;
@@ -268,6 +309,9 @@ impl PostgresPool {
 
     /// 关闭池；此后 `acquire` / SQL 返回 Unavailable。
     pub fn close(&self) {
+        #[cfg(feature = "tracing")]
+        tracing::info!(target: "postgresx", "closing pool");
+
         self.closed.store(true, Ordering::Release);
         self.inner.close();
     }

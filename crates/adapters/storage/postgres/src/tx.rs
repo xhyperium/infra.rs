@@ -230,6 +230,9 @@ impl PgTransaction {
 
     /// 提交事务。
     pub async fn commit(mut self) -> XResult<()> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(target: "postgresx", "tx.commit BEGIN");
+
         self.ensure_active()?;
         let guard = self.take_guard()?;
         match tokio::time::timeout(self.operation_timeout, guard.object()?.batch_execute("COMMIT"))
@@ -237,6 +240,8 @@ impl PgTransaction {
         {
             Ok(Ok(())) => {
                 self.state = TxStatus::Committed;
+                #[cfg(feature = "tracing")]
+                tracing::debug!(target: "postgresx", "tx.commit OK");
                 drop(guard.release()?);
                 Ok(())
             }
@@ -253,6 +258,9 @@ impl PgTransaction {
 
     /// 回滚事务。
     pub async fn rollback(mut self) -> XResult<()> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(target: "postgresx", "tx.rollback BEGIN");
+
         self.ensure_rollbackable()?;
         let guard = self.take_guard_after_validation()?;
         match tokio::time::timeout(
@@ -263,6 +271,8 @@ impl PgTransaction {
         {
             Ok(Ok(())) => {
                 self.state = TxStatus::RolledBack;
+                #[cfg(feature = "tracing")]
+                tracing::debug!(target: "postgresx", "tx.rollback OK");
                 drop(guard.release()?);
                 Ok(())
             }

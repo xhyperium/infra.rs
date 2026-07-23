@@ -73,6 +73,9 @@ impl PgConnection {
     /// # 安全
     /// 调用方必须使用 `$1..$N` 占位符；禁止字符串拼接用户输入。
     pub async fn execute(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<u64> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(target: "postgresx", param_count = params.len(), "conn.execute");
+
         let guard = self.take_guard()?;
         match tokio::time::timeout(self.operation_timeout, guard.object()?.execute(sql, params))
             .await
@@ -90,6 +93,9 @@ impl PgConnection {
 
     /// 参数化查询，期望恰好一行。
     pub async fn query_one(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<Row> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(target: "postgresx", param_count = params.len(), "conn.query_one");
+
         let guard = self.take_guard()?;
         match tokio::time::timeout(self.operation_timeout, guard.object()?.query_one(sql, params))
             .await
@@ -107,6 +113,9 @@ impl PgConnection {
 
     /// 参数化查询，返回 0..N 行。
     pub async fn query(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> XResult<Vec<Row>> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(target: "postgresx", param_count = params.len(), "conn.query");
+
         let guard = self.take_guard()?;
         match tokio::time::timeout(self.operation_timeout, guard.object()?.query(sql, params)).await
         {
@@ -126,6 +135,9 @@ impl PgConnection {
         sql: &str,
         params: &[&(dyn ToSql + Sync)],
     ) -> XResult<Option<Row>> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(target: "postgresx", param_count = params.len(), "conn.query_opt");
+
         let guard = self.take_guard()?;
         match tokio::time::timeout(self.operation_timeout, guard.object()?.query_opt(sql, params))
             .await
@@ -145,6 +157,9 @@ impl PgConnection {
     ///
     /// 仅用于**受信任**脚本（如 migration）；禁止拼接用户输入。
     pub async fn batch_execute(&mut self, sql: &str) -> XResult<()> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(target: "postgresx", sql_len = sql.len(), "conn.batch_execute");
+
         if sql.trim().is_empty() {
             return Err(XError::invalid("batch_execute sql 不能为空"));
         }

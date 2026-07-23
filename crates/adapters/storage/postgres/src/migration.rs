@@ -218,6 +218,9 @@ impl Migrator {
     ///
     /// 有 mismatch 或 unknown → `Conflict`；pending 仅体现在返回值。
     pub async fn verify(&self) -> XResult<MigrationStatus> {
+        #[cfg(feature = "tracing")]
+        tracing::info!(target: "postgresx", migration_count = self.migrations.len(), "migration.verify");
+
         let status = self.status().await?;
         if !status.mismatches.is_empty() {
             return Err(XError::conflict(format!(
@@ -239,6 +242,9 @@ impl Migrator {
     /// 全程持 session advisory lock；每条 migration 在事务中执行 SQL 并写入历史行。
     /// 已应用版本不会被修改。
     pub async fn apply(&self) -> XResult<MigrationReport> {
+        #[cfg(feature = "tracing")]
+        tracing::info!(target: "postgresx", migration_count = self.migrations.len(), "migration.apply");
+
         let mut conn = self.pool.acquire().await?;
         // 会话级锁：释放在连接归还时由 PG 在会话结束清理；我们显式 unlock
         conn.execute(
