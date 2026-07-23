@@ -17,7 +17,7 @@
 - [x] **TLS 策略** (v0.3.1)：`TlsPolicy { Disable, Prefer, Require }` + loopback/remote 自动判定 + 环境变量 `FOUNDATIONX_NATS_TLS{,_POLICY}` + Remote 明文 fail-closed
 - [x] **JetStream 薄封装** (v0.3.1)：`JetStream { publish, get_or_create_stream, create_pull_consumer }` + `StreamConfig` / `PullConsumerConfig` + `validate_stream_name`
 - [x] **JetStream durable pull 显式确认** (v0.3.2)：`JetStreamConsumerConfig` / `JetStreamConsumer` / `JetStreamDelivery` + `ack` / `double_ack` / `nak` / `progress` / `term` + `JetStreamDeliveryMetadata`
-- [x] **连接事件 stats** (v0.3.2)：`NatsPoolStats { connected, disconnected, slow_consumers }` + 订阅任务注册表管�� + panic fail-closed
+- [x] **连接事件 stats** (v0.3.2)：`NatsPoolStats { connected, disconnected, slow_consumers }` + 订阅任务注册表管理 + panic fail-closed
 - [x] **internal deadline 全覆盖** (v0.3.2)：Core 与 JetStream 全部命令配置 `operation_timeout` / `command_timeout`
 - [x] **broker conformance 7 场景** (v0.3.2)：Core 无回放、慢消费者、JetStream 重投/double_ack、Nak/Progress、max_ack_pending 背压、max_deliver/term DLQ 负向
 - [x] **reconnect conformance 3/3** (v0.3.2–v0.3.3)：固定镜像同 client 重启恢复发布 + 原 Core subscription + 慢消费者观测

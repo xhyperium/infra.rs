@@ -333,7 +333,7 @@ impl JetStreamConsumer {
     ///
     /// # Errors
     ///
-    /// `timeout` 或 `max_messages` 为零时返��� `Invalid`。
+    /// `timeout` 或 `max_messages` 为零时返回 `Invalid`。
     pub async fn next_batch(
         &self,
         timeout: Duration,
