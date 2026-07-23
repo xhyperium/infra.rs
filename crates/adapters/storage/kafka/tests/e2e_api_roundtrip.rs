@@ -91,19 +91,32 @@ async fn e2e_key_headers_stats_and_file_offset() {
 #[ignore = "requires live Kafka"]
 async fn e2e_selfcheck_full_headers_pass() {
     let pool = KafkaPool::connect_from_env().await.expect("connect");
-    let report = KafkaValidator::new(pool.clone()).run(CheckLevel::Full).await;
-    assert!(report.passed, "items={:?}", report.items);
+    let validator = KafkaValidator::new(pool.clone());
+    assert_eq!(validator.catalog().len(), 9);
+    let report = validator.run(CheckLevel::Full).await;
+    // 关键：ordering_headers 走 shipped headers 路径且非 partial；NO-GO 必须 Skipped
     let ord = report.items.iter().find(|i| i.id == "kafka.full.ordering_headers").expect("ord");
-    assert!(matches!(ord.status, CheckStatus::Passed | CheckStatus::Degraded), "{ord:?}");
     assert!(
-        ord.detail.as_ref().is_none_or(|d| !d.contains("partial") || d.contains("延迟")),
-        "headers should not be partial: {ord:?}"
+        matches!(ord.status, CheckStatus::Passed | CheckStatus::Degraded),
+        "ordering_headers 必须 PASS/Degraded: {ord:?}"
+    );
+    assert!(
+        ord.detail.as_ref().is_none_or(|d| !d.to_lowercase().contains("partial")),
+        "headers 不得仍标 partial: {ord:?}"
     );
     for id in ["kafka.full.group_lag", "kafka.full.isr_health"] {
         let i = report.items.iter().find(|x| x.id == id).expect(id);
-        assert_eq!(i.status, CheckStatus::Skipped);
-        assert!(i.detail.as_ref().is_some_and(|d| d.contains("NO-GO")));
+        assert_eq!(i.status, CheckStatus::Skipped, "{i:?}");
+        assert!(i.detail.as_ref().is_some_and(|d| d.contains("NO-GO")), "{i:?}");
     }
-    assert_eq!(KafkaValidator::new(pool.clone()).catalog().len(), 9);
+    // 其它项不得 Failed（元数据延迟允许 Degraded/Skipped，与 live_selfcheck_full 一致）
+    for item in &report.items {
+        match item.id.as_str() {
+            "kafka.full.group_lag" | "kafka.full.isr_health" => {}
+            _ => {
+                assert_ne!(item.status, CheckStatus::Failed, "非 NO-GO 项不得 Failed: {item:?}");
+            }
+        }
+    }
     let _ = pool.close(Duration::from_secs(3)).await;
 }

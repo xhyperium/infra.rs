@@ -14,7 +14,7 @@
 | R4 | Consumer / ack | 手动分区 + 应用 checkpoint PASS；group/rebalance **NO-GO** |
 | R5 | TLS / SASL | TLS+CA+PLAIN+远程明文 fail-closed PASS；SCRAM/OAuth/mTLS **NO-GO** |
 | R6 | deadline / 背压 / close | PASS |
-| R7 | 错误 / 可观测 | 脱敏 + 基础 kind PASS；完整 RED/lag 指标 PARTIAL |
+| R7 | 错误 / 可观测 | 脱敏 + kind PASS；pool stats（含 timeouts/topics）PASS；consumer lag 属 group **NO-GO** |
 | R8 | 测试矩阵 | 离线 + 隔离 harness + 真 secrets live PASS；24h soak **NO-GO** |
 | R9 | SSOT 完整性 | 11 层齐全；本轮同步 version/matrix/NO-GO/OOS |
 | R10 | Part2 | 量化栈 **全套 OOS**；与本仓实现合同无矛盾 |
