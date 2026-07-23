@@ -1,16 +1,13 @@
 //! kafka [`Validatable`] 实现与 §6.2 检查项执行。
 
-use std::collections::BTreeMap;
-use std::hash::{Hash, Hasher};
 use std::time::{Duration, Instant};
 
 use bytes::Bytes;
-use chrono::Utc;
-use rskafka::record::Record;
 use tokio::time::timeout;
 
 use crate::config::KafkaConfig;
 use crate::consumer::ConsumerConfig;
+use crate::message::{PublishRecord, partition_for_key};
 use crate::offset::{MemoryOffsetStore, OffsetCommitStore};
 use crate::pool::KafkaPool;
 
@@ -129,7 +126,7 @@ impl KafkaValidator {
                 "kafka.full.ordering_headers",
                 CheckLevel::Full,
                 Some(5_000),
-                "同分区顺序；headers 公共面 partial",
+                "同分区顺序 + header 透传",
                 true,
             ),
             desc(
@@ -467,17 +464,28 @@ impl KafkaValidator {
         if let Err(e) = self.pool.ensure_topic(&topic, 1, repl).await {
             return CheckOutcome::Fail(format!("create: {:?}", e.kind()));
         }
-        // 确认出现在 metadata
-        match self.pool.client().list_topics().await {
-            Ok(topics) if topics.iter().any(|t| t.name == topic) => {}
-            Ok(_) => {
-                let _ = self.pool.delete_topic(&topic).await;
-                return CheckOutcome::Fail("create 后 list_topics 未见 topic".into());
+        // 确认出现在 metadata（远程集群可能有短暂传播延迟）
+        let mut seen = false;
+        let mut last_list_err = None;
+        for attempt in 0u32..8 {
+            if attempt > 0 {
+                tokio::time::sleep(Duration::from_millis(100 * u64::from(attempt))).await;
             }
-            Err(e) => {
-                let _ = self.pool.delete_topic(&topic).await;
-                return CheckOutcome::Fail(format!("list_topics: {e}"));
+            match self.pool.client().list_topics().await {
+                Ok(topics) if topics.iter().any(|t| t.name == topic) => {
+                    seen = true;
+                    break;
+                }
+                Ok(_) => {}
+                Err(e) => last_list_err = Some(e.to_string()),
             }
+        }
+        if !seen {
+            let _ = self.pool.delete_topic(&topic).await;
+            return CheckOutcome::Fail(match last_list_err {
+                Some(e) => format!("list_topics: {e}"),
+                None => "create 后 list_topics 未见 topic（已重试）".into(),
+            });
         }
         if let Err(e) = self.pool.delete_topic(&topic).await {
             return CheckOutcome::Fail(format!("delete: {:?}", e.kind()));
@@ -500,21 +508,25 @@ impl KafkaValidator {
         if let Err(e) = self.pool.ensure_topic(&topic, partitions, repl).await {
             return CheckOutcome::Fail(format!("ensure_topic: {:?}", e.kind()));
         }
-        let key = b"stable-key-selfcheck";
-        let p1 = stable_partition(key, partitions);
-        let p2 = stable_partition(key, partitions);
+        let key = Bytes::from_static(b"stable-key-selfcheck");
+        let p1 = partition_for_key(key.as_ref(), partitions);
+        let p2 = partition_for_key(key.as_ref(), partitions);
         if p1 != p2 {
             let _ = self.pool.delete_topic(&topic).await;
-            return CheckOutcome::Fail("本地 hash 不稳定".into());
+            return CheckOutcome::Fail("partition_for_key 不稳定".into());
         }
-        let d1 = match produce_with_key(&self.pool, &topic, p1, Some(key), b"v1").await {
+        let producer = self.pool.producer();
+        let d1 = match producer
+            .publish_with_key(&topic, p1, key.clone(), Bytes::from_static(b"v1"))
+            .await
+        {
             Ok(d) => d,
             Err(e) => {
                 let _ = self.pool.delete_topic(&topic).await;
                 return CheckOutcome::Fail(format!("produce1: {:?}", e.kind()));
             }
         };
-        let d2 = match produce_with_key(&self.pool, &topic, p2, Some(key), b"v2").await {
+        let d2 = match producer.publish_with_key(&topic, p2, key, Bytes::from_static(b"v2")).await {
             Ok(d) => d,
             Err(e) => {
                 let _ = self.pool.delete_topic(&topic).await;
@@ -524,7 +536,7 @@ impl KafkaValidator {
         let _ = self.pool.delete_topic(&topic).await;
         if d1.partition == d2.partition && d1.partition == p1 {
             CheckOutcome::Ok(Some(format!(
-                "key→partition={p1}（应用层稳定 hash，非 broker sticky partitioner）"
+                "key→partition={p1}（publish_with_key + partition_for_key）"
             )))
         } else {
             CheckOutcome::Fail(format!(
@@ -543,7 +555,11 @@ impl KafkaValidator {
         let producer = self.pool.producer();
         let mut first_offset = None;
         for i in 0..5u8 {
-            match producer.publish(&topic, Bytes::from(vec![i])).await {
+            let rec = PublishRecord::payload(&topic, 0, Bytes::from(vec![i]))
+                .with_key(Bytes::from(format!("k{i}")))
+                .header("x-selfcheck", Bytes::from_static(b"1"))
+                .header("x-seq", Bytes::from(vec![i]));
+            match producer.publish_record(rec).await {
                 Ok(d) => {
                     if first_offset.is_none() {
                         first_offset = Some(d.offset);
@@ -567,11 +583,22 @@ impl KafkaValidator {
         };
         let wait = Duration::from_millis(ctx.config.consume_wait_ms.max(1_000));
         let mut seq = Vec::new();
-        for _ in 0..5 {
+        let mut headers_ok = true;
+        for expected in 0..5u8 {
             match consumer.recv_timeout(wait).await {
                 Ok(Some(m)) => {
                     if let Some(b) = m.payload.first() {
                         seq.push(*b);
+                    }
+                    if m.header("x-selfcheck").map(|v| v.as_ref()) != Some(&b"1"[..]) {
+                        headers_ok = false;
+                    }
+                    if m.header("x-seq").map(|v| v.as_ref()) != Some(&[expected][..]) {
+                        headers_ok = false;
+                    }
+                    if m.key.as_ref().map(|k| k.as_ref()) != Some(format!("k{expected}").as_bytes())
+                    {
+                        headers_ok = false;
                     }
                 }
                 Ok(None) => break,
@@ -584,12 +611,10 @@ impl KafkaValidator {
         }
         drop(consumer);
         let _ = self.pool.delete_topic(&topic).await;
-        if seq == [0, 1, 2, 3, 4] {
-            CheckOutcome::Ok(Some(
-                "同分区顺序 ok；headers 公共面未导出（partial，非假绿 headers）".into(),
-            ))
+        if seq == [0, 1, 2, 3, 4] && headers_ok {
+            CheckOutcome::Ok(Some("同分区顺序 + key/headers 透传 ok".into()))
         } else {
-            CheckOutcome::Fail(format!("顺序不符: {seq:?}"))
+            CheckOutcome::Fail(format!("顺序/headers 不符: seq={seq:?} headers_ok={headers_ok}"))
         }
     }
 
@@ -670,61 +695,6 @@ impl KafkaValidator {
     async fn check_isr_health(&self, _ctx: &ValidationContext) -> CheckOutcome {
         CheckOutcome::Skip("NO-GO: rskafka 无 ISR / under-replicated 分区 Admin 查询".into())
     }
-}
-
-async fn produce_with_key(
-    pool: &KafkaPool,
-    topic: &str,
-    partition: i32,
-    key: Option<&[u8]>,
-    value: &[u8],
-) -> kernel::XResult<crate::message::Delivery> {
-    use crate::error_map::map_kafka_err;
-    use crate::lifecycle::wait_for_shutdown;
-    use crate::message::Delivery;
-
-    pool.ensure_open()?;
-    let client = pool.partition_client(topic, partition).await?;
-    let _operation = pool.start_operation()?;
-    let mut shutdown = pool.shutdown_receiver();
-    let record = Record {
-        key: key.map(|k| k.to_vec()),
-        value: Some(value.to_vec()),
-        headers: BTreeMap::new(),
-        timestamp: Utc::now(),
-    };
-    match tokio::select! {
-        biased;
-        () = wait_for_shutdown(&mut shutdown) => {
-            pool.record_publish_err();
-            return Err(kernel::XError::cancelled("kafkax produce 因 pool 关闭而取消"));
-        }
-        result = tokio::time::timeout(
-            pool.config().delivery_timeout,
-            client.produce(vec![record], KafkaPool::compression()),
-        ) => result,
-    } {
-        Ok(Ok(offsets)) => {
-            let offset = offsets.first().copied().unwrap_or(0);
-            pool.record_publish_ok();
-            Ok(Delivery { partition, offset })
-        }
-        Ok(Err(e)) => {
-            pool.record_publish_err();
-            Err(map_kafka_err("kafkax produce", e))
-        }
-        Err(error) => {
-            pool.record_publish_err();
-            Err(kernel::XError::deadline_exceeded("kafkax produce 超时").with_source(error))
-        }
-    }
-}
-
-fn stable_partition(key: &[u8], partitions: i32) -> i32 {
-    let mut h = std::collections::hash_map::DefaultHasher::new();
-    key.hash(&mut h);
-    let v = h.finish();
-    (v % partitions as u64) as i32
 }
 
 fn redact_detail(s: &str) -> String {
@@ -850,7 +820,7 @@ mod tests {
     }
 
     #[test]
-    fn stable_partition_same_key() {
-        assert_eq!(stable_partition(b"k", 3), stable_partition(b"k", 3));
+    fn partition_for_key_same_as_public() {
+        assert_eq!(partition_for_key(b"k", 3), partition_for_key(b"k", 3));
     }
 }

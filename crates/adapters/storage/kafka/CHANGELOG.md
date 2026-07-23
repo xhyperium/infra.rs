@@ -1,6 +1,29 @@
 # Changelog
 
-## [0.3.6] — 2026-07-23
+## [0.3.7] — 2026-07-23
+
+### Added（gap 清零：headers / key / stats）
+
+- `PublishRecord` + `KafkaProducer::publish_record` / `publish_with_key`
+- `KafkaMessage::headers` + `header()`；消费路径透传 rskafka headers
+- `partition_for_key`：应用层稳定 key→partition 辅助
+- `KafkaPoolStats`：`publish_timeouts` / `publish_cancelled` / `topics_ensured` / `topics_deleted`
+- 测试：`tests/api_surface_offline.rs`、`tests/e2e_api_roundtrip.rs`；selfcheck 走公共 produce 路径
+- FileOffset e2e 使用 `/home/workspace/data/kafkax-gap-zero-*`
+
+### Closed
+
+- G-API-01/02 headers+key 公共面 → **PASS**
+- G-OBS-01 stats 扩展 → **PASS**
+- G-SELF-01 ordering_headers 同源 + header 透传 → **PASS**
+- NO-GO 仍 CLOSED（group/rebalance/EOS/SCRAM/HA/stable…）
+
+### Evidence
+
+- `cargo test -p kafkax --all-targets` 离线全绿
+- 隔离 broker：`e2e_api_roundtrip` + `live_selfcheck` Full
+
+[0.3.6] — 2026-07-23
 
 ### Added（LIB-SELFCHECK-SPEC §6.2 库内自验证）
 

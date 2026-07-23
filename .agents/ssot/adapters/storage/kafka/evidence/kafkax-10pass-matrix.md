@@ -14,7 +14,7 @@
 | R4 | Consumer / ack | 手动分区 + 应用 checkpoint PASS；group/rebalance **NO-GO** |
 | R5 | TLS / SASL | TLS+CA+PLAIN+远程明文 fail-closed PASS；SCRAM/OAuth/mTLS **NO-GO** |
 | R6 | deadline / 背压 / close | PASS |
-| R7 | 错误 / 可观测 | 脱敏 + 基础 kind PASS；完整 RED/lag 指标 PARTIAL |
+| R7 | 错误 / 可观测 | 脱敏 + kind PASS；pool stats（含 timeouts/topics）PASS；consumer lag 属 group **NO-GO** |
 | R8 | 测试矩阵 | 离线 + 隔离 harness + 真 secrets live PASS；24h soak **NO-GO** |
 | R9 | SSOT 完整性 | 11 层齐全；本轮同步 version/matrix/NO-GO/OOS |
 | R10 | Part2 | 量化栈 **全套 OOS**；与本仓实现合同无矛盾 |
@@ -63,3 +63,13 @@
 ## 收敛结论
 
 在「rskafka 可交付面 + 其余显式 NO-GO/OOS」定义下，**可交付面闭合**；draft 幻想能力不实现、不宣称。
+
+## 增量 0.3.7（gap 清零）
+
+| 条款 | 状态 |
+|------|------|
+| headers 读写 | PASS |
+| key produce 公共 API | PASS |
+| stats 扩展 | PASS |
+| selfcheck 同源 produce | PASS |
+| NO-GO 表 | 不变 CLOSED |
