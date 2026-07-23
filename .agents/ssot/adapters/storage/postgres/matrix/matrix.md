@@ -21,3 +21,6 @@
 | S-17 | Migrator verify/apply | PASS | live checksum + advisory lock |
 | S-18 | LIB-SELFCHECK §6.1 自验证 | PASS | selfcheck catalog + live Full |
 | S-19 | SSOT/crate 合同文档对齐 0.3.12+ | PASS | dual-spec + 标准/operations/goal |
+| S-20 | 质量门禁 (2026-07-24) | PASS | build + 66 tests + clippy + fmt |
+| S-21 | crates.io 发布路径就绪 | READY | 依赖链已发布, 仅需 rename + publish=true |
+| S-22 | release.md 发布清单 | PARTIAL | 4/5 未勾选, DEFER 已文档化 |
