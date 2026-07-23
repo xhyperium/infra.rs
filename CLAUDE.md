@@ -89,6 +89,7 @@ cd .worktrees/feat/<id>-<slug>
 - **项目开发规则**：`docs/governance/项目开发规则.md` — DEV-001 优先复用内部库、DEV-002 代码复用、DEV-003 独立复用模块、提交规范、质量门禁
 - **文档组织约定**：报告统一保存至 `docs/report/{YYYY-MM-DD}/`；见 `docs/governance/文档组织约定.md`
 - **存储适配器配置**：clickhousex/kafkax/natsx/ossx/postgresx/redisx/taosx 环境变量规范；见 `docs/governance/storage-adapter-config.md`
+- **治理文档验证**：提交前确认所有引用路径有效（`ls docs/governance/项目开发规则.md docs/governance/文档组织约定.md docs/governance/storage-adapter-config.md .cursor/rules/project-rules.mdc` 均存在）
 - **Cursor Rules**：`.cursor/rules/project-rules.mdc`（与项目开发规则同步）
 - **最小变更**：只做明确要求的事
 - **保守编辑**：优先小步修改现有文件
