@@ -1,0 +1,286 @@
+pub mod transportx
+pub enum transportx::TlsMode
+pub transportx::TlsMode::CustomCa
+pub transportx::TlsMode::CustomCa::path: std::path::PathBuf
+pub transportx::TlsMode::InsecureDevOnly
+pub transportx::TlsMode::SystemRoots
+impl core::clone::Clone for transportx::TlsMode
+pub fn transportx::TlsMode::clone(&self) -> transportx::TlsMode
+impl core::cmp::Eq for transportx::TlsMode
+impl core::cmp::PartialEq for transportx::TlsMode
+pub fn transportx::TlsMode::eq(&self, &transportx::TlsMode) -> bool
+impl core::default::Default for transportx::TlsMode
+pub fn transportx::TlsMode::default() -> transportx::TlsMode
+impl core::fmt::Debug for transportx::TlsMode
+pub fn transportx::TlsMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for transportx::TlsMode
+impl core::marker::Freeze for transportx::TlsMode
+impl core::marker::Send for transportx::TlsMode
+impl core::marker::Sync for transportx::TlsMode
+impl core::marker::Unpin for transportx::TlsMode
+impl core::marker::UnsafeUnpin for transportx::TlsMode
+impl core::panic::unwind_safe::RefUnwindSafe for transportx::TlsMode
+impl core::panic::unwind_safe::UnwindSafe for transportx::TlsMode
+pub enum transportx::TransportError
+pub transportx::TransportError::ConnectTimeout
+pub transportx::TransportError::ConnectionClosed
+pub transportx::TransportError::ConnectionClosed::clean: bool
+pub transportx::TransportError::Io(alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync)>)
+pub transportx::TransportError::PayloadTooLarge
+pub transportx::TransportError::PayloadTooLarge::got: usize
+pub transportx::TransportError::PayloadTooLarge::kind: &'static str
+pub transportx::TransportError::PayloadTooLarge::limit: usize
+pub transportx::TransportError::ProtocolViolation(alloc::string::String)
+pub transportx::TransportError::RateLimited
+pub transportx::TransportError::RateLimited::retry_after: core::option::Option<core::time::Duration>
+pub transportx::TransportError::ReadTimeout
+impl core::error::Error for transportx::TransportError
+pub fn transportx::TransportError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for transportx::TransportError
+pub fn transportx::TransportError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for transportx::TransportError
+pub fn transportx::TransportError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for transportx::TransportError
+impl core::marker::Send for transportx::TransportError
+impl core::marker::Sync for transportx::TransportError
+impl core::marker::Unpin for transportx::TransportError
+impl core::marker::UnsafeUnpin for transportx::TransportError
+impl !core::panic::unwind_safe::RefUnwindSafe for transportx::TransportError
+impl !core::panic::unwind_safe::UnwindSafe for transportx::TransportError
+pub struct transportx::HttpClientLease<'a, T>
+impl<T> transportx::HttpClientLease<'_, T>
+pub fn transportx::HttpClientLease<'_, T>::get(&self) -> core::option::Option<&T>
+pub fn transportx::HttpClientLease<'_, T>::get_mut(&mut self) -> core::option::Option<&mut T>
+pub fn transportx::HttpClientLease<'_, T>::into_inner(self) -> core::option::Option<T>
+impl<T: core::fmt::Debug> core::fmt::Debug for transportx::HttpClientLease<'_, T>
+pub fn transportx::HttpClientLease<'_, T>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T> core::ops::drop::Drop for transportx::HttpClientLease<'_, T>
+pub fn transportx::HttpClientLease<'_, T>::drop(&mut self)
+impl<'a, T> core::marker::Freeze for transportx::HttpClientLease<'a, T> where T: core::marker::Freeze
+impl<'a, T> core::marker::Send for transportx::HttpClientLease<'a, T> where T: core::marker::Send
+impl<'a, T> core::marker::Sync for transportx::HttpClientLease<'a, T> where T: core::marker::Sync + core::marker::Send
+impl<'a, T> core::marker::Unpin for transportx::HttpClientLease<'a, T> where T: core::marker::Unpin
+impl<'a, T> core::marker::UnsafeUnpin for transportx::HttpClientLease<'a, T> where T: core::marker::UnsafeUnpin
+impl<'a, T> core::panic::unwind_safe::RefUnwindSafe for transportx::HttpClientLease<'a, T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<'a, T> core::panic::unwind_safe::UnwindSafe for transportx::HttpClientLease<'a, T> where T: core::panic::unwind_safe::UnwindSafe
+pub struct transportx::HttpClientPool<T>
+impl<T> transportx::HttpClientPool<T>
+pub fn transportx::HttpClientPool<T>::checked_out(&self) -> usize
+pub fn transportx::HttpClientPool<T>::checkout_idle_timeout(&self, core::time::Duration) -> core::result::Result<core::option::Option<T>, transportx::TransportError>
+pub fn transportx::HttpClientPool<T>::checkout_lease_with<F>(&self, F) -> core::result::Result<transportx::HttpClientLease<'_, T>, transportx::TransportError> where F: core::ops::function::FnOnce() -> core::result::Result<T, transportx::TransportError>
+pub fn transportx::HttpClientPool<T>::checkout_with<F>(&self, F) -> core::result::Result<T, transportx::TransportError> where F: core::ops::function::FnOnce() -> core::result::Result<T, transportx::TransportError>
+pub fn transportx::HttpClientPool<T>::config(&self) -> transportx::PoolConfig
+pub fn transportx::HttpClientPool<T>::idle_len(&self) -> usize
+pub fn transportx::HttpClientPool<T>::new(transportx::PoolConfig) -> Self
+pub fn transportx::HttpClientPool<T>::return_client(&self, T)
+pub fn transportx::HttpClientPool<T>::try_new(transportx::PoolConfig) -> core::result::Result<Self, transportx::TransportError>
+impl<T> core::fmt::Debug for transportx::HttpClientPool<T>
+pub fn transportx::HttpClientPool<T>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T> !core::marker::Freeze for transportx::HttpClientPool<T>
+impl<T> core::marker::Send for transportx::HttpClientPool<T> where T: core::marker::Send
+impl<T> core::marker::Sync for transportx::HttpClientPool<T> where T: core::marker::Send
+impl<T> core::marker::Unpin for transportx::HttpClientPool<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for transportx::HttpClientPool<T>
+impl<T> core::panic::unwind_safe::RefUnwindSafe for transportx::HttpClientPool<T>
+impl<T> core::panic::unwind_safe::UnwindSafe for transportx::HttpClientPool<T>
+pub struct transportx::HttpRequest
+pub transportx::HttpRequest::body: core::option::Option<bytes::bytes::Bytes>
+pub transportx::HttpRequest::headers: alloc::vec::Vec<(alloc::string::String, alloc::string::String)>
+pub transportx::HttpRequest::method: alloc::string::String
+pub transportx::HttpRequest::url: alloc::string::String
+impl core::clone::Clone for transportx::HttpRequest
+pub fn transportx::HttpRequest::clone(&self) -> transportx::HttpRequest
+impl core::cmp::Eq for transportx::HttpRequest
+impl core::cmp::PartialEq for transportx::HttpRequest
+pub fn transportx::HttpRequest::eq(&self, &transportx::HttpRequest) -> bool
+impl core::fmt::Debug for transportx::HttpRequest
+pub fn transportx::HttpRequest::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for transportx::HttpRequest
+impl !core::marker::Freeze for transportx::HttpRequest
+impl core::marker::Send for transportx::HttpRequest
+impl core::marker::Sync for transportx::HttpRequest
+impl core::marker::Unpin for transportx::HttpRequest
+impl core::marker::UnsafeUnpin for transportx::HttpRequest
+impl core::panic::unwind_safe::RefUnwindSafe for transportx::HttpRequest
+impl core::panic::unwind_safe::UnwindSafe for transportx::HttpRequest
+pub struct transportx::HttpResponse
+pub transportx::HttpResponse::body: bytes::bytes::Bytes
+pub transportx::HttpResponse::status: u16
+impl core::clone::Clone for transportx::HttpResponse
+pub fn transportx::HttpResponse::clone(&self) -> transportx::HttpResponse
+impl core::cmp::Eq for transportx::HttpResponse
+impl core::cmp::PartialEq for transportx::HttpResponse
+pub fn transportx::HttpResponse::eq(&self, &transportx::HttpResponse) -> bool
+impl core::fmt::Debug for transportx::HttpResponse
+pub fn transportx::HttpResponse::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for transportx::HttpResponse
+impl !core::marker::Freeze for transportx::HttpResponse
+impl core::marker::Send for transportx::HttpResponse
+impl core::marker::Sync for transportx::HttpResponse
+impl core::marker::Unpin for transportx::HttpResponse
+impl core::marker::UnsafeUnpin for transportx::HttpResponse
+impl core::panic::unwind_safe::RefUnwindSafe for transportx::HttpResponse
+impl core::panic::unwind_safe::UnwindSafe for transportx::HttpResponse
+pub struct transportx::MockHttpTransport
+impl transportx::MockHttpTransport
+pub fn transportx::MockHttpTransport::new() -> Self
+pub fn transportx::MockHttpTransport::set_get(&self, &str, bytes::bytes::Bytes)
+pub fn transportx::MockHttpTransport::set_post(&self, &str, bytes::bytes::Bytes)
+impl core::default::Default for transportx::MockHttpTransport
+pub fn transportx::MockHttpTransport::default() -> transportx::MockHttpTransport
+impl core::fmt::Debug for transportx::MockHttpTransport
+pub fn transportx::MockHttpTransport::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl transportx::HttpDriver for transportx::MockHttpTransport
+pub fn transportx::MockHttpTransport::execute<'life0, 'async_trait>(&'life0 self, transportx::HttpRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<transportx::HttpResponse, transportx::TransportError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl transportx::HttpTransport for transportx::MockHttpTransport
+pub fn transportx::MockHttpTransport::get<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<bytes::bytes::Bytes>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn transportx::MockHttpTransport::post<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, bytes::bytes::Bytes) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<bytes::bytes::Bytes>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl !core::marker::Freeze for transportx::MockHttpTransport
+impl core::marker::Send for transportx::MockHttpTransport
+impl core::marker::Sync for transportx::MockHttpTransport
+impl core::marker::Unpin for transportx::MockHttpTransport
+impl core::marker::UnsafeUnpin for transportx::MockHttpTransport
+impl core::panic::unwind_safe::RefUnwindSafe for transportx::MockHttpTransport
+impl core::panic::unwind_safe::UnwindSafe for transportx::MockHttpTransport
+pub struct transportx::PoolConfig
+pub transportx::PoolConfig::max_idle: usize
+pub transportx::PoolConfig::max_pool_size: usize
+impl transportx::PoolConfig
+pub const fn transportx::PoolConfig::new(usize, usize) -> Self
+pub fn transportx::PoolConfig::validate(self) -> core::result::Result<(), transportx::TransportError>
+impl core::clone::Clone for transportx::PoolConfig
+pub fn transportx::PoolConfig::clone(&self) -> transportx::PoolConfig
+impl core::cmp::Eq for transportx::PoolConfig
+impl core::cmp::PartialEq for transportx::PoolConfig
+pub fn transportx::PoolConfig::eq(&self, &transportx::PoolConfig) -> bool
+impl core::default::Default for transportx::PoolConfig
+pub fn transportx::PoolConfig::default() -> Self
+impl core::fmt::Debug for transportx::PoolConfig
+pub fn transportx::PoolConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for transportx::PoolConfig
+impl core::marker::StructuralPartialEq for transportx::PoolConfig
+impl core::marker::Freeze for transportx::PoolConfig
+impl core::marker::Send for transportx::PoolConfig
+impl core::marker::Sync for transportx::PoolConfig
+impl core::marker::Unpin for transportx::PoolConfig
+impl core::marker::UnsafeUnpin for transportx::PoolConfig
+impl core::panic::unwind_safe::RefUnwindSafe for transportx::PoolConfig
+impl core::panic::unwind_safe::UnwindSafe for transportx::PoolConfig
+pub struct transportx::ProxyConfig
+pub transportx::ProxyConfig::password: core::option::Option<alloc::string::String>
+pub transportx::ProxyConfig::url: alloc::string::String
+pub transportx::ProxyConfig::username: core::option::Option<alloc::string::String>
+impl transportx::ProxyConfig
+pub fn transportx::ProxyConfig::has_auth(&self) -> bool
+pub fn transportx::ProxyConfig::new(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn transportx::ProxyConfig::with_auth(impl core::convert::Into<alloc::string::String>, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for transportx::ProxyConfig
+pub fn transportx::ProxyConfig::clone(&self) -> transportx::ProxyConfig
+impl core::cmp::Eq for transportx::ProxyConfig
+impl core::cmp::PartialEq for transportx::ProxyConfig
+pub fn transportx::ProxyConfig::eq(&self, &transportx::ProxyConfig) -> bool
+impl core::fmt::Debug for transportx::ProxyConfig
+pub fn transportx::ProxyConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for transportx::ProxyConfig
+impl core::marker::Freeze for transportx::ProxyConfig
+impl core::marker::Send for transportx::ProxyConfig
+impl core::marker::Sync for transportx::ProxyConfig
+impl core::marker::Unpin for transportx::ProxyConfig
+impl core::marker::UnsafeUnpin for transportx::ProxyConfig
+impl core::panic::unwind_safe::RefUnwindSafe for transportx::ProxyConfig
+impl core::panic::unwind_safe::UnwindSafe for transportx::ProxyConfig
+pub struct transportx::ReqwestHttpDriver
+impl transportx::ReqwestHttpDriver
+pub fn transportx::ReqwestHttpDriver::builder(core::option::Option<core::time::Duration>, usize, usize, core::option::Option<transportx::TlsConfig>, core::option::Option<transportx::ProxyConfig>) -> core::result::Result<Self, transportx::TransportError>
+pub fn transportx::ReqwestHttpDriver::new() -> core::result::Result<Self, transportx::TransportError>
+pub fn transportx::ReqwestHttpDriver::with_limits(core::option::Option<core::time::Duration>, usize, usize) -> core::result::Result<Self, transportx::TransportError>
+pub fn transportx::ReqwestHttpDriver::with_proxy(transportx::ProxyConfig) -> core::result::Result<Self, transportx::TransportError>
+pub fn transportx::ReqwestHttpDriver::with_timeout(core::option::Option<core::time::Duration>) -> core::result::Result<Self, transportx::TransportError>
+pub fn transportx::ReqwestHttpDriver::with_tls(transportx::TlsConfig) -> core::result::Result<Self, transportx::TransportError>
+impl core::clone::Clone for transportx::ReqwestHttpDriver
+pub fn transportx::ReqwestHttpDriver::clone(&self) -> transportx::ReqwestHttpDriver
+impl core::fmt::Debug for transportx::ReqwestHttpDriver
+pub fn transportx::ReqwestHttpDriver::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl transportx::HttpDriver for transportx::ReqwestHttpDriver
+pub fn transportx::ReqwestHttpDriver::execute<'life0, 'async_trait>(&'life0 self, transportx::HttpRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<transportx::HttpResponse, transportx::TransportError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl core::marker::Freeze for transportx::ReqwestHttpDriver
+impl core::marker::Send for transportx::ReqwestHttpDriver
+impl core::marker::Sync for transportx::ReqwestHttpDriver
+impl core::marker::Unpin for transportx::ReqwestHttpDriver
+impl core::marker::UnsafeUnpin for transportx::ReqwestHttpDriver
+impl !core::panic::unwind_safe::RefUnwindSafe for transportx::ReqwestHttpDriver
+impl !core::panic::unwind_safe::UnwindSafe for transportx::ReqwestHttpDriver
+pub struct transportx::TlsConfig
+pub transportx::TlsConfig::mode: transportx::TlsMode
+pub transportx::TlsConfig::sni: bool
+impl transportx::TlsConfig
+pub fn transportx::TlsConfig::custom_ca(impl core::convert::Into<std::path::PathBuf>) -> Self
+pub fn transportx::TlsConfig::insecure_dev_only() -> Self
+pub fn transportx::TlsConfig::is_insecure(&self) -> bool
+pub fn transportx::TlsConfig::system_roots() -> Self
+impl core::clone::Clone for transportx::TlsConfig
+pub fn transportx::TlsConfig::clone(&self) -> transportx::TlsConfig
+impl core::cmp::Eq for transportx::TlsConfig
+impl core::cmp::PartialEq for transportx::TlsConfig
+pub fn transportx::TlsConfig::eq(&self, &transportx::TlsConfig) -> bool
+impl core::default::Default for transportx::TlsConfig
+pub fn transportx::TlsConfig::default() -> Self
+impl core::fmt::Debug for transportx::TlsConfig
+pub fn transportx::TlsConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for transportx::TlsConfig
+impl core::marker::Freeze for transportx::TlsConfig
+impl core::marker::Send for transportx::TlsConfig
+impl core::marker::Sync for transportx::TlsConfig
+impl core::marker::Unpin for transportx::TlsConfig
+impl core::marker::UnsafeUnpin for transportx::TlsConfig
+impl core::panic::unwind_safe::RefUnwindSafe for transportx::TlsConfig
+impl core::panic::unwind_safe::UnwindSafe for transportx::TlsConfig
+pub struct transportx::TungsteniteWsConnector
+impl transportx::TungsteniteWsConnector
+pub const fn transportx::TungsteniteWsConnector::new() -> Self
+pub const fn transportx::TungsteniteWsConnector::with_limits(core::time::Duration, usize) -> Self
+impl core::clone::Clone for transportx::TungsteniteWsConnector
+pub fn transportx::TungsteniteWsConnector::clone(&self) -> transportx::TungsteniteWsConnector
+impl core::default::Default for transportx::TungsteniteWsConnector
+pub fn transportx::TungsteniteWsConnector::default() -> Self
+impl core::fmt::Debug for transportx::TungsteniteWsConnector
+pub fn transportx::TungsteniteWsConnector::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for transportx::TungsteniteWsConnector
+impl transportx::WsConnector for transportx::TungsteniteWsConnector
+pub fn transportx::TungsteniteWsConnector::connect<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<alloc::boxed::Box<dyn transportx::WsConnection>, transportx::TransportError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for transportx::TungsteniteWsConnector
+impl core::marker::Send for transportx::TungsteniteWsConnector
+impl core::marker::Sync for transportx::TungsteniteWsConnector
+impl core::marker::Unpin for transportx::TungsteniteWsConnector
+impl core::marker::UnsafeUnpin for transportx::TungsteniteWsConnector
+impl core::panic::unwind_safe::RefUnwindSafe for transportx::TungsteniteWsConnector
+impl core::panic::unwind_safe::UnwindSafe for transportx::TungsteniteWsConnector
+pub const transportx::DEFAULT_MAX_REQUEST_BODY_BYTES: usize
+pub const transportx::DEFAULT_MAX_RESPONSE_BODY_BYTES: usize
+pub const transportx::DEFAULT_MAX_WS_FRAME_BYTES: usize
+pub const transportx::DEFAULT_REQUEST_TIMEOUT: core::time::Duration
+pub const transportx::DEFAULT_WS_CONNECT_TIMEOUT: core::time::Duration
+pub trait transportx::HttpDriver: core::marker::Send + core::marker::Sync
+pub fn transportx::HttpDriver::execute<'life0, 'async_trait>(&'life0 self, transportx::HttpRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<transportx::HttpResponse, transportx::TransportError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl transportx::HttpDriver for transportx::MockHttpTransport
+pub fn transportx::MockHttpTransport::execute<'life0, 'async_trait>(&'life0 self, transportx::HttpRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<transportx::HttpResponse, transportx::TransportError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl transportx::HttpDriver for transportx::ReqwestHttpDriver
+pub fn transportx::ReqwestHttpDriver::execute<'life0, 'async_trait>(&'life0 self, transportx::HttpRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<transportx::HttpResponse, transportx::TransportError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub trait transportx::HttpTransport: core::marker::Send + core::marker::Sync
+pub fn transportx::HttpTransport::get<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<bytes::bytes::Bytes>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn transportx::HttpTransport::post<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, bytes::bytes::Bytes) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<bytes::bytes::Bytes>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl transportx::HttpTransport for transportx::MockHttpTransport
+pub fn transportx::MockHttpTransport::get<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<bytes::bytes::Bytes>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn transportx::MockHttpTransport::post<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str, bytes::bytes::Bytes) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = kernel::error::XResult<bytes::bytes::Bytes>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub trait transportx::WsConnection: core::marker::Send + core::marker::Sync
+pub fn transportx::WsConnection::close<'life0, 'async_trait>(&'life0 mut self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<(), transportx::TransportError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn transportx::WsConnection::next_frame<'life0, 'async_trait>(&'life0 mut self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<core::option::Option<bytes::bytes::Bytes>, transportx::TransportError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn transportx::WsConnection::send_frame<'life0, 'async_trait>(&'life0 mut self, bytes::bytes::Bytes) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<(), transportx::TransportError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub trait transportx::WsConnector: core::marker::Send + core::marker::Sync
+pub fn transportx::WsConnector::connect<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<alloc::boxed::Box<dyn transportx::WsConnection>, transportx::TransportError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl transportx::WsConnector for transportx::TungsteniteWsConnector
+pub fn transportx::TungsteniteWsConnector::connect<'life0, 'life1, 'async_trait>(&'life0 self, &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<alloc::boxed::Box<dyn transportx::WsConnection>, transportx::TransportError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn transportx::build_reqwest_proxy(&transportx::ProxyConfig) -> core::result::Result<reqwest::proxy::Proxy, transportx::TransportError>
+pub fn transportx::is_sensitive_header_name(&str) -> bool
+pub fn transportx::parse_retry_after_at(&str, std::time::SystemTime) -> core::option::Option<core::time::Duration>
+pub type transportx::SharedHttpClientPool<T> = alloc::sync::Arc<transportx::HttpClientPool<T>>

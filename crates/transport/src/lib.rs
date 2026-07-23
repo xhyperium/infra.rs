@@ -20,7 +20,7 @@
 //!
 //! ## 生产默认（`infra-s9t.16`）
 //!
-//! - [`HttpRequest`] / [`HttpResponse`] 默认 [`Debug`] **脱敏**（敏感 header / body 长度）
+//! - [`HttpRequest`] / [`HttpResponse`] 默认 [`Debug`] **脱敏**（URL 仅 origin、敏感 header、body 长度）
 //! - [`ReqwestHttpDriver::new`]：30s 总超时 + 16 MiB 请求/响应体上限
 //! - [`TungsteniteWsConnector::new`]：30s 连接超时 + 4 MiB 单帧上限
 //! - 超限 → [`TransportError::PayloadTooLarge`]（fail-closed）
@@ -99,7 +99,8 @@ pub enum TransportError {
 
 /// Request passed to an HTTP driver. Concrete HTTP clients stay behind this boundary.
 ///
-/// 默认 [`Debug`] **脱敏**：敏感 header 值显示为 `***`；body 仅显示字节长度。
+/// 默认 [`Debug`] **脱敏**：URL 只显示 scheme/host/port，敏感 header 值显示为
+/// `***`，body 仅显示字节长度。
 #[derive(Clone, PartialEq, Eq)]
 pub struct HttpRequest {
     /// HTTP method（如 `"GET"` / `"POST"`）。
@@ -159,31 +160,21 @@ impl fmt::Debug for BodyDebug {
 /// Debug 辅助：敏感 header 脱敏。
 struct RedactedHeaders<'a>(&'a [(String, String)]);
 
-/// Debug 辅助：隐藏 URL userinfo 与全部 query 值；解析失败时不回显原文。
+/// Debug 辅助：只保留 URL 的安全 origin（scheme/host/port）。
+///
+/// path、query 名和值、userinfo、fragment 一律不输出；解析失败或没有 host 时
+/// fail-closed，且不回显原文。
 pub(crate) struct RedactedUrl<'a>(pub(crate) &'a str);
 
 impl fmt::Debug for RedactedUrl<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let Ok(mut url) = reqwest::Url::parse(self.0) else {
+        let Ok(url) = reqwest::Url::parse(self.0) else {
             return f.write_str("\"<invalid-url-redacted>\"");
         };
-        if url.cannot_be_a_base() {
+        if url.cannot_be_a_base() || url.host().is_none() {
             return f.write_str("\"<invalid-url-redacted>\"");
         }
-        let _ = url.set_username("");
-        let _ = url.set_password(None);
-        let query = url
-            .query_pairs()
-            .map(|(key, _value)| (key.into_owned(), "***".to_owned()))
-            .collect::<Vec<_>>();
-        if !query.is_empty() {
-            url.set_query(None);
-            let mut pairs = url.query_pairs_mut();
-            for (key, value) in query {
-                pairs.append_pair(&key, &value);
-            }
-        }
-        fmt::Debug::fmt(url.as_str(), f)
+        fmt::Debug::fmt(&url.origin().ascii_serialization(), f)
     }
 }
 
@@ -404,10 +395,10 @@ impl ReqwestHttpDriver {
                             "invalid CA pem: missing BEGIN CERTIFICATE".into(),
                         ));
                     }
-                    // from_pem 在现后端几乎不返回 Err；失败留给 build 映射为 Io。
-                    // 使用 expect 避免不可达 map_err 拖垮 100% line coverage。
-                    let cert = reqwest::Certificate::from_pem(&pem)
-                        .expect("Certificate::from_pem (invalid encoding fails at Client::build)");
+                    // from_pem 在现后端通常延迟到 build 才报告编码错误；若后端在此
+                    // 提前拒绝，也必须返回结构化错误，不能在库代码中 panic。
+                    let cert =
+                        reqwest::Certificate::from_pem(&pem).map_err(map_client_build_error)?;
                     builder = builder.add_root_certificate(cert);
                 }
                 TlsMode::InsecureDevOnly => {
@@ -430,18 +421,24 @@ pub(crate) fn map_client_build_error(error: reqwest::Error) -> TransportError {
 
 /// 将 reqwest 错误映射为 [`TransportError`]。
 ///
-/// 公开为 crate 内测试可直接驱动的映射函数，保持与 execute 路径一致。
+/// 仅在 crate 内复用，保持构建请求、执行请求和读取响应的映射一致。
 pub(crate) fn map_reqwest_error(error: reqwest::Error) -> TransportError {
-    if error.is_timeout() {
-        if error.is_connect() {
-            TransportError::ConnectTimeout
-        } else {
-            TransportError::ReadTimeout
-        }
+    if let Some(timeout) = classify_reqwest_timeout(error.is_timeout(), error.is_connect()) {
+        timeout
     } else if error.is_builder() {
         TransportError::ProtocolViolation(error.to_string())
     } else {
         TransportError::Io(Box::new(error))
+    }
+}
+
+fn classify_reqwest_timeout(is_timeout: bool, is_connect: bool) -> Option<TransportError> {
+    if !is_timeout {
+        None
+    } else if is_connect {
+        Some(TransportError::ConnectTimeout)
+    } else {
+        Some(TransportError::ReadTimeout)
     }
 }
 
@@ -554,7 +551,21 @@ pub(crate) fn map_tungstenite_error(
         Error::ConnectionClosed | Error::AlreadyClosed => {
             TransportError::ConnectionClosed { clean: true }
         }
+        Error::Io(error)
+            if matches!(
+                error.kind(),
+                std::io::ErrorKind::UnexpectedEof
+                    | std::io::ErrorKind::ConnectionReset
+                    | std::io::ErrorKind::ConnectionAborted
+                    | std::io::ErrorKind::BrokenPipe
+            ) =>
+        {
+            TransportError::ConnectionClosed { clean: false }
+        }
         Error::Io(error) => TransportError::Io(Box::new(error)),
+        Error::Protocol(
+            tokio_tungstenite::tungstenite::error::ProtocolError::ResetWithoutClosingHandshake,
+        ) => TransportError::ConnectionClosed { clean: false },
         Error::Protocol(error) => TransportError::ProtocolViolation(error.to_string()),
         Error::Url(error) => TransportError::ProtocolViolation(error.to_string()),
         Error::Capacity(tokio_tungstenite::tungstenite::error::CapacityError::MessageTooLong {
@@ -718,48 +729,6 @@ impl HttpDriver for MockHttpTransport {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Test hooks（doc(hidden)；供集成测试驱动错误映射与锁投毒）
-// ---------------------------------------------------------------------------
-
-/// 映射 reqwest 错误（测试钩子）。
-#[doc(hidden)]
-pub fn __map_reqwest_error(error: reqwest::Error) -> TransportError {
-    map_reqwest_error(error)
-}
-
-/// 映射 Client::build 错误（测试钩子）。
-#[doc(hidden)]
-pub fn __map_client_build_error(error: reqwest::Error) -> TransportError {
-    map_client_build_error(error)
-}
-
-/// 映射 tungstenite 错误（测试钩子）。
-#[doc(hidden)]
-pub fn __map_tungstenite_error(error: tokio_tungstenite::tungstenite::Error) -> TransportError {
-    map_tungstenite_error(error)
-}
-
-impl MockHttpTransport {
-    /// 投毒 GET 锁（测试钩子）。
-    #[doc(hidden)]
-    pub fn __poison_gets(&self) {
-        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let _g = self.gets.write().expect("lock");
-            panic!("poison gets");
-        }));
-    }
-
-    /// 投毒 POST 锁（测试钩子）。
-    #[doc(hidden)]
-    pub fn __poison_posts(&self) {
-        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let _g = self.posts.write().expect("lock");
-            panic!("poison posts");
-        }));
-    }
-}
-
 #[cfg(test)]
 mod builder_tests {
     use super::*;
@@ -778,7 +747,6 @@ mod builder_tests {
 
         let dir = std::env::temp_dir().join(format!("transportx-ca-{}", std::process::id()));
         let _ = std::fs::create_dir_all(&dir);
-        let path = dir.join("ca.pem");
         // 缺 PEM 头 → ProtocolViolation
         {
             let bad = dir.join("bad.pem");
@@ -800,28 +768,12 @@ mod builder_tests {
                 "expected non-utf8 pem, got {err:?}"
             );
         }
-        // 有效自签 CA（若本机有 openssl）
-        let status = std::process::Command::new("openssl")
-            .args([
-                "req",
-                "-x509",
-                "-newkey",
-                "rsa:2048",
-                "-keyout",
-                dir.join("key.pem").to_str().unwrap(),
-                "-out",
-                path.to_str().unwrap(),
-                "-days",
-                "1",
-                "-nodes",
-                "-subj",
-                "/CN=transportx-test-ca",
-            ])
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .status();
-        if status.map(|s| s.success()).unwrap_or(false) {
-            let _ = ReqwestHttpDriver::with_tls(TlsConfig::custom_ca(&path)).expect("valid ca");
+        // 源码内固定 PEM fixture 验证正向路径，不依赖发行版 CA 安装位置。
+        {
+            let path = dir.join("ca.pem");
+            std::fs::write(&path, include_bytes!("../tests/fixtures/test-ca.pem.fixture"))
+                .expect("可写入固定 CA fixture");
+            let _ = ReqwestHttpDriver::with_tls(TlsConfig::custom_ca(&path)).expect("有效 CA");
         }
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -838,5 +790,104 @@ mod builder_tests {
             Some(ProxyConfig::with_auth("http://127.0.0.1:9", "u", format!("{}{}", "p", "w"))),
         )
         .expect("builder combo");
+    }
+
+    #[test]
+    fn private_reqwest_mappers_cover_builder_and_io_branches() {
+        let invalid_header = || {
+            reqwest::Client::new()
+                .request(reqwest::Method::GET, "http://example.com")
+                .header("X-Bad", "\n")
+                .build()
+                .expect_err("非法 header 必须产生 reqwest 错误")
+        };
+
+        assert!(matches!(
+            map_reqwest_error(invalid_header()),
+            TransportError::ProtocolViolation(_)
+        ));
+        assert!(matches!(map_client_build_error(invalid_header()), TransportError::Io(_)));
+    }
+
+    #[test]
+    fn private_reqwest_timeout_classifier_is_deterministic() {
+        assert!(matches!(
+            classify_reqwest_timeout(true, true),
+            Some(TransportError::ConnectTimeout)
+        ));
+        assert!(matches!(classify_reqwest_timeout(true, false), Some(TransportError::ReadTimeout)));
+        assert!(classify_reqwest_timeout(false, true).is_none());
+    }
+
+    #[test]
+    fn private_tungstenite_mapper_covers_error_variants() {
+        use tokio_tungstenite::tungstenite::error::{Error, ProtocolError, UrlError};
+
+        assert!(matches!(
+            map_tungstenite_error(Error::ConnectionClosed),
+            TransportError::ConnectionClosed { clean: true }
+        ));
+        assert!(matches!(
+            map_tungstenite_error(Error::AlreadyClosed),
+            TransportError::ConnectionClosed { clean: true }
+        ));
+        assert!(matches!(
+            map_tungstenite_error(Error::Io(std::io::Error::from(
+                std::io::ErrorKind::UnexpectedEof
+            ))),
+            TransportError::ConnectionClosed { clean: false }
+        ));
+        assert!(matches!(
+            map_tungstenite_error(Error::Io(std::io::Error::other("e"))),
+            TransportError::Io(_)
+        ));
+        assert!(matches!(
+            map_tungstenite_error(Error::Protocol(ProtocolError::ResetWithoutClosingHandshake)),
+            TransportError::ConnectionClosed { clean: false }
+        ));
+        assert!(matches!(
+            map_tungstenite_error(Error::Protocol(ProtocolError::InvalidOpcode(3))),
+            TransportError::ProtocolViolation(_)
+        ));
+        assert!(matches!(
+            map_tungstenite_error(Error::Url(UrlError::UnableToConnect("x".into()))),
+            TransportError::ProtocolViolation(_)
+        ));
+        assert!(matches!(map_tungstenite_error(Error::Utf8), TransportError::ProtocolViolation(_)));
+    }
+
+    #[tokio::test]
+    async fn private_mock_lock_poison_paths_map_to_io() {
+        let driver = MockHttpTransport::new();
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _guard = driver.gets.write().expect("可取得 GET mock 锁");
+            panic!("投毒 GET mock 锁");
+        }));
+        let get_error = driver
+            .execute(HttpRequest {
+                method: "GET".into(),
+                url: "u".into(),
+                headers: Vec::new(),
+                body: None,
+            })
+            .await
+            .expect_err("中毒 GET 锁必须映射为错误");
+        assert!(matches!(get_error, TransportError::Io(_)));
+
+        let driver = MockHttpTransport::new();
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _guard = driver.posts.write().expect("可取得 POST mock 锁");
+            panic!("投毒 POST mock 锁");
+        }));
+        let post_error = driver
+            .execute(HttpRequest {
+                method: "POST".into(),
+                url: "u".into(),
+                headers: Vec::new(),
+                body: None,
+            })
+            .await
+            .expect_err("中毒 POST 锁必须映射为错误");
+        assert!(matches!(post_error, TransportError::Io(_)));
     }
 }

@@ -173,38 +173,6 @@ async fn mock_http_driver_missing_response() {
 }
 
 #[tokio::test]
-async fn mock_http_driver_poisoned_gets_lock() {
-    let driver = MockHttpTransport::new();
-    driver.__poison_gets();
-    let err = driver
-        .execute(HttpRequest {
-            method: "GET".into(),
-            url: "u".into(),
-            headers: Vec::new(),
-            body: None,
-        })
-        .await
-        .unwrap_err();
-    assert!(matches!(err, TransportError::Io(_)));
-}
-
-#[tokio::test]
-async fn mock_http_driver_poisoned_posts_lock() {
-    let driver = MockHttpTransport::new();
-    driver.__poison_posts();
-    let err = driver
-        .execute(HttpRequest {
-            method: "POST".into(),
-            url: "u".into(),
-            headers: Vec::new(),
-            body: None,
-        })
-        .await
-        .unwrap_err();
-    assert!(matches!(err, TransportError::Io(_)));
-}
-
-#[tokio::test]
 async fn mock_as_arc_dyn_http_driver() {
     let mock = Arc::new(MockHttpTransport::new());
     mock.set_get("u", Bytes::from_static(b"v"));

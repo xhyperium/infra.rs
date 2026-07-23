@@ -1,7 +1,27 @@
-# REVIEW-TRANSPORT-MAINT-003
+# transport — Review
 
-状态：IMPLEMENTATION SELF-REVIEW PASS；INDEPENDENT STANDARDS/SPEC REVIEW PASS
+> 状态：独立终审为 **OPEN**。本文是 reviewer 输入，不是批准结论。
 
-固定 baseline `3cd29a942710c0fb42f3f6bc05e3c31570acad47`。实现审查确认：HTTP 在累计越界立即返回；WS config 下沉解码前；URL 脱敏 fail-closed；默认 SNI=true、false 明确拒绝；lease Drop/into_inner 不重复释放；Retry-After 时间 seam 确定性。scoped test/clippy/doc 与 exchange 回归通过。
+## 审查基线
 
-仓内 `cov-gate-100.mjs` 已验证 610/610 个 LCOV `DA` 行命中；region-aware 加严摘要不作为 LCOV 行门禁替代。`STATUS.md` 已由生成器刷新，完整全仓 fmt/clippy/test/doc/deny/Harness 44/44/version/deps 均 exit 0。独立 Standards 与 Spec reviewer 均已 PASS；maintainer 审批仍待完成；M3/企业 PKI/业务 live 保持 NO-GO。
+- 合同：[`spec/spec.md`](../spec/spec.md)
+- 候选：`transportx 0.1.4`
+- 落地裁定：[`transport-ssot-alignment.md`](../../../../docs/ssot/transport-ssot-alignment.md)
+- 追溯：[`matrix/matrix.md`](../matrix/matrix.md)
+
+## 必审问题
+
+1. URL 解析失败和不透明 URL 是否始终 fail-closed，且代理 Debug 是否复用同一规则。
+2. HTTP chunk 与 WS decoder 是否在 payload 完整交付前拒绝超限数据。
+3. `Retry-After` HTTP-date 是否使用确定性时钟入口，并正确处理过去日期与非法值。
+4. `sni=false` 是否在构造阶段明确失败，而不是静默忽略。
+5. pool 在 lease Drop、`into_inner`、锁中毒、factory error 和 panic unwind 后是否精确恢复许可。
+6. 公开 API 与错误映射是否仍符合 L1 边界，未吸收重试、业务认证或调度职责。
+
+## 已知边界
+
+本地 test/clippy/doc/fmt/dependency gate 已运行，固定代码证据由 manifest 绑定。
+PR CI、独立终审、人工批准与 merge 均为 OPEN。企业 PKI/mTLS、M3、
+真实业务 live 与 package stable 为 **NO-GO**。
+
+reviewer 应基于固定候选 diff 独立给出裁决；本文件不填写 PASS，也不代表 maintainer 批准。

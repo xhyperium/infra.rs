@@ -3,8 +3,17 @@
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use tokio::net::TcpListener;
-use tokio_tungstenite::{accept_async, tungstenite::Message};
-use transportx::{__map_tungstenite_error, TransportError, TungsteniteWsConnector, WsConnector};
+use tokio_tungstenite::{
+    accept_async,
+    tungstenite::{
+        Message,
+        protocol::frame::{
+            Frame,
+            coding::{Data, OpCode},
+        },
+    },
+};
+use transportx::{TransportError, TungsteniteWsConnector, WsConnector};
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn ws_text_binary_ping_pong_close_lifecycle() {
@@ -77,7 +86,7 @@ async fn ws_close_then_send_maps_connection_closed() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn ws_abrupt_tcp_drop_maps_unclean_or_io() {
+async fn ws_stream_end_without_close_frame_is_unclean() {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
     tokio::spawn(async move {
@@ -87,15 +96,7 @@ async fn ws_abrupt_tcp_drop_maps_unclean_or_io() {
     let connector = TungsteniteWsConnector::new();
     let mut conn = connector.connect(&format!("ws://{addr}/")).await.unwrap();
     let err = conn.next_frame().await.unwrap_err();
-    assert!(
-        matches!(
-            err,
-            TransportError::ConnectionClosed { .. }
-                | TransportError::Io(_)
-                | TransportError::ProtocolViolation(_)
-        ),
-        "got {err:?}"
-    );
+    assert!(matches!(err, TransportError::ConnectionClosed { clean: false }), "实际错误：{err:?}");
 }
 
 #[tokio::test]
@@ -122,32 +123,6 @@ async fn ws_connect_refused_maps_error() {
         matches!(err, TransportError::Io(_) | TransportError::ProtocolViolation(_)),
         "got {err:?}"
     );
-}
-
-#[test]
-fn map_tungstenite_error_variants() {
-    use tokio_tungstenite::tungstenite::error::{Error, ProtocolError, UrlError};
-    assert!(matches!(
-        __map_tungstenite_error(Error::ConnectionClosed),
-        TransportError::ConnectionClosed { clean: true }
-    ));
-    assert!(matches!(
-        __map_tungstenite_error(Error::AlreadyClosed),
-        TransportError::ConnectionClosed { clean: true }
-    ));
-    assert!(matches!(
-        __map_tungstenite_error(Error::Io(std::io::Error::other("e"))),
-        TransportError::Io(_)
-    ));
-    assert!(matches!(
-        __map_tungstenite_error(Error::Protocol(ProtocolError::ResetWithoutClosingHandshake)),
-        TransportError::ProtocolViolation(_)
-    ));
-    assert!(matches!(
-        __map_tungstenite_error(Error::Url(UrlError::UnableToConnect("x".into()))),
-        TransportError::ProtocolViolation(_)
-    ));
-    assert!(matches!(__map_tungstenite_error(Error::Utf8), TransportError::ProtocolViolation(_)));
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -177,35 +152,55 @@ async fn ws_server_sends_only_ping_then_text_skips_control() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn ws_stream_end_without_close_frame() {
-    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let addr = listener.local_addr().unwrap();
-    tokio::spawn(async move {
-        let (stream, _) = listener.accept().await.unwrap();
-        let ws = accept_async(stream).await.unwrap();
-        drop(ws);
-    });
-    let mut conn = TungsteniteWsConnector::new().connect(&format!("ws://{addr}/")).await.unwrap();
-    let result = conn.next_frame().await;
-    assert!(result.is_err() || matches!(result, Ok(None)), "{result:?}");
-}
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn ws_inbound_limit_is_enforced_by_decoder_before_delivery() {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
     tokio::spawn(async move {
         let (stream, _) = listener.accept().await.unwrap();
-        let mut ws = accept_async(stream).await.unwrap();
-        ws.send(Message::Binary(Bytes::from(vec![0_u8; 32]))).await.unwrap();
+        let mut websocket = accept_async(stream).await.unwrap();
+        websocket.send(Message::Binary(Bytes::from(vec![0_u8; 32]))).await.unwrap();
     });
 
     let connector = TungsteniteWsConnector::with_limits(std::time::Duration::from_secs(2), 8);
-    let mut conn = connector.connect(&format!("ws://{addr}/")).await.unwrap();
-    let err = conn.next_frame().await.expect_err("入站超限不得交付 payload");
+    let mut connection = connector.connect(&format!("ws://{addr}/")).await.unwrap();
+    let error = connection.next_frame().await.expect_err("入站超限不得交付 payload");
     assert!(
-        matches!(err, TransportError::PayloadTooLarge { kind: "ws_message", limit: 8, got: 32 }),
-        "底层 decoder 必须报告入站 message 上限，got {err:?}"
+        matches!(error, TransportError::PayloadTooLarge { kind: "ws_message", limit: 8, got: 32 }),
+        "底层 decoder 必须报告入站 message 上限，实际错误：{error:?}"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn ws_fragmented_message_limit_is_cumulative_before_delivery() {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        let (stream, _) = listener.accept().await.unwrap();
+        let mut websocket = accept_async(stream).await.unwrap();
+        websocket
+            .send(Message::Frame(Frame::message(
+                Bytes::from_static(b"12345"),
+                OpCode::Data(Data::Binary),
+                false,
+            )))
+            .await
+            .unwrap();
+        websocket
+            .send(Message::Frame(Frame::message(
+                Bytes::from_static(b"6789"),
+                OpCode::Data(Data::Continue),
+                true,
+            )))
+            .await
+            .unwrap();
+    });
+
+    let connector = TungsteniteWsConnector::with_limits(std::time::Duration::from_secs(2), 8);
+    let mut connection = connector.connect(&format!("ws://{addr}/")).await.unwrap();
+    let error = connection.next_frame().await.expect_err("碎片累计超限不得交付 payload");
+    assert!(
+        matches!(error, TransportError::PayloadTooLarge { kind: "ws_message", limit: 8, got: 9 }),
+        "每个 frame 均未超限时仍必须检查聚合 message，实际错误：{error:?}"
     );
 }
 

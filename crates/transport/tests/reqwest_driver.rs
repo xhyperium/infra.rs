@@ -4,11 +4,9 @@ use bytes::Bytes;
 use std::io::{Read, Write};
 use std::net::SocketAddr;
 use std::thread;
-use std::time::Duration;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use transportx::{
-    __map_client_build_error, __map_reqwest_error, HttpDriver, HttpRequest, ReqwestHttpDriver,
-    TransportError, parse_retry_after_at,
+    HttpDriver, HttpRequest, ReqwestHttpDriver, TransportError, parse_retry_after_at,
 };
 
 /// 极简阻塞 HTTP/1.1 响应服务端（单连接）。
@@ -30,6 +28,23 @@ fn spawn_http_server(
         response.push_str(&format!("Content-Length: {}\r\n\r\n", body.len()));
         stream.write_all(response.as_bytes()).unwrap();
         stream.write_all(body).unwrap();
+    });
+    addr
+}
+
+fn spawn_owned_http_server(status_line: String, headers: Vec<(String, String)>) -> SocketAddr {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = listener.local_addr().unwrap();
+    thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut buf = [0u8; 4096];
+        let _ = stream.read(&mut buf);
+        let mut response = format!("{status_line}\r\n");
+        for (key, value) in headers {
+            response.push_str(&format!("{key}: {value}\r\n"));
+        }
+        response.push_str("Content-Length: 0\r\n\r\n");
+        stream.write_all(response.as_bytes()).unwrap();
     });
     addr
 }
@@ -129,6 +144,34 @@ async fn reqwest_driver_429_with_retry_after_integer_seconds() {
     }
 }
 
+#[tokio::test]
+async fn reqwest_driver_429_with_retry_after_http_date() {
+    let retry_at = SystemTime::now() + Duration::from_secs(60);
+    let addr = spawn_owned_http_server(
+        "HTTP/1.1 429 Too Many Requests".into(),
+        vec![("Retry-After".into(), httpdate::fmt_http_date(retry_at))],
+    );
+    let driver = ReqwestHttpDriver::new().unwrap();
+    let error = driver
+        .execute(HttpRequest {
+            method: "GET".into(),
+            url: format!("http://{addr}/rl-date"),
+            headers: Vec::new(),
+            body: None,
+        })
+        .await
+        .expect_err("429 HTTP-date 必须接入生产 execute 路径");
+    match error {
+        TransportError::RateLimited { retry_after: Some(delay) } => {
+            assert!(
+                (Duration::from_secs(55)..=Duration::from_secs(60)).contains(&delay),
+                "HTTP-date 应映射为接近 60 秒的延迟，实际：{delay:?}"
+            );
+        }
+        other => panic!("非预期错误：{other:?}"),
+    }
+}
+
 #[test]
 fn retry_after_parser_supports_delay_seconds_and_http_date() {
     let now = UNIX_EPOCH + Duration::from_secs(784_111_767);
@@ -210,7 +253,7 @@ async fn reqwest_driver_read_timeout() {
         let (mut stream, _) = listener.accept().unwrap();
         let mut buf = [0u8; 1024];
         let _ = stream.read(&mut buf);
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(1));
     });
     let driver = ReqwestHttpDriver::with_timeout(Some(Duration::from_millis(200))).unwrap();
     let err = driver
@@ -222,80 +265,7 @@ async fn reqwest_driver_read_timeout() {
         })
         .await
         .expect_err("stalling server must not succeed");
-    // 总超时在 connect 之后通常为 ReadTimeout；部分平台归为 Io/ConnectTimeout
-    assert!(
-        matches!(
-            err,
-            TransportError::ReadTimeout | TransportError::ConnectTimeout | TransportError::Io(_)
-        ),
-        "expected timeout/io TransportError, got {err:?}"
-    );
-}
-
-#[tokio::test]
-async fn map_reqwest_connect_timeout_branch() {
-    // 专用 connect_timeout，不可达 TEST-NET 地址 → is_timeout && is_connect
-    let client =
-        reqwest::Client::builder().connect_timeout(Duration::from_millis(150)).build().unwrap();
-    let err = client.get("http://192.0.2.1:9/").send().await.expect_err("should timeout");
-    let mapped = __map_reqwest_error(err);
-    // 部分环境可能直接 Io；优先验证 ConnectTimeout 语义
-    match mapped {
-        TransportError::ConnectTimeout => {}
-        TransportError::ReadTimeout | TransportError::Io(_) => {
-            // 若平台未标 is_connect，再造一次短总超时读路径验证 ReadTimeout
-            let client =
-                reqwest::Client::builder().timeout(Duration::from_millis(80)).build().unwrap();
-            let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-            let addr = listener.local_addr().unwrap();
-            thread::spawn(move || {
-                let (mut s, _) = listener.accept().unwrap();
-                let mut buf = [0u8; 512];
-                let _ = s.read(&mut buf);
-                thread::sleep(Duration::from_secs(3));
-            });
-            let err2 =
-                client.get(format!("http://{addr}/")).send().await.expect_err("read timeout");
-            let m2 = __map_reqwest_error(err2);
-            assert!(
-                matches!(
-                    m2,
-                    TransportError::ReadTimeout
-                        | TransportError::ConnectTimeout
-                        | TransportError::Io(_)
-                ),
-                "m2={m2:?}"
-            );
-        }
-        other => panic!("unexpected map: {other:?}"),
-    }
-}
-
-#[test]
-fn map_reqwest_error_builder_branch() {
-    let client = reqwest::Client::new();
-    let err = client
-        .request(reqwest::Method::GET, "http://example.com")
-        .header("X-Bad", "\n")
-        .build()
-        .unwrap_err();
-    let mapped = __map_reqwest_error(err);
-    assert!(
-        matches!(mapped, TransportError::ProtocolViolation(_) | TransportError::Io(_)),
-        "mapped={mapped:?}"
-    );
-}
-
-#[test]
-fn map_client_build_error_wraps_as_io() {
-    // 任意 reqwest::Error 均可验证 build 失败映射为 Io
-    let err = reqwest::Client::new()
-        .request(reqwest::Method::GET, "http://example.com")
-        .header("X-Bad", "\n")
-        .build()
-        .unwrap_err();
-    let mapped = __map_client_build_error(err);
-    assert!(matches!(mapped, TransportError::Io(_)), "mapped={mapped:?}");
+    assert!(matches!(err, TransportError::ReadTimeout), "实际错误：{err:?}");
 }
 
 #[tokio::test]
