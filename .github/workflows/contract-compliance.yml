@@ -1,0 +1,226 @@
+name: 合同合规
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "Cargo.toml"
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - ".agents/ssot/**"
+      - "scripts/quality-gates/check-contract-compliance.mjs"
+      - ".github/workflows/contract-compliance.yml"
+
+  workflow_dispatch:
+    inputs:
+      level:
+        description: "验证层级"
+        required: false
+        type: choice
+        default: "L1"
+        options:
+          - "L1"
+          - "L1,L2"
+          - "L1,L2,L3"
+          - "L1,L2,L3,L4"
+      blocking:
+        description: "阻断级别"
+        required: false
+        type: choice
+        default: "L2"
+        options:
+          - "L1"
+          - "L2"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ──────────────────────────────────────────────────────
+  # 前置检查：是否需要运行
+  # ──────────────────────────────────────────────────────
+  guard:
+    name: 前置检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      has-rust: ${{ steps.check.outputs.has-rust }}
+      has-ssot: ${{ steps.check.outputs.has-ssot }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          HAS_RUST=false
+          HAS_SSOT=false
+          if [ -f Cargo.toml ] && ( [ -d crates ] || find . -name '*.rs' -not -path './.cargo/*' -not -path './.git/*' | grep -q . ); then
+            HAS_RUST=true
+          fi
+          if [ -d .agents/ssot ] && find .agents/ssot -name 'spec.md' | grep -q .; then
+            HAS_SSOT=true
+          fi
+          echo "has-rust=$HAS_RUST" >> "$GITHUB_OUTPUT"
+          echo "has-ssot=$HAS_SSOT" >> "$GITHUB_OUTPUT"
+
+  # ──────────────────────────────────────────────────────
+  # L1 签名合规验证（快速，无需 Rust 工具链）
+  # ──────────────────────────────────────────────────────
+  l1-signature:
+    name: "L1 签名合规验证"
+    needs: guard
+    if: needs.guard.outputs.has-ssot == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: L1 签名合规检查
+        id: l1-check
+        run: |
+          LEVELS="${{ github.event.inputs.level || 'L1' }}"
+          BLOCKING="${{ github.event.inputs.blocking || 'L2' }}"
+          node scripts/quality-gates/check-contract-compliance.mjs \
+            --level L1 \
+            --fail-level "$BLOCKING"
+
+      - name: L1 写入 Job Summary
+        if: always()
+        run: |
+          node scripts/quality-gates/check-contract-compliance.mjs \
+            --level L1 --summary >> "$GITHUB_STEP_SUMMARY"
+
+  # ──────────────────────────────────────────────────────
+  # L2 行为合规验证（需要 Rust 工具链）
+  # ──────────────────────────────────────────────────────
+  l2-behavior:
+    name: "L2 行为合规验证"
+    needs: [guard, l1-signature]
+    if: |
+      needs.guard.outputs.has-rust == 'true' &&
+      (contains(github.event.inputs.level || 'L1', 'L2') || github.event_name == 'pull_request')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CARGO_INCREMENTAL: 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: L2 行为合规检查
+        id: l2-check
+        run: |
+          node scripts/quality-gates/check-contract-compliance.mjs \
+            --level L2 \
+            --fail-level "${{ github.event.inputs.blocking || 'L2' }}"
+
+      - name: L2 写入 Job Summary
+        if: always()
+        run: |
+          node scripts/quality-gates/check-contract-compliance.mjs \
+            --level L2 --summary >> "$GITHUB_STEP_SUMMARY"
+
+  # ──────────────────────────────────────────────────────
+  # L3 非功能合规验证（按需，需要 cargo-deny）
+  # ──────────────────────────────────────────────────────
+  l3-non-functional:
+    name: "L3 非功能合规验证"
+    needs: [guard, l2-behavior]
+    if: |
+      needs.guard.outputs.has-rust == 'true' &&
+      contains(github.event.inputs.level || '', 'L3')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CARGO_INCREMENTAL: 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: 安装 cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - name: L3 非功能合规检查
+        id: l3-check
+        run: |
+          node scripts/quality-gates/check-contract-compliance.mjs \
+            --level L3 \
+            --fail-level L3
+
+      - name: cargo deny check
+        run: cargo deny check
+
+      - name: L3 写入 Job Summary
+        if: always()
+        run: |
+          node scripts/quality-gates/check-contract-compliance.mjs \
+            --level L3 --summary >> "$GITHUB_STEP_SUMMARY"
+
+  # ──────────────────────────────────────────────────────
+  # L4 生产证据验证（仅手动触发）
+  # ──────────────────────────────────────────────────────
+  l4-production:
+    name: "L4 生产证据验证"
+    needs: [guard, l3-non-functional]
+    if: contains(github.event.inputs.level || '', 'L4')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: L4 生产证据检查
+        id: l4-check
+        run: |
+          node scripts/quality-gates/check-contract-compliance.mjs \
+            --level L4 \
+            --fail-level L4
+
+      - name: L4 写入 Job Summary
+        if: always()
+        run: |
+          node scripts/quality-gates/check-contract-compliance.mjs \
+            --level L4 --summary >> "$GITHUB_STEP_SUMMARY"
+
+  # ──────────────────────────────────────────────────────
+  # 汇总报告
+  # ──────────────────────────────────────────────────────
+  report:
+    name: 合同合规汇总
+    needs: [l1-signature, l2-behavior, l3-non-functional, l4-production]
+    if: always() && needs.guard.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 生成汇总
+        run: |
+          {
+            echo "## 合同合规验证汇总"
+            echo ""
+            echo "| 层级 | 状态 |"
+            echo "|------|------|"
+
+            for job in l1-signature l2-behavior l3-non-functional l4-production; do
+              result="\${{ needs.${job}.result }}"
+              case "$result" in
+                success) icon="✅ PASS" ;;
+                failure) icon="❌ FAIL" ;;
+                skipped) icon="⏭ SKIP" ;;
+                *) icon="⚠ $result" ;;
+              esac
+              echo "| $job | $icon |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
