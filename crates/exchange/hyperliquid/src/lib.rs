@@ -5,7 +5,7 @@
 //!
 //! Hyperliquid 交易所适配器，覆盖永续合约（Perpetual Futures）市场数据。
 //!
-//! 规格 SSOT：`.agents/ssot/hyperliquid/spec/spec.md`
+//! 规格 SSOT：`.agents/ssot/market_data/hyperliquid/spec/spec.md`
 
 use async_trait::async_trait;
 use domain_exchange::{

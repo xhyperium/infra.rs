@@ -5,7 +5,7 @@
 //!
 //! Coinglass 数据聚合平台适配器，提供跨交易所的未平仓合约、资金费率、爆仓数据、多空比等聚合指标。
 //!
-//! 规格 SSOT：`.agents/ssot/coinglass/spec/spec.md`
+//! 规格 SSOT：`.agents/ssot/market_data/coinglass/spec/spec.md`
 //!
 //! **能力边界（DE-REST-001）**：仅公开 REST 聚合数据；不支持 WebSocket 行情、账户与交易。
 //! 不适用方法必须返回 [`AdapterError::Unsupported`]，不得伪装为 `Network` / `Internal`。

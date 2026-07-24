@@ -29,6 +29,9 @@ matrix/ gate/ evidence/   + README.md
 |------|------|
 | `kernel/` `testkit/` `types/` | L0 / test-support / types |
 | `infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/` | L1 平台面（与 `crates/infra/` 对齐；gate/testkitx 可仅规格） |
+| `core/{domainx,domain_market,domain_exchange,domain_macro}/` | 分层共存 L0 共享类型层 |
+| `market_data/{binance,okx,coinbase,hyperliquid,coinglass,orderbook}/` | 分层共存 L2 provider + L1 管线规格 |
+| `macro_data/` | 分层共存 L2 宏观数据源 provider 规格 |
 | `adapters/{exchange,storage}/…` | 九 adapter 域（保留 `adapters/` 层级） |
 | `contracts/` | trait 出口规格 |
 | `tools/{goalctl,xtask,verifyctl}/` | 工具域（保留 `tools/` 层级） |
