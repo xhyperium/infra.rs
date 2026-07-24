@@ -108,9 +108,9 @@ L0 类型层                          L1 管线
 
 两平面**互不依赖**：`core/domain_*` 不引用 `infra/*`；`infra/*` 不引用 `core/domain_*`。
 
-### 3.2 exchange/* 与 adapters/exchange/* 的关系
+### 3.2 `exchange/*` 与 `adapters/exchange/*` 的关系
 
-| 维度 | exchange/*（L2 Provider） | adapters/exchange/*（L2' Infra Adapter） |
+| 维度 | `exchange/*`（L2 Provider） | `adapters/exchange/*`（L2' Infra Adapter） |
 |------|--------------------------|------------------------------------------|
 | 实现 trait | `domain_exchange::VenueAdapter` | `contracts::Exchange` |
 | 依赖 | domainx/domain_market/domain_exchange | kernel/canonical/contracts/transportx |
