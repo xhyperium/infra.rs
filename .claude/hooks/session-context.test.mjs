@@ -634,13 +634,14 @@ const {
     assertOk(!isWorktreeBypassEnabled({ INFRA_WORKTREE_BYPASS: "" }), "empty → false");
   });
 
-  test("evaluateCommitOnMain 阻止 main 上 commit", () => {
+  test("evaluateCommitOnMain 检测 main 上 commit（WARN 不 BLOCK）", () => {
     const r1 = evaluateCommitOnMain("main", "git commit -m test");
-    assertOk(r1.blocked, "commit on main blocked");
-    assertEq(r1.kind, "commit-on-main");
+    assertEq(r1.kind, "commit-on-main", "commit on main detected");
+    assertEq(r1.severity, "warn", "severity is warn");
+    assertOk(!r1.blocked, "not blocked by default (warn only)");
 
     const r2 = evaluateCommitOnMain("master", "git commit -am test");
-    assertOk(r2.blocked, "commit on master blocked");
+    assertEq(r2.kind, "commit-on-main", "commit on master detected");
 
     const r3 = evaluateCommitOnMain("feat/x", "git commit -m test");
     assertOk(!r3.blocked, "commit on feature branch allowed");
@@ -651,7 +652,7 @@ const {
 
   test("evaluateCommitOnMain 处理 refs/heads/ 前缀", () => {
     const r = evaluateCommitOnMain("refs/heads/main", "git commit -m x");
-    assertOk(r.blocked, "refs/heads/main → commit blocked");
+    assertEq(r.kind, "commit-on-main", "refs/heads/main → commit detected");
   });
 }
 

@@ -253,15 +253,18 @@ export function evaluateMainWorkspaceGitCommand(command) {
 /**
  * 是否禁止在 main/master 上 commit。
  */
-export function evaluateCommitOnMain(branchName, command) {
+export function evaluateCommitOnMain(branchName, command, { strict = false } = {}) {
   const br = bareBranch(branchName);
   const cmd = String(command || "");
   if ((br === "main" || br === "master") && /\bgit\s+commit\b/.test(cmd)) {
     return {
-      blocked: true,
+      blocked: strict,
       kind: "commit-on-main",
+      severity: "warn",
       message:
-        "禁止在 main 上直接 commit。请先 node scripts/worktree/worktree.mjs create <type>/<slug> 再提交。",
+        "在 main 上直接 commit 违反 Git Main First 策略（宪章 §6.0.2）。" +
+        "请优先使用 worktree 流程：node scripts/worktree/worktree.mjs create <type>/<slug>。" +
+        "如用户明确要求此操作且理解风险，可继续。",
     };
   }
   return { blocked: false };

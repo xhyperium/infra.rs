@@ -257,16 +257,17 @@ if (tool === "Bash" || tool === "PowerShell") {
       }
 
       const commitOp = evaluateCommitOnMain(headBranch, cmd);
-      if (commitOp.blocked) {
-        block(`🧱 ${commitOp.message}`);
+      if (commitOp.kind === "commit-on-main") {
+        // WARN 而非 BLOCK：允许用户在明确了解风险后继续
+        console.error(`\n⚠️ [WorktreeGuard] ${commitOp.message}\n`);
       }
     }
 
-    // 已在 worktree 内但 HEAD 仍为 main（异常状态）时也禁止 commit
+    // 已在 worktree 内但 HEAD 仍为 main（异常状态）时也输出 WARN
     if (!onMainWorkspace) {
       const commitOp = evaluateCommitOnMain(headBranch, cmd);
-      if (commitOp.blocked) {
-        block(`🧱 ${commitOp.message}`);
+      if (commitOp.kind === "commit-on-main") {
+        console.error(`\n⚠️ [WorktreeGuard] ${commitOp.message}\n`);
       }
     }
   }

@@ -68,11 +68,11 @@ function main() {
     lines.push(`    ... (还有 ${remaining} 个)`);
   }
   lines.push("");
-  lines.push("  ❌ 禁止操作:");
-  lines.push("    - git branch -D " + branch + "  (强制删除分支会丢失提交)");
-  lines.push("    - git checkout main 前未推送/未建 PR  (切换后分支可能被 GC)");
+  lines.push("  ⚠️ 检查清单（删除分支前请确认）：");
+  lines.push("    - 全部提交已推送或已建 PR（" + commits.length + " 个未合并提交领先 origin/main）");
+  lines.push("    - 如用户明确要求删除且已备份/推送，则可执行：git branch -D " + branch);
   lines.push("");
-  lines.push("  ✅ 建议操作:");
+  lines.push("  📋 推荐操作:");
   lines.push(`    $ git push -u origin HEAD          # 推送当前分支到远端`);
   lines.push(`    $ gh pr create --base main         # 创建 PR 合入 main`);
   lines.push("");
