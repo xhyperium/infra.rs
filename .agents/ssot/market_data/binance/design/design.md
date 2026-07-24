@@ -33,7 +33,7 @@ Model A (Binance): 快照+增量同步，U/u 连续性校验。
 
 **背景**: infra.rs 本仓已含全部 7 个存储适配器 (kafkax v0.4.0, redisx v0.3.15, natsx v0.3.5, ossx v0.4.1, postgresx v0.3.13, taosx v0.3.10, clickhousex v0.3.6)，默认客户端入口均已落地（结构完成度高；package stable / Cluster·EOS / 部分 live 证据 OPEN，详见 [adapters-ssot-alignment](../../../../../docs/ssot/adapters-ssot-alignment.md)）。
 
-**决策**: market_data.rs 构建薄领域包装层 (sink-core/ + sink-adapters/)，将 MarketEvent 编码为对应适配器期望格式，而非重新实现存储连接逻辑。
+**决策**: 本仓 market_data（`crates/market_data`）构建薄领域包装层 (sink-core/ + sink-adapters/)，将 MarketEvent 编码为对应适配器期望格式，而非重新实现存储连接逻辑。
 
 **替代方案 (已拒绝)**: 独立实现 7 个 sink crate。拒绝理由: (1) 重复 infra.rs 已有工作 (2) 增加维护成本 (3) 无业务差异化价值。
 

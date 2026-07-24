@@ -4,10 +4,12 @@
 
 | 项目 | 值 |
 |------|----|
-| **外部仓库** | `/home/workspace/market_data.rs` |
-| **本仓路径** | `.agents/ssot/market_data/` |
-| **导入方式** | `cp -rf` 全文复制 |
-| **导入日期** | 2026-07-24 |
+| **本仓 SSOT** | `.agents/ssot/market_data/`（域规格单一事实源；`SSOT.md` R6） |
+| **实现路径** | `crates/market_data/`（L1 管线）+ `crates/exchange/{binance,okx,coinbase,hyperliquid,coinglass}/`（L2 provider） |
+| **领域模型** | `crates/{domainx,domain_market,domain_exchange}/`（规格在 `.agents/ssot/core/`） |
+| **建立日期** | 2026-07-24 |
+
+> market_data 规格是**本仓 SSOT**（非外部仓库镜像）；实现在本仓 `crates/` 下。外仓名字面量（`xhyper` / `market_data.rs`）不得进入本树（`SSOT.md` §5.4）。
 
 ## 域分类
 
@@ -37,7 +39,7 @@
 
 ## 与本仓的关系
 
-- market_data SSOT 是 **规格层镜像**，不包含 Rust 实现代码
-- 实现路径在 `market_data.rs` 仓库的 `crates/` 下
+- market_data SSOT 是**本仓规格 SSOT**（R6），不包含 Rust 实现代码
+- 实现路径在**本仓** `crates/` 下（`crates/market_data`、`crates/exchange/*`）
 - 领域模型规格统一在 `core/` 维护
 - CONTRACT.md §5 规定了跨域公共语义
