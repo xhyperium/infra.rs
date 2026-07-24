@@ -76,11 +76,11 @@ async budget 在退避前原子 reserve；deadline 在退避期取消时，未 c
 cargo fmt --all --check
 cargo test -p resiliencx --all-features --all-targets
 cargo clippy -p resiliencx --all-features --all-targets -- -D warnings
-cmp .agents/ssot/resiliencx/spec/spec.md \
-    .agents/ssot/resiliencx/spec/xhyper-resiliencx-complete-spec.md
+cmp .agents/ssot/infra/resiliencx/spec/spec.md \
+    .agents/ssot/infra/resiliencx/spec/xhyper-resiliencx-complete-spec.md
 ```
 
-SSOT：`.agents/ssot/resiliencx/spec/spec.md`
+SSOT：`.agents/ssot/infra/resiliencx/spec/spec.md`
 对齐：[docs/ssot/resiliencx-ssot-alignment.md](../../docs/ssot/resiliencx-ssot-alignment.md)
 
 **未宣称**：package stable、分布式弹性平台、自动墙钟策略、撤销外部副作用。

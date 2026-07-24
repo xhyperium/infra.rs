@@ -1898,7 +1898,7 @@ CHANGELOG
 
 ```text
 .agents/ssot/testkit/testkit-spec.md        # → 已归档为 spec/TESTKIT-SPEC-001.superseded.md
-.agents/ssot/testkitx/testkitx-spec.md
+.agents/ssot/infra/testkitx/testkitx-spec.md
 ```
 
 保留一个活动权威：

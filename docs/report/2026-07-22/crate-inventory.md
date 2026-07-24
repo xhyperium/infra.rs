@@ -14,13 +14,13 @@
 | `testkit` | `crates/testkit` | T0 | `.agents/ssot/testkit/` | [`testkit-ssot-alignment.md`](../../ssot/testkit-ssot-alignment.md) | active | 33/35 | L1 test-support |
 | `decimalx` | `crates/types/decimal` | types | `.agents/ssot/types/decimal/` | [`types-ssot-alignment.md`](../../ssot/types-ssot-alignment.md) | active | 33/35 | L1 |
 | `canonical` | `crates/types/canonical` | types | `.agents/ssot/types/canonical/` | [`types-ssot-alignment.md`](../../ssot/types-ssot-alignment.md) | active | 33/35 | L2 subset v1–v1.3 |
-| `bootstrap` | `crates/bootstrap` | L1 | `.agents/ssot/bootstrap/` | [`bootstrap-ssot-alignment.md`](../../ssot/bootstrap-ssot-alignment.md) | active | 32/35 | L1 有条件 |
-| `configx` | `crates/configx` | L1 | `.agents/ssot/configx/` | [`configx-ssot-alignment.md`](../../ssot/configx-ssot-alignment.md) | active | 32/35 | 本地多源 + 分层 + 宿主 reload/通知 |
-| `schedulex` | `crates/schedulex` | L1 | `.agents/ssot/schedulex/` | [`schedulex-ssot-alignment.md`](../../ssot/schedulex-ssot-alignment.md) | active | 32/35 | registry + 宿主驱动 `JobRunner::tick` |
-| `evidence` | `crates/evidence` | L1 | `.agents/ssot/evidence/` | [`evidence-ssot-alignment.md`](../../ssot/evidence-ssot-alignment.md) | active | 25/35 | L1 append；非合规产品 |
-| `observex` | `crates/observex` | L1 | `.agents/ssot/observex/` | [`observex-ssot-alignment.md`](../../ssot/observex-ssot-alignment.md) | active | 32/35 | L1 + L3 Instr 入口 |
-| `resiliencx` | `crates/resiliencx` | L1 | `.agents/ssot/resiliencx/` | [`resiliencx-ssot-alignment.md`](../../ssot/resiliencx-ssot-alignment.md) | active | 31/35 | 接近 L1 Internal |
-| `transportx` | `crates/transport` | L1 | `.agents/ssot/transport/` | [`transport-ssot-alignment.md`](../../ssot/transport-ssot-alignment.md) | active | 32/35 | L1 有条件 I/O |
+| `bootstrap` | `crates/bootstrap` | L1 | `.agents/ssot/infra/bootstrap/` | [`bootstrap-ssot-alignment.md`](../../ssot/bootstrap-ssot-alignment.md) | active | 32/35 | L1 有条件 |
+| `configx` | `crates/configx` | L1 | `.agents/ssot/infra/configx/` | [`configx-ssot-alignment.md`](../../ssot/configx-ssot-alignment.md) | active | 32/35 | 本地多源 + 分层 + 宿主 reload/通知 |
+| `schedulex` | `crates/schedulex` | L1 | `.agents/ssot/infra/schedulex/` | [`schedulex-ssot-alignment.md`](../../ssot/schedulex-ssot-alignment.md) | active | 32/35 | registry + 宿主驱动 `JobRunner::tick` |
+| `evidence` | `crates/evidence` | L1 | `.agents/ssot/infra/evidence/` | [`evidence-ssot-alignment.md`](../../ssot/evidence-ssot-alignment.md) | active | 25/35 | L1 append；非合规产品 |
+| `observex` | `crates/observex` | L1 | `.agents/ssot/infra/observex/` | [`observex-ssot-alignment.md`](../../ssot/observex-ssot-alignment.md) | active | 32/35 | L1 + L3 Instr 入口 |
+| `resiliencx` | `crates/resiliencx` | L1 | `.agents/ssot/infra/resiliencx/` | [`resiliencx-ssot-alignment.md`](../../ssot/resiliencx-ssot-alignment.md) | active | 31/35 | 接近 L1 Internal |
+| `transportx` | `crates/transport` | L1 | `.agents/ssot/infra/transport/` | [`transport-ssot-alignment.md`](../../ssot/transport-ssot-alignment.md) | active | 32/35 | L1 有条件 I/O |
 | `contracts` | `crates/contracts` | contracts | `.agents/ssot/contracts/` | [`contracts-ssot-alignment.md`](../../ssot/contracts-ssot-alignment.md) | active | 33/35 | L3 子集 KV+Instr |
 | `contract-testkit` | `crates/test-support/contracts` | T0 | `.agents/ssot/testkit/ §3.2 + contracts` | [`testkit-ssot-alignment.md`](../../ssot/testkit-ssot-alignment.md) | active | 29/35 | L1 test-support |
 | `binancex` | `crates/adapters/exchange/binance` | adapter | `.agents/ssot/adapters/exchange/binance/` | [`adapters-ssot-alignment.md`](../../ssot/adapters-ssot-alignment.md) | active/no-go | 24/35 | 签名 REST + 公共 WS；交易 NO-GO |
@@ -38,7 +38,7 @@
 - workspace `crates/**` 成员数：**22**
 - 本表行数：**22**
 - 对齐文档：每包至少一条 `docs/ssot/*-ssot-alignment.md`（decimalx/canonical 共享 `types-ssot-alignment.md`；binancex/okxx 共享 `adapters-ssot-alignment.md` + 分包对齐；contract-testkit 挂 testkit+contracts）
-- evidence canonical SSOT：`.agents/ssot/evidence/`；`.agents/ssot/tools/evidence/` 仅历史重定向
+- evidence canonical SSOT：`.agents/ssot/infra/evidence/`；`.agents/ssot/tools/evidence/` 仅历史重定向
 
 ## 3. 缺失说明
 

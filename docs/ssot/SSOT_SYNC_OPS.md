@@ -24,7 +24,7 @@ test -f Cargo.toml || { echo "ERROR: 请在 infra.rs 仓库根目录执行"; exi
 | kernel | `.agents/ssot/kernel/` | — |
 | testkit | `.agents/ssot/testkit/` | — |
 | types | `.agents/ssot/types/` | decimal, canonical |
-| infra | `.agents/ssot/` | bootstrap, configx, gate, observex, resiliencx, schedulex, testkitx, transport（已展平） |
+| infra | `.agents/ssot/infra/` | bootstrap, configx, evidence, gate, observex, resiliencx, schedulex, testkitx, transport（与 crates/infra 对齐） |
 | adapters | `.agents/ssot/adapters/` | binance, okx, redis, kafka, nats, postgres, taos, oss, clickhouse |
 | contracts | `.agents/ssot/contracts/` | — |
 | tools | `.agents/ssot/tools/` | evidence, goalctl, xtask, verifyctl（**本仓 SSOT**，不从外仓 rsync） |
@@ -39,10 +39,10 @@ for domain in kernel testkit types adapters contracts; do
   echo "→ syncing $domain..."
   rsync -a --delete "$SRC/$domain/" "$DST/$domain/"
 done
-# infra（8 子域，源为 $SRC/infra/，目标已展平到 $DST/）
+# infra（目标保留 infra/ 层级，与 crates/infra 对齐）
 for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
   echo "→ syncing infra/$sub..."
-  rsync -a --delete "$SRC/infra/$sub/" "$DST/$sub/"
+  rsync -a --delete "$SRC/infra/$sub/" "$DST/infra/$sub/"
 done
 # tools：路径本地化（.agent/SSOT → .agents/ssot）；verifyctl 等本仓扩展见 tools 节
 find "$DST/tools" -type f \( -name '*.md' -o -name '*.sh' -o -name '*.json' -o -name '*.yaml' \) \
@@ -70,11 +70,11 @@ rsync -a --delete "$SRC/testkit/" "$DST/testkit/"
 rsync -a --delete "$SRC/types/" "$DST/types/"
 ```
 
-### infra（8 子域，已展平）
+### infra（目标 `.agents/ssot/infra/`）
 
 ```bash
 for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
-  rsync -a --delete "$SRC/infra/$sub/" "$DST/$sub/"
+  rsync -a --delete "$SRC/infra/$sub/" "$DST/infra/$sub/"
 done
 ```
 

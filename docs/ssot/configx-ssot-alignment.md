@@ -2,8 +2,8 @@
 
 | 字段 | 值 |
 | --- | --- |
-| Active spec | `.agents/ssot/configx/spec/spec.md` |
-| Complete copy | `.agents/ssot/configx/spec/xhyper-configx-complete-spec.md`（必须 `cmp` 一致） |
+| Active spec | `.agents/ssot/infra/configx/spec/spec.md` |
+| Complete copy | `.agents/ssot/infra/configx/spec/xhyper-configx-complete-spec.md`（必须 `cmp` 一致） |
 | 本仓实现 | `crates/infra/configx` · package/lib `configx` · version `0.1.2` |
 | Round baseline | `3cd29a942710c0fb42f3f6bc05e3c31570acad47` |
 | 最终 Review base | `origin/main@630f03d5db5739a89933fe921d7615841fde3789`（rebase 后固定基线） |
@@ -66,11 +66,11 @@ cargo fmt -p configx -- --check
 cargo test -p configx --all-targets
 cargo clippy -p configx --all-targets -- -D warnings
 node scripts/quality-gates/cov-gate-100.mjs -p configx --filter crates/infra/configx/src
-cmp .agents/ssot/configx/spec/spec.md \
-    .agents/ssot/configx/spec/xhyper-configx-complete-spec.md
+cmp .agents/ssot/infra/configx/spec/spec.md \
+    .agents/ssot/infra/configx/spec/xhyper-configx-complete-spec.md
 ```
 
-完整验证结果记录在 `.agents/ssot/configx/plan/round-03-findings.md`；定向通过不扩大为全 workspace
+完整验证结果记录在 `.agents/ssot/infra/configx/plan/round-03-findings.md`；定向通过不扩大为全 workspace
 可靠性声明。Round 1/2 执行者未改版本，root 已在发布准备阶段统一 PATCH bump 至 `0.1.2`。
 
 ## 非目标 / 开放项

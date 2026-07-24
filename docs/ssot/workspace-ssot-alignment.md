@@ -71,17 +71,17 @@
 | kernel | `.agents/ssot/kernel/` | `crates/kernel` | **已落地**；ClockDomain + loom CI + wait_timeout；见 kernel 对齐文 |
 | testkit | `.agents/ssot/testkit/` | `crates/testkit` | **ManualClock core 已落地**（含 domain） |
 | contract-testkit | `.agents/ssot/testkit/` §3.2 | `crates/test-support/contracts` | **已落地**（Fake + per-trait suite；仅 dev-dep） |
-| schedulex | `.agents/ssot/schedulex/` | `crates/infra/schedulex` | ID 登记 + 宿主驱动确定性 `JobRunner::tick` 已落地；非 runtime/分布式 scheduler |
+| schedulex | `.agents/ssot/infra/schedulex/` | `crates/infra/schedulex` | ID 登记 + 宿主驱动确定性 `JobRunner::tick` 已落地；非 runtime/分布式 scheduler |
 | types | `.agents/ssot/types/` | `crates/types/{decimal,canonical}` | **已落地**；decimal **L1**；canonical **L2** committed v1–v1.3；package stable **OPEN** |
-| configx | `.agents/ssot/configx/` | `crates/infra/configx` | **0.1.1**：`MemorySource`/`EnvSource`/`FileSource`、分层、宿主 reload/通知与 `SecretString` 已落地；远端/自动 watcher/secret manager OPEN |
-| bootstrap | `.agents/ssot/bootstrap/` | `crates/infra/bootstrap` | **组合根已落地**；`ContractStoreSet` 正式 KV/EventBus + 兼容 `Bounded*`；固定 Redis/NATS E2E PASS；跨资源事务 DEFER |
-| resiliencx | `.agents/ssot/resiliencx/` | `crates/infra/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
-| observex | `.agents/ssot/observex/` | `crates/infra/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
+| configx | `.agents/ssot/infra/configx/` | `crates/infra/configx` | **0.1.1**：`MemorySource`/`EnvSource`/`FileSource`、分层、宿主 reload/通知与 `SecretString` 已落地；远端/自动 watcher/secret manager OPEN |
+| bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/infra/bootstrap` | **组合根已落地**；`ContractStoreSet` 正式 KV/EventBus + 兼容 `Bounded*`；固定 Redis/NATS E2E PASS；跨资源事务 DEFER |
+| resiliencx | `.agents/ssot/infra/resiliencx/` | `crates/infra/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
+| observex | `.agents/ssot/infra/observex/` | `crates/infra/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
 | infra 其余域 | `.agents/ssot/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
 | adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | storage×7 声明面见专项文；exchange 签名 REST + 公共 WS 已实现但交易安全证据未闭合，**交易 NO-GO**；非 package stable / crates.io |
 | （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Venue 业务 live **DEFER** |
-| transport | `.agents/ssot/transport/` | `crates/infra/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
-| evidence | `.agents/ssot/evidence/` | `crates/infra/evidence` | canonical current-state spec 位于顶层；`tools/evidence` 仅历史重定向 |
+| transport | `.agents/ssot/infra/transport/` | `crates/infra/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
+| evidence | `.agents/ssot/infra/evidence/` | `crates/infra/evidence` | canonical current-state spec 位于顶层；`tools/evidence` 仅历史重定向 |
 | tools | `.agents/ssot/tools/` | `tools/goalctl` + `tools/verifyctl` | goalctl/verifyctl 最小 CLI 已 member（#188）；verifyctl 非生产 verifier；xtask 未落地 |
 
 规则：
@@ -134,7 +134,7 @@ node scripts/nats-reconnect-conformance.mjs
 #     -p ossx -p clickhousex -p taosx -- --ignored
 
 # evidence canonical + tools 历史重定向
-test -f .agents/ssot/evidence/spec/spec.md
+test -f .agents/ssot/infra/evidence/spec/spec.md
 test -f .agents/ssot/tools/evidence/README.md
 # tools（本地化后与上游非零 diff 为预期；校验目录存在）
 test -d .agents/ssot/tools/goalctl

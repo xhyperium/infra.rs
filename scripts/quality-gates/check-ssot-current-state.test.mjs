@@ -182,7 +182,7 @@ expectFailure(
   "evidence snapshot 回退无效 commit",
   ({ root }) => {
     for (const name of ["spec.md", "xhyper-evidence-complete-spec.md"]) {
-      mutate(join(root, ".agents/ssot/evidence/spec", name), (text) =>
+      mutate(join(root, ".agents/ssot/infra/evidence/spec", name), (text) =>
         text.replace("1b80898e0425cf7dc0f787c0f663154c24c8bb37", "b0934baa"),
       );
     }
@@ -331,7 +331,7 @@ expectFailure(
 expectFailure(
   "dual spec 漂移",
   ({ root }) => {
-    const path = join(root, ".agents/ssot/configx/spec/xhyper-configx-complete-spec.md");
+    const path = join(root, ".agents/ssot/infra/configx/spec/xhyper-configx-complete-spec.md");
     mutate(path, (text) => `${text}\n漂移\n`);
   },
   "dual-specs",
@@ -340,7 +340,7 @@ expectFailure(
 expectFailure(
   "dual spec 整对删除",
   ({ root }) => {
-    rmSync(join(root, ".agents/ssot/testkitx/spec"), { recursive: true, force: true });
+    rmSync(join(root, ".agents/ssot/infra/testkitx/spec"), { recursive: true, force: true });
   },
   "dual-specs",
 );
@@ -359,7 +359,7 @@ expectFailure(
 expectFailure(
   "dual spec 域替换保持数量不变",
   ({ root }) => {
-    rmSync(join(root, ".agents/ssot/observex/spec"), { recursive: true, force: true });
+    rmSync(join(root, ".agents/ssot/infra/observex/spec"), { recursive: true, force: true });
     const directory = join(root, ".agents/ssot/replacement/spec");
     mkdirSync(directory, { recursive: true });
     writeFileSync(join(directory, "spec.md"), "# replacement\n");

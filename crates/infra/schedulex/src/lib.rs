@@ -6,7 +6,7 @@
 //! | 调度 | [`Schedule`] / [`JobRunner`] | `tick(now_ms)` 确定性触发；无墙钟依赖 |
 //!
 //! cron 仅支持文档化最小子集（见 [`schedule`] 模块）。
-//! 权威规范：`.agents/ssot/schedulex/spec/spec.md`（运行器为 additive 面）。
+//! 权威规范：`.agents/ssot/infra/schedulex/spec/spec.md`（运行器为 additive 面）。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

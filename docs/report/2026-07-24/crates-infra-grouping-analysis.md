@@ -88,7 +88,7 @@
 
 它不是「又一个能力库」，而是 **平台组装层**。进 `infra/` 合理，因为：
 
-- 规格与 SSOT 一直在 infra 平面（`.agents/ssot/bootstrap/`）
+- 规格与 SSOT 一直在 infra 平面（`.agents/ssot/infra/bootstrap/`）
 - 产品语义是「启动期平台上下文」，不是 adapter
 
 但实现上要注意：它在依赖图上 **高于** 多数 L1，不宜和 `configx` 混成同一「无层级」心智——目录上可用：
@@ -146,7 +146,7 @@ crates/
 
 | 域 | 状态 | 与 `crates/infra/` 关系 |
 |----|------|------------------------|
-| `gate` | 仅 `.agents/ssot/gate/` | **未来**若落地，优先 `crates/infra/gate` |
+| `gate` | 仅 `.agents/ssot/infra/gate/` | **未来**若落地，优先 `crates/infra/gate` |
 | `testkitx` | 仅镜像 | 更偏 test 平面，**不要**默认塞进 infra |
 
 ---

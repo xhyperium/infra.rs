@@ -4,7 +4,7 @@
 | --- | --- |
 | 策略 | 本仓最小 tracing 面 + 自定义有界进程内 sink |
 | 日期 | 2026-07-23（round 03 候选准备） |
-| active spec | `.agents/ssot/observex/spec/spec.md` |
+| active spec | `.agents/ssot/infra/observex/spec/spec.md` |
 | 当前版本 | 0.1.2 |
 | package / lib | `observex` / `observex` |
 | 发布 | `false` |
@@ -67,18 +67,18 @@ wrapper 无法确认交付状态且不会重试；该诊断不得解释为实际
 cargo fmt --all --check
 cargo test -p observex --all-targets
 cargo clippy -p observex --all-targets -- -D warnings
-cmp .agents/ssot/observex/spec/spec.md \
-    .agents/ssot/observex/spec/xhyper-observex-complete-spec.md
+cmp .agents/ssot/infra/observex/spec/spec.md \
+    .agents/ssot/infra/observex/spec/xhyper-observex-complete-spec.md
 ```
 
 round 01 发现与残余风险见
-`.agents/ssot/observex/plan/round-01-findings.md`。
+`.agents/ssot/infra/observex/plan/round-01-findings.md`。
 
 Round 2 已闭合 sanitizer、有界 exporter、错误/unwind 诊断、简体中文、`thiserror` 与 poison 恢复；
 本轮新树 root 串行覆盖率为 942/942、zeros 0、100.0000%、exit 0。治理修正后候选已重冻，
 本地独立 reviewer 已完成实现/证据审查，独立 verifier 已完成技术/证据初验；本次纯状态 delta
 不改变受审源码/测试。GitHub 固定提交 CI artifact、PR、维护者审批、合并、tag/发布仍 pending，详见
-`.agents/ssot/observex/plan/round-03-findings.md`。
+`.agents/ssot/infra/observex/plan/round-03-findings.md`。
 
 ## 残余边界
 

@@ -1,7 +1,7 @@
 # AGENTS.md — schedulex
 
 > 仓库级规则见 [`../../AGENTS.md`](../../AGENTS.md)。
-> 权威规范：[SPEC-SCHEDULEX-003](../../.agents/ssot/schedulex/spec/spec.md)
+> 权威规范：[SPEC-SCHEDULEX-003](../../.agents/ssot/infra/schedulex/spec/spec.md)
 
 ## 身份
 

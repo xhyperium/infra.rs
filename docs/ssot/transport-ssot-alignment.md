@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |---|---|
 | Baseline | `2299ff1f9c6d006d014c80d89a3082a01ba27c9a` |
-| Active SSOT | `.agents/ssot/transport/spec/spec.md` ≡ 双镜像 |
+| Active SSOT | `.agents/ssot/infra/transport/spec/spec.md` ≡ 双镜像 |
 | Crate | `crates/infra/transport` · package/lib `transportx` · 候选 `0.1.4` |
 | 范围 | HTTP/WS 客户端传输、TLS/代理配置、进程内客户端池 |
 | 本地证据 | [`manifest.json`](../../evidence/testkit/2026-07-23-infra-2d9.10/manifest.json) 绑定固定代码与本地门禁结果 |
@@ -33,8 +33,8 @@
 ## 验证
 
 ```bash
-cmp .agents/ssot/transport/spec/spec.md \
-  .agents/ssot/transport/spec/xhyper-transportx-complete-spec.md
+cmp .agents/ssot/infra/transport/spec/spec.md \
+  .agents/ssot/infra/transport/spec/xhyper-transportx-complete-spec.md
 cargo test -p transportx --all-targets
 cargo clippy -p transportx --all-targets -- -D warnings
 RUSTDOCFLAGS='-D warnings' cargo doc -p transportx --no-deps

@@ -4,7 +4,7 @@
 | --- | --- |
 | 目标 crate | `resiliencx` |
 | 路径/层级 | `crates/resiliencx` / L1 |
-| SSOT | `.agents/ssot/resiliencx/` |
+| SSOT | `.agents/ssot/infra/resiliencx/` |
 | 对齐文档 | `docs/ssot/resiliencx-ssot-alignment.md` |
 | 审查者 | AI Agent |
 
