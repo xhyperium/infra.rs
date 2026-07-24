@@ -4,7 +4,7 @@
 | --- | --- |
 | 目标 crate | `observex` |
 | 路径/层级 | `crates/observex` / L1 |
-| SSOT | `.agents/ssot/observex/` |
+| SSOT | `.agents/ssot/infra/observex/` |
 | 对齐文档 | `docs/ssot/observex-ssot-alignment.md` |
 | 审查者 | AI Agent |
 

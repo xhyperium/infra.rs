@@ -3,8 +3,8 @@
 | 字段 | 值 |
 |------|-----|
 | 日期 | 2026-07-23 · round-03 候选准备 |
-| Active SSOT | `.agents/ssot/resiliencx/spec/spec.md` |
-| Complete mirror | `.agents/ssot/resiliencx/spec/xhyper-resiliencx-complete-spec.md`（须 `cmp`） |
+| Active SSOT | `.agents/ssot/infra/resiliencx/spec/spec.md` |
+| Complete mirror | `.agents/ssot/infra/resiliencx/spec/xhyper-resiliencx-complete-spec.md`（须 `cmp`） |
 | 实现 | `crates/infra/resiliencx` · package/lib `resiliencx` |
 | 当前版本 | 0.1.2；同一 PR 已 bump 一次，按 R-C2 不重复 bump |
 | 状态 | L1 进程内弹性原语；Internal Ready，非 package stable |
@@ -24,7 +24,7 @@
 | 调用方 seed jitter | **PASS** | `RetryContext::with_jitter_seed` 接入实际 safe sync/async/deadline；另有纯计算 helper |
 | attempt-only jitter 边界 | **PASS** | 明确不具备抗群聚保证 |
 | active/complete spec | **PASS** | 两份 current-state spec 同构；以 `cmp` 为门禁 |
-| findings | **PASS** | `.agents/ssot/resiliencx/plan/round-01-findings.md` |
+| findings | **PASS** | `.agents/ssot/infra/resiliencx/plan/round-01-findings.md` |
 
 ## 当前能力
 
@@ -66,12 +66,12 @@
 cargo fmt --all --check
 cargo test -p resiliencx --all-features --all-targets
 cargo clippy -p resiliencx --all-features --all-targets -- -D warnings
-cmp .agents/ssot/resiliencx/spec/spec.md \
-    .agents/ssot/resiliencx/spec/xhyper-resiliencx-complete-spec.md
+cmp .agents/ssot/infra/resiliencx/spec/spec.md \
+    .agents/ssot/infra/resiliencx/spec/xhyper-resiliencx-complete-spec.md
 ```
 
-详细发现、选择与残余风险：`.agents/ssot/resiliencx/plan/round-01-findings.md`、
-`.agents/ssot/resiliencx/plan/round-02-findings.md` 与 `.agents/ssot/resiliencx/plan/round-03-findings.md`。
+详细发现、选择与残余风险：`.agents/ssot/infra/resiliencx/plan/round-01-findings.md`、
+`.agents/ssot/infra/resiliencx/plan/round-02-findings.md` 与 `.agents/ssot/infra/resiliencx/plan/round-03-findings.md`。
 
 第 2 轮独立代码/规格复审通过；此前 root 串行覆盖率 994/994 是本轮 Adapter safety 补丁前基线。
 首次当前树 coverage 为 1106/1116（99.1039%）；缺失行为测试补齐后，root 串行复验为

@@ -14,7 +14,7 @@
 - `ContractStoreSet` 只允许固定正式 contracts 槽位；禁止演化为通用 Service Locator 或跨资源事务协调器。
 - evidence 全量协议仍 DEFER；有界 venue 能力以 `traits` 最小对象安全替面保留。
 - 禁止新增 `register` / `resolve` / 公开 `Gate` 类型。
-- 对应 SSOT：`.agents/ssot/bootstrap/spec/spec.md`。
+- 对应 SSOT：`.agents/ssot/infra/bootstrap/spec/spec.md`。
 
 ## 目录
 

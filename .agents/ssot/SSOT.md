@@ -24,15 +24,16 @@
     ├── kernel/
     ├── testkit/
     ├── types/
-    ├── evidence/          # canonical evidence current-state 规格
-    ├── bootstrap/
-    ├── configx/
-    ├── gate/
-    ├── observex/
-    ├── resiliencx/
-    ├── schedulex/
-    ├── testkitx/
-    ├── transport/
+    ├── infra/              # L1 平台平面（与 crates/infra/ 对齐）
+    │   ├── bootstrap/
+    │   ├── configx/
+    │   ├── evidence/       # canonical evidence current-state 规格
+    │   ├── gate/           # 规格镜像；本仓 OOS/未 member
+    │   ├── observex/
+    │   ├── resiliencx/
+    │   ├── schedulex/
+    │   ├── testkitx/       # 规格镜像；非 crates/testkit
+    │   └── transport/
     ├── adapters/           # exchange + storage
     ├── contracts/
     └── tools/              # goalctl / xtask / verifyctl；evidence 子目录仅历史入口
@@ -79,11 +80,16 @@
 
 ### R6: 本仓域规格树
 
-- `.agents/ssot/{kernel,testkit,types,evidence,bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport,adapters,contracts,tools}/` 是 **infra.rs 本仓** 的域规格 SSOT
+- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 **infra.rs 本仓** 的域规格 SSOT
+  - **infra 平面**（与 `crates/infra/` 对齐）：`.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`
+  - 旧根路径 `.agents/ssot/{bootstrap,configx,…}/` 仅保留 **R5 重定向 README**（非 active spec）
+  - **infra 平面**（与 `crates/infra/` 对齐）：`.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`
+  - 旧根路径 `.agents/ssot/{bootstrap,configx,…}/` 仅保留 **R5 重定向 README**（非 active spec）
 - 禁止在 SSOT 树内写入 `src/`、`Cargo.toml`、`*.rs` 实现副本
 - 禁止用 SSOT 文档中的 COMPLETE / Stable 叙事冒充 crate 已 ship
 - 路径一律使用 `.agents/ssot/`（禁止旧 monorepo 单数 agent 路径写法）
 - 域树变更经 worktree + PR 合入；不从外仓路径覆盖本树
+- 保留层级：`adapters/`、`tools/`、**`infra/`**（与 crates 平面一致；2026-07-24 起取消 v2.1 展平）
 
 ### R7: 规格文档 ≠ 本仓实现
 
@@ -99,7 +105,7 @@
   - 交易执行精度 filters、限流、时钟偏移、私有 WS、重连与受控 live 交易证据仍 OPEN，交易 **NO-GO**
   - **未**宣称 package stable / Cluster·JetStream·EOS 全量 / crates.io
 - **tools**（2026-07-22 · #188–#191）：
-  - `crates/infra/evidence` 最小面已落地；current-state spec 唯一入口为 `.agents/ssot/evidence/spec/spec.md`
+  - `crates/infra/evidence` 最小面已落地；current-state spec 唯一入口为 `.agents/ssot/infra/evidence/spec/spec.md`
   - `.agents/ssot/tools/evidence/` 仅为历史重定向入口，不持有 active spec
   - `tools/goalctl` · `tools/verifyctl` **workspace members**（最小 CLI；verifyctl 非生产 verifier）
   - `tools/xtask` **未**落地
@@ -123,8 +129,8 @@
 | Kernel | `.agents/ssot/kernel/` | L0 规格；实现 `crates/kernel` |
 | Testkit | `.agents/ssot/testkit/` | 规格；实现 `crates/testkit` |
 | Types | `.agents/ssot/types/` | decimal / canonical |
-| Evidence | `.agents/ssot/evidence/` | canonical current-state 规格；实现 `crates/infra/evidence` |
-| Infra | `.agents/ssot/{bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport}/` | bootstrap / configx / gate / … |
+| Evidence | `.agents/ssot/infra/evidence/` | canonical current-state 规格；实现 `crates/infra/evidence` |
+| Infra | `.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/` | L1 平台平面（与 `crates/infra/` 对齐） |
 | Adapters | `.agents/ssot/adapters/` | exchange + storage |
 | Contracts | `.agents/ssot/contracts/` | trait 出口规格 |
 | Tools | `.agents/ssot/tools/` | goalctl / xtask / verifyctl；`tools/evidence` 仅历史重定向 |
@@ -136,6 +142,7 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v2.3.0 | 2026-07-24 | **恢复 infra 层级**：与 `crates/infra/` 对齐，域归组到 `.agents/ssot/infra/*`；根路径保留 R5 重定向 README |
 | v2.2.1 | 2026-07-23 | 在 v2.2.0 current-state 基线上声明域级三轮 findings 证据文件约定；清理重复域目录清单 |
 | v2.2.0 | 2026-07-22 | 唯一化顶层 evidence current-state 入口；冻结 24 package 与 configx/schedulex/exchange 当前边界 |
 | v2.1.0 | 2026-07-21 | **展平 SSOT 结构**：移除 `infra/` 子目录；bootstrap/configx/gate/observex/resiliencx/schedulex/testkitx/transport 直接位于 `.agents/ssot/` 根 |

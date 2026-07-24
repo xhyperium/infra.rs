@@ -26,7 +26,7 @@
 //! - 超限 → [`TransportError::PayloadTooLarge`]（fail-closed）
 //! - TLS：[`TlsConfig`] / [`TlsMode`]；池：[`HttpClientPool`]；代理：[`ProxyConfig`]（Debug 脱敏）
 //!
-//! 实现合同：`.agents/ssot/transport/spec/spec.md`
+//! 实现合同：`.agents/ssot/infra/transport/spec/spec.md`
 
 use async_trait::async_trait;
 use bytes::Bytes;

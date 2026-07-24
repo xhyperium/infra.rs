@@ -1,6 +1,6 @@
 # evidence-spec.md — 历史重定向
 
-> **Canonical current-state SSOT**：`.agents/ssot/evidence/spec/spec.md` ≡ `.agents/ssot/evidence/spec/xhyper-evidence-complete-spec.md`。
+> **Canonical current-state SSOT**：`.agents/ssot/infra/evidence/spec/spec.md` ≡ `.agents/ssot/infra/evidence/spec/xhyper-evidence-complete-spec.md`。
 >
 > **历史材料**：本目录保留旧战役 plan/design/review 与 `evidence-spec.superseded.md`；它们不得覆盖 canonical current-state。
 >

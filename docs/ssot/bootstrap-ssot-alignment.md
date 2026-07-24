@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 审计日期 | 2026-07-23；三轮 production hardening + 正式 contracts 注入复核 |
-| SSOT | `.agents/ssot/bootstrap/spec/spec.md` ≡ `spec/xhyper-bootstrap-complete-spec.md`（active / complete 双镜像，`cmp` 同构） |
+| SSOT | `.agents/ssot/infra/bootstrap/spec/spec.md` ≡ `spec/xhyper-bootstrap-complete-spec.md`（active / complete 双镜像，`cmp` 同构） |
 | 实现路径 | `crates/infra/bootstrap`（package `bootstrap` / lib `bootstrap`）· **v0.3.3** |
 | 权威 | active spec 描述合同；本文件记录 **本仓** 落地与证据 |
 | 上游参考 | `xhyper.rs/crates/infra/bootstrap`（可移植源，非本仓 member） |
@@ -15,7 +15,7 @@
 |-----------------|------|
 | `crates/infra/bootstrap`（infra.rs README） | `crates/infra/bootstrap` |
 | `crates/infra/bootstrap`（上游 monorepo） | 映射为本仓扁平 `crates/infra/bootstrap` |
-| `.agent/ssot/bootstrap` | `.agents/ssot/bootstrap`（SSOT 已展平） |
+| `.agent/ssot/bootstrap` | `.agents/ssot/infra/bootstrap`（SSOT 已展平） |
 
 ## §1 定位与边界
 
@@ -101,8 +101,8 @@ cargo clippy -p bootstrap --all-targets -- -D warnings
 cargo fmt --all --check
 node scripts/storage-composition-conformance.mjs
 node scripts/quality-gates/cov-gate-100.mjs -p bootstrap --filter crates/infra/bootstrap/src
-cmp .agents/ssot/bootstrap/spec/spec.md \
-    .agents/ssot/bootstrap/spec/xhyper-bootstrap-complete-spec.md
+cmp .agents/ssot/infra/bootstrap/spec/spec.md \
+    .agents/ssot/infra/bootstrap/spec/xhyper-bootstrap-complete-spec.md
 # 静态：无 Service Locator / Gate
 rg -n 'register_capability|fn resolve|pub struct Gate|pub enum Gate' crates/infra/bootstrap/src || true
 ```
@@ -145,7 +145,7 @@ rg -n 'register_capability|fn resolve|pub struct Gate|pub enum Gate' crates/infr
 
 ## 追溯
 
-- SSOT：`.agents/ssot/bootstrap/spec/spec.md`
+- SSOT：`.agents/ssot/infra/bootstrap/spec/spec.md`
 - 上游：`xhyper.rs/crates/infra/bootstrap`
 - 本仓实现：`crates/infra/bootstrap/**`
 - contracts 对齐：[contracts-ssot-alignment.md](./contracts-ssot-alignment.md)

@@ -4,7 +4,7 @@
 | --- | --- |
 | 目标 crate | `transportx` |
 | 路径/层级 | `crates/transport` / L1 |
-| SSOT | `.agents/ssot/transport/` |
+| SSOT | `.agents/ssot/infra/transport/` |
 | 对齐文档 | `docs/ssot/transport-ssot-alignment.md` |
 | 审查者 | AI Agent |
 

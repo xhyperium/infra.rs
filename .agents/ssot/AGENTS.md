@@ -27,10 +27,9 @@ matrix/ gate/ evidence/   + README.md
 | 路径 | 角色 |
 |------|------|
 | `kernel/` `testkit/` `types/` | L0 / test-support / types |
-| `{bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport}/` | infra 面（gate 等可仅规格） |
+| `infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/` | L1 平台面（与 `crates/infra/` 对齐；gate/testkitx 可仅规格） |
 | `adapters/{exchange,storage}/…` | 九 adapter 域（保留 `adapters/` 层级） |
 | `contracts/` | trait 出口规格 |
-| `evidence/` | evidence canonical current-state 规格；实现位于 `crates/infra/evidence` |
 | `tools/{goalctl,xtask,verifyctl}/` | 工具域（保留 `tools/` 层级） |
 | `tools/evidence/` | 历史重定向入口；不得创建第二份 active spec |
 
@@ -59,7 +58,7 @@ matrix/ gate/ evidence/   + README.md
 ```bash
 test -f .agents/ssot/SSOT.md
 test -f .agents/ssot/AGENTS.md
-test -f .agents/ssot/evidence/spec/spec.md
+test -f .agents/ssot/infra/evidence/spec/spec.md
 test -f .agents/ssot/adapters/README.md
 test -f .agents/ssot/tools/README.md
 # 叶域 11 层

@@ -6,7 +6,7 @@
 | crate | `crates/infra/evidence` · `evidence` / lib `evidence` · **v0.1.1**（文档名 `xhyper-evidence` 为废弃别名） |
 | 消费者 | `bootstrap`（注入） |
 | 定位 | L1 审计证据**追加面**（append-only）；**非** 合规审计平台 / 远程 CA / 不可抵赖审计产品 |
-| Canonical SSOT | `.agents/ssot/evidence/spec/spec.md` ≡ `xhyper-evidence-complete-spec.md` |
+| Canonical SSOT | `.agents/ssot/infra/evidence/spec/spec.md` ≡ `xhyper-evidence-complete-spec.md` |
 | 历史入口 | `.agents/ssot/tools/evidence/README.md` 仅重定向；不得维护第二份 active spec |
 
 ## 结论
@@ -55,5 +55,5 @@ node scripts/quality-gates/check-ssot-current-state.mjs
 | 日期 | 说明 |
 |------|------|
 | 2026-07-22 | **defer-close**：query/sign/remote PASS；合规产品仍 OPEN |
-| 2026-07-22 | 对齐 Cargo 真相：版本 `0.1.1`；明确 L1 审计证据追加面（append-only）；`xhyper-evidence` 仅废弃别名；SSOT 镜像指向 `.agents/ssot/evidence/spec/` |
-| 2026-07-22 | 冻结 `.agents/ssot/evidence/spec/spec.md` 为唯一 active current-state 入口；`tools/evidence` 仅保留历史重定向 |
+| 2026-07-22 | 对齐 Cargo 真相：版本 `0.1.1`；明确 L1 审计证据追加面（append-only）；`xhyper-evidence` 仅废弃别名；SSOT 镜像指向 `.agents/ssot/infra/evidence/spec/` |
+| 2026-07-22 | 冻结 `.agents/ssot/infra/evidence/spec/spec.md` 为唯一 active current-state 入口；`tools/evidence` 仅保留历史重定向 |

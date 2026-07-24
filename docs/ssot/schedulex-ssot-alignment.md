@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |---|---|
 | Baseline | `55433a2ec3567624c5cd98601b9f4581a7e69cb6` |
-| Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ dual mirror |
+| Active SSOT | `.agents/ssot/infra/schedulex/spec/spec.md` ≡ dual mirror |
 | Crate | `crates/infra/schedulex` · package/lib `schedulex` · 当前 v0.1.2 |
 | 范围 | Scheduler registry + 独立 explicit tick JobRunner |
 
@@ -36,8 +36,8 @@
 ## 验证
 
 ```bash
-cmp .agents/ssot/schedulex/spec/spec.md \
-  .agents/ssot/schedulex/spec/xhyper-schedulex-complete-spec.md
+cmp .agents/ssot/infra/schedulex/spec/spec.md \
+  .agents/ssot/infra/schedulex/spec/xhyper-schedulex-complete-spec.md
 cargo test -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
 node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/infra/schedulex/src

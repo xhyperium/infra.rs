@@ -40,7 +40,7 @@ assert_eq!(runner.tick(10).fired, 1);
 
 无真实墙钟、后台线程、async runtime、持久化恢复、misfire 产品、分布式 lease、完整 cron/时区。不得把本 crate 当作生产调度平台或 package stable。
 
-规范：[active SSOT](../../.agents/ssot/schedulex/spec/spec.md) · [alignment](../../docs/ssot/schedulex-ssot-alignment.md)
+规范：[active SSOT](../../.agents/ssot/infra/schedulex/spec/spec.md) · [alignment](../../docs/ssot/schedulex-ssot-alignment.md)
 
 ## 验证
 
