@@ -380,6 +380,28 @@ function showHelp() {
   --orphan-type <type> 仅处理指定类型的孤儿 worktree（可重复，仅 --auto-remove）
   --help               显示帮助信息
 
+--auto-remove 说明:
+
+  --auto-remove 与 --clean 互补，专用于清理"分支已被删除但 worktree
+  注册/目录仍然残留"的孤儿 worktree，不涉及分支本身的增删。
+
+  检测三种孤儿 worktree 类型 (可通过 --orphan-type 过滤):
+
+    missing_branch  ← 分支已被删除 (git branch -D)，但 .worktrees/<name>/ 目录
+                      和/或 git worktree 注册仍然存在
+
+    missing_dir     ← 分支仍然存在，但 .worktrees/<name>/ 磁盘目录
+                      已被手动删除，仅 git 注册残留
+
+    detached        ← worktree 处于 detached HEAD 状态，无分支关联
+
+  --auto-remove 始终安全:
+    - 永远不会删除分支 (由 --clean 负责)
+    - 永远不会触碰主仓 .worktrees 以外的路径
+    - 跳过主仓和 bare worktree
+
+  --dry-run 可安全预览所有操作。
+
 --orphan-type 有效值（大小写不敏感）:
 
   missing_branch  分支已删除，但 git worktree 注册和目录仍然残留
