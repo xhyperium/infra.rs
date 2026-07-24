@@ -5,7 +5,7 @@
 
 ## 通用门禁
 
-`cargo fmt --all --check`、`cargo build --workspace`、`cargo clippy --workspace --all-features --all-targets -- -D warnings`、`cargo test --workspace`、`cargo deny check`（工具可用时）和 `node scripts/quality-gates/check-ssot.mjs` 必须按 CI 结果记录。
+`cargo fmt --all --check`、`cargo build --workspace`、`cargo clippy --workspace --all-features --all-targets -- -D warnings`、`cargo test --workspace`、`cargo deny check`（工具可用时）和 `node scripts/quality-gates/check-ssot-current-state.mjs` 必须按 CI 结果记录。
 
 ## 域专项门禁
 

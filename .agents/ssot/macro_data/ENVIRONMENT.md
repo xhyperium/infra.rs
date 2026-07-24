@@ -32,7 +32,7 @@
 
 | 域 | spec_status | impl_status |
 |----|-------------|-------------|
-| domain_macro | draft | partial (`crates/macrox`) |
+| domain_macro | draft | not_started（计划 `crates/macrox`，尚未落地） |
 | yield_curve | draft | not_started |
 | 所有 provider | draft | not_started |
 

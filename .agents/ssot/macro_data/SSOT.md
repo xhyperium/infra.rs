@@ -56,7 +56,7 @@
 
 - CI 中验证 manifest、域层、状态和投影边界一致
 - 不一致时阻止合并
-- 校验命令：`node scripts/quality-gates/check-ssot.mjs`；Beads 仅管理任务，不替代 SSOT 校验
+- 校验命令：`node scripts/quality-gates/check-ssot-current-state.mjs`；Beads 仅管理任务，不替代 SSOT 校验
 
 ### R4: 新增 SSOT
 
@@ -98,7 +98,7 @@
 | 数据源适配器 | `.agents/ssot/{bea,eastmoney,ecb,fred,japan_cb,jin10,treasury,uk_cb,yahoo}/` | 宏观经济数据源适配器 |
 | 统一契约 kernel | `.agents/ssot/{domain_macro,yield_curve}/` | 来源无关的宏观指标与收益率曲线模型 |
 | SSOT 规则 | `.agents/ssot/SSOT.md` | 自引 |
-| SSOT 结构与状态 | `.agents/ssot/manifest.json` | 机器可读源；由 `check-ssot.mjs` 校验 |
+| SSOT 结构与状态 | `.agents/ssot/manifest.json` | 机器可读源；dual-spec/current-state 由 `check-ssot-current-state.mjs` 校验 |
 
 ---
 
