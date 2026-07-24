@@ -1,19 +1,11 @@
 # adapters — 本仓 SSOT
 
 > **SSOT 根**：`.agents/ssot/adapters/`  
-> **保留层级**：`adapters/{exchange,storage}/`（勿展平到 `.agents/ssot/` 根）  
-> **R7**：规格 COMPLETE **≠** 本仓 ship；以 members + 测试为准
+> **保留层级**：`adapters/storage/`（勿展平到 `.agents/ssot/` 根）  
+> **R7**：规格 COMPLETE **≠** 本仓 ship；以 members + 测试为准  
+> **注意**：exchange（binance/okx）行情/适配器规格已统一收敛至 `.agents/ssot/market_data/`；本目录仅保留 storage 域。exchange 实现（`crates/adapters/exchange/{binance,okx}`，交易 **NO-GO**）落地状态见 [adapters-ssot-alignment.md](../../docs/ssot/adapters-ssot-alignment.md)。
 
 ## 子域一览
-
-### exchange
-
-| 域 | SSOT | package | 本仓状态 |
-|----|------|---------|----------|
-| binance | `exchange/binance/` | `binancex` | 签名 REST + 公共 WS 解析/注入；交易 **NO-GO** |
-| okx | `exchange/okx/` | `okxx` | 签名 REST + 公共 WS 解析/注入；交易 **NO-GO** |
-
-签名请求与公共行情入口不等于可交易。精度 filters、限流、时钟偏移、私有 WS、重连和受控下单/清理证据仍 OPEN。
 
 ### storage（P0 生产默认路径 · #188–#191）
 

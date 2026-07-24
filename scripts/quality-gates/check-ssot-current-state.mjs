@@ -56,8 +56,6 @@ const expectedPackages = new Map([
 ]);
 
 const expectedDualSpecDirs = [
-  "adapters/exchange/binance/spec",
-  "adapters/exchange/okx/spec",
   "adapters/storage/clickhouse/spec",
   "adapters/storage/kafka/spec",
   "adapters/storage/nats/spec",
@@ -286,8 +284,8 @@ function runGate(root) {
     },
     {
       path: ".agents/ssot/adapters/README.md",
-      required: ["签名 REST", "公共 WS", "交易 **NO-GO**"],
-      forbidden: [/(?:binance|okx)[^\n]*(?:scaffold|mock HTTP)[^\n]*server.?time/iu],
+      required: ["storage", "P0 生产默认路径", "adapters/storage/"],
+      forbidden: [],
     },
     {
       path: "AGENTS.md",
@@ -399,14 +397,9 @@ function runGate(root) {
       path: ".agents/ssot/infra/schedulex/spec/spec.md",
       markers: ["JobRunner::tick", "宿主驱动", "分布式调度"],
     },
-    {
-      path: ".agents/ssot/adapters/exchange/binance/spec/spec.md",
-      markers: ["签名 REST", "公共 WS", "NO-GO", "精度", "限流", "时钟", "私有 WS", "重连"],
-    },
-    {
-      path: ".agents/ssot/adapters/exchange/okx/spec/spec.md",
-      markers: ["签名 REST", "公共 WS", "NO-GO", "精度", "限流", "时钟", "私有 WS", "重连"],
-    },
+    // exchange（binance/okx）规格已收敛至 .agents/ssot/market_data/；
+    // 其交易边界（签名 REST / NO-GO 等）由 docs/ssot/adapters-ssot-alignment.md
+    // 与各 crate docs/README 记录，不再在此处校验已删除的 adapters/exchange spec。
   ];
   const domainErrors = [];
   for (const { path, markers } of domainMarkers) {

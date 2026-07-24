@@ -32,7 +32,7 @@ matrix/ gate/ evidence/   + README.md
 | `core/{domainx,domain_market,domain_exchange,domain_macro}/` | 分层共存 L0 共享类型层 |
 | `market_data/{binance,okx,coinbase,hyperliquid,coinglass,orderbook}/` | 分层共存 L2 provider + L1 管线规格 |
 | `macro_data/` | 分层共存 L2 宏观数据源 provider 规格 |
-| `adapters/{exchange,storage}/…` | 九 adapter 域（保留 `adapters/` 层级） |
+| `adapters/storage/…` | storage adapter 域（保留 `adapters/` 层级；exchange 规格已收敛至 `market_data/`） |
 | `contracts/` | trait 出口规格 |
 | `tools/{goalctl,xtask,verifyctl}/` | 工具域（保留 `tools/` 层级） |
 | `tools/evidence/` | 历史重定向入口；不得创建第二份 active spec |

@@ -18,7 +18,7 @@
 | **L0 类型层** | 纯领域类型 + 验证 + trait 抽象，零 I/O | `domainx` `domain_market` `domain_exchange` | `core/` | `VenueAdapter` |
 | **L1 行情管线** | 标准化行情模型 + 数据处理内核 | `market_data` | `market_data/`（orderbook 引擎） | — |
 | **L2 Provider** | 交易所具体实现（VenueAdapter impl） | `exchange/{binance,okx,coinbase,hyperliquid,coinglass}` | `market_data/{<venue>}/` | 实现 `VenueAdapter` |
-| **L2' Infra Adapter** | 基础设施适配器（contracts impl） | `adapters/exchange/{binance,okx}` | `adapters/exchange/` | 实现 `contracts::Exchange` |
+| **L2' Infra Adapter** | 基础设施适配器（contracts impl） | `adapters/exchange/{binance,okx}` | `market_data/{binance,okx}/`（已收敛） | 实现 `contracts::Exchange` |
 
 ### 1.2 依赖图
 
@@ -91,8 +91,8 @@ L0 类型层                          L1 管线
 
 | crate | package | 版本 | SSOT | 状态 |
 |-------|---------|------|------|------|
-| `crates/adapters/exchange/binance` | `binancex` | 0.3.2 | `adapters/exchange/binance/` | 签名 REST + 公共 WS；交易 NO-GO |
-| `crates/adapters/exchange/okx` | `okxx` | — | `adapters/exchange/okx/` | 签名 REST + 公共 WS；交易 NO-GO |
+| `crates/adapters/exchange/binance` | `binancex` | 0.3.2 | `market_data/binance/` | 签名 REST + 公共 WS；交易 NO-GO |
+| `crates/adapters/exchange/okx` | `okxx` | — | `market_data/okx/` | 签名 REST + 公共 WS；交易 NO-GO |
 
 实现 `contracts::Exchange` trait；依赖 `kernel`/`canonical`/`decimalx`/`contracts`/`transportx`。详见 [adapters-ssot-alignment.md](./adapters-ssot-alignment.md)。
 

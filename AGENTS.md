@@ -47,7 +47,7 @@
 
 - `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 **infra.rs 本仓域规格 SSOT**（见 `.agents/ssot/SSOT.md` R6；历史可自外部规格仓同步，但**不是**只读镜像）
   - **infra 平面**（与 `crates/infra/` 对齐）：`.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`
-  - `adapters/` 下含 exchange（binance/okx）与 storage（clickhouse/kafka/nats/oss/postgres/redis/taos）
+  - `adapters/` 下仅含 storage（clickhouse/kafka/nats/oss/postgres/redis/taos）；exchange（binance/okx）行情/适配器规格统一收敛至 `market_data/`，不再保留 `adapters/exchange/` SSOT 副本
   - `.agents/ssot/infra/evidence/` 是 evidence current-state canonical；`.agents/ssot/tools/evidence/` 仅历史重定向
   - `tools/` 下含 goalctl / xtask（+ 本仓扩展 `verifyctl`）
   - **保留 `adapters/`、`tools/`、`infra/` 层级**（勿展平到 `.agents/ssot/` 根）
