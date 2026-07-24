@@ -22,16 +22,16 @@
 | `resiliencx` | `crates/infra/resiliencx/` | `resiliencx` | L1 重试（含 async）+ 熔断 + 限流 + 舱壁 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
 | `decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money · **L1** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO · **L2 wire 子集** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
-| `domainx` | `crates/domainx/` | `domainx` | domain 层共享 DTO 与验证 | — |
-| `domain_exchange` | `crates/domain_exchange/` | `domain_exchange` | 交易所领域模型：VenueAdapter trait, StreamType, OrderAmend, AccountInfo | — |
-| `domain_market` | `crates/domain_market/` | `domain_market` | 行情领域模型：Book, Tick, Quote, MarketEvent | — |
+| `domainx` | `crates/domainx/` | `domainx` | **L0 类型层** 交易值对象 + 验证 | [core-ssot-alignment.md](./core-ssot-alignment.md) |
+| `domain_exchange` | `crates/domain_exchange/` | `domain_exchange` | **L0 类型层** VenueAdapter trait, StreamType, OrderAmend | [core-ssot-alignment.md](./core-ssot-alignment.md) |
+| `domain_market` | `crates/domain_market/` | `domain_market` | **L0 类型层** 行情模型: Book, Tick, Quote, MarketEvent | [core-ssot-alignment.md](./core-ssot-alignment.md) |
 | `contracts` | `crates/contracts/` | `contracts` | adapter trait 出口；L3 子集（KV+Instr） | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
-| `exchange-binance` | `crates/exchange/binance/` | `exchange_binance` | Binance exchange adapter（签名/WS） | — |
-| `exchange-okx` | `crates/exchange/okx/` | `exchange_okx` | OKX exchange adapter（签名/WS） | — |
-| `exchange-coinbase` | `crates/exchange/coinbase/` | `exchange_coinbase` | Coinbase exchange adapter | — |
-| `exchange-hyperliquid` | `crates/exchange/hyperliquid/` | `exchange_hyperliquid` | Hyperliquid exchange adapter | — |
-| `exchange-coinglass` | `crates/exchange/coinglass/` | `exchange_coinglass` | Coinglass data provider adapter | — |
-| `market_data` | `crates/market_data/` | `market_data` | 行情数据处理管线 | — |
+| `exchange-binance` | `crates/exchange/binance/` | `exchange_binance` | **L2 Provider** Binance VenueAdapter（骨架 stub） | [core-ssot-alignment.md](./core-ssot-alignment.md) |
+| `exchange-okx` | `crates/exchange/okx/` | `exchange_okx` | **L2 Provider** OKX VenueAdapter（骨架 stub） | [core-ssot-alignment.md](./core-ssot-alignment.md) |
+| `exchange-coinbase` | `crates/exchange/coinbase/` | `exchange_coinbase` | **L2 Provider** Coinbase VenueAdapter（骨架 stub） | [core-ssot-alignment.md](./core-ssot-alignment.md) |
+| `exchange-hyperliquid` | `crates/exchange/hyperliquid/` | `exchange_hyperliquid` | **L2 Provider** Hyperliquid VenueAdapter（骨架 stub） | [core-ssot-alignment.md](./core-ssot-alignment.md) |
+| `exchange-coinglass` | `crates/exchange/coinglass/` | `exchange_coinglass` | **L2 Provider** Coinglass data provider（骨架 stub） | [core-ssot-alignment.md](./core-ssot-alignment.md) |
+| `market_data` | `crates/market_data/` | `market_data` | **L1 管线** 行情标准化模型 + 数据处理内核 | [core-ssot-alignment.md](./core-ssot-alignment.md) |
 | `binancex` | `crates/adapters/exchange/binance/` | `binancex` | HMAC 签名 REST + 公共 WS 解析/注入；仅 server_time live，**交易 NO-GO** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx/` | `okxx` | 四头签名 REST + 公共 WS 解析/注入；仅 server_time live，**交易 NO-GO** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **0.3.3** HTTP(S)+PEM CA+insert_batch+有界池；真实集群 TLS OPEN | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
@@ -69,6 +69,12 @@
   adapters/exchange/* ── REST 签名 + 公共 WS 行情解析（交易 NO-GO；非 package stable）
   contracts ── serde + thiserror + decimalx（trait 出口；#43）
   contract-testkit ── contracts（**仅 dev-dep**；Fake/suite；禁止 production graph）
+
+  ── 分层共存（core 平面；详见 core-ssot-alignment.md）──
+  domainx ←─ domain_market ←─ domain_exchange（L0 类型层；VenueAdapter trait）
+  domain_* ←─ exchange/{binance,okx,coinbase,hyperliquid,coinglass}（L2 Provider）
+  market_data（L1 管线；独立类型平面，无 domain_* 依赖）
+  exchange/* 与 adapters/exchange/* 间无桥接层（VenueAdapter ≠ contracts::Exchange）
   tools/goalctl · tools/verifyctl ── 最小 CLI（#188；verifyctl 非生产 verifier）
   （kernel/types MUST NOT depend on adapters）
 ```
@@ -188,6 +194,7 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 | [schedulex-ssot-alignment.md](./schedulex-ssot-alignment.md) | schedulex active registry 本仓矩阵 |
 | [types-ssot-alignment.md](./types-ssot-alignment.md) | decimal + canonical 本仓状态 |
 | [bootstrap-ssot-alignment.md](./bootstrap-ssot-alignment.md) | bootstrap 组合根本仓矩阵 |
+| [core-ssot-alignment.md](./core-ssot-alignment.md) | **分层共存** L0 类型层 + L1 管线 + L2/L2' provider 矩阵 |
 | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) | adapters 九域汇总 |
 | [redisx-ssot-alignment.md](./redisx-ssot-alignment.md) 等 7 份 | storage 分 package 对齐 |
 | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) | contracts 镜像 + trait 落地 |
@@ -214,6 +221,7 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 | 2026-07-22 | 第 1 轮冻结 24 package/current-state：evidence canonical 顶层；configx/schedulex additive 面；exchange 交易 NO-GO |
 | 2026-07-23 | 第 4 轮深化：bootstrap 正式 KV/EventBus 组合、Kafka TLS/PLAIN、Postgres deadline/隔离、ClickHouse HTTPS 客户端证据；NATS 同客户端重启恢复 3/3，Core 丢消息窗口与 Cluster/HA 保持 NO-GO |
 | 2026-07-23 | **taosx 0.3.4**（#284）：十轮 draft 审查 + 真实 dev live + 有界 bench；members 表版本对齐；SSOT 路径保持 `taos/`（非 `taosx/` 分叉）；package stable NO-GO |
+| 2026-07-24 | **分层共存声明**：登记 core/market_data/macro_data 三平面；members 表补齐 domain_*/exchange/*/market_data 对齐链接（→ core-ssot-alignment.md）；修复 exchange/*/src SSOT 路径引用 |
 
 ## 七包双栏（2026-07-22）
 

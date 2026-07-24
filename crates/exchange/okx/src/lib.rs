@@ -5,7 +5,7 @@
 //!
 //! OKX 交易所适配器，覆盖 Spot、Swap（永续合约）、Futures（交割合约）三大产品线。
 //!
-//! 规格 SSOT：`.agents/ssot/okx/spec/spec.md`
+//! 规格 SSOT：`.agents/ssot/market_data/okx/spec/spec.md`
 
 use async_trait::async_trait;
 use domain_exchange::{

@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-24T06:38:57Z
+> **生成时间**：2026-07-24T07:21:41Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -11,21 +11,21 @@
 | 指标 | 值 |
 |------|-----|
 | workspace members | **33** |
-| 布局七项齐全 | **25** / 33（76%） |
+| 布局七项齐全 | **28** / 33（85%） |
 | 含测试（单元或集成） | **33** / 33（100%） |
 | scaffold 信号 | **0** |
-| **平均完成度** | **88%** █████████░ |
+| **平均完成度** | **91%** █████████░ |
 
 ### 成熟度分布
 
 | 标签 | 含义 | 数量 |
 |------|------|------|
-| `layout-incomplete` | 标准七项缺项 | 8 |
+| `layout-incomplete` | 标准七项缺项 | 5 |
 | `scaffold` | adapter/显式 scaffold 骨架 | 0 |
 | `scaffold+mock` | scaffold 且具备 mock/测试入口 | 0 |
 | `thin` | 布局齐但实质偏薄 | 0 |
 | `partial` | 有测试 + 一定源码量 | 1 |
-| `active` | 布局齐 + 测试 + 较厚实现 | 24 |
+| `active` | 布局齐 + 测试 + 较厚实现 | 27 |
 
 ## 完成度公式
 
@@ -44,9 +44,9 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `testkit` | `crates/testkit` | T0 | 7/7 | ✅ 7i+u | 1233 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/testkit-ssot-alignment.md) |
 | `canonical` | `crates/types/canonical` | types | 7/7 | ✅ 2i+u | 1429 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/types-ssot-alignment.md) |
 | `decimalx` | `crates/types/decimal` | types | 7/7 | ✅ 6i+u | 1567 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/types-ssot-alignment.md) |
-| `domain_exchange` | `crates/domain_exchange` | L1 | 2/7 | ✅ 2i+u | 654 | · | `layout-incomplete` | **61%** █████░░░ | — |
-| `domain_market` | `crates/domain_market` | L1 | 2/7 | ✅ 2i+u | 934 | · | `layout-incomplete` | **61%** █████░░░ | — |
-| `domainx` | `crates/domainx` | L1 | 2/7 | ✅ 2i+u | 783 | · | `layout-incomplete` | **61%** █████░░░ | — |
+| `domain_exchange` | `crates/domain_exchange` | L1 | 7/7 | ✅ 2i+u | 654 | · | `active` | **98%** ████████ | — |
+| `domain_market` | `crates/domain_market` | L1 | 7/7 | ✅ 2i+u | 934 | · | `active` | **98%** ████████ | — |
+| `domainx` | `crates/domainx` | L1 | 7/7 | ✅ 2i+u | 783 | · | `active` | **98%** ████████ | — |
 | `exchange-binance` | `crates/exchange/binance` | L1 | 1/7 | ✅ u | 378 | · | `layout-incomplete` | **48%** ████░░░░ | — |
 | `exchange-coinbase` | `crates/exchange/coinbase` | L1 | 1/7 | ✅ u | 266 | · | `layout-incomplete` | **48%** ████░░░░ | — |
 | `exchange-coinglass` | `crates/exchange/coinglass` | L1 | 1/7 | ✅ u | 296 | · | `layout-incomplete` | **48%** ████░░░░ | — |
@@ -88,9 +88,9 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `testkit` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `canonical` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `decimalx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `domain_exchange` | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `domain_market` | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `domainx` | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `domain_exchange` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `domain_market` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `domainx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `exchange-binance` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `exchange-coinbase` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `exchange-coinglass` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -126,9 +126,6 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `exchange-coinglass` | 48% | `layout-incomplete` | 布局缺: tests/, docs/, benches/, README.md, review/, releases/；无 example |
 | `exchange-hyperliquid` | 48% | `layout-incomplete` | 布局缺: tests/, docs/, benches/, README.md, review/, releases/；无 example |
 | `exchange-okx` | 48% | `layout-incomplete` | 布局缺: tests/, docs/, benches/, README.md, review/, releases/；无 example |
-| `domain_exchange` | 61% | `layout-incomplete` | 布局缺: docs/, benches/, README.md, review/, releases/；无 example |
-| `domain_market` | 61% | `layout-incomplete` | 布局缺: docs/, benches/, README.md, review/, releases/；无 example |
-| `domainx` | 61% | `layout-incomplete` | 布局缺: docs/, benches/, README.md, review/, releases/；无 example |
 
 ## 维护（不必每次手同步）
 

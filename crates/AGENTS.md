@@ -187,6 +187,15 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 | `postgresx` | `crates/adapters/storage/postgres/` | 默认 deadpool/tokio-postgres 客户端；scaffold 可选 |
 | `redisx` | `crates/adapters/storage/redis/` | Redis storage adapter（scaffold） |
 | `taosx` | `crates/adapters/storage/taos/` | TDengine storage adapter（scaffold） |
+| `domainx` | `crates/domainx/` | **L0 类型层** 交易值对象：Order/Position/Trade/Portfolio |
+| `domain_market` | `crates/domain_market/` | **L0 类型层** 行情模型：Tick/Quote/Bar/OrderBook |
+| `domain_exchange` | `crates/domain_exchange/` | **L0 类型层** VenueAdapter trait/StreamType |
+| `market_data` | `crates/market_data/` | **L1 管线** 标准化行情模型 + 数据处理内核 |
+| `exchange-binance` | `crates/exchange/binance/` | **L2 Provider** Binance VenueAdapter（骨架 stub） |
+| `exchange-okx` | `crates/exchange/okx/` | **L2 Provider** OKX VenueAdapter（骨架 stub） |
+| `exchange-coinbase` | `crates/exchange/coinbase/` | **L2 Provider** Coinbase VenueAdapter（骨架 stub） |
+| `exchange-hyperliquid` | `crates/exchange/hyperliquid/` | **L2 Provider** Hyperliquid VenueAdapter（骨架 stub） |
+| `exchange-coinglass` | `crates/exchange/coinglass/` | **L2 Provider** Coinglass data provider（骨架 stub） |
 
 > 领域分组路径（如 `crates/types/<name>/`、`crates/adapters/{exchange,storage}/<name>/`）合法；标准布局作用于每个 workspace 成员 crate 根目录。  
 > adapters SSOT 镜像：`.agents/ssot/adapters/**`；本仓状态见 [docs/ssot/adapters-ssot-alignment.md](../docs/ssot/adapters-ssot-alignment.md)。

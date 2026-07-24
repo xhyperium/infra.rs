@@ -5,7 +5,7 @@
 //!
 //! Binance 交易所适配器，覆盖 Spot、USDⓈ-M Futures、COIN-M Futures、Options 四大产品线。
 //!
-//! 规格 SSOT：`.agents/ssot/binance/spec/spec.md`
+//! 规格 SSOT：`.agents/ssot/market_data/binance/spec/spec.md`
 
 use async_trait::async_trait;
 use domain_exchange::{

@@ -82,14 +82,18 @@
 
 ### R6: 本仓域规格树
 
-- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 **infra.rs 本仓** 的域规格 SSOT
+- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools,core,market_data,macro_data}/` 是 **infra.rs 本仓** 的域规格 SSOT
   - **infra 平面**（与 `crates/infra/` 对齐）：`.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`
+  - **core 共享领域层**（分层共存 L0 类型层）：`.agents/ssot/core/{domainx,domain_market,domain_exchange,domain_macro}/`
+  - **market_data 行情平面**（L2 provider + L1 管线规格）：`.agents/ssot/market_data/{binance,okx,coinbase,hyperliquid,coinglass,orderbook}/`
+  - **macro_data 宏观平面**（L2 provider 规格）：`.agents/ssot/macro_data/{yield_curve,bea,eastmoney,ecb,fred,japan_cb,jin10,treasury,uk_cb,yahoo}/`
   - 旧根路径 `.agents/ssot/{bootstrap,configx,…}/` 仅保留 **R5 重定向 README**（非 active spec）
 - 禁止在 SSOT 树内写入 `src/`、`Cargo.toml`、`*.rs` 实现副本
 - 禁止用 SSOT 文档中的 COMPLETE / Stable 叙事冒充 crate 已 ship
 - 路径一律使用 `.agents/ssot/`（禁止旧 monorepo 单数 agent 路径写法）
 - 域树变更经 worktree + PR 合入；不从外仓路径覆盖本树
 - 保留层级：`adapters/`、`tools/`、**`infra/`**（与 crates 平面一致；2026-07-24 起取消 v2.1 展平）
+- **分层共存**（core / market_data / macro_data 三平面）：各平面有独立的领域类型和 trait 层次，当前**无桥接层**；`core/domain_exchange::VenueAdapter`（L2 provider trait）与 `contracts::Exchange`（L2' infra adapter trait）是两套独立契约，不得混淆
 
 ### R7: 规格文档 ≠ 本仓实现
 
@@ -110,6 +114,17 @@
   - `tools/goalctl` · `tools/verifyctl` **workspace members**（最小 CLI；verifyctl 非生产 verifier）
   - `tools/xtask` **未**落地
 - 落地说明：`plan/infra-rs-landing.md`（各域）；draft 快照：`plan/infra-rs-draft-*.md`
+- **core 共享领域**（分层共存 L0 类型层）：
+  - `domainx`：交易值对象（Order/Position/Trade/Portfolio）+ 验证已实现；`crates/domainx`
+  - `domain_market`：行情域模型（Tick/Quote/Bar/OrderBook）+ 时间/簿验证已实现；`crates/domain_market`
+  - `domain_exchange`：交易所抽象（VenueAdapter trait/StreamType/AdapterError）已实现；`crates/domain_exchange`
+  - `domain_macro`：宏观共享模型规格 draft；**crate 未落地**
+  - **标准布局**：三个已落地 crate 当前仅有 `src/` + `tests/`，缺 docs/benches/README/review/releases（跟进中）
+- **market_data 行情平面**（分层共存）：
+  - `market_data`（L1 内核）：`MarketTick`/`InstrumentType` 等标准化行情模型；`crates/market_data`
+  - `exchange/{binance,okx,coinbase,hyperliquid,coinglass}`（L2 provider）：实现 `domain_exchange::VenueAdapter`；当前为骨架 stub
+  - `orderbook`（L2 引擎）：订单簿内核规格 complete；**无 runtime crate**
+- **分层共存边界**：`core/domain_*` 与 `market_data` 是独立类型平面；`exchange/*`（L2 provider）与 `adapters/exchange/*`（L2' infra adapter）分别实现 `VenueAdapter` 和 `contracts::Exchange` 两套独立 trait，**无桥接层**
 - 审计基线见 `docs/ssot/*-ssot-alignment.md` 与 `docs/ssot/workspace-ssot-alignment.md`
 
 ---
@@ -135,6 +150,9 @@
 | Adapters | `.agents/ssot/adapters/` | exchange + storage |
 | Contracts | `.agents/ssot/contracts/` | trait 出口规格 |
 | Tools | `.agents/ssot/tools/` | goalctl / xtask / verifyctl；`tools/evidence` 仅历史重定向 |
+| Core 共享领域 | `.agents/ssot/core/{domainx,domain_market,domain_exchange,domain_macro}/` | L0 共享类型层；分层共存类型平面 |
+| market_data 行情 | `.agents/ssot/market_data/{binance,okx,coinbase,hyperliquid,coinglass,orderbook}/` | L2 provider + L1 行情管线规格 |
+| macro_data 宏观 | `.agents/ssot/macro_data/` | L2 宏观数据源 provider 规格；`domain_macro` 在 `core/` |
 | 域合同数据模型 | `.agents/ssot/CONTRACT.md` | 合同 schema / Spec ID / 合规 catalog；验证规则见 `CONTRACT_SPEC.md` |
 | 合同合规验证规则 | `.agents/ssot/CONTRACT_SPEC.md` | L1–L4 可执行规范；数据模型见 `CONTRACT.md` |
 | SSOT 规则 | `.agents/ssot/SSOT.md` | 自引 |
@@ -145,6 +163,7 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v2.3.2 | 2026-07-24 | 登记分层共存三平面：`core/`（L0 类型层）、`market_data/`（L2 provider）、`macro_data/`（L2 宏观）；R6 域树 + R7 落地 + 清单同步 |
 | v2.3.1 | 2026-07-24 | 清单登记 `CONTRACT.md`（合同数据模型）与 `CONTRACT_SPEC.md`（L1–L4 验证规则） |
 | v2.3.0 | 2026-07-24 | **恢复 infra 层级**：与 `crates/infra/` 对齐，域归组到 `.agents/ssot/infra/*`；根路径保留 R5 重定向 README |
 | v2.2.1 | 2026-07-23 | 在 v2.2.0 current-state 基线上声明域级三轮 findings 证据文件约定；清理重复域目录清单 |

@@ -5,7 +5,7 @@
 //!
 //! Coinbase 行情行情— Spot 市场行情优化ݡ★
 //!
-//! — SSOT: `.agents/ssot/coinbase/spec/spec.md`
+//! — SSOT: `.agents/ssot/market_data/coinbase/spec/spec.md`
 
 use async_trait::async_trait;
 use domain_exchange::{
