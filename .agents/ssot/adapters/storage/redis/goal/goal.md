@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | package | `redisx` |
-| 当前版本 | `0.3.4`（`0.3.3` 为 main 历史） |
+| 当前版本 | `0.3.15` |
 | 标题 | Redis KV |
 | 实现 | `crates/adapters/storage/redis` |
 | 战役 | draft SPEC_GOAL → 本仓生产默认路径 |

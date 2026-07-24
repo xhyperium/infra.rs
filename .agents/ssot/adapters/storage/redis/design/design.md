@@ -5,9 +5,13 @@
 | 组件 | 职责 |
 |------|------|
 | Config | `FOUNDATIONX_REDISX_{ADDR,USERNAME,PASSWORD,DB,TLS,MODE,NODES,SENTINEL_MASTER}` / builder；密码 Debug 脱敏 |
-| Pool / Client | 连接、超时、健康、close 语义 |
+| Pool / Client | 连接、超时、健康、close、multi-lane 池语义 |
 | Error map | 驱动错误 → `kernel::XError` / `ErrorKind` |
 | contracts 适配 | contracts::KeyValueStore（+ 可选 pubsub） |
+| Structures | hash/list/set/sorted-set 一等 API |
+| Streams | xadd/xadd_with_id/xread_block/xrange |
+| Transactions | multi/exec/discard/watch；eval_sha Lua CAS |
+| selfcheck | 11 项 Full check（0.3.15） |
 | scaffold feature | 进程内 mock / 旧适配器（非默认） |
 
 ## 依赖方向

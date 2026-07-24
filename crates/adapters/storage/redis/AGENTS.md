@@ -1,8 +1,12 @@
 # redisx
 
-- **Package / lib / 当前版本**：`redisx` / `redisx` / `0.3.8`（未发布候选；`0.3.3` 为 main 历史）
+- **Package / lib / 当前版本**：`redisx` / `redisx` / `0.3.15`）
 - **生产默认**：`RedisPool` / `RedisClient` 实现 `contracts::KeyValueStore`
-- 扩展：`delete` / `exists` / `expire` / `ttl` / `mget` / `mset`
+- 扩展：`delete` / `exists` / `expire` / `ttl` / `mget` / `mset` / `set_nx` / `getset` / `incr` / `decr`
+- 数据结构：`hset` / `hget` / `hgetall` / `lpush` / `lrange` / `sadd` / `smembers` / `zadd` / `zrange`
+- Streams：`xadd` / `xadd_with_id` / `xread_block` / `xrange`
+- 事务：`multi` / `exec` / `discard` / `watch`
+- selfcheck：11 项 Full check（basic/rw/ttl/data_structures/pipeline/multi_exec/lua_cas/pubsub/dist_lock/memory_pressure/cluster_slots）
 - feature `pubsub`：`RedisPubSub` / `RedisPubSubFacade`
 - feature `scaffold`：旧 `RedisAdapter` / `InMemoryRedis` / `MockRedisAdapter`
 - 依赖 workspace `redis`（`tokio-comp` + `connection-manager`）

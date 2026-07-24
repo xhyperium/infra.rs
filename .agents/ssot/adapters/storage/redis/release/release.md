@@ -3,7 +3,7 @@
 | 项 | 状态 |
 |----|------|
 | workspace member | 是 · `redisx` |
-| 当前版本 | `0.3.4` 未发布候选；`0.3.3` 为 main 历史 |
+| 当前版本 | `0.3.15`（`publish = false`）；package stable 未宣称 |
 | publish | `publish = false` |
 | crates.io | **未发布** |
 | SemVer package stable | **未宣称** |
