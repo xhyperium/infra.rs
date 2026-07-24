@@ -19,12 +19,12 @@
 ## 域规格 SSOT 与本仓落地
 
 - `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}` 是**本仓域规格 SSOT**（非只读镜像）；**不要**把 COMPLETE 当成「本仓可宣称 ship」
-  - infra 平面在 `.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`（v2.3.0 恢复 infra 层级）
+  - infra 平面在 `.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`（与 `crates/infra/` 对齐）
   - adapters 平面在 `.agents/ssot/adapters/{exchange,storage}/…`（保留 `adapters/` 层级）
   - evidence current-state canonical 位于 `.agents/ssot/infra/evidence/`；`.agents/ssot/tools/evidence/` 仅历史重定向
   - tools 平面在 `.agents/ssot/tools/{goalctl,xtask,verifyctl}/…`（保留 `tools/` 层级；verifyctl 为本仓扩展）
   - **archgate / `.architecture`：OOS**（PR #164）
-- 本仓 members：`kernel` / `testkit` / `contract-testkit` / `configx` / `schedulex` / `bootstrap` / `evidence` / `observex` / `resiliencx` / `transport` / `types/*` / `contracts` / `adapters/**` / `goalctl` / `verifyctl`（configx 为本地多源/宿主 reload，schedulex 为宿主驱动 `JobRunner::tick`；storage×7 默认客户端入口；exchange 签名 REST + 公共 WS 解析/注入但交易 **NO-GO**；verifyctl 非生产 verifier；**无** `infra-core`；gate/xtask 等未落地）
+- 本仓 members（**package 名**，非 `xhyper-*` 前缀）：`kernel` / `testkit` / `contract-testkit` / `configx` / `schedulex` / `bootstrap` / `evidence` / `observex` / `resiliencx` / `transportx` / `decimalx` / `canonical` / `contracts` / `adapters/**` / `goalctl` / `verifyctl`（configx 为本地多源/宿主 reload，schedulex 为宿主驱动 `JobRunner::tick`；storage×7 默认客户端入口；exchange 签名 REST + 公共 WS 解析/注入但交易 **NO-GO**；verifyctl 非生产 verifier；**无** `infra-core`；gate/xtask 等未落地）
 - storage 当前边界：NATS 同客户端重启恢复连续 3 轮通过，但 Core 断线窗口无回放且 Cluster/HA 仍 NO-GO；不得外推为 package stable。
 - Fake/Recording 在 **`contract-testkit`**（`crates/test-support/contracts`，仅 dev-dep）；**禁止** production graph 依赖
 - 验证：`cargo test --workspace`；专项见对齐文档

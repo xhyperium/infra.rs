@@ -1,4 +1,4 @@
-# SSOT 规则 — 单一事实源 (v2.4.0)
+# SSOT 规则 — 单一事实源
 
 > `.agents/ssot/` — 本仓库代理层与域规格的**本仓单一事实源**。
 > 本文件是 SSOT 本身的 SSOT：域目录结构、落地判定与变更规则以此为准。
@@ -16,8 +16,10 @@
 ```text
 源层（可编辑）
 ├── .claude/skills/         ← 技能定义
-├── CONSTITUTION.md         ← 工程宪章
+├── docs/constitution/      ← 工程宪章正文 SSOT
+├── CONSTITUTION.md         ← 宪章兼容索引（指向 docs/constitution/）
 ├── AGENTS.md               ← 多 Agent 协作规则
+├── .agents/rules/          ← 项目规则 SSOT
 ├── .github/                ← CI/CD
 ├── docs/                   ← 项目文档（含 docs/ssot/ 对齐矩阵）
 └── .agents/ssot/           ← 域规格 SSOT 根（本仓）
@@ -34,9 +36,6 @@
     │   ├── schedulex/
     │   ├── testkitx/       # 规格镜像；非 crates/testkit
     │   └── transport/
-    ├── core/               # 共享领域规格（domainx / domain_market / domain_exchange / domain_macro）
-    ├── market_data/        # 市场数据适配器 + 引擎（binance/okx/coinbase/...）
-    ├── macro_data/         # 宏观数据 provider 适配器（bea/ecb/fred/...）
     ├── adapters/           # exchange + storage
     ├── contracts/
     └── tools/              # goalctl / xtask / verifyctl；evidence 子目录仅历史入口
@@ -83,25 +82,14 @@
 
 ### R6: 本仓域规格树
 
-- `.agents/ssot/{kernel,testkit,types,infra,core,market_data,macro_data,adapters,contracts,tools}/` 是 **infra.rs 本仓** 的域规格 SSOT
+- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 **infra.rs 本仓** 的域规格 SSOT
   - **infra 平面**（与 `crates/infra/` 对齐）：`.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`
-  - **core 平面**（共享领域规格）：`.agents/ssot/core/{domainx,domain_market,domain_exchange,domain_macro}/` — 外部导入，下沉到独立 core 层
-  - **market_data 平面**（市场数据适配器）：`.agents/ssot/market_data/{binance,okx,coinbase,hyperliquid,coinglass,orderbook}/`
-  - **macro_data 平面**（宏观数据 provider）：`.agents/ssot/macro_data/{bea,ecb,fred,japan_cb,jin10,eastmoney,treasury,uk_cb,yahoo,yield_curve}/`
   - 旧根路径 `.agents/ssot/{bootstrap,configx,…}/` 仅保留 **R5 重定向 README**（非 active spec）
 - 禁止在 SSOT 树内写入 `src/`、`Cargo.toml`、`*.rs` 实现副本
 - 禁止用 SSOT 文档中的 COMPLETE / Stable 叙事冒充 crate 已 ship
 - 路径一律使用 `.agents/ssot/`（禁止旧 monorepo 单数 agent 路径写法）
 - 域树变更经 worktree + PR 合入；不从外仓路径覆盖本树
-- 保留层级：`adapters/`、`tools/`、`infra/`、`core/`、`market_data/`、`macro_data/`
-- **dual-specs 约定**：`spec/` 目录必须同时存在 `spec.md`（active spec，短名入口）和 `xhyper-<name>-complete-spec.md`（complete spec，长名镜像）。两文件须逐字节一致（`readFileSync().equals()`）。
-
-  **CI 门禁校验规则**（`check-ssot-current-state.mjs`）：
-  1. **域目录冻结**：46 个域列入 `expectedDualSpecDirs`，禁止缺失或未声明的新域
-  2. **文件存在**：每个 `spec/` 必须含 `spec.md` + 恰好 1 个 matching `xhyper-*-complete-spec.md` mirror
-  3. **逐字节同构**：`spec.md` 与 `complete-spec.md` 必须 byte-identical，任一不同构则阻断合并
-
-  **冻结域清单**（46 域）：kernel · testkit · types(canonical decimal) · contracts · tools(goalctl verifyctl xtask) · infra(9) · adapters/exchange(2) · adapters/storage(7) · core(4) · market_data(6) · macro_data(10)
+- 保留层级：`adapters/`、`tools/`、**`infra/`**（与 crates 平面一致；2026-07-24 起取消 v2.1 展平）
 
 ### R7: 规格文档 ≠ 本仓实现
 
@@ -131,7 +119,8 @@
 | 事实域 | SSOT 位置 | 说明 |
 |--------|----------|------|
 | Agent 技能 | `.claude/skills/` | 投影至 `.agents/skills/` |
-| 工程宪章 | `CONSTITUTION.md` | 直接引用 |
+| 工程宪章 | `docs/constitution/` | 正文 SSOT；根 `CONSTITUTION.md` 仅为兼容索引 |
+| 项目规则 | `.agents/rules/` | 工程约定与加严落地；`docs/governance/` 仅为 stub |
 | Agent 行为 | `AGENTS.md` | 直接引用 |
 | CI/CD | `.github/workflows/` | 直接引用 |
 | 项目文档 | `docs/` | 直接引用 |
@@ -143,9 +132,6 @@
 | Types | `.agents/ssot/types/` | decimal / canonical |
 | Evidence | `.agents/ssot/infra/evidence/` | canonical current-state 规格；实现 `crates/infra/evidence` |
 | Infra | `.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/` | L1 平台平面（与 `crates/infra/` 对齐） |
-| Core | `.agents/ssot/core/{domainx,domain_market,domain_exchange,domain_macro}/` | 共享领域规格（外部导入，下沉到独立 core 层） |
-| Market Data | `.agents/ssot/market_data/{binance,okx,coinbase,hyperliquid,coinglass,orderbook}/` | 市场数据适配器 + 订单簿引擎 |
-| Macro Data | `.agents/ssot/macro_data/{bea,ecb,fred,japan_cb,jin10,eastmoney,treasury,uk_cb,yahoo,yield_curve}/` | 宏观数据 provider 适配器 |
 | Adapters | `.agents/ssot/adapters/` | exchange + storage |
 | Contracts | `.agents/ssot/contracts/` | trait 出口规格 |
 | Tools | `.agents/ssot/tools/` | goalctl / xtask / verifyctl；`tools/evidence` 仅历史重定向 |
@@ -153,20 +139,10 @@
 
 ---
 
-
----
 ## 版本
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
-| v2.4.0 | 2026-07-24 | **新增三平面 + dual-specs CI 门禁**
-
-- **core/market_data/macro_data**：从外部仓库导入 20 域 SSOT，共享领域规格下沉到 core/ 层
-- **dual-specs CI 门禁**（`check-ssot-current-state.mjs`）：
-  - 冻结 46 域 `expectedDualSpecDirs`
-  - 每域 `spec/` 验证：`spec.md` + 恰好 1 个 `xhyper-*-complete-spec.md` mirror
-  - 逐字节同构：任一不同构则 CI fail
-- R6 域规格树、SSOT 清单、层级树同步更新；`SSOT.md` 升至 v2.4.0 |
 | v2.3.0 | 2026-07-24 | **恢复 infra 层级**：与 `crates/infra/` 对齐，域归组到 `.agents/ssot/infra/*`；根路径保留 R5 重定向 README |
 | v2.2.1 | 2026-07-23 | 在 v2.2.0 current-state 基线上声明域级三轮 findings 证据文件约定；清理重复域目录清单 |
 | v2.2.0 | 2026-07-22 | 唯一化顶层 evidence current-state 入口；冻结 24 package 与 configx/schedulex/exchange 当前边界 |

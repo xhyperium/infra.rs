@@ -45,7 +45,7 @@
 ## 域规格 SSOT 与本仓落地
 
 - `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 **infra.rs 本仓域规格 SSOT**（见 `.agents/ssot/SSOT.md` R6；历史可自外部规格仓同步，但**不是**只读镜像）
-  - infra 域位于 `.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`（v2.3.0 恢复 infra 层级）
+  - **infra 平面**（与 `crates/infra/` 对齐）：`.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`
   - `adapters/` 下含 exchange（binance/okx）与 storage（clickhouse/kafka/nats/oss/postgres/redis/taos）
   - `.agents/ssot/infra/evidence/` 是 evidence current-state canonical；`.agents/ssot/tools/evidence/` 仅历史重定向
   - `tools/` 下含 goalctl / xtask（+ 本仓扩展 `verifyctl`）
@@ -59,13 +59,13 @@
   - `crates/infra/configx` → `configx`（L1 本地 Memory/Env/File source + 分层 + 宿主 reload/通知 + secret 脱敏；非远端配置中心）
   - `crates/infra/schedulex` → `schedulex`（L1 任务 ID 登记 + 宿主驱动确定性 `JobRunner::tick`；非 runtime/分布式 scheduler）
   - `crates/infra/bootstrap` → `bootstrap`（L1 组合根；已注入 contracts/observex/evidence + 正式 KV/EventBus 固定槽位 + 显式 shutdown/drain）
-  - `crates/infra/evidence` → `xhyper-evidence`（L1 审计证据追加面）
+  - `crates/infra/evidence` → `evidence`（L1 审计证据追加面）
   - `crates/infra/observex` → `observex`（L1 instrumentation + 有界进程内遥测 sink；非 OpenTelemetry/OTLP 实现）
   - `crates/infra/resiliencx` → `resiliencx`（L1 安全重试 + 熔断 + 限流 + bulkhead）
-  - `crates/infra/transport` → `xhyper-transportx`（L1 HTTP/WS）
+  - `crates/infra/transport` → `transportx`（L1 HTTP/WS）
   - `crates/types/decimal` → `decimalx`
   - `crates/types/canonical` → `canonical`
-  - `crates/contracts` → `xhyper-contracts`（adapter trait 出口；#43）
+  - `crates/contracts` → `contracts`（adapter trait 出口；#43）
   - `crates/adapters/**` → 9 个 adapter package（storage×7 默认客户端入口；exchange 签名 REST + 公共 WS 解析/注入，交易 **NO-GO**；均非 package stable）
   - `tools/goalctl` · `tools/verifyctl` → 最小 CLI members（#188；verifyctl 非生产 verifier）
 - `contract-testkit` **已落地**（`crates/test-support/contracts`）；**infra 其余域**（gate 等）当前仅镜像，未宣称本仓实现
