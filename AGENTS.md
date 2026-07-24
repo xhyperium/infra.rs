@@ -44,12 +44,12 @@
 
 ## 域规格 SSOT 与本仓落地
 
-- `.agents/ssot/{kernel,testkit,types,evidence,bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport,adapters,contracts,tools}/` 是 **infra.rs 本仓域规格 SSOT**（见 `.agents/ssot/SSOT.md` R6；历史可自外部规格仓同步，但**不是**只读镜像）
-  - infra 域已展平为 bootstrap / configx / gate / observex / resiliencx / schedulex / testkitx / transport
+- `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 **infra.rs 本仓域规格 SSOT**（见 `.agents/ssot/SSOT.md` R6；历史可自外部规格仓同步，但**不是**只读镜像）
+  - infra 域位于 `.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`（v2.3.0 恢复 infra 层级）
   - `adapters/` 下含 exchange（binance/okx）与 storage（clickhouse/kafka/nats/oss/postgres/redis/taos）
   - `.agents/ssot/infra/evidence/` 是 evidence current-state canonical；`.agents/ssot/tools/evidence/` 仅历史重定向
   - `tools/` 下含 goalctl / xtask（+ 本仓扩展 `verifyctl`）
-  - **保留 `adapters/`、`tools/` 层级**（勿展平到 `.agents/ssot/` 根）
+  - **保留 `adapters/`、`tools/`、`infra/` 层级**（勿展平到 `.agents/ssot/` 根）
 - **规格写 COMPLETE / Stable ≠ 本仓已有对应实现**；必须以 `crates/` + `cargo metadata` 为准
 - **archgate / `.architecture`：OOS**（PR #164）— 本仓明确不移植
 - **当前 workspace members**（无 `infra-core`）：
