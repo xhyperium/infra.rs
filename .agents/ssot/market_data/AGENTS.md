@@ -43,6 +43,20 @@ matrix/            # 追溯矩阵（门禁 → 实现 → 测试）
 
 `market_data`（L0 内核）的兼容 API 在 `crates/market_data/docs/`，不重复上述类型的 SSOT。
 
+### 基础设施复用约定（强制）
+
+本域所有 sink / 存储 / 消息基础设施**统一优先复用 infra.rs 本仓现有 7 个适配器**，禁止引入外部存储组件或重新实现连接逻辑：
+
+| 用途 | 复用模块（intra-workspace path 依赖） |
+|------|--------------------------------------|
+| 行情流 / 消息总线 | `kafkax`、`natsx` |
+| 热缓存 / KV | `redisx` |
+| 时序 / 关系 / 对象 / 列式 | `taosx`、`postgresx`、`ossx`、`clickhousex` |
+
+- market_data 仅构建**薄领域包装层**，将 `MarketEvent` 编码为各适配器期望格式（见 `binance/design/design.md` ADR-001）。
+- 依赖以 **intra-workspace path** 引入（package 名无 `xhyper-` 前缀；intra-workspace 允许内联 version），**禁止**以 git/tag 外部依赖形式引入 infra.rs 自身模块。详见 `binance/infra-deps.md`。
+- 各适配器落地边界（package stable / Cluster·EOS / 部分 live 证据 OPEN）以 [adapters-ssot-alignment](../../../docs/ssot/adapters-ssot-alignment.md) 为准。
+
 ## 4. 落地状态速查（门禁统计）
 
 > 领域规格门禁见 `core/AGENTS.md`。
