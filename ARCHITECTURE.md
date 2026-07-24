@@ -26,51 +26,38 @@
 
 ```text
 infra.rs/
-├── Cargo.toml                 # Workspace 根清单
-├── Cargo.lock                 # 锁文件（v4）
-├── clippy.toml                # Clippy 行为阈值配置
-├── deny.toml                  # cargo-deny 安全审计规则
-├── rustfmt.toml               # Rustfmt 格式化规则
-├── rust-toolchain.toml        # Rust 工具链声明
-├── .editorconfig              # 编辑器通用配置
+├── Cargo.toml                 # Workspace 根清单（24 members）
+├── Cargo.lock                 # 锁文件
+├── clippy.toml / deny.toml / rustfmt.toml / rust-toolchain.toml
 ├── Makefile                   # 快捷命令入口
-├── LICENSE                    # MIT
+├── LICENSE
 │
-├── crates/                    # Rust workspace 成员
-│   ├── kernel/                # L0 语义信任根
-│   ├── testkit/               # 测试支持（dev-only）
-│   ├── configx/               # L1 内存字符串 KV 配置存储
-│   ├── transport/             # L1 HTTP/WS 传输（transportx）
-│   └── types/
-│       ├── decimal/           # 十进制数值 / Money
-│       └── canonical/         # 跨层共享 DTO
+├── crates/
+│   ├── kernel/                # L0 · package kernel
+│   ├── testkit/               # T0 · package testkit（仅 dev-dep）
+│   ├── test-support/contracts/# T0 · package contract-testkit（仅 dev-dep）
+│   ├── contracts/             # package contracts
+│   ├── types/{decimal,canonical}/   # decimalx / canonical
+│   ├── infra/                 # L1 平台平面
+│   │   ├── bootstrap/ configx/ evidence/ observex/
+│   │   ├── resiliencx/ schedulex/ transport/
+│   └── adapters/
+│       ├── exchange/{binance,okx}/
+│       └── storage/{clickhouse,kafka,nats,oss,postgres,redis,taos}/
 │
-├── scripts/                   # Harness 脚本
-│   ├── check.mjs              # 健康检查
-│   ├── check-constitution.mjs  # 宪章合规验证
-│   ├── gc-scan.mjs            # 垃圾回收扫描
-│   └── worktree-policy.mjs    # Worktree 策略
-│
-├── .github/                   # GitHub 配置
-│   └── workflows/             # CI/CD 工作流（6 个）
-│
-├── .claude/                   # Claude Code 配置
-│   ├── settings.json          # 生命周期钩子注册
-│   ├── hooks/                 # 12 个钩子脚本
-│   └── skills/                # 46 个技能定义
-│
-├── .codex/                    # Codex CLI 配置
-│   └── agents/                # 28 个代理定义
-│
-├── docs/                      # 项目文档（严格分类，见 docs/README.md）
-│   ├── governance/            # 兼容重定向 → .agents/rules/
-│   ├── ssot/                  # SSOT 对齐矩阵与同步手册
-│   ├── status/                # CI/配置状态记录
-│   └── decisions/             # 架构决策记录（DDR）
-│
-├── examples/                  # 示例代码
-└── tests/                     # 集成测试
+├── tools/{goalctl,verifyctl}/ # CLI members
+├── scripts/                   # quality-gates / worktree / docs / harness
+├── .agents/{rules,ssot,skills}/
+├── .github/workflows/         # CI 工作流（约 35+ 个 yaml）
+├── .claude/                   # hooks + skills（技能 SSOT）
+├── .codex/                    # Codex 代理配置
+├── docs/                      # constitution / ssot / plans / report / decisions …
+├── examples/
+└── tests/
 ```
+
+权威 members 与路径以 `cargo metadata --no-deps` 与根 `Cargo.toml` 为准。  
+包名 **不含** `xhyper-` 前缀（见宪章 §4.3）；根 `README` 中的 `xhyper-*` 仅为依赖键别名示例。
 
 ---
 
@@ -79,39 +66,36 @@ infra.rs/
 ### 层次模型
 
 ```text
-┌────────────────────────────────────────────┐
-│  tests/ / examples/                        │  跨 crate 集成与示例
-├────────────────────────────────────────────┤
-│  crates/testkit/                           │  T0 test-support（仅 dev-dep）
-│  └── ManualClock 族                        │
-├────────────────────────────────────────────┤
-│  crates/infra/configx/                           │  L1 内存 KV（非多源热更新）
-│  └── ConfigStore                           │
-│  crates/infra/bootstrap/                         │  L1 唯一组合根（ADR-016）
-│  └── typed composition / shutdown owner    │
-├────────────────────────────────────────────┤
-│  crates/types/canonical/                   │  跨层共享纯 DTO
-│  crates/types/decimal/                     │  Decimal / Money
-├────────────────────────────────────────────┤
-│  crates/kernel/                            │  L0 语义信任根
-│  └── clock / lifecycle                     │
-└────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│  tests/ · examples/ · tools/{goalctl,verifyctl}            │
+├────────────────────────────────────────────────────────────┤
+│  adapters/exchange/* · adapters/storage/*                  │  生产客户端入口（边界见对齐文）
+│  contracts · contract-testkit(dev-only)                    │
+├────────────────────────────────────────────────────────────┤
+│  infra/{bootstrap,configx,evidence,observex,               │  L1
+│         resiliencx,schedulex,transportx}                   │
+├────────────────────────────────────────────────────────────┤
+│  types/{canonical,decimalx} · testkit(dev-only)            │
+├────────────────────────────────────────────────────────────┤
+│  kernel                                                    │  L0
+└────────────────────────────────────────────────────────────┘
 ```
 
 ### 依赖规则
 
 ```text
 canonical   →  decimalx  →  kernel
-configx     →  kernel          # L1；禁止其他 L1 / observex
-resiliencx  →  kernel          # L1 重试
-bootstrap   →  kernel          # L1 composition root；无 gate / Service Locator
-testkit     →  kernel          # 仅 [dev-dependencies]
+configx / resiliencx / schedulex / observex / evidence / transportx
+            →  kernel（及各自声明的 workspace 依赖）
+bootstrap   →  kernel + 组合注入的 contracts / observex / evidence 等
+adapters/*  →  contracts（及各自 SDK）；不得反向依赖上层业务
+testkit / contract-testkit → 仅 [dev-dependencies] 进入生产图外
 ```
 
-- 所有 crate 通过 `[workspace.dependencies]` 统一管理版本
+- 第三方依赖版本集中在根 `[workspace.dependencies]`；成员 `workspace = true`
 - 禁止循环依赖
 - L0 / types 层不依赖外部运行时或平台特定代码
-- 新增 crate 须在 `crates/` 下注册，遵循单一职责与标准布局
+- 新增 crate 须注册为 workspace member，并更新 `docs/ssot/` 对齐文与 `STATUS.md`
 
 ---
 
@@ -147,7 +131,7 @@ testkit     →  kernel          # 仅 [dev-dependencies]
 | 质量 | .rs / rustfmt.toml / clippy.toml 变更 | — |
 | 校验 | 全部 push / PR | — |
 | 安全 | Cargo / deny.toml 变更 | 每周一 02:00 |
-| Constitution | Rust / config / CONSTITUTION.md / docs/constitution/** 变更 | — |
+| Constitution | Rust / config / docs/constitution/**（根 `CONSTITUTION.md` 仅为兼容索引） | — |
 
 详见 [CI_STATUS_REPORT.md](docs/status/CI_STATUS_REPORT.md)。
 
