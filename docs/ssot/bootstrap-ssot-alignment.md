@@ -15,7 +15,7 @@
 |-----------------|------|
 | `crates/infra/bootstrap`（infra.rs README） | `crates/infra/bootstrap` |
 | `crates/infra/bootstrap`（上游 monorepo） | 映射为本仓扁平 `crates/infra/bootstrap` |
-| `.agent/ssot/bootstrap` | `.agents/ssot/infra/bootstrap`（SSOT 已展平） |
+| `.agents/ssot/bootstrap` | `.agents/ssot/infra/bootstrap`（域规格已归组至 infra/） |
 
 ## §1 定位与边界
 
