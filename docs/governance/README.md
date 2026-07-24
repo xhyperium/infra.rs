@@ -18,6 +18,7 @@
 
 | 旧路径（stub） | 新路径（正文） |
 |----------------|----------------|
+| [生效规则摘要.md](./生效规则摘要.md) | [`.agents/rules/生效规则摘要.md`](../../.agents/rules/生效规则摘要.md) |
 | [项目开发规则.md](./项目开发规则.md) | [`.agents/rules/项目开发规则.md`](../../.agents/rules/项目开发规则.md) |
 | [rust-dev-rules.md](./rust-dev-rules.md) | [`.agents/rules/rust-dev-rules.md`](../../.agents/rules/rust-dev-rules.md) |
 | [编码与语言约定.md](./编码与语言约定.md) | [`.agents/rules/编码与语言约定.md`](../../.agents/rules/编码与语言约定.md) |

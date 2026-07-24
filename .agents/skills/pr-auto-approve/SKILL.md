@@ -1,6 +1,6 @@
 ---
 name: pr-auto-approve
-description: Approve open GitHub PRs as @liukongqiang5 via LIUKONGQIANG5_APPROVE_TOKEN (not author self-approve). Use when ruleset needs a maintainer approve, require_last_push_approval blocks the last pusher, or the user asks for auto-approve / pr-auto-approve / liukongqiang5 approve.
+description: Approve open GitHub PRs as @liukongqiang5 via LIUKONGQIANG5_APPROVE_TOKEN (not author self-approve). ONLY when the user explicitly asks to approve/merge/auto-approve, or after explicit handoff to land a PR. Never call by default.
 ---
 
 # PR Auto-Approve（@liukongqiang5）
@@ -10,6 +10,8 @@ description: Approve open GitHub PRs as @liukongqiang5 via LIUKONGQIANG5_APPROVE
 
 **不是** 降低 Ruleset、**不是** `gh pr merge --admin` 绕过 CI。  
 批准后是否可 merge 仍取决于 required checks / conversation resolution / auto-merge。
+
+**政策 SSOT**：[`.agents/rules/生效规则摘要.md` §4](../../.agents/rules/生效规则摘要.md)。
 
 ## 身份与密钥
 
@@ -21,17 +23,22 @@ description: Approve open GitHub PRs as @liukongqiang5 via LIUKONGQIANG5_APPROVE
 
 脚本会先 `GET /user` 校验 token 登录名必须等于 `liukongqiang5`，否则 exit 2。
 
-## 何时使用
+## 何时使用（硬条件）
 
-- PR 作者是 `ZoneCNH`（或其它非 liukongqiang5），CI 已绿，卡在 review  
-- 用户明确要求 auto-approve / 自动 approve  
-- recovery / 合入通道 PR 需要 maintainers 路径批准  
+**全部满足** 才可调用：
+
+1. **用户明确要求** approve / auto-approve / 合入 / land /「继续合并」等（或当前任务已授权「开 PR 并合入」）  
+2. PR **open**，作者 **≠** `liukongqiang5`  
+3. 不把「检查仍红」说成已可合；required 未绿时仅可 `--auto` **排队**，不得谎称已合  
+
+**默认禁止**：会话未获合入/批准指令时，Agent **只**开 PR 并报告状态，**不**调用本 skill。
 
 **不要** 在以下情况使用：
 
 - 用本 token 批准 **liukongqiang5 自己开的 PR**（self-approve 禁止）  
 - required status check 仍红时「假装已可 merge」——本 skill 只做 APPROVE  
-- 用 admin merge 代替本 skill（那是另一条路径）
+- 用 admin merge 代替本 skill（那是另一条路径）  
+- 批量批准无关 PR、静默批准  
 
 ## 执行（Agent）
 

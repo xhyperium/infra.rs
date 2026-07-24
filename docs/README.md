@@ -42,6 +42,7 @@
 
 | 文档 | 说明 |
 |------|------|
+| [生效规则摘要.md](../.agents/rules/生效规则摘要.md) | **速查**：红线 · 合入必跑 · 审查档位 · auto-approve |
 | [VERSIONING.md](../.agents/rules/VERSIONING.md) | 统一版本管理（项目 / 宪章 / Crate） |
 | [support-matrix.md](../.agents/rules/support-matrix.md) | 官方支持矩阵（Linux x86_64 + MSRV 1.85；DEFER-6） |
 | [prod-signoff-TEMPLATE.md](../.agents/rules/prod-signoff-TEMPLATE.md) | 生产签核包模板（L1–L5；仅 Maintainer 签核） |

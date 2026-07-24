@@ -6,6 +6,7 @@
 
 ## 项目规则
 
+- **先读速查**：[`.agents/rules/生效规则摘要.md`](./.agents/rules/生效规则摘要.md)
 - 本仓规则 SSOT：[`.agents/rules/`](./.agents/rules/)（索引 [README.md](./.agents/rules/README.md)）
 - 开发总览：[`项目开发规则.md`](./.agents/rules/项目开发规则.md)
 - `docs/governance/` 仅为兼容重定向，勿在旧路径改正文

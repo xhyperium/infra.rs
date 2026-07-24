@@ -17,12 +17,16 @@
 
 ## 5.1 本地验证
 
-提交 PR 前运行 `make ci` 模拟全部强制门禁：
+**本仓唯一清单**（按变更类型）：[`.agents/rules/生效规则摘要.md` §2](../../.agents/rules/生效规则摘要.md#2-合入前必跑唯一清单)。
+
+提交 PR 前（Rust 变更）可运行 `make ci` 模拟强制 Rust 门禁：
 
 ```bash
 make ci    # 等价于: make fmt-check lint test deny
 make check # 等效: ./scripts/quality-gates/check-constitution.mjs
 ```
+
+分支保护 **required** checks：`Constitution Check` + `Template Validation`（见 `docs/status/CONFIG_SUMMARY.md`）。
 
 ## 5.2 模块自验证
 
