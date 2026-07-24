@@ -1,0 +1,17 @@
+{
+  "orderId": "ord-001",
+  "instrument": "BTCUSDT",
+  "side": "buy",
+  "orderType": "limit",
+  "status": "new",
+  "price": "50000.00",
+  "stopPrice": null,
+  "quantity": "1.5000",
+  "filledQuantity": "0.0000",
+  "remainingQuantity": "1.5000",
+  "avgFillPrice": null,
+  "timeInForce": { "type": "Gtc" },
+  "createdAt": 1700000000000,
+  "updatedAt": 1700000000000,
+  "clientOrderId": "cli-1"
+}

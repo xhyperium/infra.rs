@@ -1,0 +1,17 @@
+{
+  "instrument": { "exchange": "okx", "symbol": "BTC-USDT" },
+  "bidPrice": "49999.5",
+  "bidQuantity": "1.2",
+  "askPrice": "50000.5",
+  "askQuantity": "0.8",
+  "bidLevels": [
+    { "price": "49999.5", "quantity": "1.2", "orderCount": 3 },
+    { "price": "49999.0", "quantity": "2.0", "orderCount": null }
+  ],
+  "askLevels": [
+    { "price": "50000.5", "quantity": "0.8", "orderCount": 1 },
+    { "price": "50001.0", "quantity": "1.5", "orderCount": 2 }
+  ],
+  "timestamp": 1700000000100,
+  "receivedAt": 1700000000110
+}

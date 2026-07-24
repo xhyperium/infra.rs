@@ -1,0 +1,22 @@
+{
+  "reportId": "r-1",
+  "orderId": "o-1",
+  "execType": "trade",
+  "orderStatus": "partiallyFilled",
+  "instrument": "BTCUSDT",
+  "side": "buy",
+  "orderType": "limit",
+  "price": "50000.10",
+  "quantity": "2.00",
+  "lastFilledPrice": "50000.10",
+  "lastFilledQuantity": "0.50",
+  "cumulativeFilledQuantity": "0.50",
+  "remainingQuantity": "1.50",
+  "commission": {
+    "amount": "0.0001",
+    "asset": "BNB"
+  },
+  "tradeId": "t-1",
+  "rejectReason": null,
+  "occurredAt": 1700000000600
+}

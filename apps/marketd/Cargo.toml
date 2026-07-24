@@ -1,0 +1,19 @@
+[package]
+name = "xhyper-marketd"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+
+[[bin]]
+name = "marketd"
+path = "src/main.rs"
+[dependencies]
+async-trait = { workspace = true }
+kernel = { path = "../../crates/kernel", version = "0.3.1" }
+market_data = { path = "../../crates/market_data", version = "0.1.0" }
+tokio = { workspace = true, features = ["signal"] }
+[dev-dependencies]
+tempfile = { workspace = true }

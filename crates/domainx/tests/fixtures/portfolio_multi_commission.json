@@ -1,0 +1,29 @@
+{
+  "portfolioId": "pf-1",
+  "accountId": "acc-1",
+  "positions": [
+    {
+      "positionId": "pos-1",
+      "instrument": "BTCUSDT",
+      "direction": "long",
+      "status": "open",
+      "quantity": "1.0",
+      "entryPrice": "50000",
+      "currentPrice": "51000",
+      "unrealizedPnl": "1000",
+      "realizedPnl": "0",
+      "createdAt": 1700000000000,
+      "updatedAt": 1700000001000
+    }
+  ],
+  "totalUnrealizedPnl": "1000",
+  "totalRealizedPnl": "0",
+  "totalCommission": "0.0015",
+  "commissions": [
+    { "amount": "0.0010", "asset": "BNB" },
+    { "amount": "0.0005", "asset": "BNB" },
+    { "amount": "1.25", "asset": "USDT" }
+  ],
+  "totalTrades": 3,
+  "updatedAt": 1700000001000
+}

@@ -1,0 +1,14 @@
+{
+  "tradeId": "t-edge",
+  "orderId": "o-edge",
+  "instrument": "ETHUSDT",
+  "side": "sell",
+  "price": "-0.000001",
+  "quantity": "12345678901234567890.123456789",
+  "commission": {
+    "amount": "0.1000",
+    "asset": "ETH"
+  },
+  "executedAt": 1700000000500,
+  "isMaker": false
+}
