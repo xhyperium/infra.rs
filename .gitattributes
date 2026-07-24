@@ -1,0 +1,3 @@
+Cargo.lock -diff linguist-generated=true
+docs/status/CI_WORKFLOW_MATRIX.generated.md linguist-generated=true
+docs/api-baselines/*.txt linguist-generated=true

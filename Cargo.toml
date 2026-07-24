@@ -23,8 +23,18 @@ members = [
   "crates/adapters/storage/taos",
   "crates/adapters/storage/oss",
   "crates/adapters/storage/clickhouse",
+  "crates/domain_exchange",
+  "crates/domain_market",
+  "crates/domainx",
+  "crates/market_data",
+  "crates/exchange/binance",
+  "crates/exchange/okx",
+  "crates/exchange/coinbase",
+  "crates/exchange/hyperliquid",
+  "crates/exchange/coinglass",
   "tools/goalctl",
   "tools/verifyctl",
+  "apps/marketd",
 ]
 
 [workspace.package]
@@ -121,6 +131,7 @@ sha1 = "0.10"
 proptest = "1"
 static_assertions = "1"
 bigdecimal = "0.4"
+rust_decimal = "1"
 criterion = { version = "0.5", default-features = false }
 tracing-subscriber = { version = "0.3", default-features = false, features = [
   "std",

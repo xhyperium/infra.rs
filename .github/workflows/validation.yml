@@ -241,3 +241,12 @@ jobs:
             exit 1
           fi
           echo "✅ 无 U+FFFD 替换字符"
+
+  linguist-generated:
+    name: Linguist 生成文件门禁
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 校验生成文件 linguist-generated 属性
+        run: node scripts/quality-gates/check-linguist-generated.mjs

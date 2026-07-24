@@ -1,0 +1,9 @@
+{
+  "instrument": { "exchange": "binance", "symbol": "BTCUSDT" },
+  "price": "50000.00",
+  "quantity": "0.0100",
+  "side": "buy",
+  "tradeId": "12345",
+  "timestamp": 1700000000000,
+  "receivedAt": 1700000000012
+}
