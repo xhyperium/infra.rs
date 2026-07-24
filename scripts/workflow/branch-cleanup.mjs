@@ -3,18 +3,22 @@
  * branch-cleanup.mjs — 分支清理工具
  *
  * 职责: 扫描并清理已合并的本地/远程分支及关联 worktree。
+ *       auto-remove 子命令专门清理 worktree 引用不存在分支的孤儿残留。
  *
  * 用法:
- *   node scripts/workflow/branch-cleanup.mjs [选项]
+ *   node scripts/workflow/branch-cleanup.mjs [子命令|选项]
+ *
+ * 子命令:
+ *   --list            列出分支状态（默认）
+ *   --clean           清理可安全删除的分支
+ *   --auto-remove     清理 worktree 引用不存在分支的孤儿残留
  *
  * 选项:
- *   --list          仅列出分支状态，不执行清理（默认）
- *   --clean         删除可安全清理的分支
- *   --force         强制删除（跳过确认）
- *   --dry-run       演练模式，仅输出计划
- *   --branch <name> 只处理指定分支（可重复）
- *   --prune-remote  同时删除已合并 PR 的远程分支
- *   --help          显示帮助信息
+ *   --force           跳过交互确认
+ *   --dry-run         演练模式
+ *   --branch <name>   只处理指定分支（可重复）
+ *   --prune-remote    同时删除已合并 PR 的远程分支
+ *   --help            显示帮助信息
  *
  * 清理策略（安全默认）:
  *   - 不删除 main 分支
@@ -315,6 +319,7 @@ function parseArgs(argv) {
   const opts = {
     list: true,
     clean: false,
+    autoRemove: false,
     force: false,
     dryRun: false,
     pruneRemote: false,
@@ -324,11 +329,12 @@ function parseArgs(argv) {
   let i = 0;
   while (i < argv.length) {
     switch (argv[i]) {
-      case "--list":   opts.list = true; break;
-      case "--clean":  opts.list = false; opts.clean = true; break;
-      case "--force":  opts.force = true; break;
-      case "--dry-run":opts.dryRun = true; break;
-      case "--prune-remote": opts.pruneRemote = true; break;
+      case "--list":        opts.list = true; break;
+      case "--clean":       opts.list = false; opts.clean = true; break;
+      case "--auto-remove": opts.list = false; opts.autoRemove = true; break;
+      case "--force":       opts.force = true; break;
+      case "--dry-run":     opts.dryRun = true; break;
+      case "--prune-remote":opts.pruneRemote = true; break;
       case "--branch":
         if (i + 1 >= argv.length) die("--branch 缺少参数");
         opts.branches.push(argv[++i]);
@@ -347,15 +353,18 @@ function showHelp() {
   console.log(`branch-cleanup.mjs — 分支清理工具
 
 用法:
-  node scripts/workflow/branch-cleanup.mjs [选项]
+  node scripts/workflow/branch-cleanup.mjs [子命令|选项]
+
+子命令:
+  --list            仅列出分支状态（默认）
+  --clean           删除可安全清理的分支及关联 worktree
+  --auto-remove     清理 worktree 引用不存在分支的孤儿 worktree
 
 选项:
-  --list            仅列出分支状态（默认）
-  --clean           执行清理（需配合 --force 或交互确认）
   --force           跳过交互确认
   --dry-run         演练模式，仅输出计划，不实际操作
-  --branch <name>   只处理指定分支（可重复多次）
-  --prune-remote    同时删除 PR 已合并的远程分支
+  --branch <name>   只处理指定分支（可重复，仅 --list/--clean）
+  --prune-remote    同时删除 PR 已合并的远程分支（仅 --clean）
   --help            显示帮助信息
 
 安全护栏:
@@ -363,25 +372,226 @@ function showHelp() {
   - 当前分支默认不删除
   - 未关联 PR 的分支不会被自动清理（除非显式指定 --branch）
   - squash-merge 通过 gh API 检测（不依赖 commit hash）
+  - --auto-remove 仅清理"分支已删除但 worktree 仍注册"的残留
 
 示例:
   # 查看所有分支状态
   node scripts/workflow/branch-cleanup.mjs --list
 
-  # 演练清理
+  # 演练清理分支
   node scripts/workflow/branch-cleanup.mjs --clean --dry-run
 
   # 强制清理所有安全分支（含远程）
   node scripts/workflow/branch-cleanup.mjs --clean --force --prune-remote
 
-  # 只清理特定分支
-  node scripts/workflow/branch-cleanup.mjs --clean --branch chore/old-work
+  # 查看并清理孤儿 worktree
+  node scripts/workflow/branch-cleanup.mjs --auto-remove --dry-run
+  node scripts/workflow/branch-cleanup.mjs --auto-remove --force
 `);
 }
 
 // ── 插件检查：识别陈旧的 Dolt 分支 ─────────────────────────
 function findDoltBranches(remoteBranches) {
   return remoteBranches.filter(b => b.startsWith("__dolt"));
+}
+
+// ── auto-remove: 清理 worktree 引用不存在的分支 ───────────
+/**
+ * 扫描所有 git worktree 注册，找出：
+ *   - 分支已删除但 worktree 注册仍存在
+ *   - worktree 目录存在但 git 分支已不存在
+ *   - git worktree 注册孤立（目录已被手动删除）
+ *
+ * 返回: [{ path, branch, worktreeDir, kind, existsOnDisk }]
+ */
+function findOrphanedWorktrees() {
+  const raw = git("worktree list --porcelain", { silent: true, allowFail: true });
+  if (!raw) return [];
+
+  const worktrees = [];
+  let current = null;
+
+  for (const line of raw.split("\n")) {
+    if (line.startsWith("worktree ")) {
+      if (current) worktrees.push(current);
+      current = { path: line.replace("worktree ", ""), branch: null, bare: false };
+    } else if (line.startsWith("bare")) {
+      if (current) current.bare = true;
+    } else if (line.startsWith("HEAD ")) {
+      if (current) current.head = line.replace("HEAD ", "");
+    } else if (line.startsWith("branch ")) {
+      // branch refs/heads/<name>
+      if (current) current.branch = line.replace("branch refs/heads/", "");
+    }
+  }
+  if (current) worktrees.push(current);
+
+  // 获取所有已知分支名
+  const knownBranches = new Set();
+  const branchRaw = git("for-each-ref --format='%(refname:short)' refs/heads/", { silent: true, allowFail: true });
+  if (branchRaw) {
+    for (const b of branchRaw.split("\n")) {
+      const name = b.trim();
+      if (name) knownBranches.add(name);
+    }
+  }
+
+  // 判定孤儿 worktree
+  const orphans = [];
+  for (const wt of worktrees) {
+    // 跳过 bare repository（主仓）
+    if (wt.bare) continue;
+
+    // 跳过主 worktree（path 为仓库根目录）
+    if (wt.path === ROOT || wt.path === resolve(ROOT)) continue;
+
+    // 判断目录是否存在
+    const existsOnDisk = existsSync(wt.path);
+
+    // 无分支引用（detached HEAD 且无 branch 行）
+    if (!wt.branch) {
+      orphans.push({
+        ...wt,
+        kind: "DETACHED",
+        existsOnDisk,
+        reason: "detached HEAD，无分支关联",
+      });
+      continue;
+    }
+
+    // 分支已不存在
+    if (!knownBranches.has(wt.branch)) {
+      orphans.push({
+        ...wt,
+        kind: "MISSING_BRANCH",
+        existsOnDisk,
+        reason: `引用的分支 '${wt.branch}' 已不存在`,
+      });
+      continue;
+    }
+
+    // 目录不存在但注册仍在（残留注册）
+    if (!existsOnDisk) {
+      orphans.push({
+        ...wt,
+        kind: "MISSING_DIR",
+        existsOnDisk: false,
+        reason: `worktree 目录不存在但 git 注册仍指向分支 '${wt.branch}'`,
+      });
+    }
+  }
+
+  return orphans;
+}
+
+/**
+ * 清理单个孤儿 worktree
+ */
+function removeOrphanedWorktree(wt, dryRun) {
+  const relPath = wt.path.startsWith(ROOT)
+    ? wt.path.slice(ROOT.length).replace(/^\//, "")
+    : wt.path;
+
+  if (dryRun) {
+    info(`[DRY-RUN] 清理孤儿 worktree: ${relPath} (${wt.reason})`);
+    // 如果目录存在则模拟清理目录
+    if (wt.existsOnDisk) {
+      info(`[DRY-RUN] rm -rf '${relPath}'`);
+    }
+    // 如果 git 有注册则模拟移除注册
+    info(`[DRY-RUN] git worktree remove '${relPath}' --force`);
+    return true;
+  }
+
+  // 先移除 git 注册
+  try {
+    git(`worktree remove '${wt.path}' --force`, { silent: false });
+    ok(`已移除 worktree 注册: ${relPath}`);
+  } catch {
+    // 如果 git worktree remove 失败（目录不存在），用 prune 清理
+    try {
+      git("worktree prune", { silent: true, allowFail: true });
+      ok(`已 prune worktree 孤儿注册`);
+    } catch {
+      warn(`移除 worktree 注册失败: ${relPath}`);
+    }
+  }
+
+  // 清理目录残留
+  if (wt.existsOnDisk && existsSync(wt.path)) {
+    try {
+      rmSync(wt.path, { recursive: true, force: true });
+      ok(`已删除 worktree 目录: ${relPath}`);
+    } catch (e) {
+      warn(`删除 worktree 目录失败: ${relPath} — ${String(e.message || e).slice(0, 100)}`);
+    }
+  }
+
+  return true;
+}
+
+/**
+ * 展示孤儿 worktree 列表
+ */
+function displayOrphanedWorktrees(orphans) {
+  if (orphans.length === 0) {
+    console.log(color(C.green, "\n✓ 没有孤儿 worktree 发现"));
+    return;
+  }
+
+  console.log(`\n${color(C.bold, "孤儿 Worktree 一览")}`);
+  console.log(`${color(C.dim, "─".repeat(80))}`);
+
+  for (const wt of orphans) {
+    const relPath = wt.path.startsWith(ROOT)
+      ? "." + wt.path.slice(ROOT.length)
+      : wt.path;
+    const diskIcon = wt.existsOnDisk ? color(C.green, "✓") : color(C.red, "✗");
+    const kindColor = wt.kind === "MISSING_BRANCH" ? C.yellow : C.red;
+
+    console.log(
+      `  ${color(kindColor + C.bold, "◉")} ${color(C.bold, relPath)}`
+    );
+    console.log(
+      `    ${color(C.dim, "分支:")} ${color(C.yellow, wt.branch || "(无)")}  ` +
+      `${color(C.dim, "目录:")} ${diskIcon}  ` +
+      `${color(C.dim, "原因:")} ${wt.reason}`
+    );
+  }
+
+  console.log(`\n${color(C.bold, "汇总:")} ${color(C.yellow, orphans.length)} 个孤儿 worktree`);
+}
+
+// ── auto-remove 子命令 ─────────────────────────────────────
+async function runAutoRemove(opts) {
+  const orphans = findOrphanedWorktrees();
+
+  displayOrphanedWorktrees(orphans);
+
+  if (orphans.length === 0) {
+    return;
+  }
+
+  if (!opts.dryRun && !opts.force) {
+    const confirmed = await confirm("确认清理以上孤儿 worktree?");
+    if (!confirmed) {
+      console.log(color(C.dim, "已取消。"));
+      return;
+    }
+  }
+
+  console.log(color(C.bold, `\n执行清理...`));
+  const isDry = opts.dryRun;
+  if (isDry) console.log(color(C.yellow, "(DRY-RUN 模式 — 不会实际操作)\n"));
+
+  for (const wt of orphans) {
+    console.log(color(C.dim, `\n处理: ${wt.branch || "detached HEAD"}`));
+    removeOrphanedWorktree(wt, isDry);
+  }
+
+  pruneGit(isDry);
+
+  console.log(`\n${color(C.green, "✓ 孤儿 worktree 清理完成")}`);
 }
 
 // ── 主逻辑 ────────────────────────────────────────────────
@@ -391,6 +601,12 @@ async function main() {
   if (opts.help) {
     showHelp();
     process.exit(0);
+  }
+
+  // --auto-remove 子命令
+  if (opts.autoRemove) {
+    await runAutoRemove(opts);
+    return;
   }
 
   const currentBranch = git("rev-parse --abbrev-ref HEAD", { silent: true });
