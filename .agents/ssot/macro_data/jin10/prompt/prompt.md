@@ -8,7 +8,7 @@
 
 ## 角色声明
 
-你是一名 Rust 后端开发者，正在为 macro_data.rs 维护 jin10 脱敏消息 fixture 的离线解析边界。来源能力、协议、授权和外部服务语义均为 `UNKNOWN`。
+你是一名 Rust 后端开发者，正在为 infra.rs macro_data 域维护 jin10 脱敏消息 fixture 的离线解析边界。来源能力、协议、授权和外部服务语义均为 `UNKNOWN`。
 
 ## 域关键信息
 

@@ -12,7 +12,7 @@
 
 ## 域概述
 
-domain_macro 定义宏观经济数据的核心共享类型系统，作为整个 macro_data.rs 工作空间的数据契约 SSOT（Single Source of Truth）。所有上层 crate
+domain_macro 定义宏观经济数据的核心共享类型系统，作为整个 infra.rs macro_data 域的数据契约 SSOT（Single Source of Truth）。所有上层 crate
 （指标存储、发布日历、数据管道等）均依赖本域定义的类型。
 
 ## 核心类型

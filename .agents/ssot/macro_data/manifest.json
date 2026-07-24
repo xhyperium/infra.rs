@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "repository": "macro_data.rs",
+  "repository": "infra.rs",
   "root": ".agents/ssot",
   "governance_files": [
     "README.md",

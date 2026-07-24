@@ -70,7 +70,7 @@
 
 ### R6: 本仓域规格树
 
-- `.agents/ssot/domain_macro/` + 各数据源适配器 是 **macro_data.rs 本仓** 的域规格 SSOT
+- `.agents/ssot/core/domain_macro/` + 各数据源适配器 是 **infra.rs 本仓** macro_data 域规格 SSOT
 - 禁止在 SSOT 树内写入 `src/`、`Cargo.toml`、`*.rs` 实现副本
 - 禁止用 SSOT 文档中的 COMPLETE / Stable 叙事冒充 crate 已 ship
 - `spec_status` 与 `implementation_status` 必须分开；`draft` 规格不提供生产合同
@@ -106,5 +106,5 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
-| v1.0.0 | 2026-07-22 | **macro_data.rs 初始化**：清空上一项目遗留 SSOT，建立宏观数据域规格体系 |
+| v1.0.0 | 2026-07-22 | **macro_data 域初始化**：清空上一项目遗留 SSOT，建立宏观数据域规格体系 |
 | v1.1.0 | 2026-07-22 | **生产级治理补强**：统一 13 层结构，分离规格/实现状态，增加 manifest 与 fail-closed 门禁 |

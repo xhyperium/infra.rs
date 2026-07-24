@@ -4,10 +4,11 @@
 
 | 项目 | 值 |
 |------|----|
-| **外部仓库** | `/home/workspace/macro_data.rs` |
-| **本仓路径** | `.agents/ssot/macro_data/` |
-| **导入方式** | `cp -rf` 全文复制 |
-| **导入日期** | 2026-07-24 |
+| **本仓 SSOT** | `.agents/ssot/macro_data/`（域规格单一事实源；`SSOT.md` R6） |
+| **领域模型** | `crates/domain_macro`（规格在 `.agents/ssot/core/domain_macro/`） |
+| **建立日期** | 2026-07-24 |
+
+> macro_data 规格是**本仓 SSOT**（非外部仓库镜像）；provider 实现尚未落地（见下方实现状态）。外仓名字面量（`xhyper` / `macro_data.rs`）不得进入本树（`SSOT.md` §5.4）。
 
 ## 域分类
 
@@ -37,5 +38,5 @@
 
 ## 与本仓的关系
 
-- macro_data SSOT 是规格层镜像，不包含 Rust 实现代码
+- macro_data SSOT 是**本仓规格 SSOT**（R6），不包含 Rust 实现代码
 - 领域模型 (`domain_macro`) 规格统一在 `core/` 维护
