@@ -1,6 +1,6 @@
-# `.agents/ssot/` — Agent 操作说明（macro_data.rs）
+# `.agents/ssot/macro_data/` — Agent 操作说明
 
-> 本目录是 **macro_data.rs 本仓域规格 SSOT**。
+> 本目录是 **infra.rs 本仓 macro_data 域规格 SSOT**。
 > 实现代码在 `crates/`；`docs/ssot/` 保存经 allowlist 管理的治理文档源，不复制域规格。
 
 ## 1. 何时读这里
