@@ -73,11 +73,11 @@
       "id": "domain_macro",
       "kind": "kernel",
       "spec_status": "draft",
-      "implementation_status": "partial",
-      "current_code_paths": [
+      "implementation_status": "not_started",
+      "current_code_paths": [],
+      "planned_code_paths": [
         "crates/macrox"
       ],
-      "planned_code_paths": [],
       "access_mode": "none",
       "authorization_status": "not_applicable",
       "credential_policy": "no_credentials_in_ssot",

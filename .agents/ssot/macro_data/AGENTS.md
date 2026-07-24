@@ -40,11 +40,11 @@ matrix/ gate/ evidence/   + README.md
 ## 5. 变更规则
 
 1. **worktree + PR** 修改本树（禁止 main 直接改）
-2. 改规格后运行 `node scripts/quality-gates/check-ssot.mjs`；`docs/ssot/` 只维护治理文档源
+2. 改规格后运行 `node scripts/quality-gates/check-ssot-current-state.mjs`；`docs/ssot/` 只维护治理文档源
 
 ## 6. 验证
 
 ```bash
-node scripts/quality-gates/check-ssot.test.mjs
-node scripts/quality-gates/check-ssot.mjs
+node --test scripts/quality-gates/check-ssot-current-state.test.mjs
+node scripts/quality-gates/check-ssot-current-state.mjs
 ```
