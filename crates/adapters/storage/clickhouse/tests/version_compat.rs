@@ -66,6 +66,7 @@ fn ch_cfg() -> ClickHouseConfig {
 // ═══════════════════════════════════════════════════════════════
 
 #[tokio::test]
+#[ignore = "requires ClickHouse server"]
 #[ignore = "needs local ClickHouse"]
 async fn clickhouse_version_is_detectable() {
     let pool = ClickHousePool::connect(ch_cfg()).await.expect("connect");
@@ -74,6 +75,7 @@ async fn clickhouse_version_is_detectable() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse server"]
 #[ignore = "needs local ClickHouse"]
 async fn clickhouse_version_contains_dots() {
     let pool = ClickHousePool::connect(ch_cfg()).await.expect("connect");
@@ -86,6 +88,7 @@ async fn clickhouse_version_contains_dots() {
 // ═══════════════════════════════════════════════════════════════
 
 #[tokio::test]
+#[ignore = "requires ClickHouse server"]
 #[ignore = "needs local ClickHouse"]
 async fn create_table_if_not_exists_is_idempotent() {
     let db = "gap_zero_ddl";
@@ -105,6 +108,7 @@ async fn create_table_if_not_exists_is_idempotent() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse server"]
 #[ignore = "needs local ClickHouse"]
 async fn create_or_replace_table() {
     let db = "gap_zero_replace";
@@ -130,6 +134,7 @@ async fn create_or_replace_table() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse server"]
 #[ignore = "needs local ClickHouse"]
 async fn alter_table_add_column() {
     let db = "gap_zero_alter";
@@ -153,6 +158,7 @@ async fn alter_table_add_column() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse server"]
 #[ignore = "needs local ClickHouse"]
 async fn drop_table_if_exists() {
     let db = "gap_zero_drop";
@@ -267,6 +273,7 @@ fn whitespace_only_host_validate_fails() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse server"]
 async fn zero_max_in_flight_connect_fails() {
     let cfg = ClickHouseConfig { max_in_flight: 0, ..ClickHouseConfig::default() };
     let err = match ClickHousePool::connect(cfg).await {
