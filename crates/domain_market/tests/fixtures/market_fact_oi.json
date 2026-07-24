@@ -1,0 +1,10 @@
+{
+  "type": "openInterest",
+  "payload": {
+    "coin": "BTC",
+    "exchange": "binance",
+    "oi": "100000",
+    "oiValue": "5000000000",
+    "timestamp": 1700000000200
+  }
+}

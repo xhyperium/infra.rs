@@ -1,0 +1,12 @@
+{
+  "type": "tick",
+  "payload": {
+    "instrument": { "exchange": "binance", "symbol": "BTCUSDT" },
+    "price": "50000.00",
+    "quantity": "0.01",
+    "side": "buy",
+    "tradeId": "1",
+    "timestamp": 1700000000000,
+    "receivedAt": 1700000000010
+  }
+}

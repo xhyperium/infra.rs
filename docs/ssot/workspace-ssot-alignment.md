@@ -5,7 +5,7 @@
 | 审计日期 | 2026-07-22 |
 | 跟进 | P0/P1 **#98**；L5 **0.3.0-signoff**；四包 GO **#159** · **`v0.3.0-four-crates`**；kernel **#163**；**`infra-s9t` 18/18 closed**（#166–#168 · #172）· 对齐 **#174** · closeout **#175**；**contract-testkit #178**；**不**宣称 workspace Production Ready / L5 |
 | 用途 | 一眼看清：**镜像有什么** vs **本仓落地了什么** |
-| 权威 members | 根 `Cargo.toml` `[workspace.members]` + `cargo metadata --no-deps`（当前 **24** 个 package；名称/路径以 metadata 为准） |
+| 权威 members | 根 `Cargo.toml` `[workspace.members]` + `cargo metadata --no-deps`（当前 **33** 个 package；名称/路径以 metadata 为准） |
 
 ## 当前 workspace members
 
@@ -22,7 +22,16 @@
 | `resiliencx` | `crates/infra/resiliencx/` | `resiliencx` | L1 重试（含 async）+ 熔断 + 限流 + 舱壁 | [resiliencx-ssot-alignment.md](./resiliencx-ssot-alignment.md) |
 | `decimalx` | `crates/types/decimal/` | `decimalx` | `/types/` 十进制 / Money · **L1** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
 | `canonical` | `crates/types/canonical/` | `canonical` | `/types/` 跨层纯 DTO · **L2 wire 子集** | [types-ssot-alignment.md](./types-ssot-alignment.md) |
+| `domainx` | `crates/domainx/` | `domainx` | domain 层共享 DTO 与验证 | — |
+| `domain_exchange` | `crates/domain_exchange/` | `domain_exchange` | 交易所领域模型：VenueAdapter trait, StreamType, OrderAmend, AccountInfo | — |
+| `domain_market` | `crates/domain_market/` | `domain_market` | 行情领域模型：Book, Tick, Quote, MarketEvent | — |
 | `contracts` | `crates/contracts/` | `contracts` | adapter trait 出口；L3 子集（KV+Instr） | [contracts-ssot-alignment.md](./contracts-ssot-alignment.md) |
+| `exchange-binance` | `crates/exchange/binance/` | `exchange_binance` | Binance exchange adapter（签名/WS） | — |
+| `exchange-okx` | `crates/exchange/okx/` | `exchange_okx` | OKX exchange adapter（签名/WS） | — |
+| `exchange-coinbase` | `crates/exchange/coinbase/` | `exchange_coinbase` | Coinbase exchange adapter | — |
+| `exchange-hyperliquid` | `crates/exchange/hyperliquid/` | `exchange_hyperliquid` | Hyperliquid exchange adapter | — |
+| `exchange-coinglass` | `crates/exchange/coinglass/` | `exchange_coinglass` | Coinglass data provider adapter | — |
+| `market_data` | `crates/market_data/` | `market_data` | 行情数据处理管线 | — |
 | `binancex` | `crates/adapters/exchange/binance/` | `binancex` | HMAC 签名 REST + 公共 WS 解析/注入；仅 server_time live，**交易 NO-GO** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `okxx` | `crates/adapters/exchange/okx/` | `okxx` | 四头签名 REST + 公共 WS 解析/注入；仅 server_time live，**交易 NO-GO** | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |
 | `clickhousex` | `crates/adapters/storage/clickhouse/` | `clickhousex` | **0.3.2** HTTP(S)+PEM CA+insert_batch+有界池；真实集群 TLS OPEN | [adapters-ssot-alignment.md](./adapters-ssot-alignment.md) |

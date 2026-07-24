@@ -1,0 +1,15 @@
+{
+  "instrument": { "exchange": "binance", "symbol": "ETHUSDT" },
+  "interval": 5,
+  "openTime": 1700000000000,
+  "closeTime": 1700000300000,
+  "open": "3000.00",
+  "high": "3010.50",
+  "low": "2995.25",
+  "close": "3005.00",
+  "volume": "1234.5678",
+  "quoteVolume": "3703703.70",
+  "tradeCount": 4200,
+  "takerBuyVolume": "600.0000",
+  "takerBuyQuoteVolume": "1800000.00"
+}

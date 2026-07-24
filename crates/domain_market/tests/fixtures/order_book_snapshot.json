@@ -1,0 +1,16 @@
+{
+  "instrument": { "exchange": "binance", "symbol": "BTCUSDT" },
+  "bids": [
+    { "price": "50000.00", "quantity": "1.5", "orderCount": null },
+    { "price": "49999.00", "quantity": "2.0", "orderCount": null }
+  ],
+  "asks": [
+    { "price": "50001.00", "quantity": "1.1", "orderCount": null },
+    { "price": "50002.00", "quantity": "3.0", "orderCount": null }
+  ],
+  "sequence": 42,
+  "firstUpdateId": 1000,
+  "lastUpdateId": 1010,
+  "timestamp": 1700000000200,
+  "updateType": "snapshot"
+}
