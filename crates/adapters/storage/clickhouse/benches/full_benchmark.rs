@@ -67,16 +67,12 @@ async fn bench_insert_json_each_row(pool: &ClickHousePool) {
             let rows: Vec<Value> = (0..batch)
                 .map(|i| serde_json::json!({"id": i, "marker": format!("r{i}")}))
                 .collect();
-            pool.insert_json_each_row(&table, &rows)
-                .await
-                .expect("insert each row");
+            pool.insert_json_each_row(&table, &rows).await.expect("insert each row");
         }
         let elapsed = start.elapsed();
         report(&format!("clickhousex_insert_each_row_batch{batch}"), n, elapsed);
 
-        pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-            .await
-            .expect("清理");
+        pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理");
     }
 }
 
@@ -85,9 +81,8 @@ async fn bench_insert_json_each_row(pool: &ClickHousePool) {
 async fn bench_insert_batch(pool: &ClickHousePool) {
     let pid = std::process::id();
     let total = 5000usize;
-    let rows: Vec<Value> = (0..total)
-        .map(|i| serde_json::json!({"id": i, "marker": format!("r{i}")}))
-        .collect();
+    let rows: Vec<Value> =
+        (0..total).map(|i| serde_json::json!({"id": i, "marker": format!("r{i}")})).collect();
 
     for &chunk in &[100, 500, 1000, 5000] {
         let table = format!("bench_insert_batch_{chunk}_{pid}");
@@ -97,8 +92,7 @@ async fn bench_insert_batch(pool: &ClickHousePool) {
         .await
         .expect("创建表");
 
-        let options =
-            clickhousex::BatchInsertOptions { max_rows_per_chunk: chunk };
+        let options = clickhousex::BatchInsertOptions { max_rows_per_chunk: chunk };
 
         let n = quick1(5u32);
         let start = Instant::now();
@@ -108,9 +102,7 @@ async fn bench_insert_batch(pool: &ClickHousePool) {
         let elapsed = start.elapsed();
         report(&format!("clickhousex_insert_batch_chunk{chunk}"), n, elapsed);
 
-        pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-            .await
-            .expect("清理");
+        pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理");
     }
 }
 
@@ -127,12 +119,9 @@ async fn bench_query_rows(pool: &ClickHousePool) {
     .expect("创建查询表");
 
     // 插入 1000 行
-    let rows: Vec<Value> = (0..1000)
-        .map(|i| serde_json::json!({"id": i, "marker": format!("r{i}")}))
-        .collect();
-    pool.insert_json_each_row(&table, &rows)
-        .await
-        .expect("插入数据");
+    let rows: Vec<Value> =
+        (0..1000).map(|i| serde_json::json!({"id": i, "marker": format!("r{i}")})).collect();
+    pool.insert_json_each_row(&table, &rows).await.expect("插入数据");
 
     for &limit in &[10, 100, 1000] {
         let sql = format!("SELECT * FROM {table} LIMIT {limit} FORMAT TabSeparated");
@@ -144,18 +133,15 @@ async fn bench_query_rows(pool: &ClickHousePool) {
         report(&format!("clickhousex_query_rows_limit{limit}"), n, start.elapsed());
     }
 
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .expect("清理");
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理");
 }
 
 // ── 基准 5：并发 insert（不同 max_in_flight） ──────────────────
 
 async fn bench_concurrent_insert(config: &ClickHouseConfig) {
     let total = 500u32;
-    let rows: Vec<Value> = (0..total)
-        .map(|i| serde_json::json!({"id": i, "marker": format!("r{i}")}))
-        .collect();
+    let rows: Vec<Value> =
+        (0..total).map(|i| serde_json::json!({"id": i, "marker": format!("r{i}")})).collect();
 
     for &max_in_flight in &[1usize, 4, 16, 64] {
         let mut cfg = config.clone();
@@ -182,7 +168,8 @@ async fn bench_concurrent_insert(config: &ClickHouseConfig) {
                 let pool = pool.clone();
                 let table = table.clone();
                 let start_idx = g * chunk_size;
-                let end_idx = if g == max_in_flight - 1 { total as usize } else { (g + 1) * chunk_size };
+                let end_idx =
+                    if g == max_in_flight - 1 { total as usize } else { (g + 1) * chunk_size };
                 let chunk_rows = rows[start_idx..end_idx].to_vec();
                 handles.push(tokio::spawn(async move {
                     pool.insert_json_each_row(&table, &chunk_rows).await
@@ -193,15 +180,9 @@ async fn bench_concurrent_insert(config: &ClickHouseConfig) {
             }
         }
 
-        report(
-            &format!("clickhousex_concurrent_insert_mif{max_in_flight}"),
-            n,
-            start.elapsed(),
-        );
+        report(&format!("clickhousex_concurrent_insert_mif{max_in_flight}"), n, start.elapsed());
 
-        pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-            .await
-            .expect("清理");
+        pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理");
         pool.close().await.expect("关闭");
     }
 }
@@ -212,7 +193,10 @@ fn sample_process_stats() {
     let pid = std::process::id();
     if let Ok(status) = fs::read_to_string(format!("/proc/{pid}/status")) {
         for line in status.lines() {
-            if line.starts_with("VmRSS:") || line.starts_with("VmPeak:") || line.starts_with("VmSize:") {
+            if line.starts_with("VmRSS:")
+                || line.starts_with("VmPeak:")
+                || line.starts_with("VmSize:")
+            {
                 println!("bench_process_stats: {line}");
             }
         }
@@ -228,17 +212,20 @@ async fn main() {
     println!("=== ClickHouse 基准测试 ===");
     sample_process_stats();
 
-    let pool = match tokio::time::timeout(Duration::from_secs(5), ClickHousePool::connect(cfg.clone())).await {
-        Ok(Ok(p)) => p,
-        Ok(Err(error)) => {
-            eprintln!("连接失败: {error}");
-            return;
-        }
-        Err(_) => {
-            eprintln!("连接超时");
-            return;
-        }
-    };
+    let pool =
+        match tokio::time::timeout(Duration::from_secs(5), ClickHousePool::connect(cfg.clone()))
+            .await
+        {
+            Ok(Ok(p)) => p,
+            Ok(Err(error)) => {
+                eprintln!("连接失败: {error}");
+                return;
+            }
+            Err(_) => {
+                eprintln!("连接超时");
+                return;
+            }
+        };
 
     println!("\n# SELECT 1 延迟");
     bench_select_one(&pool).await;

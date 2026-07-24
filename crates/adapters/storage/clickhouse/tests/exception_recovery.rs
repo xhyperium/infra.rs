@@ -31,9 +31,7 @@ async fn setup_db() -> ClickHousePool {
         .expect("创建测试数据库");
     pool.close().await.expect("关闭");
 
-    ClickHousePool::connect(default_config())
-        .await
-        .expect("连接到测试数据库")
+    ClickHousePool::connect(default_config()).await.expect("连接到测试数据库")
 }
 
 #[tokio::test]
@@ -116,14 +114,20 @@ async fn timeout_returns_deadline_exceeded() {
             let err = p.ping().await.expect_err("极短 timeout 应失败");
             let kind = err.kind();
             assert!(
-                matches!(kind, ErrorKind::DeadlineExceeded | ErrorKind::Unavailable | ErrorKind::Transient),
+                matches!(
+                    kind,
+                    ErrorKind::DeadlineExceeded | ErrorKind::Unavailable | ErrorKind::Transient
+                ),
                 "极短 timeout 应为 DeadlineExceeded/Unavailable/Transient, 实际: {kind:?}"
             );
         }
         Err(e) => {
             let kind = e.kind();
             assert!(
-                matches!(kind, ErrorKind::DeadlineExceeded | ErrorKind::Unavailable | ErrorKind::Transient),
+                matches!(
+                    kind,
+                    ErrorKind::DeadlineExceeded | ErrorKind::Unavailable | ErrorKind::Transient
+                ),
                 "极短 timeout 应为 DeadlineExceeded/Unavailable/Transient, 实际: {kind:?}"
             );
         }
@@ -139,9 +143,7 @@ async fn reconnect_after_close_succeeds() {
     let err = pool.execute("SELECT 1").await.expect_err("关闭后操作应失败");
     assert_eq!(err.kind(), ErrorKind::Unavailable);
 
-    let pool2 = ClickHousePool::connect(default_config())
-        .await
-        .expect("重连应成功");
+    let pool2 = ClickHousePool::connect(default_config()).await.expect("重连应成功");
     pool2.ping().await.expect("重连后 ping 应成功");
 
     let text = pool2.query_text("SELECT 1").await.expect("query 应成功");
@@ -171,11 +173,7 @@ async fn backpressure_deadline_exceeded() {
         "背压错误应为 DeadlineExceeded, 实际: {:?}",
         err.kind()
     );
-    assert!(
-        err.context().contains("max=1"),
-        "错误上下文应包含 max=1: {}",
-        err.context()
-    );
+    assert!(err.context().contains("max=1"), "错误上下文应包含 max=1: {}", err.context());
 
     pool.close().await.expect("关闭");
 }
@@ -193,15 +191,10 @@ async fn write_to_nonexistent_table_preserves_existing_data() {
     .expect("创建表");
 
     let row = serde_json::json!({"id": 1, "marker": "original"});
-    pool.insert_json_each_row(&table, &[row])
-        .await
-        .expect("插入原始数据");
+    pool.insert_json_each_row(&table, &[row]).await.expect("插入原始数据");
 
     let err = pool
-        .insert_json_each_row(
-            "nonexistent_table_xyz",
-            &[serde_json::json!({"id": 1})],
-        )
+        .insert_json_each_row("nonexistent_table_xyz", &[serde_json::json!({"id": 1})])
         .await
         .expect_err("写入不存在表应失败");
     assert!(err.kind() != ErrorKind::Conflict, "不应是 Conflict");
@@ -211,9 +204,7 @@ async fn write_to_nonexistent_table_preserves_existing_data() {
     let count: u64 = count_text.trim().parse().expect("解析");
     assert_eq!(count, 1, "原始数据应完整保留");
 
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .expect("清理");
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理");
     pool.close().await.expect("关闭");
 }
 
@@ -225,12 +216,7 @@ async fn error_kind_invalid_for_illegal_identifier() {
         .insert_json_each_row("1bad_table", &[serde_json::json!({"id": 1})])
         .await
         .expect_err("非标识符应失败");
-    assert_eq!(
-        err.kind(),
-        ErrorKind::Invalid,
-        "非法标识符应为 Invalid, 实际: {:?}",
-        err.kind()
-    );
+    assert_eq!(err.kind(), ErrorKind::Invalid, "非法标识符应为 Invalid, 实际: {:?}", err.kind());
 
     pool.close().await.expect("关闭");
 }
@@ -272,17 +258,12 @@ async fn error_kind_conflict_for_duplicate_table() {
         .expect_err("重复建表应失败");
 
     assert!(
-        matches!(
-            err.kind(),
-            ErrorKind::Conflict | ErrorKind::Transient | ErrorKind::Invalid
-        ),
+        matches!(err.kind(), ErrorKind::Conflict | ErrorKind::Transient | ErrorKind::Invalid),
         "重复建表应为 Conflict/Transient/Invalid, 实际: {:?}",
         err.kind()
     );
 
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .expect("清理");
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.expect("清理");
     pool.close().await.expect("关闭");
 }
 
@@ -294,11 +275,7 @@ async fn error_kind_unavailable_for_wrong_password() {
         Ok(p) => p.ping().await.expect_err("ping 应失败").kind(),
         Err(e) => e.kind(),
     };
-    assert_eq!(
-        err,
-        ErrorKind::Unavailable,
-        "错误密码应为 Unavailable, 实际: {err:?}"
-    );
+    assert_eq!(err, ErrorKind::Unavailable, "错误密码应为 Unavailable, 实际: {err:?}");
 }
 
 #[tokio::test]
@@ -331,20 +308,11 @@ async fn error_messages_never_contain_secrets() {
     let pool = setup_db().await;
 
     let sensitive_sql = "SELECT * FROM nonexistent_table_xyz_123";
-    let err = pool
-        .query_text(sensitive_sql)
-        .await
-        .expect_err("查询不存在表应失败");
+    let err = pool.query_text(sensitive_sql).await.expect_err("查询不存在表应失败");
 
     let err_str = err.to_string();
-    assert!(
-        !err_str.contains(TEST_PASSWORD),
-        "错误信息不得包含密码: {err_str}"
-    );
-    assert!(
-        !err_str.contains("payload"),
-        "错误信息不应包含 payload 原文: {err_str}"
-    );
+    assert!(!err_str.contains(TEST_PASSWORD), "错误信息不得包含密码: {err_str}");
+    assert!(!err_str.contains("payload"), "错误信息不应包含 payload 原文: {err_str}");
 
     pool.close().await.expect("关闭");
 }
