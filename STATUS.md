@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-24T03:18:44Z
+> **生成时间**：2026-07-24T03:24:57Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -47,7 +47,7 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `bootstrap` | `crates/infra/bootstrap` | L1 | 7/7 | ✅ 3i+u | 1860 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/bootstrap-ssot-alignment.md) |
 | `configx` | `crates/infra/configx` | L1 | 7/7 | ✅ 2i+u | 2014 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/configx-ssot-alignment.md) |
 | `evidence` | `crates/infra/evidence` | L1 | 7/7 | ✅ 2i+u | 896 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/evidence-ssot-alignment.md) |
-| `observex` | `crates/infra/observex` | L1 | 7/7 | ✅ 2i+u | 1593 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/observex-ssot-alignment.md) |
+| `observex` | `crates/infra/observex` | L1 | 7/7 | ✅ 2i+u | 1599 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/observex-ssot-alignment.md) |
 | `resiliencx` | `crates/infra/resiliencx` | L1 | 7/7 | ✅ 4i+u | 2059 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/resiliencx-ssot-alignment.md) |
 | `schedulex` | `crates/infra/schedulex` | L1 | 7/7 | ✅ 3i+u | 1345 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/schedulex-ssot-alignment.md) |
 | `transportx` | `crates/infra/transport` | L1 | 7/7 | ✅ 6i+u | 1514 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/transport-ssot-alignment.md) |
