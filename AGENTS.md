@@ -19,6 +19,7 @@
 
 ## 项目规则（强制入口）
 
+- **先读速查**：[`.agents/rules/生效规则摘要.md`](./.agents/rules/生效规则摘要.md)（红线 · 合入必跑 · 审查档位 · auto-approve）
 - **本仓规则 SSOT**：[`.agents/rules/`](./.agents/rules/)（与 `.agents/skills/`、`.agents/ssot/` 并列）
 - **索引**：[`.agents/rules/README.md`](./.agents/rules/README.md)
 - **常用**：[`项目开发规则.md`](./.agents/rules/项目开发规则.md) · [`rust-dev-rules.md`](./.agents/rules/rust-dev-rules.md) · [`worktree-policy.md`](./.agents/rules/worktree-policy.md) · [`VERSIONING.md`](./.agents/rules/VERSIONING.md)
