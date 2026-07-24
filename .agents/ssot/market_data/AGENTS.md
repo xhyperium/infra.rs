@@ -77,7 +77,7 @@ matrix/            # 追溯矩阵（门禁 → 实现 → 测试）
 - `skeleton`：类型/trait 骨架存在，运行时行为待实现
 - `pending`：对应实现未完成或没有可重复的验证证据
 - `verified`：有固定 fixture/mock + 可重复命令通过
-- `blocked`：被外部依赖（如 `xhyper-canonical`）阻塞
+- `blocked`：被外部依赖（如 `canonical`）阻塞
 - `deferred`：当前不纳入门禁范围的需求
 
 ### 各域关键差距
