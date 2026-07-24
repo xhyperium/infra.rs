@@ -1,0 +1,30 @@
+name: SSOT Dual-Specs 门禁
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".agents/ssot/**"
+      - "scripts/quality-gates/check-ssot-current-state.mjs"
+      - "scripts/quality-gates/check-ssot-current-state.test.mjs"
+      - ".github/workflows/ssot-dual-specs.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dual-specs:
+    name: Dual-Specs 同构校验
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 校验 46 域 dual-specs (spec.md ≡ complete-spec.md)
+        run: node scripts/quality-gates/check-ssot-current-state.mjs
+      - name: SSOT 隔离负向测试
+        run: node scripts/quality-gates/check-ssot-current-state.test.mjs
