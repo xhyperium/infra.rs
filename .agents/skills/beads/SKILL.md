@@ -59,6 +59,23 @@ bd create "Short title" --description="Why this exists and what needs to be done
 bd close <id> --reason="Completed"
 ```
 
+## xhyper.rs controlled write path
+
+When the repository contains `.beads/github-sync.json`, Beads/Dolt remains the SSOT and GitHub
+Issues is a one-way mirror. Use the repository wrapper for mutating commands so the Dolt commit is
+pushed before the central GitHub writer is dispatched:
+
+```bash
+just beads-write update <id> --claim
+just beads-write create --title="..." --description="..." --type=task --priority=2
+just beads-write close <id> --reason="Completed"
+```
+
+Read-only commands (`bd ready`, `bd show`, `bd list`, `bd prime`) continue to use `bd` directly.
+If Dolt push or GitHub dispatch fails, the Beads mutation may already be committed; report the
+mirror as pending and use `just beads-sync-dispatch` after connectivity returns. Do not edit
+mirrored fields in GitHub because reconciliation deliberately restores the Beads value.
+
 ## What Belongs In Beads
 
 Use Beads for:

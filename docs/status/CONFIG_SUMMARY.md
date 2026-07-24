@@ -1,21 +1,38 @@
 # CONFIG_SUMMARY.md — 配置与测试记录
 
-> 生成日期: 2026-07-21  
-> 版本: v1.1  
-> 仓库: [xhyperium/infra.rs](https://github.com/xhyperium/infra.rs)
+> **更新日期**: 2026-07-24  
+> **版本**: v2.0  
+> **仓库**: [xhyperium/infra.rs](https://github.com/xhyperium/infra.rs)  
+> **权威源**: 以 GitHub Ruleset 为准；本文件仅记录配置基线快照。
 
 ---
 
-## CI 工作流 (6 个)
+## CI 工作流概览
 
-| 工作流 | 文件 | 触发 | 状态 |
-| -------- | ------ | ------ | ------ |
-| Validation | `validation.yml` | PR + main push | YAML/TOML/MD lint + spell + link check |
-| Quality | `quality.yml` | PR + Rust 文件变更 | rustfmt + clippy |
-| CI (Rust) | `ci-rust.yml` | PR + Rust 文件变更 | build → test → coverage |
-| Security | `security.yml` | PR + 定时 (周一) | cargo-deny + cargo-audit |
-| Constitution | `constitution.yml` | 全部 PR；main push（Rust/配置路径） | 宪章合规；docs-only PR 快速绿 |
-| PR Template Check | `pr-template-check.yml` | PR (opened/edited/sync) | 模板字段校验 |
+> **workflow 清单不再在此手工维护**——以 `.github/workflows/` 目录实际文件为准。  
+> 运行 `ls .github/workflows/*.yml` 获取当前完整列表。
+
+### 按类别
+
+| 类别 | 说明 | required? |
+|------|------|-----------|
+| **核心门禁** | constitution / quality / ci-rust-org / security / validation / pr-template-check | Ruleset required: **Constitution Check** + **Template Validation**；组织 ruleset 另强制 rust-fmt/clippy/test |
+| **per-crate coverage** | kernel / testkit / configx / observex / resiliencx / schedulex / contracts / canonical / decimal / evidence | 信号（非阻断） |
+| **MIRI / Loom / Mutants** | kernel / testkit / decimal | 定时 + PR paths 触发（非阻断） |
+| **Live 集成** | redisx-live / contracts-live / exchange-live-readonly | paths/manual（非阻断） |
+| **治理辅助** | contract-compliance / public-api / secrets-lint / self-test / ssot-dual-specs / workflow-security / ci-summary | 信号（部分 required by org） |
+| **发布/协作** | release / rebase-on-push / rebase-on-label / beads-e2e / beads-test | event 触发 |
+
+### required checks（合入硬门槛）
+
+Ruleset `main-ai-first` required（名称须完全一致）：
+
+1. **`Constitution Check`**（`constitution.yml` job name）
+2. **`Template Validation`**（`pr-template-check.yml` job name）
+
+组织级 ruleset 另外强制（来自 `xhyperium/.github` 可复用 workflow `ci-rust-org.yml`）：`rust-fmt` / `rust-clippy` / `rust-test`。
+
+其余 workflow 多为 **信号 / 推荐**；应尽量绿，但**以仓库 Ruleset 配置为准**。
 
 ---
 
@@ -77,35 +94,6 @@ remote: - 2 of 2 required status checks are expected.
 
 ---
 
-## Dependabot
-
-| 项目 | 状态 |
-| ------ | ------ |
-| Dependabot 配置 | 已移除 (`dependabot.yml` 删除) |
-| 最后漏洞告警 | CVE-2024-48908 (lychee-action v1 → v2，已修复) |
-| 告警状态 | fixed (自动) |
-
----
-
-## 宪章合规性验证
-
-全部强制门禁 (8/8) 已通过：
-
-```text
-rustfmt          ✓
-clippy           ✓
-unit + doc tests ✓  (18 tests)
-unsafe 审计       ✓  (0 处)
-unwrap/expect    ✓  (clippy lint 控制)
-命名规范         ✓  (snake_case)
-文档             ✓  (cargo doc + doc-test)
-cargo-deny       ✓
-```
-
-快捷命令: `make check` / `make check-quick` / `make check-json`
-
----
-
 ## 仓库配置
 
 | 配置 | 值 |
@@ -115,4 +103,13 @@ cargo-deny       ✓
 | Auto-merge | 启用 |
 | 合并后删除分支 | 启用 |
 | Secret scanning | 启用 + push protection |
-| Dependabot security updates | 禁用 |
+| Dependabot security updates | 禁用（依赖 `security.yml` 周一 audit） |
+
+---
+
+## 变更日志
+
+| 日期 | 版本 | 变更 |
+|------|------|------|
+| 2026-07-24 | v2.0 | 不再手工维护 workflow 清单（指向 `.github/workflows/` 实际文件）；修正 `ci-rust.yml` → `ci-rust-org.yml`；添加 workflow 分类概览 |
+| 2026-07-21 | v1.1 | 初始版本 |

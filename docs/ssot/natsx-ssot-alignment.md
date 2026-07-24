@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/adapters/storage/nats/` |
 | 实现 | `crates/adapters/storage/nats` |
 | 审计日期 | 2026-07-22 |
-| version | `0.3.2` |
+| version | `0.3.5` |
 | 结论 | **Core AMO、预算内同客户端重连与 JetStream durable pull 有 broker 证据**；未宣称 package stable |
 
 ## 语义矩阵

@@ -5,7 +5,7 @@
 | 域 | `tools/`（goalctl · xtask · verifyctl）+ evidence 历史重定向 |
 | SSOT | `.agents/ssot/tools/**` |
 | 本仓实现 | 见下表；**禁止**把文档 COMPLETE 当作 ship |
-| 审计日期 | 2026-07-22 |
+| 审计日期 | 2026-07-24 |
 | 结论 | evidence canonical SSOT 位于 `.agents/ssot/infra/evidence/`；`tools/evidence` 仅历史重定向。goalctl / verifyctl 最小 CLI 已 member；verifyctl **非生产 verifier**；xtask 未宣称 ship。实际 package 为 `goalctl`（0.2.0）/ `verifyctl`（0.1.0） |
 
 ## 结论摘要
@@ -98,6 +98,7 @@ needle=$'xhyper\x2ers'
 | 2026-07-22 | #188：goalctl/verifyctl 进入 workspace members |
 | 2026-07-22 | #190：VERSION / report API 单测；公共 API 清单闭合 |
 | 2026-07-22 | #191：`scripts/live/build-foundationx-env.mjs`；对齐文档刷新 |
+| 2026-07-24 | 治理修复：新增 check-skills-sync.mjs（skills 投影 CI 校验）；codex-worktree-guard.mjs（Codex SessionStart/UserPromptSubmit 钩子）；contract-compliance-guard.mjs 接线到 Claude Stop；rsi-trigger.mjs 清理（功能已在 session-review 内嵌） |
 | 2026-07-22 | evidence current-state 唯一化到 `.agents/ssot/infra/evidence/`；tools 入口改为历史重定向；verifyctl 生产边界显式化 |
 
 ## SSOT 树补充（2026-07-22）
