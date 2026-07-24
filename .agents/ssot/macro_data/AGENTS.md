@@ -18,7 +18,7 @@ goal/ spec/ design/ plan/ tasks/ prompt/ test/ review/ release/ retrospective/
 matrix/ gate/ evidence/   + README.md
 ```
 
-实际结构由 `.agents/ssot/manifest.json` 维护：11 个域、13 个目录层、每域 14 个文件。`spec_status` 与 `implementation_status` 必须分离；计划路径不是落地证据。
+实际结构由 `.agents/ssot/macro_data/manifest.json` 维护：11 个域、13 个目录层、每域 14 个文件。`spec_status` 与 `implementation_status` 必须分离；计划路径不是落地证据。
 
 - **Code 不在本树**：实现路径只作为追溯引用；实际状态以 manifest 与 Cargo workspace 为准
 - 禁止在 SSOT 写 `src/`、`Cargo.toml`、`*.rs` 实现副本
