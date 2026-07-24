@@ -2,23 +2,29 @@
 //!
 //! 覆盖 client / module / config 的全部 `pub` 项目。
 //!
+//! # Note
+//!
+//! `pool.close().await` 是 async pool 资源释放的典型模式，
+//! 锁持有横跨 await 是池生命周期管理的预期行为。
+#![allow(clippy::await_holding_lock)]
+//!
 //! ```bash
 //! cargo test -p clickhousex --test functional_api_coverage -- --nocapture
 //! cargo test -p clickhousex --features scaffold --test functional_api_coverage -- --nocapture
 //! ```
 
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 use bytes::Bytes;
 use clickhousex::{
-    chunk_ranges, parse_tab_separated_rows, BatchInsertOptions, ClickHouseClient,
-    ClickHouseConfig, ClickHousePool, ClickHousePoolStats, ANALYTICS_TABLE,
+    ANALYTICS_TABLE, BatchInsertOptions, ClickHouseClient, ClickHouseConfig, ClickHousePool,
+    ClickHousePoolStats, chunk_ranges, parse_tab_separated_rows,
 };
 use contracts::AnalyticsSink;
 use kernel::{ErrorKind, XError};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 // ═══════════════════════════════════════════════════════════════
 // 辅助函数
@@ -47,10 +53,7 @@ fn base_cfg() -> ClickHouseConfig {
 }
 
 fn func_cfg() -> ClickHouseConfig {
-    ClickHouseConfig {
-        database: FUNC_DB.into(),
-        ..base_cfg()
-    }
+    ClickHouseConfig { database: FUNC_DB.into(), ..base_cfg() }
 }
 
 async fn setup_db() {
@@ -67,9 +70,7 @@ async fn func_pool() -> ClickHousePool {
 }
 
 async fn drop_tbl(pool: &ClickHousePool, table: &str) {
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .ok();
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.ok();
 }
 
 static ENV_LOCK: Mutex<()> = Mutex::new(());
@@ -139,20 +140,13 @@ fn config_base_url_http_and_https() {
     let http_cfg = ClickHouseConfig::default();
     assert_eq!(http_cfg.base_url(), "http://127.0.0.1:8123");
 
-    let https_cfg = ClickHouseConfig {
-        tls: true,
-        http_port: 8443,
-        ..Default::default()
-    };
+    let https_cfg = ClickHouseConfig { tls: true, http_port: 8443, ..Default::default() };
     assert_eq!(https_cfg.base_url(), "https://127.0.0.1:8443");
 }
 
 #[test]
 fn config_debug_redacts_password() {
-    let c = ClickHouseConfig {
-        password: "secret-value".into(),
-        ..Default::default()
-    };
+    let c = ClickHouseConfig { password: "secret-value".into(), ..Default::default() };
     let s = format!("{c:?}");
     assert!(s.contains("***"), "Debug 必须用 *** 替换密码");
     assert!(!s.contains("secret-value"), "Debug 不得暴露真实密码");
@@ -217,7 +211,9 @@ fn config_from_env_tls_parsing() {
         ("off", false),
     ] {
         // SAFETY: 测试环境，单线程。
-        unsafe { std::env::set_var("FOUNDATIONX_CLICKHOUSEX_TLS", val); }
+        unsafe {
+            std::env::set_var("FOUNDATIONX_CLICKHOUSEX_TLS", val);
+        }
         let c = ClickHouseConfig::from_env().expect("from_env");
         assert_eq!(c.tls, *expected, "TLS={val} → {expected}");
     }
@@ -225,10 +221,7 @@ fn config_from_env_tls_parsing() {
 
 #[test]
 fn config_validate_max_in_flight_at_least_1() {
-    let c = ClickHouseConfig {
-        max_in_flight: 0,
-        ..Default::default()
-    };
+    let c = ClickHouseConfig { max_in_flight: 0, ..Default::default() };
     let err = c.validate().expect_err("max_in_flight=0 必须拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
     assert!(err.to_string().contains("max_in_flight"));
@@ -236,71 +229,48 @@ fn config_validate_max_in_flight_at_least_1() {
 
 #[test]
 fn config_validate_timeout_must_be_positive() {
-    let err = ClickHouseConfig {
-        timeout: Duration::ZERO,
-        ..Default::default()
-    }
-    .validate()
-    .expect_err("零 timeout 必须拒绝");
+    let err = ClickHouseConfig { timeout: Duration::ZERO, ..Default::default() }
+        .validate()
+        .expect_err("零 timeout 必须拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 
-    let err = ClickHouseConfig {
-        acquire_timeout: Duration::ZERO,
-        ..Default::default()
-    }
-    .validate()
-    .expect_err("零 acquire_timeout 必须拒绝");
+    let err = ClickHouseConfig { acquire_timeout: Duration::ZERO, ..Default::default() }
+        .validate()
+        .expect_err("零 acquire_timeout 必须拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
 
 #[test]
 fn config_validate_host_and_port_required() {
-    let err = ClickHouseConfig {
-        host: "".into(),
-        ..Default::default()
-    }
-    .validate()
-    .expect_err("空 host 必须拒绝");
+    let err = ClickHouseConfig { host: "".into(), ..Default::default() }
+        .validate()
+        .expect_err("空 host 必须拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 
-    let err = ClickHouseConfig {
-        host: "   ".into(),
-        ..Default::default()
-    }
-    .validate()
-    .expect_err("空白 host 必须拒绝");
+    let err = ClickHouseConfig { host: "   ".into(), ..Default::default() }
+        .validate()
+        .expect_err("空白 host 必须拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 
-    let err = ClickHouseConfig {
-        http_port: 0,
-        ..Default::default()
-    }
-    .validate()
-    .expect_err("port=0 必须拒绝");
+    let err = ClickHouseConfig { http_port: 0, ..Default::default() }
+        .validate()
+        .expect_err("port=0 必须拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
 
 #[test]
 fn config_validate_remote_requires_tls() {
-    let c = ClickHouseConfig {
-        host: "clickhouse.example.com".into(),
-        ..Default::default()
-    };
+    let c = ClickHouseConfig { host: "clickhouse.example.com".into(), ..Default::default() };
     let err = c.validate().expect_err("远程 HTTP 必须拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 
     // localhost 可以不用 TLS
-    ClickHouseConfig::default()
-        .validate()
-        .expect("本地回环应通过");
+    ClickHouseConfig::default().validate().expect("本地回环应通过");
 }
 
 #[test]
 fn config_validate_ca_requires_tls() {
-    let c = ClickHouseConfig {
-        tls_ca_file: Some("/tmp/ca.pem".into()),
-        ..Default::default()
-    };
+    let c = ClickHouseConfig { tls_ca_file: Some("/tmp/ca.pem".into()), ..Default::default() };
     let err = c.validate().expect_err("CA 不含 TLS 必须拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
@@ -378,7 +348,9 @@ async fn pool_connect_from_env() {
     clear_clickhouse_env();
     set_clickhouse_env();
     // SAFETY: 测试环境，单线程。
-    unsafe { std::env::set_var("FOUNDATIONX_CLICKHOUSEX_DATABASE", "default"); }
+    unsafe {
+        std::env::set_var("FOUNDATIONX_CLICKHOUSEX_DATABASE", "default");
+    }
     let pool = ClickHousePool::connect_from_env().await.expect("connect_from_env");
     pool.ping().await.expect("ping");
     pool.close().await.ok();
@@ -441,10 +413,8 @@ async fn pool_query_rows_multi_column() {
         .await
         .expect("insert");
 
-    let rows = pool
-        .query_rows(&format!("SELECT n, s FROM {tbl} ORDER BY n"))
-        .await
-        .expect("query_rows");
+    let rows =
+        pool.query_rows(&format!("SELECT n, s FROM {tbl} ORDER BY n")).await.expect("query_rows");
     assert_eq!(rows.len(), 3);
     assert_eq!(rows[0], vec!["1", "a"]);
     assert_eq!(rows[1], vec!["2", "b"]);
@@ -464,18 +434,10 @@ async fn pool_insert_json_each_row_and_verify() {
     .await
     .expect("create");
 
-    let rows = vec![
-        json!({"n": 10, "s": "ten"}),
-        json!({"n": 20, "s": "twenty"}),
-    ];
-    pool.insert_json_each_row(&tbl, &rows)
-        .await
-        .expect("insert");
+    let rows = vec![json!({"n": 10, "s": "ten"}), json!({"n": 20, "s": "twenty"})];
+    pool.insert_json_each_row(&tbl, &rows).await.expect("insert");
 
-    let got = pool
-        .query_rows(&format!("SELECT n, s FROM {tbl} ORDER BY n"))
-        .await
-        .expect("select");
+    let got = pool.query_rows(&format!("SELECT n, s FROM {tbl} ORDER BY n")).await.expect("select");
     assert_eq!(got.len(), 2);
     assert_eq!(got[0], vec!["10", "ten"]);
     assert_eq!(got[1], vec!["20", "twenty"]);
@@ -487,9 +449,7 @@ async fn pool_insert_json_each_row_and_verify() {
 #[tokio::test]
 async fn pool_insert_json_each_row_empty_short_circuits() {
     let pool = func_pool().await;
-    pool.insert_json_each_row("valid_table_name", &[])
-        .await
-        .expect("空 rows 必须直接成功");
+    pool.insert_json_each_row("valid_table_name", &[]).await.expect("空 rows 必须直接成功");
     pool.close().await.ok();
 }
 
@@ -506,10 +466,8 @@ async fn pool_insert_json_each_row_rejects_non_object() {
 #[tokio::test]
 async fn pool_insert_json_each_row_rejects_invalid_table_name() {
     let pool = func_pool().await;
-    let err = pool
-        .insert_json_each_row("1bad", &[json!({"a": 1})])
-        .await
-        .expect_err("非法表名必须拒绝");
+    let err =
+        pool.insert_json_each_row("1bad", &[json!({"a": 1})]).await.expect_err("非法表名必须拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 }
 
@@ -524,17 +482,10 @@ async fn pool_insert_batch_with_chunks_and_verify() {
     .expect("create");
 
     let rows: Vec<Value> = (1..=5).map(|i| json!({"n": i})).collect();
-    let options = BatchInsertOptions {
-        max_rows_per_chunk: 2,
-    };
-    pool.insert_batch(&tbl, &rows, options)
-        .await
-        .expect("insert_batch");
+    let options = BatchInsertOptions { max_rows_per_chunk: 2 };
+    pool.insert_batch(&tbl, &rows, options).await.expect("insert_batch");
 
-    let got = pool
-        .query_rows(&format!("SELECT n FROM {tbl} ORDER BY n"))
-        .await
-        .expect("select");
+    let got = pool.query_rows(&format!("SELECT n FROM {tbl} ORDER BY n")).await.expect("select");
     assert_eq!(got.len(), 5);
     for (i, r) in got.iter().enumerate() {
         assert_eq!(r[0], (i + 1).to_string());
@@ -570,9 +521,7 @@ async fn pool_insert_batch_sends_one_http_request_per_chunk() {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
 
-    let listener = TcpListener::bind(("127.0.0.1", 0))
-        .await
-        .expect("绑定临时端口");
+    let listener = TcpListener::bind(("127.0.0.1", 0)).await.expect("绑定临时端口");
     let port = listener.local_addr().expect("端口").port();
     let expected = 3; // 5行每chunk=2 → 3次HTTP POST
     let server = tokio::spawn(async move {
@@ -580,9 +529,7 @@ async fn pool_insert_batch_sends_one_http_request_per_chunk() {
         for _ in 0..expected {
             let (mut stream, _) = listener.accept().await.expect("accept");
             let mut buf = vec![0u8; 16384];
-            let _ = tokio::time::timeout(Duration::from_secs(5), stream.read(&mut buf))
-                .await
-                .ok();
+            let _ = tokio::time::timeout(Duration::from_secs(5), stream.read(&mut buf)).await.ok();
             count += 1;
             stream
                 .write_all(
@@ -606,15 +553,9 @@ async fn pool_insert_batch_sends_one_http_request_per_chunk() {
     let pool = ClickHousePool::connect_without_ping(cfg).expect("build");
 
     let rows: Vec<Value> = (0..5).map(|i| json!({"n": i})).collect();
-    pool.insert_batch(
-        "valid_table",
-        &rows,
-        BatchInsertOptions {
-            max_rows_per_chunk: 2,
-        },
-    )
-    .await
-    .expect("insert_batch");
+    pool.insert_batch("valid_table", &rows, BatchInsertOptions { max_rows_per_chunk: 2 })
+        .await
+        .expect("insert_batch");
 
     pool.close().await.ok();
     let count = server.await.expect("server task");
@@ -629,12 +570,9 @@ async fn pool_ensure_analytics_table_idempotent() {
     pool.ensure_analytics_table().await.expect("second idempotent");
 
     // 验证表存在且有预期列
-    let cols = pool
-        .query_rows(&format!("DESCRIBE TABLE {ANALYTICS_TABLE}"))
-        .await
-        .expect("describe");
-    let names: Vec<&str> =
-        cols.iter().filter_map(|r| r.first().map(|s| s.as_str())).collect();
+    let cols =
+        pool.query_rows(&format!("DESCRIBE TABLE {ANALYTICS_TABLE}")).await.expect("describe");
+    let names: Vec<&str> = cols.iter().filter_map(|r| r.first().map(|s| s.as_str())).collect();
     assert!(names.contains(&"ts"), "缺少 ts 列");
     assert!(names.contains(&"event"), "缺少 event 列");
     assert!(names.contains(&"payload"), "缺少 payload 列");
@@ -717,19 +655,13 @@ async fn analytics_sink_writes_and_verifies() {
     let event = utext("sink_write");
 
     // 先清理已有数据
-    pool.execute(&format!(
-        "ALTER TABLE {ANALYTICS_TABLE} DELETE WHERE event = '{event}'"
-    ))
-    .await
-    .ok();
+    pool.execute(&format!("ALTER TABLE {ANALYTICS_TABLE} DELETE WHERE event = '{event}'"))
+        .await
+        .ok();
     tokio::time::sleep(Duration::from_millis(200)).await;
 
-    pool.sink(&event, Bytes::from_static(b"payload-data"))
-        .await
-        .expect("sink");
-    pool.sink(&event, Bytes::from_static(b"payload-2"))
-        .await
-        .expect("sink 2");
+    pool.sink(&event, Bytes::from_static(b"payload-data")).await.expect("sink");
+    pool.sink(&event, Bytes::from_static(b"payload-2")).await.expect("sink 2");
 
     tokio::time::sleep(Duration::from_millis(200)).await;
     let rows = pool
@@ -742,11 +674,9 @@ async fn analytics_sink_writes_and_verifies() {
     assert!(rows.iter().any(|r| r[1] == "payload-data"));
     assert!(rows.iter().any(|r| r[1] == "payload-2"));
 
-    pool.execute(&format!(
-        "ALTER TABLE {ANALYTICS_TABLE} DELETE WHERE event = '{event}'"
-    ))
-    .await
-    .ok();
+    pool.execute(&format!("ALTER TABLE {ANALYTICS_TABLE} DELETE WHERE event = '{event}'"))
+        .await
+        .ok();
     pool.close().await.ok();
 }
 
@@ -755,10 +685,7 @@ async fn analytics_sink_rejects_empty_event() {
     let pool = func_pool().await;
     pool.ensure_analytics_table().await.expect("ensure");
 
-    let err = pool
-        .sink("", Bytes::from_static(b"data"))
-        .await
-        .expect_err("空 event 必须拒绝");
+    let err = pool.sink("", Bytes::from_static(b"data")).await.expect_err("空 event 必须拒绝");
     assert_eq!(err.kind(), ErrorKind::Invalid);
 
     pool.close().await.ok();
@@ -792,9 +719,7 @@ mod scaffold_tests {
     #[tokio::test]
     async fn adapter_sink_single_event() {
         let a = ClickHouseAdapter::local();
-        a.sink("ev", Bytes::from_static(b"payload"))
-            .await
-            .expect("sink");
+        a.sink("ev", Bytes::from_static(b"payload")).await.expect("sink");
         assert_eq!(a.event_count().expect("count"), 1);
     }
 
@@ -802,12 +727,7 @@ mod scaffold_tests {
     async fn adapter_sink_accumulates_multiple_events() {
         let a = ClickHouseAdapter::new("multi", "http://example.invalid:8123");
         for i in 0..5 {
-            a.sink(
-                &format!("event-{i}"),
-                Bytes::from(format!("payload-{i}")),
-            )
-            .await
-            .expect("sink");
+            a.sink(&format!("event-{i}"), Bytes::from(format!("payload-{i}"))).await.expect("sink");
         }
         assert_eq!(a.event_count().expect("count"), 5);
     }
@@ -829,10 +749,7 @@ fn utils_parse_tab_separated_rows_multi_line() {
     let rows = parse_tab_separated_rows("a\tb\nc\td\te\n");
     assert_eq!(rows.len(), 2);
     assert_eq!(rows[0], vec!["a".to_string(), "b".to_string()]);
-    assert_eq!(
-        rows[1],
-        vec!["c".to_string(), "d".to_string(), "e".to_string()]
-    );
+    assert_eq!(rows[1], vec!["c".to_string(), "d".to_string(), "e".to_string()]);
 }
 
 #[test]
@@ -902,20 +819,14 @@ fn utils_batch_insert_options_default() {
 
 #[test]
 fn utils_clickhouse_pool_stats_field_access() {
-    let s = ClickHousePoolStats {
-        in_flight: 3,
-        closed: false,
-    };
+    let s = ClickHousePoolStats { in_flight: 3, closed: false };
     assert_eq!(s.in_flight, 3);
     assert!(!s.closed);
 }
 
 #[test]
 fn utils_clickhouse_pool_stats_closed() {
-    let s = ClickHousePoolStats {
-        in_flight: 0,
-        closed: true,
-    };
+    let s = ClickHousePoolStats { in_flight: 0, closed: true };
     assert_eq!(s.in_flight, 0);
     assert!(s.closed);
 }

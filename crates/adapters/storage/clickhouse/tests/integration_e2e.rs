@@ -11,10 +11,10 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 use bytes::Bytes;
-use clickhousex::{BatchInsertOptions, ClickHouseConfig, ClickHousePool, ANALYTICS_TABLE};
+use clickhousex::{ANALYTICS_TABLE, BatchInsertOptions, ClickHouseConfig, ClickHousePool};
 use contracts::AnalyticsSink;
 use kernel::ErrorKind;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 // ═══════════════════════════════════════════════════════════════
 // 辅助函数
@@ -42,22 +42,16 @@ fn live_cfg(database: &str) -> ClickHouseConfig {
 }
 
 async fn connect_integration() -> ClickHousePool {
-    let pool = ClickHousePool::connect(live_cfg("default"))
-        .await
-        .expect("connect default");
+    let pool = ClickHousePool::connect(live_cfg("default")).await.expect("connect default");
     pool.execute(&format!("CREATE DATABASE IF NOT EXISTS {INTEGRATION_DB}"))
         .await
         .expect("create integration db");
     pool.close().await.ok();
-    ClickHousePool::connect(live_cfg(INTEGRATION_DB))
-        .await
-        .expect("connect integration db")
+    ClickHousePool::connect(live_cfg(INTEGRATION_DB)).await.expect("connect integration db")
 }
 
 async fn drop_table_silently(pool: &ClickHousePool, table: &str) {
-    pool.execute(&format!("DROP TABLE IF EXISTS {table}"))
-        .await
-        .ok();
+    pool.execute(&format!("DROP TABLE IF EXISTS {table}")).await.ok();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -96,9 +90,7 @@ async fn roundtrip_insert_query_multiple_types() {
             "bool_val": 0
         }),
     ];
-    pool.insert_json_each_row(&tbl, &rows)
-        .await
-        .expect("insert");
+    pool.insert_json_each_row(&tbl, &rows).await.expect("insert");
 
     let got = pool
         .query_rows(&format!(
@@ -129,9 +121,7 @@ async fn batch_insert_chunk_verification() {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
 
-    let listener = TcpListener::bind(("127.0.0.1", 0))
-        .await
-        .expect("绑定临时端口");
+    let listener = TcpListener::bind(("127.0.0.1", 0)).await.expect("绑定临时端口");
     let port = listener.local_addr().expect("端口").port();
     let expected = 5; // 50行每chunk=10 → 5次POST
     let server = tokio::spawn(async move {
@@ -139,9 +129,7 @@ async fn batch_insert_chunk_verification() {
         for _ in 0..expected {
             let (mut stream, _) = listener.accept().await.expect("accept");
             let mut buf = vec![0u8; 32768];
-            let _ = tokio::time::timeout(Duration::from_secs(5), stream.read(&mut buf))
-                .await
-                .ok();
+            let _ = tokio::time::timeout(Duration::from_secs(5), stream.read(&mut buf)).await.ok();
             count += 1;
             stream
                 .write_all(
@@ -165,15 +153,9 @@ async fn batch_insert_chunk_verification() {
     let pool = ClickHousePool::connect_without_ping(cfg).expect("build without ping");
 
     let rows: Vec<Value> = (0..50).map(|i| json!({"n": i})).collect();
-    pool.insert_batch(
-        "valid_table",
-        &rows,
-        BatchInsertOptions {
-            max_rows_per_chunk: 10,
-        },
-    )
-    .await
-    .expect("insert_batch");
+    pool.insert_batch("valid_table", &rows, BatchInsertOptions { max_rows_per_chunk: 10 })
+        .await
+        .expect("insert_batch");
 
     pool.close().await.ok();
     let count = server.await.expect("server");
@@ -193,12 +175,9 @@ async fn analytics_sink_full_path() {
     pool.ensure_analytics_table().await.expect("re-ensure idempotent");
 
     for i in 0..3 {
-        pool.sink(
-            "e2e_analytics_event",
-            Bytes::from(format!("payload-{}", i)),
-        )
-        .await
-        .expect("sink");
+        pool.sink("e2e_analytics_event", Bytes::from(format!("payload-{}", i)))
+            .await
+            .expect("sink");
     }
 
     let rows = pool
@@ -213,9 +192,7 @@ async fn analytics_sink_full_path() {
     assert_eq!(rows[1][1], "payload-1");
     assert_eq!(rows[2][1], "payload-2");
 
-    pool.sink("e2e_analytics_event", Bytes::from_static(b"payload-3"))
-        .await
-        .expect("sink again");
+    pool.sink("e2e_analytics_event", Bytes::from_static(b"payload-3")).await.expect("sink again");
     let rows = pool
         .query_rows(&format!(
             "SELECT event, payload FROM {ANALYTICS_TABLE} \
@@ -250,15 +227,9 @@ async fn multi_table_and_persistence_across_reconnect() {
     .await
     .expect("create b");
 
-    let rows = (1..=3)
-        .map(|i| json!({"id": i, "val": format!("val-{i}")}))
-        .collect::<Vec<_>>();
-    pool.insert_json_each_row(&tbl_a, &rows)
-        .await
-        .expect("insert a");
-    pool.insert_json_each_row(&tbl_b, &rows)
-        .await
-        .expect("insert b");
+    let rows = (1..=3).map(|i| json!({"id": i, "val": format!("val-{i}")})).collect::<Vec<_>>();
+    pool.insert_json_each_row(&tbl_a, &rows).await.expect("insert a");
+    pool.insert_json_each_row(&tbl_b, &rows).await.expect("insert b");
 
     pool.close().await.ok();
 
@@ -299,32 +270,20 @@ async fn large_batch_insert_and_verify() {
     .expect("create");
 
     let total = 1001;
-    let rows: Vec<Value> = (0..total)
-        .map(|i| json!({"idx": i, "label": format!("row-{}", i)}))
-        .collect();
+    let rows: Vec<Value> =
+        (0..total).map(|i| json!({"idx": i, "label": format!("row-{}", i)})).collect();
 
-    pool.insert_batch(
-        &tbl,
-        &rows,
-        BatchInsertOptions {
-            max_rows_per_chunk: 200,
-        },
-    )
-    .await
-    .expect("insert_batch");
-
-    let count_text = pool
-        .query_text(&format!("SELECT count() FROM {tbl}"))
+    pool.insert_batch(&tbl, &rows, BatchInsertOptions { max_rows_per_chunk: 200 })
         .await
-        .expect("count");
+        .expect("insert_batch");
+
+    let count_text = pool.query_text(&format!("SELECT count() FROM {tbl}")).await.expect("count");
     let count: u64 = count_text.trim().parse().unwrap();
     assert_eq!(count, total as u64);
 
     for idx in [0, 500, 1000u64] {
         let got = pool
-            .query_rows(&format!(
-                "SELECT idx, label FROM {tbl} WHERE idx = {idx}"
-            ))
+            .query_rows(&format!("SELECT idx, label FROM {tbl} WHERE idx = {idx}"))
             .await
             .expect("select");
         assert_eq!(got.len(), 1, "idx={idx} 应恰好一行");
@@ -351,33 +310,21 @@ async fn error_recovery_partial_success() {
     .expect("create");
 
     let good = json!({"id": 1, "val": "good"});
-    pool.insert_json_each_row(&tbl, &[good])
-        .await
-        .expect("good insert");
+    pool.insert_json_each_row(&tbl, &[good]).await.expect("good insert");
 
     // 非法插入（类型不匹配：id=UInt64 但给字符串）
     let bad = json!({"id": "not-a-number", "val": "bad"});
-    let _err = pool
-        .insert_json_each_row(&tbl, &[bad])
-        .await
-        .expect_err("bad insert must fail");
+    let _err = pool.insert_json_each_row(&tbl, &[bad]).await.expect_err("bad insert must fail");
 
-    let got = pool
-        .query_rows(&format!("SELECT id, val FROM {tbl}"))
-        .await
-        .expect("select");
+    let got = pool.query_rows(&format!("SELECT id, val FROM {tbl}")).await.expect("select");
     assert_eq!(got.len(), 1, "legal data survives error");
     assert_eq!(got[0][0], "1");
     assert_eq!(got[0][1], "good");
 
     let good2 = json!({"id": 2, "val": "after-error"});
-    pool.insert_json_each_row(&tbl, &[good2])
-        .await
-        .expect("good insert after error");
-    let got = pool
-        .query_rows(&format!("SELECT id, val FROM {tbl} ORDER BY id"))
-        .await
-        .expect("select");
+    pool.insert_json_each_row(&tbl, &[good2]).await.expect("good insert after error");
+    let got =
+        pool.query_rows(&format!("SELECT id, val FROM {tbl} ORDER BY id")).await.expect("select");
     assert_eq!(got.len(), 2);
     assert_eq!(got[1][1], "after-error");
 
@@ -414,10 +361,7 @@ async fn close_rejects_new_requests_and_stats_closed() {
         .expect_err("execute after close must fail");
     assert_eq!(err.kind(), ErrorKind::Unavailable);
 
-    let err = pool
-        .query_text("SELECT 1")
-        .await
-        .expect_err("query after close must fail");
+    let err = pool.query_text("SELECT 1").await.expect_err("query after close must fail");
     assert_eq!(err.kind(), ErrorKind::Unavailable);
 
     let err = pool
