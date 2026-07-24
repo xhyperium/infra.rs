@@ -16,8 +16,10 @@
 ```text
 源层（可编辑）
 ├── .claude/skills/         ← 技能定义
-├── CONSTITUTION.md         ← 工程宪章
+├── docs/constitution/      ← 工程宪章正文 SSOT
+├── CONSTITUTION.md         ← 宪章兼容索引（指向 docs/constitution/）
 ├── AGENTS.md               ← 多 Agent 协作规则
+├── .agents/rules/          ← 项目规则 SSOT
 ├── .github/                ← CI/CD
 ├── docs/                   ← 项目文档（含 docs/ssot/ 对齐矩阵）
 └── .agents/ssot/           ← 域规格 SSOT 根（本仓）
@@ -83,8 +85,6 @@
 - `.agents/ssot/{kernel,testkit,types,infra,adapters,contracts,tools}/` 是 **infra.rs 本仓** 的域规格 SSOT
   - **infra 平面**（与 `crates/infra/` 对齐）：`.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`
   - 旧根路径 `.agents/ssot/{bootstrap,configx,…}/` 仅保留 **R5 重定向 README**（非 active spec）
-  - **infra 平面**（与 `crates/infra/` 对齐）：`.agents/ssot/infra/{bootstrap,configx,evidence,gate,observex,resiliencx,schedulex,testkitx,transport}/`
-  - 旧根路径 `.agents/ssot/{bootstrap,configx,…}/` 仅保留 **R5 重定向 README**（非 active spec）
 - 禁止在 SSOT 树内写入 `src/`、`Cargo.toml`、`*.rs` 实现副本
 - 禁止用 SSOT 文档中的 COMPLETE / Stable 叙事冒充 crate 已 ship
 - 路径一律使用 `.agents/ssot/`（禁止旧 monorepo 单数 agent 路径写法）
@@ -119,7 +119,8 @@
 | 事实域 | SSOT 位置 | 说明 |
 |--------|----------|------|
 | Agent 技能 | `.claude/skills/` | 投影至 `.agents/skills/` |
-| 工程宪章 | `CONSTITUTION.md` | 直接引用 |
+| 工程宪章 | `docs/constitution/` | 正文 SSOT；根 `CONSTITUTION.md` 仅为兼容索引 |
+| 项目规则 | `.agents/rules/` | 工程约定与加严落地；`docs/governance/` 仅为 stub |
 | Agent 行为 | `AGENTS.md` | 直接引用 |
 | CI/CD | `.github/workflows/` | 直接引用 |
 | 项目文档 | `docs/` | 直接引用 |
