@@ -272,10 +272,10 @@ expectFailure(
 );
 
 expectFailure(
-  "adapters 索引退回 exchange scaffold",
+  "adapters 索引丢失 storage 范畴标记",
   ({ root }) => {
     mutate(join(root, ".agents/ssot/adapters/README.md"), (text) =>
-      text.replace("签名 REST + 公共 WS 解析/注入", "scaffold + mock HTTP + server_time"),
+      text.replace("P0 生产默认路径", "P0 默认路径"),
     );
   },
   "current-state-docs",
@@ -355,7 +355,7 @@ expectFailure(
 );
 
 expectFailure(
-  "新增第 47 对 dual spec — 46 域之外新增未声明域",
+  "新增第 45 对 dual spec — 44 域之外新增未声明域",
   ({ root }) => {
     const directory = join(root, ".agents/ssot/extra/spec");
     mkdirSync(directory, { recursive: true });
@@ -366,7 +366,7 @@ expectFailure(
 );
 
 expectFailure(
-  "dual spec 域替换保持 46 域数量不变但引入未声明域",
+  "dual spec 域替换保持 44 域数量不变但引入未声明域",
   ({ root }) => {
     rmSync(join(root, ".agents/ssot/infra/observex/spec"), { recursive: true, force: true });
     const directory = join(root, ".agents/ssot/replacement/spec");

@@ -13,7 +13,7 @@
 | Agent 规则 | [../AGENTS.md](../AGENTS.md) |
 | 变更日志 | [../CHANGELOG.md](../CHANGELOG.md) |
 | 本仓 SSOT 对齐 | [`docs/ssot/adapters-ssot-alignment.md`](../../../../../docs/ssot/adapters-ssot-alignment.md) |
-| 上游 SSOT 镜像 | `.agents/ssot/adapters/exchange/binance/` |
+| 上游 SSOT 镜像 | `.agents/ssot/market_data/binance/` |
 | Workspace 总览 | [`docs/ssot/workspace-ssot-alignment.md`](../../../../../docs/ssot/workspace-ssot-alignment.md) |
 
 ## 边界

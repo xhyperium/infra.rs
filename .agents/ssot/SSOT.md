@@ -124,7 +124,7 @@
   - `market_data`（L1 内核）：`MarketTick`/`InstrumentType` 等标准化行情模型；`crates/market_data`
   - `exchange/{binance,okx,coinbase,hyperliquid,coinglass}`（L2 provider）：实现 `domain_exchange::VenueAdapter`；当前为骨架 stub
   - `orderbook`（L2 引擎）：订单簿内核规格 complete；**无 runtime crate**
-- **分层共存边界**：`core/domain_*` 与 `market_data` 是独立类型平面；`exchange/*`（L2 provider）与 `adapters/exchange/*`（L2' infra adapter）分别实现 `VenueAdapter` 和 `contracts::Exchange` 两套独立 trait，**无桥接层**
+- **分层共存边界**：`core/domain_*` 与 `market_data` 是独立类型平面；`exchange/*`（L2 provider）与 `crates/adapters/exchange/*`（L2' infra adapter）分别实现 `VenueAdapter` 和 `contracts::Exchange` 两套独立 trait，**无桥接层**；两者的 binance/okx 规格已统一收敛至 `market_data/{binance,okx}/`（不再保留 `adapters/exchange/` SSOT 副本）
 - 审计基线见 `docs/ssot/*-ssot-alignment.md` 与 `docs/ssot/workspace-ssot-alignment.md`
 
 ---
