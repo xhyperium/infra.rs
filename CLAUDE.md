@@ -66,17 +66,58 @@ cd .worktrees/feat/<id>-<slug>
 # 在该目录内编码 / 测试 / 提交 / 开 PR
 ```
 
-- `pre-tool-check` **BLOCK**：主仓**已跟踪**文件 Write/Edit、主仓 `checkout -b`/`switch` 功能分支、`main` 上 commit
+- `pre-tool-check` **BLOCK**：主仓**已跟踪**文件 Write/Edit、主仓 `checkout -b`/`switch` 功能分支
+- `pre-tool-check` **WARN**：`main` 上 `git commit` 输出警告但不硬阻断（用户评估风险后可继续）
 - **例外**：`.gitignore` 匹配路径（如 `.beads/`、`.claude/*.local.json`、`target/`）可在主仓编辑；`.env` 仍单独拦截
 - 路径规范：`.worktrees/<branch-name>`（`/` 保留为目录分隔符）
 - 禁止设置 `INFRA_WORKTREE_BYPASS=1` 绕过（仅人工 maintainer 应急）
+
+## Git 操作确认规则
+
+### 本地操作（用户授权后可执行）
+
+以下操作**不**被 hook 硬拦截，但 agent 应在用户明确要求时执行，不应主动发起：
+
+- `git commit`（含 main 上 commit：hook 仅输出 WARN，用户知晓风险后可继续）
+- `git merge`（本地合并）
+- `git branch -d` / `git branch -D`（删除本地分支）
+
+### 远程操作（须用户逐次确认）
+
+以下操作执行前，agent 必须在对话中向用户清晰展示**将要执行的完整命令与影响范围**，
+并在收到用户明确回复确认后才能执行：
+
+- `git push` / `git push --force-with-lease`（推送到共享分支）
+- `git push origin --delete <branch>`（删除远程分支）
+- 任何修改远程分支历史的操作
+
+> 用户在一次对话中说"可以推了"不自动携带到后续操作；每次远程操作前须单独确认。
+
+### 合并前质量检查
+
+执行 `git merge` 前，agent 必须完成并在对话中汇报：
+
+1. `cargo fmt --all -- --check` — 通过
+2. `cargo clippy --workspace --all-targets --all-features -- -D warnings` — 通过
+3. `cargo test --workspace --all-features` — 通过
+4. 确认合并目标分支无误
+
+### 永远不会执行的操作
+
+- `git push --force`（不用 --force-with-lease 替代亦不可）
+- `git push --no-verify`
+- `git reset --hard` 到已推送历史
+- 删除 `main` / `master` 分支
+- 设置 `INFRA_WORKTREE_BYPASS=1`（仅人工 maintainer 可用）
 
 ## 安全红线
 
 - 不提交 `.claude/*.local.json`、密钥、证书
 - 不在对话中回显完整 API Token
 - 不削弱 `.gitignore` 对敏感路径的排除
-- 不执行 `git push --force`、`git push --no-verify`、删除 `main`（除非用户明确要求且已确认风险）
+- 不执行 `git push --force`（不用 --force-with-lease 替代亦不可）；不执行 `git push --no-verify`
+- 不删除 `main` / `master` 分支
+- push / 远程操作须每次单独确认（见「Git 操作确认规则」）
 - **Git Main First**（宪章 §6.0）：不在 `main` 上直接开发；worktree 建支 → PR → 合并 main
 
 ## 代码行为准则

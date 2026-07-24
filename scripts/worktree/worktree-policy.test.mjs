@@ -150,8 +150,9 @@ assert("resolveMainProjectRoot main root", resolveMainProjectRoot(root) === root
 // evaluateCommitOnMain
 {
   assert(
-    "block commit on main",
-    evaluateCommitOnMain("main", "git commit -m 'x'").blocked,
+    "warn commit on main (no longer blocked)",
+    !evaluateCommitOnMain("main", "git commit -m 'x'").blocked &&
+      evaluateCommitOnMain("main", "git commit -m 'x'").severity === "warn",
   );
   assert(
     "allow commit on feature",

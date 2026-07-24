@@ -179,6 +179,9 @@ node scripts/quality-gates/check-workspace-deps.mjs
 - 从最新 `origin/main` 建支；合并默认 squash；合并后清理分支
 - 禁止对 `main` force push；禁止 `--no-verify` 绕过钩子
 - Conventional Commits
+- **Git 操作确认规则**：本地 commit/merge/branch-delete 用户授权后可执行；
+  push / 远程操作须逐次确认；合并前须通过质量检查。
+  完整规则见 [CLAUDE.md §Git 操作确认规则](./CLAUDE.md)
 
 ## 安全
 

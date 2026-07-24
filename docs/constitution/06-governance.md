@@ -46,7 +46,7 @@ cd .worktrees/feat/my-feature
 - **已废弃**：`.worktrees/workspaces/`、单数 `.worktree/`、全局 `~/.worktrees/`
 - 实质性任务必须使用独立分支 + worktree 隔离
 - 禁止多任务混用同一 worktree / 分支
-- **机器强制（BLOCK）**：`pre-tool-check.mjs` 拦截主仓**已跟踪**文件 Write/Edit、主仓 `checkout -b`/`switch` 功能分支、`main` 上 commit；`.gitignore` 匹配路径为例外（见 `.agents/rules/worktree-policy.md`）；`session-context.mjs` 在主仓给出开工指引
+- **机器强制（BLOCK）**：`pre-tool-check.mjs` 拦截主仓**已跟踪**文件 Write/Edit、主仓 `checkout -b`/`switch` 功能分支；`.gitignore` 匹配路径为例外（见 `.agents/rules/worktree-policy.md`）；`main` 上 `git commit` 输出 WARN 但不硬阻断（允许用户评估风险后继续）；`session-context.mjs` 在主仓给出开工指引
 
 ### 6.0.6 与 AI 协作
 

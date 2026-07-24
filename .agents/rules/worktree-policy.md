@@ -74,7 +74,7 @@ infra.rs/                      # 主工作区 (main) — 只读：review / build
 | `Write` / `Edit` 目标被 `.gitignore` 匹配 | **放行（例外）** | `git check-ignore` |
 | 主工作区 `git checkout -b` / `git switch -c` | **BLOCK** | `pre-tool-check.mjs` |
 | 主工作区 `git checkout`/`switch` 到非 main 功能分支 | **BLOCK** | `pre-tool-check.mjs` |
-| 在 `main`/`master` 分支上 `git commit` | **BLOCK** | `pre-tool-check.mjs` |
+| 在 `main`/`master` 分支上 `git commit` | **WARN（不再硬阻断）** | `pre-tool-check.mjs` |
 | `git worktree add` 路径 ≠ `.worktrees/<branch>` | **BLOCK** | `pre-tool-check.mjs` |
 | 分支名缺少 type 前缀 | **BLOCK** | `pre-tool-check.mjs` |
 | SessionStart 在主仓 | **WARN + 开工指引** | `session-context.mjs` |
@@ -93,7 +93,8 @@ infra.rs/                      # 主工作区 (main) — 只读：review / build
 - 禁止在 main 工作区 `git checkout -b <feature>`
 - 禁止在 main 工作区 `git switch <feature>`
 - 禁止在 main 工作区对仓库文件 Write/Edit（Agent 与脚本钩子均拦截）
-- 禁止在 `main` 分支上直接 `git commit` / push
+- 不推荐在 `main` 分支上直接 `git commit`（hook 输出 WARN）
+- 仍禁止在 `main` 分支上直接 push
 - Worktree 仅用于开发，不得用于 `cargo publish` 等发布操作
 
 ### 5. 清理
