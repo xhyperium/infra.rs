@@ -10,7 +10,8 @@
 | 改 adapter / tools 规格 | 对应域 `spec/` + `plan/infra-rs-landing.md` |
 | 对照 draft 战役合同 | `plan/infra-rs-draft-*.md`（#188 入库快照） |
 | 判断是否可宣称 ship | **不要**只看本树 COMPLETE；读 `docs/ssot/*-ssot-alignment.md` + members |
-| 新增域 | 先改本文件与根 `SSOT.md` 清单，再补 11 层 |
+| 合同字段 / Spec ID / 合规目录 | 根 [`CONTRACT.md`](./CONTRACT.md)（数据模型）；验证见 [`CONTRACT_SPEC.md`](./CONTRACT_SPEC.md) |
+| 新增域 | 先改本文件与根 `SSOT.md` 清单，再补 11 层；受管合规域还要改 `CONTRACT.md` §8 |
 
 ## 2. 标准 11 层（域叶节点）
 
@@ -58,6 +59,8 @@ matrix/ gate/ evidence/   + README.md
 ```bash
 test -f .agents/ssot/SSOT.md
 test -f .agents/ssot/AGENTS.md
+test -f .agents/ssot/CONTRACT.md
+test -f .agents/ssot/CONTRACT_SPEC.md
 test -f .agents/ssot/infra/evidence/spec/spec.md
 test -f .agents/ssot/adapters/README.md
 test -f .agents/ssot/tools/README.md
@@ -65,4 +68,6 @@ test -f .agents/ssot/tools/README.md
 test -d .agents/ssot/adapters/storage/redis/spec
 test -f .agents/ssot/tools/goalctl/plan/infra-rs-landing.md
 test -f .agents/ssot/tools/verifyctl/plan/infra-rs-draft-spec.md
+# 合同合规（L1 签名；可选）
+node scripts/quality-gates/check-contract-compliance.mjs --level L1 --fail-level L1
 ```

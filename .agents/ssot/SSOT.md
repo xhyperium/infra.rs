@@ -135,6 +135,8 @@
 | Adapters | `.agents/ssot/adapters/` | exchange + storage |
 | Contracts | `.agents/ssot/contracts/` | trait 出口规格 |
 | Tools | `.agents/ssot/tools/` | goalctl / xtask / verifyctl；`tools/evidence` 仅历史重定向 |
+| 域合同数据模型 | `.agents/ssot/CONTRACT.md` | 合同 schema / Spec ID / 合规 catalog；验证规则见 `CONTRACT_SPEC.md` |
+| 合同合规验证规则 | `.agents/ssot/CONTRACT_SPEC.md` | L1–L4 可执行规范；数据模型见 `CONTRACT.md` |
 | SSOT 规则 | `.agents/ssot/SSOT.md` | 自引 |
 
 ---
@@ -143,6 +145,7 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
+| v2.3.1 | 2026-07-24 | 清单登记 `CONTRACT.md`（合同数据模型）与 `CONTRACT_SPEC.md`（L1–L4 验证规则） |
 | v2.3.0 | 2026-07-24 | **恢复 infra 层级**：与 `crates/infra/` 对齐，域归组到 `.agents/ssot/infra/*`；根路径保留 R5 重定向 README |
 | v2.2.1 | 2026-07-23 | 在 v2.2.0 current-state 基线上声明域级三轮 findings 证据文件约定；清理重复域目录清单 |
 | v2.2.0 | 2026-07-22 | 唯一化顶层 evidence current-state 入口；冻结 24 package 与 configx/schedulex/exchange 当前边界 |
