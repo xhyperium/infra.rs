@@ -36,7 +36,6 @@ async fn setup_db() -> ClickHousePool {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn connect_invalid_port_returns_error() {
     let cfg = ClickHouseConfig {
         host: "127.0.0.1".into(),
@@ -60,7 +59,6 @@ async fn connect_invalid_port_returns_error() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn connect_invalid_host_returns_error() {
     let cfg = ClickHouseConfig {
         host: "unknown-host-that-does-not-exist.invalid".into(),
@@ -90,7 +88,6 @@ async fn connect_invalid_host_returns_error() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn connect_wrong_password_returns_unavailable() {
     let mut cfg = default_config();
     cfg.password = "definitely-wrong-password-no-chance-this-is-real".into();
@@ -106,7 +103,6 @@ async fn connect_wrong_password_returns_unavailable() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn timeout_returns_deadline_exceeded() {
     let cfg = ClickHouseConfig {
         host: "127.0.0.1".into(),
@@ -144,7 +140,6 @@ async fn timeout_returns_deadline_exceeded() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn reconnect_after_close_succeeds() {
     let pool = setup_db().await;
     pool.ping().await.expect("首次 ping 应成功");
@@ -164,7 +159,6 @@ async fn reconnect_after_close_succeeds() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn backpressure_deadline_exceeded() {
     let mut cfg = default_config();
     cfg.max_in_flight = 1;
@@ -192,7 +186,6 @@ async fn backpressure_deadline_exceeded() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn write_to_nonexistent_table_preserves_existing_data() {
     let pool = setup_db().await;
 
@@ -224,7 +217,6 @@ async fn write_to_nonexistent_table_preserves_existing_data() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn error_kind_invalid_for_illegal_identifier() {
     let pool = setup_db().await;
 
@@ -239,7 +231,6 @@ async fn error_kind_invalid_for_illegal_identifier() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn error_kind_missing_for_nonexistent_table() {
     let pool = setup_db().await;
 
@@ -258,7 +249,6 @@ async fn error_kind_missing_for_nonexistent_table() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn error_kind_conflict_for_duplicate_table() {
     let pool = setup_db().await;
     let pid = std::process::id();
@@ -289,7 +279,6 @@ async fn error_kind_conflict_for_duplicate_table() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn error_kind_unavailable_for_wrong_password() {
     let mut cfg = default_config();
     cfg.password = "this-is-not-the-correct-password".into();
@@ -302,7 +291,6 @@ async fn error_kind_unavailable_for_wrong_password() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn error_kind_deadline_exceeded_for_backpressure() {
     let mut cfg = default_config();
     cfg.max_in_flight = 1;
@@ -329,7 +317,6 @@ async fn error_kind_deadline_exceeded_for_backpressure() {
 
 #[tokio::test]
 #[ignore = "requires ClickHouse"]
-#[ignore = "requires ClickHouse server"]
 async fn error_messages_never_contain_secrets() {
     let pool = setup_db().await;
 
