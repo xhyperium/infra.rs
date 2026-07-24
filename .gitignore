@@ -118,6 +118,9 @@ desktop.ini
 docs/status/*.local.md
 docs/status/CRATES_STATUS.local.md
 
+# Generated reports (不入库)
+docs/report/
+
 # =============================================================================
 # Miscellaneous
 # =============================================================================
