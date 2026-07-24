@@ -12,10 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **目录布局**：L1 平台 crate 迁入 `crates/infra/`（`configx` / `schedulex` / `resiliencx` / `observex` / `transport` / `evidence` / `bootstrap`）；Cargo package 名不变，纯路径归组（见 `docs/plans/2026-07-24-crates-infra-directory-migration.md`）。
-
-
-### Changed
-
 - **redisx 0.3.8**：调用级 total deadline、pipeline_set、Lua 脚本与 fencing 分布式锁；workspace redis 启用 script feature
 - **redisx 0.3.7**：error_map/client 离线单测补强；交付记录挂 #281 merge SHA；覆盖率残余更新
 - **redisx 0.3.6**：Standalone P0 对齐证据与 10 轮审查冻结；SSOT 路径裁决保持 `adapters/storage/redis/`；真实 Redis live 复验；覆盖率残余诚实文档；Cluster/Sentinel/TLS live 仍 OPEN；禁止 package stable

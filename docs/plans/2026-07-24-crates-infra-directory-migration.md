@@ -163,7 +163,7 @@ cargo metadata --no-deps --format-version 1 \
 | `scripts/docs/gen-crate-status.mjs` | `SSOT_DOC_BY_PREFIX` 前缀：`crates/configx` → `crates/infra/configx` 等 7 条 |
 | `scripts/quality-gates/check-ssot-current-state.mjs` | package→Cargo.toml 映射；`required` 字符串；源文件存在性检查路径（configx src、evidence path 文案） |
 | `scripts/quality-gates/check-ssot-current-state.test.mjs` | 同上 fixture 路径 |
-| `scripts/quality-gates/verify-seven-dualbar.mjs` | `crates/${p}` / `crates/transport` → `crates/infra/...` |
+| `scripts/quality-gates/verify-seven-dualbar.mjs` | `crates/${p}` / `crates/transport` → `crates/infra/...`（七包双栏脚本） |
 | `scripts/quality-gates/check-decimal-no-panicking-ops.mjs` | `crates/bootstrap/src` 等扫描根 → `crates/infra/.../src` |
 | `.github/workflows/configx-coverage.yml` | `paths:` 与 `cov-gate-100 --filter` |
 | `.github/workflows/schedulex-coverage.yml` | 同上 |
@@ -237,12 +237,13 @@ git mv crates/bootstrap  crates/infra/bootstrap
 
 - [ ] §3.1 全部路径更新
 - [ ] 跑：
-  ```bash
-  node scripts/quality-gates/check-ssot-current-state.mjs
-  node --test scripts/quality-gates/check-ssot-current-state.test.mjs
-  node scripts/quality-gates/check-decimal-no-panicking-ops.mjs
-  node scripts/docs/gen-crate-status.mjs --tracked
-  ```
+
+```bash
+node scripts/quality-gates/check-ssot-current-state.mjs
+node --test scripts/quality-gates/check-ssot-current-state.test.mjs
+node scripts/quality-gates/check-decimal-no-panicking-ops.mjs
+node scripts/docs/gen-crate-status.mjs --tracked
+```
 
 ### W3 — 活跃文档（Executor / Writer）
 

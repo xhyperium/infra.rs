@@ -219,6 +219,8 @@ mod tests {
         }
     }
     fn with_capture(f: impl FnOnce()) -> String {
+        use tracing::Level;
+        use tracing_subscriber::filter::LevelFilter;
         let cap = Capture::default();
         let sub = tracing_subscriber::fmt()
             .with_writer(cap.clone())
@@ -226,6 +228,7 @@ mod tests {
             .with_level(true)
             .with_target(false)
             .without_time()
+            .with_max_level(LevelFilter::from_level(Level::TRACE))
             .finish();
         tracing::subscriber::with_default(sub, f);
         let _ = cap.make_writer().flush();
@@ -286,9 +289,12 @@ mod tests {
             p.record_circuit_open("get");
             p.record_circuit_close("get");
         });
-        assert!(out.contains("retry"));
-        assert!(out.contains("circuit_open"));
-        assert!(out.contains("circuit_close"));
+        for needle in ["retry", "circuit_open", "circuit_close"] {
+            assert!(
+                out.contains(needle),
+                "expected tracing capture to contain {needle:?}; got:\n{out}"
+            );
+        }
     }
 
     #[test]
