@@ -59,6 +59,7 @@ async fn drop_table_silently(pool: &ClickHousePool, table: &str) {
 // ═══════════════════════════════════════════════════════════════
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn roundtrip_insert_query_multiple_types() {
     let pool = connect_integration().await;
     let tbl = runique_table("rtt");
@@ -117,6 +118,7 @@ async fn roundtrip_insert_query_multiple_types() {
 // ═══════════════════════════════════════════════════════════════
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn batch_insert_chunk_verification() {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
@@ -167,6 +169,7 @@ async fn batch_insert_chunk_verification() {
 // ════════════════════════════════════════════════════════════════
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn analytics_sink_full_path() {
     let pool = connect_integration().await;
     drop_table_silently(&pool, ANALYTICS_TABLE).await;
@@ -211,6 +214,7 @@ async fn analytics_sink_full_path() {
 // ═══════════════════════════════════════════════════════════════
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn multi_table_and_persistence_across_reconnect() {
     let pool = connect_integration().await;
     let tbl_a = runique_table("persist_a");
@@ -260,6 +264,7 @@ async fn multi_table_and_persistence_across_reconnect() {
 // ══════════════════════════════════════════════════════════════════
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn large_batch_insert_and_verify() {
     let pool = connect_integration().await;
     let tbl = runique_table("large_batch");
@@ -300,6 +305,7 @@ async fn large_batch_insert_and_verify() {
 // ═══════════════════════════════════════════════════════════════
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn error_recovery_partial_success() {
     let pool = connect_integration().await;
     let tbl = runique_table("err_recovery");
@@ -337,6 +343,7 @@ async fn error_recovery_partial_success() {
 // ═══════════════════════════════════════════════════════════════
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn close_rejects_new_requests_and_stats_closed() {
     let pool = connect_integration().await;
     let tbl = runique_table("close_test");

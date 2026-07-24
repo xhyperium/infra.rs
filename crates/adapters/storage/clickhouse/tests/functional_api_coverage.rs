@@ -336,6 +336,7 @@ fn resolve_http_port_err(http_port: Option<&str>, port_alias: Option<&str>) -> X
 // ═══════════════════════════════════════════════════════════════
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_connect_and_ping() {
     let pool = func_pool().await;
     pool.ping().await.expect("ping must succeed");
@@ -343,6 +344,7 @@ async fn pool_connect_and_ping() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_connect_from_env() {
     let _lock = env_lock();
     clear_clickhouse_env();
@@ -357,6 +359,7 @@ async fn pool_connect_from_env() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_execute_ddl_create_database_table_drop() {
     let pool = func_pool().await;
     let tbl = utext("ddl_test");
@@ -388,6 +391,7 @@ async fn pool_execute_ddl_create_database_table_drop() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_query_text_select_1_and_literal() {
     let pool = func_pool().await;
     let body = pool.query_text("SELECT 1").await.expect("SELECT 1");
@@ -400,6 +404,7 @@ async fn pool_query_text_select_1_and_literal() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_query_rows_multi_column() {
     let pool = func_pool().await;
     let tbl = utext("qr_test");
@@ -425,6 +430,7 @@ async fn pool_query_rows_multi_column() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_insert_json_each_row_and_verify() {
     let pool = func_pool().await;
     let tbl = utext("ijr_test");
@@ -447,6 +453,7 @@ async fn pool_insert_json_each_row_and_verify() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_insert_json_each_row_empty_short_circuits() {
     let pool = func_pool().await;
     pool.insert_json_each_row("valid_table_name", &[]).await.expect("空 rows 必须直接成功");
@@ -454,6 +461,7 @@ async fn pool_insert_json_each_row_empty_short_circuits() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_insert_json_each_row_rejects_non_object() {
     let pool = func_pool().await;
     let err = pool
@@ -464,6 +472,7 @@ async fn pool_insert_json_each_row_rejects_non_object() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_insert_json_each_row_rejects_invalid_table_name() {
     let pool = func_pool().await;
     let err =
@@ -472,6 +481,7 @@ async fn pool_insert_json_each_row_rejects_invalid_table_name() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_insert_batch_with_chunks_and_verify() {
     let pool = func_pool().await;
     let tbl = utext("batch_test");
@@ -496,6 +506,7 @@ async fn pool_insert_batch_with_chunks_and_verify() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_insert_batch_empty_short_circuits() {
     let pool = func_pool().await;
     pool.insert_batch("valid_table", &[], BatchInsertOptions::default())
@@ -505,6 +516,7 @@ async fn pool_insert_batch_empty_short_circuits() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_insert_batch_rejects_invalid_table_name() {
     let pool = func_pool().await;
     let err = pool
@@ -517,6 +529,7 @@ async fn pool_insert_batch_rejects_invalid_table_name() {
 /// 发起一个记录独立 HTTP 请求数的计数服务器，证明
 /// `insert_batch` 为每个 chunk 发出独立 POST（而非合并）。
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_insert_batch_sends_one_http_request_per_chunk() {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
@@ -563,6 +576,7 @@ async fn pool_insert_batch_sends_one_http_request_per_chunk() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_ensure_analytics_table_idempotent() {
     let pool = func_pool().await;
 
@@ -581,6 +595,7 @@ async fn pool_ensure_analytics_table_idempotent() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_close_idempotent_and_rejects_after_close() {
     let pool = func_pool().await;
     pool.close().await.expect("close");
@@ -600,6 +615,7 @@ async fn pool_close_idempotent_and_rejects_after_close() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_accessors_client_config_stats_is_closed() {
     let pool = func_pool().await;
 
@@ -626,6 +642,7 @@ async fn pool_accessors_client_config_stats_is_closed() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn pool_connect_without_ping_builds_without_network() {
     let cfg = ClickHouseConfig {
         host: "127.0.0.1".into(),
@@ -647,6 +664,7 @@ async fn pool_connect_without_ping_builds_without_network() {
 // ═══════════════════════════════════════════════════════════════
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn analytics_sink_writes_and_verifies() {
     let pool = func_pool().await;
     pool.ensure_analytics_table().await.expect("ensure analytics");
@@ -681,6 +699,7 @@ async fn analytics_sink_writes_and_verifies() {
 }
 
 #[tokio::test]
+#[ignore = "requires ClickHouse"]
 async fn analytics_sink_rejects_empty_event() {
     let pool = func_pool().await;
     pool.ensure_analytics_table().await.expect("ensure");
@@ -701,6 +720,7 @@ mod scaffold_tests {
     use clickhousex::ClickHouseAdapter;
 
     #[tokio::test]
+#[ignore = "requires ClickHouse"]
     async fn adapter_new_and_accessors() {
         let a = ClickHouseAdapter::new("my-adapter", "http://host:8123");
         assert_eq!(a.name(), "my-adapter");
@@ -709,6 +729,7 @@ mod scaffold_tests {
     }
 
     #[tokio::test]
+#[ignore = "requires ClickHouse"]
     async fn adapter_local_defaults() {
         let a = ClickHouseAdapter::local();
         assert_eq!(a.name(), "clickhouse-local");
@@ -717,6 +738,7 @@ mod scaffold_tests {
     }
 
     #[tokio::test]
+#[ignore = "requires ClickHouse"]
     async fn adapter_sink_single_event() {
         let a = ClickHouseAdapter::local();
         a.sink("ev", Bytes::from_static(b"payload")).await.expect("sink");
@@ -724,6 +746,7 @@ mod scaffold_tests {
     }
 
     #[tokio::test]
+#[ignore = "requires ClickHouse"]
     async fn adapter_sink_accumulates_multiple_events() {
         let a = ClickHouseAdapter::new("multi", "http://example.invalid:8123");
         for i in 0..5 {
