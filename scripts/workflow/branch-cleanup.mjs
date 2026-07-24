@@ -373,13 +373,25 @@ function showHelp() {
   --auto-remove     清理 worktree 引用不存在分支的孤儿 worktree
 
 选项:
-  --force           跳过交互确认
-  --dry-run         演练模式，仅输出计划，不实际操作
-  --branch <name>   只处理指定分支（可重复，仅 --list/--clean）
-  --prune-remote    同时删除 PR 已合并的远程分支（仅 --clean）
-  --orphan-type <t> 仅处理指定类型的孤儿 worktree（可重复，仅 --auto-remove）
-                    有效值: missing_branch, missing_dir, detached
-  --help            显示帮助信息
+  --force              跳过交互确认
+  --dry-run            演练模式，仅输出计划，不实际操作
+  --branch <name>      只处理指定分支（可重复，仅 --list/--clean）
+  --prune-remote       同时删除 PR 已合并的远程分支（仅 --clean）
+  --orphan-type <type> 仅处理指定类型的孤儿 worktree（可重复，仅 --auto-remove）
+  --help               显示帮助信息
+
+--orphan-type 有效值（大小写不敏感）:
+
+  missing_branch  分支已删除，但 git worktree 注册和目录仍然残留
+                  ← 最危险: 可能包含未合并的工作，清理前确认已合并
+
+  missing_dir     分支正常，但 .worktrees/<name>/ 目录已被手动删除
+                  ← 仅 git 注册残留，安全清理
+
+  detached        detached HEAD 状态，无分支关联
+                  ← 通常为临时 checkout 遗留，安全清理
+
+  不指定 --orphan-type 时，默认处理全部三种类型。
 
 安全护栏:
   - main 分支永不删除
