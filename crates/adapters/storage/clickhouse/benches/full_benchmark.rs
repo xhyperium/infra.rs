@@ -148,7 +148,7 @@ async fn bench_concurrent_insert(config: &ClickHouseConfig) {
         cfg.max_in_flight = max_in_flight;
         let pool = ClickHousePool::connect(cfg)
             .await
-            .expect(&format!("连接 max_in_flight={max_in_flight}"));
+            .unwrap_or_else(|e| panic!("连接 max_in_flight={max_in_flight}: {e:?}"));
         let pid = std::process::id();
         let table = format!("bench_concurrent_{max_in_flight}_{pid}");
 
