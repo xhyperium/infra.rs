@@ -8,8 +8,8 @@
 - 兼容入口：`call_with_retry_budget` / `call_with_retry_budget_async`、`retry_fn*`、`retry_async*`
   的未带 `safe` 变体均为 unchecked compatibility
 - 熔断/限流/舱壁：无墙钟；本地立即拒绝，不宣称分布式协调或公平队列
-- Active SSOT：`.agents/ssot/resiliencx/spec/spec.md`，须与
-  `.agents/ssot/resiliencx/spec/xhyper-resiliencx-complete-spec.md` 保持 `cmp` 一致
+- Active SSOT：`.agents/ssot/infra/resiliencx/spec/spec.md`，须与
+  `.agents/ssot/infra/resiliencx/spec/xhyper-resiliencx-complete-spec.md` 保持 `cmp` 一致
 
 ## 验收命令
 
@@ -19,8 +19,8 @@ cargo test -p resiliencx --all-features --all-targets
 cargo clippy -p resiliencx --all-features --all-targets -- -D warnings
 cargo doc -p resiliencx --all-features --no-deps
 node scripts/quality-gates/cov-gate-100.mjs -p resiliencx --filter crates/infra/resiliencx/src
-cmp .agents/ssot/resiliencx/spec/spec.md \
-    .agents/ssot/resiliencx/spec/xhyper-resiliencx-complete-spec.md
+cmp .agents/ssot/infra/resiliencx/spec/spec.md \
+    .agents/ssot/infra/resiliencx/spec/xhyper-resiliencx-complete-spec.md
 ```
 
 覆盖率门禁使用共享 target；多 writer 并行时由 root 停止其他 writer 后串行执行。

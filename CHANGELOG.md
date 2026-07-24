@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **SSOT 结构**：infra 平面归组到 `.agents/ssot/infra/*`（与 `crates/infra/` 对齐）；根路径保留 R5 重定向 README。
 - **目录布局**：L1 平台 crate 迁入 `crates/infra/`（`configx` / `schedulex` / `resiliencx` / `observex` / `transport` / `evidence` / `bootstrap`）；Cargo package 名不变，纯路径归组（见 `docs/plans/2026-07-24-crates-infra-directory-migration.md`）。
 - **redisx 0.3.8**：调用级 total deadline、pipeline_set、Lua 脚本与 fencing 分布式锁；workspace redis 启用 script feature
 - **redisx 0.3.7**：error_map/client 离线单测补强；交付记录挂 #281 merge SHA；覆盖率残余更新

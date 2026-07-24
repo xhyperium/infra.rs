@@ -99,7 +99,7 @@ trait 语义、conformance suite、非 scaffold 真入口。
 |----|-----|
 | 路径 | `crates/bootstrap` |
 | 平面 | L1 |
-| SSOT | `.agents/ssot/bootstrap/` |
+| SSOT | `.agents/ssot/infra/bootstrap/` |
 | 对齐 | `docs/ssot/bootstrap-ssot-alignment.md` |
 | Spec S1–S7 | 5/5/5/5/4/5/3（Σ=32/35） |
 | 生产层 | L1 有条件 |
@@ -114,7 +114,7 @@ trait 语义、conformance suite、非 scaffold 真入口。
 |----|-----|
 | 路径 | `crates/configx` |
 | 平面 | L1 |
-| SSOT | `.agents/ssot/configx/` |
+| SSOT | `.agents/ssot/infra/configx/` |
 | 对齐 | `docs/ssot/configx-ssot-alignment.md` |
 | Spec S1–S7 | 5/5/5/5/4/5/3（Σ=32/35） |
 | 生产层 | L1 内存合同 |
@@ -129,7 +129,7 @@ trait 语义、conformance suite、非 scaffold 真入口。
 |----|-----|
 | 路径 | `crates/schedulex` |
 | 平面 | L1 |
-| SSOT | `.agents/ssot/schedulex/` |
+| SSOT | `.agents/ssot/infra/schedulex/` |
 | 对齐 | `docs/ssot/schedulex-ssot-alignment.md` |
 | Spec S1–S7 | 5/5/5/5/4/5/3（Σ=32/35） |
 | 生产层 | L1 registry |
@@ -159,7 +159,7 @@ trait 语义、conformance suite、非 scaffold 真入口。
 |----|-----|
 | 路径 | `crates/observex` |
 | 平面 | L1 |
-| SSOT | `.agents/ssot/observex/` |
+| SSOT | `.agents/ssot/infra/observex/` |
 | 对齐 | `docs/ssot/observex-ssot-alignment.md` |
 | Spec S1–S7 | 5/5/5/5/4/5/3（Σ=32/35） |
 | 生产层 | L1 + L3 Instr 入口 |
@@ -174,7 +174,7 @@ trait 语义、conformance suite、非 scaffold 真入口。
 |----|-----|
 | 路径 | `crates/resiliencx` |
 | 平面 | L1 |
-| SSOT | `.agents/ssot/resiliencx/` |
+| SSOT | `.agents/ssot/infra/resiliencx/` |
 | 对齐 | `docs/ssot/resiliencx-ssot-alignment.md` |
 | Spec S1–S7 | 5/5/5/4/4/5/3（Σ=31/35） |
 | 生产层 | 接近 L1 Internal |
@@ -189,7 +189,7 @@ trait 语义、conformance suite、非 scaffold 真入口。
 |----|-----|
 | 路径 | `crates/transport` |
 | 平面 | L1 |
-| SSOT | `.agents/ssot/transport/` |
+| SSOT | `.agents/ssot/infra/transport/` |
 | 对齐 | `docs/ssot/transport-ssot-alignment.md` |
 | Spec S1–S7 | 5/5/5/5/4/5/3（Σ=32/35） |
 | 生产层 | L1 有条件 I/O |

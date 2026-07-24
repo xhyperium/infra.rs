@@ -4,7 +4,7 @@
 | --- | --- |
 | 目标 crate | `bootstrap` |
 | 路径/层级 | `crates/bootstrap` / L1 组合根 |
-| SSOT | `.agents/ssot/bootstrap/` |
+| SSOT | `.agents/ssot/infra/bootstrap/` |
 | 对齐文档 | `docs/ssot/bootstrap-ssot-alignment.md` |
 | 审查者 | AI Agent |
 

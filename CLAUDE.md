@@ -21,7 +21,7 @@
 - `.agents/ssot/{kernel,testkit,types,evidence,bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport,adapters,contracts,tools}` 是**本仓域规格 SSOT**（非只读镜像）；**不要**把 COMPLETE 当成「本仓可宣称 ship」
   - infra 平面在 `.agents/ssot/{bootstrap,configx,gate,…}`（infra/ 已展平）
   - adapters 平面在 `.agents/ssot/adapters/{exchange,storage}/…`（保留 `adapters/` 层级）
-  - evidence current-state canonical 位于 `.agents/ssot/evidence/`；`.agents/ssot/tools/evidence/` 仅历史重定向
+  - evidence current-state canonical 位于 `.agents/ssot/infra/evidence/`；`.agents/ssot/tools/evidence/` 仅历史重定向
   - tools 平面在 `.agents/ssot/tools/{goalctl,xtask,verifyctl}/…`（保留 `tools/` 层级；verifyctl 为本仓扩展）
   - **archgate / `.architecture`：OOS**（PR #164）
 - 本仓 members：`kernel` / `testkit` / `contract-testkit` / `configx` / `schedulex` / `bootstrap` / `evidence` / `observex` / `resiliencx` / `transport` / `types/*` / `contracts` / `adapters/**` / `goalctl` / `verifyctl`（configx 为本地多源/宿主 reload，schedulex 为宿主驱动 `JobRunner::tick`；storage×7 默认客户端入口；exchange 签名 REST + 公共 WS 解析/注入但交易 **NO-GO**；verifyctl 非生产 verifier；**无** `infra-core`；gate/xtask 等未落地）

@@ -8,4 +8,4 @@
 - API 是否无 removal/signature change；
 - SSOT、rustdoc、README 与 alignment 是否一致。
 
-独立 reviewer 结论记录于 `.agents/ssot/schedulex/review/review.md`。
+独立 reviewer 结论记录于 `.agents/ssot/infra/schedulex/review/review.md`。

@@ -8,7 +8,7 @@
 
 | 子域 | SSOT 路径 | 本仓实现路径 | 本仓状态 |
 |------|----------|--------------|----------|
-| `evidence` | `.agents/ssot/evidence/`（canonical） | `crates/infra/evidence` | 最小面已落地；`tools/evidence` 仅历史重定向 |
+| `evidence` | `.agents/ssot/infra/evidence/`（canonical） | `crates/infra/evidence` | 最小面已落地；`tools/evidence` 仅历史重定向 |
 | `goalctl` | `.agents/ssot/tools/goalctl/` | `tools/goalctl` | **workspace member**（#188）；最小 Goal→Contract CLI；[landing](goalctl/plan/infra-rs-landing.md) |
 | `xtask` | `.agents/ssot/tools/xtask/` | `tools/xtask`（期望） | **未落地**；`cargo xtask` alias 可忽略 |
 | `verifyctl` | `.agents/ssot/tools/verifyctl/` | `tools/verifyctl` | **workspace member**（#188）；最小 plan/execute/report，**非生产 verifier**；[landing](verifyctl/plan/infra-rs-landing.md) |
@@ -40,9 +40,9 @@ test -f .agents/ssot/tools/xtask/README.md
 test -f .agents/ssot/tools/verifyctl/README.md
 test -f .agents/ssot/tools/goalctl/plan/infra-rs-landing.md
 test -f .agents/ssot/tools/verifyctl/plan/infra-rs-draft-spec.md
-test -f .agents/ssot/evidence/spec/spec.md
-cmp .agents/ssot/evidence/spec/spec.md \
-  .agents/ssot/evidence/spec/xhyper-evidence-complete-spec.md
+test -f .agents/ssot/infra/evidence/spec/spec.md
+cmp .agents/ssot/infra/evidence/spec/spec.md \
+  .agents/ssot/infra/evidence/spec/xhyper-evidence-complete-spec.md
 cargo test -p evidence -p goalctl -p verifyctl --all-targets
 cargo run -p goalctl -- doctor
 ```

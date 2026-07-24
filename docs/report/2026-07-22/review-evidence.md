@@ -8,7 +8,7 @@
 | 审查日期 | 2026-07-22 |
 | 审查者 | AI Agent（review-prompt v1.0 验证执行） |
 | 前置依赖 | `kernel`（间接消费者）、`bootstrap`（注入消费者） |
-| SSOT | `.agents/ssot/evidence/spec/spec.md`（canonical；`tools/evidence` 仅历史重定向） |
+| SSOT | `.agents/ssot/infra/evidence/spec/spec.md`（canonical；`tools/evidence` 仅历史重定向） |
 | 对齐文档 | `docs/ssot/evidence-ssot-alignment.md` |
 
 ## 1. 概览

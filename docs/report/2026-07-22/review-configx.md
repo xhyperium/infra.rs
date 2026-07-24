@@ -4,7 +4,7 @@
 | --- | --- |
 | 目标 crate | `configx` |
 | 路径/层级 | `crates/configx` / L1 |
-| SSOT | `.agents/ssot/configx/` |
+| SSOT | `.agents/ssot/infra/configx/` |
 | 对齐文档 | `docs/ssot/configx-ssot-alignment.md` |
 | 审查者 | AI Agent |
 

@@ -4,7 +4,7 @@
 | --- | --- |
 | 目标 crate | `schedulex` |
 | 路径/层级 | `crates/schedulex` / L1 |
-| SSOT | `.agents/ssot/schedulex/` |
+| SSOT | `.agents/ssot/infra/schedulex/` |
 | 对齐文档 | `docs/ssot/schedulex-ssot-alignment.md` |
 | 审查者 | AI Agent |
 

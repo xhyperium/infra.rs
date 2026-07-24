@@ -56,21 +56,21 @@ const expectedDualSpecDirs = [
   "adapters/storage/postgres/spec",
   "adapters/storage/redis/spec",
   "adapters/storage/taos/spec",
-  "bootstrap/spec",
-  "configx/spec",
   "contracts/spec",
-  "evidence/spec",
-  "gate/spec",
+  "infra/bootstrap/spec",
+  "infra/configx/spec",
+  "infra/evidence/spec",
+  "infra/gate/spec",
+  "infra/observex/spec",
+  "infra/resiliencx/spec",
+  "infra/schedulex/spec",
+  "infra/testkitx/spec",
+  "infra/transport/spec",
   "kernel/spec",
-  "observex/spec",
-  "resiliencx/spec",
-  "schedulex/spec",
   "testkit/spec",
-  "testkitx/spec",
   "tools/goalctl/spec",
   "tools/verifyctl/spec",
   "tools/xtask/spec",
-  "transport/spec",
   "types/canonical/spec",
   "types/decimal/spec",
 ];
@@ -188,8 +188,8 @@ function runGate(root) {
     metadataErrors.length === 0 ? "24 个 package 名称与路径一致" : metadataErrors.join("；"),
   );
 
-  const canonicalEvidence = ".agents/ssot/evidence/spec/spec.md";
-  const canonicalEvidenceMirror = ".agents/ssot/evidence/spec/xhyper-evidence-complete-spec.md";
+  const canonicalEvidence = ".agents/ssot/infra/evidence/spec/spec.md";
+  const canonicalEvidenceMirror = ".agents/ssot/infra/evidence/spec/xhyper-evidence-complete-spec.md";
   const evidenceRedirect = ".agents/ssot/tools/evidence/README.md";
   const evidenceLegacyPointer = ".agents/ssot/tools/evidence/evidence-spec.md";
   const evidenceErrors = [];
@@ -242,12 +242,12 @@ function runGate(root) {
     },
     {
       path: ".agents/ssot/tools/README.md",
-      required: [".agents/ssot/evidence/", "历史重定向", "非生产 verifier"],
+      required: [".agents/ssot/infra/evidence/", "历史重定向", "非生产 verifier"],
       forbidden: [/\.agents\/ssot\/tools\/evidence\/spec\/spec\.md/u, /最小生产 CLI/u],
     },
     {
       path: ".agents/ssot/SSOT.md",
-      required: [".agents/ssot/evidence/", "签名 REST", "公共 WS", "NO-GO"],
+      required: [".agents/ssot/infra/evidence/", "签名 REST", "公共 WS", "NO-GO"],
       forbidden: [/exchange[^\n]*(?:scaffold|mock HTTP)[^\n]*server.?time/iu],
     },
     {
@@ -262,22 +262,22 @@ function runGate(root) {
     },
     {
       path: "AGENTS.md",
-      required: [".agents/ssot/evidence/", "历史重定向", "Memory/Env/File source", "JobRunner::tick", "交易 **NO-GO**", "verifyctl 非生产 verifier"],
+      required: [".agents/ssot/infra/evidence/", "历史重定向", "Memory/Env/File source", "JobRunner::tick", "交易 **NO-GO**", "verifyctl 非生产 verifier"],
       forbidden: [/tools\/.*含 evidence/u, /非多源热更新/u, /registry only/iu, /最小生产 CLI members/u],
     },
     {
       path: "CLAUDE.md",
-      required: [".agents/ssot/evidence/", "历史重定向", "本地多源", "JobRunner::tick", "交易 **NO-GO**", "verifyctl 非生产 verifier"],
+      required: [".agents/ssot/infra/evidence/", "历史重定向", "本地多源", "JobRunner::tick", "交易 **NO-GO**", "verifyctl 非生产 verifier"],
       forbidden: [/tools\/\{evidence,/u, /exchange 生产默认 REST\+WS/iu],
     },
     {
       path: ".agents/ssot/kernel/design/design.md",
-      required: ["path: crates/infra/evidence", ".agents/ssot/evidence/"],
+      required: ["path: crates/infra/evidence", ".agents/ssot/infra/evidence/"],
       forbidden: [/path: tools\/evidence/u],
     },
     {
       path: ".agents/ssot/kernel/design/DESIGN-KERNEL-002.md",
-      required: ["path: crates/infra/evidence", ".agents/ssot/evidence/"],
+      required: ["path: crates/infra/evidence", ".agents/ssot/infra/evidence/"],
       forbidden: [/path: tools\/evidence/u],
     },
     {
@@ -292,12 +292,12 @@ function runGate(root) {
     },
     {
       path: "docs/ssot/evidence-ssot-alignment.md",
-      required: [".agents/ssot/evidence/spec/spec.md", "历史入口", "不得维护第二份 active spec"],
+      required: [".agents/ssot/infra/evidence/spec/spec.md", "历史入口", "不得维护第二份 active spec"],
       forbidden: [/SSOT 镜像\s*\|\s*`\.agents\/ssot\/tools\/evidence/iu],
     },
     {
       path: "docs/ssot/tools-ssot-alignment.md",
-      required: [".agents/ssot/evidence/", "历史重定向", "非生产 verifier"],
+      required: [".agents/ssot/infra/evidence/", "历史重定向", "非生产 verifier"],
       forbidden: [/SSOT 路径\s*\|[^\n]*\.agents\/ssot\/tools\/evidence/iu, /最小生产 CLI/iu],
     },
     {
@@ -322,12 +322,12 @@ function runGate(root) {
     },
     {
       path: "docs/report/2026-07-22/crate-inventory.md",
-      required: ["本地多源", "JobRunner::tick", ".agents/ssot/evidence/", "签名 REST + 公共 WS", "交易 NO-GO"],
+      required: ["本地多源", "JobRunner::tick", ".agents/ssot/infra/evidence/", "签名 REST + 公共 WS", "交易 NO-GO"],
       forbidden: [/L1 内存合同/u, /L1 registry/u, /scaffold\s*\+\s*server_time/iu, /evidence SSOT 物理位置[^\n]*tools\/evidence/iu],
     },
     {
       path: "docs/report/2026-07-22/review-evidence.md",
-      required: [".agents/ssot/evidence/spec/spec.md", "canonical", "历史重定向"],
+      required: [".agents/ssot/infra/evidence/spec/spec.md", "canonical", "历史重定向"],
       forbidden: [/\| SSOT \| `\.agents\/ssot\/tools\/evidence\/?`/u],
     },
     {
@@ -363,11 +363,11 @@ function runGate(root) {
 
   const domainMarkers = [
     {
-      path: ".agents/ssot/configx/spec/spec.md",
+      path: ".agents/ssot/infra/configx/spec/spec.md",
       markers: ["MemorySource", "EnvSource", "FileSource", "LayeredConfig", "ConfigWatch", "SecretString", "远端配置中心"],
     },
     {
-      path: ".agents/ssot/schedulex/spec/spec.md",
+      path: ".agents/ssot/infra/schedulex/spec/spec.md",
       markers: ["JobRunner::tick", "宿主驱动", "分布式调度"],
     },
     {
