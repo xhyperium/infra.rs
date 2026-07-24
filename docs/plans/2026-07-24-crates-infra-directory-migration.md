@@ -194,7 +194,7 @@ cargo metadata --no-deps --format-version 1 \
 | `docs/report/2026-07-2{1,2,3}/**` 历史审查 | **不改**（快照）；如需可注脚「路径已迁移」 |
 | `CHANGELOG.md` 历史条目 | **不改**旧条；可选在 Unreleased 记一条 chore |
 | `evidence/**` 战役目录（非 crate） | 勿与 `crates/infra/evidence` 混淆；路径字符串按需检查 |
-| `.agents/ssot/**` 域名 | **不搬 SSOT 树**（仍为展平域名）；仅更新「本仓 path」表述 |
+| `.agents/ssot/**` 域名 | **不搬 SSOT 树**（v2.3.0 已恢复 infra 层级）；仅更新「本仓 path」表述 |
 
 ---
 

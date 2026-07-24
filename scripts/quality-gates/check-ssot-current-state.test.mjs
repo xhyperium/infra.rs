@@ -346,7 +346,7 @@ expectFailure(
 );
 
 expectFailure(
-  "新增第 27 对 dual spec",
+  "新增第 47 对 dual spec — 46 域之外新增未声明域",
   ({ root }) => {
     const directory = join(root, ".agents/ssot/extra/spec");
     mkdirSync(directory, { recursive: true });
@@ -357,7 +357,7 @@ expectFailure(
 );
 
 expectFailure(
-  "dual spec 域替换保持数量不变",
+  "dual spec 域替换保持 46 域数量不变但引入未声明域",
   ({ root }) => {
     rmSync(join(root, ".agents/ssot/infra/observex/spec"), { recursive: true, force: true });
     const directory = join(root, ".agents/ssot/replacement/spec");

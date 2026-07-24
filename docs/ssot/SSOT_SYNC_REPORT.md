@@ -76,8 +76,8 @@ du -sh <src> <dst>  # 字节级一致
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/kernel/   .agents/ssot/kernel/
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/testkit/  .agents/ssot/testkit/
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/types/    .agents/ssot/types/
-# infra（8 子域，源为 upstream/infra/，目标保留 infra/ 层级）
-for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
+# infra（9 子域，源为 upstream/infra/，目标保留 infra/ 层级）
+for sub in bootstrap configx evidence gate observex resiliencx schedulex testkitx transport; do
   rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/infra/$sub/ .agents/ssot/infra/$sub/
 done
 rsync -a --delete /home/workspace/xhyper.rs/.agent/SSOT/adapters/ .agents/ssot/adapters/

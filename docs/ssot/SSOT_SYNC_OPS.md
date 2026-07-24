@@ -40,7 +40,7 @@ for domain in kernel testkit types adapters contracts; do
   rsync -a --delete "$SRC/$domain/" "$DST/$domain/"
 done
 # infra（目标保留 infra/ 层级，与 crates/infra 对齐）
-for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
+for sub in bootstrap configx evidence gate observex resiliencx schedulex testkitx transport; do
   echo "→ syncing infra/$sub..."
   rsync -a --delete "$SRC/infra/$sub/" "$DST/infra/$sub/"
 done
@@ -73,7 +73,7 @@ rsync -a --delete "$SRC/types/" "$DST/types/"
 ### infra（目标 `.agents/ssot/infra/`）
 
 ```bash
-for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
+for sub in bootstrap configx evidence gate observex resiliencx schedulex testkitx transport; do
   rsync -a --delete "$SRC/infra/$sub/" "$DST/infra/$sub/"
 done
 ```
@@ -120,8 +120,8 @@ for domain in kernel testkit types adapters contracts; do
     printf "  ~ %-12s src=%d dst=%d\n" "$domain" "$src_n" "$dst_n"
   fi
 done
-# infra（8 子域；源在 $SRC/infra/，目标在 $DST/infra/）
-for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
+# infra（9 子域；源在 $SRC/infra/，目标在 $DST/infra/）
+for sub in bootstrap configx evidence gate observex resiliencx schedulex testkitx transport; do
   src_n=$(find "$SRC/infra/$sub" -type f 2>/dev/null | wc -l)
   dst_n=$(find "$DST/infra/$sub" -type f 2>/dev/null | wc -l)
   if [ "$src_n" -eq "$dst_n" ]; then

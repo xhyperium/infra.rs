@@ -1,0 +1,123 @@
+self-test.mjs tests
+
+§1 文件存在性与完整性
+  ok  脚本文件存在
+  ok  文件非空
+  ok  shebang 为 #!/usr/bin/env node
+  ok  使用 ESM import
+
+§2 语法检查
+  ok  node --check 通过
+
+§3 import 有效性
+  ok  child_process 导入 (execFileSync)
+  ok  fs 导入 (readdirSync)
+  ok  path 导入 (resolve, join, dirname, basename)
+  ok  url 导入 (fileURLToPath)
+
+§4 关键函数存在性
+  ok  包含 parseArgs 函数
+  ok  包含 syntaxCheck 函数
+  ok  包含 l0Check 函数
+  ok  包含 l1Check 函数
+  ok  包含递归模块收集函数
+  ok  包含独立测试收集函数
+  ok  包含 checkGroup 函数
+
+§5 parseArgs 逻辑
+  ok  无标志时 scripts/hooks/crates 全启用
+  ok  --scripts 标志支持
+  ok  --hooks 标志支持
+  ok  --crates 标志支持
+  ok  --lint-only 标志支持
+  ok  --verbose / -v 标志支持
+  ok  --help / -h 标志支持
+  ok  未知选项报错
+  ok  未知选项 exit(2)
+  ok  parseArgs 返回 scripts 字段
+  ok  parseArgs 返回 hooks 字段
+  ok  parseArgs 返回 crates 字段
+  ok  parseArgs 返回 lintOnly 字段
+  ok  parseArgs 返回 verbose 字段
+  ok  parseArgs 返回 help 字段
+
+§6 syntaxCheck 函数
+  ok  syntaxCheck 使用 execFileSync
+  ok  syntaxCheck 使用 --check
+  ok  syntaxCheck 返回 {ok:true}
+  ok  syntaxCheck 错误返回 {ok:false,error:...}
+
+§7 l0Check 函数
+  ok  l0Check 调用 syntaxCheck
+  ok  l0Check 检查 shebang
+  ok  l0Check 排除 test 文件
+  ok  l0Check 排除 hooks 目录
+  ok  l0Check 返回 {ok,issues}
+
+§8 l1Check 函数
+  ok  l1Check 检查文件存在
+  ok  l1Check 不存在时返回 skipped
+  ok  l1Check 执行 node testPath
+  ok  l1Check 超时 300000ms
+  ok  --lint-only 跳过 L1
+  ok  --crates 实际执行 cargo
+
+§9 checkGroup 函数
+  ok  moduleFiles 过滤 .mjs/.cjs
+  ok  moduleFiles 排除测试模块自身
+  ok  checkGroup 区分相邻测试并执行独立测试
+  ok  moduleFiles 按名称排序
+  ok  checkGroup 按模块所在目录构造 testPath
+
+§10 --help 标志
+  ok  --help 退出码 0
+  ok  -h 退出码 0
+
+§11 --scripts 标志
+  ok  --scripts L0 不崩溃
+
+§12 --hooks 标志
+  ok  --hooks L0 输出包含 Hooks 标题
+
+§13 --lint-only 标志
+  ok  --lint-only 不崩溃
+  ok  --lint-only 只做 L0 检查
+
+§14 --verbose 标志
+  ok  --verbose L0 可执行
+
+§15 临时目录测试
+  临时测试文件已创建
+  ok  good.mjs 语法正确
+  ok  bad-syntax.mjs 语法错误（正确检测到）
+  ok  good.mjs 可执行
+  ok  bad-syntax.mjs 不可执行（正确检测到）
+  ok  noshebang.mjs 可执行（只是缺少 shebang）
+  临时测试文件已清理
+
+§16 未知选项
+  ok  未知选项 exit(2)
+
+§17 --scripts --lint-only 组合
+  ok  --scripts --lint-only 不崩溃
+
+§18 无参数执行
+  ok  无参数默认开启 scripts/hooks/crates
+
+§19 Summary 格式
+  ok  Summary 输出包含 'Coverage' 标题
+  ok  Summary 输出包含 'Total modules:'
+  ok  Summary 输出包含 'pass' 统计
+  ok  Summary 输出包含 'fail' 统计
+  ok  Summary 输出包含 'Time:'
+  ok  Summary 含 'All modules pass' 成功信息
+  ok  Summary 含 'modules failed' 失败信息
+  ok  exit(0) 用于成功
+  ok  exit(1) 用于失败
+  ok  exit(2) 用于未知选项
+  ok  Summary 使用 all.filter 统计 L0
+  ok  Summary 使用 production filter 统计 L1
+
+78 个测试运行，0 个失败
+
+all passed

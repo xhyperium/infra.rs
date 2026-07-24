@@ -237,9 +237,9 @@ crates/
     └── contracts/          # contract-testkit
 ```
 
-这与 SSOT 规则「保留 `adapters/`、`tools/` 层级；infra 域展平为多个 domain 名」**不冲突**：
+这与 SSOT 规则「保留 `adapters/`、`tools/`、`infra/` 层级（v2.3.0 恢复）」**不冲突**：
 
-- SSOT 树：域名在 `.agents/ssot/{configx,bootstrap,…}`
+- SSOT 树：域名在 `.agents/ssot/infra/{configx,bootstrap,…}`
 - 源码树：用 `crates/infra/*` **物理归组**，package 名仍可 `configx` / `bootstrap` 不变
 
 ---
@@ -316,7 +316,7 @@ crates/
 | [seven-l1-contracts-dual-bar-readiness.md](../2026-07-21/seven-l1-contracts-dual-bar-readiness.md) | 七包双栏（能力 + contracts） |
 | [crates/AGENTS.md](../../../crates/AGENTS.md) | crate 标准布局与概览 |
 | [ARCHITECTURE.md](../../../ARCHITECTURE.md) | 层次模型（部分叙述可能滞后） |
-| [.agents/ssot/SSOT.md](../../../.agents/ssot/SSOT.md) | 域规格 SSOT 规则（infra 展平） |
+| [.agents/ssot/SSOT.md](../../../.agents/ssot/SSOT.md) | 域规格 SSOT 规则（v2.3.0 infra 层级已恢复） |
 | [文档组织约定](../../../.agents/rules/文档组织约定.md) | 报告落盘路径规范 |
 | [PLAN-INFRA-DIR-001 实施计划](../../plans/2026-07-24-crates-infra-directory-migration.md) | 方案 A 可执行迁移计划（path 矩阵 / 波次 / 门禁） |
 

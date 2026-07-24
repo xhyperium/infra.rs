@@ -1,0 +1,39 @@
+name: SSOT Dual-Specs 门禁
+
+# 46 域 dual-specs 同构校验
+# 内部分布：kernel(1) testkit(1) types(2) contracts(1) tools(3)
+#           infra(9) adapters/exchange(2) adapters/storage(7)
+#           core(4) market_data(6) macro_data(10)
+# 验证：spec.md ≡ xhyper-<name>-complete-spec.md（逐字节一致）
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".agents/ssot/**"
+      - "scripts/quality-gates/check-ssot-current-state.mjs"
+      - "scripts/quality-gates/check-ssot-current-state.test.mjs"
+      - ".github/workflows/ssot-dual-specs.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dual-specs:
+    name: Dual-Specs 同构校验 (46 域)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - id: checkout-46-domains
+        uses: actions/checkout@v4
+      - id: dual-specs-check-46-domains
+        name: 校验 46 域 dual-specs (spec.md ≡ complete-spec.md)
+        run: node scripts/quality-gates/check-ssot-current-state.mjs
+      - id: dual-specs-test-46-domains
+        name: SSOT 隔离负向测试
+        run: node scripts/quality-gates/check-ssot-current-state.test.mjs

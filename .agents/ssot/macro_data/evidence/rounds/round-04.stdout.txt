@@ -1,0 +1,36 @@
+worktree-policy tests
+  ok  WORKTREE_PATH_RULE
+  ok  bareBranch strips refs
+  ok  canonicalWorktreePath
+  ok  worktreeBasePath
+  ok  isPathInside child
+  ok  isPathInside self
+  ok  isPathInside outside
+  ok  canonicalExistingPath 保留不存在尾部
+  ok  isMainWorkspaceTopLevel true
+  ok  isMainWorkspaceTopLevel false
+  ok  resolveMainProjectRoot from worktree hooks path
+  ok  resolveMainProjectRoot from main
+  ok  resolveMainProjectRoot main root
+  ok  deny main checkout edit
+  ok  deny relative main path
+  ok  allow worktree path
+  ok  allow outside repo
+  ok  allow with bypass
+  ok  allow gitignored path
+  ok  deny tracked path when not ignored
+  ok  deny canonical path escape
+  ok  block checkout -b
+  ok  block switch -c
+  ok  block switch feature
+  ok  allow switch main
+  ok  allow worktree add
+  ok  allow status
+  ok  block commit on main
+  ok  allow commit on feature
+  ok  bypass off
+  ok  环境变量绕过仍关闭
+  ok  compliant path
+  ok  root is not compliant feature path
+
+all passed
