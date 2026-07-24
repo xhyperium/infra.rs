@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - "crates/evidence/**"
+      - "crates/infra/evidence/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "scripts/quality-gates/cov-gate-100.mjs"
@@ -37,4 +37,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/quality-gates/cov-gate-100.mjs -p evidence --filter crates/evidence/src
+        run: node scripts/quality-gates/cov-gate-100.mjs -p evidence --filter crates/infra/evidence/src

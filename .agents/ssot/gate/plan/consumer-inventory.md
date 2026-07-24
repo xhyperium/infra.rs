@@ -41,12 +41,12 @@ cargo tree -i gate   # → did not match any packages
 
 ```text
 xhyper-gate v0.1.0 (/home/workspace/infra.rs/crates/gate)
-└── xhyper-bootstrap v0.1.0 (/home/workspace/infra.rs/crates/bootstrap)
+└── xhyper-bootstrap v0.1.0 (/home/workspace/infra.rs/crates/infra/bootstrap)
 ```
 
 | Dependent | Kind | Notes |
 |-----------|------|-------|
-| `xhyper-bootstrap` | production path dep | `crates/bootstrap/Cargo.toml` → `xhyper-gate = { path = "../gate" }` |
+| `xhyper-bootstrap` | production path dep | `crates/infra/bootstrap/Cargo.toml` → `xhyper-gate = { path = "../gate" }` |
 
 **无**其他 workspace 生产 package 依赖 `xhyper-gate`。
 
@@ -64,14 +64,14 @@ use gate::|gate::(Gate|Capability)|register_capability|Gate::(new|register|resol
 
 | File | Usage |
 |------|-------|
-| `crates/bootstrap/src/lib.rs` | `use gate::{Capability, Gate}`；`Gate::new()`；`register_capability`；`AppContext` 持有 `gate`；`gate()` accessor |
+| `crates/infra/bootstrap/src/lib.rs` | `use gate::{Capability, Gate}`；`Gate::new()`；`register_capability`；`AppContext` 持有 `gate`；`gate()` accessor |
 
 ### 3.2 Tests
 
 | File | Usage |
 |------|-------|
-| `crates/bootstrap/src/lib.rs` `#[cfg(test)]` | DummyCap、register、resolve、len、is_empty |
-| `crates/bootstrap/tests/e2e.rs` | E2ECap、register、ctx.gate().resolve |
+| `crates/infra/bootstrap/src/lib.rs` `#[cfg(test)]` | DummyCap、register、resolve、len、is_empty |
+| `crates/infra/bootstrap/tests/e2e.rs` | E2ECap、register、ctx.gate().resolve |
 | `crates/gate/src/lib.rs` tests | Gate 自测（随 crate 删除） |
 
 ### 3.3 未发现
@@ -142,5 +142,5 @@ Do not touch as "consumers":
 ```bash
 cargo tree -i xhyper-gate --workspace
 cargo metadata --format-version 1 --no-deps | jq '.packages[] | select(.name|test("gate")) | {name, manifest_path}'
-rg -n 'use gate::|gate::(Gate|Capability)|register_capability' --glob '*.rs' crates/bootstrap crates/gate
+rg -n 'use gate::|gate::(Gate|Capability)|register_capability' --glob '*.rs' crates/infra/bootstrap crates/gate
 ```

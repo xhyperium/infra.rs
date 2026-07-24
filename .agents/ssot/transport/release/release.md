@@ -19,7 +19,7 @@
 0.1.4 在 0.1.3 上继续收紧 URL Debug、兼容池构造和异常关闭语义，并补齐隐藏 public
 hook、factory unwind、锁中毒与超时证据；资源上限、RFC 9110 `Retry-After`、SNI fail-closed、
 pool RAII/poison/factory unwind 许可恢复，以及 WS decoder 前置限制。用户可见摘要见
-[`crates/transport/releases/0.1.4.md`](../../../../crates/transport/releases/0.1.4.md)。
+[`crates/infra/transport/releases/0.1.4.md`](../../../../crates/infra/transport/releases/0.1.4.md)。
 
 ## 发布红线
 

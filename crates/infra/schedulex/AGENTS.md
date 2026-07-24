@@ -28,7 +28,7 @@
 cargo test -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
 cargo fmt --all --check
-node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/schedulex/src
+node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/infra/schedulex/src
 ```
 
 不得把本地测试通过外推为 package stable、生产平台 readiness 或分布式能力。

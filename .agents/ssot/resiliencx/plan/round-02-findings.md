@@ -47,10 +47,10 @@
 | `cargo test -p resiliencx --all-features --all-targets` | 0 | 80 个 Rust 测试通过；bench/examples targets 通过 |
 | `cargo clippy -p resiliencx --all-features --all-targets -- -D warnings` | 0 | 无 warning |
 | `cargo doc -p resiliencx --all-features --no-deps` | 0 | rustdoc 生成成功 |
-| `node scripts/quality-gates/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src` | 0 | 994 / 994 行命中，100% |
+| `node scripts/quality-gates/cov-gate-100.mjs -p resiliencx --filter crates/infra/resiliencx/src` | 0 | 994 / 994 行命中，100% |
 | active/complete spec `cmp` | 0 | 双镜像一致 |
 | scoped `git diff --check` | 0 | 无 whitespace 错误 |
-| `crates/resiliencx/Cargo.toml` base diff | 0 | 本任务未改 manifest 或版本 |
+| `crates/infra/resiliencx/Cargo.toml` base diff | 0 | 本任务未改 manifest 或版本 |
 
 本表记录共享 worktree 的本地执行；没有原始日志归档、CI artifact、固定提交、commit 或发布动作。
 共享 worktree 的 `Cargo.lock` 当前存在其他 writer 的并行 diff；本任务未编辑、格式化或回退该越界文件。

@@ -18,7 +18,7 @@
 ## 目录
 
 ```text
-crates/transport/
+crates/infra/transport/
 ├── Cargo.toml
 ├── src/lib.rs
 ├── tests/          # mock / HTTP driver / WS loopback
@@ -34,5 +34,5 @@ crates/transport/
 ```bash
 cargo test -p transportx --all-targets
 cargo clippy -p transportx --all-targets --all-features -- -D warnings
-node scripts/quality-gates/cov-gate-100.mjs -p transportx --filter crates/transport/src
+node scripts/quality-gates/cov-gate-100.mjs -p transportx --filter crates/infra/transport/src
 ```

@@ -19,7 +19,7 @@
 ## 目录
 
 ```text
-crates/configx/
+crates/infra/configx/
 ├── Cargo.toml
 ├── src/lib.rs          # ConfigStore + 单元/毒锁测试
 ├── tests/              # 公开面 + 并发集成测试

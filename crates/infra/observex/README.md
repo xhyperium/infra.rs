@@ -6,7 +6,7 @@ L1 **tracing/metrics 封装**（SPEC-INFRA-OBSERVEX 0.1.2 / ADR-005）。
 |----|-----|
 | package / lib | `observex` |
 | lib | `observex` |
-| path | `crates/observex` |
+| path | `crates/infra/observex` |
 | version | `0.1.2` |
 | publish | `false` |
 
@@ -57,7 +57,7 @@ instr.record_circuit_close("fetch");
 ```bash
 cargo test -p observex --all-targets
 cargo clippy -p observex --all-targets -- -D warnings
-node scripts/quality-gates/cov-gate-100.mjs -p observex --filter crates/observex/src
+node scripts/quality-gates/cov-gate-100.mjs -p observex --filter crates/infra/observex/src
 ```
 
 ## 非职责

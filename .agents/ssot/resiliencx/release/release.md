@@ -18,4 +18,4 @@ root 已在同一 PR 内完成从 `0.1.1` 到 `0.1.2` 的 PATCH bump；按 R-C2 
 与合并证据。当前未创建 tag，
 未执行外部发布，也没有签名或校验和；`publish = false` 保持不变。
 
-crate 侧候选记录见 `crates/resiliencx/releases/round-03-2026-07-23.md`。
+crate 侧候选记录见 `crates/infra/resiliencx/releases/round-03-2026-07-23.md`。

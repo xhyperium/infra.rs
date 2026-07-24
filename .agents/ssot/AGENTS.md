@@ -30,7 +30,7 @@ matrix/ gate/ evidence/   + README.md
 | `{bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport}/` | infra 面（gate 等可仅规格） |
 | `adapters/{exchange,storage}/…` | 九 adapter 域（保留 `adapters/` 层级） |
 | `contracts/` | trait 出口规格 |
-| `evidence/` | evidence canonical current-state 规格；实现位于 `crates/evidence` |
+| `evidence/` | evidence canonical current-state 规格；实现位于 `crates/infra/evidence` |
 | `tools/{goalctl,xtask,verifyctl}/` | 工具域（保留 `tools/` 层级） |
 | `tools/evidence/` | 历史重定向入口；不得创建第二份 active spec |
 

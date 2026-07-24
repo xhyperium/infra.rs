@@ -22,10 +22,10 @@ const root = join(__dirname, "..", "..");
 
 const SCAN_ROOTS = [
   "crates/adapters",
-  "crates/bootstrap/src",
-  "crates/observex/src",
-  "crates/resiliencx/src",
-  "crates/transport/src",
+  "crates/infra/bootstrap/src",
+  "crates/infra/observex/src",
+  "crates/infra/resiliencx/src",
+  "crates/infra/transport/src",
 ];
 
 /** 明显的 panicking 生产调用形态（保守启发式，非完整类型分析）。 */

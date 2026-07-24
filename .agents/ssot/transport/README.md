@@ -1,6 +1,6 @@
 # transport — Goal 管线契约
 
-> 实现 / 代码唯一位置：`crates/transport`  
+> 实现 / 代码唯一位置：`crates/infra/transport`  
 > **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-transportx-complete-spec.md](spec/xhyper-transportx-complete-spec.md)  
 > **Source Goal**：见 [goal/goal.md](goal/goal.md) — `0.1.4` **IMPLEMENTED CANDIDATE**
 > **布局**：对齐 [`.agents/ssot/kernel/`](../kernel/)（[AGENTS.md](../../../AGENTS.md) §2）  
@@ -18,7 +18,7 @@
 | Plan | [plan/plan.md](plan/plan.md) | 三轮收敛计划 |
 | Tasks | [tasks/tasks.md](tasks/tasks.md) | 本地完成 + 交付待办 |
 | Prompt | [prompt/prompt.md](prompt/prompt.md) | 最终交付上下文 |
-| **Code** | **`crates/transport`** | 实现不在 `.agents/ssot/` |
+| **Code** | **`crates/infra/transport`** | 实现不在 `.agents/ssot/` |
 | Test | [test/test.md](test/test.md) | 本地证据由 manifest 绑定 |
 | Review | [review/review.md](review/review.md) | PENDING |
 | Release | [release/release.md](release/release.md) | NOT RELEASED |

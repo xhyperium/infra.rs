@@ -1,6 +1,6 @@
 # adapters/storage/postgres — Evidence
 
-> 模块战役证据落盘处（≠ `crates/evidence` 生产库）。
+> 模块战役证据落盘处（≠ `crates/infra/evidence` 生产库）。
 
 ## 本仓证据索引
 

@@ -12,7 +12,7 @@
 
 本设计解释当前实现边界与关键取舍。`spec.md` 定义必须满足的契约；本设计说明边界与取舍；源码和测试提供可执行事实。gate 只记录与当前 commit 绑定的新鲜验证结果。
 
-仓库位置：`evidence` crate 的 `path: crates/evidence`，其 current-state spec 位于 `.agents/ssot/evidence/`；`tools/evidence` 不是当前路径。
+仓库位置：`evidence` crate 的 `path: crates/infra/evidence`，其 current-state spec 位于 `.agents/ssot/evidence/`；`tools/evidence` 不是当前路径。
 
 ## 1. 总体结构
 

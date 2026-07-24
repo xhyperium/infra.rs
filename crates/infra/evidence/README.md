@@ -24,7 +24,7 @@ L1 **审计证据追加面**：trait + 进程内实现，供 bootstrap 注入。
 ```bash
 cargo test -p evidence --all-targets
 cargo clippy -p evidence --all-targets -- -D warnings
-node scripts/cov-gate-100.mjs -p evidence --filter crates/evidence/src
+node scripts/cov-gate-100.mjs -p evidence --filter crates/infra/evidence/src
 ```
 
 ## 生产误用红线

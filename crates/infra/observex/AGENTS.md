@@ -6,7 +6,7 @@
 ## 身份
 
 - **L1 observability**（`publish = false`）
-- package / lib：`observex` · path：`crates/observex`
+- package / lib：`observex` · path：`crates/infra/observex`
 - 稳定公开面：`TracingInstrumentation`（+ 别名 `ObservexInstrumentation`）
 
 ## 本 crate 约束
@@ -15,7 +15,7 @@
 - `default = []`；禁止 feature 泄漏
 - exporter 返回的 `ExportError` 不得改变记录调用返回；同步泛型 exporter 的阻塞与 panic 边界必须诚实记录
 - 只允许自定义有界进程内 sink；禁止宣称 OpenTelemetry API/SDK、OTLP 或远程持久化
-- 验证：`cargo test -p observex --all-targets` · clippy · `node scripts/quality-gates/cov-gate-100.mjs -p observex --filter crates/observex/src`
+- 验证：`cargo test -p observex --all-targets` · clippy · `node scripts/quality-gates/cov-gate-100.mjs -p observex --filter crates/infra/observex/src`
 - 对齐：[`../../docs/ssot/observex-ssot-alignment.md`](../../docs/ssot/observex-ssot-alignment.md)
 
 ## 与 SSOT 镜像的关系

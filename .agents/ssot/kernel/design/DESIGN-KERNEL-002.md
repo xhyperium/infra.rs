@@ -170,7 +170,7 @@ flowchart TB
   subgraph L0reg["registry layer=kernel（语义层标签）"]
     K["kernel · path: crates/kernel · L0 语义根"]
     TK["testkit · path: crates/testkit · registry layer=kernel"]
-    EV["evidence · path: crates/evidence · registry layer=kernel"]
+    EV["evidence · path: crates/infra/evidence · registry layer=kernel"]
   end
 
   D -->|R1: L0 + types only| K
@@ -190,7 +190,7 @@ flowchart TB
 **双轴说明（layer 标签 vs 物理目录）**：
 
 - registry `layer = "kernel"` 表示 **语义归属 L0 信任带**，不是「与 `kernel` 同 crate」。
-- `evidence` 物理在 `crates/evidence`；current-state spec 位于 `.agents/ssot/evidence/`；`testkit` 在 `crates/testkit`。上图边均为 **依赖 kernel**，无反向箭头。
+- `evidence` 物理在 `crates/infra/evidence`；current-state spec 位于 `.agents/ssot/evidence/`；`testkit` 在 `crates/testkit`。上图边均为 **依赖 kernel**，无反向箭头。
 - 注：历史 `crates/gate` 已退役；历史 monorepo 机器门禁曾由 `tools/archgate` 承载。**infra.rs 不适用（OOS）**：本仓不移植 archgate，不维护 `.architecture/**`；机控走结构扫描 / tests / CI。
 
 | 规则 | 对 kernel 的含义 |
@@ -411,7 +411,7 @@ monotonic():
 6. **构造入口分轨（勿混）**：
    - **KERNEL-TIME-003**：**只**允许 `from_unix_nanos` 调用点在既定 allowlist（历史 `FROM_UNIX_NANOS_ALLOW`）：  
      `crates/kernel/`、`crates/testkit/`、  
-     `crates/domain/macro/`、`crates/evidence/src/`、`crates/adapters/evidence/`，  
+     `crates/domain/macro/`、`crates/infra/evidence/src/`、`crates/adapters/evidence/`，  
      `crates/adapters/exchange/binance/src/rest.rs`、  
      `crates/adapters/exchange/okx/src/rest.rs`  
      （后几者为同文件 `#[cfg(test)]` FixedClock 字面墙钟 / 持久化还原墙钟）。

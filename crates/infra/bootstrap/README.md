@@ -64,7 +64,7 @@ Redis/NATS 仅作为固定摘要组合实验的 dev-dependencies；`ContractStor
 cargo test -p bootstrap --all-targets
 cargo clippy -p bootstrap --all-targets -- -D warnings
 node scripts/storage-composition-conformance.mjs
-node scripts/quality-gates/cov-gate-100.mjs -p bootstrap --filter crates/bootstrap/src
+node scripts/quality-gates/cov-gate-100.mjs -p bootstrap --filter crates/infra/bootstrap/src
 ```
 
 ## 关停与 drain 合同

@@ -237,7 +237,7 @@ conflicts_with
   "authority_id": "ADR-012",
   "scope": {
     "modules": ["evidence"],
-    "paths": ["crates/evidence/**"],
+    "paths": ["crates/infra/evidence/**"],
     "capabilities": ["audit-storage"]
   },
   "effective_from": "commit-or-version",

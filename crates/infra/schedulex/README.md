@@ -5,7 +5,7 @@ std-only 的 L1 任务 ID registry 与显式 tick Job runner。
 | 项 | 值 |
 |---|---|
 | package / lib | `schedulex` / `schedulex` |
-| path | `crates/schedulex` |
+| path | `crates/infra/schedulex` |
 | current version | `0.1.1` |
 | publish | `false` |
 | production deps | 无 |
@@ -47,5 +47,5 @@ assert_eq!(runner.tick(10).fired, 1);
 ```bash
 cargo test -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
-node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/schedulex/src
+node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/infra/schedulex/src
 ```

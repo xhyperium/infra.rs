@@ -195,7 +195,7 @@ RUSTFLAGS='--cfg loom' cargo test -p kernel --test lifecycle_concurrency_loom --
 | 项 | 前状态 | 现状态 | 证据 |
 |----|--------|--------|------|
 | archgate / `.architecture` | OOS | **OOS-Accept** | 本仓明确不移植；机控 = 结构扫描 / CI / `check-public-api.mjs` |
-| 组合根 drain 所有权 | 审查侧 DEFER（「在 bootstrap」） | **PASS**（归属 bootstrap） | `crates/bootstrap/src/drain.rs` · `AsyncDrain` · `Bootstrap::register_drain` / `AppContext::run_drain`；**不**在 kernel 实现 |
+| 组合根 drain 所有权 | 审查侧 DEFER（「在 bootstrap」） | **PASS**（归属 bootstrap） | `crates/infra/bootstrap/src/drain.rs` · `AsyncDrain` · `Bootstrap::register_drain` / `AppContext::run_drain`；**不**在 kernel 实现 |
 
 ## 未做（follow-up，不阻塞本仓语义对齐）
 

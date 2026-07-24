@@ -49,7 +49,7 @@
 
 | Checkbox | 映射 | 裁定 |
 |----------|------|------|
-| crates/evidence…字段私有 | T-CORE-\* 表 | **OK**（全部真实 ID） |
+| crates/infra/evidence…字段私有 | T-CORE-\* 表 | **OK**（全部真实 ID） |
 
 \*Subject 规范化（§7.2 领域策略）仍无独立 Task——字段有、策略无；记 omission，不单独否决 33.2 字面勾选（勾选写 actor/subject 完整，依赖 T-CORE-008/010）。
 

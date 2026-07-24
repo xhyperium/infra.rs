@@ -209,7 +209,7 @@ B 否定终态:    文案 PASS
 | 3 | R-SPEC-003 | **FAIL** | 幽灵 T-ATOM；external 无 ID；33.5 规划桶 |
 | 4 | R-GAP-001 | PASS* | DEF-001…018 在 gap+todo；\*residual-open 文件缺 |
 | 5 | R-GAP-002 | **FAIL** | T1–T18 无 Task 绑定表（R3） |
-| 6 | R-PATH-001 | PASS | plan §5 crates/evidence |
+| 6 | R-PATH-001 | PASS | plan §5 crates/infra/evidence |
 | 7 | R-PATH-002 | PASS | adapters 三路径写明 |
 | 8 | R-PATH-003 | PASS | CLI + 删 tools/evidence |
 | 9 | R-DEP-001 | PASS | kernel+sha2+thiserror |

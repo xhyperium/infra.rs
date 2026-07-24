@@ -13,7 +13,7 @@ name = "configx"
 
 [dependencies]
 # Active SSOT §2：普通依赖仅 xhyper-kernel；不得增加其他 L1
-kernel = { path = "../kernel", version = "0.3.1" }
+kernel = { path = "../../kernel", version = "0.3.1" }
 
 [features]
 # Active SSOT §2：无 feature；新增前须由真实配置源需求评审

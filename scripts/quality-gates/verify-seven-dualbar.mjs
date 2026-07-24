@@ -32,7 +32,7 @@ for (const p of pkgs) {
 const list = pkgs.join(" -p ");
 run(`cargo test -p ${list} --all-targets`);
 for (const p of pkgs) {
-  const path = p === "transportx" ? "crates/transport" : `crates/${p}`;
+  const path = p === "transportx" ? "crates/infra/transport" : `crates/${p}`;
   run(`node scripts/quality-gates/cov-gate-100.mjs -p ${p} --filter ${path}/src`);
 }
 console.log("verify-seven-dualbar: PASS");

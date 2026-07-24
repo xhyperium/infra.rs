@@ -43,7 +43,7 @@ notes: |
 | R-SPEC-003 | **FAIL** | tasks “§33 勾选→Task 映射” incomplete: (a) `external Attempted+terminal` = “订单域后续；policy 预留” — **no Task ID**; (b) Tier-A 原子性 cites phantom **`T-ATOM via design`** (no such task); (c) several 33.5 items only map to `T-CI-002` “规划/草案”, not executable close-out ACs. |
 | R-GAP-001 | **PASS** | DEF-001…018 in gap-matrix §4 + evidence-todo §1. (`T-RES-001` residual file still TODO, but IDs are registered.) |
 | R-GAP-002 | **PASS** | T1–T18 in gap-matrix §2 + todo §3 with Wave coverage. |
-| R-PATH-001 | **PASS** | plan §5 `crates/evidence/`. |
+| R-PATH-001 | **PASS** | plan §5 `crates/infra/evidence/`. |
 | R-PATH-002 | **PASS** | plan §5 memory/file/postgres under `crates/adapters/evidence/`. |
 | R-PATH-003 | **PASS** | plan §5 `tools/evidence-cli/`; W6/T-CUT-002 delete `tools/evidence`. |
 | R-DEP-001 | **PASS** | plan §5 + T-CORE-002: kernel+sha2+thiserror. |

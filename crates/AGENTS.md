@@ -171,12 +171,12 @@ node scripts/docs/gen-crate-status.mjs --check       # CI 新鲜度
 | `kernel`（lib `kernel`） | `crates/kernel/` | L0 语义信任根（clock / lifecycle） |
 | `testkit`（lib `testkit`） | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
 | `contract-testkit`（lib `contract_testkit`） | `crates/test-support/contracts/` | Fake + per-trait suite（仅 dev-dep） |
-| `xhyper-configx`（lib `configx`） | `crates/configx/` | L1 配置存储（MemoryConfigStore） |
-| `xhyper-schedulex`（lib `schedulex`） | `crates/schedulex/` | L1 任务 ID 登记表（active SSOT：无真实定时器） |
+| `xhyper-configx`（lib `configx`） | `crates/infra/configx/` | L1 配置存储（MemoryConfigStore） |
+| `xhyper-schedulex`（lib `schedulex`） | `crates/infra/schedulex/` | L1 任务 ID 登记表（active SSOT：无真实定时器） |
 | `decimalx`（lib `decimalx`） | `crates/types/decimal/` | 十进制数值 / Money（ADR-006/007） |
 | `canonical`（lib `canonical`） | `crates/types/canonical/` | 跨层共享纯 DTO（ADR-001；Money 复用 decimalx） |
-| `resiliencx`（lib `resiliencx`） | `crates/resiliencx/` | L1 重试 + 熔断 + 限流 + 舱壁 + async retry（infra-s9t） |
-| `bootstrap` | `crates/bootstrap/` | L1 唯一组合根；正式 KV/EventBus typed composition |
+| `resiliencx`（lib `resiliencx`） | `crates/infra/resiliencx/` | L1 重试 + 熔断 + 限流 + 舱壁 + async retry（infra-s9t） |
+| `bootstrap` | `crates/infra/bootstrap/` | L1 唯一组合根；正式 KV/EventBus typed composition |
 | `xhyper-contracts` | `crates/contracts/` | adapter trait 出口（Exchange/Storage） |
 | `binancex` | `crates/adapters/exchange/binance/` | Binance exchange adapter（生产默认 REST+WS，#210+#214） |
 | `okxx` | `crates/adapters/exchange/okx/` | OKX exchange adapter（生产默认 REST+WS，#210+#214） |

@@ -19,7 +19,7 @@
 ## 目录
 
 ```text
-crates/bootstrap/
+crates/infra/bootstrap/
 ├── Cargo.toml
 ├── src/{lib,error,bounded,traits,contract_store_set}.rs
 ├── examples/minimal.rs

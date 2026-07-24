@@ -1,4 +1,4 @@
-# AGENTS — crates/resiliencx
+# AGENTS — crates/infra/resiliencx
 
 - Package / lib：`resiliencx` · 当前版本：`0.1.2`
 - 定位：L1 **安全重试 + budget + 退避/jitter/可注入 wait + 熔断 + 限流 + 舱壁**
@@ -18,7 +18,7 @@ cargo fmt -p resiliencx -- --check
 cargo test -p resiliencx --all-features --all-targets
 cargo clippy -p resiliencx --all-features --all-targets -- -D warnings
 cargo doc -p resiliencx --all-features --no-deps
-node scripts/quality-gates/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
+node scripts/quality-gates/cov-gate-100.mjs -p resiliencx --filter crates/infra/resiliencx/src
 cmp .agents/ssot/resiliencx/spec/spec.md \
     .agents/ssot/resiliencx/spec/xhyper-resiliencx-complete-spec.md
 ```

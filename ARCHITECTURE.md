@@ -85,9 +85,9 @@ infra.rs/
 │  crates/testkit/                           │  T0 test-support（仅 dev-dep）
 │  └── ManualClock 族                        │
 ├────────────────────────────────────────────┤
-│  crates/configx/                           │  L1 内存 KV（非多源热更新）
+│  crates/infra/configx/                           │  L1 内存 KV（非多源热更新）
 │  └── ConfigStore                           │
-│  crates/bootstrap/                         │  L1 唯一组合根（ADR-016）
+│  crates/infra/bootstrap/                         │  L1 唯一组合根（ADR-016）
 │  └── typed composition / shutdown owner    │
 ├────────────────────────────────────────────┤
 │  crates/types/canonical/                   │  跨层共享纯 DTO

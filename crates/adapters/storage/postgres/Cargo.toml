@@ -20,7 +20,7 @@ contracts = { path = "../../../contracts", version = "0.1.4" }
 deadpool-postgres = { workspace = true }
 futures-util = { workspace = true }
 kernel = { path = "../../../kernel", version = "0.3.1" }
-resiliencx = { path = "../../../resiliencx", version = "0.1.2", features = [
+resiliencx = { path = "../../../infra/resiliencx", version = "0.1.2", features = [
   "tokio",
 ] }
 rustls = { workspace = true }

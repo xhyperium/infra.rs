@@ -6,7 +6,7 @@
 |------|-----|
 | 日期 | 2026-07-23 |
 | Base | `3cd29a942710c0fb42f3f6bc05e3c31570acad47` |
-| 范围 | `crates/resiliencx/**`、`.agents/ssot/resiliencx/**`、`docs/ssot/resiliencx-ssot-alignment.md` |
+| 范围 | `crates/infra/resiliencx/**`、`.agents/ssot/resiliencx/**`、`docs/ssot/resiliencx-ssot-alignment.md` |
 | 版本 | 保持 `0.1.1`；任务明确禁止版本变更 |
 
 ## 发现与处置
@@ -59,7 +59,7 @@
 | `cargo test -p resiliencx --all-features --all-targets` | 0 | round-01 复审前：41 unit + 36 其他测试/target 通过 |
 | `cargo clippy -p resiliencx --all-features --all-targets -- -D warnings` | 0 | 无 warning |
 | `cmp .agents/ssot/resiliencx/spec/spec.md .agents/ssot/resiliencx/spec/xhyper-resiliencx-complete-spec.md` | 0 | 双镜像一致 |
-| `git diff --check -- crates/resiliencx .agents/ssot/resiliencx docs/ssot/resiliencx-ssot-alignment.md` | 0 | scoped diff 无 whitespace 错误 |
+| `git diff --check -- crates/infra/resiliencx .agents/ssot/resiliencx docs/ssot/resiliencx-ssot-alignment.md` | 0 | scoped diff 无 whitespace 错误 |
 | `cargo doc -p resiliencx --all-features --no-deps` | 0 | 公共 rustdoc 可生成 |
 
 首次 `cargo fmt --all --check` 因同一共享 worktree 中其他 writer 的 bootstrap 未格式化 diff 返回 1；

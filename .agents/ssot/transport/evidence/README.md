@@ -1,6 +1,6 @@
 # transport — Evidence（横切）
 
-> 模块战役证据落盘处（≠ `crates/evidence` 生产库）。  
+> 模块战役证据落盘处（≠ `crates/infra/evidence` 生产库）。  
 > 当前跨域候选证据：仓库根
 > [`manifest.json`](../../../../evidence/testkit/2026-07-23-infra-2d9.10/manifest.json)。
 > 固定代码与本地门禁结果的绑定以该 manifest 为准，本索引不嵌入可过期 SHA；

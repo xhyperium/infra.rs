@@ -60,5 +60,5 @@
 transportx 只封装客户端 HTTP/WS、TLS/代理配置与进程内池，不实现 resiliencx 策略、
 业务认证、服务发现或跨进程治理。企业 PKI/mTLS、M3 与 live 矩阵继续 **NO-GO**。
 
-实现入口见 [`crates/transport`](../../../../crates/transport/README.md)，追溯见
+实现入口见 [`crates/infra/transport`](../../../../crates/infra/transport/README.md)，追溯见
 [`matrix/matrix.md`](../matrix/matrix.md)。

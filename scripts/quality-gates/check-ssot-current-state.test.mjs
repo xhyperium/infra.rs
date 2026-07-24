@@ -26,17 +26,17 @@ const expectedPackages = [
   ["postgresx", "crates/adapters/storage/postgres/Cargo.toml"],
   ["redisx", "crates/adapters/storage/redis/Cargo.toml"],
   ["taosx", "crates/adapters/storage/taos/Cargo.toml"],
-  ["bootstrap", "crates/bootstrap/Cargo.toml"],
-  ["configx", "crates/configx/Cargo.toml"],
+  ["bootstrap", "crates/infra/bootstrap/Cargo.toml"],
+  ["configx", "crates/infra/configx/Cargo.toml"],
   ["contracts", "crates/contracts/Cargo.toml"],
-  ["evidence", "crates/evidence/Cargo.toml"],
+  ["evidence", "crates/infra/evidence/Cargo.toml"],
   ["kernel", "crates/kernel/Cargo.toml"],
-  ["observex", "crates/observex/Cargo.toml"],
-  ["resiliencx", "crates/resiliencx/Cargo.toml"],
-  ["schedulex", "crates/schedulex/Cargo.toml"],
+  ["observex", "crates/infra/observex/Cargo.toml"],
+  ["resiliencx", "crates/infra/resiliencx/Cargo.toml"],
+  ["schedulex", "crates/infra/schedulex/Cargo.toml"],
   ["contract-testkit", "crates/test-support/contracts/Cargo.toml"],
   ["testkit", "crates/testkit/Cargo.toml"],
-  ["transportx", "crates/transport/Cargo.toml"],
+  ["transportx", "crates/infra/transport/Cargo.toml"],
   ["canonical", "crates/types/canonical/Cargo.toml"],
   ["decimalx", "crates/types/decimal/Cargo.toml"],
   ["goalctl", "tools/goalctl/Cargo.toml"],
@@ -56,11 +56,11 @@ function makeFixture() {
   cpSync(join(repoRoot, "CLAUDE.md"), join(root, "CLAUDE.md"));
   cpSync(join(repoRoot, ".agents", "ssot"), join(root, ".agents", "ssot"), { recursive: true });
   for (const file of [
-    "crates/configx/src/source.rs",
-    "crates/configx/src/layered.rs",
-    "crates/configx/src/watch.rs",
-    "crates/configx/src/secret.rs",
-    "crates/schedulex/src/runner.rs",
+    "crates/infra/configx/src/source.rs",
+    "crates/infra/configx/src/layered.rs",
+    "crates/infra/configx/src/watch.rs",
+    "crates/infra/configx/src/secret.rs",
+    "crates/infra/schedulex/src/runner.rs",
     "crates/adapters/exchange/binance/src/lib.rs",
     "crates/adapters/exchange/binance/src/adapter.rs",
     "crates/adapters/exchange/binance/tests/live_server_time.rs",
@@ -284,7 +284,7 @@ expectFailure(
   "kernel 设计恢复旧 evidence 物理路径",
   ({ root }) => {
     mutate(join(root, ".agents/ssot/kernel/design/design.md"), (text) =>
-      text.replace("path: crates/evidence", "path: tools/evidence"),
+      text.replace("path: crates/infra/evidence", "path: tools/evidence"),
     );
   },
   "current-state-docs",
@@ -293,7 +293,7 @@ expectFailure(
 expectFailure(
   "source 表面删除后规格不可继续通过",
   ({ root }) => {
-    mutate(join(root, "crates/configx/src/source.rs"), (text) =>
+    mutate(join(root, "crates/infra/configx/src/source.rs"), (text) =>
       text.replace("pub struct FileSource", "struct RemovedFileSource"),
     );
   },

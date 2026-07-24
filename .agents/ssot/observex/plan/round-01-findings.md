@@ -53,7 +53,7 @@
   测试通过，bench 与 examples 目标可运行。
 - `cargo clippy -p observex --all-targets -- -D warnings`：exit 0。
 - `cmp .agents/ssot/observex/spec/spec.md .agents/ssot/observex/spec/xhyper-observex-complete-spec.md`：exit 0。
-- 当时执行的 `git diff --check -- crates/observex .agents/ssot/observex docs/ssot/observex-ssot-alignment.md`
+- 当时执行的 `git diff --check -- crates/infra/observex .agents/ssot/observex docs/ssot/observex-ssot-alignment.md`
   相对 HEAD exit 0，但不能证明相对实施 base 无空白；Round 3 使用带 base 命令重新验证。
 - `cargo fmt --all --check`：最终复跑 exit 0。此前一次 exit 1 仅来自并行 writer 当时尚未格式化的
-  `crates/bootstrap/**` 与 `crates/resiliencx/**`；本任务未修改这些越界路径。
+  `crates/infra/bootstrap/**` 与 `crates/infra/resiliencx/**`；本任务未修改这些越界路径。

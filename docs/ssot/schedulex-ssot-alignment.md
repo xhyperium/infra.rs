@@ -4,7 +4,7 @@
 |---|---|
 | Baseline | `55433a2ec3567624c5cd98601b9f4581a7e69cb6` |
 | Active SSOT | `.agents/ssot/schedulex/spec/spec.md` ≡ dual mirror |
-| Crate | `crates/schedulex` · package/lib `schedulex` · 当前 v0.1.2 |
+| Crate | `crates/infra/schedulex` · package/lib `schedulex` · 当前 v0.1.2 |
 | 范围 | Scheduler registry + 独立 explicit tick JobRunner |
 
 ## 合同矩阵
@@ -40,7 +40,7 @@ cmp .agents/ssot/schedulex/spec/spec.md \
   .agents/ssot/schedulex/spec/xhyper-schedulex-complete-spec.md
 cargo test -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
-node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/schedulex/src
+node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/infra/schedulex/src
 ```
 
 最终发布仍需前序 PR 合并后的版本/lock/STATUS 同步、全仓门禁、独立 review、PR CI 与人工审批。

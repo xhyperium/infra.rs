@@ -64,7 +64,7 @@ R-SPEC-003 细节：
 | 风险 | 机制 |
 |------|------|
 | **「I-14 有表」⇒ 迁移完成** | 表是计划层；W0–W6 任务几乎全 TODO |
-| **T-LEG-003 DONE 前建 crates/evidence** | 未 rename 旧包 → cargo 双 `name=evidence` 构建炸；须先/同 PR 隔离 |
+| **T-LEG-003 DONE 前建 crates/infra/evidence** | 未 rename 旧包 → cargo 双 `name=evidence` 构建炸；须先/同 PR 隔离 |
 | **A11 未签仍按 002 路径改 architecture** | plan 默认 002，但 ADR-012 仍 OPEN GOVERNANCE |
 | **T-BOOT-001 与 T-ARCH-011 循环依赖表述** | tasks 互指；实现时需明确接线序 |
 
@@ -89,8 +89,8 @@ R-SPEC-003 细节：
 
 ```text
 旧: evidence_legacy @ tools/evidence（rename）
-新: evidence @ crates/evidence
-切后: 仅 crates/evidence
+新: evidence @ crates/infra/evidence
+切后: 仅 crates/infra/evidence
 Task: T-LEG-003；Forbidden I-26 #10；A12 Approve 策略
 ```
 
@@ -109,7 +109,7 @@ omissions:
   - P2 exit criteria not separate checkbox
   - systemd deploy list still untasked
 false_pass_risks:
-  - build crates/evidence before T-LEG-003 rename
+  - build crates/infra/evidence before T-LEG-003 rename
   - A11 unsigned path assumption
 notes: |
   R-MIG-001 PASS. Dual-package T-LEG-003 + I-18 PASS.

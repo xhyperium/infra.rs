@@ -6,7 +6,7 @@
 |---|---|
 | Baseline | `2299ff1f9c6d006d014c80d89a3082a01ba27c9a` |
 | Package / lib | `transportx` / `transportx` |
-| Path / layer | `crates/transport` / L1 |
+| Path / layer | `crates/infra/transport` / L1 |
 | 当前候选版本 | `0.1.4` |
 | 消费者 | binance / okx 等 adapter |
 | Authority | 本文件与双镜像共同定义当前声明面 |

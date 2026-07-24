@@ -7,7 +7,7 @@
 | 日期 | 2026-07-23 |
 | Base commit | `3cd29a942710c0fb42f3f6bc05e3c31570acad47` |
 | 前置证据 | [round-01-findings.md](./round-01-findings.md) |
-| 范围 | `crates/bootstrap/**`、`.agents/ssot/bootstrap/**`、`docs/ssot/bootstrap-ssot-alignment.md` |
+| 范围 | `crates/infra/bootstrap/**`、`.agents/ssot/bootstrap/**`、`docs/ssot/bootstrap-ssot-alignment.md` |
 | 版本策略 | root 负责版本；本执行者不改 package version 或 `Cargo.lock` |
 
 ## Reviewer P1
