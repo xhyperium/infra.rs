@@ -9,6 +9,7 @@
 
 | 计划 | 状态 | 说明 |
 |------|------|------|
+| [2026-07-24-crates-infra-directory-migration.md](./2026-07-24-crates-infra-directory-migration.md) | **DRAFT · 待确认** | 方案 A：L1 七包迁入 `crates/infra/`（纯路径；单 PR 原子）；依据 [归组分析](../report/2026-07-24/crates-infra-grouping-analysis.md) |
 | [2026-07-21-core-crates-production-readiness.md](./2026-07-21-core-crates-production-readiness.md) | W0–W5 已合入 · **L5 GO-with-Accepts** · 计划 DONE | 五核心 crate 生产级修复；PR #120–#128；输入审计 `docs/report/2026-07-21/`（含 §12 post-W5） |
 | [releases/0.3.0-signoff.md](./releases/0.3.0-signoff.md) | **SIGNED · GO-with-Accepts** | 正式签核包（DEFER-7 已闭；`@ZoneCNH` · 2026-07-21） |
 | [releases/2026-07-21-four-crates-internal-release.md](./releases/2026-07-21-four-crates-internal-release.md) | **DRAFT · GO for declared tiers** | kernel/testkit/decimalx/canonical 四包内部生产证据（L1/L2/L4）；非 crates.io |

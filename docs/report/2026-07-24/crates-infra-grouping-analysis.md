@@ -318,6 +318,7 @@ crates/
 | [ARCHITECTURE.md](../../../ARCHITECTURE.md) | 层次模型（部分叙述可能滞后） |
 | [.agents/ssot/SSOT.md](../../../.agents/ssot/SSOT.md) | 域规格 SSOT 规则（infra 展平） |
 | [文档组织约定](../../../.agents/rules/文档组织约定.md) | 报告落盘路径规范 |
+| [PLAN-INFRA-DIR-001 实施计划](../../plans/2026-07-24-crates-infra-directory-migration.md) | 方案 A 可执行迁移计划（path 矩阵 / 波次 / 门禁） |
 
 ---
 
@@ -326,3 +327,4 @@ crates/
 | 日期 | 说明 |
 |------|------|
 | 2026-07-24 | 初版：会话架构分析落盘；方案 A 推荐 |
+| 2026-07-24 | 交叉链接实施计划 `PLAN-INFRA-DIR-001` |
