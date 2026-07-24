@@ -182,7 +182,7 @@ fetch main
 |---|------|------|
 | **P3-1** | **命名规则未完全统一** | `*x` 后缀“推荐” vs kernel/testkit/contracts 等无 `x`；缺冻结对照表 |
 | **P3-2** | **业务价值路径不清晰** | 对外「何时可依赖哪个 crate 哪一级能力」依赖读多份 alignment + GO/NO-GO |
-| **P3-3** | **多工具链并行** | Claude / Codex / Copilot / OMC / gstack / beads / make… 日常选型仍模糊 |
+| **P3-3** | **多工具链并行** | Claude / Codex / Copilot / OMC / GStack / beads / make… 日常选型仍模糊 |
 | **P3-4** | **文档生成物与手写混放** | `STATUS.md`、CI 矩阵 generated 与人工叙事并存，过期风险高 |
 
 ---
@@ -230,16 +230,16 @@ fetch main
 
 ### 8.2 短期（降载）
 
-4. **写一页「本仓生效规则摘要」**（≤2 屏）：合入最小门禁、worktree 开工、禁止事项、签核红线；其余外链。
-5. **定义审查档位**：trivial / standard / production-ready；禁止默认 10 轮；仅 L5/交易相关升档。
-6. **明确「合入前必跑」命令集**为唯一清单（与 CI required checks 对齐表）。
-7. **约束 pr-auto-approve**：仅用户显式要求 + 审计日志；禁止 Agent 默认调用。
+1. **写一页「本仓生效规则摘要」**（≤2 屏）：合入最小门禁、worktree 开工、禁止事项、签核红线；其余外链。
+2. **定义审查档位**：trivial / standard / production-ready；禁止默认 10 轮；仅 L5/交易相关升档。
+3. **明确「合入前必跑」命令集**为唯一清单（与 CI required checks 对齐表）。
+4. **约束 pr-auto-approve**：仅用户显式要求 + 审计日志；禁止 Agent 默认调用。
 
 ### 8.3 中期（产品化治理）
 
-8. **Consumer 支持矩阵一页纸**：每个 package 的支持级（L1 内部 / NO-GO 面 / live 条件）。
-9. **任务系统选型固化**：要么 “bd 为执行、GH 为公开”，要么合并叙事，避免双写义务。
-10. **规格树瘦身策略**：未 member 域折叠为 OOS index，降低 COMPLETE 误读面。
+1. **Consumer 支持矩阵一页纸**：每个 package 的支持级（L1 内部 / NO-GO 面 / live 条件）。
+2. **任务系统选型固化**：要么 “bd 为执行、GH 为公开”，要么合并叙事，避免双写义务。
+3. **规格树瘦身策略**：未 member 域折叠为 OOS index，降低 COMPLETE 误读面。
 
 ---
 
