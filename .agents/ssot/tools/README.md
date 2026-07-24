@@ -8,7 +8,7 @@
 
 | 子域 | SSOT 路径 | 本仓实现路径 | 本仓状态 |
 |------|----------|--------------|----------|
-| `evidence` | `.agents/ssot/evidence/`（canonical） | `crates/evidence` | 最小面已落地；`tools/evidence` 仅历史重定向 |
+| `evidence` | `.agents/ssot/evidence/`（canonical） | `crates/infra/evidence` | 最小面已落地；`tools/evidence` 仅历史重定向 |
 | `goalctl` | `.agents/ssot/tools/goalctl/` | `tools/goalctl` | **workspace member**（#188）；最小 Goal→Contract CLI；[landing](goalctl/plan/infra-rs-landing.md) |
 | `xtask` | `.agents/ssot/tools/xtask/` | `tools/xtask`（期望） | **未落地**；`cargo xtask` alias 可忽略 |
 | `verifyctl` | `.agents/ssot/tools/verifyctl/` | `tools/verifyctl` | **workspace member**（#188）；最小 plan/execute/report，**非生产 verifier**；[landing](verifyctl/plan/infra-rs-landing.md) |

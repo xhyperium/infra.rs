@@ -94,13 +94,13 @@ const SSOT_DOC_BY_PREFIX = [
     prefix: "crates/test-support/contracts",
     doc: "docs/ssot/testkit-ssot-alignment.md",
   },
-  { prefix: "crates/configx", doc: "docs/ssot/configx-ssot-alignment.md" },
-  { prefix: "crates/schedulex", doc: "docs/ssot/schedulex-ssot-alignment.md" },
-  { prefix: "crates/bootstrap", doc: "docs/ssot/bootstrap-ssot-alignment.md" },
-  { prefix: "crates/evidence", doc: "docs/ssot/evidence-ssot-alignment.md" },
-  { prefix: "crates/observex", doc: "docs/ssot/observex-ssot-alignment.md" },
-  { prefix: "crates/resiliencx", doc: "docs/ssot/resiliencx-ssot-alignment.md" },
-  { prefix: "crates/transport", doc: "docs/ssot/transport-ssot-alignment.md" },
+  { prefix: "crates/infra/configx", doc: "docs/ssot/configx-ssot-alignment.md" },
+  { prefix: "crates/infra/schedulex", doc: "docs/ssot/schedulex-ssot-alignment.md" },
+  { prefix: "crates/infra/bootstrap", doc: "docs/ssot/bootstrap-ssot-alignment.md" },
+  { prefix: "crates/infra/evidence", doc: "docs/ssot/evidence-ssot-alignment.md" },
+  { prefix: "crates/infra/observex", doc: "docs/ssot/observex-ssot-alignment.md" },
+  { prefix: "crates/infra/resiliencx", doc: "docs/ssot/resiliencx-ssot-alignment.md" },
+  { prefix: "crates/infra/transport", doc: "docs/ssot/transport-ssot-alignment.md" },
   { prefix: "crates/contracts", doc: "docs/ssot/contracts-ssot-alignment.md" },
   { prefix: "crates/types/", doc: "docs/ssot/types-ssot-alignment.md" },
   { prefix: "crates/adapters/storage/redis", doc: "docs/ssot/redisx-ssot-alignment.md" },
@@ -225,6 +225,7 @@ function layerOf(cratePath) {
   if (cratePath.startsWith("crates/types/")) return "types";
   if (cratePath.startsWith("crates/adapters/")) return "adapter";
   if (cratePath === "crates/contracts") return "contracts";
+  if (cratePath.startsWith("crates/infra/")) return "L1";
   return "L1";
 }
 

@@ -10,4 +10,4 @@ root 已完成从 `0.1.1` 到 `0.1.2` 的 PATCH bump。该版本候选包含 san
 本次纯状态 delta 不改变受审源码/测试。发布前仍须完成 GitHub 固定提交 CI artifact、PR、维护者审批与合并。
 当前未创建 tag，未执行外部发布，也没有签名或校验和；`publish = false` 保持不变。
 
-crate 侧候选记录见 `crates/observex/releases/round-03-2026-07-23.md`。
+crate 侧候选记录见 `crates/infra/observex/releases/round-03-2026-07-23.md`。

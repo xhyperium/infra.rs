@@ -3,9 +3,9 @@
 > 状态：最新修复后三包测试通过；root 串行 coverage `1208 / 1208`、zeros 0、100.0000%、退出码 0。
 > 候选已重冻，本地 reviewer 完成，verifier 技术/证据初验完成；GitHub CI artifact pending。
 
-行为测试位于 `crates/resiliencx/src/**` 与 `crates/resiliencx/tests/**`，覆盖安全分类、seeded 实际退避、
+行为测试位于 `crates/infra/resiliencx/src/**` 与 `crates/infra/resiliencx/tests/**`，覆盖安全分类、seeded 实际退避、
 sync/async budget、deadline/backoff cancellation、bulkhead poison 恢复与公开 API。
-串行 LCOV 门禁要求 `crates/resiliencx/src` 行覆盖 100%，禁止 coverage 排除或空断言。当前
+串行 LCOV 门禁要求 `crates/infra/resiliencx/src` 行覆盖 100%，禁止 coverage 排除或空断言。当前
 `cargo test -p resiliencx -p postgresx -p redisx --all-features --all-targets` 退出码 0：resiliencx
 84 passed；postgresx 52 passed + 6 ignored；redisx 51 passed + 8 ignored。ignored 项需要外部
 Postgres/Redis 服务，不作为默认 CI 通过证据。此前

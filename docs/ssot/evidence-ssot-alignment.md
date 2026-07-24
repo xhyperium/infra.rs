@@ -3,7 +3,7 @@
 | 字段 | 值 |
 |------|-----|
 | 日期 | 2026-07-21；**defer-close 复核 2026-07-22** |
-| crate | `crates/evidence` · `evidence` / lib `evidence` · **v0.1.1**（文档名 `xhyper-evidence` 为废弃别名） |
+| crate | `crates/infra/evidence` · `evidence` / lib `evidence` · **v0.1.1**（文档名 `xhyper-evidence` 为废弃别名） |
 | 消费者 | `bootstrap`（注入） |
 | 定位 | L1 审计证据**追加面**（append-only）；**非** 合规审计平台 / 远程 CA / 不可抵赖审计产品 |
 | Canonical SSOT | `.agents/ssot/evidence/spec/spec.md` ≡ `xhyper-evidence-complete-spec.md` |
@@ -28,15 +28,15 @@
 
 | 项 | 前状态 | 现状态 | 证据 |
 |----|--------|--------|------|
-| 远程 wire | DEFER | **PASS（transport trait + mock）** | `crates/evidence/src/remote.rs` |
-| 签名 | DEFER | **PASS（HMAC 面）** | `crates/evidence/src/sign.rs` |
-| 查询 API | DEFER | **PASS** | `crates/evidence/src/query.rs` |
+| 远程 wire | DEFER | **PASS（transport trait + mock）** | `crates/infra/evidence/src/remote.rs` |
+| 签名 | DEFER | **PASS（HMAC 面）** | `crates/infra/evidence/src/sign.rs` |
+| 查询 API | DEFER | **PASS** | `crates/infra/evidence/src/query.rs` |
 
 ## 验证
 
 ```bash
 cargo test -p evidence -p bootstrap --all-targets
-node scripts/quality-gates/cov-gate-100.mjs -p evidence --filter crates/evidence/src
+node scripts/quality-gates/cov-gate-100.mjs -p evidence --filter crates/infra/evidence/src
 node scripts/quality-gates/check-ssot-current-state.mjs
 ```
 

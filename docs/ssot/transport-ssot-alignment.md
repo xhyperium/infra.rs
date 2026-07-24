@@ -4,7 +4,7 @@
 |---|---|
 | Baseline | `2299ff1f9c6d006d014c80d89a3082a01ba27c9a` |
 | Active SSOT | `.agents/ssot/transport/spec/spec.md` ≡ 双镜像 |
-| Crate | `crates/transport` · package/lib `transportx` · 候选 `0.1.4` |
+| Crate | `crates/infra/transport` · package/lib `transportx` · 候选 `0.1.4` |
 | 范围 | HTTP/WS 客户端传输、TLS/代理配置、进程内客户端池 |
 | 本地证据 | [`manifest.json`](../../evidence/testkit/2026-07-23-infra-2d9.10/manifest.json) 绑定固定代码与本地门禁结果 |
 | 状态 | 行为已实现，本地 workspace 门禁已运行；PR CI、独立终审、人工批准与 merge 均为 OPEN |

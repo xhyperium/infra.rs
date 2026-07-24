@@ -40,7 +40,7 @@
 | R-SPEC-001 / R-SPEC-002 | PASS | Spec + gap §0–§34 |
 | R-GAP-001 | PASS | DEF-001…018 全在 todo + gap（见下） |
 | R-GAP-002 | PASS* | 威胁行存在；安全深度见 R3 FAIL（本轮不重复升格） |
-| R-PATH-001 | PASS | `crates/evidence` plan §5 |
+| R-PATH-001 | PASS | `crates/infra/evidence` plan §5 |
 | R-PATH-002 | PASS | memory/file/postgres 路径写明 |
 | R-PATH-003 | PASS | evidence-cli + 删 tools/evidence |
 | R-DEP-001/002 | PASS | |

@@ -8,8 +8,8 @@
 | Source Spec | [`.agents/ssot/tools/evidence/xhyper-evidence-complete-spec.md`](../xhyper-evidence-complete-spec.md) |
 | Spec ID | `SPEC-EVIDENCE-002` · Status **Approved**（2026-07-14 ZoneCNH）→ Target **Stable** |
 | Goal | `GOAL-EVIDENCE-AUDIT-TRUST` |
-| Package | `evidence` @ `crates/evidence` **0.1.0** → 目标 **0.1.1**（发布/A9 Defer） |
-| Layer | L0 Audit Core（runtime 在 `crates/evidence`；CLI `tools/evidence-cli`） |
+| Package | `evidence` @ `crates/infra/evidence` **0.1.0** → 目标 **0.1.1**（发布/A9 Defer） |
+| Layer | L0 Audit Core（runtime 在 `crates/infra/evidence`；CLI `tools/evidence-cli`） |
 | Baseline | `main@007ca7b5`（开战役）· 实现 PR #253 |
 | Gap Matrix | [`gap-matrix.md`](./gap-matrix.md) |
 | Spec Inventory | [`spec-inventory.md`](./spec-inventory.md)（I-1…I-26 防遗漏枚举） |
@@ -57,7 +57,7 @@ typed EvidenceDraft
 3. 是否引入 **不稳定摘要**（Debug/JSON/未域分离 hash）？
 4. 是否把 **测试替身** 装进生产依赖图？
 
-只有 1=是、2=是、3=否、4=否 才能进入 `crates/evidence`。
+只有 1=是、2=是、3=否、4=否 才能进入 `crates/infra/evidence`。
 
 ### 0.3 现状一句话
 
@@ -115,7 +115,7 @@ base:    origin/main HEAD
 | PR 栈 | 内容 |
 |-------|------|
 | PR1 | W0 文档/冻结/措辞 + policy 骨架 |
-| PR2 | W1 crates/evidence Core V1 + golden |
+| PR2 | W1 crates/infra/evidence Core V1 + golden |
 | PR3 | W2 memory adapter + traits 拆出 core |
 | PR4 | W3 domain_macro + gate 迁移 |
 | PR5 | W4 file adapter |
@@ -132,12 +132,12 @@ base:    origin/main HEAD
 ### 1.3 与 ADR-012（auditx）路径冲突
 
 ADR-012 曾写：`tools/evidence` 运行时 → `crates/infra/auditx`，CI 工具仍留 `tools/evidence`。  
-SPEC-EVIDENCE-002 裁定目标为 **`crates/evidence`（L0）** + `crates/adapters/evidence/*` + `tools/evidence-cli`。
+SPEC-EVIDENCE-002 裁定目标为 **`crates/infra/evidence`（L0）** + `crates/adapters/evidence/*` + `tools/evidence-cli`。
 
 | 决议状态 | 说明 |
 |----------|------|
 | **未人审二选一** | 见 approval **A11**；`T-DOC-005` |
-| 本计划默认实现目标 | **002 路径**（L0 `crates/evidence`），因 R1 允许 domain→evidence 且 002 为完整生产合同 |
+| 本计划默认实现目标 | **002 路径**（L0 `crates/infra/evidence`），因 R1 允许 domain→evidence 且 002 为完整生产合同 |
 | 禁止 | 实现期静默同时创建 auditx 与 evidence 两套 runtime |
 
 ### 1.4 Spec Inventory 强制引用
@@ -176,7 +176,7 @@ W9  §33 闭合声明（仅人审后）
 | Wave | 名称 | 可并行 | Owner | 退出条件 |
 |------|------|--------|-------|----------|
 | **W0** | 冻结错误扩散 + 台账 | 是（docs） | Doc/Policy | 措辞修正；禁新增 hash_bytes/Debug-hash；quality=incubating；plan/todo 一致 |
-| **W1** | Core V1 | 否（新 crate） | Core Agent | crates/evidence 编译；canonical+golden；无 anyhow；字段私有 |
+| **W1** | Core V1 | 否（新 crate） | Core Agent | crates/infra/evidence 编译；canonical+golden；无 anyhow；字段私有 |
 | **W2** | Memory adapter + contracts | 依赖 W1 | Adapter-Mem | Append/Reader/幂等/CAS；Volatile only；conformance 子集 |
 | **W3** | Domain/gate + policy | 依赖 W2 | Domain Agents | 删除 Debug hash；required ops 登记；失败路径 evidence |
 | **W4** | File + Postgres | 可互为并行（不同包） | Adapter-File / Adapter-Pg | fsync/crash；outbox 原子；conformance |
@@ -192,7 +192,7 @@ W9  §33 闭合声明（仅人审后）
 |------------|-----------------|
 | W0 plan/todo/gap/approval 包 | Spec Status → Approved |
 | W0 文档措辞（README 去「不可篡改」） | ADR-010 修订合并 |
-| W1 在 feature 分支 scaffold crates/evidence | production anchor 真实 KMS/OSS |
+| W1 在 feature 分支 scaffold crates/infra/evidence | production anchor 真实 KMS/OSS |
 | W1 golden vectors + core 实现 | postgres 真实联调环境 |
 | W2 memory adapter | registry stable |
 | 十轮 **计划完备性** 检查 | 0.1.1 publish |
@@ -209,7 +209,7 @@ W9  §33 闭合声明（仅人审后）
 | Role | 职责 | 写入路径（互斥） |
 |------|------|------------------|
 | **Planner** | plan / gap / residual / todo | `.agents/ssot/tools/evidence/plan/*`、`.worktrees/evidence-todo.md` |
-| **Executor-Core** | crates/evidence 全模块 | `crates/evidence/**` |
+| **Executor-Core** | crates/infra/evidence 全模块 | `crates/infra/evidence/**` |
 | **Executor-Mem** | memory adapter | `crates/adapters/evidence/memory/**` |
 | **Executor-File** | file adapter | `crates/adapters/evidence/file/**` |
 | **Executor-Pg** | postgres/outbox | `crates/adapters/evidence/postgres/**` |
@@ -254,7 +254,7 @@ team-plan → team-prd（原子任务）→ team-exec（按路径）→ team-ver
 | 3 | R-SPEC-003 | 完成定义 §33.1–33.6 全部映射到 Task | tasks.md 可追踪 |
 | 4 | R-GAP-001 | DEF-001…018 全部登记 | residual/todo 有 ID |
 | 5 | R-GAP-002 | T1–T18 全部有覆盖策略 | gap-matrix §2 |
-| 6 | R-PATH-001 | 目标路径 crates/evidence 写明 | plan §5 |
+| 6 | R-PATH-001 | 目标路径 crates/infra/evidence 写明 | plan §5 |
 | 7 | R-PATH-002 | adapters memory/file/postgres 写明 | plan §5 |
 | 8 | R-PATH-003 | tools/evidence-cli + 删除 tools/evidence | plan W6 |
 | 9 | R-DEP-001 | core 白名单 kernel+sha2+thiserror | plan/tasks |
@@ -325,7 +325,7 @@ cargo xtl lint-deps
 ## 5. 目标目录与模块落地顺序（W1）
 
 ```text
-crates/evidence/
+crates/infra/evidence/
   Cargo.toml          # name=evidence; deps: kernel, sha2, thiserror
   README.md / AGENTS.md / CHANGELOG.md
   src/
@@ -440,7 +440,7 @@ evidence/system/<date>-<change-id>/
 | §33 节 | 闭合条件 | 最早 Wave | AI 可独断？ |
 |--------|----------|-----------|-------------|
 | 33.1 规格 | Approved + superseded + ADR 修订 + policy + registry | W8 | **否** |
-| 33.2 Core | crates/evidence + V1 全项 | W1+W7 | 实现可；stable 否 |
+| 33.2 Core | crates/infra/evidence + V1 全项 | W1+W7 | 实现可；stable 否 |
 | 33.3 Adapter | mem/file/pg + conformance | W4+W7 | 实现可；生产锚否 |
 | 33.4 Checkpoint | signed+anchor+tail | W5+W7 | 部分需外部 |
 | 33.5 测试 | golden/fuzz/cov/mutants/miri | W7 | 环境依赖 |

@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - "crates/configx/**"
+      - "crates/infra/configx/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "scripts/quality-gates/cov-gate-100.mjs"
@@ -39,4 +39,4 @@ jobs:
       - name: LCOV 100%
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/quality-gates/cov-gate-100.mjs -p configx --filter crates/configx/src
+        run: node scripts/quality-gates/cov-gate-100.mjs -p configx --filter crates/infra/configx/src

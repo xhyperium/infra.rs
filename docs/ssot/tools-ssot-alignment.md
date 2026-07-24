@@ -16,8 +16,8 @@
 | 路径约定 | 统一 `.agents/ssot/tools/**`（保留 `tools/` 层级） |
 | `verifyctl` | **workspace member** `tools/verifyctl` · package `verifyctl`：plan / execute / report |
 | `goalctl` | **workspace member** `tools/goalctl` · package `goalctl`：doctor / validate / compile |
-| evidence 权威 | `.agents/ssot/evidence/spec/spec.md` → `crates/evidence`；不在 tools 树维护第二份 active spec |
-| 本仓 crate 落地 | `crates/evidence`；`tools/goalctl`；`tools/verifyctl` |
+| evidence 权威 | `.agents/ssot/evidence/spec/spec.md` → `crates/infra/evidence`；不在 tools 树维护第二份 active spec |
+| 本仓 crate 落地 | `crates/infra/evidence`；`tools/goalctl`；`tools/verifyctl` |
 | `tools/xtask` | **未** member · **未**宣称 ship |
 | live 凭据工具 | `build-foundationx-env.mjs` 独占创建 0600 文件；`export-foundationx-env.sh` 仅为 dev 子进程注入并自动清理 |
 
@@ -36,7 +36,7 @@
 
 | 子域 | SSOT 路径 | 本仓路径 | package | 本仓状态 |
 |------|----------|----------|---------|----------|
-| evidence | `.agents/ssot/evidence`（canonical） | `crates/evidence` | `evidence` **0.1.1** | 最小 append/query/sign/remote trait 面；非合规产品 |
+| evidence | `.agents/ssot/evidence`（canonical） | `crates/infra/evidence` | `evidence` **0.1.1** | 最小 append/query/sign/remote trait 面；非合规产品 |
 | goalctl | `.agents/ssot/tools/goalctl` | `tools/goalctl` | `goalctl` **0.2.0** | **最小 Goal→Contract**：doctor/validate/compile + fixtures + `VERSION` 单测；**非**完整 authority plane |
 | xtask | `.agents/ssot/tools/xtask` | `tools/xtask` | — | **未** member |
 | verifyctl | `.agents/ssot/tools/verifyctl` | `tools/verifyctl` | `verifyctl` **0.1.0** | **最小** plan/execute/report；schema v1；超时/输入完整闭锁/远程 runner 等 OPEN，非生产 verifier |

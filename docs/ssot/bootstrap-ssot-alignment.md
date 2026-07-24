@@ -4,7 +4,7 @@
 |------|-----|
 | 审计日期 | 2026-07-23；三轮 production hardening + 正式 contracts 注入复核 |
 | SSOT | `.agents/ssot/bootstrap/spec/spec.md` ≡ `spec/xhyper-bootstrap-complete-spec.md`（active / complete 双镜像，`cmp` 同构） |
-| 实现路径 | `crates/bootstrap`（package `bootstrap` / lib `bootstrap`）· **v0.3.3** |
+| 实现路径 | `crates/infra/bootstrap`（package `bootstrap` / lib `bootstrap`）· **v0.3.3** |
 | 权威 | active spec 描述合同；本文件记录 **本仓** 落地与证据 |
 | 上游参考 | `xhyper.rs/crates/infra/bootstrap`（可移植源，非本仓 member） |
 | OBJECTIVE | 所列实现/证据已由本地独立 reviewer 审查，独立 verifier 已完成技术/证据初验；GitHub 固定提交 CI artifact 与交付流程 pending；上述不等于跨资源事务、交易栈全量装配或 Production Ready |
@@ -13,8 +13,8 @@
 
 | SSOT / 上游表述 | 本仓 |
 |-----------------|------|
-| `crates/bootstrap`（infra.rs README） | `crates/bootstrap` |
-| `crates/infra/bootstrap`（上游 monorepo） | 映射为本仓扁平 `crates/bootstrap` |
+| `crates/infra/bootstrap`（infra.rs README） | `crates/infra/bootstrap` |
+| `crates/infra/bootstrap`（上游 monorepo） | 映射为本仓扁平 `crates/infra/bootstrap` |
 | `.agent/ssot/bootstrap` | `.agents/ssot/bootstrap`（SSOT 已展平） |
 
 ## §1 定位与边界
@@ -37,8 +37,8 @@
 | 有界 venue/storage 替面 | `BoundedMarketDataSource` / `BoundedKeyValueStore` / …（**非** contracts 同名 trait） | **PASS**（命名收敛） |
 | `StoreSet` 适配器接线面 | `src/store_set.rs`；`Bootstrap::with_store_set` | **PASS**（类型化注入；禁止动态 register/resolve） |
 | `AsyncDrain` 关停排空 | `src/drain.rs`；`register_drain` / `graceful_shutdown` | **PASS**（同步 hook；signal 先触发；批内 LIFO） |
-| `observex`（`TracingInstrumentation`） | path `crates/observex`；`Bootstrap::new` 默认 | **PASS**（ADR-005 默认实现） |
-| `evidence`（`EvidenceAppender`） | path `crates/evidence`；re-export + `InMemoryEvidenceAppender` | **PASS**（注入/可选/require；远程见 evidence 对齐） |
+| `observex`（`TracingInstrumentation`） | path `crates/infra/observex`；`Bootstrap::new` 默认 | **PASS**（ADR-005 默认实现） |
+| `evidence`（`EvidenceAppender`） | path `crates/infra/evidence`；re-export + `InMemoryEvidenceAppender` | **PASS**（注入/可选/require；远程见 evidence 对齐） |
 | dev-dependencies | 集中声明的 async/tokio 辅助依赖 + `natsx 0.3.2` / `redisx 0.3.4` path 依赖 | **PASS**（仅固定摘要组合实验；不进入生产依赖） |
 | 真实 exchange 业务装配 e2e | 非本包职责 | **OPEN**（exchange 生产默认 REST+WS（业务 live 签名下单仍 NO-GO 默认 CI）；**≠** StoreSet API 缺失） |
 
@@ -100,11 +100,11 @@ cargo check -p bootstrap --all-targets
 cargo clippy -p bootstrap --all-targets -- -D warnings
 cargo fmt --all --check
 node scripts/storage-composition-conformance.mjs
-node scripts/quality-gates/cov-gate-100.mjs -p bootstrap --filter crates/bootstrap/src
+node scripts/quality-gates/cov-gate-100.mjs -p bootstrap --filter crates/infra/bootstrap/src
 cmp .agents/ssot/bootstrap/spec/spec.md \
     .agents/ssot/bootstrap/spec/xhyper-bootstrap-complete-spec.md
 # 静态：无 Service Locator / Gate
-rg -n 'register_capability|fn resolve|pub struct Gate|pub enum Gate' crates/bootstrap/src || true
+rg -n 'register_capability|fn resolve|pub struct Gate|pub enum Gate' crates/infra/bootstrap/src || true
 ```
 
 | 门禁 | 期望 |
@@ -124,8 +124,8 @@ rg -n 'register_capability|fn resolve|pub struct Gate|pub enum Gate' crates/boot
 
 | 项 | 前状态 | 现状态 | 证据 |
 |----|--------|--------|------|
-| StoreSet / adapter 接线 | DEFER | **PASS** | `crates/bootstrap/src/store_set.rs` · `Bootstrap::with_store_set` |
-| 同步 drain | DEFER | **PASS（有界）** | `crates/bootstrap/src/drain.rs` · signal→快照内 LIFO；无 timeout/cancel |
+| StoreSet / adapter 接线 | DEFER | **PASS** | `crates/infra/bootstrap/src/store_set.rs` · `Bootstrap::with_store_set` |
+| 同步 drain | DEFER | **PASS（有界）** | `crates/infra/bootstrap/src/drain.rs` · signal→快照内 LIFO；无 timeout/cancel |
 | 正式 storage trait 注入 | DEFER | **PASS** | `ContractStoreSet` + 固定摘要 Redis/NATS E2E |
 
 ## 变更记录
@@ -147,5 +147,5 @@ rg -n 'register_capability|fn resolve|pub struct Gate|pub enum Gate' crates/boot
 
 - SSOT：`.agents/ssot/bootstrap/spec/spec.md`
 - 上游：`xhyper.rs/crates/infra/bootstrap`
-- 本仓实现：`crates/bootstrap/**`
+- 本仓实现：`crates/infra/bootstrap/**`
 - contracts 对齐：[contracts-ssot-alignment.md](./contracts-ssot-alignment.md)

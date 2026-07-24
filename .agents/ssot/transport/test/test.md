@@ -8,13 +8,13 @@
 
 | 合同 | 主要测试证据 |
 |---|---|
-| URL/header/body Debug 脱敏与 SNI fail-closed | [`limits_and_debug.rs`](../../../../crates/transport/tests/limits_and_debug.rs) |
-| HTTP body 上限与 chunk 累计首次越界 | [`limits_and_debug.rs`](../../../../crates/transport/tests/limits_and_debug.rs) |
-| RFC 9110 `Retry-After` 与真实 429 路径 | [`reqwest_driver.rs`](../../../../crates/transport/tests/reqwest_driver.rs) |
-| pool 配置、RAII Drop 与 `into_inner` | [`pool_contracts.rs`](../../../../crates/transport/tests/pool_contracts.rs) |
-| pool poison、factory error/panic 许可恢复 | [`pool.rs`](../../../../crates/transport/src/pool.rs) 内部故障注入测试 |
-| WS decoder 单帧/碎片累计上限与生命周期 | [`websocket.rs`](../../../../crates/transport/tests/websocket.rs) |
-| Mock 与公开消费面 | [`mock_http.rs`](../../../../crates/transport/tests/mock_http.rs)、[`public_api_surface.rs`](../../../../crates/transport/tests/public_api_surface.rs) |
+| URL/header/body Debug 脱敏与 SNI fail-closed | [`limits_and_debug.rs`](../../../../crates/infra/transport/tests/limits_and_debug.rs) |
+| HTTP body 上限与 chunk 累计首次越界 | [`limits_and_debug.rs`](../../../../crates/infra/transport/tests/limits_and_debug.rs) |
+| RFC 9110 `Retry-After` 与真实 429 路径 | [`reqwest_driver.rs`](../../../../crates/infra/transport/tests/reqwest_driver.rs) |
+| pool 配置、RAII Drop 与 `into_inner` | [`pool_contracts.rs`](../../../../crates/infra/transport/tests/pool_contracts.rs) |
+| pool poison、factory error/panic 许可恢复 | [`pool.rs`](../../../../crates/infra/transport/src/pool.rs) 内部故障注入测试 |
+| WS decoder 单帧/碎片累计上限与生命周期 | [`websocket.rs`](../../../../crates/infra/transport/tests/websocket.rs) |
+| Mock 与公开消费面 | [`mock_http.rs`](../../../../crates/infra/transport/tests/mock_http.rs)、[`public_api_surface.rs`](../../../../crates/infra/transport/tests/public_api_surface.rs) |
 
 所有网络路径默认使用本地 loopback 或受控故障注入，不把公网、企业 PKI 或业务 live
 作为本地测试替代品。

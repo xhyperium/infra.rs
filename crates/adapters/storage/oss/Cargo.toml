@@ -24,7 +24,7 @@ futures-util = { workspace = true }
 hmac = { workspace = true }
 kernel = { path = "../../../kernel", version = "0.3.1" }
 reqwest = { workspace = true }
-resiliencx = { path = "../../../resiliencx", version = "0.1.2", features = [
+resiliencx = { path = "../../../infra/resiliencx", version = "0.1.2", features = [
   "tokio",
 ] }
 sha1 = { workspace = true }

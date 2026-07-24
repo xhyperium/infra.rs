@@ -1,6 +1,6 @@
 # configx — Goal 管线契约
 
-> 实现 / 代码唯一位置：`crates/configx`  
+> 实现 / 代码唯一位置：`crates/infra/configx`  
 > **当前 SSOT Spec**：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-configx-complete-spec.md](spec/xhyper-configx-complete-spec.md)  
 > **Source Goal**：见 [goal/goal.md](goal/goal.md) — **未宣称闭合**（无证据不得标 Done）  
 > **布局**：对齐 [`.agents/ssot/kernel/`](../kernel/)（[AGENTS.md](../../../AGENTS.md) §2）  
@@ -17,7 +17,7 @@
 | Plan | [plan/plan.md](plan/plan.md) | Round 01/02/03 findings 已记录 |
 | Tasks | [tasks/tasks.md](tasks/tasks.md) | 入口 / 占位 |
 | Prompt | [prompt/prompt.md](prompt/prompt.md) | 入口 / 占位 |
-| **Code** | **`crates/configx`** | 实现不在 `.agents/ssot/` |
+| **Code** | **`crates/infra/configx`** | 实现不在 `.agents/ssot/` |
 | Test | [test/test.md](test/test.md) | 确定性加强与本地证据审查完成；GitHub CI artifact pending |
 | Review | [review/review.md](review/review.md) | `f904ecd` 实现内容无 finding；最终独立 verifier 待文档修正后复核 |
 | Release | [release/release.md](release/release.md) | `0.1.2` 候选；BLOCKED |

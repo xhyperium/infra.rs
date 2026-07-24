@@ -32,7 +32,7 @@
 
 | Checkbox | 映射 | 判定 |
 |----------|------|------|
-| crates/evidence 已落地 | `T-CORE-001` | OK |
+| crates/infra/evidence 已落地 | `T-CORE-001` | OK |
 | canonical V1 冻结 | `T-CORE-014..027` | OK 范围 |
 | 无字段拼接歧义 | `T-CORE-029` | OK |
 | 无全零 genesis | `T-CORE-017` | OK |
@@ -168,7 +168,7 @@ plan §8 目录模板与规范 §32 **字段级一致**（manifest / logs / cove
 | residual-open 文件 | **缺失**（`T-RES-001` TODO） |
 | DEF 列表 | gap-matrix + gitignored todo only |
 | `crates/adapters/evidence` | **不存在**；现树为 `crates/adapters/storage/*` + `exchange/*` |
-| `crates/evidence` | **不存在** |
+| `crates/infra/evidence` | **不存在** |
 | `evidence/system/` | **不存在** |
 | 若把「tasks 写出了路径」当「路径已对齐」 | **false completeness** |
 

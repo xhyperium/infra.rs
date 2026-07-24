@@ -7,7 +7,7 @@
 - [第 1 轮发现与加固](../plan/round-01-findings.md)
 - [第 2 轮 ownerless / poison 复审闭环](../plan/round-02-findings.md)
 - [第 3 轮候选准备](../plan/round-03-findings.md)
-- 行为测试：`crates/bootstrap/src/**`、`crates/bootstrap/tests/**`
+- 行为测试：`crates/infra/bootstrap/src/**`、`crates/infra/bootstrap/tests/**`
 
 ## 已确认机器证据
 
@@ -25,7 +25,7 @@ cargo fmt -p bootstrap -- --check
 cargo test -p bootstrap --all-targets
 cargo clippy -p bootstrap --all-targets -- -D warnings
 cargo doc -p bootstrap --no-deps
-node scripts/quality-gates/cov-gate-100.mjs -p bootstrap --filter crates/bootstrap/src
+node scripts/quality-gates/cov-gate-100.mjs -p bootstrap --filter crates/infra/bootstrap/src
 cmp .agents/ssot/bootstrap/spec/spec.md \
     .agents/ssot/bootstrap/spec/xhyper-bootstrap-complete-spec.md
 ```

@@ -8,7 +8,7 @@
 
 ## 已发现
 
-1. `node scripts/quality-gates/cov-gate-100.mjs -p observex --filter crates/observex/src`
+1. `node scripts/quality-gates/cov-gate-100.mjs -p observex --filter crates/infra/observex/src`
    初次 exit 1：instrumented 806、hit 786、20 行未命中、line 97.5186%。
 2. 未命中行包括 shutdown 并发测试的非确定分支、失败 exporter 的 flush/shutdown、unwind panic
    exporter 的非 panic 方法及 ops 的冗余条件分支。

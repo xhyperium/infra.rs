@@ -5,7 +5,7 @@
 | 日期 | 2026-07-23 · round-03 候选准备 |
 | Active SSOT | `.agents/ssot/resiliencx/spec/spec.md` |
 | Complete mirror | `.agents/ssot/resiliencx/spec/xhyper-resiliencx-complete-spec.md`（须 `cmp`） |
-| 实现 | `crates/resiliencx` · package/lib `resiliencx` |
+| 实现 | `crates/infra/resiliencx` · package/lib `resiliencx` |
 | 当前版本 | 0.1.2；同一 PR 已 bump 一次，按 R-C2 不重复 bump |
 | 状态 | L1 进程内弹性原语；Internal Ready，非 package stable |
 

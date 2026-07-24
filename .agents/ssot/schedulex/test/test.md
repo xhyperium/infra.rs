@@ -17,7 +17,7 @@
 cargo test -p schedulex --test job_runner_public
 cargo test -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
-node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/schedulex/src
+node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/infra/schedulex/src
 ```
 
 panic 测试只证明 panic 传播，不把 unwind 当作恢复保证。

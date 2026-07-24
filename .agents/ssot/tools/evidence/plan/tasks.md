@@ -31,16 +31,16 @@
 | T-INV-001 | 落盘 spec-inventory.md | I-1…I-26 枚举齐全 | T-PLAN-002 | Planner | **DONE** |
 | T-V10-PLAN | 计划完备性十轮检查 | fail_rounds=0；verdict 文件 | T-PLAN-* T-TODO-001 T-INV-001 | Verifier | **DONE** |
 | T-BRANCH-001 | 创建 feat 分支/worktree | 非 main 开发 | — | Lead | **DONE**（`docs/evidence-002-plan`；实现波另开 feat） |
-| T-DOC-005 | ADR-012 auditx 路径 vs 002 crates/evidence 对账 | 冲突写入 approval A11 + alignment + spec §0；不静默选边 | — | Doc | **DONE**（登记；人审仍 OPEN） |
+| T-DOC-005 | ADR-012 auditx 路径 vs 002 crates/infra/evidence 对账 | 冲突写入 approval A11 + alignment + spec §0；不静默选边 | — | Doc | **DONE**（登记；人审仍 OPEN） |
 | T-ALIGN-001 | 执行后文档对齐包 | architecture/CLAUDE/AGENTS/TECH/CHANGELOG + evidence/evidence-002/alignment | T-DOC-003 | Doc | **DONE** |
 
 ---
 
-## W1 — Core V1（`crates/evidence`）
+## W1 — Core V1（`crates/infra/evidence`）
 
 | Task ID | 内容 | AC | 依赖 | Owner | Status |
 |---------|------|-----|------|-------|--------|
-| T-CORE-001 | workspace member `crates/evidence` | cargo metadata 可见 | T-BRANCH-001 | Core | TODO |
+| T-CORE-001 | workspace member `crates/infra/evidence` | cargo metadata 可见 | T-BRANCH-001 | Core | TODO |
 | T-CORE-002 | Cargo.toml：kernel+sha2+thiserror only | 无 anyhow/serde/tokio | T-CORE-001 | Core | TODO |
 | T-CORE-003 | lib.rs 属性 forbid/deny | 与 §5 一致 | T-CORE-001 | Core | TODO |
 | T-CORE-004 | Digest32 API | from/as/into_bytes；无 Default | T-CORE-002 | Core | TODO |
@@ -212,7 +212,7 @@
 | T-MEM-PROD-SYS | systemd/release 清单禁 evidence_memory | 与 T-ARCH-005/T-BOOT-001 联检 | T-BOOT-001 | Boot | TODO |
 | T-CUT-001 | 调用方全部迁离 legacy | 无 workspace 依赖旧包 | T-DOM-001 T-GATE-001 T-LEG-003 | Lead | TODO |
 | T-CUT-002 | 删除 tools/evidence（或 legacy） | PATH-001 绿 | T-CUT-001 T-BOOT-001 | Lead | TODO |
-| T-CUT-003 | 更新 docs/architecture/spec.md 路径 | crates/evidence（或人审选定路径） | T-CUT-002 T-DOC-005 | Doc | TODO |
+| T-CUT-003 | 更新 docs/architecture/spec.md 路径 | crates/infra/evidence（或人审选定路径） | T-CUT-002 T-DOC-005 | Doc | TODO |
 | T-CUT-004 | 删除旧 EvidenceSink/hash_bytes/mock | 全树无引用 | T-CUT-002 | Lead | TODO |
 | T-DOC-004 | ADR-010 修订提案 | 与 002 对齐 | T-CORE-025 | Doc | TODO |
 | T-REG-001 | architecture registry 对齐草案 | 待人审 | T-CUT-003 | Doc | TODO |
@@ -260,7 +260,7 @@
 
 | 项 | Task |
 |----|------|
-| crates/evidence | T-CORE-001 |
+| crates/infra/evidence | T-CORE-001 |
 | canonical V1 冻结 | T-CORE-014..027 |
 | 无字段拼接歧义 | T-CORE-029 |
 | 无全零 genesis | T-CORE-017 |

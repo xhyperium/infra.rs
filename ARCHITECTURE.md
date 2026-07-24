@@ -12,7 +12,7 @@
 | 版号 | 2024 |
 | MSRV | 1.85 |
 | 许可证 | MIT |
-| 仓库 | https://github.com/xhyperium/infra.rs |
+| 仓库 | <https://github.com/xhyperium/infra.rs> |
 
 ### 非目标
 
@@ -24,7 +24,7 @@
 
 ## 仓库结构
 
-```
+```text
 infra.rs/
 ├── Cargo.toml                 # Workspace 根清单
 ├── Cargo.lock                 # 锁文件（v4）
@@ -78,16 +78,16 @@ infra.rs/
 
 ### 层次模型
 
-```
+```text
 ┌────────────────────────────────────────────┐
 │  tests/ / examples/                        │  跨 crate 集成与示例
 ├────────────────────────────────────────────┤
 │  crates/testkit/                           │  T0 test-support（仅 dev-dep）
 │  └── ManualClock 族                        │
 ├────────────────────────────────────────────┤
-│  crates/configx/                           │  L1 内存 KV（非多源热更新）
+│  crates/infra/configx/                           │  L1 内存 KV（非多源热更新）
 │  └── ConfigStore                           │
-│  crates/bootstrap/                         │  L1 唯一组合根（ADR-016）
+│  crates/infra/bootstrap/                         │  L1 唯一组合根（ADR-016）
 │  └── typed composition / shutdown owner    │
 ├────────────────────────────────────────────┤
 │  crates/types/canonical/                   │  跨层共享纯 DTO
@@ -100,7 +100,7 @@ infra.rs/
 
 ### 依赖规则
 
-```
+```text
 canonical   →  decimalx  →  kernel
 configx     →  kernel          # L1；禁止其他 L1 / observex
 resiliencx  →  kernel          # L1 重试
@@ -119,7 +119,7 @@ testkit     →  kernel          # 仅 [dev-dependencies]
 
 ### 工作流矩阵
 
-```
+```text
                      push/PR 到 main
                           │
         ┌─────────────────┼─────────────────┐
@@ -174,7 +174,7 @@ testkit     →  kernel          # 仅 [dev-dependencies]
 
 ### AI 代理角色
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │              AGENTS.md                       │
 │           共享治理（SSOT）                    │
@@ -194,7 +194,7 @@ SSOT 规则：所有技能定义以 `.claude/skills/` 为唯一事实源；`.cod
 
 ### 钩子生命周期
 
-```
+```text
 SessionStart ──► PreToolUse ──► PostToolUse ──► PreCompact ──► Stop
      │               │              │               │            │
  session-       pre-tool-     post-tool-      pre-        session-

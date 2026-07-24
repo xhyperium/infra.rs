@@ -19,15 +19,15 @@
 |---|------|------|------|-------------------------------|
 | A1 | 将 `xhyper-evidence-complete-spec.md` 升为 **Approved**，supersede `evidence-spec.md` | 实现 SSOT | Approve after plan 10x | **Approve** |
 | A2 | 修订 **ADR-010** evidence 部分：从六字段+mock feature → V1 模型；mock 迁出 core | 与 Article IX 历史约定冲突，需 ADR | Approve with ADR | **Approve 方向**；ADR 正文修订可随本 PR 或紧随 follow-up |
-| A3 | runtime 路径 `tools/evidence` → `crates/evidence`；适配器 `crates/adapters/evidence/*` | 改 R1 路径描述 | Approve | **Approve**（cutover 已落地） |
+| A3 | runtime 路径 `tools/evidence` → `crates/infra/evidence`；适配器 `crates/adapters/evidence/*` | 改 R1 路径描述 | Approve | **Approve**（cutover 已落地） |
 | A4 | core 依赖白名单：`kernel + sha2 + thiserror`；禁止 anyhow/serde | 破坏性相对现状 | Approve | **Approve** |
 | A5 | 取消 core `mock` feature；测试替身仅 memory adapter / testkit | 宪法 Article IX 需解释 | Approve via A2 | **Approve** |
 | A6 | 生产默认 Durability::Durable；memory 禁止生产 | 安全 | Approve | **Approve** |
 | A7 | 旧链迁移策略：新 genesis + migration record，**不**静默 rehash | 历史审计语义 | Approve | **Approve** |
 | A8 | 独立锚点最低要求（WORM OSS / 独立库） | 运维成本 | Defer 实现细节；Approve 合同 | **Approve 合同**；生产 WORM 实现 **Defer** |
 | A9 | 版本 0.1.1 与 quality **stable** 时机 | 发布 | Defer until §33 | **Defer**（本 PR 不宣称 package stable / 0.1.1 发布） |
-| A10 | golden vectors 目录最终路径 | 工具链 | 默认 `crates/evidence/tests/vectors/evidence-v1/`（I-6） | **Approve** 默认路径 |
-| A11 | **ADR-012 `auditx` vs 002 `crates/evidence`** 路径唯一权威 | 迁移目标冲突 | **必须人审**；计划默认 002 | **Approve 002 路径为权威**；auditx 叙述后续修订 |
+| A10 | golden vectors 目录最终路径 | 工具链 | 默认 `crates/infra/evidence/tests/vectors/evidence-v1/`（I-6） | **Approve** 默认路径 |
+| A11 | **ADR-012 `auditx` vs 002 `crates/infra/evidence`** 路径唯一权威 | 迁移目标冲突 | **必须人审**；计划默认 002 | **Approve 002 路径为权威**；auditx 叙述后续修订 |
 | A12 | 迁移期 package rename：`evidence_legacy` | 双包同名 | Approve 策略 | **Approve**；cutover 后 legacy 已删除 |
 | A13 | T-ATOM-004 外部 Attempted+terminal 是否本战役交付或 DEFER | 范围 | 可 DEFER(accepted) 但须登记 | **DEFER(accepted)** · residual |
 
@@ -79,7 +79,7 @@
 | 项 | 状态 |
 |----|------|
 | plan 10x | pass3 fail_rounds=0（计划完备性，≠ 实现完成） |
-| Core V1 `crates/evidence` | 已实现 |
+| Core V1 `crates/infra/evidence` | 已实现 |
 | adapters memory/file/postgres/signer | 已实现 |
 | `tools/evidence-cli` | 已实现 |
 | cutover 删除 `tools/evidence` | 已实现 |

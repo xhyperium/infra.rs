@@ -55,7 +55,7 @@
 
 | Layer | 路径前缀 | 语义 |
 |---|---|---|
-| `Kernel` | `crates/kernel/`、`crates/evidence/`、`crates/testkit/` | L0 根与测试/证据边界；gate 为 OOS |
+| `Kernel` | `crates/kernel/`、`crates/infra/evidence/`、`crates/testkit/` | L0 根与测试/证据边界；gate 为 OOS |
 | `Types` | `crates/types/` | 跨层共享 DTO |
 | `Contract` | `crates/contracts/` | 契约层 trait 出口 |
 | `Infra` | `crates/infra/`（不含 gate） | L1 基础设施 |
@@ -73,7 +73,7 @@
 **证据（spec §3）：** 按 `manifest_path` 前缀判定。
 
 - 路径含 `/tools/xtask/` 或以 `/tools/xtask/Cargo.toml` 结尾 → `XTask`；
-- 路径含 `/crates/kernel/`、`/crates/evidence/` 或 `/crates/testkit/` → `Kernel`；
+- 路径含 `/crates/kernel/`、`/crates/infra/evidence/` 或 `/crates/testkit/` → `Kernel`；
 - 以此类推；
 - 路径兜底失败时，按 crate 名识别 `xtask` / `xlibgate` / `xlib_harness` / `xlib_evidence` / `quant`；
 - 均不匹配 → `Unknown`。

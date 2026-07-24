@@ -27,7 +27,7 @@ kernel = { path = "../../../kernel", version = "0.3.1" }
 serde_json = { workspace = true }
 serde = { workspace = true }
 sha2 = { workspace = true }
-transportx = { path = "../../../transport", version = "0.1.4" }
+transportx = { path = "../../../infra/transport", version = "0.1.4" }
 
 [dev-dependencies]
 tokio = { workspace = true }

@@ -1,0 +1,27 @@
+[package]
+name = "configx"
+version = "0.1.2"
+publish = false
+edition.workspace = true
+rust-version.workspace = true
+description = "L1 config store: memory KV + multi-source merge + watch + secret redaction"
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "configx"
+
+[dependencies]
+# Active SSOT §2：普通依赖仅 xhyper-kernel；不得增加其他 L1
+kernel = { path = "../../kernel", version = "0.3.1" }
+
+[features]
+# Active SSOT §2：无 feature；新增前须由真实配置源需求评审
+default = []
+
+[lints]
+workspace = true
+
+[[bench]]
+name = "hot_path"
+harness = false

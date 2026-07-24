@@ -22,7 +22,7 @@ rg -n "thread::sleep|tokio::time::sleep|std::thread::sleep" --type rust
 | 1 | `crates/kernel/src/clock.rs` ≈L214 | **unit test** — SystemClock monotonic 可测间隔 | **annotate** — `interval smoke only / not correctness proof` |
 | 2 | `crates/kernel/tests/public_api.rs` ≈L22 | **integration smoke** — 公共面单调推进 | **annotate** — 同上；lifecycle 正确性见 loom |
 | 3 | `crates/adapters/storage/redis/src/lib.rs` ≈L399 | **集成 TTL 测**（`#[ignore]`，需 REDIS） | **annotate** — TTL interval smoke；**非** lifecycle |
-| 4 | `crates/resiliencx/src/lib.rs` ≈L57 | **生产代码** — 重试退避阻塞 sleep | **accept** — 非测试；注释已说明 w4 阻塞语义 |
+| 4 | `crates/infra/resiliencx/src/lib.rs` ≈L57 | **生产代码** — 重试退避阻塞 sleep | **accept** — 非测试；注释已说明 w4 阻塞语义 |
 
 **无其他** workspace Rust 命中。
 

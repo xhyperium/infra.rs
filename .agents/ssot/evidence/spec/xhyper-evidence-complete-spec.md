@@ -4,7 +4,7 @@
 |---|---|
 | Status | 当前 `0.1.1`：L1 审计证据**追加面**（append-only）；**非** 合规审计平台 / 远程 CA / 不可抵赖审计产品 |
 | Package / lib | `evidence` / `evidence`（别名 `xhyper-evidence` 仅作废弃兼容标签 / dual-mirror 文件名） |
-| Path | `crates/evidence` |
+| Path | `crates/infra/evidence` |
 | Layer | L1 Infra |
 | Authority | 本文件是 active current-state spec |
 | Implementation snapshot | `1b80898e0425cf7dc0f787c0f663154c24c8bb37`（本轮审计起点 `origin/main`） |
@@ -63,4 +63,4 @@ node scripts/quality-gates/cov-gate-100.mjs -p evidence
 ## 6. 追溯
 
 - `docs/ssot/evidence-ssot-alignment.md`
-- `crates/evidence/{Cargo.toml,src/}`
+- `crates/infra/evidence/{Cargo.toml,src/}`

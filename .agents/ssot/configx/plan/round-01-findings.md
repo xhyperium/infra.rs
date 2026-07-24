@@ -7,7 +7,7 @@ Base commit：`3cd29a942710c0fb42f3f6bc05e3c31570acad47`
 
 ## 范围
 
-本轮只加固 `crates/configx` 的进程内手动 reload、批量提交、读失败语义、快照诊断和 watch 边界。
+本轮只加固 `crates/infra/configx` 的进程内手动 reload、批量提交、读失败语义、快照诊断和 watch 边界。
 不新增依赖、feature、版本号、自动 watcher、远端源或后台 runtime。
 
 ## 基线发现

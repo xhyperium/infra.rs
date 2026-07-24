@@ -75,7 +75,7 @@ Rust 日常开发速查（本仓）：[rust-dev-rules.md](../../.agents/rules/ru
 
 - **`x` 后缀**：推荐新 crate 以 `x` 结尾（xhyper extension）
 - **无前缀**：包名不含 `xhyper-` 前缀
-- **目录与包名一致**：`crates/configx/` → 包名 `configx`
+- **目录与包名一致**：`crates/infra/configx/` → 包名 `configx`
 - **适配器**：统一 `{provider}x` 模式，目录保持 `crates/adapters/{kind}/{provider}/`
 
 ### 4.3.3 分支与标签
@@ -95,7 +95,7 @@ Rust 日常开发速查（本仓）：[rust-dev-rules.md](../../.agents/rules/ru
 - **配置**：`.toml` 优先，避免 `.yaml` / `.json` 碎片化
 - **Markdown**：仓库根级标志文件可用 `SCREAMING_SNAKE_CASE.md`（`CHANGELOG.md`）；宪章正文分章见本目录
 - **Rust 模块**：`snake_case.rs`
-- **Cargo 包目录**：与包名一致（`crates/configx/` → 包名 `configx`）
+- **Cargo 包目录**：与包名一致（`crates/infra/configx/` → 包名 `configx`）
 
 ## 4.4 测试
 

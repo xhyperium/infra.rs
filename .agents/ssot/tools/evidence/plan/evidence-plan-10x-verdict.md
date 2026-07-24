@@ -52,7 +52,7 @@ pass3: <this run> · hygiene 后复检
 | Round | Result | 1-line reason |
 |-------|--------|---------------|
 | **R1** | **PASS** | Spec ID 存在；gap §0–§34 齐；§33 映射仅真实 Task ID（含 T-CP-007/008、T-DOC-005）；DEF/T1–T18 登记完整。 |
-| **R2** | **PASS** | 目标路径 `crates/evidence` + adapters memory/file/postgres + `tools/evidence-cli` + cutover 删 `tools/evidence` 写明；core 白名单 + I-12 禁表。 |
+| **R2** | **PASS** | 目标路径 `crates/infra/evidence` + adapters memory/file/postgres + `tools/evidence-cli` + cutover 删 `tools/evidence` 写明；core 白名单 + I-12 禁表。 |
 | **R3** | **PASS** | API（Digest/Draft/Outcome/RecordV1+seal）与 canonical 25 步/genesis/边界/域分离均绑 Task+I-\*；时间分离与 ChainHead 有 Task。 |
 | **R4** | **PASS** | Durability 三态 + 生产 Durable；幂等/CAS/fail-closed；Reader 合同；A/B/C/External/Memory/Rejected 原子性 T-ATOM-001…006；CP+Signed+TailTruncated。 |
 | **R5** | **PASS** | Error 24+XError 映射 I-4；mem 禁伪 Durable；file frame/fsync/I-17 recovery；pg 四表不变量；golden/property/fuzz/cov/mutants/miri 非草案桶。 |
@@ -78,7 +78,7 @@ pass3_checklist_fail_count = 0
 | 3 | R-SPEC-003 | **PASS** | `tasks.md` §33.1–33.6 映射全部为真实 Task ID；规范 checkbox 无漏项；无 `+ verify` / `via design`。 |
 | 4 | R-GAP-001 | **PASS** | DEF-001…018 在 gap+residual；+DEF-019/020；todo §1 入口。 |
 | 5 | R-GAP-002 | **PASS** | gap-matrix §2 T1–T18 均有目标防御与 Gap 状态。 |
-| 6 | R-PATH-001 | **PASS** | plan §5 `crates/evidence/` 模块树。 |
+| 6 | R-PATH-001 | **PASS** | plan §5 `crates/infra/evidence/` 模块树。 |
 | 7 | R-PATH-002 | **PASS** | plan §5 + T-MEM/FILE/PG-001 → `crates/adapters/evidence/{memory,file,postgres}`。 |
 | 8 | R-PATH-003 | **PASS** | `tools/evidence-cli/`（T-CLI-001）+ T-CUT-002 删除 `tools/evidence`。 |
 | 9 | R-DEP-001 | **PASS** | plan §5 / T-CORE-002：kernel + sha2 + thiserror only。 |
@@ -295,7 +295,7 @@ TOP_fixes = []   # no remaining strict omissions for plan completeness
 
 ```text
 PLANNING · plan completeness 10x PASS (pass3) · Spec Proposed ·
-implementation ABSENT (crates/evidence 未落地) · §33 OPEN · ≠ stable
+implementation ABSENT (crates/infra/evidence 未落地) · §33 OPEN · ≠ stable
 ```
 
 ---

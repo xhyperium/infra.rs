@@ -9,7 +9,7 @@
 
 ## 0. 文档定位与裁定边界
 
-本文是本仓 `crates/configx` 的 active 合同。状态必须由源码、测试和验证命令共同证明；文件名中的
+本文是本仓 `crates/infra/configx` 的 active 合同。状态必须由源码、测试和验证命令共同证明；文件名中的
 `complete` 只表示合同副本完整，不表示 package stable、Production Ready 或远端配置平台已完成。
 
 冲突时按“组织 Rust 规范 → 仓库宪章 / AGENTS.md → 本文 → 实现”裁定。实现不得用未来目标反向扩大
@@ -41,7 +41,7 @@
 
 | 项目 | 合同 |
 | --- | --- |
-| 路径 | `crates/configx`，L1 Infra |
+| 路径 | `crates/infra/configx`，L1 Infra |
 | 版本 | `0.1.2`；root 发布阶段已完成本次 PATCH bump |
 | 普通依赖 | 仅 `kernel`；不得增加其他 L1 |
 | feature | `default = []`，无额外 feature |
@@ -145,11 +145,11 @@
 cargo fmt -p configx -- --check
 cargo test -p configx --all-targets
 cargo clippy -p configx --all-targets -- -D warnings
-node scripts/quality-gates/cov-gate-100.mjs -p configx --filter crates/configx/src
+node scripts/quality-gates/cov-gate-100.mjs -p configx --filter crates/infra/configx/src
 cmp .agents/ssot/configx/spec/spec.md \
     .agents/ssot/configx/spec/xhyper-configx-complete-spec.md
 git diff --check 3cd29a942710c0fb42f3f6bc05e3c31570acad47 -- \
-    crates/configx .agents/ssot/configx docs/ssot/configx-ssot-alignment.md
+    crates/infra/configx .agents/ssot/configx docs/ssot/configx-ssot-alignment.md
 ```
 
 ## 6. 验收标准

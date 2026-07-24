@@ -4,7 +4,7 @@
 |---|---|
 | Status | 当前 `0.3.3`：L1 唯一组合根；正式 storage contracts 注入 + 进程内 typed composition + 同步关停 drain，**非**完整应用运行时 |
 | Package / lib | `bootstrap` / `bootstrap`（`publish = false`） |
-| Path | `crates/bootstrap` |
+| Path | `crates/infra/bootstrap` |
 | Layer | L1 唯一组合根（R3.1 豁免） |
 | Authority | 本文件是 active current-state spec |
 | Baseline | `3cd29a942710c0fb42f3f6bc05e3c31570acad47` |
@@ -23,7 +23,7 @@
 
 ## 2. 当前依赖
 
-`crates/bootstrap/Cargo.toml` 的直接普通依赖只有四个 workspace path package；固定摘要 storage 组合实验另使用集中声明的第三方 dev-dependencies 与 `natsx` / `redisx` path dev-dependencies：
+`crates/infra/bootstrap/Cargo.toml` 的直接普通依赖只有四个 workspace path package；固定摘要 storage 组合实验另使用集中声明的第三方 dev-dependencies 与 `natsx` / `redisx` path dev-dependencies：
 
 | 依赖 | 当前用途 |
 |---|---|
@@ -115,7 +115,7 @@ cargo fmt -p bootstrap -- --check
 cargo test -p bootstrap --all-targets
 cargo clippy -p bootstrap --all-targets -- -D warnings
 node scripts/storage-composition-conformance.mjs
-node scripts/quality-gates/cov-gate-100.mjs -p bootstrap --filter crates/bootstrap/src
+node scripts/quality-gates/cov-gate-100.mjs -p bootstrap --filter crates/infra/bootstrap/src
 cmp .agents/ssot/bootstrap/spec/spec.md \
     .agents/ssot/bootstrap/spec/xhyper-bootstrap-complete-spec.md
 ```
@@ -124,7 +124,7 @@ cmp .agents/ssot/bootstrap/spec/spec.md \
 
 ## 9. 追溯
 
-- 仓库治理：`AGENTS.md` 与 `crates/bootstrap/AGENTS.md`
+- 仓库治理：`AGENTS.md` 与 `crates/infra/bootstrap/AGENTS.md`
 - Gate 退役计划：`.agents/ssot/gate/plan/xhyper-gate-retirement-complete-plan.md`
-- 实现：`crates/bootstrap/{Cargo.toml,src/,tests/,examples/}`
+- 实现：`crates/infra/bootstrap/{Cargo.toml,src/,tests/,examples/}`
 - 对齐矩阵：`docs/ssot/bootstrap-ssot-alignment.md`

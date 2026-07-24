@@ -1,6 +1,6 @@
 # schedulex maintenance 管线
 
-> 实现：`crates/schedulex`
+> 实现：`crates/infra/schedulex`
 > Active Spec：[spec/spec.md](spec/spec.md) ≡ [spec/xhyper-schedulex-complete-spec.md](spec/xhyper-schedulex-complete-spec.md)
 > 战役：`SPEC-SCHEDULEX-003` · Beads `infra-2d9.9.1`
 

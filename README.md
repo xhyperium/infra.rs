@@ -106,11 +106,11 @@ wt
 | `testkit` | `crates/testkit/` | ManualClock 等测试支持（仅 dev-dep） |
 | `contract-testkit` | `crates/test-support/contracts/` | Fake + per-trait suite（仅 dev-dep） |
 | `contracts` | `crates/contracts/` | R4 trait 出口（Additive Only） |
-| `xhyper-configx` | `crates/configx/` | L1 配置存储（MemoryConfigStore） |
+| `xhyper-configx` | `crates/infra/configx/` | L1 配置存储（MemoryConfigStore） |
 | `decimalx` | `crates/types/decimal/` | 十进制数值 / Money |
 | `canonical` | `crates/types/canonical/` | 跨层共享纯 DTO（Money 复用 decimalx） |
-| `resiliencx` | `crates/resiliencx/` | L1 重试 + 熔断 + 限流 + 舱壁 + `retry_async` |
-| `xhyper-bootstrap` | `crates/bootstrap/` | L1 唯一组合根（ADR-016 typed composition） |
+| `resiliencx` | `crates/infra/resiliencx/` | L1 重试 + 熔断 + 限流 + 舱壁 + `retry_async` |
+| `xhyper-bootstrap` | `crates/infra/bootstrap/` | L1 唯一组合根（ADR-016 typed composition） |
 
 Rust edition `2024`，MSRV `1.85`。完整结构见 [ARCHITECTURE.md](ARCHITECTURE.md)。
 

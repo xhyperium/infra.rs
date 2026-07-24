@@ -11,7 +11,7 @@
 | 日期 | 2026-07-23 |
 | Base commit | `3cd29a942710c0fb42f3f6bc05e3c31570acad47` |
 | Worktree | `.worktrees/feat/infra-2d9.9-infra-core-domains` |
-| 范围 | `crates/bootstrap/**`、`.agents/ssot/bootstrap/**`、`docs/ssot/bootstrap-ssot-alignment.md` |
+| 范围 | `crates/infra/bootstrap/**`、`.agents/ssot/bootstrap/**`、`docs/ssot/bootstrap-ssot-alignment.md` |
 | 版本策略 | 本轮明确禁止版本变更；package 保持 `bootstrap` v0.3.1 |
 
 ## 发现

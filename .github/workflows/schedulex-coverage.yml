@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - "crates/schedulex/**"
+      - "crates/infra/schedulex/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "scripts/quality-gates/cov-gate-100.mjs"
@@ -39,4 +39,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/schedulex/src
+        run: node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/infra/schedulex/src

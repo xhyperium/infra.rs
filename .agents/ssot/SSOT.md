@@ -99,7 +99,7 @@
   - 交易执行精度 filters、限流、时钟偏移、私有 WS、重连与受控 live 交易证据仍 OPEN，交易 **NO-GO**
   - **未**宣称 package stable / Cluster·JetStream·EOS 全量 / crates.io
 - **tools**（2026-07-22 · #188–#191）：
-  - `crates/evidence` 最小面已落地；current-state spec 唯一入口为 `.agents/ssot/evidence/spec/spec.md`
+  - `crates/infra/evidence` 最小面已落地；current-state spec 唯一入口为 `.agents/ssot/evidence/spec/spec.md`
   - `.agents/ssot/tools/evidence/` 仅为历史重定向入口，不持有 active spec
   - `tools/goalctl` · `tools/verifyctl` **workspace members**（最小 CLI；verifyctl 非生产 verifier）
   - `tools/xtask` **未**落地
@@ -123,7 +123,7 @@
 | Kernel | `.agents/ssot/kernel/` | L0 规格；实现 `crates/kernel` |
 | Testkit | `.agents/ssot/testkit/` | 规格；实现 `crates/testkit` |
 | Types | `.agents/ssot/types/` | decimal / canonical |
-| Evidence | `.agents/ssot/evidence/` | canonical current-state 规格；实现 `crates/evidence` |
+| Evidence | `.agents/ssot/evidence/` | canonical current-state 规格；实现 `crates/infra/evidence` |
 | Infra | `.agents/ssot/{bootstrap,configx,gate,observex,resiliencx,schedulex,testkitx,transport}/` | bootstrap / configx / gate / … |
 | Adapters | `.agents/ssot/adapters/` | exchange + storage |
 | Contracts | `.agents/ssot/contracts/` | trait 出口规格 |

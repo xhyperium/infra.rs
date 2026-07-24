@@ -47,7 +47,7 @@ notes: |
 | 3 | R-SPEC-003 | **PASS** | tasks §33.1–33.6 fully Task-mapped; no phantom IDs. |
 | 4 | R-GAP-001 | **PASS** | DEF-001…018 in gap + residual (+ DEF-019/020). |
 | 5 | R-GAP-002 | **PASS** | T1–T18 in gap-matrix §2 with target defenses. |
-| 6 | R-PATH-001 | **PASS** | plan §5 `crates/evidence/`. |
+| 6 | R-PATH-001 | **PASS** | plan §5 `crates/infra/evidence/`. |
 | 7 | R-PATH-002 | **PASS** | memory/file/postgres under `crates/adapters/evidence/`. |
 | 8 | R-PATH-003 | **PASS** | `tools/evidence-cli/` + T-CUT-002 delete tools/evidence. |
 | 9 | R-DEP-001 | **PASS** | kernel+sha2+thiserror (plan §5, T-CORE-002). |

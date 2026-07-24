@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - "crates/resiliencx/**"
+      - "crates/infra/resiliencx/**"
       - "crates/contracts/**"
       - "crates/kernel/**"
       - "Cargo.toml"
@@ -41,4 +41,4 @@ jobs:
       - name: 行覆盖率 100% (LCOV)
         env:
           RUSTUP_TOOLCHAIN: nightly
-        run: node scripts/quality-gates/cov-gate-100.mjs -p resiliencx --filter crates/resiliencx/src
+        run: node scripts/quality-gates/cov-gate-100.mjs -p resiliencx --filter crates/infra/resiliencx/src

@@ -6,7 +6,7 @@
 |---|---|
 | Baseline | `55433a2ec3567624c5cd98601b9f4581a7e69cb6` |
 | Package / lib | `schedulex` / `schedulex` |
-| Path / layer | `crates/schedulex` / L1 |
+| Path / layer | `crates/infra/schedulex` / L1 |
 | 依赖 | std-only，生产依赖必须为空 |
 | Authority | 本文件与双镜像共同定义当前声明面 |
 
@@ -73,7 +73,7 @@ cmp .agents/ssot/schedulex/spec/spec.md \
 cargo test -p schedulex --all-targets
 cargo clippy -p schedulex --all-targets -- -D warnings
 cargo fmt --all --check
-node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/schedulex/src
+node scripts/quality-gates/cov-gate-100.mjs -p schedulex --filter crates/infra/schedulex/src
 node scripts/quality-gates/check-workspace-deps.mjs
 ```
 

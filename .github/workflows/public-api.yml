@@ -14,7 +14,7 @@ on:
       - "crates/types/decimal/**"
       - "crates/types/canonical/**"
       - "crates/contracts/**"
-      - "crates/schedulex/**"
+      - "crates/infra/schedulex/**"
       - "crates/test-support/contracts/**"
       - "docs/api-baselines/**"
       - "scripts/quality-gates/check-public-api.mjs"

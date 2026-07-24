@@ -4,7 +4,7 @@
 GitHub CI/交付 pending，非 package stable
 
 - Package / lib：`observex` / `observex`
-- 路径：`crates/observex`
+- 路径：`crates/infra/observex`
 - 当前版本：`0.1.2`
 - 发布：`false`
 - 机器证据：本轮新树 root 串行覆盖率 `942 / 942`、zeros 0、100.0000%、exit 0
@@ -128,8 +128,8 @@ OpenTelemetry SDK/OTLP、远端持久化、异步队列、timeout、采样、PII
 | 合同 | 证据 |
 | --- | --- |
 | Instrumentation 签名 | `crates/contracts/src/lib.rs` |
-| op 清理 | `crates/observex/src/ops.rs` |
-| tracing 记录 | `crates/observex/src/lib.rs` |
-| 有界 sink 与生命周期 | `crates/observex/src/export.rs` |
-| 公开/失败/并发测试 | `crates/observex/src/*.rs`、`crates/observex/tests/` |
+| op 清理 | `crates/infra/observex/src/ops.rs` |
+| tracing 记录 | `crates/infra/observex/src/lib.rs` |
+| 有界 sink 与生命周期 | `crates/infra/observex/src/export.rs` |
+| 公开/失败/并发测试 | `crates/infra/observex/src/*.rs`、`crates/infra/observex/tests/` |
 | 本仓裁定 | `docs/ssot/observex-ssot-alignment.md` |

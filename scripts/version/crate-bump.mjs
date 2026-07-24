@@ -7,7 +7,7 @@
  * 用法:
  *   node scripts/version/crate-bump.mjs <package-name|relative-path>
  *   node scripts/version/crate-bump.mjs kernel --dry-run
- *   node scripts/version/crate-bump.mjs crates/configx
+ *   node scripts/version/crate-bump.mjs crates/infra/configx
  */
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";

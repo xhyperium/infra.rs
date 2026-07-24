@@ -67,7 +67,7 @@ cargo clippy -p configx --all-targets -- -D warnings
 cargo doc -p configx --no-deps
 结果：exit 0
 
-node scripts/quality-gates/cov-gate-100.mjs -p configx --filter crates/configx/src
+node scripts/quality-gates/cov-gate-100.mjs -p configx --filter crates/infra/configx/src
 结果：Round 3 root 串行复验 `1164 / 1164`（100.0000%），exit 0
 
 active / complete spec cmp

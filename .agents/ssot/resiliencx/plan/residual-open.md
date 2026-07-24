@@ -37,4 +37,4 @@
 | RETRY-JITTER-001 | caller seed 入口与 attempt-only 边界 |
 | BULKHEAD-POISON-001 | poisoned inner 恢复且 permit 不泄漏容量 |
 | INSTR-CONTRACTS-001 | re-export `contracts::Instrumentation` |
-| WS-MEMBER | workspace 成员 `crates/resiliencx` |
+| WS-MEMBER | workspace 成员 `crates/infra/resiliencx` |
