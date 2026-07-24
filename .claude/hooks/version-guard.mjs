@@ -1,46 +1,29 @@
 #!/usr/bin/env node
 // Version Guard — Stop Hook
 //
-// 检查本次会话是否修改了追踪文件但未递增版本号。
+// 检查本次会话是否修改了 crates/tools 源码但未递增版本号。
 // 输出警告到 stderr，不阻塞。
 //
-// 追踪文件（修改了这些文件就必须 bump 版本）：
-//   - STATUS.md, README.md, ARCHITECTURE.md, module/README.md
-//   - module/*/SPEC.md
-//   - .repo-contract.yaml
-//   - .foundationx/repo-contract.json
-//   - .foundationx/status/index.json
-//   - .foundationx/blockers.json
-//   - foundation-bom.yaml
+// 规则来源：.agents/rules/VERSIONING.md R-C2 — 每更一次 PATCH +1
+// 版本源：crates/**/Cargo.toml 与 tools/**/Cargo.toml 显式独立版本
 //
-// 版本目标：
-//   - release/manifest/latest.json version — 文档发布版本
-//   - .repo-contract.yaml trust_hardening.ruleset — 信任规则版本
-//
-// 规则来源：CLAUDE.md §版本号自动递增
-//  "每次更新迭代，版本号都要+1"
+// 不再使用 release/manifest/latest.json（旧模型，已移除）。
 
 import { execSync } from "child_process";
 import { readFileSync, existsSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
-// ── 追踪文件 ──────────────────────────────────────────────────────
-const TRACKED_FILES = [
-  "STATUS.md", "README.md", "ARCHITECTURE.md", "module/README.md",
-  "CLAUDE.md", "AGENTS.md", "CONSTITUTION.md",
-  ".repo-contract.yaml", ".foundationx/repo-contract.json",
-  ".foundationx/status/index.json", ".foundationx/blockers.json",
-  "foundation-bom.yaml",
-];
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const projectRoot = join(__dirname, "../..");
 
-const SPEC_GLOB = "module/*/SPEC.md";
-
-const MANIFEST_FILE = "release/manifest/latest.json";
+const CRATE_CARGO_TOML = /^(crates|tools)\/.+\/Cargo\.toml$/;
 
 function getChangedFiles() {
   try {
     const output = execSync("git diff --name-only HEAD", {
       encoding: "utf8",
-      cwd: process.cwd(),
+      cwd: projectRoot,
     }).trim();
     return output.split("\n").filter(Boolean);
   } catch {
@@ -48,14 +31,28 @@ function getChangedFiles() {
   }
 }
 
-function getCurrentVersion() {
-  if (!existsSync(MANIFEST_FILE)) {
+function getVersionFromToml(tomlPath) {
+  const abs = join(projectRoot, tomlPath);
+  if (!existsSync(abs)) return null;
+  try {
+    const text = readFileSync(abs, "utf8");
+    const m = text.match(/^version\s*=\s*"([^"]+)"/m);
+    return m ? m[1] : null;
+  } catch {
     return null;
   }
+}
+
+function getVersionBeforeChange(tomlPath) {
   try {
-    const data = JSON.parse(readFileSync(MANIFEST_FILE, "utf8"));
-    return data.version || null;
+    const output = execSync(`git show HEAD:"${tomlPath}"`, {
+      encoding: "utf8",
+      cwd: projectRoot,
+    }).trim();
+    const m = output.match(/^version\s*=\s*"([^"]+)"/m);
+    return m ? m[1] : null;
   } catch {
+    // 新文件，无 HEAD 版本
     return null;
   }
 }
@@ -67,67 +64,76 @@ function main() {
     return;
   }
 
-  const trackedChanged = changedFiles.filter((f) =>
-    TRACKED_FILES.includes(f) || f.match(/^module\/[^/]+\/SPEC\.md$/)
-  );
+  // 只关注 crates/ 和 tools/ 下的 Cargo.toml
+  const cargoTomlsChanged = changedFiles.filter((f) => CRATE_CARGO_TOML.test(f));
 
-  if (trackedChanged.length === 0) {
+  if (cargoTomlsChanged.length === 0) {
+    // 没有 crate/tools Cargo.toml 变更，无需版本检查
     return;
   }
 
-  const currentVersion = getCurrentVersion();
+  // 检查源码变更 — 任一 crates/ 或 tools/ 下非 Cargo.toml 文件变更
+  const sourceChanged = changedFiles.some(
+    (f) => /^(crates|tools)\//.test(f) && !f.endsWith("Cargo.toml"),
+  );
 
-  let lastBumpInfo = "";
-  try {
-    const log = execSync(
-      `git log --oneline -10 -- ${MANIFEST_FILE}`,
-      { encoding: "utf8" }
-    ).trim();
-    if (log) {
-      lastBumpInfo = log.split("\n")[0];
+  const needsBump = [];
+
+  for (const toml of cargoTomlsChanged) {
+    const current = getVersionFromToml(toml);
+    const previous = getVersionBeforeChange(toml);
+
+    if (previous && current === previous) {
+      needsBump.push({ toml, version: current });
     }
-  } catch {
-    // ignore
   }
 
-  const manifestChanged = changedFiles.includes(MANIFEST_FILE);
-
-  const lines = [];
-  lines.push("");
-  lines.push("══════════════════════════════════════════════════════");
-  lines.push("[VersionGuard] 📋 本次会话修改了追踪文件，检查版本号...");
-  lines.push("");
-  lines.push(`  当前版本: ${currentVersion || "(未找到)"}`);
-  lines.push(`  上次 bump: ${lastBumpInfo || "(无记录)"}`);
-  lines.push(`  manifest 已变更: ${manifestChanged ? "是 ✅" : "否 ⚠️"}`);
-  lines.push("");
-  lines.push("  修改的追踪文件:");
-  for (const f of trackedChanged) {
-    lines.push(`    - ${f}`);
+  // 如果只有 Cargo.toml 改了且版本已增，跳过
+  if (needsBump.length === 0 && !sourceChanged) {
+    return;
   }
-  lines.push("");
 
-  if (!manifestChanged) {
-    lines.push("  ⚠️  警告: 追踪文件已修改但 release/manifest/latest.json 版本号未变！");
+  // 如果 Cargo.toml 改了且版本已增，但还有源码变更 — 检查源码所在 crate
+  if (needsBump.length > 0 || sourceChanged) {
+    const lines = [];
     lines.push("");
-    lines.push("  CLAUDE.md 规则: 每次更新迭代，版本号都要 +1");
+    lines.push("\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
+    lines.push("[VersionGuard] 检查 crates/tools 版本号...");
+    lines.push("");
+
+    if (needsBump.length > 0) {
+      lines.push("  以下 crate 的 Cargo.toml 已修改但版本号未变：");
+      for (const { toml, version } of needsBump) {
+        lines.push(`    - ${toml}  (current: ${version})`);
+      }
+    }
+
+    if (sourceChanged && needsBump.length === 0) {
+      lines.push("  源码已变更但所有受影响的 Cargo.toml 不在变更列表中。");
+      lines.push("  请确认是否需要 bump 对应 crate 版本：");
+    }
+
+    lines.push("");
+    lines.push("  规则: .agents/rules/VERSIONING.md R-C2 — 每更一次 PATCH +1");
     lines.push("");
     lines.push("  自动 bump:");
-    lines.push("    $ ./scripts/version-bump.sh              # patch bump");
-    lines.push("    $ ./scripts/version-bump.sh --level minor # minor bump");
-    lines.push("    $ ./scripts/version-bump.sh --dry-run      # 预览");
+    lines.push("    $ node scripts/version/crate-bump.mjs <package-name>");
+    lines.push("    $ node scripts/version/crate-bump.mjs crates/infra/configx");
+    lines.push("    $ node scripts/version/crate-bump.mjs <package-name> --dry-run  # 预览");
     lines.push("");
-    lines.push("  Bump 级别选择:");
-    lines.push("    PATCH: 错字修复、链接更新、说明澄清");
-    lines.push("    MINOR: 新增模块/章节、架构描述变更");
-    lines.push("    MAJOR: 治理体系重构、顶层架构重写");
-  } else {
-    lines.push("  ✅ manifest 版本号已变更，版本递增规则已满足。");
+
+    if (needsBump.length > 0) {
+      lines.push("  \u26a0\ufe0f  警告: Cargo.toml 已修改但版本号未递增！");
+    }
+
+    if (sourceChanged && needsBump.length === 0) {
+      lines.push("  \u2139\ufe0f  提示: 仅有源码变更，版本更新需手动确认");
+    }
+
+    lines.push("\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
+
+    console.error(lines.join("\n"));
   }
-
-  lines.push("══════════════════════════════════════════════════════");
-
-  console.error(lines.join("\n"));
 }
 
 main();
