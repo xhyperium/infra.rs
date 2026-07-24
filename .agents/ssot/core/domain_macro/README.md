@@ -6,9 +6,9 @@
 
 生产声明：本域当前为 draft；manifest 中的 `partial` 仅表示 `macrox` 有少量既有类型，不表示下面列出的契约已经全部实现、测试或发布。
 
-**路径**：`.agents/ssot/domain_macro/`
+**路径**：`.agents/ssot/core/domain_macro/`
 
-**对应 crate**：`crates/macrox`（L0 宏观经济数据模型核心 crate）
+**对应 crate**：`crates/macrox`（计划 L0 宏观经济数据模型核心 crate，**尚未落地**；见 `macro_data/manifest.json`）
 
 ## 域概述
 

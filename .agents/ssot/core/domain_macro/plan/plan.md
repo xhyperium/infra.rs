@@ -9,4 +9,4 @@
 | P3 | JSON envelope 与 N-1 迁移 | 未开始 | golden fixture、迁移和回滚报告 |
 | P4 | provider 映射 | 未开始 | 每个来源契约、fixture、许可证和映射 evidence |
 
-当前唯一实现路径是 `crates/macrox`；不存在的 `src/*.rs` 不得写入 evidence 或宣称已落地。
+计划实现路径为 `crates/macrox`（**尚未落地**）；不存在的 `src/*.rs` 不得写入 evidence 或宣称已落地。

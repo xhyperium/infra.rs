@@ -5,7 +5,7 @@
 | 项目 | 值 |
 |------|----|
 | **本仓 SSOT** | `.agents/ssot/macro_data/`（域规格单一事实源；`SSOT.md` R6） |
-| **领域模型** | `crates/domain_macro`（规格在 `.agents/ssot/core/domain_macro/`） |
+| **领域模型** | 规格在 `.agents/ssot/core/domain_macro/`（实现 crate `macrox` 计划中，尚未落地） |
 | **建立日期** | 2026-07-24 |
 
 > macro_data 规格是**本仓 SSOT**（非外部仓库镜像）；provider 实现尚未落地（见下方实现状态）。外仓名字面量（`xhyper` / `macro_data.rs`）不得进入本树（`SSOT.md` §5.4）。

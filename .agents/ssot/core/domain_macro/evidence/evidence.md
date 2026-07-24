@@ -3,8 +3,8 @@
 
 | 事实 | 当前状态 | 证据 |
 |---|---|---|
-| workspace member | 已核实 | `Cargo.toml` 仅含 `crates/macrox` |
-| 现有实现 | 部分 | `crates/macrox/src/lib.rs` 仅有 `IndicatorCategory`、`DataPoint<T>` |
+| workspace member | 未注册 | `Cargo.toml` 不含 `macrox`（计划路径 `crates/macrox`，尚未落地） |
+| 现有实现 | 无 | `crates/macrox` 尚未落地；无 `src/*.rs`，不得据历史外部仓库快照宣称实现 |
 | DM-V01–DM-V07 | 未验证 | 尚无对应实现、测试和原始命令输出 |
 | JSON/N-1/回滚 | 未验证 | 尚无 golden fixture |
 

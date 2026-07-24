@@ -7,7 +7,7 @@
 # domain_macro 核心规格 v0.2.0-draft
 
 > 状态：draft。该规格是跨来源数据契约，尚未宣称 `macrox` 已实现或可发布。
-> 当前代码事实：`crates/macrox` 仅有 `IndicatorCategory` 与泛型 `DataPoint<T>`；实现状态由 `.agents/ssot/manifest.json` 管理。
+> 当前代码事实：`crates/macrox` **尚未落地**（计划 L0 宏观经济数据模型核心 crate）；实现状态以 `.agents/ssot/macro_data/manifest.json`（`domain_macro`: `not_started`）为准。
 
 ## 1. 目标与非目标
 
