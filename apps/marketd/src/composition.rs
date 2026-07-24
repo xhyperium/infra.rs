@@ -1,12 +1,12 @@
 use async_trait::async_trait;
 use kernel::{ShutdownGuard, ShutdownSignal};
 use market_data::{
+    ReplaySource,
     checkpoint::FileCheckpoint,
     model::{MarketEvent, SourceEvent},
     pipeline::{Delivery, DeliveryError, DeliveryPipeline},
     ports::{EventSink, MarketDataSource, PortError},
     quality::Quality,
-    ReplaySource,
 };
 use std::{collections::BTreeSet, path::PathBuf};
 #[cfg(unix)]
@@ -84,11 +84,7 @@ async fn run_replay(
         deliveries,
         committed,
         quality,
-        emitted_sequences: sink
-            .events
-            .into_iter()
-            .map(|event| event.sequence)
-            .collect(),
+        emitted_sequences: sink.events.into_iter().map(|event| event.sequence).collect(),
     })
 }
 
@@ -123,7 +119,7 @@ pub async fn wait_for_shutdown_signal(
     sender: watch::Sender<bool>,
     guard: ShutdownGuard,
 ) -> io::Result<()> {
-    use tokio::signal::unix::{signal, SignalKind};
+    use tokio::signal::unix::{SignalKind, signal};
 
     let mut terminate = signal(SignalKind::terminate())?;
     let mut interrupt = signal(SignalKind::interrupt())?;
@@ -208,8 +204,8 @@ mod tests {
     use super::*;
     use market_data::checkpoint::MemoryCheckpoint;
     use std::sync::{
-        atomic::{AtomicUsize, Ordering},
         Arc,
+        atomic::{AtomicUsize, Ordering},
     };
 
     #[tokio::test]
@@ -233,16 +229,12 @@ mod tests {
         let path = directory.path().join("checkpoint");
 
         let (_sender, mut shutdown) = watch::channel(false);
-        let first = run_fixture_with_shutdown(&path, &mut shutdown)
-            .await
-            .unwrap();
+        let first = run_fixture_with_shutdown(&path, &mut shutdown).await.unwrap();
         assert_eq!(first.committed, 4);
         assert_eq!(first.emitted_sequences, vec![1, 3, 4]);
 
         let (_sender, mut shutdown) = watch::channel(false);
-        let restarted = run_fixture_with_shutdown(path, &mut shutdown)
-            .await
-            .unwrap();
+        let restarted = run_fixture_with_shutdown(path, &mut shutdown).await.unwrap();
         assert_eq!(restarted.committed, 4);
         assert!(restarted.emitted_sequences.is_empty());
         assert_eq!(restarted.quality.duplicates, 5);
@@ -292,19 +284,14 @@ mod tests {
     #[tokio::test]
     async fn shutdown_after_emit_keeps_checkpoint_before_next_read() {
         let reads = Arc::new(AtomicUsize::new(0));
-        let source = OneThenPending {
-            event: Some(event(1)),
-            reads: Arc::clone(&reads),
-        };
+        let source = OneThenPending { event: Some(event(1)), reads: Arc::clone(&reads) };
         let (sender, mut shutdown) = watch::channel(false);
         let mut pipeline =
             DeliveryPipeline::new(MemoryCheckpoint::default(), SignalAfterEmit { sender })
                 .await
                 .unwrap();
 
-        let deliveries = run_until_shutdown(source, &mut pipeline, &mut shutdown)
-            .await
-            .unwrap();
+        let deliveries = run_until_shutdown(source, &mut pipeline, &mut shutdown).await.unwrap();
         assert_eq!(deliveries, vec![Delivery::Emitted(1)]);
         assert_eq!(pipeline.committed(), 1);
         assert_eq!(reads.load(Ordering::SeqCst), 1);
@@ -316,14 +303,9 @@ mod tests {
         let (guard, signal) = ShutdownSignal::new();
         let (sender, receiver) = watch::channel(false);
         assert!(!signal.is_triggered());
-        forward_shutdown_signal(async { Ok(()) }, sender, guard)
-            .await
-            .unwrap();
+        forward_shutdown_signal(async { Ok(()) }, sender, guard).await.unwrap();
         assert!(*receiver.borrow());
-        assert!(
-            signal.is_triggered(),
-            "composition path must trigger kernel ShutdownGuard"
-        );
+        assert!(signal.is_triggered(), "composition path must trigger kernel ShutdownGuard");
     }
 
     /// 组合路径契约：`ShutdownGuard::trigger` 使配对 `ShutdownSignal::is_triggered` 为 true。

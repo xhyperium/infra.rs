@@ -34,7 +34,6 @@ members = [
   "crates/exchange/coinglass",
   "tools/goalctl",
   "tools/verifyctl",
-  "apps/marketd",
 ]
 
 [workspace.package]
@@ -121,6 +120,7 @@ hex = "0.4"
 serde_yaml = "0.9"
 chrono = { version = "0.4", default-features = false, features = [
   "clock",
+  "serde",
   "std",
 ] }
 # crypto / encoding（exchange + oss 签名）
@@ -131,7 +131,7 @@ sha1 = "0.10"
 proptest = "1"
 static_assertions = "1"
 bigdecimal = "0.4"
-rust_decimal = "1"
+rust_decimal = { version = "1", features = ["serde"] }
 criterion = { version = "0.5", default-features = false }
 tracing-subscriber = { version = "0.3", default-features = false, features = [
   "std",

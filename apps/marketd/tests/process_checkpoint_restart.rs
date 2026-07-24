@@ -11,10 +11,8 @@ use std::{
 
 fn run_marketd(checkpoint: &Path) -> (i32, String, String) {
     let bin = env!("CARGO_BIN_EXE_marketd");
-    let output = Command::new(bin)
-        .env("MARKETD_CHECKPOINT", checkpoint)
-        .output()
-        .expect("spawn marketd");
+    let output =
+        Command::new(bin).env("MARKETD_CHECKPOINT", checkpoint).output().expect("spawn marketd");
     let code = output.status.code().unwrap_or(-1);
     let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
     let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
@@ -23,27 +21,15 @@ fn run_marketd(checkpoint: &Path) -> (i32, String, String) {
 
 #[test]
 fn process_restart_reopens_checkpoint_without_reemitting() {
-    let stamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("clock")
-        .as_nanos();
+    let stamp = SystemTime::now().duration_since(UNIX_EPOCH).expect("clock").as_nanos();
     let dir = std::env::temp_dir().join(format!("marketd-process-ckpt-{stamp}"));
     std::fs::create_dir_all(&dir).expect("temp dir");
     let checkpoint = dir.join("marketd.checkpoint");
 
     let (code1, out1, err1) = run_marketd(&checkpoint);
-    assert_eq!(
-        code1, 0,
-        "first process failed: stdout={out1} stderr={err1}"
-    );
-    assert!(
-        out1.contains("emitted=[1, 3, 4]"),
-        "first process expected unique emits, got: {out1}"
-    );
-    assert!(
-        out1.contains("committed=4"),
-        "first process expected committed=4, got: {out1}"
-    );
+    assert_eq!(code1, 0, "first process failed: stdout={out1} stderr={err1}");
+    assert!(out1.contains("emitted=[1, 3, 4]"), "first process expected unique emits, got: {out1}");
+    assert!(out1.contains("committed=4"), "first process expected committed=4, got: {out1}");
     assert!(
         checkpoint.is_file(),
         "checkpoint file missing after first run: {}",
@@ -57,18 +43,9 @@ fn process_restart_reopens_checkpoint_without_reemitting() {
     assert_eq!(committed, 4);
 
     let (code2, out2, err2) = run_marketd(&checkpoint);
-    assert_eq!(
-        code2, 0,
-        "second process failed: stdout={out2} stderr={err2}"
-    );
-    assert!(
-        out2.contains("emitted=[]"),
-        "restart must not re-emit fixture events, got: {out2}"
-    );
-    assert!(
-        out2.contains("committed=4"),
-        "restart must retain committed=4, got: {out2}"
-    );
+    assert_eq!(code2, 0, "second process failed: stdout={out2} stderr={err2}");
+    assert!(out2.contains("emitted=[]"), "restart must not re-emit fixture events, got: {out2}");
+    assert!(out2.contains("committed=4"), "restart must retain committed=4, got: {out2}");
 
     let _ = std::fs::remove_dir_all(&dir);
 }
