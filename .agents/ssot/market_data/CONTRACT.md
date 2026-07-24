@@ -10,9 +10,9 @@
 
 | 主题            | 规格入口                                   | workspace 实现                | 当前状态                                     |
 | --------------- | ------------------------------------------ | ----------------------------- | -------------------------------------------- |
-| domainx         | `domainx/spec/spec.md`                     | `crates/domainx`              | 类型骨架已存在；跨域 instrument 仍是兼容占位 |
-| domain_market   | `domain_market/spec/spec.md`               | `crates/domain_market`        | 类型骨架已存在；Envelope 仍为 JSON 载荷      |
-| domain_exchange | `domain_exchange/spec/spec.md`             | `crates/domain_exchange`      | trait/错误类型已存在；运行时行为待实现       |
+| domainx         | `core/domainx/spec/spec.md`               | `crates/domainx`              | 类型骨架已存在；跨域 instrument 仍是兼容占位 |
+| domain_market   | `core/domain_market/spec/spec.md`         | `crates/domain_market`        | 类型骨架已存在；Envelope 仍为 JSON 载荷      |
+| domain_exchange | `core/domain_exchange/spec/spec.md`       | `crates/domain_exchange`      | trait/错误类型已存在；运行时行为待实现       |
 | binance         | `binance/spec/spec.md`                     | `crates/exchange/binance`     | DTO/config 骨架；连接、映射和 REST 待实现    |
 | okx             | `okx/spec/spec.md`                         | `crates/exchange/okx`         | DTO/config 骨架；连接、映射和 REST 待实现    |
 | coinbase        | `coinbase/spec/spec.md`                    | `crates/exchange/coinbase`    | DTO/config 骨架；连接、映射和 REST 待实现    |

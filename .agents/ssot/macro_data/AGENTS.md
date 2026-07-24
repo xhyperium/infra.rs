@@ -25,11 +25,13 @@ matrix/ gate/ evidence/   + README.md
 
 ## 3. 本仓域树
 
+> `domain_macro` 领域规格已移至 `core/domain_macro/`，详见 `core/AGENTS.md`。
+
 | 路径 | 角色 |
 |------|------|
-| `domain_macro/` | 核心宏观数据域（L0）：宏观经济指标模型、数据源抽象 |
+| `yield_curve/` | 来源无关的收益率曲线统一契约 |
+| `manifest.json` | 机器可读的域结构与状态清单 |
 | `{bea,eastmoney,ecb,fred,japan_cb,jin10,treasury,uk_cb,yahoo}/` | 宏观经济数据源适配器 |
-| `yield_curve/` | 来源无关的收益率曲线统一契约（kernel） |
 
 ## 4. 落地状态速查
 

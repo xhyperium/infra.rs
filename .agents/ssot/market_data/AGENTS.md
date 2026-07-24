@@ -4,13 +4,15 @@
 
 ## 1. 何时读这里
 
+> 领域规格 (`domainx` / `domain_market` / `domain_exchange`) 已移至 `core/`。适配器/引擎开发时需同时阅读 `core/` 下的领域规格和本目录的适配器规格。
+
 | 场景                                         | 读什么                                                                     |
 | -------------------------------------------- | -------------------------------------------------------------------------- |
-| 新增或修改 crate 的类型、trait、公开 API     | 对应域 `spec/spec.md` + `design/design.md`                                 |
-| 实现跨域交互逻辑（adapter 映射、订单簿物化） | `CONTRACT.md` §1 主题映射 + §2 冲突裁决                                    |
-| 关闭质量门禁                                 | 对照 `spec/spec.md` 逐项验证 + `matrix/` 门禁表                            |
-| 判断是否可宣称 ship                          | 参考下方「落地状态速查」门禁统计 + `docs/ssot/workspace-ssot-alignment.md` |
-| 新增域                                       | 创建 goal → design → spec → matrix 四层，更新本文件索引                    |
+| 新增或修改领域类型/trait 规格                 | `core/<domain>/spec/spec.md` + `design/design.md`                         |
+| 实现 adapter 映射与跨域交互                   | `CONTRACT.md` §1 主题映射 + §2 冲突裁决                                    |
+| 关闭适配器/引擎质量门禁                      | 对照本目录 `spec/spec.md` 逐项验证 + `matrix/` 门禁表                      |
+| 判断是否可宣称 ship                          | 参考下方「落地状态速查」+ `docs/ssot/workspace-ssot-alignment.md`          |
+| 新增数据源适配器                             | 创建 goal → design → spec → matrix 四层，更新本文件索引                    |
 
 ## 2. 标准文档结构（域叶节点）
 
