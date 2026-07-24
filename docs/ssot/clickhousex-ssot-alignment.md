@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/adapters/storage/clickhouse/` |
 | 实现 | `crates/adapters/storage/clickhouse` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.2` |
+| version | `0.3.3` |
 | 结论 | **HTTP(S) AnalyticsSink + PEM CA + 分片批量 insert + 有界池已落地**；**未**宣称 package stable |
 
 ## 结论摘要

@@ -88,4 +88,5 @@ SKIP_VERSION_CHECK=1 git commit -m "docs(ssot): sync alignment to current state"
 |------|------|
 | 2026-07-22 | **#178** 独立 `contract-testkit` 落地；Fake 在 `crates/test-support/contracts`；对齐/同步报告已纠偏 |
 | 2026-07-22 | **#188–#191** storage×7 生产路径 + goalctl/verifyctl + live env；workspace/adapters/tools 对齐文刷新 |
+| 2026-07-24 | 治理对齐修正：7 处版本漂移修正（bootstrap/clickhouse/nats/oss/postgres/taos/configx）；skills 投影同步 + check-skills-sync.mjs CI 校验；workspace-ssot-alignment v2.0 审计日期刷新 |
 | 2026-07-22 | storage×7 分 package 对齐文 + SSOT 层实质化（非占位） |

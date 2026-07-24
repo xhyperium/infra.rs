@@ -123,6 +123,10 @@
           {
             "command": "nice -n 19 timeout 30 node .claude/hooks/branch-protect.mjs",
             "type": "command"
+          },
+          {
+            "command": "nice -n 19 timeout 30 node .claude/hooks/contract-compliance-guard.mjs",
+            "type": "command"
           }
         ],
         "matcher": ""

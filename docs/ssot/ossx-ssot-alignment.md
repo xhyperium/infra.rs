@@ -6,7 +6,7 @@
 | SSOT | `.agents/ssot/adapters/storage/oss/` |
 | 实现 | `crates/adapters/storage/oss` |
 | 审计日期 | 2026-07-23 |
-| version | `0.3.2` |
+| version | `0.4.1` |
 | 结论 | **ObjectStore + 有界 multipart/retry/资源治理已落地**；**未**宣称 package stable |
 
 ## 结论摘要

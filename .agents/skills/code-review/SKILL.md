@@ -33,7 +33,13 @@ Look for the originating spec, in this order:
 
 ### 3. Identify the standards sources
 
-Anything in the repo that documents how code should be written, such as `CODING_STANDARDS.md` or `CONTRIBUTING.md`.
+This repo's documented coding standards are spread across several files — always reference all applicable ones:
+
+- `docs/governance/项目开发规则.md` — DEV-001（优先复用内部库）、DEV-002（代码复用）、DEV-003（独立复用模块）、提交规范、质量门禁
+- `docs/governance/编码与语言约定.md` — UTF-8、中文强制
+- `docs/governance/VERSIONING.md` — 语义化版本与 crate 独立版本
+- `docs/constitution/` — Rust 编码规范（cargo fmt、clippy、test）
+- `AGENTS.md` — Agent 工作流与 Git 规范
 
 On top of whatever the repo documents, the Standards axis always carries the **smell baseline** below — a fixed set of Fowler code smells (_Refactoring_, ch.3) that applies even when a repo documents nothing. Two rules bind it:
 
