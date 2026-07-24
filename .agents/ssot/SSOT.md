@@ -94,7 +94,14 @@
 - 路径一律使用 `.agents/ssot/`（禁止旧 monorepo 单数 agent 路径写法）
 - 域树变更经 worktree + PR 合入；不从外仓路径覆盖本树
 - 保留层级：`adapters/`、`tools/`、`infra/`、`core/`、`market_data/`、`macro_data/`
-- **dual-specs 约定**：每个域 `spec/` 目录须包含 `spec/spec.md`（短名入口）和 `xhyper-<name>-complete-spec.md`（长名镜像）。两文件须逐字节一致（`cmp` exit 0）。CI 门禁 `check-ssot-current-state.mjs` 强制校验
+- **dual-specs 约定**：`spec/` 目录必须同时存在 `spec.md`（active spec，短名入口）和 `xhyper-<name>-complete-spec.md`（complete spec，长名镜像）。两文件须逐字节一致（`readFileSync().equals()`）。
+
+  **CI 门禁校验规则**（`check-ssot-current-state.mjs`）：
+  1. **域目录冻结**：46 个域列入 `expectedDualSpecDirs`，禁止缺失或未声明的新域
+  2. **文件存在**：每个 `spec/` 必须含 `spec.md` + 恰好 1 个 matching `xhyper-*-complete-spec.md` mirror
+  3. **逐字节同构**：`spec.md` 与 `complete-spec.md` 必须 byte-identical，任一不同构则阻断合并
+
+  **冻结域清单**（46 域）：kernel · testkit · types(canonical decimal) · contracts · tools(goalctl verifyctl xtask) · infra(9) · adapters/exchange(2) · adapters/storage(7) · core(4) · market_data(6) · macro_data(10)
 
 ### R7: 规格文档 ≠ 本仓实现
 
@@ -152,13 +159,14 @@
 
 | 版本 | 日期 | 修订 |
 |------|------|------|
-| v2.4.0 | 2026-07-24 | **新增三平面 + dual-specs 约定**
+| v2.4.0 | 2026-07-24 | **新增三平面 + dual-specs CI 门禁**
 
-- **core/**：共享领域规格从 market_data / macro_data 下沉（4 域：domainx/domain_market/domain_exchange/domain_macro）
-- **market_data/**：市场数据适配器（5 域）+ 订单簿引擎（orderbook，无 runtime）
-- **macro_data/**：宏观数据 provider 适配器（10 域含 yield_curve）
-- **dual-specs**：每域 spec/ 需含 spec.md(active) + xhyper-<name>-complete-spec.md(mirror)，CI 门禁统一校验
-- R6/清单/层级树同步更新；core/AGENTS.md 独立层文档；ENVIRONMENT.md 记录来源 |
+- **core/market_data/macro_data**：从外部仓库导入 20 域 SSOT，共享领域规格下沉到 core/ 层
+- **dual-specs CI 门禁**（`check-ssot-current-state.mjs`）：
+  - 冻结 46 域 `expectedDualSpecDirs`
+  - 每域 `spec/` 验证：`spec.md` + 恰好 1 个 `xhyper-*-complete-spec.md` mirror
+  - 逐字节同构：任一不同构则 CI fail
+- R6 域规格树、SSOT 清单、层级树同步更新；`SSOT.md` 升至 v2.4.0 |
 | v2.3.0 | 2026-07-24 | **恢复 infra 层级**：与 `crates/infra/` 对齐，域归组到 `.agents/ssot/infra/*`；根路径保留 R5 重定向 README |
 | v2.2.1 | 2026-07-23 | 在 v2.2.0 current-state 基线上声明域级三轮 findings 证据文件约定；清理重复域目录清单 |
 | v2.2.0 | 2026-07-22 | 唯一化顶层 evidence current-state 入口；冻结 24 package 与 configx/schedulex/exchange 当前边界 |
