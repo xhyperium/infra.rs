@@ -1,7 +1,7 @@
 # CI 工作流矩阵（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-docs-status.mjs`
-> **生成日期**：2026-07-22
+> **生成日期**：2026-07-24
 > **源目录**：`.github/workflows/`
 > **勿手改**：本文件由脚本覆盖；叙事性说明见 [CI_STATUS_REPORT.md](CI_STATUS_REPORT.md) / [CONFIG_SUMMARY.md](CONFIG_SUMMARY.md)。
 
@@ -17,6 +17,7 @@
 | `ci-summary.yml` | CI Summary | (see workflow) | `summary` |
 | `configx-coverage.yml` | ConfigX Coverage | pull_request, workflow_dispatch | `coverage` |
 | `constitution.yml` | Constitution | pull_request, workflow_dispatch | `constitution` |
+| `contract-compliance.yml` | 合同合规 | pull_request, workflow_dispatch | `guard`, `l1-signature`, `l2-behavior`, `l3-non-functional`, `l4-production`, `report` |
 | `contracts-coverage.yml` | Contracts Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `contracts-live.yml` | Contracts Mock Verification | workflow_dispatch | `mock-backend` |
 | `decimal-coverage.yml` | Decimal Coverage | pull_request, workflow_dispatch | `line-coverage` |
@@ -41,6 +42,7 @@
 | `secrets-lint.yml` | Secrets Lint | pull_request, workflow_dispatch | `check-changes`, `lint-tables`, `lint-dotenv`, `summary` |
 | `security.yml` | 安全 | pull_request, schedule, workflow_dispatch | `check-rust`, `deny`, `audit` |
 | `self-test.yml` | 模块自验证 | pull_request | `scripts-lint`, `hooks-lint`, `scripts-test` |
+| `ssot-dual-specs.yml` | SSOT Dual-Specs 门禁 | pull_request, workflow_dispatch | `dual-specs` |
 | `testkit-coverage.yml` | Testkit Coverage | pull_request, workflow_dispatch | `line-coverage` |
 | `testkit-miri.yml` | Testkit Miri | schedule, workflow_dispatch | `miri` |
 | `testkit-mutants.yml` | Testkit Mutants | schedule, workflow_dispatch | `mutants` |
@@ -51,8 +53,8 @@
 
 | 指标 | 值 |
 |------|-----|
-| 工作流文件数 | 37 |
-| Job 总数（解析） | 72 |
+| 工作流文件数 | 39 |
+| Job 总数（解析） | 79 |
 
 ## 维护
 
