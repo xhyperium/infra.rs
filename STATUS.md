@@ -1,7 +1,7 @@
 # crates 子模块进度看板（自动生成）
 
 > **生成方式**：`node scripts/docs/gen-crate-status.mjs`
-> **生成时间**：2026-07-24T05:22:10Z
+> **生成时间**：2026-07-24T06:38:57Z
 > **源权威**：根 `Cargo.toml` `[workspace.members]` + 各 crate 目录树
 > **勿手改**：本文件由脚本覆盖。标准布局定义见 [crates/AGENTS.md](crates/AGENTS.md)；对齐叙事见 [docs/ssot/](docs/ssot/)。
 > **口径声明**：完成度是**结构/可观测进度**（布局·测试·源码实质），**不是** Production Ready 签字，也不是 SSOT 镜像 COMPLETE。
@@ -10,21 +10,21 @@
 
 | 指标 | 值 |
 |------|-----|
-| workspace members | **24** |
-| 布局七项齐全 | **24** / 24（100%） |
-| 含测试（单元或集成） | **24** / 24（100%） |
+| workspace members | **33** |
+| 布局七项齐全 | **25** / 33（76%） |
+| 含测试（单元或集成） | **33** / 33（100%） |
 | scaffold 信号 | **0** |
-| **平均完成度** | **100%** ██████████ |
+| **平均完成度** | **88%** █████████░ |
 
 ### 成熟度分布
 
 | 标签 | 含义 | 数量 |
 |------|------|------|
-| `layout-incomplete` | 标准七项缺项 | 0 |
+| `layout-incomplete` | 标准七项缺项 | 8 |
 | `scaffold` | adapter/显式 scaffold 骨架 | 0 |
 | `scaffold+mock` | scaffold 且具备 mock/测试入口 | 0 |
 | `thin` | 布局齐但实质偏薄 | 0 |
-| `partial` | 有测试 + 一定源码量 | 0 |
+| `partial` | 有测试 + 一定源码量 | 1 |
 | `active` | 布局齐 + 测试 + 较厚实现 | 24 |
 
 ## 完成度公式
@@ -44,6 +44,14 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `testkit` | `crates/testkit` | T0 | 7/7 | ✅ 7i+u | 1233 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/testkit-ssot-alignment.md) |
 | `canonical` | `crates/types/canonical` | types | 7/7 | ✅ 2i+u | 1429 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/types-ssot-alignment.md) |
 | `decimalx` | `crates/types/decimal` | types | 7/7 | ✅ 6i+u | 1567 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/types-ssot-alignment.md) |
+| `domain_exchange` | `crates/domain_exchange` | L1 | 2/7 | ✅ 2i+u | 654 | · | `layout-incomplete` | **61%** █████░░░ | — |
+| `domain_market` | `crates/domain_market` | L1 | 2/7 | ✅ 2i+u | 934 | · | `layout-incomplete` | **61%** █████░░░ | — |
+| `domainx` | `crates/domainx` | L1 | 2/7 | ✅ 2i+u | 783 | · | `layout-incomplete` | **61%** █████░░░ | — |
+| `exchange-binance` | `crates/exchange/binance` | L1 | 1/7 | ✅ u | 378 | · | `layout-incomplete` | **48%** ████░░░░ | — |
+| `exchange-coinbase` | `crates/exchange/coinbase` | L1 | 1/7 | ✅ u | 266 | · | `layout-incomplete` | **48%** ████░░░░ | — |
+| `exchange-coinglass` | `crates/exchange/coinglass` | L1 | 1/7 | ✅ u | 296 | · | `layout-incomplete` | **48%** ████░░░░ | — |
+| `exchange-hyperliquid` | `crates/exchange/hyperliquid` | L1 | 1/7 | ✅ u | 273 | · | `layout-incomplete` | **48%** ████░░░░ | — |
+| `exchange-okx` | `crates/exchange/okx` | L1 | 1/7 | ✅ u | 236 | · | `layout-incomplete` | **48%** ████░░░░ | — |
 | `bootstrap` | `crates/infra/bootstrap` | L1 | 7/7 | ✅ 3i+u | 1860 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/bootstrap-ssot-alignment.md) |
 | `configx` | `crates/infra/configx` | L1 | 7/7 | ✅ 2i+u | 2014 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/configx-ssot-alignment.md) |
 | `evidence` | `crates/infra/evidence` | L1 | 7/7 | ✅ 2i+u | 896 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/evidence-ssot-alignment.md) |
@@ -51,6 +59,7 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `resiliencx` | `crates/infra/resiliencx` | L1 | 7/7 | ✅ 4i+u | 2059 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/resiliencx-ssot-alignment.md) |
 | `schedulex` | `crates/infra/schedulex` | L1 | 7/7 | ✅ 3i+u | 1345 | 2 | `active` | **100%** ████████ | [✓](docs/ssot/schedulex-ssot-alignment.md) |
 | `transportx` | `crates/infra/transport` | L1 | 7/7 | ✅ 6i+u | 1514 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/transport-ssot-alignment.md) |
+| `market_data` | `crates/market_data` | L1 | 7/7 | ✅ u | 106 | · | `partial` | **86%** ███████░ | — |
 | `goalctl` | `tools/goalctl` | L1 | 7/7 | ✅ 1i+u | 574 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/tools-ssot-alignment.md) |
 | `verifyctl` | `tools/verifyctl` | L1 | 7/7 | ✅ 1i+u | 663 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/tools-ssot-alignment.md) |
 | `contracts` | `crates/contracts` | contracts | 7/7 | ✅ 5i+u | 1522 | 1 | `active` | **100%** ████████ | [✓](docs/ssot/contracts-ssot-alignment.md) |
@@ -79,6 +88,14 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `testkit` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `canonical` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `decimalx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `domain_exchange` | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `domain_market` | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `domainx` | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `exchange-binance` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `exchange-coinbase` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `exchange-coinglass` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `exchange-hyperliquid` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `exchange-okx` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `bootstrap` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `configx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `evidence` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -86,6 +103,7 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 | `resiliencx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `schedulex` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `transportx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `market_data` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `goalctl` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `verifyctl` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `contracts` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -101,7 +119,16 @@ scaffold   → content 上限 0.55（避免把内存桩当成生产实现）
 
 ## 需关注（完成度 < 70%）
 
-_当前无成员低于 70%。_
+| Package | 完成度 | 成熟度 | 主要缺口 |
+|---------|--------|--------|----------|
+| `exchange-binance` | 48% | `layout-incomplete` | 布局缺: tests/, docs/, benches/, README.md, review/, releases/；无 example |
+| `exchange-coinbase` | 48% | `layout-incomplete` | 布局缺: tests/, docs/, benches/, README.md, review/, releases/；无 example |
+| `exchange-coinglass` | 48% | `layout-incomplete` | 布局缺: tests/, docs/, benches/, README.md, review/, releases/；无 example |
+| `exchange-hyperliquid` | 48% | `layout-incomplete` | 布局缺: tests/, docs/, benches/, README.md, review/, releases/；无 example |
+| `exchange-okx` | 48% | `layout-incomplete` | 布局缺: tests/, docs/, benches/, README.md, review/, releases/；无 example |
+| `domain_exchange` | 61% | `layout-incomplete` | 布局缺: docs/, benches/, README.md, review/, releases/；无 example |
+| `domain_market` | 61% | `layout-incomplete` | 布局缺: docs/, benches/, README.md, review/, releases/；无 example |
+| `domainx` | 61% | `layout-incomplete` | 布局缺: docs/, benches/, README.md, review/, releases/；无 example |
 
 ## 维护（不必每次手同步）
 

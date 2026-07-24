@@ -41,6 +41,15 @@ const expectedPackages = [
   ["decimalx", "crates/types/decimal/Cargo.toml"],
   ["goalctl", "tools/goalctl/Cargo.toml"],
   ["verifyctl", "tools/verifyctl/Cargo.toml"],
+  ["domainx", "crates/domainx/Cargo.toml"],
+  ["domain_exchange", "crates/domain_exchange/Cargo.toml"],
+  ["domain_market", "crates/domain_market/Cargo.toml"],
+  ["exchange-binance", "crates/exchange/binance/Cargo.toml"],
+  ["exchange-coinbase", "crates/exchange/coinbase/Cargo.toml"],
+  ["exchange-coinglass", "crates/exchange/coinglass/Cargo.toml"],
+  ["exchange-hyperliquid", "crates/exchange/hyperliquid/Cargo.toml"],
+  ["exchange-okx", "crates/exchange/okx/Cargo.toml"],
+  ["market_data", "crates/market_data/Cargo.toml"],
 ];
 
 const tempRoots = [];

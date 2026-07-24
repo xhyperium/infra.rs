@@ -42,6 +42,15 @@ const expectedPackages = new Map([
   ["transportx", "crates/infra/transport/Cargo.toml"],
   ["canonical", "crates/types/canonical/Cargo.toml"],
   ["decimalx", "crates/types/decimal/Cargo.toml"],
+  ["domainx", "crates/domainx/Cargo.toml"],
+  ["domain_exchange", "crates/domain_exchange/Cargo.toml"],
+  ["domain_market", "crates/domain_market/Cargo.toml"],
+  ["exchange-binance", "crates/exchange/binance/Cargo.toml"],
+  ["exchange-coinbase", "crates/exchange/coinbase/Cargo.toml"],
+  ["exchange-coinglass", "crates/exchange/coinglass/Cargo.toml"],
+  ["exchange-hyperliquid", "crates/exchange/hyperliquid/Cargo.toml"],
+  ["exchange-okx", "crates/exchange/okx/Cargo.toml"],
+  ["market_data", "crates/market_data/Cargo.toml"],
   ["goalctl", "tools/goalctl/Cargo.toml"],
   ["verifyctl", "tools/verifyctl/Cargo.toml"],
 ]);
@@ -205,7 +214,7 @@ function runGate(root) {
   check(
     "cargo-packages",
     metadataErrors.length === 0,
-    metadataErrors.length === 0 ? "24 个 package 名称与路径一致" : metadataErrors.join("；"),
+    metadataErrors.length === 0 ? "33 个 package 名称与路径一致" : metadataErrors.join("；"),
   );
 
   const canonicalEvidence = ".agents/ssot/infra/evidence/spec/spec.md";
@@ -307,7 +316,7 @@ function runGate(root) {
     },
     {
       path: "docs/ssot/workspace-ssot-alignment.md",
-      required: ["24", "MemorySource", "JobRunner::tick", "交易 NO-GO"],
+      required: ["33", "MemorySource", "JobRunner::tick", "交易 NO-GO"],
       forbidden: [/非多源热更新/u, /registry only/iu],
     },
     {

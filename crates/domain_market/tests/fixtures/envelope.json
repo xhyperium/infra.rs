@@ -1,0 +1,7 @@
+{
+  "instrument": { "exchange": "coinbase", "symbol": "BTC-USD" },
+  "source": "coinbase",
+  "factType": "tick",
+  "data": { "price": "50000", "quantity": "0.01" },
+  "timestamp": 1700000000300
+}
