@@ -120,10 +120,10 @@ for domain in kernel testkit types adapters contracts; do
     printf "  ~ %-12s src=%d dst=%d\n" "$domain" "$src_n" "$dst_n"
   fi
 done
-# infra（8 子域，已展平；源在 $SRC/infra/，目标在 $DST/）
+# infra（8 子域；源在 $SRC/infra/，目标在 $DST/infra/）
 for sub in bootstrap configx gate observex resiliencx schedulex testkitx transport; do
   src_n=$(find "$SRC/infra/$sub" -type f 2>/dev/null | wc -l)
-  dst_n=$(find "$DST/$sub" -type f 2>/dev/null | wc -l)
+  dst_n=$(find "$DST/infra/$sub" -type f 2>/dev/null | wc -l)
   if [ "$src_n" -eq "$dst_n" ]; then
     printf "  ✓ %-12s %4d files\n" "infra/$sub" "$dst_n"
   else

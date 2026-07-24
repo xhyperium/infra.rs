@@ -77,7 +77,7 @@
 | bootstrap | `.agents/ssot/infra/bootstrap/` | `crates/infra/bootstrap` | **组合根已落地**；`ContractStoreSet` 正式 KV/EventBus + 兼容 `Bounded*`；固定 Redis/NATS E2E PASS；跨资源事务 DEFER |
 | resiliencx | `.agents/ssot/infra/resiliencx/` | `crates/infra/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
 | observex | `.agents/ssot/infra/observex/` | `crates/infra/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
-| infra 其余域 | `.agents/ssot/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
+| infra 其余域 | `.agents/ssot/infra/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
 | adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | storage×7 声明面见专项文；exchange 签名 REST + 公共 WS 已实现但交易安全证据未闭合，**交易 NO-GO**；非 package stable / crates.io |
 | （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Venue 业务 live **DEFER** |
 | transport | `.agents/ssot/infra/transport/` | `crates/infra/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
@@ -89,7 +89,7 @@
 1. 规格写 COMPLETE / Stable ≠ 本仓可宣称 ship
 2. 本仓完成声明必须以 **members + 源码 + 本仓测试输出** 为准
 3. `.agents/ssot/**` 为本仓域规格 SSOT（见 `.agents/ssot/SSOT.md` R6）；变更走 worktree + PR。从外仓镜像同步用删除感知 rsync（见 [SSOT_SYNC_OPS.md](./SSOT_SYNC_OPS.md)），**禁止**用上游覆盖冲掉本仓 OOS/落地裁定
-4. 保留层级：`adapters/`、`tools/` 勿展平到 `.agents/ssot/` 根（`infra/` 已展平）
+4. 保留层级：`adapters/`、`tools/`、**`infra/`**（与 crates 平面一致）
 5. **archgate / `.architecture`：OOS**（#164）— 本仓明确不移植；机控用结构扫描 / CI / public-api 等
 
 ## 验证入口

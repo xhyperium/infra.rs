@@ -22,7 +22,7 @@
 
 ## SSOT 目录
 
-保留上游 `adapters/` 层级（勿展平到 `.agents/ssot/` 根；`infra/` 已展平）。
+保留上游 `adapters/` 层级（勿展平到 `.agents/ssot/` 根；`infra/` 已归组至 `infra/`）。
 
 ```text
 .agents/ssot/adapters/
