@@ -68,3 +68,19 @@ cargo bench -p postgresx --bench query_hot_path
 - 可选 `tracing`
 
 **禁止**将密码或完整 DSN 提交到 git。
+
+## Gap 追踪
+
+> 最后更新：2026-07-23 · 详情：[docs/ssot/gap-matrix.md](../../../../docs/ssot/gap-matrix.md)
+
+| 状态 | 项 |
+|------|-----|
+| ✅ G-2 | 流式 COPY |
+| ✅ G-3 | down migration |
+| ✅ G-6 | channel binding |
+| ✅ G-7 | tracing |
+| ✅ T-1 | runner 测试 |
+| ✅ T-2 | batch_execute 文档 |
+| ❌ G-1 | package stable |
+| ❌ G-4 | read-replica |
+| ❌ G-5 | mTLS live |
