@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "source_commit": "39e1b9452d739d490c7d7918628b76131ca976ec",
+  "generator_sha256": "12088d550a4e5873bf5a8807465f96e4aea808eb90c683bd003ea737f71f2009",
+  "generated_at": "2026-07-23T01:16:46.511Z",
+  "environment": {
+    "node": "v24.14.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "rounds": [
+    {
+      "id": "01",
+      "scope": "SSOT 结构与状态",
+      "command": "node scripts/quality-gates/check-ssot.mjs",
+      "command_sha256": "0a9f7ba3a661b2bc8d5d9ef10de383aeb10bc59366290369d9da3550302e3d47",
+      "exit_code": 0,
+      "stdout": ".agents/ssot/evidence/rounds/round-01.stdout.txt",
+      "stdout_sha256": "fc0f8a7150cc4624c298b943ededc312713134e941cf753755982fed276a5842",
+      "stderr": ".agents/ssot/evidence/rounds/round-01.stderr.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "agents": [
+        {
+          "nickname": "Pauli",
+          "id": "019f8c58-1a15-7c33-85e7-b5abb82d7cba"
+        },
+        {
+          "nickname": "Pasteur",
+          "id": "019f8c58-1c3a-7a30-8e3f-a2544034a28a"
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "scope": "SSOT 对抗测试与规格完整性",
+      "command": "node scripts/quality-gates/check-ssot.test.mjs",
+      "command_sha256": "839137055551187343098126aa8f1336d7a81bad172d7a04d6b5d1b1a1b0a352",
+      "exit_code": 0,
+      "stdout": ".agents/ssot/evidence/rounds/round-02.stdout.txt",
+      "stdout_sha256": "b7009317d36498f82a91ec278839dd25169f27976e91acdf77378b46d227f677",
+      "stderr": ".agents/ssot/evidence/rounds/round-02.stderr.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "agents": [
+        {
+          "nickname": "Pauli",
+          "id": "019f8c58-1a15-7c33-85e7-b5abb82d7cba"
+        },
+        {
+          "nickname": "Pasteur",
+          "id": "019f8c58-1c3a-7a30-8e3f-a2544034a28a"
+        }
+      ]
+    },
+    {
+      "id": "03",
+      "scope": "技能投影一致性",
+      "command": "node scripts/quality-gates/check-skill-projection.mjs",
+      "command_sha256": "459b6c9f807bcc02da3867aa950657a0c786102ce96679386617022485e4b71f",
+      "exit_code": 0,
+      "stdout": ".agents/ssot/evidence/rounds/round-03.stdout.txt",
+      "stdout_sha256": "e7ee55e88007bbdb8f9edc383748810d199dab2d1513cc6949f54e92dec22076",
+      "stderr": ".agents/ssot/evidence/rounds/round-03.stderr.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "agents": [
+        {
+          "nickname": "Pauli",
+          "id": "019f8c58-1a15-7c33-85e7-b5abb82d7cba"
+        },
+        {
+          "nickname": "Pasteur",
+          "id": "019f8c58-1c3a-7a30-8e3f-a2544034a28a"
+        }
+      ]
+    },
+    {
+      "id": "04",
+      "scope": "worktree 路径与策略",
+      "command": "node scripts/worktree/worktree-policy.test.mjs",
+      "command_sha256": "63d763a33050c535748694afa316196240482f0eaa052eed2fdd2d8571d4aaaf",
+      "exit_code": 0,
+      "stdout": ".agents/ssot/evidence/rounds/round-04.stdout.txt",
+      "stdout_sha256": "963499011cd3f20d27a6e5188c7f23eb1ca96b21d8201a0efdf494116d799525",
+      "stderr": ".agents/ssot/evidence/rounds/round-04.stderr.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "agents": [
+        {
+          "nickname": "Pauli",
+          "id": "019f8c58-1a15-7c33-85e7-b5abb82d7cba"
+        },
+        {
+          "nickname": "Pasteur",
+          "id": "019f8c58-1c3a-7a30-8e3f-a2544034a28a"
+        }
+      ]
+    },
+    {
+      "id": "05",
+      "scope": "工作流远程脚本安全",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/quality-gates/check-workflow-security.test.py",
+      "command_sha256": "26462073c83b9b9b8152a36dc6fbf281ad2bdba54b7dfb8510acc9008af360a0",
+      "exit_code": 0,
+      "stdout": ".agents/ssot/evidence/rounds/round-05.stdout.txt",
+      "stdout_sha256": "61d397a65351a3db1580b0a66034de63eac429bf3a39cb3c5c34bbe66e2799f3",
+      "stderr": ".agents/ssot/evidence/rounds/round-05.stderr.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "agents": [
+        {
+          "nickname": "Pauli",
+          "id": "019f8c58-1a15-7c33-85e7-b5abb82d7cba"
+        },
+        {
+          "nickname": "Pasteur",
+          "id": "019f8c58-1c3a-7a30-8e3f-a2544034a28a"
+        }
+      ]
+    },
+    {
+      "id": "06",
+      "scope": "脚本与钩子独立自测",
+      "command": "node scripts/self-test.test.mjs",
+      "command_sha256": "5caa95d929db96a030d92420da0b9373e356489d0ff58802299c582b0f0974ec",
+      "exit_code": 0,
+      "stdout": ".agents/ssot/evidence/rounds/round-06.stdout.txt",
+      "stdout_sha256": "0c61da7b489854ff37805372eac0e5014e9565237cf0ae53036cdfc75acc9108",
+      "stderr": ".agents/ssot/evidence/rounds/round-06.stderr.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "agents": [
+        {
+          "nickname": "Pauli",
+          "id": "019f8c58-1a15-7c33-85e7-b5abb82d7cba"
+        },
+        {
+          "nickname": "Pasteur",
+          "id": "019f8c58-1c3a-7a30-8e3f-a2544034a28a"
+        }
+      ]
+    },
+    {
+      "id": "07",
+      "scope": "Rust 格式",
+      "command": "cargo fmt --all --check",
+      "command_sha256": "2d009b4c2fff7c140a0e853344ad59d7dd2bd2a362627a962da72a2e39704a8f",
+      "exit_code": 0,
+      "stdout": ".agents/ssot/evidence/rounds/round-07.stdout.txt",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr": ".agents/ssot/evidence/rounds/round-07.stderr.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "agents": [
+        {
+          "nickname": "Pauli",
+          "id": "019f8c58-1a15-7c33-85e7-b5abb82d7cba"
+        },
+        {
+          "nickname": "Pasteur",
+          "id": "019f8c58-1c3a-7a30-8e3f-a2544034a28a"
+        }
+      ]
+    },
+    {
+      "id": "08",
+      "scope": "workspace 测试",
+      "command": "cargo test --workspace",
+      "command_sha256": "ec4556a178527361344d876629bb9533c63fc8fcd216f423dd8bce76787fce86",
+      "exit_code": 0,
+      "stdout": ".agents/ssot/evidence/rounds/round-08.stdout.txt",
+      "stdout_sha256": "8aafdaeb04608e015bb320c36f23e0a5e0d82ca82d42f2da3df67160b26cd6ff",
+      "stderr": ".agents/ssot/evidence/rounds/round-08.stderr.txt",
+      "stderr_sha256": "78167c5b50b233fb6bbf4cbfdd5f4b9e9e0b8fd09d55b8726f37525195c3842a",
+      "agents": [
+        {
+          "nickname": "Pauli",
+          "id": "019f8c58-1a15-7c33-85e7-b5abb82d7cba"
+        },
+        {
+          "nickname": "Pasteur",
+          "id": "019f8c58-1c3a-7a30-8e3f-a2544034a28a"
+        }
+      ]
+    },
+    {
+      "id": "09",
+      "scope": "workspace Clippy",
+      "command": "cargo clippy --workspace --all-features --all-targets -- -D warnings",
+      "command_sha256": "9b9ee4135f7d03fba0d401e987200331210a4ec56d7cb07a5996345a779837d1",
+      "exit_code": 0,
+      "stdout": ".agents/ssot/evidence/rounds/round-09.stdout.txt",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr": ".agents/ssot/evidence/rounds/round-09.stderr.txt",
+      "stderr_sha256": "fecede7c2157efe2f16c8c8b9dce94b0fb4dd384dca8207046c8bf7636eb0ffe",
+      "agents": [
+        {
+          "nickname": "Pauli",
+          "id": "019f8c58-1a15-7c33-85e7-b5abb82d7cba"
+        },
+        {
+          "nickname": "Pasteur",
+          "id": "019f8c58-1c3a-7a30-8e3f-a2544034a28a"
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "scope": "Harness 健康与投影",
+      "command": "node scripts/quality-gates/check.mjs",
+      "command_sha256": "765a7b709686e06a0f48098627ed7a4f06c9713b37de739ed2916439cd948b2e",
+      "exit_code": 0,
+      "stdout": ".agents/ssot/evidence/rounds/round-10.stdout.txt",
+      "stdout_sha256": "cf701f62482dd9ea35ffd425db2f620a0cc4a20e44d7d2c4b0e38cfe7bbc388d",
+      "stderr": ".agents/ssot/evidence/rounds/round-10.stderr.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "agents": [
+        {
+          "nickname": "Pauli",
+          "id": "019f8c58-1a15-7c33-85e7-b5abb82d7cba"
+        },
+        {
+          "nickname": "Pasteur",
+          "id": "019f8c58-1c3a-7a30-8e3f-a2544034a28a"
+        }
+      ]
+    }
+  ]
+}

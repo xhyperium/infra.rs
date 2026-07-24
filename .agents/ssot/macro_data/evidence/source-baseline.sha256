@@ -1,0 +1,15 @@
+# SSOT 初始基线
+
+- 用途：记录接管前 130 个 SSOT 文件的内容指纹；其中根治理文件 2 个已由基准提交跟踪，域文件 128 个来自当时工作树。原始域 blob 未进入 Git，不能作为回滚制品。
+- 分支：governance/ssot-production-10x
+- 提交：a3cb50c12356e308c8a25a04fedf2b4ed5af9153
+- 文件数：130（根治理文件 2，域规格文件 128）。
+- Git 来源状态：基准提交可复验根治理文件 2 个；捕获时域规格文件为工作树内容，原始 `git status --porcelain` 输出未保存。
+- 列表摘要 SHA-256：e0834ceec9fe98609944147815fe80c86f0bb17d2f3aacbbc34efbd8eb8522db
+- 完整清单：`evidence/source-baseline.files.sha256`（130 行，逐文件 SHA-256，按路径排序）。该清单只能证明生成时的指纹，不能恢复原始文件。
+
+完整文件列表已原样保存；可用下列命令在仍保留原始文件的环境中重算并与清单逐行比较。回滚使用候选提交的 Git revert，不依赖该未跟踪基线：
+
+```bash
+find .agents/ssot -type f -print0 | sort -z | xargs -0 sha256sum
+```

@@ -1,0 +1,449 @@
+{
+  "schema_version": 1,
+  "repository": "macro_data.rs",
+  "root": ".agents/ssot",
+  "governance_files": [
+    "README.md",
+    "production-readiness-10x.md"
+  ],
+  "authorization_statuses": [
+    "unknown",
+    "approved"
+  ],
+  "access_modes": [
+    "offline_fixture_only",
+    "authorized_standard_client"
+  ],
+  "layers": [
+    {
+      "id": "goal",
+      "path": "goal/goal.md"
+    },
+    {
+      "id": "spec",
+      "path": "spec/spec.md"
+    },
+    {
+      "id": "design",
+      "path": "design/design.md"
+    },
+    {
+      "id": "plan",
+      "path": "plan/plan.md"
+    },
+    {
+      "id": "tasks",
+      "path": "tasks/README.md"
+    },
+    {
+      "id": "prompt",
+      "path": "prompt/prompt.md"
+    },
+    {
+      "id": "test",
+      "path": "test/test.md"
+    },
+    {
+      "id": "review",
+      "path": "review/review.md"
+    },
+    {
+      "id": "release",
+      "path": "release/release.md"
+    },
+    {
+      "id": "retrospective",
+      "path": "retrospective/README.md"
+    },
+    {
+      "id": "matrix",
+      "path": "matrix/matrix.md"
+    },
+    {
+      "id": "gate",
+      "path": "gate/gate.md"
+    },
+    {
+      "id": "evidence",
+      "path": "evidence/evidence.md"
+    }
+  ],
+  "domains": [
+    {
+      "id": "domain_macro",
+      "kind": "kernel",
+      "spec_status": "draft",
+      "implementation_status": "partial",
+      "current_code_paths": [
+        "crates/macrox"
+      ],
+      "planned_code_paths": [],
+      "access_mode": "none",
+      "authorization_status": "not_applicable",
+      "credential_policy": "no_credentials_in_ssot",
+      "logging_policy": "redacted_endpoint_id_only",
+      "traceability": {
+        "goal_id": "domain_macro.goal.001",
+        "spec_id": "domain_macro.spec.001",
+        "design_id": "domain_macro.design.001",
+        "plan_id": "domain_macro.plan.001",
+        "task_ids": [
+          "domain_macro.task.001"
+        ],
+        "test_ids": [
+          "domain_macro.test.001"
+        ],
+        "review_id": "domain_macro.review.001",
+        "release_id": "domain_macro.release.001",
+        "retrospective_id": "domain_macro.retrospective.001",
+        "matrix_id": "domain_macro.matrix.001",
+        "gate_id": "domain_macro.gate.001",
+        "evidence_id": "domain_macro.evidence.001",
+        "clause_ids": [
+          "domain_macro.clause.001"
+        ],
+        "prompt_id": "domain_macro.prompt.001"
+      }
+    },
+    {
+      "id": "bea",
+      "kind": "provider",
+      "spec_status": "draft",
+      "implementation_status": "not_started",
+      "current_code_paths": [],
+      "planned_code_paths": [],
+      "access_mode": "offline_fixture_only",
+      "authorization_status": "unknown",
+      "credential_policy": "no_credentials_in_ssot",
+      "logging_policy": "redacted_endpoint_id_only",
+      "traceability": {
+        "goal_id": "bea.goal.001",
+        "spec_id": "bea.spec.001",
+        "design_id": "bea.design.001",
+        "plan_id": "bea.plan.001",
+        "task_ids": [
+          "bea.task.001"
+        ],
+        "test_ids": [
+          "bea.test.001"
+        ],
+        "review_id": "bea.review.001",
+        "release_id": "bea.release.001",
+        "retrospective_id": "bea.retrospective.001",
+        "matrix_id": "bea.matrix.001",
+        "gate_id": "bea.gate.001",
+        "evidence_id": "bea.evidence.001",
+        "clause_ids": [
+          "bea.clause.001"
+        ],
+        "prompt_id": "bea.prompt.001"
+      }
+    },
+    {
+      "id": "eastmoney",
+      "kind": "provider",
+      "spec_status": "draft",
+      "implementation_status": "not_started",
+      "current_code_paths": [],
+      "planned_code_paths": [],
+      "access_mode": "offline_fixture_only",
+      "authorization_status": "unknown",
+      "credential_policy": "no_credentials_in_ssot",
+      "logging_policy": "redacted_endpoint_id_only",
+      "traceability": {
+        "goal_id": "eastmoney.goal.001",
+        "spec_id": "eastmoney.spec.001",
+        "design_id": "eastmoney.design.001",
+        "plan_id": "eastmoney.plan.001",
+        "task_ids": [
+          "eastmoney.task.001"
+        ],
+        "test_ids": [
+          "eastmoney.test.001"
+        ],
+        "review_id": "eastmoney.review.001",
+        "release_id": "eastmoney.release.001",
+        "retrospective_id": "eastmoney.retrospective.001",
+        "matrix_id": "eastmoney.matrix.001",
+        "gate_id": "eastmoney.gate.001",
+        "evidence_id": "eastmoney.evidence.001",
+        "clause_ids": [
+          "eastmoney.clause.001"
+        ],
+        "prompt_id": "eastmoney.prompt.001"
+      }
+    },
+    {
+      "id": "ecb",
+      "kind": "provider",
+      "spec_status": "draft",
+      "implementation_status": "not_started",
+      "current_code_paths": [],
+      "planned_code_paths": [],
+      "access_mode": "offline_fixture_only",
+      "authorization_status": "unknown",
+      "credential_policy": "no_credentials_in_ssot",
+      "logging_policy": "redacted_endpoint_id_only",
+      "traceability": {
+        "goal_id": "ecb.goal.001",
+        "spec_id": "ecb.spec.001",
+        "design_id": "ecb.design.001",
+        "plan_id": "ecb.plan.001",
+        "task_ids": [
+          "ecb.task.001"
+        ],
+        "test_ids": [
+          "ecb.test.001"
+        ],
+        "review_id": "ecb.review.001",
+        "release_id": "ecb.release.001",
+        "retrospective_id": "ecb.retrospective.001",
+        "matrix_id": "ecb.matrix.001",
+        "gate_id": "ecb.gate.001",
+        "evidence_id": "ecb.evidence.001",
+        "clause_ids": [
+          "ecb.clause.001"
+        ],
+        "prompt_id": "ecb.prompt.001"
+      }
+    },
+    {
+      "id": "fred",
+      "kind": "provider",
+      "spec_status": "draft",
+      "implementation_status": "not_started",
+      "current_code_paths": [],
+      "planned_code_paths": [],
+      "access_mode": "offline_fixture_only",
+      "authorization_status": "unknown",
+      "credential_policy": "no_credentials_in_ssot",
+      "logging_policy": "redacted_endpoint_id_only",
+      "traceability": {
+        "goal_id": "fred.goal.001",
+        "spec_id": "fred.spec.001",
+        "design_id": "fred.design.001",
+        "plan_id": "fred.plan.001",
+        "task_ids": [
+          "fred.task.001"
+        ],
+        "test_ids": [
+          "fred.test.001"
+        ],
+        "review_id": "fred.review.001",
+        "release_id": "fred.release.001",
+        "retrospective_id": "fred.retrospective.001",
+        "matrix_id": "fred.matrix.001",
+        "gate_id": "fred.gate.001",
+        "evidence_id": "fred.evidence.001",
+        "clause_ids": [
+          "fred.clause.001"
+        ],
+        "prompt_id": "fred.prompt.001"
+      }
+    },
+    {
+      "id": "japan_cb",
+      "kind": "provider",
+      "spec_status": "draft",
+      "implementation_status": "not_started",
+      "current_code_paths": [],
+      "planned_code_paths": [],
+      "access_mode": "offline_fixture_only",
+      "authorization_status": "unknown",
+      "credential_policy": "no_credentials_in_ssot",
+      "logging_policy": "redacted_endpoint_id_only",
+      "traceability": {
+        "goal_id": "japan_cb.goal.001",
+        "spec_id": "japan_cb.spec.001",
+        "design_id": "japan_cb.design.001",
+        "plan_id": "japan_cb.plan.001",
+        "task_ids": [
+          "japan_cb.task.001"
+        ],
+        "test_ids": [
+          "japan_cb.test.001"
+        ],
+        "review_id": "japan_cb.review.001",
+        "release_id": "japan_cb.release.001",
+        "retrospective_id": "japan_cb.retrospective.001",
+        "matrix_id": "japan_cb.matrix.001",
+        "gate_id": "japan_cb.gate.001",
+        "evidence_id": "japan_cb.evidence.001",
+        "clause_ids": [
+          "japan_cb.clause.001"
+        ],
+        "prompt_id": "japan_cb.prompt.001"
+      }
+    },
+    {
+      "id": "jin10",
+      "kind": "provider",
+      "spec_status": "draft",
+      "implementation_status": "not_started",
+      "current_code_paths": [],
+      "planned_code_paths": [],
+      "access_mode": "offline_fixture_only",
+      "authorization_status": "unknown",
+      "credential_policy": "no_credentials_in_ssot",
+      "logging_policy": "redacted_endpoint_id_only",
+      "traceability": {
+        "goal_id": "jin10.goal.001",
+        "spec_id": "jin10.spec.001",
+        "design_id": "jin10.design.001",
+        "plan_id": "jin10.plan.001",
+        "task_ids": [
+          "jin10.task.001"
+        ],
+        "test_ids": [
+          "jin10.test.001"
+        ],
+        "review_id": "jin10.review.001",
+        "release_id": "jin10.release.001",
+        "retrospective_id": "jin10.retrospective.001",
+        "matrix_id": "jin10.matrix.001",
+        "gate_id": "jin10.gate.001",
+        "evidence_id": "jin10.evidence.001",
+        "clause_ids": [
+          "jin10.clause.001"
+        ],
+        "prompt_id": "jin10.prompt.001"
+      }
+    },
+    {
+      "id": "treasury",
+      "kind": "provider",
+      "spec_status": "draft",
+      "implementation_status": "not_started",
+      "current_code_paths": [],
+      "planned_code_paths": [],
+      "access_mode": "offline_fixture_only",
+      "authorization_status": "unknown",
+      "credential_policy": "no_credentials_in_ssot",
+      "logging_policy": "redacted_endpoint_id_only",
+      "traceability": {
+        "goal_id": "treasury.goal.001",
+        "spec_id": "treasury.spec.001",
+        "design_id": "treasury.design.001",
+        "plan_id": "treasury.plan.001",
+        "task_ids": [
+          "treasury.task.001"
+        ],
+        "test_ids": [
+          "treasury.test.001"
+        ],
+        "review_id": "treasury.review.001",
+        "release_id": "treasury.release.001",
+        "retrospective_id": "treasury.retrospective.001",
+        "matrix_id": "treasury.matrix.001",
+        "gate_id": "treasury.gate.001",
+        "evidence_id": "treasury.evidence.001",
+        "clause_ids": [
+          "treasury.clause.001"
+        ],
+        "prompt_id": "treasury.prompt.001"
+      }
+    },
+    {
+      "id": "uk_cb",
+      "kind": "provider",
+      "spec_status": "draft",
+      "implementation_status": "not_started",
+      "current_code_paths": [],
+      "planned_code_paths": [],
+      "access_mode": "offline_fixture_only",
+      "authorization_status": "unknown",
+      "credential_policy": "no_credentials_in_ssot",
+      "logging_policy": "redacted_endpoint_id_only",
+      "traceability": {
+        "goal_id": "uk_cb.goal.001",
+        "spec_id": "uk_cb.spec.001",
+        "design_id": "uk_cb.design.001",
+        "plan_id": "uk_cb.plan.001",
+        "task_ids": [
+          "uk_cb.task.001"
+        ],
+        "test_ids": [
+          "uk_cb.test.001"
+        ],
+        "review_id": "uk_cb.review.001",
+        "release_id": "uk_cb.release.001",
+        "retrospective_id": "uk_cb.retrospective.001",
+        "matrix_id": "uk_cb.matrix.001",
+        "gate_id": "uk_cb.gate.001",
+        "evidence_id": "uk_cb.evidence.001",
+        "clause_ids": [
+          "uk_cb.clause.001"
+        ],
+        "prompt_id": "uk_cb.prompt.001"
+      }
+    },
+    {
+      "id": "yahoo",
+      "kind": "provider",
+      "spec_status": "draft",
+      "implementation_status": "not_started",
+      "current_code_paths": [],
+      "planned_code_paths": [],
+      "access_mode": "offline_fixture_only",
+      "authorization_status": "unknown",
+      "credential_policy": "no_credentials_in_ssot",
+      "logging_policy": "redacted_endpoint_id_only",
+      "traceability": {
+        "goal_id": "yahoo.goal.001",
+        "spec_id": "yahoo.spec.001",
+        "design_id": "yahoo.design.001",
+        "plan_id": "yahoo.plan.001",
+        "task_ids": [
+          "yahoo.task.001"
+        ],
+        "test_ids": [
+          "yahoo.test.001"
+        ],
+        "review_id": "yahoo.review.001",
+        "release_id": "yahoo.release.001",
+        "retrospective_id": "yahoo.retrospective.001",
+        "matrix_id": "yahoo.matrix.001",
+        "gate_id": "yahoo.gate.001",
+        "evidence_id": "yahoo.evidence.001",
+        "clause_ids": [
+          "yahoo.clause.001"
+        ],
+        "prompt_id": "yahoo.prompt.001"
+      }
+    },
+    {
+      "id": "yield_curve",
+      "kind": "kernel",
+      "spec_status": "draft",
+      "implementation_status": "not_started",
+      "current_code_paths": [],
+      "planned_code_paths": [],
+      "access_mode": "none",
+      "authorization_status": "not_applicable",
+      "credential_policy": "no_credentials_in_ssot",
+      "logging_policy": "redacted_endpoint_id_only",
+      "traceability": {
+        "goal_id": "yield_curve.goal.001",
+        "spec_id": "yield_curve.spec.001",
+        "design_id": "yield_curve.design.001",
+        "plan_id": "yield_curve.plan.001",
+        "task_ids": [
+          "yield_curve.task.001"
+        ],
+        "test_ids": [
+          "yield_curve.test.001"
+        ],
+        "review_id": "yield_curve.review.001",
+        "release_id": "yield_curve.release.001",
+        "retrospective_id": "yield_curve.retrospective.001",
+        "matrix_id": "yield_curve.matrix.001",
+        "gate_id": "yield_curve.gate.001",
+        "evidence_id": "yield_curve.evidence.001",
+        "clause_ids": [
+          "yield_curve.clause.001"
+        ],
+        "prompt_id": "yield_curve.prompt.001"
+      }
+    }
+  ]
+}

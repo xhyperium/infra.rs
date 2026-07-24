@@ -1,0 +1,50 @@
+
+=== macro_data.rs Harness Health Check ===
+分支: chore/gitignore-omx
+通过: 43/43
+
+PASS: CLAUDE.md 存在
+PASS: AGENTS.md 存在
+PASS: README.md 存在
+PASS: .gitignore 排除 .claude/*.local.json
+PASS: .gitignore 排除 .beads/
+PASS: Hook 文件: pre-tool-check.mjs
+PASS: Hook 文件: post-tool-check.mjs
+PASS: Hook 文件: pre-compact.mjs
+PASS: Hook 文件: session-context.mjs
+PASS: Hook 文件: session-review.mjs
+PASS: Hook 文件: edit-guard.mjs
+PASS: Hook 文件: count-guard.mjs
+PASS: Hook 文件: branch-protect.mjs
+PASS: Hook 文件: version-guard.mjs
+PASS: 活动 pre-push hook 组合健康
+PASS: .claude/settings.json 可解析
+PASS: settings 注册 PreToolUse
+PASS: settings 注册 PostToolUse
+PASS: settings 注册 SessionStart
+PASS: settings 注册 Stop
+PASS: settings 注册 PreCompact
+PASS: scripts/worktree/worktree-policy.mjs
+PASS: scripts/harness/gc-scan.mjs
+PASS: scripts/quality-gates/check.mjs
+PASS: scripts/quality-gates/check-settings-hooks.mjs
+PASS: scripts/quality-gates/check-crate-versions.mjs
+PASS: crates 独立版本门禁
+PASS: settings hooks nice/timeout 门禁
+PASS: worktree-policy 可导入
+PASS: pre-tool-check 含 worktree 硬门禁
+PASS: session-context 指引 worktree.mjs create
+PASS: worktree-policy 单元自检
+PASS: harness-state 字段完整
+PASS: Beads 已初始化
+PASS: bd CLI 可用
+PASS: .claude/skills/ 存在
+PASS: 技能数量 ≥ 10（当前 47）
+PASS: .cargo/config.toml 存在
+PASS: 不在 detached HEAD
+PASS: 当前分支: chore/gitignore-omx
+PASS: docs status matrix 新鲜
+PASS: STATUS.md crates 看板新鲜
+PASS: 技能投影一致
+
+结果: PASS

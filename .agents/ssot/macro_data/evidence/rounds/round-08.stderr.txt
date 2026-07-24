@@ -1,0 +1,4 @@
+    Blocking waiting for file lock on package cache
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.19s
+     Running unittests src/lib.rs (.cargo/target/debug/deps/macrox-fd220bcd99b8794f)
+   Doc-tests macrox
