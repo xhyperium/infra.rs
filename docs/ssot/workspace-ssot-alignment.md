@@ -93,7 +93,7 @@
 | resiliencx | `.agents/ssot/infra/resiliencx/` | `crates/infra/resiliencx` | **重试 + 熔断 + 限流 + 舱壁 + `retry_async`/`AsyncWait`**（#167）；budget/stable **DEFER** |
 | observex | `.agents/ssot/infra/observex/` | `crates/infra/observex` | **TracingInstrumentation 最小面**；OTEL 导出 **DEFER** |
 | infra 其余域 | `.agents/ssot/infra/{gate,testkitx}` | — | **仅镜像**；勿把镜像 COMPLETE 当本仓 ship |
-| adapters | `.agents/ssot/adapters/` | `crates/adapters/**`（9 package） | storage×7 声明面见专项文；exchange 签名 REST + 公共 WS 已实现但交易安全证据未闭合，**交易 NO-GO**；非 package stable / crates.io |
+| adapters | `.agents/ssot/adapters/`（storage）+ `market_data/`（exchange，2026-07-24 收敛） | `crates/adapters/**`（9 package） | storage×7 声明面见专项文；exchange（binance/okx）规格已收敛至 `market_data/`，签名 REST + 公共 WS 已实现但交易安全证据未闭合，**交易 NO-GO**；非 package stable / crates.io |
 | （本仓）contracts | `.agents/ssot/contracts/`（若有） | `crates/contracts` | **trait 出口**；Fake/suite 在 `contract-testkit`；**L3 子集** KV+Instr（#172）；Venue 业务 live **DEFER** |
 | transport | `.agents/ssot/infra/transport/` | `crates/infra/transport` | **active 合同已落地**（含 P0 硬化 #166）；未达 M3 |
 | evidence | `.agents/ssot/infra/evidence/` | `crates/infra/evidence` | canonical current-state spec 位于顶层；`tools/evidence` 仅历史重定向 |
@@ -222,6 +222,7 @@ cargo run -p verifyctl -- plan --changed tools/verifyctl -o /tmp/vplan.json
 | 2026-07-23 | 第 4 轮深化：bootstrap 正式 KV/EventBus 组合、Kafka TLS/PLAIN、Postgres deadline/隔离、ClickHouse HTTPS 客户端证据；NATS 同客户端重启恢复 3/3，Core 丢消息窗口与 Cluster/HA 保持 NO-GO |
 | 2026-07-23 | **taosx 0.3.4**（#284）：十轮 draft 审查 + 真实 dev live + 有界 bench；members 表版本对齐；SSOT 路径保持 `taos/`（非 `taosx/` 分叉）；package stable NO-GO |
 | 2026-07-24 | **分层共存声明**：登记 core/market_data/macro_data 三平面；members 表补齐 domain_*/exchange/*/market_data 对齐链接（→ core-ssot-alignment.md）；修复 exchange/*/src SSOT 路径引用 |
+| 2026-07-24 | **#387** exchange 规格收敛：删除 `.agents/ssot/adapters/exchange/{binance,okx}/` 副本，统一至 `market_data/`；CI `expectedDualSpecDirs` 删 2 项（44 对 dual-spec）；`adapters/` SSOT 仅剩 storage |
 
 ## 七包双栏（2026-07-22）
 

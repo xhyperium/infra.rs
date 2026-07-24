@@ -114,9 +114,9 @@ node scripts/clickhouse-https-conformance.mjs
 
 | ID | 条款 | 状态 | 本仓证据 |
 |----|------|------|----------|
-| A-1 | 镜像路径保留 `adapters/` 层级 | PASS | `.agents/ssot/adapters/{exchange,storage}/` |
+| A-1 | 镜像路径保留 `adapters/` 层级（storage） | PASS | `.agents/ssot/adapters/storage/`；exchange 规格已于 #387 收敛至 `.agents/ssot/market_data/` |
 | A-2 | 本仓 current-state 不依赖外仓 0 diff | PASS | `.agents/ssot/SSOT.md` R6/R7 + 本轮门禁 |
-| A-3 | 9 域均有 README + 11 层 + dual-spec | PASS | 镜像树；`cmp` 全 OK |
+| A-3 | 9 域均有 README + 11 层 + dual-spec | PASS | storage 在 `adapters/` 镜像树；exchange dual-spec 于 `market_data/`；`cmp` 全 OK |
 | A-4 | 本仓 crate 路径与 SSOT Code 列一致 | PASS | `crates/adapters/...` 与镜像 README Code 列同构 |
 | A-5 | workspace members 已注册 9 package | PASS | 根 `Cargo.toml` |
 | A-6 | scaffold 可 `cargo check` / `cargo test` | PASS | feature `scaffold` 可选；默认生产路径可编译测试 |
