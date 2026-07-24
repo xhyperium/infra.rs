@@ -324,8 +324,10 @@ function parseArgs(argv) {
     dryRun: false,
     pruneRemote: false,
     branches: [],
+    orphanTypes: [],
     help: false,
   };
+  const VALID_ORPHAN_TYPES = new Set(["MISSING_BRANCH", "MISSING_DIR", "DETACHED"]);
   let i = 0;
   while (i < argv.length) {
     switch (argv[i]) {
@@ -335,6 +337,16 @@ function parseArgs(argv) {
       case "--force":       opts.force = true; break;
       case "--dry-run":     opts.dryRun = true; break;
       case "--prune-remote":opts.pruneRemote = true; break;
+      case "--orphan-type":
+        if (i + 1 >= argv.length) die("--orphan-type 缺少参数");
+        {
+          const t = argv[++i].toUpperCase();
+          if (!VALID_ORPHAN_TYPES.has(t)) {
+            die(`无效的 orphan type: ${argv[i]}。有效值: ${[...VALID_ORPHAN_TYPES].join(", ")}`);
+          }
+          opts.orphanTypes.push(t);
+        }
+        break;
       case "--branch":
         if (i + 1 >= argv.length) die("--branch 缺少参数");
         opts.branches.push(argv[++i]);
@@ -365,6 +377,8 @@ function showHelp() {
   --dry-run         演练模式，仅输出计划，不实际操作
   --branch <name>   只处理指定分支（可重复，仅 --list/--clean）
   --prune-remote    同时删除 PR 已合并的远程分支（仅 --clean）
+  --orphan-type <t> 仅处理指定类型的孤儿 worktree（可重复，仅 --auto-remove）
+                    有效值: missing_branch, missing_dir, detached
   --help            显示帮助信息
 
 安全护栏:
@@ -387,6 +401,12 @@ function showHelp() {
   # 查看并清理孤儿 worktree
   node scripts/workflow/branch-cleanup.mjs --auto-remove --dry-run
   node scripts/workflow/branch-cleanup.mjs --auto-remove --force
+
+  # 仅清理缺失分支的孤儿（跳过 MISSING_DIR 和 DETACHED）
+  node scripts/workflow/branch-cleanup.mjs --auto-remove --orphan-type missing_branch
+
+  # 仅清理缺失目录和 detached HEAD
+  node scripts/workflow/branch-cleanup.mjs --auto-remove --orphan-type missing_dir --orphan-type detached
 `);
 }
 
@@ -532,8 +552,15 @@ function removeOrphanedWorktree(wt, dryRun) {
 
 /**
  * 展示孤儿 worktree 列表
+ * @param {Array} orphans  孤儿列表
+ * @param {Array} typeFilter  仅展示指定类型的孤儿（空 = 全部）
  */
-function displayOrphanedWorktrees(orphans) {
+function displayOrphanedWorktrees(orphans, typeFilter = []) {
+  const filtered = typeFilter.length > 0
+    ? orphans.filter(wt => typeFilter.includes(wt.kind))
+    : orphans;
+  const excluded = typeFilter.length > 0 ? orphans.length - filtered.length : 0;
+
   if (orphans.length === 0) {
     console.log(color(C.green, "\n✓ 没有孤儿 worktree 发现"));
     return;
@@ -542,33 +569,52 @@ function displayOrphanedWorktrees(orphans) {
   console.log(`\n${color(C.bold, "孤儿 Worktree 一览")}`);
   console.log(`${color(C.dim, "─".repeat(80))}`);
 
-  for (const wt of orphans) {
+  for (const wt of filtered) {
     const relPath = wt.path.startsWith(ROOT)
       ? "." + wt.path.slice(ROOT.length)
       : wt.path;
     const diskIcon = wt.existsOnDisk ? color(C.green, "✓") : color(C.red, "✗");
-    const kindColor = wt.kind === "MISSING_BRANCH" ? C.yellow : C.red;
+    const kindColor = wt.kind === "MISSING_DIR" ? C.red
+      : wt.kind === "DETACHED" ? C.magenta : C.yellow;
 
     console.log(
       `  ${color(kindColor + C.bold, "◉")} ${color(C.bold, relPath)}`
     );
     console.log(
-      `    ${color(C.dim, "分支:")} ${color(C.yellow, wt.branch || "(无)")}  ` +
-      `${color(C.dim, "目录:")} ${diskIcon}  ` +
-      `${color(C.dim, "原因:")} ${wt.reason}`
+      `    ${color(C.dim, "类型:")} ${color(kindColor, wt.kind)}  ` +
+      `${color(C.dim, "分支:")} ${color(C.yellow, wt.branch || "(无)")}  ` +
+      `${color(C.dim, "目录:")} ${diskIcon}`
+    );
+    console.log(
+      `    ${color(C.dim, "原因:")} ${wt.reason}`
     );
   }
 
-  console.log(`\n${color(C.bold, "汇总:")} ${color(C.yellow, orphans.length)} 个孤儿 worktree`);
+  const summary = `${color(C.yellow, filtered.length)} 个孤儿`;
+  if (excluded > 0) {
+    console.log(`\n${color(C.bold, "汇总:")} ${summary}${color(C.dim, ` (已过滤 ${excluded} 个)`)}  — 共 ${orphans.length} 个`);
+  } else if (typeFilter.length > 0) {
+    console.log(`\n${color(C.bold, "汇总:")} ${summary}${color(C.dim, ` (类型过滤: ${typeFilter.join(", ")})`)}`);
+  } else {
+    console.log(`\n${color(C.bold, "汇总:")} ${summary}  — 共 ${orphans.length} 个`);
+  }
 }
 
 // ── auto-remove 子命令 ─────────────────────────────────────
 async function runAutoRemove(opts) {
-  const orphans = findOrphanedWorktrees();
+  const allOrphans = findOrphanedWorktrees();
 
-  displayOrphanedWorktrees(orphans);
+  // 按类型过滤
+  const orphans = opts.orphanTypes.length > 0
+    ? allOrphans.filter(wt => opts.orphanTypes.includes(wt.kind))
+    : allOrphans;
+
+  displayOrphanedWorktrees(allOrphans, opts.orphanTypes);
 
   if (orphans.length === 0) {
+    if (opts.orphanTypes.length > 0) {
+      console.log(color(C.dim, `\n没有匹配类型 [${opts.orphanTypes.join(", ")}] 的孤儿 worktree`));
+    }
     return;
   }
 
