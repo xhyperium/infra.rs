@@ -720,7 +720,7 @@ mod scaffold_tests {
     use clickhousex::ClickHouseAdapter;
 
     #[tokio::test]
-#[ignore = "requires ClickHouse"]
+    #[ignore = "requires ClickHouse"]
     async fn adapter_new_and_accessors() {
         let a = ClickHouseAdapter::new("my-adapter", "http://host:8123");
         assert_eq!(a.name(), "my-adapter");
@@ -729,7 +729,7 @@ mod scaffold_tests {
     }
 
     #[tokio::test]
-#[ignore = "requires ClickHouse"]
+    #[ignore = "requires ClickHouse"]
     async fn adapter_local_defaults() {
         let a = ClickHouseAdapter::local();
         assert_eq!(a.name(), "clickhouse-local");
@@ -738,7 +738,7 @@ mod scaffold_tests {
     }
 
     #[tokio::test]
-#[ignore = "requires ClickHouse"]
+    #[ignore = "requires ClickHouse"]
     async fn adapter_sink_single_event() {
         let a = ClickHouseAdapter::local();
         a.sink("ev", Bytes::from_static(b"payload")).await.expect("sink");
@@ -746,7 +746,7 @@ mod scaffold_tests {
     }
 
     #[tokio::test]
-#[ignore = "requires ClickHouse"]
+    #[ignore = "requires ClickHouse"]
     async fn adapter_sink_accumulates_multiple_events() {
         let a = ClickHouseAdapter::new("multi", "http://example.invalid:8123");
         for i in 0..5 {
